@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -71,6 +71,83 @@ function loadJSON(key, def) { try { const r = localStorage.getItem(key); return 
 function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
 // ══════════════════════════════════════════════
+//  EXPORT HELPERS
+// ══════════════════════════════════════════════
+function exportCSV(dados, cols, filename) {
+  const header = cols.map(c => c.l).join(";");
+  const rows = dados.map(r => cols.map(c => {
+    const v = String(r[c.k] || "").replace(/"/g,'""');
+    return `"${v}"`;
+  }).join(";"));
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + [header,...rows].join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename+".csv"; a.click();
+}
+
+function exportODS(dados, cols, filename) {
+  // ODS via XML spreadsheet (compatível com LibreOffice)
+  const rows = dados.map(r =>
+    `<Row>${cols.map(c => `<Cell><Data ss:Type="String">${esc(String(r[c.k]||""))}</Data></Cell>`).join("")}</Row>`
+  ).join("");
+  const header = `<Row>${cols.map(c=>`<Cell ss:StyleID="hdr"><Data ss:Type="String">${esc(c.l)}</Data></Cell>`).join("")}</Row>`;
+  const xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="hdr"><Font ss:Bold="1"/></Style></Styles>
+<Worksheet ss:Name="Dados"><Table>${header}${rows}</Table></Worksheet></Workbook>`;
+  const blob = new Blob([xml], {type:"application/vnd.ms-excel"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename+".xls"; a.click();
+}
+
+function exportPDF(dados, cols, titulo) {
+  const rows = dados.map(r =>
+    `<tr>${cols.map(c=>`<td>${esc(String(r[c.k]||"—"))}</td>`).join("")}</tr>`
+  ).join("");
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${titulo}</title>
+<style>
+  body{font-family:Arial,sans-serif;font-size:10px;color:#222;padding:20px;margin:0}
+  h1{font-size:16px;margin-bottom:4px}h2{font-size:10px;color:#666;font-weight:normal;margin-bottom:14px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th{background:#1a1a2e;color:#fff;padding:7px 5px;font-size:8px;text-transform:uppercase;letter-spacing:.8px;text-align:left;border:1px solid #333}
+  td{padding:5px;border:1px solid #ddd;font-size:9px}
+  tr:nth-child(even){background:#f8f8f8}
+  .footer{margin-top:14px;font-size:8px;color:#999;border-top:1px solid #ddd;padding-top:6px}
+  @media print{body{padding:8px}}
+</style></head><body>
+<h1>${titulo}</h1><h2>Exportado em ${new Date().toLocaleString("pt-BR")} — ${dados.length} registros</h2>
+<table><thead><tr>${cols.map(c=>`<th>${c.l}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>
+<div class="footer">Controle Operacional · YFGroup — Gerado automaticamente</div>
+<script>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+  const w = window.open("","_blank","width=960,height=720");
+  if (w) { w.document.write(html); w.document.close(); }
+}
+
+function ExportMenu({ dados, cols, filename, titulo }) {
+  const [open, setOpen] = React.useState(false);
+  const t = themes.dark;
+  return (
+    <div style={{position:"relative",display:"inline-block"}}>
+      <button onClick={()=>setOpen(!open)} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:9,padding:"8px 12px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:5,fontFamily:"inherit"}}>
+        📥 Exportar ▾
+      </button>
+      {open && (
+        <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,overflow:"hidden",zIndex:50,minWidth:150,boxShadow:`0 8px 24px rgba(0,0,0,.4)`}}>
+          {[
+            {ico:"📄",l:"CSV (.csv)",fn:()=>exportCSV(dados,cols,filename)},
+            {ico:"📝",l:"Planilha (.xls)",fn:()=>exportODS(dados,cols,filename)},
+            {ico:"📕",l:"PDF (impressão)",fn:()=>exportPDF(dados,cols,titulo)},
+          ].map((opt,i,arr) => (
+            <button key={opt.l} onClick={()=>{opt.fn();setOpen(false);}} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:11,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}}>
+              {opt.ico} {opt.l}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
 //  SUPABASE HELPERS
 // ══════════════════════════════════════════════
 async function supaFetch(url, key, method, path, body) {
@@ -99,6 +176,54 @@ function Toast({ msg, type, visible }) {
       whiteSpace:"nowrap",pointerEvents:"none",backdropFilter:"blur(12px)",
       boxShadow:`0 8px 32px ${t.shadow}`,
     }}>{msg}</div>
+  );
+}
+
+// ══════════════════════════════════════════════
+//  SENHAS MASTER SECTION (colapsável)
+// ══════════════════════════════════════════════
+function SenhasMasterSection({ t, css, senhas, setSenhas, showToast }) {
+  const [open, setOpen] = React.useState(false);
+  const [vals, setVals] = React.useState({admin:"",operador:"",visualizador:""});
+
+  const salvar = async (perfil) => {
+    const v = vals[perfil].trim();
+    if (!v) { showToast("⚠️ Digite a nova senha","warn"); return; }
+    const hash = await hashSenha(v);
+    const ns = {...senhas,[perfil]:hash};
+    setSenhas(ns);
+    saveJSON("co_senhas", ns);
+    setVals(p=>({...p,[perfil]:""}));
+    showToast(`✅ Senha ${perfil} atualizada!`,"ok");
+  };
+
+  return (
+    <>
+      <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setOpen(!open)}>
+        🔑 Senhas Master <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{open?"▲":"▼"}</span>
+        <span style={{flex:1,height:1,background:t.borda}} />
+      </div>
+      {open && (
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+          {["admin","operador","visualizador"].map(p => (
+            <div key={p} style={{...css.card,padding:12,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:13,width:80,fontWeight:700,color:t.txt,textTransform:"capitalize"}}>{p==="admin"?"👑":p==="operador"?"⚙️":"👁️"} {p}</span>
+              <input
+                type="password"
+                placeholder="Nova senha..."
+                value={vals[p]}
+                onChange={e=>setVals(v=>({...v,[p]:e.target.value}))}
+                onKeyDown={e=>e.key==="Enter"&&salvar(p)}
+                style={{...css.inp,flex:1,padding:"8px 10px",fontSize:12}}
+              />
+              <button onClick={()=>salvar(p)} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"8px 12px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>
+                💾 Salvar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -163,6 +288,7 @@ export default function App() {
 
   // Alerts
   const [alertasOpen, setAlertasOpen] = useState(false);
+  const [gsheetsOpen, setGsheetsOpen] = useState(false);
 
   // Chart refs
   const chartCarregRef = useRef(null);
@@ -829,6 +955,14 @@ export default function App() {
         {/* ═══ PLANILHA ═══ */}
         {activeTab === "planilha" && (
           <div>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
+              <ExportMenu
+                dados={DADOS}
+                cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"},{k:"status",l:"Status"},{k:"vl_cte",l:"VL CTE"},{k:"vl_contrato",l:"VL Contrato"},{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"}]}
+                filename="planilha-operacional"
+                titulo="Planilha Operacional"
+              />
+            </div>
             <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"70vh",overflowY:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:500}}>
                 <thead>
@@ -860,6 +994,14 @@ export default function App() {
         {/* ═══ DIÁRIAS ═══ */}
         {activeTab === "diarias" && (
           <div>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+              <ExportMenu
+                dados={diariasData.items.map(({r,tipo,dias})=>({...r,_tipo:tipo==="ok"?"No prazo":tipo==="atraso"?`Atraso ${dias||0}d`:"Aguardando"}))}
+                cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"placa",l:"Placa"},{k:"data_carr",l:"Carregamento"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"},{k:"_tipo",l:"Status"},{k:"diaria_prev",l:"Diária Prev."},{k:"diaria_pg",l:"Diária Paga"}]}
+                filename="diarias"
+                titulo="Relatório de Diárias"
+              />
+            </div>
             <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center",flexWrap:"wrap"}}>
               {[{k:"resumo",ico:"📊",l:"Resumo"},{k:"planilha",ico:"📋",l:"Planilha"}].map(s => (
                 <button key={s.k} onClick={()=>setDSubTab(s.k)} style={{padding:"10px 20px",fontSize:12,fontWeight:700,border:`1.5px solid ${dSubTab===s.k?t.ouro:t.borda}`,borderRadius:8,cursor:"pointer",background:dSubTab===s.k?`rgba(240,185,11,.08)`:t.card2,color:dSubTab===s.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
@@ -930,6 +1072,14 @@ export default function App() {
         {/* ═══ DESCARGA ═══ */}
         {activeTab === "descarga" && (
           <div>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
+              <ExportMenu
+                dados={dscTab==="hoje"?descargaData.hoje:descargaData.atrasados}
+                cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"placa",l:"Placa"},{k:"destino",l:"Destino"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"}]}
+                filename={`descarga-${dscData}`}
+                titulo={`Descarga ${dscTab==="hoje"?"do Dia":"- Atrasos"} · ${dscData}`}
+              />
+            </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,maxWidth:400,margin:"0 auto 14px"}}>
               {[{k:"hoje",ico:"📅",l:"Descarrega Hoje",ct:descargaData.hoje.length},{k:"atrasado",ico:"🚨",l:"Em Atraso",ct:descargaData.atrasados.length}].map(tb => (
                 <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?t.azul:t.borda}`,borderRadius:10,padding:12,cursor:"pointer",background:dscTab===tb.k?`rgba(22,119,255,.07)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s"}}>
@@ -1006,8 +1156,7 @@ export default function App() {
         {/* ═══ ADMIN ═══ */}
         {activeTab === "admin" && isAdmin && (
           <div>
-            <div style={css.secTitle}>🗄️ Banco de Dados <span style={{flex:1,height:1,background:t.borda}} /></div>
-            <div style={{...css.card,marginBottom:16}}>
+            <div style={css.secTitle}>🗄️ Banco de Dados <span style={{flex:1,height:1,background:t.borda}} /></div>            <div style={{...css.card,marginBottom:16}}>
               <div style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid ${t.borda}`}}>
                 <div style={{width:24,height:24,background:t.azul,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>🗄️</div>
                 <div><div style={{fontSize:12,fontWeight:600,color:t.txt}}>Supabase PostgreSQL</div><div style={{fontSize:9,color:t.txt2}}>{ultimaSync?`Sync: ${ultimaSync}`:"Nunca sincronizado"}</div></div>
@@ -1056,6 +1205,87 @@ export default function App() {
                 showToast("✅ Conexão adicionada!","ok");
               }} style={{...css.btnGreen,justifyContent:"center"}}>🗄️ CONECTAR</button>
             </div>
+
+            {/* Google Sheets */}
+            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setGsheetsOpen(!gsheetsOpen)}>
+              🟢 Sincronização Google Sheets <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{gsheetsOpen?"▲":"▼"}</span>
+              <span style={{flex:1,height:1,background:t.borda}} />
+            </div>
+            {gsheetsOpen && (
+              <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
+                <p style={{fontSize:11,color:t.txt2,lineHeight:1.7,marginBottom:10}}>
+                  Sincronize sua planilha Google Sheets com o Supabase automaticamente usando Apps Script.<br/>
+                  Cole o script abaixo em <strong style={{color:t.txt}}>Extensões → Apps Script</strong> na sua planilha.
+                </p>
+                <div style={{background:t.bg,borderRadius:8,padding:10,marginBottom:10,border:`1px solid ${t.borda}`,overflowX:"auto"}}>
+                  <pre style={{fontSize:9,color:t.verde,margin:0,whiteSpace:"pre-wrap",lineHeight:1.6}}>{`function sincronizarComSupabase() {
+  var SUPA_URL = 'SUA_URL_SUPABASE';
+  var SUPA_KEY = 'SUA_ANON_KEY';
+  var TABELA   = 'controle_operacional';
+
+  var sheet  = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var dados  = sheet.getDataRange().getValues();
+  var header = dados[0];
+  var mapa   = {};
+  header.forEach(function(col,i){
+    var c = mapearColuna(col.toString().toLowerCase().trim());
+    if(c) mapa[i]=c;
+  });
+
+  var registros = [];
+  for(var r=1;r<dados.length;r++){
+    var reg={};var temDT=false;
+    Object.keys(mapa).forEach(function(i){
+      var v=dados[r][i];
+      if(v instanceof Date) v=Utilities.formatDate(v,'America/Sao_Paulo','dd/MM/yyyy');
+      reg[mapa[i]]=v?v.toString().trim():'';
+      if(mapa[i]==='dt'&&reg.dt) temDT=true;
+    });
+    if(temDT) registros.push(reg);
+  }
+  // Envia em lotes de 50
+  for(var i=0;i<registros.length;i+=50){
+    UrlFetchApp.fetch(SUPA_URL+'/rest/v1/'+TABELA+'?on_conflict=dt',{
+      method:'POST',
+      headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,
+        'Content-Type':'application/json',
+        Prefer:'return=minimal,resolution=merge-duplicates'},
+      payload:JSON.stringify(registros.slice(i,i+50)),
+      muteHttpExceptions:true
+    });
+  }
+  Logger.log('Sincronizados '+registros.length+' registros');
+}
+
+function mapearColuna(n){
+  var m={'dt espelho':'dt','espelho':'dt','dt':'dt','nome':'nome',
+    'cpf':'cpf','placa':'placa','vinculo':'vinculo','status':'status',
+    'origem':'origem','destino':'destino',
+    'data carr.':'data_carr','data_carr':'data_carr',
+    'data agenda':'data_agenda','data_agenda':'data_agenda',
+    'data desc.':'data_desc','data_desc':'data_desc',
+    'vl cte':'vl_cte','valor cte':'vl_cte','vl_cte':'vl_cte',
+    'vl contrato':'vl_contrato','vl_contrato':'vl_contrato',
+    'adiant':'adiant','adiantamento':'adiant',
+    'cte':'cte','mdf':'mdf','nf':'nf','cliente':'cliente'};
+  return m[n]||null;
+}`}</pre>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`}}>
+                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:4}}>⏱️ Disparo automático</div>
+                    <div style={{fontSize:10,color:t.txt2,lineHeight:1.6}}>No Apps Script, clique no ícone de relógio → Adicionar acionador → sincronizarComSupabase → A cada hora</div>
+                  </div>
+                  <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`}}>
+                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:4}}>🔑 Credenciais</div>
+                    <div style={{fontSize:10,color:t.txt2,lineHeight:1.6}}>Substitua <strong style={{color:t.ouro}}>SUA_URL_SUPABASE</strong> e <strong style={{color:t.ouro}}>SUA_ANON_KEY</strong> pelos valores do seu projeto Supabase.</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Senhas Master */}
+            <SenhasMasterSection t={t} css={css} senhas={senhas} setSenhas={setSenhas} showToast={showToast} />
           </div>
         )}
       </div>
