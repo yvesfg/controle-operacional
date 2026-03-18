@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import * as Chart from "chart.js";
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from "chart.js";
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 // ══════════════════════════════════════════════
 //  THEME & COLOR SYSTEM
@@ -404,13 +405,13 @@ export default function App() {
     if (chartInstances.current.f) chartInstances.current.f.destroy();
 
     if (chartCarregRef.current) {
-      chartInstances.current.c = new Chart.Chart(chartCarregRef.current, {
+      chartInstances.current.c = new Chart(chartCarregRef.current, {
         type:"bar", data:{labels, datasets:[{label:"Carregamentos",data:dc,backgroundColor:"rgba(240,185,11,.65)",borderColor:"rgba(240,185,11,1)",borderWidth:1.5,borderRadius:6}]},
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tickC},grid:{color:gridC}},x:{ticks:{color:tickC},grid:{display:false}}}}
       });
     }
     if (chartCTERef.current && perms.financeiro) {
-      chartInstances.current.f = new Chart.Chart(chartCTERef.current, {
+      chartInstances.current.f = new Chart(chartCTERef.current, {
         type:"bar", data:{labels, datasets:[{label:"CTE (R$)",data:dcte,backgroundColor:"rgba(2,192,118,.6)",borderColor:"rgba(2,192,118,1)",borderWidth:1.5,borderRadius:6}]},
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tickC,callback:v=>"R$"+v.toLocaleString("pt-BR")},grid:{color:gridC}},x:{ticks:{color:tickC},grid:{display:false}}}}
       });
