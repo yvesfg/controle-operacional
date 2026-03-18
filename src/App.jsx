@@ -280,6 +280,12 @@ export default function App() {
   const [dscTab, setDscTab] = useState("hoje");
   const [dscData, setDscData] = useState(new Date().toISOString().slice(0,10));
 
+  // View mode state (linhas | blocos) + colunas para Diarias e Descarga
+  const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","linhas"));
+  const [diariaCols, setDiariaCols] = useState(() => loadJSON("co_diaria_cols", 2));
+  const [descargaView, setDescargaView] = useState(() => loadJSON("co_descarga_view","linhas"));
+  const [descargaCols, setDescargaCols] = useState(() => loadJSON("co_descarga_cols", 2));
+
   // Modal state
   const [modalOpen, setModalOpen] = useState(null); // 'edit' | 'motorista' | 'usuario' | 'wa' | 'import' | 'configdb'
   const [editIdx, setEditIdx] = useState(-1);
@@ -1019,29 +1025,92 @@ export default function App() {
 
             {dSubTab === "resumo" && (
               <div>
-                <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>
+                {/* Filtro + toolbar de view */}
+                <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
                   {[{k:"todos",l:"Todos"},{k:"atraso",l:"⚠️ Perdeu agenda"},{k:"pendente",l:"⏳ Sem descarga"},{k:"ok",l:"✅ No prazo"}].map(f => (
                     <button key={f.k} onClick={()=>setDFiltro(f.k)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dFiltro===f.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dFiltro===f.k?`rgba(240,185,11,.07)`:t.card2,color:dFiltro===f.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{f.l}</button>
                   ))}
                 </div>
-                {diariasData.items.filter(i => dFiltro==="todos" || i.tipo===dFiltro).slice(0,50).map((item,idx) => {
-                  const {r,tipo,dias} = item;
-                  const borderC = tipo==="ok"?t.verde:tipo==="atraso"?t.danger:t.ouro;
-                  return (
-                    <div key={idx} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${borderC}`,marginBottom:8,animation:"slideUp .3s"}}>
-                      <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3,display:"flex",alignItems:"center",gap:6}}>
-                        {r.nome||"—"}
-                        <span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
-                          {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":""}`:  "⏳ Aguardando"}
-                        </span>
+                {/* Toolbar view */}
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+                  {[{v:"linhas",ico:"☰",l:"Linhas"},{v:"blocos",ico:"⊞",l:"Blocos"}].map(m => (
+                    <button key={m.v} onClick={()=>{setDiariaView(m.v);saveJSON("co_diaria_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${diariaView===m.v?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:diariaView===m.v?`rgba(22,119,255,.09)`:t.card2,color:diariaView===m.v?t.azulLt:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
+                      {m.ico} {m.l}
+                    </button>
+                  ))}
+                  {diariaView==="blocos" && (
+                    <>
+                      <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
+                      {[1,2,3,4].map(n => (
+                        <button key={n} onClick={()=>{setDiariaCols(n);saveJSON("co_diaria_cols",n);}} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${diariaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:diariaCols===n?`rgba(22,119,255,.09)`:t.card2,color:diariaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
+                      ))}
+                    </>
+                  )}
+                </div>
+
+                {/* Lista de itens */}
+                {diariaView==="linhas" ? (
+                  // ── MODO LINHAS (original) ──
+                  diariasData.items.filter(i => dFiltro==="todos" || i.tipo===dFiltro).slice(0,50).map((item,idx) => {
+                    const {r,tipo,dias} = item;
+                    const borderC = tipo==="ok"?t.verde:tipo==="atraso"?t.danger:t.ouro;
+                    return (
+                      <div key={idx} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${borderC}`,marginBottom:8,animation:"slideUp .3s"}}>
+                        <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3,display:"flex",alignItems:"center",gap:6}}>
+                          {r.nome||"—"}
+                          <span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
+                            {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":""}`:  "⏳ Aguardando"}
+                          </span>
+                        </div>
+                        <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
+                          🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
+                          📅 Agenda: <strong style={{color:t.ouro}}>{r.data_agenda||"—"}</strong> · 🏁 Descarga: <strong style={{color:r.data_desc?t.verde:t.txt2}}>{r.data_desc||"Não informada"}</strong>
+                        </div>
                       </div>
-                      <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
-                        🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
-                        📅 Agenda: <strong style={{color:t.ouro}}>{r.data_agenda||"—"}</strong> · 🏁 Descarga: <strong style={{color:r.data_desc?t.verde:t.txt2}}>{r.data_desc||"Não informada"}</strong>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  // ── MODO BLOCOS (Opção C com avatar) ──
+                  <div style={{display:"grid",gridTemplateColumns:`repeat(${diariaCols},minmax(0,1fr))`,gap:10}}>
+                    {diariasData.items.filter(i => dFiltro==="todos" || i.tipo===dFiltro).slice(0,50).map((item,idx) => {
+                      const {r,tipo,dias} = item;
+                      const borderC = tipo==="ok"?t.verde:tipo==="atraso"?t.danger:t.ouro;
+                      const avatarBg = tipo==="ok"?`rgba(2,192,118,.12)`:tipo==="atraso"?`rgba(246,70,93,.1)`:`rgba(240,185,11,.1)`;
+                      const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
+                      const chips = [
+                        {l:"DT",v:r.dt,c:t.ouro},
+                        {l:"Placa",v:r.placa||"—",c:t.verde},
+                        {l:"Agenda",v:r.data_agenda||"—",c:t.txt2},
+                        {l:"Descarga",v:r.data_desc||"Pendente",c:r.data_desc?t.verde:t.txt2},
+                        {l:"Origem",v:r.origem||"—",c:t.txt2},
+                        {l:"Destino",v:r.destino||"—",c:t.txt2},
+                      ];
+                      return (
+                        <div key={idx} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s"}}>
+                          {/* Header avatar */}
+                          <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
+                            <div style={{width:36,height:36,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${borderC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:borderC,flexShrink:0}}>{initials}</div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                              <span style={{display:"inline-block",marginTop:3,padding:"2px 7px",borderRadius:4,fontSize:8,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
+                                {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":"atrasado"}`:"⏳ Aguardando"}
+                              </span>
+                            </div>
+                          </div>
+                          {/* Chips */}
+                          <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                            {chips.map((ch,ci) => (
+                              <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 8px",fontSize:10}}>
+                                <span style={{color:t.txt2,fontSize:9}}>{ch.l} </span>
+                                <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1095,25 +1164,88 @@ export default function App() {
               <button onClick={()=>{}} style={{...css.btnGreen,padding:"10px 14px",fontSize:12}}>🔍</button>
             </div>
 
-            {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).slice(0,50).map((r,i) => {
-              const da = parseData(r.data_agenda);
-              const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
-              const isAtrasado = dscTab === "atrasado";
-              return (
-                <div key={i} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s"}}>
-                  <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
-                    {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
-                    {r.nome||"—"}
-                  </div>
-                  <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
-                    🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
-                    📍 {r.destino||"—"}<br/>
-                    📅 Agenda: <strong style={{color:isAtrasado?t.danger:t.ouro}}>{r.data_agenda||"—"}</strong>
-                    {r.data_desc && <> · 🏁 Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></>}
-                  </div>
-                </div>
-              );
-            })}
+            {/* Toolbar view Descarga */}
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+              {[{v:"linhas",ico:"☰",l:"Linhas"},{v:"blocos",ico:"⊞",l:"Blocos"}].map(m => (
+                <button key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${descargaView===m.v?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:descargaView===m.v?`rgba(22,119,255,.09)`:t.card2,color:descargaView===m.v?t.azulLt:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
+                  {m.ico} {m.l}
+                </button>
+              ))}
+              {descargaView==="blocos" && (
+                <>
+                  <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
+                  {[1,2,3,4].map(n => (
+                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?`rgba(22,119,255,.09)`:t.card2,color:descargaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {descargaView==="linhas" ? (
+              // ── MODO LINHAS (original) ──
+              <>
+                {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).slice(0,50).map((r,i) => {
+                  const da = parseData(r.data_agenda);
+                  const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
+                  const isAtrasado = dscTab === "atrasado";
+                  return (
+                    <div key={i} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s"}}>
+                      <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
+                        {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
+                        {r.nome||"—"}
+                      </div>
+                      <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
+                        🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
+                        📍 {r.destino||"—"}<br/>
+                        📅 Agenda: <strong style={{color:isAtrasado?t.danger:t.ouro}}>{r.data_agenda||"—"}</strong>
+                        {r.data_desc && <> · 🏁 Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              // ── MODO BLOCOS (Opção C com avatar) ──
+              <div style={{display:"grid",gridTemplateColumns:`repeat(${descargaCols},minmax(0,1fr))`,gap:10}}>
+                {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).slice(0,50).map((r,i) => {
+                  const da = parseData(r.data_agenda);
+                  const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
+                  const isAtrasado = dscTab === "atrasado";
+                  const accentC = isAtrasado ? t.danger : t.azul;
+                  const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : `rgba(22,119,255,.1)`;
+                  const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
+                  const chips = [
+                    {l:"DT",v:r.dt,c:t.ouro},
+                    {l:"Placa",v:r.placa||"—",c:t.verde},
+                    {l:"Destino",v:r.destino||"—",c:t.txt2},
+                    {l:"Agenda",v:r.data_agenda||"—",c:isAtrasado?t.danger:t.ouro},
+                    {l:"Descarga",v:r.data_desc||"Pendente",c:r.data_desc?t.verde:t.txt2},
+                    ...(r.origem?[{l:"Origem",v:r.origem,c:t.txt2}]:[]),
+                  ];
+                  return (
+                    <div key={i} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s"}}>
+                      <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
+                        <div style={{width:36,height:36,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${accentC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:accentC,flexShrink:0}}>{initials}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                          {isAtrasado && dias !== null && (
+                            <span style={{display:"inline-block",marginTop:3,padding:"2px 7px",borderRadius:4,fontSize:8,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>🚨 {dias}d atraso</span>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                        {chips.map((ch,ci) => (
+                          <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 8px",fontSize:10}}>
+                            <span style={{color:t.txt2,fontSize:9}}>{ch.l} </span>
+                            <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
             {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).length === 0 && (
               <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":"✅"}</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":"SEM ATRASOS"}</h3></div>
             )}
