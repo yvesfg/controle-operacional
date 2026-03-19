@@ -51,6 +51,45 @@ const PERMS_LISTA = [
   {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
 ];
 
+// ══════════════════════════════════════════════
+//  DEV CHANGELOG (histórico de sessões de desenvolvimento)
+// ══════════════════════════════════════════════
+const DEV_CHANGELOG = [
+  {
+    data: "2026-03-19 13:12", sessao: "Sessão 3",
+    itens: [
+      "00 · Modal Motorista: campo Vínculo → dropdown (Agregado/Terceiro/Frota); seção Dados Bancários adicionada (BCO, AGE, C/C, FAV, PIX c/ seletor de tipo)",
+      "01 · Alertas de Descarga EVA: botão 📅 para adicionar ao calendário — gera .ics (celular) ou abre Google Calendar (notebook)",
+      "02 · Log Admin: histórico de desenvolvimento (DEV_CHANGELOG) embutido no app; abas Desenvolvimento / Operacional no log",
+      "03 · Motoristas: campo de busca por nome ou placa; exportação vCard (.vcf); script de normalização de contatos no Admin",
+      "04 · WhatsApp card: modal rico com todos os campos da DT antes de abrir o WhatsApp; PGTO Cheque/Conta/Ambos com validação bancária e soma ≤ ADT",
+    ],
+  },
+  {
+    data: "2026-03-19 07:19", sessao: "Sessão 2",
+    itens: [
+      "BUG #1 · getConfigRemoto/setConfigRemoto: colunas corrigidas para 'chave'/'valor' (PostgREST retornava HTTP 400 com 'key'/'value')",
+      "BUG #2 · getConexao: variáveis de ambiente VITE_SUPABASE_URL/KEY agora são PRIORIDADE (garante sync desktop + mobile)",
+      "BUG #3 · setConfigRemoto: campo updated_at removido do payload (não existe na tabela co_config)",
+      "FEAT · Login social: botões Google e Apple via Supabase Auth REST — redireciona para /auth/v1/authorize, captura hash #access_token no retorno",
+    ],
+  },
+  {
+    data: "2026-03-18 23:56", sessao: "Sessão 1",
+    itens: [
+      "FEAT · Sistema de backup automático: cria App.jsx.bckp_TIMESTAMP antes de cada sessão de mudanças",
+      "FEAT · Log de alterações: tabela co_logs_alteracoes no Supabase + fallback localStorage (co_logs_local)",
+      "FEAT · Acompanhamento dia a dia da DT: timeline com registro de texto e imagens por dia",
+      "FEAT · Modal Detalhe / Ocorrências: timeline visual, ocorrências por tipo (info/alerta/status), acompanhamento persistido",
+      "FEAT · Multi-perfil: admin, gerente, operador, visualizador com permissões granulares",
+      "FEAT · Sync Supabase: paginação 1000 registros por página, override local/remoto",
+      "FEAT · Export CSV / XLS / PDF; ExportMenu dropdown",
+      "FEAT · Tema dark/light; logo customizável no primeiro login",
+      "FEAT · Dashboard com gráficos Chart.js (bar/pie) agrupados por mês/motorista/destino/status",
+    ],
+  },
+];
+
 // ── Admin fixo ──
 const ADMIN_EMAIL = "yvesfg@icloud.com";
 const ADMIN_SENHA_PADRAO = "YFGroup@2024";
@@ -85,6 +124,23 @@ async function verificarSenha(plain, stored) {
 
 function loadJSON(key, def) { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : def; } catch { return def; } }
 function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+// ── Decodifica JWT sem biblioteca externa (para OAuth social) ──────────────
+function decodeJWT(token) {
+  try {
+    const base64 = token.split(".")[1];
+    const padded = base64 + "=".repeat((4 - base64.length % 4) % 4);
+    const decoded = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(decoded);
+  } catch { return null; }
+}
+
+// ── Inicia login OAuth via Supabase Auth REST (sem SDK externo) ───────────
+function iniciarOAuth(provider) {
+  if (!ENV_SUPA_URL) { alert("Configure VITE_SUPABASE_URL no .env.local"); return; }
+  const redirectTo = encodeURIComponent(window.location.origin + window.location.pathname);
+  window.location.href = `${ENV_SUPA_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
+}
 
 // ══════════════════════════════════════════════
 //  EXPORT HELPERS
@@ -162,6 +218,72 @@ function ExportMenu({ dados, cols, filename, titulo }) {
       )}
     </div>
   );
+}
+
+// ══════════════════════════════════════════════
+//  CALENDAR HELPERS (Item 1)
+// ══════════════════════════════════════════════
+function gerarICS(titulo, data, descricao, local) {
+  // data no formato dd/mm/yyyy
+  const parts = String(data).split("/");
+  const dtStr = parts.length === 3 ? `${parts[2]}${parts[1]}${parts[0]}` : data.replace(/\D/g,"");
+  const uid = `co-${Date.now()}@yfgroup.com`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//YFGroup//ControleOperacional//PT",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTART;VALUE=DATE:${dtStr}`,
+    `DTEND;VALUE=DATE:${dtStr}`,
+    `SUMMARY:${titulo}`,
+    `DESCRIPTION:${descricao.replace(/\n/g,"\\n")}`,
+    local ? `LOCATION:${local}` : "",
+    "BEGIN:VALARM",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:Lembrete de descarga",
+    "TRIGGER:-PT2H",
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n");
+  const blob = new Blob([ics], {type:"text/calendar;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `descarga_${dtStr}.ics`;
+  a.click();
+}
+
+function abrirGoogleCalendar(titulo, data, descricao) {
+  const parts = String(data).split("/");
+  const dtStr = parts.length === 3 ? `${parts[2]}${parts[1]}${parts[0]}` : data.replace(/\D/g,"");
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(titulo)}`
+    + `&dates=${dtStr}/${dtStr}`
+    + `&details=${encodeURIComponent(descricao)}`;
+  window.open(url, "_blank");
+}
+
+// Helper validação placa (Item 3)
+function validarPlaca(p) {
+  if (!p) return false;
+  const s = p.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  return /^[A-Z]{3}[0-9]{4}$/.test(s) || /^[A-Z]{3}[0-9][A-Z0-9][0-9]{3}$/.test(s);
+}
+function normalizarPlaca(p) {
+  if (!p) return "";
+  return p.toUpperCase().replace(/[^A-Z0-9]/g,"");
+}
+function normalizarTelefone(t) {
+  if (!t) return "";
+  const d = t.replace(/\D/g,"");
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return t;
+}
+function normalizarNome(n) {
+  if (!n) return "";
+  return n.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
 // ══════════════════════════════════════════════
@@ -326,6 +448,18 @@ export default function App() {
   // Item 8 — Log de alterações
   const [logsOpen, setLogsOpen] = useState(false);
   const [logsData, setLogsData] = useState([]);
+  const [logsSubTab, setLogsSubTab] = useState("dev"); // 'dev' | 'op'
+
+  // WhatsApp card modal (Item 4)
+  const [wppModal, setWppModal] = useState(null); // {reg, mot}
+  const [wppTel, setWppTel] = useState("");
+  const [wppPgto, setWppPgto] = useState("cheque"); // 'cheque'|'conta'|'ambos'
+  const [wppValCheque, setWppValCheque] = useState("");
+  const [wppValConta, setWppValConta] = useState("");
+  const [wppObs, setWppObs] = useState("");
+
+  // Motoristas — busca local (Item 3)
+  const [motBusca, setMotBusca] = useState("");
 
   // Dashboard extras
   const [dashChartType, setDashChartType] = useState("bar"); // bar | pie
@@ -360,12 +494,12 @@ export default function App() {
     DADOS.forEach(r => {
       if (!r.nome?.trim()) return;
       const da = parseData(r.data_agenda), dd = parseData(r.data_desc);
-      // Alerta de atraso na descarga
-      if (da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`}); }
+      // Alerta de atraso na descarga — inclui ref. ao registro para botão de calendário
+      if (da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
       // Alerta de cobrança — saldo pendente após descarga
       const saldo = parseFloat(r.saldo);
       if (!isNaN(saldo) && saldo > 0 && dd) {
-        list.push({tipo:"warn",cat:"cobranca",txt:`💰 Cobrança pendente: ${r.nome} · DT ${r.dt} · Saldo ${fmtMoeda(r.saldo)}`});
+        list.push({tipo:"warn",cat:"cobranca",txt:`💰 Cobrança pendente: ${r.nome} · DT ${r.dt} · Saldo ${fmtMoeda(r.saldo)}`,reg:r});
       }
     });
     return list;
@@ -377,14 +511,13 @@ export default function App() {
     setTimeout(() => setToast(p => ({...p,visible:false})), 2800);
   }, []);
 
-  // Connection — usa variáveis de ambiente como fallback automático
+  // Connection — env vars têm PRIORIDADE (funcionam em todos os dispositivos sem config local)
   const getConexao = useCallback(() => {
-    const ativa = loadJSON("co_conexao_ativa",0);
-    const local = conexoes[ativa] || conexoes[0] || null;
-    if (local) return local;
-    // Fallback: variáveis de ambiente (VITE_SUPABASE_URL / VITE_SUPABASE_KEY)
+    // Primário: variáveis de ambiente do Vite/Vercel — garante sync em desktop E mobile
     if (ENV_SUPA_URL && ENV_SUPA_KEY) return {url: ENV_SUPA_URL, key: ENV_SUPA_KEY, name:"Padrão"};
-    return null;
+    // Fallback: conexões manuais salvas no localStorage (somente este dispositivo)
+    const ativa = loadJSON("co_conexao_ativa",0);
+    return conexoes[ativa] || conexoes[0] || null;
   }, [conexoes]);
 
   // Sync
@@ -441,7 +574,58 @@ export default function App() {
   // Save theme
   useEffect(() => { saveJSON("co_theme", theme); }, [theme]);
 
+  // ── Callback OAuth: detecta retorno do Google/Apple e loga automaticamente ──
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash.includes("access_token")) return;
+
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const accessToken = params.get("access_token");
+    if (!accessToken) return;
+
+    // Limpa hash da URL (evita reprocessar no reload)
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+
+    const payload = decodeJWT(accessToken);
+    if (!payload?.email) { setAuthMsg({t:"err",m:"❌ Email não encontrado no token OAuth"}); return; }
+
+    const emailOAuth = payload.email.toLowerCase();
+    const nomeOAuth = payload.user_metadata?.full_name || payload.user_metadata?.name || emailOAuth;
+
+    // Admin via OAuth
+    if (emailOAuth === ADMIN_EMAIL.toLowerCase()) {
+      const p = "admin"; const pm = {...PERMS_PADRAO.admin};
+      setPerfil(p); setPerms(pm); setAuthed(true);
+      setUsuarioLogado(nomeOAuth);
+      saveJSON("co_sessao", {perfil:p, perms:pm, nome:nomeOAuth});
+      showToast(`✅ Login social realizado — bem-vindo, ${nomeOAuth}!`, "ok");
+      return;
+    }
+
+    // Busca usuário no Supabase (sincronização real)
+    if (ENV_SUPA_URL && ENV_SUPA_KEY) {
+      supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "GET",
+        `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(payload.email)}&select=*&limit=1`)
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            const u = data[0];
+            const p = u.perfil || "visualizador";
+            const pm = typeof u.perms === "string" ? JSON.parse(u.perms) : (u.perms || {...PERMS_PADRAO[p]});
+            setPerfil(p); setPerms(pm); setAuthed(true);
+            setUsuarioLogado(u.nome || u.email);
+            saveJSON("co_sessao", {perfil:p, perms:pm, nome:u.nome||u.email});
+            showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
+          } else {
+            setAuthMsg({t:"err", m:`❌ Conta ${payload.email} não cadastrada no sistema`});
+          }
+        })
+        .catch(() => setAuthMsg({t:"err", m:"❌ Erro ao verificar conta no banco"}));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Roda uma única vez no mount — processa hash OAuth do redirect
+
   // ── Helpers para co_config no Supabase ──
+  // ── co_config: colunas reais = key (PK) + value + updated_at ────────────
   const getConfigRemoto = useCallback(async (key) => {
     const conn = getConexao();
     if (!conn) return null;
@@ -1028,6 +1212,40 @@ export default function App() {
             {authMsg && (
               <div style={{padding:"10px 12px",borderRadius:8,fontSize:12,fontWeight:600,textAlign:"center",marginTop:8,lineHeight:1.5,background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
             )}
+
+            {/* ── Login Social (OAuth) ── */}
+            {ENV_SUPA_URL && (
+              <>
+                <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 2px"}}>
+                  <div style={{flex:1,height:1,background:t.borda}} />
+                  <span style={{fontSize:10,color:t.txt2,fontWeight:600,letterSpacing:1}}>OU ENTRE COM</span>
+                  <div style={{flex:1,height:1,background:t.borda}} />
+                </div>
+                <div style={{display:"flex",gap:8,marginTop:10}}>
+                  <button
+                    onClick={() => iniciarOAuth("google")}
+                    style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)",border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 8px",cursor:"pointer",fontSize:12,fontWeight:600,color:t.txt,fontFamily:"inherit",transition:"background .2s"}}
+                    onMouseEnter={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.12)":"rgba(0,0,0,.08)"}
+                    onMouseLeave={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)"}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+                    Google
+                  </button>
+                  <button
+                    onClick={() => iniciarOAuth("apple")}
+                    style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)",border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 8px",cursor:"pointer",fontSize:12,fontWeight:600,color:t.txt,fontFamily:"inherit",transition:"background .2s"}}
+                    onMouseEnter={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.12)":"rgba(0,0,0,.08)"}
+                    onMouseLeave={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)"}
+                  >
+                    <svg width="15" height="18" viewBox="0 0 814 1000" fill={t.txt}><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-105L46.1 840.6C27.4 812.5 0 775.8 0 707.2c0-130.3 77.7-227.2 240-227.2 61.6 0 104.2 34.8 139.6 34.8 33.7 0 87.5-37 152.2-37zm-8.8-175.8c31-37 53.1-88.1 53.1-139.1 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.5-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.5z"/></svg>
+                    Apple
+                  </button>
+                </div>
+                <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:8,lineHeight:1.5}}>
+                  ⚠️ OAuth requer configuração no painel Supabase → Authentication → Providers
+                </div>
+              </>
+            )}
           </div>
         </div>
         <Toast {...toast} />
@@ -1140,7 +1358,26 @@ export default function App() {
           {alertas.slice(0,10).map((a,i) => (
             <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`}}>
               <span style={{fontSize:16,flexShrink:0}}>{a.tipo==="danger"?"🚨":"⚠️"}</span>
-              <span style={{fontSize:11,color:t.txt2,lineHeight:1.5}}>{a.txt}</span>
+              <span style={{fontSize:11,color:t.txt2,lineHeight:1.5,flex:1}}>{a.txt}</span>
+              {a.cat==="descarga" && a.reg && (
+                <div style={{display:"flex",gap:5,flexShrink:0}}>
+                  <button
+                    title="Adicionar ao Calendário (celular/notebook)"
+                    onClick={()=>{
+                      const reg = a.reg;
+                      const titulo = `📦 Descarga — ${reg.nome||"Motorista"} · DT ${reg.dt}`;
+                      const desc = `DT: ${reg.dt}\nMotorista: ${reg.nome||"—"}\nRota: ${reg.origem||"—"} → ${reg.destino||"—"}\nPlaca: ${reg.placa||"—"}\nYFGroup Controle Operacional`;
+                      const data = reg.data_agenda;
+                      if (window.confirm(`📅 Adicionar ao calendário?\n"${titulo}"\nData: ${data}\n\nClique OK para baixar .ics (celular/notebook)\nou Cancelar para abrir no Google Calendar`)) {
+                        gerarICS(titulo, data, desc, reg.destino||"");
+                      } else {
+                        abrirGoogleCalendar(titulo, data, desc);
+                      }
+                    }}
+                    style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:6,padding:"4px 8px",color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}
+                  >📅 Calendário</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1265,23 +1502,19 @@ export default function App() {
                         setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
                       }} style={{...css.btnGold,justifyContent:"center",padding:11}}>✏️ EDITAR</button>
                       <button onClick={()=>{
-                        // Buscar telefone no cadastro de motoristas
+                        // Abrir modal WhatsApp (Item 4)
                         const mot = motoristas.find(m =>
+                          (buscaResult.cpf && m.cpf?.replace(/\D/g,"") === buscaResult.cpf?.replace(/\D/g,"")) ||
                           (buscaResult.nome && m.nome === buscaResult.nome) ||
-                          [m.placa1,m.placa2,m.placa3,m.placa4].includes(buscaResult.placa)
+                          [m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa)
                         );
-                        const tel = (mot?.tel || buscaResult.tel || "").replace(/\D/g,"");
-                        const nome = buscaResult.nome || "Motorista";
-                        const dt = buscaResult.dt || "";
-                        const placa = buscaResult.placa || "—";
-                        const agenda = buscaResult.data_agenda || "—";
-                        const origem = buscaResult.origem || "—";
-                        const destino = buscaResult.destino || "—";
-                        const msg = encodeURIComponent(`Olá ${nome}!\nDT: ${dt} | Placa: ${placa}\nRota: ${origem} → ${destino}\nAgenda descarga: ${agenda}\n\nYFGroup · Controle Operacional`);
-                        const url = tel ? `https://wa.me/55${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
-                        window.open(url, "_blank");
-                        if (!tel) showToast("⚠️ Motorista sem telefone cadastrado","warn");
-                      }} style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(37,211,102,.1)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase"}}>📲 WHATSAPP</button>
+                        setWppModal({reg: buscaResult, mot: mot||null});
+                        setWppTel((mot?.tel||buscaResult.tel||""));
+                        setWppPgto("cheque");
+                        setWppValCheque("");
+                        setWppValConta("");
+                        setWppObs("");
+                      }} style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(37,211,102,.1)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase",fontFamily:"inherit"}}>📲 WHATSAPP</button>
                     </div>
                   )}
                 </div>
@@ -1786,37 +2019,88 @@ export default function App() {
         )}
 
         {/* ═══ MOTORISTAS ═══ */}
-        {activeTab === "motoristas" && (
-          <div>
-            <div style={{display:"flex",gap:8,marginBottom:14}}>
-              <input placeholder="Buscar motorista..." style={{...css.inp,flex:1}} onChange={e=>e.target.value} />
-              {canEdit && <button onClick={()=>{setFormData({});setEditIdx(-1);setModalOpen("motorista")}} style={css.btnGold}>＋ NOVO</button>}
-            </div>
-            {motoristas.length === 0 ? (
-              <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
-            ) : motoristas.map((m,i) => (
-              <div key={i} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,marginBottom:10}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                  <div style={{width:38,height:38,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#000",flexShrink:0}}>{(m.nome||"M")[0].toUpperCase()}</div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:700,color:t.txt}}>{m.nome||"—"}</div>
-                    <div style={{fontSize:10,color:t.txt2}}>{m.cpf||""}{m.vinculo?" · "+m.vinculo:""}</div>
-                  </div>
-                  {canEdit && <>
-                    <button onClick={()=>{setFormData({...m});setEditIdx(i);setModalOpen("motorista")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
-                    <button onClick={()=>{if(confirm(`Excluir "${m.nome}"?`)){const nm=[...motoristas];nm.splice(i,1);saveMotoristasLS(nm);showToast("🗑️ Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
-                  </>}
-                </div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:6}}>
-                  {[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).map((p,j) => (
-                    <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde,background:`rgba(2,192,118,.07)`,border:`1px solid rgba(2,192,118,.15)`,borderRadius:4,padding:"1px 6px"}}>{p}</span>
-                  ))}
-                </div>
-                {m.tel && <div style={{fontSize:11,color:t.txt2}}>📞 {m.tel}</div>}
+        {activeTab === "motoristas" && (()=>{
+          // filtro de busca por nome ou placa (Item 3)
+          const motFiltrados = motoristas.filter(m => {
+            if (!motBusca.trim()) return true;
+            const q = motBusca.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+            const nome = (m.nome||"").toUpperCase();
+            const placas = [m.placa1,m.placa2,m.placa3,m.placa4].map(p=>(p||"").toUpperCase().replace(/[^A-Z0-9]/g,""));
+            return nome.includes(motBusca.trim().toUpperCase()) || placas.some(p=>p.includes(q));
+          });
+
+          // exportar vCard
+          const exportarVCard = () => {
+            const vCards = motoristas.map(m => {
+              const tel = (m.tel||"").replace(/\D/g,"");
+              const nomeN = (m.nome||"").split(" "); const sobrenome = nomeN.pop()||""; const primeiro = nomeN.join(" ");
+              return [
+                "BEGIN:VCARD","VERSION:3.0",
+                `FN:${m.nome||""}`,`N:${sobrenome};${primeiro};;;`,
+                tel?`TEL;TYPE=CELL:+55${tel}`:"",
+                m.cpf?`X-CPF:${m.cpf}`:"",
+                m.placa1?`NOTE:Placa: ${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join(" | ")} | Vínculo: ${m.vinculo||"—"}`:"",
+                "END:VCARD"
+              ].filter(Boolean).join("\r\n");
+            }).join("\r\n");
+            const blob = new Blob([vCards], {type:"text/vcard;charset=utf-8"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "motoristas_yfgroup.vcf"; a.click();
+            showToast(`📤 ${motoristas.length} contatos exportados!`,"ok");
+          };
+
+          return (
+            <div>
+              <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+                <input
+                  value={motBusca}
+                  onChange={e=>setMotBusca(e.target.value)}
+                  placeholder="Buscar por nome ou placa cavalo..."
+                  style={{...css.inp,flex:1,minWidth:140}}
+                />
+                <button onClick={exportarVCard} title="Exportar todos como vCard (.vcf) para importar no Google Contacts" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11}}>📤 vCard</button>
+                {canEdit && <button onClick={()=>{setFormData({});setEditIdx(-1);setModalOpen("motorista")}} style={{...css.btnGold,whiteSpace:"nowrap"}}>＋ NOVO</button>}
               </div>
-            ))}
-          </div>
-        )}
+              {motBusca && <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>{motFiltrados.length} resultado{motFiltrados.length!==1?"s":""} encontrado{motFiltrados.length!==1?"s":""}</div>}
+              {motoristas.length === 0 ? (
+                <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
+              ) : motFiltrados.length === 0 ? (
+                <div style={css.empty}><div style={{fontSize:30,marginBottom:8}}>🔍</div><p style={{fontSize:12,color:t.txt2}}>Nenhum motorista encontrado para "{motBusca}"</p></div>
+              ) : motFiltrados.map((m,i) => {
+                const idxReal = motoristas.indexOf(m);
+                const vincBadgeC = m.vinculo==="Frota"?t.azulLt:m.vinculo==="Agregado"?t.ouro:m.vinculo==="Terceiro"?t.verde:t.txt2;
+                const vincBadgeBg = m.vinculo==="Frota"?`rgba(22,119,255,.08)`:m.vinculo==="Agregado"?`rgba(240,185,11,.08)`:m.vinculo==="Terceiro"?`rgba(2,192,118,.08)`:`rgba(128,128,128,.06)`;
+                return (
+                  <div key={i} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,marginBottom:10}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                      <div style={{width:38,height:38,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#000",flexShrink:0}}>{(m.nome||"M")[0].toUpperCase()}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:700,color:t.txt}}>{m.nome||"—"}</div>
+                        <div style={{fontSize:10,color:t.txt2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                          {m.cpf && <span>{m.cpf}</span>}
+                          {m.vinculo && <span style={{background:vincBadgeBg,border:`1px solid ${vincBadgeC}33`,borderRadius:4,padding:"1px 6px",color:vincBadgeC,fontWeight:700,fontSize:9,textTransform:"uppercase"}}>{m.vinculo}</span>}
+                        </div>
+                      </div>
+                      {canEdit && <>
+                        <button onClick={()=>{setFormData({...m});setEditIdx(idxReal);setModalOpen("motorista")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
+                        <button onClick={()=>{if(window.confirm(`Excluir "${m.nome}"?`)){const nm=[...motoristas];nm.splice(idxReal,1);saveMotoristasLS(nm);showToast("🗑️ Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
+                      </>}
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:m.tel||m.banco?6:0}}>
+                      {[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).map((p,j) => (
+                        <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:4,padding:"2px 7px"}}>{p}</span>
+                      ))}
+                    </div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:10,fontSize:10,color:t.txt2}}>
+                      {m.tel && <span>📞 {m.tel}</span>}
+                      {m.banco && <span>🏦 {m.banco}{m.agencia?` · Ag ${m.agencia}`:""}{m.conta?` · CC ${m.conta}`:""}</span>}
+                      {m.pix_tipo && <span style={{color:t.azulLt}}>PIX {m.pix_tipo}: {m.pix_chave||"—"}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* ═══ ADMIN ═══ */}
         {activeTab === "admin" && isAdmin && (
@@ -1985,6 +2269,49 @@ function mapearColuna(n){
               </div>
             )}
 
+            {/* NORMALIZAR CONTATOS (Item 3) */}
+            <div style={{...css.secTitle,marginTop:24}}>
+              📇 Contatos / Motoristas <span style={{flex:1,height:1,background:t.borda}} />
+            </div>
+            <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
+              <p style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:10}}>
+                Normaliza os dados de todos os motoristas cadastrados: capitalização dos nomes, formato de telefone <strong style={{color:t.txt}}>(XX) XXXXX-XXXX</strong> e placas em maiúsculas sem caracteres extras.
+              </p>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <button onClick={()=>{
+                  const normalizados = motoristas.map(m=>({
+                    ...m,
+                    nome: normalizarNome(m.nome),
+                    tel: normalizarTelefone(m.tel),
+                    placa1: normalizarPlaca(m.placa1),
+                    placa2: normalizarPlaca(m.placa2),
+                    placa3: normalizarPlaca(m.placa3),
+                    placa4: normalizarPlaca(m.placa4),
+                    favorecido: normalizarNome(m.favorecido),
+                  }));
+                  saveMotoristasLS(normalizados);
+                  registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);
+                  showToast(`✅ ${normalizados.length} contatos normalizados!`,"ok");
+                }} style={{...css.btnGold,fontSize:12}}>🔧 Normalizar Todos os Contatos</button>
+                <button onClick={()=>{
+                  const vcards = motoristas.map(m=>{
+                    const tel=(m.tel||"").replace(/\D/g,"");
+                    const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
+                    return["BEGIN:VCARD","VERSION:3.0",`FN:${m.nome||""}`,`N:${sob};${prim};;;`,
+                      tel?`TEL;TYPE=CELL:+55${tel}`:"",m.cpf?`X-CPF:${m.cpf}`:"",
+                      `NOTE:Placa: ${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join(" | ")} | Vínculo: ${m.vinculo||"—"}`,
+                      "END:VCARD"].filter(Boolean).join("\r\n");
+                  }).join("\r\n");
+                  const blob=new Blob([vcards],{type:"text/vcard;charset=utf-8"});
+                  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_yfgroup.vcf";a.click();
+                  showToast(`📤 ${motoristas.length} contatos exportados como vCard!`,"ok");
+                }} style={{...css.hBtn,fontSize:12}}>📤 Exportar vCard (.vcf)</button>
+              </div>
+              <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:`1px solid ${t.borda}`,fontSize:10,color:t.txt2,lineHeight:1.6}}>
+                💡 Para importar no Google Contacts: acesse <strong style={{color:t.txt}}>contacts.google.com</strong> → Importar → selecione o arquivo .vcf exportado.
+              </div>
+            </div>
+
             {/* LOG DE ALTERACOES */}
             <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={async()=>{const next=!logsOpen;setLogsOpen(next);if(next)await carregarLogs();}}>
               {"📋 Log de Alterações"}<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{logsOpen?"▲":"▼"}</span>
@@ -1992,25 +2319,62 @@ function mapearColuna(n){
             </div>
             {logsOpen && (
               <div style={{marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <span style={{fontSize:10,color:t.txt2}}>{logsData.length} registros | tabela: co_logs_alteracoes</span>
-                  <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px"}}>Atualizar</button>
+                {/* Sub-abas */}
+                <div style={{display:"flex",gap:5,marginBottom:12}}>
+                  {[{k:"dev",l:"🧑‍💻 Desenvolvimento"},{k:"op",l:"⚙️ Operacional"}].map(st=>(
+                    <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:logsSubTab===st.k?`rgba(240,185,11,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{st.l}</button>
+                  ))}
+                  {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}>↺ Atualizar</button>}
                 </div>
-                {logsData.length===0?(
-                  <div style={{...css.empty,padding:"16px 0",fontSize:11,color:t.txt2}}>Nenhum log registrado ainda.</div>
-                ):(
-                  <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:360,overflowY:"auto"}}>
-                    {logsData.map((log,li)=>(
-                      <div key={li} style={{background:t.card,borderRadius:9,padding:"8px 12px",border:"1px solid "+t.borda,borderLeft:"3px solid "+(log.acao&&log.acao.includes("DELETAR")?t.danger:log.acao&&log.acao.includes("NOVO")?t.verde:t.ouro)}}>
-                        <div style={{display:"flex",justifyContent:"space-between",gap:8,marginBottom:2}}>
-                          <span style={{fontSize:10,fontWeight:700,color:t.txt}}>{log.acao}</span>
-                          <span style={{fontSize:8,color:t.txt2,flexShrink:0}}>{new Date(log.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+
+                {/* ABA DESENVOLVIMENTO */}
+                {logsSubTab==="dev" && (
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {DEV_CHANGELOG.map((sessao,si)=>(
+                      <div key={si} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.azulLt}`,overflow:"hidden"}}>
+                        <div style={{padding:"8px 12px",background:t.card2,display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontSize:12}}>🧑‍💻</span>
+                          <span style={{fontSize:11,fontWeight:700,color:t.txt}}>{sessao.sessao}</span>
+                          <span style={{fontSize:9,color:t.txt2,marginLeft:"auto"}}>{sessao.data}</span>
                         </div>
-                        <div style={{fontSize:11,color:t.txt2}}>{log.descricao}</div>
-                        <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Autor: {log.usuario} ({log.perfil_usuario})</div>
+                        <div style={{padding:"8px 12px",display:"flex",flexDirection:"column",gap:5}}>
+                          {sessao.itens.map((item,ii)=>(
+                            <div key={ii} style={{display:"flex",gap:7,alignItems:"flex-start"}}>
+                              <span style={{color:t.verde,fontSize:10,flexShrink:0,marginTop:1}}>✓</span>
+                              <span style={{fontSize:10,color:t.txt2,lineHeight:1.55}}>{item}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
+                )}
+
+                {/* ABA OPERACIONAL */}
+                {logsSubTab==="op" && (
+                  <>
+                    <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>{logsData.length} eventos operacionais · tabela: co_logs_alteracoes</div>
+                    {logsData.length===0?(
+                      <div style={{...css.empty,padding:"16px 0",fontSize:11,color:t.txt2}}>
+                        <div style={{fontSize:28,marginBottom:8}}>📭</div>
+                        Nenhum evento operacional registrado ainda.<br/>
+                        <span style={{fontSize:9}}>Eventos são criados ao editar, criar ou excluir registros no app.</span>
+                      </div>
+                    ):(
+                      <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:360,overflowY:"auto"}}>
+                        {logsData.map((log,li)=>(
+                          <div key={li} style={{background:t.card,borderRadius:9,padding:"8px 12px",border:"1px solid "+t.borda,borderLeft:"3px solid "+(log.acao&&log.acao.includes("DELETAR")?t.danger:log.acao&&log.acao.includes("NOVO")?t.verde:t.ouro)}}>
+                            <div style={{display:"flex",justifyContent:"space-between",gap:8,marginBottom:2}}>
+                              <span style={{fontSize:10,fontWeight:700,color:t.txt}}>{log.acao}</span>
+                              <span style={{fontSize:8,color:t.txt2,flexShrink:0}}>{new Date(log.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+                            </div>
+                            <div style={{fontSize:11,color:t.txt2}}>{log.descricao}</div>
+                            <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Autor: {log.usuario} ({log.perfil_usuario})</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -2078,13 +2442,88 @@ function mapearColuna(n){
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} MOTORISTA</div></div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:"auto",padding:16}}>
-              {[{k:"nome",l:"Nome Completo",req:true},{k:"cpf",l:"CPF",req:true},{k:"tel",l:"Telefone"},{k:"placa1",l:"Placa Cavalo",req:true},{k:"placa2",l:"Placa Carreta 1"},{k:"placa3",l:"Placa Carreta 2"},{k:"vinculo",l:"Vínculo"},{k:"obs",l:"Observações"}].map(f => (
-                <div key={f.k} style={{marginBottom:10}}>
+            <div style={{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:10}}>
+
+              {/* ── Identificação ── */}
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>👤 Identificação<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
+              {[{k:"nome",l:"Nome Completo",req:true},{k:"cpf",l:"CPF",req:true},{k:"tel",l:"Telefone"}].map(f=>(
+                <div key={f.k}>
                   <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
-                  <input value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} style={{...css.inp,textTransform:f.k.startsWith("placa")?"uppercase":"none"}} />
+                  <input value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} style={css.inp} />
                 </div>
               ))}
+
+              {/* ── Vínculo dropdown ── */}
+              <div>
+                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Vínculo</label>
+                <select value={formData.vinculo||""} onChange={e=>setFormData(p=>({...p,vinculo:e.target.value}))} style={{...css.inp,appearance:"none",cursor:"pointer"}}>
+                  <option value="">— Selecione —</option>
+                  <option value="Agregado">Agregado</option>
+                  <option value="Terceiro">Terceiro</option>
+                  <option value="Frota">Frota</option>
+                </select>
+              </div>
+
+              {/* ── Placas ── */}
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>🚛 Placas<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {[{k:"placa1",l:"Placa Cavalo",req:true},{k:"placa2",l:"Placa Carreta 1"},{k:"placa3",l:"Placa Carreta 2"},{k:"placa4",l:"Placa Carreta 3"}].map(f=>(
+                  <div key={f.k}>
+                    <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
+                    <input value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value.toUpperCase()}))} style={{...css.inp,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,fontSize:15}} placeholder="AAA0000" />
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Dados Bancários ── */}
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>💳 Dados Bancários<span style={{flex:1,height:1,background:`rgba(240,185,11,.15)`}} /></div>
+              <div>
+                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>BCO · Nome do Banco</label>
+                <input value={formData.banco||""} onChange={e=>setFormData(p=>({...p,banco:e.target.value}))} placeholder="Ex: Banco do Brasil, Bradesco, Nubank..." style={css.inp} />
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                <div>
+                  <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>AGE · Agência</label>
+                  <input value={formData.agencia||""} onChange={e=>setFormData(p=>({...p,agencia:e.target.value}))} placeholder="0000-0" style={css.inp} />
+                </div>
+                <div>
+                  <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>C/C · Conta Corrente</label>
+                  <input value={formData.conta||""} onChange={e=>setFormData(p=>({...p,conta:e.target.value}))} placeholder="00000-0" style={css.inp} />
+                </div>
+              </div>
+              <div>
+                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>FAV · Favorecido</label>
+                <input value={formData.favorecido||""} onChange={e=>setFormData(p=>({...p,favorecido:e.target.value}))} placeholder="Nome do titular" style={css.inp} />
+              </div>
+              <div>
+                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>PIX · Tipo de Chave</label>
+                <select value={formData.pix_tipo||""} onChange={e=>setFormData(p=>({...p,pix_tipo:e.target.value,pix_chave:""}))} style={{...css.inp,appearance:"none",cursor:"pointer",marginBottom:6}}>
+                  <option value="">— Sem PIX —</option>
+                  <option value="CPF">CPF</option>
+                  <option value="Telefone">Telefone</option>
+                  <option value="Email">E-mail</option>
+                  <option value="Aleatória">Chave Aleatória</option>
+                </select>
+                {formData.pix_tipo && (
+                  <input
+                    value={formData.pix_chave||""}
+                    onChange={e=>setFormData(p=>({...p,pix_chave:e.target.value}))}
+                    placeholder={
+                      formData.pix_tipo==="CPF"?"000.000.000-00":
+                      formData.pix_tipo==="Telefone"?"(00) 00000-0000":
+                      formData.pix_tipo==="Email"?"email@exemplo.com":
+                      "Chave aleatória (UUID)"
+                    }
+                    style={css.inp}
+                  />
+                )}
+              </div>
+
+              {/* ── Observações ── */}
+              <div>
+                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Observações</label>
+                <textarea value={formData.obs||""} onChange={e=>setFormData(p=>({...p,obs:e.target.value}))} rows={2} style={{...css.inp,resize:"vertical",fontSize:12}} />
+              </div>
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
               <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
@@ -2092,9 +2531,11 @@ function mapearColuna(n){
                 const m = {...formData};
                 if (!m.nome) { showToast("⚠️ Nome obrigatório","warn"); return; }
                 if (!m.cpf) { showToast("⚠️ CPF obrigatório","warn"); return; }
+                if (!m.placa1) { showToast("⚠️ Placa Cavalo obrigatória","warn"); return; }
                 const nm = [...motoristas];
                 if (editIdx>=0) nm[editIdx] = m; else nm.push(m);
                 saveMotoristasLS(nm);
+                registrarLog(editIdx>=0?"EDITAR_MOTORISTA":"NOVO_MOTORISTA",`${m.nome} · CPF ${m.cpf} · Vínculo: ${m.vinculo||"—"}`);
                 showToast(editIdx>=0?"✅ Atualizado!":"✅ Cadastrado!","ok");
                 setModalOpen(null);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
@@ -2474,6 +2915,209 @@ function mapearColuna(n){
           </div>
         </div>
       )}
+
+      {/* ═══ WHATSAPP CARD MODAL (Item 4) ═══ */}
+      {wppModal && (()=>{
+        const {reg, mot} = wppModal;
+        const adtNum = parseFloat(reg.adiant||0)||0;
+        const chequeNum = parseFloat(wppValCheque||0)||0;
+        const contaNum = parseFloat(wppValConta||0)||0;
+        const somaExcede = wppPgto==="ambos" && (chequeNum+contaNum) > adtNum && adtNum > 0;
+        const temConta = !!(mot?.banco || mot?.conta);
+        const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ") || reg.placa || "—";
+
+        const gerarMsg = () => {
+          const ln = "\n";
+          let msg = `DT: ${reg.dt||"—"}    DESTINO: ${reg.destino||"—"}${ln}`;
+          msg += `NOME: ${reg.nome||"—"}${ln}`;
+          msg += `CPF: ${reg.cpf||"—"}${ln}`;
+          msg += `TELEFONE: ${wppTel||"—"}${ln}`;
+          msg += `PLACAS: ${placas}${ln}`;
+          msg += `CARREGAR: ${reg.data_carr||"—"}${ln}`;
+          msg += `AG DESCARGA: ${reg.data_agenda||"—"}${ln}`;
+          msg += `VLR EMPRESA: ${fmtMoeda(reg.vl_cte)}${ln}`;
+          msg += `VLR MOT: ${fmtMoeda(reg.vl_contrato)}${ln}`;
+          msg += `ADT: ${fmtMoeda(reg.adiant)}${ln}`;
+          if (wppPgto==="cheque") {
+            msg += `PGTO: ✅ CHEQUE${ln}`;
+          } else if (wppPgto==="conta") {
+            msg += `PGTO: ✅ CONTA${ln}`;
+            if (temConta) {
+              msg += `  BCO: ${mot.banco||"—"}${ln}`;
+              msg += `  AGE: ${mot.agencia||"—"}${ln}`;
+              msg += `  C/C: ${mot.conta||"—"}${ln}`;
+              msg += `  FAV: ${mot.favorecido||mot?.nome||reg.nome||"—"}${ln}`;
+              if (mot?.pix_tipo) msg += `  PIX (${mot.pix_tipo}): ${mot.pix_chave||"—"}${ln}`;
+            }
+          } else {
+            msg += `PGTO: ✅ CHEQUE + CONTA${ln}`;
+            msg += `  Cheque: ${fmtMoeda(wppValCheque)}${ln}`;
+            msg += `  Conta: ${fmtMoeda(wppValConta)}${ln}`;
+            if (temConta) {
+              msg += `  BCO: ${mot.banco||"—"}${ln}`;
+              msg += `  AGE: ${mot.agencia||"—"}${ln}`;
+              msg += `  C/C: ${mot.conta||"—"}${ln}`;
+              msg += `  FAV: ${mot.favorecido||mot?.nome||reg.nome||"—"}${ln}`;
+              if (mot?.pix_tipo) msg += `  PIX (${mot.pix_tipo}): ${mot.pix_chave||"—"}${ln}`;
+            }
+          }
+          if (wppObs.trim()) msg += `OBSERVAÇÃO: ${wppObs.trim()}${ln}`;
+          msg += `${ln}YFGroup · Controle Operacional`;
+          return msg;
+        };
+
+        const enviar = () => {
+          if (somaExcede) { showToast("⚠️ Soma Cheque + Conta excede o ADT!","warn"); return; }
+          const tel = wppTel.replace(/\D/g,"");
+          const msg = encodeURIComponent(gerarMsg());
+          const url = tel ? `https://wa.me/55${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+          window.open(url, "_blank");
+          if (!tel) showToast("⚠️ Sem telefone — WhatsApp aberto sem número","warn");
+          setWppModal(null);
+        };
+
+        const inpStyle = {...css.inp, fontSize:12, padding:"7px 10px"};
+        const labelStyle = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+        const pgtoOptions = [{k:"cheque",l:"📝 Cheque"},{k:"conta",l:"🏦 Conta"},{k:"ambos",l:"📝 + 🏦 Ambos"}];
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal(null)}>
+            <div style={{...css.modal,maxHeight:"96vh"}}>
+              {/* Header */}
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.06)"}}>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>WHATSAPP</div>
+                  <div style={{fontSize:9,color:t.txt2}}>Revise os dados antes de enviar</div>
+                </div>
+                <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+
+                {/* Linha DT + DESTINO */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div><label style={labelStyle}>DT</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.ouro}}>{reg.dt||"—"}</div></div>
+                  <div><label style={labelStyle}>Destino</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontSize:11,color:t.txt}}>{reg.destino||"—"}</div></div>
+                </div>
+
+                {/* Nome, CPF */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div><label style={labelStyle}>Nome</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontSize:12,color:t.txt,fontWeight:700}}>{reg.nome||"—"}</div></div>
+                  <div><label style={labelStyle}>CPF</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontSize:11,color:t.txt}}>{reg.cpf||"—"}</div></div>
+                </div>
+
+                {/* Telefone — editável */}
+                <div>
+                  <label style={labelStyle}>Telefone <span style={{color:t.verde,fontSize:8}}>(editável)</span></label>
+                  <input value={wppTel} onChange={e=>setWppTel(e.target.value)} placeholder="(XX) XXXXX-XXXX" style={inpStyle} />
+                  {!wppTel && <div style={{fontSize:9,color:t.warn,marginTop:3}}>⚠️ Motorista sem telefone cadastrado — o WhatsApp abrirá sem número</div>}
+                </div>
+
+                {/* Placas */}
+                <div>
+                  <label style={labelStyle}>Placas</label>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                    {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2.5,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:5,padding:"3px 9px"}}>{p}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Datas + Financeiro */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {[
+                    {l:"Carregar",v:reg.data_carr},
+                    {l:"Ag. Descarga",v:reg.data_agenda},
+                  ].map(f=>(
+                    <div key={f.l}><label style={labelStyle}>{f.l}</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:1.5,color:t.ouro}}>{f.v||"—"}</div></div>
+                  ))}
+                </div>
+                {canFin && (
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {[{l:"VLR EMPRESA",v:reg.vl_cte,c:t.verde},{l:"VLR MOT",v:reg.vl_contrato,c:t.azulLt},{l:"ADT",v:reg.adiant,c:t.ouro}].map(f=>(
+                      <div key={f.l} style={{background:t.card2,borderRadius:9,padding:"8px 10px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
+                        <div style={{fontSize:7,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:3}}>{f.l}</div>
+                        <div style={{fontSize:11,fontWeight:700,color:f.c}}>{fmtMoeda(f.v)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* PGTO */}
+                <div>
+                  <label style={{...labelStyle,marginBottom:7}}>PGTO · Forma de Pagamento</label>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                    {pgtoOptions.map(op=>(
+                      <button key={op.k} onClick={()=>setWppPgto(op.k)} style={{padding:"9px 6px",borderRadius:9,border:`1.5px solid ${wppPgto===op.k?t.verde:t.borda}`,background:wppPgto===op.k?`rgba(2,192,118,.1)`:t.card2,color:wppPgto===op.k?t.verde:t.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
+                        {op.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Conta — verificar dados bancários */}
+                {(wppPgto==="conta" || wppPgto==="ambos") && (
+                  <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${temConta?t.verde:t.warn}`}}>
+                    {temConta ? (
+                      <>
+                        <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Conta bancária cadastrada</div>
+                        <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
+                          <div>BCO: <strong style={{color:t.txt}}>{mot.banco||"—"}</strong></div>
+                          <div>AGE: <strong style={{color:t.txt}}>{mot.agencia||"—"}</strong> · C/C: <strong style={{color:t.txt}}>{mot.conta||"—"}</strong></div>
+                          <div>FAV: <strong style={{color:t.txt}}>{mot.favorecido||mot?.nome||reg.nome||"—"}</strong></div>
+                          {mot?.pix_tipo && <div style={{color:t.azulLt}}>PIX ({mot.pix_tipo}): <strong>{mot.pix_chave||"—"}</strong></div>}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{fontSize:10,color:t.warn}}>⚠️ Motorista sem conta bancária cadastrada. Cadastre na aba Motoristas antes de enviar.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Valores Cheque + Conta */}
+                {wppPgto==="ambos" && (
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div>
+                      <label style={labelStyle}>Valor Cheque (R$)</label>
+                      <input type="number" value={wppValCheque} onChange={e=>setWppValCheque(e.target.value)} placeholder="0,00" style={inpStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Valor Conta (R$)</label>
+                      <input type="number" value={wppValConta} onChange={e=>setWppValConta(e.target.value)} placeholder="0,00" style={inpStyle} />
+                    </div>
+                    {somaExcede && (
+                      <div style={{gridColumn:"1/-1",background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:8,padding:"8px 10px",fontSize:11,color:t.danger,fontWeight:600}}>
+                        ⚠️ Soma ({fmtMoeda((chequeNum+contaNum).toFixed(2))}) excede o ADT ({fmtMoeda(reg.adiant)})!
+                      </div>
+                    )}
+                    {!somaExcede && (chequeNum+contaNum)>0 && adtNum>0 && (
+                      <div style={{gridColumn:"1/-1",background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:8,padding:"8px 10px",fontSize:11,color:t.verde}}>
+                        ✅ Total: {fmtMoeda((chequeNum+contaNum).toFixed(2))} de {fmtMoeda(reg.adiant)}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Observação */}
+                <div>
+                  <label style={labelStyle}>Observação</label>
+                  <textarea value={wppObs} onChange={e=>setWppObs(e.target.value)} rows={2} placeholder="Qualquer observação relevante..." style={{...inpStyle,resize:"vertical",lineHeight:1.5}} />
+                </div>
+
+              </div>
+
+              {/* Botão enviar */}
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
+                <button onClick={()=>setWppModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={enviar} disabled={somaExcede} style={{flex:1,border:"none",borderRadius:10,padding:"12px 18px",cursor:somaExcede?"not-allowed":"pointer",background:somaExcede?`rgba(128,128,128,.2)`:`rgba(37,211,102,.15)`,border:`1.5px solid ${somaExcede?t.borda:"rgba(37,211,102,.4)"}`,color:somaExcede?t.txt2:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                  📲 ENVIAR NO WHATSAPP
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <Toast {...toast} />
     </div>
