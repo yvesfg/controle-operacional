@@ -56,6 +56,14 @@ const PERMS_LISTA = [
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
+    data: "2026-03-19 13:42", sessao: "Sessão 4",
+    itens: [
+      "01 · Admin Contatos: importar CSV Google Contacts ou vCard (.vcf); comparação com existentes; conflitos exibidos lado a lado com opção Manter atual / Usar importado; operações ≥5 contatos exigem digitar 'ESTOU DE ACORDO'",
+      "02 · Cards Diárias/Descargas: campo RO (Registro de Ocorrência) e MAT adicionados ao formulário; chip 🔵 RO visível nos cards linha e bloco",
+      "03 · Segundo botão WhatsApp (📄 DOC): formato documentário MOT/CTE/MDF/MAT/PLACAS/DT·NF·ID·RO; RO obrigatório; OBS opcional com memória do último valor",
+    ],
+  },
+  {
     data: "2026-03-19 13:12", sessao: "Sessão 3",
     itens: [
       "00 · Modal Motorista: campo Vínculo → dropdown (Agregado/Terceiro/Frota); seção Dados Bancários adicionada (BCO, AGE, C/C, FAV, PIX c/ seletor de tipo)",
@@ -460,6 +468,18 @@ export default function App() {
 
   // Motoristas — busca local (Item 3)
   const [motBusca, setMotBusca] = useState("");
+
+  // Importação de contatos (Item 1 sessão 4)
+  const [motImportOpen, setMotImportOpen] = useState(false);
+  const [motImportData, setMotImportData] = useState(null); // {novos:[], conflitos:[{atual,import,escolha}]}
+  const [motImportConfirm, setMotImportConfirm] = useState("");
+
+  // Segundo WhatsApp — formato documentário (Item 3 sessão 4)
+  const [wppModal2, setWppModal2] = useState(null); // {reg, mot}
+  const [wpp2Ro, setWpp2Ro] = useState("");
+  const [wpp2Obs, setWpp2Obs] = useState(() => loadJSON("co_wpp2_obs_last",""));
+  const [wpp2IncluirObs, setWpp2IncluirObs] = useState(false);
+  const [wpp2Conflitos, setWpp2Conflitos] = useState([]); // para resolver conflitos de importação
 
   // Dashboard extras
   const [dashChartType, setDashChartType] = useState("bar"); // bar | pie
@@ -1496,25 +1516,38 @@ export default function App() {
                   })()}
 
                   {canEdit && (
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
                       <button onClick={()=>{
                         const idx = DADOS.findIndex(r=>r.dt===buscaResult.dt);
                         setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
                       }} style={{...css.btnGold,justifyContent:"center",padding:11}}>✏️ EDITAR</button>
-                      <button onClick={()=>{
-                        // Abrir modal WhatsApp (Item 4)
-                        const mot = motoristas.find(m =>
-                          (buscaResult.cpf && m.cpf?.replace(/\D/g,"") === buscaResult.cpf?.replace(/\D/g,"")) ||
-                          (buscaResult.nome && m.nome === buscaResult.nome) ||
-                          [m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa)
-                        );
-                        setWppModal({reg: buscaResult, mot: mot||null});
-                        setWppTel((mot?.tel||buscaResult.tel||""));
-                        setWppPgto("cheque");
-                        setWppValCheque("");
-                        setWppValConta("");
-                        setWppObs("");
-                      }} style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(37,211,102,.1)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase",fontFamily:"inherit"}}>📲 WHATSAPP</button>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        <button onClick={()=>{
+                          // Abrir modal WhatsApp (Item 4)
+                          const mot = motoristas.find(m =>
+                            (buscaResult.cpf && m.cpf?.replace(/\D/g,"") === buscaResult.cpf?.replace(/\D/g,"")) ||
+                            (buscaResult.nome && m.nome === buscaResult.nome) ||
+                            [m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa)
+                          );
+                          setWppModal({reg: buscaResult, mot: mot||null});
+                          setWppTel((mot?.tel||buscaResult.tel||""));
+                          setWppPgto("cheque");
+                          setWppValCheque("");
+                          setWppValConta("");
+                          setWppObs("");
+                        }} style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(37,211,102,.1)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase",fontFamily:"inherit"}}>📲 WHATSAPP</button>
+                        <button onClick={()=>{
+                          // Abrir modal WhatsApp DOC (Item 3 Sessão 4)
+                          const mot = motoristas.find(m =>
+                            (buscaResult.cpf && m.cpf?.replace(/\D/g,"") === buscaResult.cpf?.replace(/\D/g,"")) ||
+                            (buscaResult.nome && m.nome === buscaResult.nome) ||
+                            [m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa)
+                          );
+                          setWppModal2({reg: buscaResult, mot: mot||null});
+                          setWpp2Ro(buscaResult.ro||"");
+                          setWpp2IncluirObs(false);
+                        }} style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.25)`,color:t.azulLt,fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase",fontFamily:"inherit"}}>📄 DOC</button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1811,6 +1844,7 @@ export default function App() {
                             {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":""}`:  "⏳ Aguardando"}
                           </span>
                           {pgStatus && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>{pgStatus==="pago"?"💳 Pago":"💸 Não Pago"}</span>}
+                          {r.ro && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`rgba(255,152,0,.08)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
                           <span style={{marginLeft:"auto",fontSize:11,color:t.txt2}}>ver detalhes ›</span>
                         </div>
                         <div style={{fontSize:12,color:t.txt2,lineHeight:1.7}}>
@@ -1837,6 +1871,7 @@ export default function App() {
                         {l:"Descarga",v:r.data_desc||"Pendente",c:r.data_desc?t.verde:t.txt2},
                         {l:"Origem",v:r.origem||"—",c:t.txt2},
                         {l:"Destino",v:r.destino||"—",c:t.txt2},
+                        ...(r.ro?[{l:"RO",v:r.ro,c:"#f57c00"}]:[]),
                       ];
                       return (
                         <div key={idx} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
@@ -1947,9 +1982,10 @@ export default function App() {
                   const isAtrasado = dscTab === "atrasado";
                   return (
                     <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer"}}>
-                      <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                         {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
+                        {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.08)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
                         <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
                       <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
@@ -1981,6 +2017,7 @@ export default function App() {
                     {l:"Agenda",v:r.data_agenda||"—",c:isAtrasado?t.danger:t.ouro},
                     {l:"Descarga",v:r.data_desc||"Pendente",c:r.data_desc?t.verde:t.txt2},
                     ...(r.origem?[{l:"Origem",v:r.origem,c:t.txt2}]:[]),
+                    ...(r.ro?[{l:"RO",v:r.ro,c:"#f57c00"}]:[]),
                   ];
                   return (
                     <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
@@ -2277,38 +2314,109 @@ function mapearColuna(n){
               <p style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:10}}>
                 Normaliza os dados de todos os motoristas cadastrados: capitalização dos nomes, formato de telefone <strong style={{color:t.txt}}>(XX) XXXXX-XXXX</strong> e placas em maiúsculas sem caracteres extras.
               </p>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {/* ── Exportar ── */}
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6}}>📤 Exportar</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
                 <button onClick={()=>{
-                  const normalizados = motoristas.map(m=>({
-                    ...m,
-                    nome: normalizarNome(m.nome),
-                    tel: normalizarTelefone(m.tel),
-                    placa1: normalizarPlaca(m.placa1),
-                    placa2: normalizarPlaca(m.placa2),
-                    placa3: normalizarPlaca(m.placa3),
-                    placa4: normalizarPlaca(m.placa4),
-                    favorecido: normalizarNome(m.favorecido),
-                  }));
-                  saveMotoristasLS(normalizados);
-                  registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);
-                  showToast(`✅ ${normalizados.length} contatos normalizados!`,"ok");
-                }} style={{...css.btnGold,fontSize:12}}>🔧 Normalizar Todos os Contatos</button>
-                <button onClick={()=>{
-                  const vcards = motoristas.map(m=>{
-                    const tel=(m.tel||"").replace(/\D/g,"");
-                    const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
-                    return["BEGIN:VCARD","VERSION:3.0",`FN:${m.nome||""}`,`N:${sob};${prim};;;`,
-                      tel?`TEL;TYPE=CELL:+55${tel}`:"",m.cpf?`X-CPF:${m.cpf}`:"",
-                      `NOTE:Placa: ${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join(" | ")} | Vínculo: ${m.vinculo||"—"}`,
-                      "END:VCARD"].filter(Boolean).join("\r\n");
+                  if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("❌ Exportação cancelada","err");return;}}
+                  const vcards=motoristas.map(m=>{const tel=(m.tel||"").replace(/\D/g,"");const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
+                    return["BEGIN:VCARD","VERSION:3.0",`FN:${m.nome||""}`,`N:${sob};${prim};;;`,tel?`TEL;TYPE=CELL:+55${tel}`:"",m.cpf?`X-CPF:${m.cpf}`:"",`NOTE:Placa: ${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join(" | ")} | Vínculo: ${m.vinculo||"—"}`,"END:VCARD"].filter(Boolean).join("\r\n");
                   }).join("\r\n");
-                  const blob=new Blob([vcards],{type:"text/vcard;charset=utf-8"});
-                  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_yfgroup.vcf";a.click();
+                  const blob=new Blob([vcards],{type:"text/vcard;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_yfgroup.vcf";a.click();
                   showToast(`📤 ${motoristas.length} contatos exportados como vCard!`,"ok");
-                }} style={{...css.hBtn,fontSize:12}}>📤 Exportar vCard (.vcf)</button>
+                }} style={{...css.hBtn,fontSize:12}}>📤 vCard (.vcf)</button>
+                <button onClick={()=>{
+                  if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("❌ Exportação cancelada","err");return;}}
+                  const header="Name,Given Name,Family Name,Phone 1 - Type,Phone 1 - Value,Notes";
+                  const rows=motoristas.map(m=>{
+                    const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
+                    const tel=(m.tel||"").replace(/\D/g,"");
+                    const nota=`CPF:${m.cpf||""} | Placa:${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join("/")} | Vínculo:${m.vinculo||""} | Banco:${m.banco||""} AGE:${m.agencia||""} CC:${m.conta||""}`;
+                    return `"${m.nome||""}","${prim}","${sob}","Mobile","${tel?"+55"+tel:""}","${nota}"`;
+                  });
+                  const bom="\uFEFF";const blob=new Blob([bom+[header,...rows].join("\n")],{type:"text/csv;charset=utf-8"});
+                  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_google.csv";a.click();
+                  showToast(`📤 ${motoristas.length} contatos exportados como CSV Google!`,"ok");
+                }} style={{...css.hBtn,fontSize:12}}>📊 CSV Google</button>
+                <button onClick={()=>{
+                  const normalizados=motoristas.map(m=>({...m,nome:normalizarNome(m.nome),tel:normalizarTelefone(m.tel),placa1:normalizarPlaca(m.placa1),placa2:normalizarPlaca(m.placa2),placa3:normalizarPlaca(m.placa3),placa4:normalizarPlaca(m.placa4),favorecido:normalizarNome(m.favorecido)}));
+                  saveMotoristasLS(normalizados);registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);showToast(`✅ ${normalizados.length} contatos normalizados!`,"ok");
+                }} style={{...css.btnGold,fontSize:12}}>🔧 Normalizar</button>
               </div>
-              <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:`1px solid ${t.borda}`,fontSize:10,color:t.txt2,lineHeight:1.6}}>
-                💡 Para importar no Google Contacts: acesse <strong style={{color:t.txt}}>contacts.google.com</strong> → Importar → selecione o arquivo .vcf exportado.
+
+              {/* ── Importar ── */}
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6,marginTop:8}}>📥 Importar</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                <label style={{...css.hBtn,fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
+                  📥 CSV Google / vCard
+                  <input type="file" accept=".csv,.vcf,.vcard" style={{display:"none"}} onChange={e=>{
+                    const f=e.target.files?.[0]; if(!f){return;}
+                    const reader=new FileReader();
+                    reader.onload=ev=>{
+                      const txt=ev.target.result;
+                      const parseVCard=(raw)=>{
+                        const contatos=[];const blocos=raw.split(/END:VCARD/i);
+                        blocos.forEach(bloco=>{
+                          if(!bloco.toUpperCase().includes("BEGIN:VCARD"))return;
+                          const fn=(bloco.match(/^FN:(.+)$/mi)||[])[1]?.trim()||"";
+                          const n=(bloco.match(/^N:(.+)$/mi)||[])[1]?.trim()||"";
+                          const nParts=n.split(";");const sobV=nParts[0]||"";const primV=nParts[1]||"";
+                          const nomeV=fn||(primV+" "+sobV).trim();
+                          const telM=bloco.match(/^TEL[^:]*:(.+)$/mi);
+                          const telV=(telM?.[1]||"").replace(/\D/g,"").replace(/^55/,"");
+                          const cpfM=bloco.match(/X-CPF:(.+)/i);const cpfV=(cpfM?.[1]||"").trim();
+                          const noteM=bloco.match(/^NOTE:(.+)$/mi);const noteV=(noteM?.[1]||"");
+                          const placaM=noteV.match(/Placa:\s*([\w/| ]+)/i);
+                          const placas=(placaM?.[1]||"").split(/[|\/]/).map(p=>p.trim()).filter(Boolean);
+                          if(nomeV)contatos.push({nome:nomeV,tel:telV,cpf:cpfV,placa1:placas[0]||"",placa2:placas[1]||"",placa3:placas[2]||"",placa4:placas[3]||""});
+                        });
+                        return contatos;
+                      };
+                      const parseCSV=(raw)=>{
+                        const lines=raw.trim().split("\n");if(lines.length<2)return[];
+                        const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim().toLowerCase());
+                        const nameIdx=headers.findIndex(h=>h==="name"||h==="full name"||h==="nome");
+                        const phoneIdx=headers.findIndex(h=>h.includes("phone")||h.includes("fone")||h.includes("tel"));
+                        const noteIdx=headers.findIndex(h=>h.includes("note")||h.includes("obs"));
+                        return lines.slice(1).map(line=>{
+                          const cols=line.split(",").map(c=>c.replace(/^"|"$/g,"").trim());
+                          const nome=nameIdx>=0?cols[nameIdx]||"":"";
+                          const tel=(phoneIdx>=0?cols[phoneIdx]||"":"").replace(/\D/g,"").replace(/^55/,"");
+                          const nota=noteIdx>=0?cols[noteIdx]||"":"";
+                          const placaM=nota.match(/Placa[:\s]*([\w/| ]+)/i);
+                          const placas=(placaM?.[1]||"").split(/[|\/]/).map(p=>p.trim()).filter(Boolean);
+                          const cpfM=nota.match(/CPF[:\s]*([0-9./-]+)/i);
+                          return nome?{nome,tel,cpf:(cpfM?.[1]||"").trim(),placa1:placas[0]||"",placa2:placas[1]||"",placa3:placas[2]||"",placa4:placas[3]||""}:null;
+                        }).filter(Boolean);
+                      };
+                      const isVCard=txt.toUpperCase().includes("BEGIN:VCARD");
+                      const importados=isVCard?parseVCard(txt):parseCSV(txt);
+                      if(!importados.length){showToast("⚠️ Nenhum contato encontrado no arquivo","warn");return;}
+                      // Comparar com existentes
+                      const novos=[], conflitos=[];
+                      importados.forEach(imp=>{
+                        const nomeN=imp.nome.toUpperCase();
+                        const cpfN=(imp.cpf||"").replace(/\D/g,"");
+                        const placa1N=(imp.placa1||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+                        const existente=motoristas.find(m=>{
+                          if(cpfN&&m.cpf&&m.cpf.replace(/\D/g,"")===cpfN)return true;
+                          if(placa1N&&m.placa1&&m.placa1.toUpperCase().replace(/[^A-Z0-9]/g,"")===placa1N)return true;
+                          return m.nome&&m.nome.toUpperCase()===nomeN;
+                        });
+                        if(existente){conflitos.push({atual:existente,imp,escolha:"manter"});}
+                        else{novos.push(imp);}
+                      });
+                      setMotImportData({novos,conflitos});
+                      setMotImportConfirm("");
+                      setMotImportOpen(true);
+                    };
+                    reader.readAsText(f,"utf-8");
+                    e.target.value="";
+                  }} />
+                </label>
+              </div>
+              <div style={{padding:"8px 10px",background:t.bg,borderRadius:8,border:`1px solid ${t.borda}`,fontSize:10,color:t.txt2,lineHeight:1.5}}>
+                💡 Google Contacts: <strong style={{color:t.txt}}>contacts.google.com</strong> → Exportar → CSV Google. Para importar, exporte da aba Motoristas ou baixe o .csv/.vcf e importe aqui.
               </div>
             </div>
 
@@ -2406,7 +2514,7 @@ function mapearColuna(n){
                 {s:"👤 Identificação",fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho"},{k:"vinculo",l:"Vínculo"}]},
                 {s:"📍 Rota e Agenda",fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda",type:"date"},{k:"status",l:"Status"},{k:"dias",l:"Dias"}]},
                 {s:"💰 Financeiro",fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"}]},
-                {s:"📄 Documentação",fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
+                {s:"📄 Documentação",fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
                 {s:"🏁 Operacional",fields:[{k:"data_desc",l:"Descarga",type:"date"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"chegada",l:"Chegada",type:"date"},{k:"gerenc",l:"Gerenciadora"}]},
               ].map((section,si) => (
                 <div key={si}>
@@ -2916,6 +3024,137 @@ function mapearColuna(n){
         </div>
       )}
 
+      {/* ═══ IMPORT CONTACTS MODAL (Item 1 Sessão 4) ═══ */}
+      {motImportOpen && motImportData && (()=>{
+        const {novos, conflitos} = motImportData;
+        const totalOps = novos.length + conflitos.length;
+        const needsConfirm = totalOps >= 5;
+        const confirmOk = !needsConfirm || motImportConfirm.trim() === "ESTOU DE ACORDO";
+        const inpS = {...css.inp, fontSize:11, padding:"6px 9px"};
+        const lblS = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:2};
+
+        const aplicar = () => {
+          if (!confirmOk) { showToast("⚠️ Digite ESTOU DE ACORDO para confirmar","warn"); return; }
+          const updated = [...motoristas];
+          novos.forEach(n => { if (!updated.find(m=>m.nome===n.nome)) updated.push(n); });
+          conflitos.forEach(c => {
+            if (c.escolha === "usar") {
+              const idx = updated.findIndex(m =>
+                (c.atual.cpf && m.cpf && m.cpf.replace(/\D/g,"")===c.atual.cpf.replace(/\D/g,"")) ||
+                (c.atual.placa1 && m.placa1 && m.placa1.toUpperCase()===c.atual.placa1.toUpperCase()) ||
+                m.nome === c.atual.nome
+              );
+              if (idx >= 0) updated[idx] = {...updated[idx], ...c.imp};
+            }
+          });
+          saveMotoristasLS(updated);
+          registrarLog("IMPORTAR_CONTATOS", `${novos.length} novos + ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`);
+          showToast(`✅ ${novos.length} novos importados, ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`, "ok");
+          setMotImportOpen(false);
+          setMotImportData(null);
+          setMotImportConfirm("");
+        };
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotImportOpen(false)}>
+            <div style={{...css.modal, maxHeight:"94vh"}}>
+              {/* Header */}
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📥</div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>IMPORTAR CONTATOS</div>
+                  <div style={{fontSize:9,color:t.txt2}}>{novos.length} novos · {conflitos.length} conflito{conflitos.length!==1?"s":""}</div>
+                </div>
+                <button onClick={()=>setMotImportOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:12}}>
+
+                {/* NOVOS */}
+                {novos.length > 0 && (
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ {novos.length} novo{novos.length!==1?"s":""} a adicionar</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                      {novos.map((n,i)=>(
+                        <div key={i} style={{background:t.card2,borderRadius:8,padding:"7px 10px",border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.verde}`,fontSize:10,color:t.txt}}>
+                          <strong>{n.nome}</strong>
+                          {n.tel && <span style={{color:t.txt2,marginLeft:8}}>📞 {n.tel}</span>}
+                          {n.placa1 && <span style={{color:t.ouro,marginLeft:8}}>🚛 {n.placa1}</span>}
+                          {n.cpf && <span style={{color:t.txt2,marginLeft:8}}>🪪 {n.cpf}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* CONFLITOS */}
+                {conflitos.length > 0 && (
+                  <div>
+                    <div style={{fontSize:10,fontWeight:700,color:t.warn,marginBottom:6}}>⚠️ {conflitos.length} conflito{conflitos.length!==1?"s":""} — escolha o que manter</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      {conflitos.map((c,ci)=>(
+                        <div key={ci} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,overflow:"hidden"}}>
+                          {/* Compare header */}
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",borderBottom:`1px solid ${t.borda}`}}>
+                            <div style={{padding:"6px 10px",background:c.escolha==="manter"?`rgba(2,192,118,.08)`:t.card2,borderRight:`1px solid ${t.borda}`,cursor:"pointer",transition:"background .2s"}} onClick={()=>{
+                              const nc=[...conflitos]; nc[ci]={...nc[ci],escolha:"manter"}; setMotImportData({novos,conflitos:nc});
+                            }}>
+                              <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                                <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${c.escolha==="manter"?t.verde:t.borda}`,background:c.escolha==="manter"?t.verde:"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                                  {c.escolha==="manter" && <div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}} />}
+                                </div>
+                                <span style={{fontSize:9,fontWeight:700,color:c.escolha==="manter"?t.verde:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Manter atual</span>
+                              </div>
+                              {[{l:"Nome",v:c.atual.nome},{l:"Tel",v:c.atual.tel},{l:"Placa",v:c.atual.placa1},{l:"CPF",v:c.atual.cpf}].filter(f=>f.v).map(f=>(
+                                <div key={f.l} style={{fontSize:9,color:t.txt2}}>{f.l}: <strong style={{color:t.txt}}>{f.v}</strong></div>
+                              ))}
+                            </div>
+                            <div style={{padding:"6px 10px",background:c.escolha==="usar"?`rgba(22,119,255,.08)`:t.card2,cursor:"pointer",transition:"background .2s"}} onClick={()=>{
+                              const nc=[...conflitos]; nc[ci]={...nc[ci],escolha:"usar"}; setMotImportData({novos,conflitos:nc});
+                            }}>
+                              <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
+                                <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${c.escolha==="usar"?t.azulLt:t.borda}`,background:c.escolha==="usar"?t.azulLt:"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                                  {c.escolha==="usar" && <div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}} />}
+                                </div>
+                                <span style={{fontSize:9,fontWeight:700,color:c.escolha==="usar"?t.azulLt:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Usar importado</span>
+                              </div>
+                              {[{l:"Nome",v:c.imp.nome},{l:"Tel",v:c.imp.tel},{l:"Placa",v:c.imp.placa1},{l:"CPF",v:c.imp.cpf}].filter(f=>f.v).map(f=>(
+                                <div key={f.l} style={{fontSize:9,color:t.txt2}}>{f.l}: <strong style={{color:t.azulLt}}>{f.v}</strong></div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Confirmação para operações grandes */}
+                {needsConfirm && (
+                  <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:10,padding:"10px 12px"}}>
+                    <div style={{fontSize:10,fontWeight:700,color:t.warn,marginBottom:6}}>🔐 Operação com {totalOps} contato{totalOps!==1?"s":""} — confirmação obrigatória</div>
+                    <div style={{marginBottom:6}}>
+                      <label style={lblS}>Digite <strong style={{color:t.ouro}}>ESTOU DE ACORDO</strong> para prosseguir</label>
+                      <input value={motImportConfirm} onChange={e=>setMotImportConfirm(e.target.value)} placeholder="ESTOU DE ACORDO" style={{...inpS,width:"100%",boxSizing:"border-box",border:`1.5px solid ${confirmOk?t.verde:t.borda}`,color:confirmOk?t.verde:t.txt}} />
+                    </div>
+                    {confirmOk && <div style={{fontSize:9,color:t.verde}}>✅ Confirmado</div>}
+                  </div>
+                )}
+
+              </div>
+
+              {/* Footer */}
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
+                <button onClick={()=>setMotImportOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={aplicar} disabled={!confirmOk} style={{flex:1,border:`1.5px solid ${confirmOk?t.azulLt:t.borda}`,borderRadius:10,padding:"12px 18px",cursor:confirmOk?"pointer":"not-allowed",background:confirmOk?`rgba(22,119,255,.12)`:`rgba(128,128,128,.08)`,color:confirmOk?t.azulLt:t.txt2,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
+                  📥 IMPORTAR ({novos.length} novos + {conflitos.filter(c=>c.escolha==="usar").length} atualizações)
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ═══ WHATSAPP CARD MODAL (Item 4) ═══ */}
       {wppModal && (()=>{
         const {reg, mot} = wppModal;
@@ -3112,6 +3351,141 @@ function mapearColuna(n){
                 <button onClick={()=>setWppModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
                 <button onClick={enviar} disabled={somaExcede} style={{flex:1,border:"none",borderRadius:10,padding:"12px 18px",cursor:somaExcede?"not-allowed":"pointer",background:somaExcede?`rgba(128,128,128,.2)`:`rgba(37,211,102,.15)`,border:`1.5px solid ${somaExcede?t.borda:"rgba(37,211,102,.4)"}`,color:somaExcede?t.txt2:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   📲 ENVIAR NO WHATSAPP
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ WHATSAPP DOC MODAL (Item 3 Sessão 4) ═══ */}
+      {wppModal2 && (()=>{
+        const {reg, mot} = wppModal2;
+        const nomeMotorista = mot?.nome || reg.nome || "";
+        const placas = [mot?.placa1||reg.placa, mot?.placa2, mot?.placa3, mot?.placa4].filter(Boolean).join(" / ") || reg.placa || "—";
+        const telMot = mot?.tel || reg.tel || "";
+        const roOk = wpp2Ro.trim().length > 0;
+
+        const inpStyle2 = {...css.inp, fontSize:12, padding:"7px 10px"};
+        const lbl2 = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+
+        const gerarMsgDoc = () => {
+          const ln = "%0A";
+          const b = (s) => `*${s}*`;
+          let msg = `${b("📄 DOCUMENTO")}${ln}`;
+          msg += `────────────────${ln}`;
+          msg += `${b("MOT:")} ${nomeMotorista}${ln}`;
+          msg += `${b("CTE:")} ${reg.cte||"—"}${ln}`;
+          msg += `${b("MDF:")} ${reg.mdf||"—"}${ln}`;
+          msg += `${b("MAT:")} ${reg.mat||"—"}${ln}`;
+          msg += `${b("PLACAS:")} ${placas}${ln}`;
+          msg += `────────────────${ln}`;
+          msg += `${b("DT:")} ${reg.dt||"—"}  ${b("NF:")} ${reg.nf||"—"}  ${b("ID:")} ${reg.id||"—"}${ln}`;
+          msg += `${b("RO:")} ${wpp2Ro.trim()}${ln}`;
+          if (wpp2IncluirObs && wpp2Obs.trim()) msg += `${b("OBS:")} ${wpp2Obs.trim()}${ln}`;
+          msg += `────────────────${ln}`;
+          msg += `YFGroup · Controle Operacional`;
+          return msg;
+        };
+
+        const enviarDoc = () => {
+          if (!roOk) { showToast("⚠️ RO é obrigatório","warn"); return; }
+          // Memoriza OBS se preenchido e incluído
+          if (wpp2IncluirObs && wpp2Obs.trim()) saveJSON("co_wpp2_obs_last", wpp2Obs.trim());
+          const tel = telMot.replace(/\D/g,"");
+          const msg = gerarMsgDoc();
+          const url = tel ? `https://wa.me/55${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+          window.open(url, "_blank");
+          if (!tel) showToast("⚠️ Sem telefone — WhatsApp aberto sem número","warn");
+          setWppModal2(null);
+        };
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal2(null)}>
+            <div style={{...css.modal, maxHeight:"96vh"}}>
+              {/* Header */}
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📄</div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>WHATSAPP DOC</div>
+                  <div style={{fontSize:9,color:t.txt2}}>Mensagem documentária · RO obrigatório</div>
+                </div>
+                <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+
+                {/* Motorista + Placas */}
+                <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700}}>Motorista</div>
+                    {telMot && <div style={{fontSize:9,color:t.txt2}}>📞 {telMot}</div>}
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3}}>{nomeMotorista||"—"}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
+                    {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:5,padding:"2px 8px"}}>{p}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Documentos */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  {[{l:"CTE",v:reg.cte},{l:"MDF",v:reg.mdf},{l:"MAT",v:reg.mat}].map(f=>(
+                    <div key={f.l} style={{background:t.card2,borderRadius:8,padding:"7px 9px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
+                      <div style={{fontSize:7,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
+                      <div style={{fontSize:11,fontWeight:700,color:f.v?t.txt:t.txt2}}>{f.v||"—"}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DT / NF / ID */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  {[{l:"DT",v:reg.dt},{l:"NF",v:reg.nf},{l:"ID",v:reg.id}].map(f=>(
+                    <div key={f.l} style={{background:t.card2,borderRadius:8,padding:"7px 9px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
+                      <div style={{fontSize:7,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1.5,color:t.ouro}}>{f.v||"—"}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* RO — obrigatório */}
+                <div>
+                  <label style={{...lbl2,color:roOk?t.verde:t.danger}}>RO — Registro de Ocorrência <span style={{color:t.danger}}>*obrigatório</span></label>
+                  <input value={wpp2Ro} onChange={e=>setWpp2Ro(e.target.value)} placeholder="Nº do Registro de Ocorrência" style={{...inpStyle2,border:`1.5px solid ${roOk?t.verde:t.danger}`,width:"100%",boxSizing:"border-box"}} />
+                  {!roOk && <div style={{fontSize:9,color:t.danger,marginTop:3}}>⚠️ Informe o número do RO para prosseguir</div>}
+                </div>
+
+                {/* OBS — opcional com memória */}
+                <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                    <label style={{...lbl2,margin:0,flex:1}}>OBS — Observação <span style={{color:t.txt2,fontSize:7}}>(opcional)</span></label>
+                    <button onClick={()=>setWpp2IncluirObs(v=>!v)} style={{background:wpp2IncluirObs?`rgba(2,192,118,.12)`:`rgba(128,128,128,.08)`,border:`1.5px solid ${wpp2IncluirObs?t.verde:t.borda}`,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:9,fontWeight:700,color:wpp2IncluirObs?t.verde:t.txt2,fontFamily:"inherit"}}>
+                      {wpp2IncluirObs?"✅ Incluir":"⬜ Incluir"}
+                    </button>
+                  </div>
+                  <textarea value={wpp2Obs} onChange={e=>setWpp2Obs(e.target.value)} rows={2} placeholder={wpp2Obs?"Última OBS salva — edite se necessário":"Digite uma observação..."}
+                    style={{...inpStyle2,resize:"vertical",lineHeight:1.5,width:"100%",boxSizing:"border-box",opacity:wpp2IncluirObs?1:.55}} />
+                  {!wpp2IncluirObs && wpp2Obs && (
+                    <div style={{fontSize:8,color:t.txt2,marginTop:3}}>💾 Última OBS salva — clique em "Incluir" para adicionar à mensagem</div>
+                  )}
+                </div>
+
+                {/* Preview da mensagem */}
+                <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
+                  <div style={{fontFamily:"monospace",fontSize:9,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>
+                    {`📄 DOCUMENTO\n────────────────\nMOT: ${nomeMotorista||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nPLACAS: ${placas}\n────────────────\nDT: ${reg.dt||"—"}  NF: ${reg.nf||"—"}  ID: ${reg.id||"—"}\nRO: ${wpp2Ro||"[obrigatório]"}${wpp2IncluirObs&&wpp2Obs?`\nOBS: ${wpp2Obs}`:""}\n────────────────\nYFGroup · Controle Operacional`}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Botão enviar */}
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
+                <button onClick={()=>setWppModal2(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={enviarDoc} disabled={!roOk} style={{flex:1,border:`1.5px solid ${roOk?"rgba(37,211,102,.4)":t.borda}`,borderRadius:10,padding:"12px 18px",cursor:roOk?"pointer":"not-allowed",background:roOk?`rgba(37,211,102,.15)`:`rgba(128,128,128,.08)`,color:roOk?"#25D366":t.txt2,fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                  📄 ENVIAR DOC NO WHATSAPP
                 </button>
               </div>
             </div>
