@@ -30,6 +30,7 @@ const themes = {
 //  CONSTANTS
 // ══════════════════════════════════════════════
 const TABLE = "controle_operacional";
+const TABLE_USUARIOS = "co_usuarios";
 const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const PERMS_PADRAO = {
   admin:{financeiro:true,editar:true,importar:true,dashboard:true,diarias:true,descarga:true,planilha:true,config_db:true,usuarios:true},
@@ -41,7 +42,14 @@ const PERMS_LISTA = [
   {key:"dashboard",lbl:"Dashboard"},{key:"diarias",lbl:"Diárias"},{key:"descarga",lbl:"Descarga"},
   {key:"planilha",lbl:"Planilha"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
 ];
-const SENHAS_PADRAO = {admin:"admin123",operador:"op123",visualizador:"view123"};
+
+// ── Admin fixo ──
+const ADMIN_EMAIL = "yvesfg@icloud.com";
+const ADMIN_SENHA_PADRAO = "YFGroup@2024";
+
+// ── Supabase padrão via variáveis de ambiente (Vite) ──
+const ENV_SUPA_URL = typeof import.meta !== "undefined" ? (import.meta.env?.VITE_SUPABASE_URL || "") : "";
+const ENV_SUPA_KEY = typeof import.meta !== "undefined" ? (import.meta.env?.VITE_SUPABASE_KEY || "") : "";
 
 // ══════════════════════════════════════════════
 //  HELPERS
@@ -180,47 +188,36 @@ function Toast({ msg, type, visible }) {
 }
 
 // ══════════════════════════════════════════════
-//  SENHAS MASTER SECTION (colapsável)
+//  ALTERAR SENHA ADMIN (colapsável)
 // ══════════════════════════════════════════════
-function SenhasMasterSection({ t, css, senhas, setSenhas, showToast }) {
+function AlterarSenhaAdmin({ t, css, showToast }) {
   const [open, setOpen] = React.useState(false);
-  const [vals, setVals] = React.useState({admin:"",operador:"",visualizador:""});
+  const [novaSenha, setNovaSenha] = React.useState("");
+  const [confirmar, setConfirmar] = React.useState("");
 
-  const salvar = async (perfil) => {
-    const v = vals[perfil].trim();
-    if (!v) { showToast("⚠️ Digite a nova senha","warn"); return; }
-    const hash = await hashSenha(v);
-    const ns = {...senhas,[perfil]:hash};
-    setSenhas(ns);
-    saveJSON("co_senhas", ns);
-    setVals(p=>({...p,[perfil]:""}));
-    showToast(`✅ Senha ${perfil} atualizada!`,"ok");
+  const salvar = async () => {
+    if (!novaSenha) { showToast("⚠️ Digite a nova senha","warn"); return; }
+    if (novaSenha.length < 6) { showToast("⚠️ Mínimo 6 caracteres","warn"); return; }
+    if (novaSenha !== confirmar) { showToast("❌ Senhas não conferem","err"); return; }
+    const hash = await hashSenha(novaSenha);
+    saveJSON("co_admin_senha", hash);
+    setNovaSenha(""); setConfirmar("");
+    showToast("✅ Senha do admin atualizada!","ok");
   };
 
   return (
     <>
       <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setOpen(!open)}>
-        🔑 Senhas Master <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{open?"▲":"▼"}</span>
+        🔑 Alterar Senha do Admin <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{open?"▲":"▼"}</span>
         <span style={{flex:1,height:1,background:t.borda}} />
       </div>
       {open && (
-        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
-          {["admin","operador","visualizador"].map(p => (
-            <div key={p} style={{...css.card,padding:12,display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:13,width:80,fontWeight:700,color:t.txt,textTransform:"capitalize"}}>{p==="admin"?"👑":p==="operador"?"⚙️":"👁️"} {p}</span>
-              <input
-                type="password"
-                placeholder="Nova senha..."
-                value={vals[p]}
-                onChange={e=>setVals(v=>({...v,[p]:e.target.value}))}
-                onKeyDown={e=>e.key==="Enter"&&salvar(p)}
-                style={{...css.inp,flex:1,padding:"8px 10px",fontSize:12}}
-              />
-              <button onClick={()=>salvar(p)} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"8px 12px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>
-                💾 Salvar
-              </button>
-            </div>
-          ))}
+        <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+          <input type="password" placeholder="Nova senha (mín. 6 caracteres)" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)} style={{...css.inp,fontSize:12}} />
+          <input type="password" placeholder="Confirmar nova senha" value={confirmar} onChange={e=>setConfirmar(e.target.value)} onKeyDown={e=>e.key==="Enter"&&salvar()} style={{...css.inp,fontSize:12}} />
+          <button onClick={salvar} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"10px 14px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+            💾 Salvar Nova Senha
+          </button>
         </div>
       )}
     </>
@@ -238,17 +235,15 @@ export default function App() {
   const [authed, setAuthed] = useState(false);
   const [perfil, setPerfil] = useState(null);
   const [perms, setPerms] = useState({});
-  const [authMode, setAuthMode] = useState("master");
-  const [perfilSel, setPerfilSel] = useState("admin");
   const [authEmail, setAuthEmail] = useState("");
   const [authSenha, setAuthSenha] = useState("");
   const [authMsg, setAuthMsg] = useState(null);
-  const [senhas, setSenhas] = useState(() => {
-    const raw = loadJSON("co_senhas", null);
-    if (raw?.admin && raw?.operador && raw?.visualizador) return raw;
-    return {...SENHAS_PADRAO};
-  });
-  const [usuarios, setUsuarios] = useState(() => loadJSON("co_usuarios",[]));
+  const [primeiroLogin, setPrimeiroLogin] = useState(false);
+  const [primLoginSenha, setPrimLoginSenha] = useState("");
+  const [primLoginSenha2, setPrimLoginSenha2] = useState("");
+  const [customLogo, setCustomLogo] = useState(() => loadJSON("co_custom_logo", null));
+  const [usuarioLogado, setUsuarioLogado] = useState(null); // nome do usuário logado
+  const [usuarios, setUsuarios] = useState(() => loadJSON("co_usuarios_local",[]));
 
   // Data state
   const [dadosBase, setDadosBase] = useState([]);
@@ -335,10 +330,14 @@ export default function App() {
     setTimeout(() => setToast(p => ({...p,visible:false})), 2800);
   }, []);
 
-  // Connection
+  // Connection — usa variáveis de ambiente como fallback automático
   const getConexao = useCallback(() => {
     const ativa = loadJSON("co_conexao_ativa",0);
-    return conexoes[ativa] || conexoes[0] || null;
+    const local = conexoes[ativa] || conexoes[0] || null;
+    if (local) return local;
+    // Fallback: variáveis de ambiente (VITE_SUPABASE_URL / VITE_SUPABASE_KEY)
+    if (ENV_SUPA_URL && ENV_SUPA_KEY) return {url: ENV_SUPA_URL, key: ENV_SUPA_KEY, name:"Padrão"};
+    return null;
   }, [conexoes]);
 
   // Sync
@@ -379,64 +378,119 @@ export default function App() {
     if (s?.perfil) {
       setPerfil(s.perfil);
       setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
+      setUsuarioLogado(s.nome || s.perfil);
       setAuthed(true);
     }
   }, []);
 
   // Sync on auth
   useEffect(() => {
-    if (authed && getConexao()) sincronizar();
+    if (authed && getConexao()) {
+      sincronizar();
+      syncUsuariosRemoto(); // Sincronizar usuários do Supabase ao logar
+    }
   }, [authed]);
 
   // Save theme
   useEffect(() => { saveJSON("co_theme", theme); }, [theme]);
 
+  // Sincronizar usuários do Supabase
+  const syncUsuariosRemoto = useCallback(async () => {
+    const conn = getConexao();
+    if (!conn) return;
+    try {
+      const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?select=*`);
+      if (Array.isArray(data)) {
+        setUsuarios(data);
+        saveJSON("co_usuarios_local", data);
+      }
+    } catch { /* silencioso */ }
+  }, [getConexao]);
+
   // Login handler
   const handleLogin = async () => {
     setAuthMsg(null);
+    const login = authEmail.trim().toLowerCase();
+    if (!login) { setAuthMsg({t:"err",m:"⚠️ Digite seu email"}); return; }
     if (!authSenha) { setAuthMsg({t:"err",m:"⚠️ Digite a senha"}); return; }
-    if (authMode === "master") {
-      const stored = senhas[perfilSel];
+
+    // ── Login ADMIN ──
+    if (login === ADMIN_EMAIL.toLowerCase() || login === "admin") {
+      const storedHash = loadJSON("co_admin_senha", null);
       let ok = false;
-      try { ok = await verificarSenha(authSenha, stored); } catch { ok = authSenha === stored; }
+      if (!storedHash) {
+        // Primeira vez: comparar com senha padrão em plain
+        ok = authSenha === ADMIN_SENHA_PADRAO;
+      } else {
+        try { ok = await verificarSenha(authSenha, storedHash); } catch { ok = authSenha === storedHash; }
+      }
       if (ok) {
-        const p = perfilSel;
-        const pm = {...PERMS_PADRAO[p]};
+        const p = "admin";
+        const pm = {...PERMS_PADRAO.admin};
         setPerfil(p); setPerms(pm); setAuthed(true);
-        saveJSON("co_sessao",{perfil:p,perms:pm,nome:p});
-        setAuthSenha("");
-      } else {
-        setAuthMsg({t:"err",m:`❌ Senha incorreta para ${perfilSel.toUpperCase()}`});
-        setAuthSenha("");
-      }
-    } else {
-      if (!authEmail) { setAuthMsg({t:"err",m:"⚠️ Digite seu email"}); return; }
-      let found = null;
-      for (const u of usuarios) {
-        if (u.email === authEmail) {
-          let m = false;
-          try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
-          if (m) { found = u; break; }
-        }
-      }
-      if (found) {
-        const p = found.perfil || "visualizador";
-        const pm = found.perms || {...PERMS_PADRAO[p]};
-        setPerfil(p); setPerms(pm); setAuthed(true);
-        saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome});
+        setUsuarioLogado("Admin");
+        saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin"});
         setAuthSenha(""); setAuthEmail("");
+        // Verificar primeiro login (senha ainda não foi alterada)
+        if (!storedHash) setPrimeiroLogin(true);
       } else {
-        const emailExists = usuarios.some(u => u.email === authEmail);
-        setAuthMsg({t:"err",m: emailExists ? "❌ Senha incorreta" : "❌ Email não encontrado"});
+        setAuthMsg({t:"err",m:"❌ Senha incorreta"});
         setAuthSenha("");
       }
+      return;
+    }
+
+    // ── Login USUÁRIO (busca local + Supabase) ──
+    // Primeiro tentar local, depois remoto
+    let listaUsuarios = [...usuarios];
+    const conn = getConexao();
+    if (conn) {
+      try {
+        const remote = await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(authEmail.trim())}&select=*`);
+        if (Array.isArray(remote) && remote.length > 0) {
+          listaUsuarios = [...listaUsuarios.filter(u => u.email !== authEmail.trim()), ...remote];
+        }
+      } catch { /* usar lista local */ }
+    }
+
+    let found = null;
+    for (const u of listaUsuarios) {
+      if ((u.email||"").toLowerCase() === login) {
+        let m = false;
+        try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
+        if (m) { found = u; break; }
+      }
+    }
+    if (found) {
+      const p = found.perfil || "visualizador";
+      const pm = found.perms || {...PERMS_PADRAO[p]};
+      setPerfil(p); setPerms(pm); setAuthed(true);
+      setUsuarioLogado(found.nome || found.email);
+      saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email});
+      setAuthSenha(""); setAuthEmail("");
+    } else {
+      const emailExists = listaUsuarios.some(u => (u.email||"").toLowerCase() === login);
+      setAuthMsg({t:"err",m: emailExists ? "❌ Senha incorreta" : "❌ Usuário não encontrado"});
+      setAuthSenha("");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("co_sessao");
     setAuthed(false); setPerfil(null); setPerms({});
-    setActiveTab("busca"); setAuthSenha("");
+    setActiveTab("busca"); setAuthSenha(""); setAuthEmail("");
+    setUsuarioLogado(null);
+  };
+
+  // Salvar nova senha no primeiro login
+  const handlePrimeiroLoginSalvar = async () => {
+    if (!primLoginSenha || primLoginSenha.length < 6) { showToast("⚠️ Senha deve ter ao menos 6 caracteres","warn"); return; }
+    if (primLoginSenha !== primLoginSenha2) { showToast("❌ Senhas não conferem","err"); return; }
+    const hash = await hashSenha(primLoginSenha);
+    saveJSON("co_admin_senha", hash);
+    setPrimeiroLogin(false);
+    setPrimLoginSenha(""); setPrimLoginSenha2("");
+    showToast("✅ Senha atualizada com sucesso!","ok");
   };
 
   // Search
@@ -660,7 +714,12 @@ export default function App() {
         <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px"}}>
           {theme==="dark"?"☀️":"🌙"}
         </button>
-        <div style={{width:72,height:72,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,marginBottom:12,boxShadow:"0 0 36px rgba(240,185,11,.35)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}}>🚛</div>
+
+        {/* Logo */}
+        {customLogo
+          ? <img src={customLogo} alt="Logo" style={{width:72,height:72,borderRadius:20,objectFit:"contain",marginBottom:12,boxShadow:"0 0 36px rgba(240,185,11,.35)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}} />
+          : <div style={{width:72,height:72,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,marginBottom:12,boxShadow:"0 0 36px rgba(240,185,11,.35)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}}>🚛</div>
+        }
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:4,color:t.txt,textAlign:"center"}}>CONTROLE OPERACIONAL</div>
         <div style={{fontSize:11,color:t.txt2,textAlign:"center",margin:"4px 0 18px"}}>YFGroup · Imperatriz</div>
 
@@ -671,37 +730,16 @@ export default function App() {
           </div>
 
           <div style={{padding:16}}>
-            {/* Mode tabs */}
-            <div style={{display:"flex",gap:6,marginBottom:14}}>
-              {[{k:"master",l:"🔑 Master"},{k:"user",l:"👤 Usuário"}].map(m => (
-                <button key={m.k} onClick={()=>setAuthMode(m.k)} style={{flex:1,border:`1.5px solid ${authMode===m.k?t.ouro:t.borda}`,borderRadius:8,padding:9,fontSize:10,fontWeight:700,cursor:"pointer",background:authMode===m.k?`rgba(240,185,11,.08)`:t.card2,color:authMode===m.k?t.ouro:t.txt2,letterSpacing:.5,textTransform:"uppercase",fontFamily:"inherit"}}>{m.l}</button>
-              ))}
+            {/* Email/Login */}
+            <div style={{marginBottom:12}}>
+              <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Email</label>
+              <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="seu@email.com" style={css.inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()} autoComplete="username" />
             </div>
 
-            {/* Role tabs (master mode) */}
-            {authMode === "master" && (
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:14}}>
-                {[{k:"admin",ico:"👑",l:"Admin"},{k:"operador",ico:"⚙️",l:"Operador"},{k:"visualizador",ico:"👁️",l:"Visual."}].map(r => (
-                  <div key={r.k} onClick={()=>setPerfilSel(r.k)} style={{border:`1.5px solid ${perfilSel===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"9px 6px",cursor:"pointer",background:perfilSel===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s"}}>
-                    <span style={{fontSize:16}}>{r.ico}</span>
-                    <span style={{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:perfilSel===r.k?t.ouro:t.txt2}}>{r.l}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Email field (user mode) */}
-            {authMode === "user" && (
-              <div style={{marginBottom:12}}>
-                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Email</label>
-                <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="seu@email.com" style={css.inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()} />
-              </div>
-            )}
-
             {/* Password */}
-            <div style={{marginBottom:14}}>
+            <div style={{marginBottom:16}}>
               <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Senha</label>
-              <input type="password" value={authSenha} onChange={e=>setAuthSenha(e.target.value)} placeholder="Digite sua senha..." style={css.inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()} />
+              <input type="password" value={authSenha} onChange={e=>setAuthSenha(e.target.value)} placeholder="Digite sua senha..." style={css.inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()} autoComplete="current-password" />
             </div>
 
             <button onClick={handleLogin} style={{...css.btnGold,width:"100%",justifyContent:"center",padding:14,fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>🔓 ENTRAR</button>
@@ -710,6 +748,44 @@ export default function App() {
               <div style={{padding:"10px 12px",borderRadius:8,fontSize:12,fontWeight:600,textAlign:"center",marginTop:8,lineHeight:1.5,background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
             )}
           </div>
+        </div>
+        <Toast {...toast} />
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════
+  //  MODAL PRIMEIRO LOGIN (troca de senha + logo)
+  // ══════════════════════════════════════════════
+  if (primeiroLogin) {
+    return (
+      <div style={{...css.app, background:t.gradientAuth, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}input::placeholder{color:${t.txt2}}`}</style>
+        <div style={{width:64,height:64,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,marginBottom:14,boxShadow:"0 0 30px rgba(240,185,11,.35)"}}>🔑</div>
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:3,color:t.txt,marginBottom:4}}>PRIMEIRO ACESSO</div>
+        <div style={{fontSize:11,color:t.txt2,marginBottom:20,textAlign:"center"}}>Configure sua senha de administrador e, opcionalmente, sua logo.</div>
+
+        <div style={{width:"100%",maxWidth:360,...css.card,boxShadow:`0 24px 60px ${t.shadow}`,padding:18,display:"flex",flexDirection:"column",gap:14}}>
+          <div>
+            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Nova Senha *</label>
+            <input type="password" value={primLoginSenha} onChange={e=>setPrimLoginSenha(e.target.value)} placeholder="Mínimo 6 caracteres" style={css.inp} />
+          </div>
+          <div>
+            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Confirmar Senha *</label>
+            <input type="password" value={primLoginSenha2} onChange={e=>setPrimLoginSenha2(e.target.value)} placeholder="Repita a senha" style={css.inp} onKeyDown={e=>e.key==="Enter"&&handlePrimeiroLoginSalvar()} />
+          </div>
+          <div>
+            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Logo da Empresa (opcional)</label>
+            <input type="file" accept="image/*" onChange={e=>{
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const reader = new FileReader();
+              reader.onload = ev => { const b64 = ev.target.result; setCustomLogo(b64); saveJSON("co_custom_logo", b64); };
+              reader.readAsDataURL(f);
+            }} style={{...css.inp,padding:"7px 10px",fontSize:11}} />
+            {customLogo && <img src={customLogo} alt="preview" style={{width:60,height:60,objectFit:"contain",borderRadius:10,marginTop:8,border:`1px solid ${t.borda}`}} />}
+          </div>
+          <button onClick={handlePrimeiroLoginSalvar} style={{...css.btnGold,justifyContent:"center",padding:13,fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>✅ CONFIRMAR E ENTRAR</button>
         </div>
         <Toast {...toast} />
       </div>
@@ -757,7 +833,7 @@ export default function App() {
             perfil==="admin"?t.ouro:perfil==="operador"?t.txt2:t.azulLt,
             perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
             perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
-          )}>{perfil==="admin"?"👑 ADMIN":perfil==="operador"?"⚙️ OP":"👁️ VIEW"}</span>
+          )} title={usuarioLogado||perfil}>{perfil==="admin"?"👑 ADMIN":perfil==="operador"?`⚙️ ${(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}`:`👁️ ${(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}`}</span>
 
           <button onClick={sincronizar} style={css.hBtn}>
             <span style={{width:6,height:6,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.borda,boxShadow:connStatus==="online"?`0 0 5px rgba(2,192,118,.6)`:"none",flexShrink:0}} />
@@ -873,7 +949,24 @@ export default function App() {
                         const idx = DADOS.findIndex(r=>r.dt===buscaResult.dt);
                         setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
                       }} style={{...css.btnGold,justifyContent:"center",padding:11}}>✏️ EDITAR</button>
-                      <button style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(37,211,102,.1)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase"}}>📲 WHATSAPP</button>
+                      <button onClick={()=>{
+                        // Buscar telefone no cadastro de motoristas
+                        const mot = motoristas.find(m =>
+                          (buscaResult.nome && m.nome === buscaResult.nome) ||
+                          [m.placa1,m.placa2,m.placa3,m.placa4].includes(buscaResult.placa)
+                        );
+                        const tel = (mot?.tel || buscaResult.tel || "").replace(/\D/g,"");
+                        const nome = buscaResult.nome || "Motorista";
+                        const dt = buscaResult.dt || "";
+                        const placa = buscaResult.placa || "—";
+                        const agenda = buscaResult.data_agenda || "—";
+                        const origem = buscaResult.origem || "—";
+                        const destino = buscaResult.destino || "—";
+                        const msg = encodeURIComponent(`Olá ${nome}!\nDT: ${dt} | Placa: ${placa}\nRota: ${origem} → ${destino}\nAgenda descarga: ${agenda}\n\nYFGroup · Controle Operacional`);
+                        const url = tel ? `https://wa.me/55${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+                        window.open(url, "_blank");
+                        if (!tel) showToast("⚠️ Motorista sem telefone cadastrado","warn");
+                      }} style={{border:"none",borderRadius:10,padding:11,cursor:"pointer",background:`rgba(37,211,102,.1)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:11,letterSpacing:.5,textTransform:"uppercase"}}>📲 WHATSAPP</button>
                     </div>
                   )}
                 </div>
@@ -1416,8 +1509,8 @@ function mapearColuna(n){
               </div>
             )}
 
-            {/* Senhas Master */}
-            <SenhasMasterSection t={t} css={css} senhas={senhas} setSenhas={setSenhas} showToast={showToast} />
+            {/* Alterar senha do Admin */}
+            <AlterarSenhaAdmin t={t} css={css} showToast={showToast} />
           </div>
         )}
       </div>
@@ -1500,6 +1593,102 @@ function mapearColuna(n){
                 if (editIdx>=0) nm[editIdx] = m; else nm.push(m);
                 saveMotoristasLS(nm);
                 showToast(editIdx>=0?"✅ Atualizado!":"✅ Cadastrado!","ok");
+                setModalOpen(null);
+              }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ USUARIO MODAL ═══ */}
+      {modalOpen === "usuario" && (
+        <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
+          <div style={css.modal}>
+            <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>👤</div>
+              <div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} USUÁRIO</div>
+                <div style={{fontSize:9,color:t.txt2}}>Preencha os dados do usuário</div>
+              </div>
+              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:16}}>
+              {/* Dados básicos */}
+              {[{k:"nome",l:"Nome Completo",req:true},{k:"email",l:"Email",req:true,type:"email"},{k:"tel",l:"Telefone"}].map(f => (
+                <div key={f.k} style={{marginBottom:12}}>
+                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
+                  <input type={f.type||"text"} value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} style={css.inp} />
+                </div>
+              ))}
+              {/* Senha */}
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>
+                  Senha{editIdx<0&&<span style={{color:t.danger}}> *</span>}
+                  {editIdx>=0&&<span style={{color:t.txt2,fontWeight:400,textTransform:"none"}}> (deixe em branco para manter)</span>}
+                </label>
+                <input type="password" value={formData._senhaPlain||""} onChange={e=>setFormData(p=>({...p,_senhaPlain:e.target.value}))} placeholder={editIdx>=0?"Nova senha (opcional)":"Mínimo 6 caracteres"} style={css.inp} />
+              </div>
+              {/* Perfil */}
+              <div style={{marginBottom:14}}>
+                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Perfil</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {[{k:"operador",ico:"⚙️",l:"Operador"},{k:"visualizador",ico:"👁️",l:"Visualizador"}].map(r => (
+                    <div key={r.k} onClick={()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}}))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",alignItems:"center",gap:8,transition:"all .2s"}}>
+                      <span style={{fontSize:18}}>{r.ico}</span>
+                      <span style={{fontSize:11,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Permissões */}
+              <div>
+                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:8}}>Permissões</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {PERMS_LISTA.filter(p=>p.key!=="config_db"&&p.key!=="usuarios").map(p => {
+                    const val = (formData.perms||PERMS_PADRAO[formData.perfil||"operador"])[p.key];
+                    return (
+                      <div key={p.key} onClick={()=>setFormData(prev=>({...prev,perms:{...(prev.perms||PERMS_PADRAO[prev.perfil||"operador"]),[p.key]:!val}}))}
+                        style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:`1px solid ${val?t.verde:t.borda}`,cursor:"pointer",background:val?`rgba(2,192,118,.06)`:"transparent"}}>
+                        <div style={{width:16,height:16,borderRadius:4,background:val?t.verde:t.borda2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+                          {val&&<span style={{fontSize:10,color:"#fff",fontWeight:700}}>✓</span>}
+                        </div>
+                        <span style={{fontSize:11,fontWeight:600,color:val?t.txt:t.txt2}}>{p.lbl}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8,padding:"10px 16px 18px",flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
+              <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+              <button onClick={async ()=>{
+                const u = {...formData};
+                if (!u.nome) { showToast("⚠️ Nome obrigatório","warn"); return; }
+                if (!u.email) { showToast("⚠️ Email obrigatório","warn"); return; }
+                if (editIdx<0 && !u._senhaPlain) { showToast("⚠️ Senha obrigatória","warn"); return; }
+                if (u._senhaPlain) {
+                  if (u._senhaPlain.length < 6) { showToast("⚠️ Senha deve ter ao menos 6 caracteres","warn"); return; }
+                  u.senha = await hashSenha(u._senhaPlain);
+                }
+                delete u._senhaPlain;
+                if (!u.perfil) u.perfil = "operador";
+                if (!u.perms) u.perms = {...PERMS_PADRAO[u.perfil]};
+                const nu = [...usuarios];
+                if (editIdx>=0) nu[editIdx] = u; else nu.push(u);
+                setUsuarios(nu);
+                saveJSON("co_usuarios_local", nu);
+                // Salvar no Supabase
+                const conn = getConexao();
+                if (conn) {
+                  try {
+                    await supaFetch(conn.url, conn.key, "POST", `${TABLE_USUARIOS}?on_conflict=email`, [u]);
+                    showToast(editIdx>=0?"✅ Usuário atualizado!":"✅ Usuário criado!","ok");
+                  } catch(e) {
+                    showToast("✅ Salvo local. Supabase: "+e.message.slice(0,40),"warn");
+                  }
+                } else {
+                  showToast(editIdx>=0?"✅ Usuário atualizado!":"✅ Usuário criado!","ok");
+                }
                 setModalOpen(null);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
             </div>
