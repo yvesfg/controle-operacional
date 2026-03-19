@@ -31,16 +31,23 @@ const themes = {
 // ══════════════════════════════════════════════
 const TABLE = "controle_operacional";
 const TABLE_USUARIOS = "co_usuarios";
+const TABLE_CONFIG   = "co_config";
+const TABLE_OCORR    = "co_ocorrencias";
 const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const PERMS_PADRAO = {
-  admin:{financeiro:true,editar:true,importar:true,dashboard:true,diarias:true,descarga:true,planilha:true,config_db:true,usuarios:true},
-  operador:{financeiro:false,editar:true,importar:true,dashboard:true,diarias:true,descarga:true,planilha:true,config_db:false,usuarios:false},
-  visualizador:{financeiro:false,editar:false,importar:false,dashboard:true,diarias:true,descarga:true,planilha:true,config_db:false,usuarios:false},
+  // ── Admin: acesso total ──
+  admin:      {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:true,  usuarios:true,  ocorrencias:true },
+  // ── Gerente: vê financeiro, edita tudo operacional, sem config de sistema ──
+  gerente:    {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true },
+  // ── Operador: edita operacional, sem financeiro nem config ──
+  operador:   {financeiro:false,editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true },
+  // ── Visualizador: somente leitura ──
+  visualizador:{financeiro:false,editar:false,importar:false,dashboard:true,diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:false},
 };
 const PERMS_LISTA = [
   {key:"financeiro",lbl:"Financeiro"},{key:"editar",lbl:"Editar"},{key:"importar",lbl:"Importar"},
   {key:"dashboard",lbl:"Dashboard"},{key:"diarias",lbl:"Diárias"},{key:"descarga",lbl:"Descarga"},
-  {key:"planilha",lbl:"Planilha"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
+  {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
 ];
 
 // ── Admin fixo ──
@@ -190,7 +197,7 @@ function Toast({ msg, type, visible }) {
 // ══════════════════════════════════════════════
 //  ALTERAR SENHA ADMIN (colapsável)
 // ══════════════════════════════════════════════
-function AlterarSenhaAdmin({ t, css, showToast }) {
+function AlterarSenhaAdmin({ t, css, showToast, onSalvar }) {
   const [open, setOpen] = React.useState(false);
   const [novaSenha, setNovaSenha] = React.useState("");
   const [confirmar, setConfirmar] = React.useState("");
@@ -201,8 +208,9 @@ function AlterarSenhaAdmin({ t, css, showToast }) {
     if (novaSenha !== confirmar) { showToast("❌ Senhas não conferem","err"); return; }
     const hash = await hashSenha(novaSenha);
     saveJSON("co_admin_senha", hash);
+    if (onSalvar) await onSalvar(hash); // ← salva no Supabase via callback
     setNovaSenha(""); setConfirmar("");
-    showToast("✅ Senha do admin atualizada!","ok");
+    showToast("✅ Senha atualizada e sincronizada!","ok");
   };
 
   return (
@@ -261,6 +269,7 @@ export default function App() {
   const [buscaTipo, setBuscaTipo] = useState("dt");
   const [buscaInput, setBuscaInput] = useState("");
   const [buscaResult, setBuscaResult] = useState(null);
+  const [buscaRelacionados, setBuscaRelacionados] = useState([]);
   const [buscaError, setBuscaError] = useState(null);
   const [historico, setHistorico] = useState(() => loadJSON("hist",[]));
 
@@ -394,6 +403,24 @@ export default function App() {
   // Save theme
   useEffect(() => { saveJSON("co_theme", theme); }, [theme]);
 
+  // ── Helpers para co_config no Supabase ──
+  const getConfigRemoto = useCallback(async (key) => {
+    const conn = getConexao();
+    if (!conn) return null;
+    try {
+      const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_CONFIG}?key=eq.${key}&select=value`);
+      return Array.isArray(data) && data.length > 0 ? data[0].value : null;
+    } catch { return null; }
+  }, [getConexao]);
+
+  const setConfigRemoto = useCallback(async (key, value) => {
+    const conn = getConexao();
+    if (!conn) return;
+    try {
+      await supaFetch(conn.url, conn.key, "POST", `${TABLE_CONFIG}?on_conflict=key`, [{key, value, updated_at: new Date().toISOString()}]);
+    } catch { /* silencioso */ }
+  }, [getConexao]);
+
   // Sincronizar usuários do Supabase
   const syncUsuariosRemoto = useCallback(async () => {
     const conn = getConexao();
@@ -416,10 +443,17 @@ export default function App() {
 
     // ── Login ADMIN ──
     if (login === ADMIN_EMAIL.toLowerCase() || login === "admin") {
-      const storedHash = loadJSON("co_admin_senha", null);
+      // Buscar hash do Supabase primeiro (sincroniza entre dispositivos),
+      // fallback para localStorage
+      let storedHash = await getConfigRemoto("admin_senha_hash");
+      if (storedHash) {
+        saveJSON("co_admin_senha", storedHash); // atualiza local
+      } else {
+        storedHash = loadJSON("co_admin_senha", null);
+      }
+
       let ok = false;
       if (!storedHash) {
-        // Primeira vez: comparar com senha padrão em plain
         ok = authSenha === ADMIN_SENHA_PADRAO;
       } else {
         try { ok = await verificarSenha(authSenha, storedHash); } catch { ok = authSenha === storedHash; }
@@ -431,7 +465,6 @@ export default function App() {
         setUsuarioLogado("Admin");
         saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin"});
         setAuthSenha(""); setAuthEmail("");
-        // Verificar primeiro login (senha ainda não foi alterada)
         if (!storedHash) setPrimeiroLogin(true);
       } else {
         setAuthMsg({t:"err",m:"❌ Senha incorreta"});
@@ -482,38 +515,72 @@ export default function App() {
     setUsuarioLogado(null);
   };
 
-  // Salvar nova senha no primeiro login
+  // Salvar nova senha no primeiro login (local + Supabase)
   const handlePrimeiroLoginSalvar = async () => {
     if (!primLoginSenha || primLoginSenha.length < 6) { showToast("⚠️ Senha deve ter ao menos 6 caracteres","warn"); return; }
     if (primLoginSenha !== primLoginSenha2) { showToast("❌ Senhas não conferem","err"); return; }
     const hash = await hashSenha(primLoginSenha);
     saveJSON("co_admin_senha", hash);
+    await setConfigRemoto("admin_senha_hash", hash); // ← sincroniza todos os dispositivos
     setPrimeiroLogin(false);
     setPrimLoginSenha(""); setPrimLoginSenha2("");
-    showToast("✅ Senha atualizada com sucesso!","ok");
+    showToast("✅ Senha atualizada e sincronizada!","ok");
   };
 
   // Search
   const buscar = () => {
-    setBuscaResult(null); setBuscaError(null);
+    setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
     const v = buscaInput.trim();
     if (!v) return;
     let found = null;
+    let relacionados = [];
+
     if (buscaTipo === "dt") {
       const c = v.replace(/\D/g,"");
       found = DADOS.find(r => r.dt?.replace(/\D/g,"") === c || dtBase(r.dt)?.replace(/\D/g,"") === c);
+      if (found) {
+        // Buscar outros registros com mesmo CPF ou mesma Placa
+        const cpfN = found.cpf?.replace(/\D/g,"");
+        const placaN = found.placa?.toUpperCase().replace(/\W/g,"");
+        relacionados = DADOS.filter(r =>
+          r.dt !== found.dt && (
+            (cpfN && r.cpf?.replace(/\D/g,"") === cpfN) ||
+            (placaN && r.placa?.toUpperCase().replace(/\W/g,"") === placaN)
+          )
+        ).sort((a,b) => {
+          const da = parseData(a.data_carr), db = parseData(b.data_carr);
+          return da && db ? db - da : 0; // mais recente primeiro
+        });
+      }
     } else if (buscaTipo === "cpf") {
-      found = DADOS.find(r => r.cpf?.replace(/\D/g,"") === v.replace(/\D/g,""));
+      const cpfN = v.replace(/\D/g,"");
+      const todos = DADOS.filter(r => r.cpf?.replace(/\D/g,"") === cpfN)
+        .sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
+      found = todos[0] || null;
+      relacionados = todos.slice(1);
     } else {
-      found = DADOS.find(r => r.placa?.toUpperCase().replace(/\W/g,"") === v.toUpperCase().replace(/\W/g,""));
+      const placaN = v.toUpperCase().replace(/\W/g,"");
+      const todos = DADOS.filter(r => r.placa?.toUpperCase().replace(/\W/g,"") === placaN)
+        .sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
+      found = todos[0] || null;
+      relacionados = todos.slice(1);
     }
+
     if (found) {
       setBuscaResult(found);
+      setBuscaRelacionados(relacionados);
       const newH = [{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);
       setHistorico(newH);
       saveJSON("hist",newH);
     } else {
-      setBuscaError(v);
+      // CPF/Placa não achou registro — checar se existe em dados com info parcial
+      if (buscaTipo === "cpf") {
+        const cpfN = v.replace(/\D/g,"");
+        const temCpf = DADOS.some(r => r.cpf?.replace(/\D/g,"") === cpfN);
+        setBuscaError(temCpf ? `__cpf_sem_dt__${v}` : v);
+      } else {
+        setBuscaError(v);
+      }
     }
   };
 
@@ -943,6 +1010,40 @@ export default function App() {
                       <div style={{textAlign:"center"}}><div style={{fontSize:8,textTransform:"uppercase",color:t.txt2,fontWeight:600,marginBottom:2}}>Adiant.</div><div style={{fontSize:11,fontWeight:700,color:t.ouro}}>{fmtMoeda(buscaResult.adiant)}</div></div>
                     </div>
                   )}
+                  {/* ── Banner: Motorista não cadastrado ── */}
+                  {(() => {
+                    const cpfN = buscaResult.cpf?.replace(/\D/g,"");
+                    const placaN = buscaResult.placa?.toUpperCase().replace(/\W/g,"");
+                    const motCadastrado = motoristas.find(m =>
+                      (cpfN && m.cpf?.replace(/\D/g,"") === cpfN) ||
+                      [m.placa1,m.placa2,m.placa3,m.placa4].some(p => p && p.toUpperCase().replace(/\W/g,"") === placaN)
+                    );
+                    if (motCadastrado) return null;
+                    return (
+                      <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
+                        <span style={{fontSize:18,flexShrink:0}}>⚠️</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,fontWeight:700,color:t.ouro}}>Motorista não cadastrado</div>
+                          <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Este motorista não está no cadastro. Deseja cadastrar?</div>
+                        </div>
+                        {canEdit && (
+                          <button onClick={()=>{
+                            setFormData({
+                              nome: buscaResult.nome || "",
+                              cpf: buscaResult.cpf || "",
+                              placa1: buscaResult.placa || "",
+                              vinculo: buscaResult.vinculo || "",
+                            });
+                            setEditIdx(-1);
+                            setModalOpen("motorista");
+                          }} style={{background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"7px 11px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",flexShrink:0}}>
+                            ＋ Cadastrar
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {canEdit && (
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                       <button onClick={()=>{
@@ -973,8 +1074,58 @@ export default function App() {
               </div>
             )}
 
+            {/* ── Outros registros (mesmo CPF / mesma Placa) ── */}
+            {buscaResult && buscaRelacionados.length > 0 && (
+              <div style={{marginTop:12,animation:"slideUp .3s"}}>
+                <div style={{...css.secTitle,marginBottom:8}}>
+                  {buscaTipo==="cpf"?"🪪 Outros DTs com este CPF":buscaTipo==="placa"?"🚛 Outros DTs com esta Placa":"📋 Outros registros (mesmo CPF / Placa)"}
+                  <span style={{flex:1,height:1,background:t.borda}} />
+                  <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{buscaRelacionados.length} registro{buscaRelacionados.length>1?"s":""}</span>
+                </div>
+                {buscaRelacionados.slice(0,10).map((r,i) => {
+                  const statusC = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.txt2;
+                  const statusL = r.data_desc ? "✅ Descarregado" : r.data_agenda ? "⏳ Aguardando" : "—";
+                  return (
+                    <div key={i} onClick={()=>{
+                      setBuscaInput(r.dt);
+                      setBuscaTipo("dt");
+                      setTimeout(()=>{
+                        setBuscaResult(r);
+                        // recalcular relacionados
+                        const cpfN = r.cpf?.replace(/\D/g,"");
+                        const placaN = r.placa?.toUpperCase().replace(/\W/g,"");
+                        const rel = DADOS.filter(x =>
+                          x.dt !== r.dt && (
+                            (cpfN && x.cpf?.replace(/\D/g,"") === cpfN) ||
+                            (placaN && x.placa?.toUpperCase().replace(/\W/g,"") === placaN)
+                          )
+                        ).sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
+                        setBuscaRelacionados(rel);
+                      }, 0);
+                    }} style={{background:t.card,borderRadius:10,padding:"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
+                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde}}>{r.placa||""}</span>
+                        </div>
+                        <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap"}}>
+                          <span>📦 {r.data_carr||"—"}</span>
+                          <span>📅 {r.data_agenda||"—"}</span>
+                          <span style={{color:statusC,fontWeight:600}}>{statusL}</span>
+                        </div>
+                      </div>
+                      <span style={{color:t.txt2,fontSize:14,flexShrink:0}}>›</span>
+                    </div>
+                  );
+                })}
+                {buscaRelacionados.length > 10 && (
+                  <div style={{fontSize:10,color:t.txt2,textAlign:"center",padding:"6px 0"}}>… e mais {buscaRelacionados.length-10} registro(s)</div>
+                )}
+              </div>
+            )}
+
             {/* Error */}
-            {buscaError && (
+            {buscaError && !buscaError.startsWith("__cpf_sem_dt__") && (
               <div style={{...css.card,padding:"24px 16px",textAlign:"center",borderTop:`3px solid ${t.danger}`,animation:"slideUp .3s"}}>
                 <div style={{fontSize:30,marginBottom:10}}>❌</div>
                 <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.danger,marginBottom:5}}>NÃO ENCONTRADO</h3>
@@ -1510,7 +1661,7 @@ function mapearColuna(n){
             )}
 
             {/* Alterar senha do Admin */}
-            <AlterarSenhaAdmin t={t} css={css} showToast={showToast} />
+            <AlterarSenhaAdmin t={t} css={css} showToast={showToast} onSalvar={hash=>setConfigRemoto("admin_senha_hash",hash)} />
           </div>
         )}
       </div>
@@ -1631,11 +1782,16 @@ function mapearColuna(n){
               {/* Perfil */}
               <div style={{marginBottom:14}}>
                 <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Perfil</label>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                  {[{k:"operador",ico:"⚙️",l:"Operador"},{k:"visualizador",ico:"👁️",l:"Visualizador"}].map(r => (
-                    <div key={r.k} onClick={()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}}))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"10px 8px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",alignItems:"center",gap:8,transition:"all .2s"}}>
-                      <span style={{fontSize:18}}>{r.ico}</span>
-                      <span style={{fontSize:11,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  {[
+                    {k:"gerente",    ico:"👔",l:"Gerente",    desc:"Financeiro + edita tudo"},
+                    {k:"operador",   ico:"⚙️",l:"Operador",  desc:"Edita operacional"},
+                    {k:"visualizador",ico:"👁️",l:"Visual.",  desc:"Somente leitura"},
+                  ].map(r => (
+                    <div key={r.k} onClick={()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}}))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
+                      <span style={{fontSize:16}}>{r.ico}</span>
+                      <span style={{fontSize:10,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
+                      <span style={{fontSize:8,color:t.txt2,lineHeight:1.2}}>{r.desc}</span>
                     </div>
                   ))}
                 </div>
