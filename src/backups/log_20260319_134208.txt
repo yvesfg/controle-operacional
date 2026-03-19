@@ -1,0 +1,69 @@
+================================================================================
+LOG DE ALTERAÇÕES — controle-operacional / App.jsx
+DATA/HORA : 2026-03-19 13:42:08
+ARQUIVO   : App.jsx.bckp_20260319_134208
+================================================================================
+
+── SOLICITAÇÕES DO USUÁRIO ──────────────────────────────────────────────────────
+
+  01  ADMIN CONTATOS — IMPORTAR CSV GOOGLE OU VCARD COM SEGURANÇA
+      - Deve existir opção de importar CSV (formato Google Contacts) ou vCard (.vcf)
+      - Ao importar: comparar com existentes e mostrar conflitos
+      - Para cada conflito: opção de manter o enviado ou o anterior
+      - Para grandes volumes: exigir que o usuário escreva "ESTOU DE ACORDO"
+        tanto para importar como para exportar — mais segurança
+
+  02  CARDS DIÁRIAS / DESCARGAS — MOSTRAR NÚMERO DA RO
+      - Nos cards das abas Diárias e Descargas, exibir o número da RO
+      - Campo "ro" adicionado ao formulário de edição (Documentação)
+      - Campo "mat" (MAT) também adicionado ao formulário
+
+  03  SEGUNDO BOTÃO WHATSAPP COM DADOS DOCUMENTAIS
+      - Novo botão ao lado do WhatsApp existente com formato diferente:
+          MOT: Nome motorista (buscado nos dados do cadastro)
+          CTE:
+          MDF:
+          MAT:
+          PLACAS:
+          DT:  NF:  ID:  RO: ← RO sempre obrigatório
+          OBS: perguntar se quer incluir, lembrando o último valor preenchido
+               ou permitir seleção do que deseja enviar
+
+── O QUE FOI IMPLEMENTADO ───────────────────────────────────────────────────────
+
+  01  ✅ ADMIN CONTATOS — IMPORTAR COM SEGURANÇA
+      - Novo estado motImportOpen para abrir painel de importação
+      - Parse de CSV Google Contacts (formato padrão com colunas Name, Phone...)
+      - Parse de vCard (.vcf) multi-contato
+      - Comparação automática: agrupa em Novos / Conflitos (mesmo nome ou placa)
+      - Conflitos exibem lado a lado (atual vs importado) com radio "Manter atual"
+        ou "Usar importado"
+      - Operações com muitos contatos (≥5) exigem confirmação digitando
+        "ESTOU DE ACORDO" antes de prosseguir
+      - Exportar vCard e CSV Google também pedem "ESTOU DE ACORDO" quando há
+        ≥5 contatos exportados
+
+  02  ✅ CARDS RO
+      - Novo campo `ro` (Registro de Ocorrência) e `mat` (MAT) adicionados à
+        seção Documentação do formulário de edição
+      - Nos cards de Diárias (modo linhas + blocos) e Descargas (linhas + blocos):
+        se r.ro existir, exibido como chip destacado em laranja
+      - Atualizado DEV_CHANGELOG para incluir sessão 4
+
+  03  ✅ SEGUNDO BOTÃO WHATSAPP
+      - Novo estado wppModal2 + wpp2Ro + wpp2Obs + wpp2IncluirObs
+      - Modal "📄 DOC WPP" com formato documentário:
+          MOT / CTE / MDF / MAT / PLACAS / DT · NF · ID · RO / OBS (opcional)
+      - RO campo obrigatório — bloqueia envio se vazio
+      - OBS: checkbox "Incluir observação?" + textarea; ao abrir, sugere o último
+        valor salvo em localStorage (co_wpp2_obs_last); ao enviar, persiste o
+        novo valor
+      - Botão "📄 DOC" ao lado do "📲 WHATSAPP" na tela de busca
+
+── ARQUIVO DE BACKUP ────────────────────────────────────────────────────────────
+  Localização : src/backups/App.jsx.bckp_20260319_134208
+  Linhas (antes das alterações) : 3125
+
+================================================================================
+FIM DO LOG
+================================================================================
