@@ -33,6 +33,7 @@ const TABLE = "controle_operacional";
 const TABLE_USUARIOS = "co_usuarios";
 const TABLE_CONFIG   = "co_config";
 const TABLE_OCORR    = "co_ocorrencias";
+const TABLE_LOGS     = "co_logs_alteracoes";
 const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const PERMS_PADRAO = {
   // ── Admin: acesso total ──
@@ -291,14 +292,39 @@ export default function App() {
   const [descargaCols, setDescargaCols] = useState(() => loadJSON("co_descarga_cols", 2));
 
   // Modal state
-  const [modalOpen, setModalOpen] = useState(null); // 'edit' | 'motorista' | 'usuario' | 'wa' | 'import' | 'configdb'
+  const [modalOpen, setModalOpen] = useState(null); // 'edit'|'motorista'|'usuario'|'configdb'|'detalhe'
   const [editIdx, setEditIdx] = useState(-1);
   const [editStep, setEditStep] = useState(1);
   const [formData, setFormData] = useState({});
 
+  // Detalhe / Ocorrências
+  const [detalheDT, setDetalheDT] = useState(null);       // registro aberto no modal
+  const [ocorrencias, setOcorrencias] = useState([]);      // lista de ocorrências do DT atual
+  const [novaOcorr, setNovaOcorr] = useState("");
+  const [novaOcorrTipo, setNovaOcorrTipo] = useState("info"); // info | alerta | status
+  const [ocorrLoading, setOcorrLoading] = useState(false);
+
+  // Item 4 - Acompanhamento dia a dia da DT
+  const [acompDias, setAcompDias] = useState([]);
+  const [acompDiaSel, setAcompDiaSel] = useState(null);
+  const [acompTexto, setAcompTexto] = useState("");
+  const [acompImagens, setAcompImagens] = useState([]);
+
   // Alerts
   const [alertasOpen, setAlertasOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
+
+  // Item 7 — Email template e envio
+  const [emailTemplateOpen, setEmailTemplateOpen] = useState(false);
+  const [emailTemplate, setEmailTemplate] = useState(() => loadJSON("co_email_template", {
+    assunto: "Bem-vindo ao Controle Operacional — YFGroup",
+    corpo: `Olá {nome},\n\nSeu acesso ao sistema de Controle Operacional da YFGroup foi criado com sucesso!\n\nSeus dados de acesso:\n- Email: {email}\n- Senha temporária: {senha}\n- Perfil: {perfil}\n\nAcesse o sistema em: https://controle-operacional-omega.vercel.app\n\nRecomendamos trocar sua senha no primeiro acesso.\n\nAtenciosamente,\nAdministração — YFGroup`,
+  }));
+  const [usuarioEmailPreview, setUsuarioEmailPreview] = useState(null);
+
+  // Item 8 — Log de alterações
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [logsData, setLogsData] = useState([]);
 
   // Chart refs
   const chartCarregRef = useRef(null);
@@ -421,6 +447,61 @@ export default function App() {
     } catch { /* silencioso */ }
   }, [getConexao]);
 
+  // ── Log de alterações (Item 8) ──
+  const registrarLog = useCallback(async (acao, descricao, dados_antes = null, dados_depois = null) => {
+    const conn = getConexao();
+    const entrada = {
+      data_hora: new Date().toISOString(),
+      usuario: usuarioLogado || perfil || "sistema",
+      perfil_usuario: perfil || "desconhecido",
+      acao,
+      descricao,
+      dados_antes: dados_antes ? JSON.stringify(dados_antes) : null,
+      dados_depois: dados_depois ? JSON.stringify(dados_depois) : null,
+    };
+    // Salva local como fallback
+    const logsLocal = loadJSON("co_logs_local", []);
+    logsLocal.unshift(entrada);
+    saveJSON("co_logs_local", logsLocal.slice(0, 200)); // máximo 200 entradas locais
+    // Salva no Supabase
+    if (conn) {
+      try { await supaFetch(conn.url, conn.key, "POST", TABLE_LOGS, [entrada]); } catch { /* silencioso */ }
+    }
+  }, [getConexao, usuarioLogado, perfil]);
+
+  // Item 7 — Gerar email de boas-vindas
+  const gerarCorpoEmail = useCallback((template, usuario, senhaPlain = "") => {
+    return (template.corpo || "")
+      .replace(/{nome}/g, usuario.nome || "")
+      .replace(/{email}/g, usuario.email || "")
+      .replace(/{senha}/g, senhaPlain || "(senha definida no cadastro)")
+      .replace(/{perfil}/g, usuario.perfil || "operador");
+  }, []);
+
+  const enviarEmailBoasVindas = useCallback((usuario, senhaPlain = "") => {
+    const corpo = gerarCorpoEmail(emailTemplate, usuario, senhaPlain);
+    const assunto = (emailTemplate.assunto || "").replace(/{nome}/g, usuario.nome || "");
+    const mailtoLink = `mailto:${usuario.email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+    window.open(mailtoLink, "_blank");
+    showToast(`📧 Email preparado para ${usuario.email}`,"ok");
+  }, [emailTemplate, gerarCorpoEmail, showToast]);
+
+  // Item 8 — Carregar logs do Supabase
+  const carregarLogs = useCallback(async () => {
+    const conn = getConexao();
+    if (!conn) {
+      setLogsData(loadJSON("co_logs_local", []));
+      return;
+    }
+    try {
+      const data = await supaFetch(conn.url, conn.key, "GET",
+        `${TABLE_LOGS}?order=data_hora.desc&limit=100&select=*`);
+      if (Array.isArray(data)) setLogsData(data);
+    } catch {
+      setLogsData(loadJSON("co_logs_local", []));
+    }
+  }, [getConexao]);
+
   // Sincronizar usuários do Supabase
   const syncUsuariosRemoto = useCallback(async () => {
     const conn = getConexao();
@@ -434,6 +515,61 @@ export default function App() {
     } catch { /* silencioso */ }
   }, [getConexao]);
 
+  // ── Ocorrências ──
+  const abrirDetalhe = useCallback(async (reg) => {
+    setDetalheDT(reg);
+    setOcorrencias([]);
+    setNovaOcorr("");
+    setAcompDias([]);
+    setAcompDiaSel(null);
+    setAcompTexto("");
+    setAcompImagens([]);
+    setModalOpen("detalhe");
+    // Carregar acompanhamento local
+    const acompLocal = JSON.parse(localStorage.getItem("co_acomp_"+reg.dt) || "[]");
+    setAcompDias(acompLocal);
+    // Carregar ocorrências locais
+    const local = loadJSON(`co_ocorr_${reg.dt}`, []);
+    setOcorrencias(local);
+    // Carregar do Supabase
+    const conn = getConexao();
+    if (conn) {
+      setOcorrLoading(true);
+      try {
+        const data = await supaFetch(conn.url, conn.key, "GET",
+          `${TABLE_OCORR}?dt=eq.${encodeURIComponent(reg.dt)}&order=data_hora.asc&select=*`);
+        if (Array.isArray(data)) {
+          setOcorrencias(data);
+          saveJSON(`co_ocorr_${reg.dt}`, data);
+        }
+      } catch { /* usa local */ }
+      finally { setOcorrLoading(false); }
+    }
+  }, [getConexao]);
+
+  const adicionarOcorrencia = useCallback(async () => {
+    if (!novaOcorr.trim() || !detalheDT) return;
+    const nova = {
+      dt: detalheDT.dt,
+      data_hora: new Date().toISOString(),
+      texto: novaOcorr.trim(),
+      tipo: novaOcorrTipo,
+      usuario: usuarioLogado || perfil || "sistema",
+    };
+    const updated = [...ocorrencias, nova];
+    setOcorrencias(updated);
+    saveJSON(`co_ocorr_${detalheDT.dt}`, updated);
+    setNovaOcorr("");
+    // Salvar no Supabase
+    const conn = getConexao();
+    if (conn) {
+      try {
+        await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]);
+      } catch { /* silencioso */ }
+    }
+    showToast("✅ Ocorrência registrada","ok");
+  }, [novaOcorr, novaOcorrTipo, detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
+
   // Login handler
   const handleLogin = async () => {
     setAuthMsg(null);
@@ -443,14 +579,16 @@ export default function App() {
 
     // ── Login ADMIN ──
     if (login === ADMIN_EMAIL.toLowerCase() || login === "admin") {
-      // Buscar hash do Supabase primeiro (sincroniza entre dispositivos),
-      // fallback para localStorage
-      let storedHash = await getConfigRemoto("admin_senha_hash");
-      if (storedHash) {
-        saveJSON("co_admin_senha", storedHash); // atualiza local
-      } else {
-        storedHash = loadJSON("co_admin_senha", null);
+      // SEMPRE busca do Supabase primeiro — garante sincronização entre todos os dispositivos
+      let storedHash = null;
+      const conn = getConexao();
+      if (conn) {
+        try {
+          storedHash = await getConfigRemoto("admin_senha_hash");
+          if (storedHash) saveJSON("co_admin_senha", storedHash); // espelha localmente
+        } catch { /* fallback local */ }
       }
+      if (!storedHash) storedHash = loadJSON("co_admin_senha", null);
 
       let ok = false;
       if (!storedHash) {
@@ -473,27 +611,40 @@ export default function App() {
       return;
     }
 
-    // ── Login USUÁRIO (busca local + Supabase) ──
-    // Primeiro tentar local, depois remoto
-    let listaUsuarios = [...usuarios];
-    const conn = getConexao();
-    if (conn) {
+    // ── Login USUÁRIO — busca SEMPRE do Supabase primeiro (sincronização real entre dispositivos) ──
+    let found = null;
+    const conn2 = getConexao();
+    if (conn2) {
       try {
-        const remote = await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(authEmail.trim())}&select=*`);
+        const remote = await supaFetch(conn2.url, conn2.key, "GET",
+          `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(authEmail.trim())}&select=*&limit=1`);
         if (Array.isArray(remote) && remote.length > 0) {
-          listaUsuarios = [...listaUsuarios.filter(u => u.email !== authEmail.trim()), ...remote];
+          const u = remote[0];
+          let m = false;
+          try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
+          if (m) found = u;
+          // Atualiza cache local com dados frescos do Supabase
+          if (found) {
+            const cacheAtual = loadJSON("co_usuarios_local", []);
+            const cacheAtualizado = [...cacheAtual.filter(x => x.email !== u.email), u];
+            saveJSON("co_usuarios_local", cacheAtualizado);
+            setUsuarios(cacheAtualizado);
+          }
         }
-      } catch { /* usar lista local */ }
+      } catch { /* fallback lista local */ }
     }
 
-    let found = null;
-    for (const u of listaUsuarios) {
-      if ((u.email||"").toLowerCase() === login) {
-        let m = false;
-        try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
-        if (m) { found = u; break; }
+    // Fallback: lista local (offline)
+    if (!found) {
+      for (const u of usuarios) {
+        if ((u.email||"").toLowerCase() === login) {
+          let m = false;
+          try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
+          if (m) { found = u; break; }
+        }
       }
     }
+
     if (found) {
       const p = found.perfil || "visualizador";
       const pm = found.perms || {...PERMS_PADRAO[p]};
@@ -502,8 +653,9 @@ export default function App() {
       saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email});
       setAuthSenha(""); setAuthEmail("");
     } else {
-      const emailExists = listaUsuarios.some(u => (u.email||"").toLowerCase() === login);
-      setAuthMsg({t:"err",m: emailExists ? "❌ Senha incorreta" : "❌ Usuário não encontrado"});
+      // Checar se existe na lista local para dar mensagem correta
+      const emailExiste = usuarios.some(u => (u.email||"").toLowerCase() === login);
+      setAuthMsg({t:"err",m: emailExiste ? "❌ Senha incorreta" : "❌ Usuário não encontrado"});
       setAuthSenha("");
     }
   };
@@ -720,7 +872,16 @@ export default function App() {
     // Supabase sync
     const conn = getConexao();
     if (conn) {
-      try { await supaUpsert(reg); showToast("✅ Salvo e sincronizado!","ok"); }
+      try {
+        await supaUpsert(reg);
+        await registrarLog(
+          editIdx>=0 ? "EDITAR_REGISTRO" : "NOVO_REGISTRO",
+          `DT ${reg.dt} — ${reg.nome||"sem nome"}`,
+          editIdx>=0 ? DADOS[editIdx] : null,
+          reg
+        );
+        showToast("✅ Salvo e sincronizado!","ok");
+      }
       catch(e) { showToast("⚠️ Salvo local. Sync: "+e.message,"warn"); }
     } else {
       showToast("✅ Salvo localmente!","ok");
@@ -897,10 +1058,10 @@ export default function App() {
         </div>
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:7}}>
           <span style={css.badge(
-            perfil==="admin"?t.ouro:perfil==="operador"?t.txt2:t.azulLt,
-            perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
-            perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
-          )} title={usuarioLogado||perfil}>{perfil==="admin"?"👑 ADMIN":perfil==="operador"?`⚙️ ${(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}`:`👁️ ${(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}`}</span>
+            perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
+            perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="gerente"?`rgba(22,119,255,.1)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
+            perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="gerente"?`rgba(22,119,255,.22)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
+          )} title={usuarioLogado||perfil}>{perfil==="admin"?"👑 ADMIN":perfil==="gerente"?`🏢 ${(usuarioLogado||"GER").split(" ")[0].substring(0,8).toUpperCase()}`:perfil==="operador"?`⚙️ ${(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}`:`👁️ ${(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}`}</span>
 
           <button onClick={sincronizar} style={css.hBtn}>
             <span style={{width:6,height:6,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.borda,boxShadow:connStatus==="online"?`0 0 5px rgba(2,192,118,.6)`:"none",flexShrink:0}} />
@@ -1299,12 +1460,13 @@ export default function App() {
                     const {r,tipo,dias} = item;
                     const borderC = tipo==="ok"?t.verde:tipo==="atraso"?t.danger:t.ouro;
                     return (
-                      <div key={idx} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${borderC}`,marginBottom:8,animation:"slideUp .3s"}}>
+                      <div key={idx} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${borderC}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer"}}>
                         <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3,display:"flex",alignItems:"center",gap:6}}>
                           {r.nome||"—"}
                           <span style={{padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
                             {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":""}`:  "⏳ Aguardando"}
                           </span>
+                          <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                         </div>
                         <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
                           🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
@@ -1330,8 +1492,7 @@ export default function App() {
                         {l:"Destino",v:r.destino||"—",c:t.txt2},
                       ];
                       return (
-                        <div key={idx} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s"}}>
-                          {/* Header avatar */}
+                        <div key={idx} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
                           <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                             <div style={{width:36,height:36,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${borderC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:borderC,flexShrink:0}}>{initials}</div>
                             <div style={{flex:1,minWidth:0}}>
@@ -1340,8 +1501,8 @@ export default function App() {
                                 {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":"atrasado"}`:"⏳ Aguardando"}
                               </span>
                             </div>
+                            <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>›</span>
                           </div>
-                          {/* Chips */}
                           <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                             {chips.map((ch,ci) => (
                               <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 8px",fontSize:10}}>
@@ -1433,10 +1594,11 @@ export default function App() {
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
                   return (
-                    <div key={i} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s"}}>
+                    <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer"}}>
                       <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>
                         {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
+                        <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
                       <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
                         🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
@@ -1467,7 +1629,7 @@ export default function App() {
                     ...(r.origem?[{l:"Origem",v:r.origem,c:t.txt2}]:[]),
                   ];
                   return (
-                    <div key={i} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s"}}>
+                    <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
                       <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                         <div style={{width:36,height:36,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${accentC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:accentC,flexShrink:0}}>{initials}</div>
                         <div style={{flex:1,minWidth:0}}>
@@ -1476,6 +1638,7 @@ export default function App() {
                             <span style={{display:"inline-block",marginTop:3,padding:"2px 7px",borderRadius:4,fontSize:8,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>🚨 {dias}d atraso</span>
                           )}
                         </div>
+                        <span style={{fontSize:11,color:t.txt2,flexShrink:0}}>›</span>
                       </div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                         {chips.map((ch,ci) => (
@@ -1549,10 +1712,14 @@ export default function App() {
             {usuarios.map((u,i) => (
               <div key={i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,padding:12,marginBottom:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <div style={{width:34,height:34,borderRadius:9,background:u.perfil==="admin"?`linear-gradient(135deg,${t.ouroDk},${t.ouro})`:`linear-gradient(135deg,#555,#848e9c)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:"#000",flexShrink:0}}>{u.nome?.[0]?.toUpperCase()||"U"}</div>
+                  <div style={{width:34,height:34,borderRadius:9,background:u.perfil==="admin"?`linear-gradient(135deg,${t.ouroDk},${t.ouro})`:u.perfil==="gerente"?`linear-gradient(135deg,${t.azul},${t.azulLt})`:u.perfil==="operador"?`linear-gradient(135deg,#555,#848e9c)`:`linear-gradient(135deg,#444,#666)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:"#000",flexShrink:0}}>{u.nome?.[0]?.toUpperCase()||"U"}</div>
                   <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,color:t.txt}}>{u.nome}</div><div style={{fontSize:10,color:t.txt2}}>📧 {u.email} · <span style={{color:t.ouro}}>{u.perfil}</span></div></div>
                   <button onClick={()=>{setFormData({...u});setEditIdx(i);setModalOpen("usuario")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
-                  <button onClick={()=>{if(confirm(`Excluir "${u.nome}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios",nu);showToast("🗑️ Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
+                  <button onClick={()=>{if(confirm(`Excluir "${u.nome}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios_local",nu);
+                    // Remove do Supabase também
+                    const conn=getConexao();
+                    if(conn){supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});}
+                    showToast("🗑️ Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
                 </div>
               </div>
             ))}
@@ -1661,7 +1828,65 @@ function mapearColuna(n){
             )}
 
             {/* Alterar senha do Admin */}
-            <AlterarSenhaAdmin t={t} css={css} showToast={showToast} onSalvar={hash=>setConfigRemoto("admin_senha_hash",hash)} />
+            <AlterarSenhaAdmin t={t} css={css} showToast={showToast} onSalvar={hash=>{setConfigRemoto("admin_senha_hash",hash);registrarLog("ALTERAR_SENHA_ADMIN","Senha do Admin alterada");}} />
+
+            {/* EMAIL BOAS-VINDAS */}
+            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setEmailTemplateOpen(!emailTemplateOpen)}>
+              {"\U0001F4E7 Email de Boas-vindas"}<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{emailTemplateOpen?"\u25B2":"\u25BC"}</span>
+              <span style={{flex:1,height:1,background:t.borda}} />
+            </div>
+            {emailTemplateOpen && (
+              <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
+                <p style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:10}}>
+                  Configure o email enviado ao criar novo usuario. Use <strong style={{color:t.ouro}}>&#123;nome&#125;</strong>, <strong style={{color:t.ouro}}>&#123;email&#125;</strong>, <strong style={{color:t.ouro}}>&#123;senha&#125;</strong>, <strong style={{color:t.ouro}}>&#123;perfil&#125;</strong>.
+                </p>
+                <div style={{marginBottom:10}}>
+                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Assunto</label>
+                  <input value={emailTemplate.assunto} onChange={e=>setEmailTemplate(p=>({...p,assunto:e.target.value}))} style={{...css.inp,fontSize:12}} />
+                </div>
+                <div style={{marginBottom:10}}>
+                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Corpo do Email</label>
+                  <textarea value={emailTemplate.corpo} onChange={e=>setEmailTemplate(p=>({...p,corpo:e.target.value}))} rows={9} style={{...css.inp,resize:"vertical",fontSize:11,lineHeight:1.6,fontFamily:"monospace"}} />
+                </div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <button onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("\u2705 Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{...css.btnGreen,flex:1,justifyContent:"center",fontSize:12}}>Salvar Template</button>
+                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:ADMIN_EMAIL,perfil:"operador"},"senha123")} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>Testar Email</button>
+                </div>
+                <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:"1px solid "+t.borda,fontSize:10,color:t.txt2,lineHeight:1.6}}>
+                  O email abre no seu cliente de email ja preenchido. Para usuarios novos, clique no botao Email no cadastro.
+                </div>
+              </div>
+            )}
+
+            {/* LOG DE ALTERACOES */}
+            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={async()=>{const next=!logsOpen;setLogsOpen(next);if(next)await carregarLogs();}}>
+              {"\U0001F4CB Log de Alteracoes"}<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{logsOpen?"\u25B2":"\u25BC"}</span>
+              <span style={{flex:1,height:1,background:t.borda}} />
+            </div>
+            {logsOpen && (
+              <div style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <span style={{fontSize:10,color:t.txt2}}>{logsData.length} registros | tabela: co_logs_alteracoes</span>
+                  <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px"}}>Atualizar</button>
+                </div>
+                {logsData.length===0?(
+                  <div style={{...css.empty,padding:"16px 0",fontSize:11,color:t.txt2}}>Nenhum log registrado ainda.</div>
+                ):(
+                  <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:360,overflowY:"auto"}}>
+                    {logsData.map((log,li)=>(
+                      <div key={li} style={{background:t.card,borderRadius:9,padding:"8px 12px",border:"1px solid "+t.borda,borderLeft:"3px solid "+(log.acao&&log.acao.includes("DELETAR")?t.danger:log.acao&&log.acao.includes("NOVO")?t.verde:t.ouro)}}>
+                        <div style={{display:"flex",justifyContent:"space-between",gap:8,marginBottom:2}}>
+                          <span style={{fontSize:10,fontWeight:700,color:t.txt}}>{log.acao}</span>
+                          <span style={{fontSize:8,color:t.txt2,flexShrink:0}}>{new Date(log.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+                        </div>
+                        <div style={{fontSize:11,color:t.txt2}}>{log.descricao}</div>
+                        <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Autor: {log.usuario} ({log.perfil_usuario})</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1751,6 +1976,202 @@ function mapearColuna(n){
         </div>
       )}
 
+      {/* ═══ DETALHE + OCORRÊNCIAS MODAL ═══ */}
+      {modalOpen === "detalhe" && detalheDT && (()=>{
+        const r = detalheDT;
+        const canEditDetalhe = isAdmin || perms.editar;
+        const canOcorr = isAdmin || perms.ocorrencias;
+        // Timeline steps
+        const steps = [
+          {ico:"📦",lbl:"Carregamento",val:r.data_carr,  c:t.ouro,  done:!!r.data_carr},
+          {ico:"📍",lbl:"Em Trânsito",  val:r.origem&&r.destino?`${r.origem}→${r.destino}`:r.origem||r.destino||null, c:t.azulLt,done:!!r.data_carr},
+          {ico:"📅",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
+          {ico:"🏁",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
+        ];
+        const tipoColors = {info:t.azulLt, alerta:t.danger, status:t.verde};
+        const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
+            <div style={{...css.modal,maxHeight:"96vh"}}>
+              {/* Header */}
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
+                <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
+                  <div style={{fontSize:9,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
+                </div>
+                <div style={{display:"flex",gap:6,flexShrink:0}}>
+                  {canEditDetalhe && (
+                    <button onClick={()=>{
+                      const idx=DADOS.findIndex(x=>x.dt===r.dt);
+                      setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
+                    }} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:7,padding:"5px 9px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️ Editar</button>
+                  )}
+                  <button onClick={()=>setModalOpen(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                </div>
+              </div>
+
+              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:14}}>
+
+                {/* ── Timeline ── */}
+                <div>
+                  <div style={{...css.secTitle,marginBottom:10}}>📊 Timeline <span style={{flex:1,height:1,background:t.borda}} /></div>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:0,position:"relative",padding:"0 8px"}}>
+                    {steps.map((s,si) => (
+                      <div key={si} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
+                        {/* Linha conectora */}
+                        {si < steps.length-1 && (
+                          <div style={{position:"absolute",top:14,left:"50%",width:"100%",height:2,background:steps[si+1].done?s.c:`${t.borda}`,zIndex:0,transition:"background .3s"}} />
+                        )}
+                        {/* Círculo */}
+                        <div style={{width:28,height:28,borderRadius:"50%",background:s.done?s.c:t.card2,border:`2px solid ${s.done?s.c:t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,zIndex:1,flexShrink:0,transition:"all .3s"}}>{s.done?<span style={{fontSize:11}}>✓</span>:<span style={{fontSize:12}}>{s.ico}</span>}</div>
+                        <div style={{fontSize:8,color:s.done?s.c:t.txt2,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginTop:4,textAlign:"center",lineHeight:1.3}}>{s.lbl}</div>
+                        {s.val && <div style={{fontSize:8,color:t.txt2,marginTop:2,textAlign:"center",maxWidth:60,wordBreak:"break-word"}}>{s.val}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ITEM 4 */}
+                {(()=>{
+                  const dcArr = acompDias;
+                  const toISO = s => { if(!s)return null; const p=s.split("/"); return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:s; };
+                  const dIni = toISO(detalheDT.data_carr); const dFimS = toISO(detalheDT.data_desc);
+                  const dFim = dFimS ? new Date(dFimS+"T12:00:00") : new Date();
+                  const dias = []; if(dIni){let c=new Date(dIni+"T12:00:00");while(c<=dFim&&dias.length<60){dias.push(c.toISOString().slice(0,10));c.setDate(c.getDate()+1);}}
+                  const getE = d => dcArr.find(x=>x.data===d)||null;
+                  const salvarDia = (data,texto,imgs) => {
+                    const e={data,texto,imagens:imgs||[],usuario:usuarioLogado||"sistema",at:new Date().toISOString()};
+                    const nv=(texto.trim()||imgs.length)?[...dcArr.filter(x=>x.data!==data),e].sort((a,b)=>a.data.localeCompare(b.data)):dcArr.filter(x=>x.data!==data);
+                    setAcompDias(nv); localStorage.setItem("co_acomp_"+detalheDT.dt,JSON.stringify(nv));
+                    const conn2=getConexao(); if(conn2&&(texto.trim()||imgs.length)){supaFetch(conn2.url,conn2.key,"POST","co_acompanhamento_dt",[{dt:detalheDT.dt,data,texto,imagens:JSON.stringify(imgs||[]),usuario:e.usuario,atualizado_em:e.at}]).catch(()=>{});}
+                  };
+                  return (
+                    <div>
+                      <div style={{...css.secTitle,marginBottom:10}}>
+                        📅 Acompanhamento Dia a Dia
+                        {dias.length>0&&<span style={{fontSize:9,color:t.txt2,fontWeight:400,marginLeft:4}}>{dias.length} dias</span>}
+                        <span style={{flex:1,height:1,background:t.borda}} />
+                      </div>
+                      {dias.length===0?(
+                        <div style={{fontSize:11,color:t.txt2,textAlign:"center",padding:"8px 0"}}>Informe data de carregamento para ver o acompanhamento.</div>
+                      ):(
+                        <div>
+                          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:4,marginBottom:8,scrollbarWidth:"none"}}>
+                            {dias.map(d=>{
+                              const ent=getE(d);const isHoje=d===new Date().toISOString().slice(0,10);const isSel=acompDiaSel===d;
+                              return(<button key={d} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}} style={{flexShrink:0,padding:"5px 7px",borderRadius:8,border:"1.5px solid "+(isSel?t.azul:ent?t.verde:t.borda),background:isSel?"rgba(22,119,255,.1)":ent?"rgba(2,192,118,.06)":"transparent",cursor:"pointer",minWidth:46,textAlign:"center"}}>
+                                <div style={{fontSize:8,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</div>
+                                {isHoje&&<div style={{fontSize:7,color:t.ouro,fontWeight:700}}>HOJE</div>}
+                                {ent&&<div style={{fontSize:9}}>{"\u2705"}</div>}
+                              </button>);
+                            })}
+                          </div>
+                          {acompDiaSel&&(
+                            <div style={{background:t.card2,borderRadius:10,padding:12,border:"1px solid "+t.borda,marginBottom:6}}>
+                              <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>{"\U0001F4C5"} {new Date(acompDiaSel+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
+                              <textarea value={acompTexto} onChange={e=>setAcompTexto(e.target.value)} placeholder="Status, localização, ocorrências deste dia..." rows={3} style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,marginBottom:8}} />
+                              <label style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Anexar Fotos</label>
+                              <input type="file" accept="image/*" multiple onChange={e=>{Array.from(e.target.files||[]).forEach(f=>{const rd=new FileReader();rd.onload=ev=>setAcompImagens(p=>[...p,{nome:f.name,base64:ev.target.result}]);rd.readAsDataURL(f);});e.target.value="";}} style={{...css.inp,padding:"7px 10px",fontSize:11,marginBottom:8}} />
+                              {acompImagens.length>0&&(
+                                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                                  {acompImagens.map((img,ii)=>(
+                                    <div key={ii} style={{position:"relative"}}>
+                                      <img src={img.base64} alt={img.nome} style={{width:60,height:60,objectFit:"cover",borderRadius:8,border:"1px solid "+t.borda}} />
+                                      <button onClick={()=>setAcompImagens(p=>p.filter((_,j)=>j!==ii))} style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:t.danger,border:"none",color:"#fff",fontSize:9,cursor:"pointer",lineHeight:"1"}}>{"x"}</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <button onClick={()=>{salvarDia(acompDiaSel,acompTexto,acompImagens);showToast("{"+"\u2705"+"} Dia salvo!","ok");}} style={{...css.btnGreen,width:"100%",justifyContent:"center",fontSize:12}}>{"\U0001F4BE"} Salvar Dia</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* ── Dados completos ── */}
+                <div>
+                  <div style={{...css.secTitle,marginBottom:8}}>📋 Dados do Registro <span style={{flex:1,height:1,background:t.borda}} /></div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                    {[
+                      {l:"Motorista",v:r.nome},{l:"CPF",v:r.cpf},{l:"Placa",v:r.placa},{l:"Vínculo",v:r.vinculo},
+                      {l:"Origem",v:r.origem},{l:"Destino",v:r.destino},{l:"Status",v:r.status},{l:"Dias",v:r.dias},
+                      {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
+                      ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
+                      {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"Cliente",v:r.cliente},
+                    ].filter(f=>f.v).map((f,fi)=>(
+                      <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:t.txt,marginTop:1}}>{f.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── Histórico de Ocorrências ── */}
+                <div>
+                  <div style={{...css.secTitle,marginBottom:8}}>
+                    📝 Histórico de Ocorrências
+                    {ocorrLoading && <span style={{fontSize:9,color:t.txt2,fontWeight:400}}> carregando…</span>}
+                    <span style={{flex:1,height:1,background:t.borda}} />
+                  </div>
+
+                  {/* Lista de ocorrências */}
+                  {ocorrencias.length === 0 ? (
+                    <div style={{fontSize:11,color:t.txt2,textAlign:"center",padding:"12px 0"}}>Nenhuma ocorrência registrada.</div>
+                  ) : (
+                    <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                      {ocorrencias.map((o,oi)=>(
+                        <div key={oi} style={{display:"flex",gap:9,alignItems:"flex-start"}}>
+                          {/* Linha vertical */}
+                          <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
+                            <div style={{width:24,height:24,borderRadius:"50%",background:`${tipoColors[o.tipo]||t.azulLt}18`,border:`1.5px solid ${tipoColors[o.tipo]||t.azulLt}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>{tipoIcos[o.tipo]||"💬"}</div>
+                            {oi < ocorrencias.length-1 && <div style={{width:1,flex:1,minHeight:12,background:t.borda,margin:"3px 0"}} />}
+                          </div>
+                          <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
+                              <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tipoColors[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
+                              <span style={{fontSize:8,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"} · {new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+                            </div>
+                            <div style={{fontSize:12,color:t.txt,lineHeight:1.5}}>{o.texto}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Adicionar nova ocorrência */}
+                  {canOcorr && (
+                    <div style={{marginTop:10,background:t.card2,borderRadius:10,padding:10,border:`1px solid ${t.borda}`}}>
+                      <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:7}}>＋ Nova Ocorrência</div>
+                      {/* Tipo */}
+                      <div style={{display:"flex",gap:5,marginBottom:7}}>
+                        {[{k:"info",l:"💬 Info"},{k:"status",l:"✅ Status"},{k:"alerta",l:"🚨 Alerta"}].map(tp=>(
+                          <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,padding:"5px 4px",fontSize:9,fontWeight:700,border:`1.5px solid ${novaOcorrTipo===tp.k?tipoColors[tp.k]:t.borda}`,borderRadius:6,cursor:"pointer",background:novaOcorrTipo===tp.k?`${tipoColors[tp.k]}15`:t.card,color:novaOcorrTipo===tp.k?tipoColors[tp.k]:t.txt2,fontFamily:"inherit"}}>{tp.l}</button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={novaOcorr}
+                        onChange={e=>setNovaOcorr(e.target.value)}
+                        placeholder="Descreva a ocorrência, atualização ou observação…"
+                        rows={3}
+                        style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,padding:"8px 10px"}}
+                      />
+                      <button onClick={adicionarOcorrencia} disabled={!novaOcorr.trim()} style={{...css.btnGreen,width:"100%",justifyContent:"center",marginTop:7,opacity:novaOcorr.trim()?1:.5}}>
+                        💾 Registrar Ocorrência
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ═══ USUARIO MODAL ═══ */}
       {modalOpen === "usuario" && (
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
@@ -1784,9 +2205,9 @@ function mapearColuna(n){
                 <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Perfil</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                   {[
-                    {k:"gerente",    ico:"👔",l:"Gerente",    desc:"Financeiro + edita tudo"},
-                    {k:"operador",   ico:"⚙️",l:"Operador",  desc:"Edita operacional"},
-                    {k:"visualizador",ico:"👁️",l:"Visual.",  desc:"Somente leitura"},
+                    {k:"gerente",ico:"🏢",l:"Gerente",desc:"Financeiro + edita tudo"},
+                    {k:"operador",ico:"⚙️",l:"Operador",desc:"Edita operacional"},
+                    {k:"visualizador",ico:"👁️",l:"Visual.",desc:"Somente leitura"},
                   ].map(r => (
                     <div key={r.k} onClick={()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}}))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
                       <span style={{fontSize:16}}>{r.ico}</span>
@@ -1829,16 +2250,21 @@ function mapearColuna(n){
                 delete u._senhaPlain;
                 if (!u.perfil) u.perfil = "operador";
                 if (!u.perms) u.perms = {...PERMS_PADRAO[u.perfil]};
+                // Garantir que perms seja string JSON para Supabase (coluna jsonb)
+                const uParaSupa = {...u, perms: u.perms};
                 const nu = [...usuarios];
                 if (editIdx>=0) nu[editIdx] = u; else nu.push(u);
                 setUsuarios(nu);
-                saveJSON("co_usuarios_local", nu);
-                // Salvar no Supabase
+                saveJSON("co_usuarios_local", nu); // chave consistente
+                // Salvar no Supabase com upsert real
                 const conn = getConexao();
                 if (conn) {
                   try {
-                    await supaFetch(conn.url, conn.key, "POST", `${TABLE_USUARIOS}?on_conflict=email`, [u]);
-                    showToast(editIdx>=0?"✅ Usuário atualizado!":"✅ Usuário criado!","ok");
+                    await supaFetch(conn.url, conn.key, "POST",
+                      `${TABLE_USUARIOS}?on_conflict=email`, [uParaSupa]);
+                    await registrarLog(editIdx>=0?"EDITAR_USUARIO":"NOVO_USUARIO", `${u.nome} (${u.email}) - perfil: ${u.perfil}`);
+                    if (editIdx < 0) { setUsuarioEmailPreview({...u, _senhaRaw: formData._senhaPlain||""}); }
+                    showToast(editIdx>=0?"✅ Usuário atualizado e sincronizado!":"✅ Usuário criado! Envie o email de boas-vindas.","ok");
                   } catch(e) {
                     showToast("✅ Salvo local. Supabase: "+e.message.slice(0,40),"warn");
                   }
@@ -1847,6 +2273,35 @@ function mapearColuna(n){
                 }
                 setModalOpen(null);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ EMAIL BOAS-VINDAS PROMPT ═══ */}
+      {usuarioEmailPreview && (
+        <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setUsuarioEmailPreview(null)}>
+          <div style={{...css.modal,maxWidth:420}}>
+            <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📧</div>
+              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>EMAIL DE BOAS-VINDAS</div><div style={{fontSize:9,color:t.txt2}}>Notificar o novo usuário?</div></div>
+              <button onClick={()=>setUsuarioEmailPreview(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2}}>✕</button>
+            </div>
+            <div style={{padding:16}}>
+              <div style={{background:t.card2,borderRadius:10,padding:12,marginBottom:14,border:`1px solid ${t.borda}`}}>
+                <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:4}}>{usuarioEmailPreview.nome}</div>
+                <div style={{fontSize:10,color:t.txt2}}>📧 {usuarioEmailPreview.email}</div>
+                <div style={{fontSize:10,color:t.ouro}}>🔑 Perfil: {usuarioEmailPreview.perfil}</div>
+              </div>
+              <p style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:14}}>
+                O email será aberto no seu cliente de email (Mail, Outlook, Gmail) já preenchido com os dados de acesso. Basta clicar em <strong style={{color:t.txt}}>Enviar</strong>.
+              </p>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setUsuarioEmailPreview(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Agora não</button>
+                <button onClick={()=>{enviarEmailBoasVindas(usuarioEmailPreview, usuarioEmailPreview._senhaRaw||"");setUsuarioEmailPreview(null);}} style={{...css.btnGold,flex:1,justifyContent:"center"}}>
+                  📧 Enviar Email de Boas-vindas
+                </button>
+              </div>
             </div>
           </div>
         </div>
