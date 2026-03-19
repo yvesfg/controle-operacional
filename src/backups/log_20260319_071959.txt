@@ -1,0 +1,98 @@
+================================================================================
+LOG DE ALTERAÇÕES — controle-operacional / App.jsx
+DATA/HORA : 2026-03-19 07:19:59
+ARQUIVO   : App.jsx.bckp_20260319_071959
+================================================================================
+
+── PROBLEMAS IDENTIFICADOS ─────────────────────────────────────────────────────
+
+  BUG #1 (CRÍTICO — ROOT CAUSE do sync quebrado)
+  ──────────────────────────────────────────────
+  getConfigRemoto e setConfigRemoto usavam colunas "key"/"value" para
+  query e upsert na tabela co_config, mas a tabela foi criada com colunas
+  "chave" (PK) e "valor".
+  PostgREST retornava HTTP 400 (coluna desconhecida) → erro capturado
+  silenciosamente → storedHash sempre null → sistema caía no
+  ADMIN_SENHA_PADRAO ("YFGroup@2024") → mobile sempre aceitava senha padrão.
+
+  BUG #2 (Conexão mobile)
+  ─────────────────────────────────────────────
+  getConexao() verificava localStorage PRIMEIRO e env vars como fallback.
+  Mobile não tem nada em localStorage (co_conexoes) → tentava fallback env vars.
+  Se VITE_SUPABASE_URL/KEY não estivessem no build Vercel, retornava null →
+  todas chamadas Supabase falhavam no mobile.
+
+  BUG #3 (updated_at não existe na tabela co_config)
+  ──────────────────────────────────────────────────
+  setConfigRemoto enviava {key, value, updated_at: ...} para upsert.
+  Tabela co_config foi criada sem coluna updated_at → upsert falhava
+  silenciosamente (+ já com coluna errada "key").
+
+── O QUE FOI CORRIGIDO ─────────────────────────────────────────────────────────
+
+  01  ✅ BUG #1 — getConfigRemoto: query corrigida para
+              ?chave=eq.${key}&select=valor → data[0].valor
+              (era: ?key=eq.${key}&select=value → data[0].value)
+
+  02  ✅ BUG #1 — setConfigRemoto: upsert corrigido para
+              ?on_conflict=chave com payload [{chave: key, valor: value}]
+              updated_at REMOVIDO (não existe na tabela)
+              (era: ?on_conflict=key com [{key, value, updated_at}])
+
+  03  ✅ BUG #2 — getConexao: env vars agora são PRIORIDADE (não fallback)
+              Se VITE_SUPABASE_URL/KEY definidos, SEMPRE usa eles.
+              Garante mesma conexão em desktop e mobile.
+
+  04  ✅ LOGIN SOCIAL — Adicionados botões Google e Apple na tela de login.
+              Implementação via Supabase Auth REST direto (sem SDK externo):
+              - iniciarOAuth(provider): redireciona para /auth/v1/authorize
+              - decodeJWT(token): decodifica JWT sem biblioteca
+              - useEffect no mount: detecta hash #access_token= após redirect
+              - Mapeia email OAuth para usuário interno (co_usuarios ou admin)
+              - Suporte ao logo SVG oficial Google e Apple
+              - Botões ocultos se VITE_SUPABASE_URL não estiver configurado
+
+── PENDÊNCIAS (ação necessária no Supabase) ─────────────────────────────────────
+
+  [!] EXECUTE O SQL ABAIXO no Supabase SQL Editor (se não executou antes):
+
+      -- Tabela de configurações (coluna correta = "chave", não "key")
+      CREATE TABLE IF NOT EXISTS co_config (
+        chave TEXT PRIMARY KEY,
+        valor TEXT
+      );
+
+      -- Confirmar que a tabela está correta (deve retornar 2 colunas: chave, valor)
+      SELECT column_name, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'co_config'
+      ORDER BY ordinal_position;
+
+  [!] SE A TABELA JÁ EXISTE COM COLUNAS "key"/"value":
+      Execute este SQL para renomear:
+
+      ALTER TABLE co_config RENAME COLUMN "key" TO chave;
+      ALTER TABLE co_config RENAME COLUMN "value" TO valor;
+
+  [!] PARA ATIVAR LOGIN GOOGLE (no painel Supabase):
+      1. Acesse: Authentication → Providers → Google
+      2. Habilite o provider
+      3. Adicione Client ID e Client Secret do Google Cloud Console
+      4. Em "Redirect URLs" adicione: https://controle-operacional-omega.vercel.app
+
+  [!] PARA ATIVAR LOGIN APPLE (no painel Supabase):
+      1. Acesse: Authentication → Providers → Apple
+      2. Habilite o provider
+      3. Configure com Apple Developer credentials
+      Nota: Apple exige domínio verificado e conta Apple Developer paga ($99/ano)
+
+  [!] DEPLOY: git add/commit/push para Vercel detectar mudanças.
+
+── ARQUIVO DE BACKUP ────────────────────────────────────────────────────────────
+
+  Localização : src/backups/App.jsx.bckp_20260319_071959
+  Linhas      : 2583
+
+================================================================================
+FIM DO LOG
+================================================================================
