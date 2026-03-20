@@ -1265,7 +1265,7 @@ export default function App() {
   const css = {
     app: { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:"'Barlow','Segoe UI',system-ui,sans-serif", transition:"background .3s, color .3s" },
     // Header — mais alto, mais refinado
-    header: { background:t.headerBg, padding:"14px 20px", borderBottom:`2px solid ${t.ouro}`, position:"sticky", top:0, zIndex:100, display:"flex", alignItems:"center", gap:12, boxShadow:`0 4px 20px ${t.shadow}`, transition:"background .3s" },
+    header: { background:t.headerBg, padding:"14px 20px", borderBottom:`2px solid ${t.ouro}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:12, boxShadow:`0 4px 20px ${t.shadow}`, transition:"background .3s", overflow:"hidden" },
     logo: { width:44, height:44, background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, borderRadius:13, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0, boxShadow:`0 4px 14px rgba(240,185,11,.38)` },
     hBtn: { background:"rgba(128,128,128,.08)", border:`1.5px solid ${t.borda}`, borderRadius:10, padding:"9px 14px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, fontWeight:600, transition:"all .2s" },
     // Tabs — underline style, mais altas
@@ -1781,7 +1781,8 @@ export default function App() {
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.scrollThumb};border-radius:3px}
         input::placeholder,textarea::placeholder{color:${t.txt2}!important}
         input[type=date]{color-scheme:${theme}}
-        body{overflow-x:hidden}
+        html{background:${t.bg}!important}
+        body{background:${t.bg};overflow-x:hidden;overscroll-behavior-x:none}
         /* ─── Hover lift nos cards ─── */
         .co-card{transition:transform .18s ease,box-shadow .18s ease!important}
         .co-card:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(240,185,11,.1)!important}
@@ -1881,7 +1882,7 @@ export default function App() {
 
       {/* ALERTAS PANEL */}
       {alertasOpen && alertas.length > 0 && (
-        <div style={{background:t.card,borderBottom:`1px solid ${t.borda}`,animation:"fadeIn .2s"}}>
+        <div style={{background:t.card,borderBottom:`1px solid ${t.borda}`,animation:"fadeIn .2s",marginTop:74,position:"relative",zIndex:99}}>
           {alertas.slice(0,10).map((a,i) => (
             <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`}}>
               <span style={{fontSize:16,flexShrink:0}}>{a.tipo==="danger"?"🚨":"⚠️"}</span>
@@ -1911,7 +1912,7 @@ export default function App() {
       )}
 
       {/* CONTENT */}
-      <div style={{padding:activeTab==="planilha"?"0 0 68px":"16px 16px 68px",maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
+      <div style={{padding:activeTab==="planilha"?"76px 0 68px":"76px 16px 68px",maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
 
         {/* ═══ BUSCA ═══ */}
         {activeTab === "busca" && (
@@ -2476,22 +2477,27 @@ export default function App() {
                           <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                             <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${borderC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:borderC,flexShrink:0}}>{initials}</div>
                             <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:13,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                              <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                              {/* Diária + RO abaixo do nome */}
+                              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:2}}>
+                                {(r.diaria_prev||r.diaria_pg) && <span style={{fontSize:9,color:t.txt2}}>Diária: <strong style={{color:r.diaria_pg?t.verde:t.ouro}}>{r.diaria_pg ? `R$${r.diaria_pg}` : `R$${r.diaria_prev}`}</strong></span>}
+                                {r.ro && <span style={{fontSize:9,color:"#f57c00",fontWeight:600}}>RO: {r.ro}</span>}
+                              </div>
                               <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
-                                <span style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
+                                <span style={{display:"inline-block",padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
                                   {tipo==="ok"?"✅ No prazo":tipo==="atraso"?`⚠️ ${dias>0?dias+"d":"atrasado"}`:"⏳ Aguardando"}
                                 </span>
-                                {pgStatus && <span style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
+                                {pgStatus && <span style={{display:"inline-block",padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
                                   {pgStatus==="pago"?"💳 Pago":"💸 Não Pago"}
                                 </span>}
                               </div>
                             </div>
                             <span style={{fontSize:12,color:t.txt2,flexShrink:0}}>›</span>
                           </div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                             {chips.map((ch,ci) => (
-                              <div key={ci} style={{background:t.card2,borderRadius:6,padding:"4px 9px",fontSize:11}}>
-                                <span style={{color:t.txt2,fontSize:9}}>{ch.l} </span>
+                              <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 7px",fontSize:10}}>
+                                <span style={{color:t.txt2,fontSize:8}}>{ch.l} </span>
                                 <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
                               </div>
                             ))}
@@ -2622,22 +2628,27 @@ export default function App() {
                       <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                         <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${accentC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:accentC,flexShrink:0}}>{initials}</div>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                          <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                          {/* Diária + RO abaixo do nome */}
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:2}}>
+                            {r.diaria_prev && <span style={{fontSize:9,color:t.txt2}}>Diária: <strong style={{color:t.ouro}}>R${r.diaria_prev}</strong></span>}
+                            {r.ro && <span style={{fontSize:9,color:"#f57c00",fontWeight:600}}>RO: {r.ro}</span>}
+                          </div>
                           <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
                             {isAtrasado && dias !== null && (
-                              <span style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>🚨 {dias}d atraso</span>
+                              <span style={{display:"inline-block",padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>🚨 {dias}d atraso</span>
                             )}
-                            {pgStatus && <span style={{display:"inline-block",padding:"3px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
+                            {pgStatus && <span style={{display:"inline-block",padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
                               {pgStatus==="pago"?"💳 Pago":"💸 Pendente"}
                             </span>}
                           </div>
                         </div>
                         <span style={{fontSize:12,color:t.txt2,flexShrink:0}}>›</span>
                       </div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                         {chips.map((ch,ci) => (
-                          <div key={ci} style={{background:t.card2,borderRadius:6,padding:"4px 9px",fontSize:11}}>
-                            <span style={{color:t.txt2,fontSize:9}}>{ch.l} </span>
+                          <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 7px",fontSize:10}}>
+                            <span style={{color:t.txt2,fontSize:8}}>{ch.l} </span>
                             <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
                           </div>
                         ))}
@@ -3341,9 +3352,7 @@ function mapearColuna(n){
         height:62,
         boxShadow:`0 -4px 20px ${t.shadow}`,
         paddingBottom:"env(safe-area-inset-bottom,0)",
-        overflowX:"auto",
-        scrollbarWidth:"none",
-        WebkitOverflowScrolling:"touch",
+        overflow:"hidden",
       }}>
         {tabs.map(tb => {
           const ativo = activeTab === tb.k;
@@ -3352,8 +3361,8 @@ function mapearColuna(n){
               key={tb.k}
               onClick={()=>setActiveTab(tb.k)}
               style={{
-                flex:"1 0 auto",
-                minWidth:56,
+                flex:"1 1 0",
+                minWidth:0,
                 background:"transparent",
                 border:"none",
                 cursor:"pointer",
@@ -3366,6 +3375,7 @@ function mapearColuna(n){
                 position:"relative",
                 transition:"all .18s",
                 fontFamily:"inherit",
+                overflow:"hidden",
               }}
             >
               {/* indicador topo */}
@@ -3410,7 +3420,7 @@ function mapearColuna(n){
             <div style={{flex:1,overflowY:"auto",padding:16}}>
               {[
                 {s:"👤 Identificação",fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo"}]},
-                {s:"📍 Rota e Agenda",fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"📅 Agenda (data prevista p/ descarga)",type:"date"},{k:"status",l:"Status"},{k:"dias",l:"Dias"}]},
+                {s:"📍 Rota e Agenda",fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"📅 Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status"},{k:"dias",l:"Dias"}]},
                 {s:"💰 Financeiro",fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"}]},
                 {s:"📄 Documentação",fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
                 {s:"🏁 Operacional",fields:[{k:"chegada",l:"🛬 Chegada (data real de chegada)",type:"date"},{k:"data_desc",l:"🏁 Descarga (data real de descarga)",type:"date"},{k:"informou_analista",l:"✅ Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",span:2}]},
