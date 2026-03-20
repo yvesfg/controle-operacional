@@ -56,6 +56,18 @@ const PERMS_LISTA = [
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
+    data: "2026-03-20 19:55", sessao: "Sessão 10",
+    itens: [
+      "FEAT · Ícones SVG Stroke Clean (estilo Lucide/Feather) na bottom nav — substituídos emojis por SVGs monocromáticos; stroke ativo = dourado com glow; inativo = cinza; stroke-width 1.8px; transição suave de cor",
+      "FIX · html/body background = tema ativo → elimina tela branca nas laterais ao arrastar (overscroll iOS/Android)",
+      "FIX · body overscroll-behavior-x:none → impede bounce lateral no mobile",
+      "FIX · Header: position sticky → fixed (left:0,right:0,overflow:hidden) → header não sai mais da tela ao arrastar; content com paddingTop 76px",
+      "FIX · Bottom nav: overflowX:auto → overflow:hidden; botões flex:1 1 0 sem minWidth fixo → sem corte de ícones",
+      "FIX · Campo 'Agenda (data prevista p/ descarga)' → 'Agenda (DT PRV. P/ DESCARREGAR)' — não sobrepõe o campo ao lado",
+      "FEAT · Cards de blocos (Diárias + Descarga): Diária (R$) e RO exibidos abaixo do nome do motorista; chips reduzidos para 8px",
+    ],
+  },
+  {
     data: "2026-03-20 17:03", sessao: "Sessão 8",
     itens: [
       "FEAT · Ordenação por coluna na Planilha — clicar no título de qualquer coluna ordena A→Z; clicar de novo inverte Z→A (igual Excel); indicador ▲/▼ na coluna ativa; ⇅ nas demais; borda inferior dourada na coluna ordenada; botão ✕ na toolbar para limpar a ordenação; datas DD/MM/YYYY comparadas corretamente (convertidas para YYYYMMDD antes de comparar)",
@@ -1427,15 +1439,33 @@ export default function App() {
   // ══════════════════════════════════════════════
   //  MAIN APP RENDER
   // ══════════════════════════════════════════════
+  // ── Ícones SVG Stroke Clean (Opção A) ──
+  const svgIco = (a, paths, extra) => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke={a ? t.ouro : t.txt2} strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round"
+      style={{display:"block",transition:"stroke .18s",filter:a?"drop-shadow(0 0 5px rgba(240,185,11,.55))":"none"}}
+      {...extra}>
+      {paths}
+    </svg>
+  );
   const tabs = [
-    {k:"busca",ico:"🔍",l:"Busca"},
-    {k:"dashboard",ico:"📊",l:"Dashboard",perm:"dashboard"},
-    {k:"planilha",ico:"📋",l:"Planilha",perm:"planilha"},
-    {k:"diarias",ico:"🛏️",l:"Diárias",perm:"diarias"},
-    {k:"descarga",ico:"📦",l:"Descarga",perm:"descarga"},
-    {k:"operacional",ico:"🗂️",l:"Operacional"},
-    {k:"motoristas",ico:"🚛",l:"Motoristas"},
-    ...(isAdmin ? [{k:"admin",ico:"⚙️",l:"Admin"}] : []),
+    {k:"busca", l:"Busca",
+      ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
+    {k:"dashboard", l:"Dashboard", perm:"dashboard",
+      ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
+    {k:"planilha", l:"Planilha", perm:"planilha",
+      ico:(a)=>svgIco(a,<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>)},
+    {k:"diarias", l:"Diárias", perm:"diarias",
+      ico:(a)=>svgIco(a,<><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>)},
+    {k:"descarga", l:"Descarga", perm:"descarga",
+      ico:(a)=>svgIco(a,<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.04 8.73-5.04M12 22V12"/></>)},
+    {k:"operacional", l:"Operac.",
+      ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>)},
+    {k:"motoristas", l:"Motori.",
+      ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
+    ...(isAdmin ? [{k:"admin", l:"Admin",
+      ico:(a)=>svgIco(a,<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>)}] : []),
   ].filter(tb => !tb.perm || perms[tb.perm] !== false);
 
   // ══════════════════════════════════════════════════════
@@ -3387,12 +3417,9 @@ function mapearColuna(n){
                   boxShadow:`0 0 8px rgba(240,185,11,.6)`,
                 }} />
               )}
-              <span style={{
-                fontSize:20,
-                lineHeight:1,
-                filter:ativo?"drop-shadow(0 0 4px rgba(240,185,11,.5))":"none",
-                transition:"filter .18s",
-              }}>{tb.ico}</span>
+              <span style={{lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:20}}>{tb.ico}</span>}
+              </span>
               <span style={{
                 fontSize:9,
                 fontWeight:ativo?700:500,
