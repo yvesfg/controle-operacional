@@ -56,25 +56,7 @@ const PERMS_LISTA = [
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
-    data: "2026-03-20 17:03", sessao: "Sessão 8",
-    itens: [
-      "FEAT · Ordenação por coluna na Planilha — clicar no título de qualquer coluna ordena A→Z; clicar de novo inverte Z→A (igual Excel); indicador ▲/▼ na coluna ativa; ⇅ nas demais; borda inferior dourada na coluna ordenada; botão ✕ na toolbar para limpar a ordenação; datas DD/MM/YYYY comparadas corretamente (convertidas para YYYYMMDD antes de comparar)",
-    ],
-  },
-  {
-    data: "2026-03-20 16:52", sessao: "Sessão 7",
-    itens: [
-      "FEAT · Tela inicial alterada para Planilha (era Busca) — ao abrir o app, a planilha já é exibida",
-      "FEAT · Navegação movida para rodapé (bottom nav fixo estilo Binance) — abas de navegação ficam fixas na parte inferior da tela com ícone + label, indicador dourado na aba ativa",
-      "FEAT · Botões WPP e Relatório movidos para o cabeçalho (header) — ao lado do botão de tema e logout; acessíveis em qualquer aba",
-      "FEAT · Planilha full-width responsiva — ocupa 100% da largura da tela (sem padding lateral), tabela usa tableLayout:fixed com colunas proporcionais (colgroup), altura calc(100vh-130px) com scroll interno",
-      "FEAT · Toolbar da planilha com contador de registros e botão de exportação na barra de topo da planilha",
-      "FEAT · FAB (+NOVO) reposicionado para bottom:74px para não sobrepor a barra de navegação",
-      "FIX · Padding do conteúdo reduzido para 68px no rodapé (era 100px) — alinhado com a altura da bottom nav (62px + margem)",
-    ],
-  },
-  {
-    data: "2026-03-20 16:06", sessao: "Sessão 6",
+    data: "2026-03-20 16:06", sessao: "Sessão 5",
     itens: [
       "FIX · WPP barra: dropdown WhatsApp na tabBar não abria (overflow:auto do tabBar externo clippava o dropdown absoluto); corrigido para overflow:visible no container externo",
       "FIX · Relatórios paisagem: regra @page{size:A4 landscape} movida para fora do @media print — era CSS inválido (regra @page não pode ser aninhada em @media); agora funciona em todos os navegadores",
@@ -424,9 +406,7 @@ export default function App() {
   const [conexoes, setConexoes] = useState(() => loadJSON("co_conexoes",[]));
 
   // UI state
-  const [activeTab, setActiveTab] = useState("planilha");
-  const [planilhaSortKey, setPlanilhaSortKey] = useState(null);   // coluna ativa: 'dt'|'nome'|'placa'|...
-  const [planilhaSortDir, setPlanilhaSortDir] = useState("asc");  // 'asc'|'desc'
+  const [activeTab, setActiveTab] = useState("busca");
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
   const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
@@ -1834,47 +1814,6 @@ export default function App() {
           )}
 
           <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,fontSize:14,padding:"6px 10px"}}>{theme==="dark"?"☀️":"🌙"}</button>
-          {/* Relatório Geral */}
-          <button onClick={()=>setRelGeralOpen(true)} title="Relatório Geral PDF" style={{...css.hBtn,color:t.ouro,border:`1.5px solid rgba(240,185,11,.3)`,padding:"8px 10px",fontSize:13}}>📊</button>
-          {/* WhatsApp Dropdown */}
-          <div style={{position:"relative"}}>
-            <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,color:"#25D366",border:`1.5px solid rgba(37,211,102,.3)`,padding:"8px 10px",fontSize:13}}>
-              📲
-            </button>
-            {wppTipoOpen && (
-              <>
-                <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)} />
-                <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
-                  {buscaResult
-                    ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700,display:"flex",alignItems:"center",gap:5}}>✅ DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
-                    : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>⚠️ Busque um registro primeiro</div>
-                  }
-                  {[
-                    {k:"faturamento",ico:"🧾",l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
-                    {k:"contratacao",ico:"📝",l:"Contratação",sub:"Modelo completo de pagamento"},
-                    {k:"descarga",ico:"📦",l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
-                    {k:"diarias",ico:"🛏️",l:"Diárias",sub:"Solicitar pagamento diária"},
-                  ].map((op,i,arr)=>(
-                    <button key={op.k} onClick={()=>{
-                      setWppTipoOpen(false);
-                      if(!buscaResult){setActiveTab("busca");showToast("🔍 Busque um registro primeiro","warn");return;}
-                      const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                      if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
-                      else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                      else if(op.k==="descarga"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");}
-                      else if(op.k==="diarias"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");}
-                    }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"flex-start",gap:10,transition:"background .15s"}}
-                      onMouseOver={e=>e.currentTarget.style.background=t.card2}
-                      onMouseOut={e=>e.currentTarget.style.background="transparent"}
-                    >
-                      <span style={{fontSize:18,flexShrink:0}}>{op.ico}</span>
-                      <div><div style={{color:t.txt,fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
           <button onClick={handleLogout} style={css.hBtn}>🚪</button>
         </div>
       </div>
@@ -1910,8 +1849,72 @@ export default function App() {
         </div>
       )}
 
+      {/* TAB BAR */}
+      <div style={{...css.tabBar,justifyContent:"space-between"}}>
+        <div style={{display:"flex",gap:4,overflowX:"auto",scrollbarWidth:"none"}}>
+          {tabs.map(tb => (
+            <button key={tb.k} onClick={()=>setActiveTab(tb.k)} className="co-tab" style={css.tab(activeTab===tb.k)}>
+              <span style={{fontSize:14,verticalAlign:"middle",marginRight:3}}>{tb.ico}</span> {tb.l}
+            </button>
+          ))}
+        </div>
+        {/* Botões WhatsApp + Relatório fixos na barra */}
+        <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
+          {/* Relatório Geral */}
+          <button
+            onClick={()=>setRelGeralOpen(true)}
+            title="Relatório Geral PDF"
+            style={{padding:"10px 12px",fontSize:10,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:t.ouro,border:"none",background:`rgba(240,185,11,.12)`,cursor:"pointer",borderRadius:10,whiteSpace:"nowrap",boxShadow:`0 0 0 1.5px rgba(240,185,11,.3) inset`,display:"flex",alignItems:"center",gap:5,fontFamily:"inherit"}}
+          >
+            <span style={{fontSize:14}}>📊</span>
+          </button>
+          {/* WhatsApp Dropdown */}
+          <div style={{position:"relative"}}>
+            <button
+              onClick={()=>setWppTipoOpen(v=>!v)}
+              style={{padding:"10px 14px",fontSize:10,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:"#25D366",border:"none",background:`rgba(37,211,102,.12)`,cursor:"pointer",borderRadius:10,whiteSpace:"nowrap",boxShadow:`0 0 0 1.5px rgba(37,211,102,.3) inset`,display:"flex",alignItems:"center",gap:5,fontFamily:"inherit"}}
+            >
+              <span style={{fontSize:14}}>📲</span> WPP ▾
+            </button>
+            {wppTipoOpen && (
+              <>
+                <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)} />
+                <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
+                  {buscaResult
+                    ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700,display:"flex",alignItems:"center",gap:5}}>✅ DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                    : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>⚠️ Busque um registro primeiro para preencher automaticamente</div>
+                  }
+                  {[
+                    {k:"faturamento",ico:"🧾",l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
+                    {k:"contratacao",ico:"📝",l:"Contratação",sub:"Modelo completo de pagamento"},
+                    {k:"descarga",ico:"📦",l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
+                    {k:"diarias",ico:"🛏️",l:"Diárias",sub:"Solicitar pagamento diária"},
+                  ].map((op,i,arr)=>(
+                    <button key={op.k} onClick={()=>{
+                      setWppTipoOpen(false);
+                      if(!buscaResult){setActiveTab("busca");showToast("🔍 Busque um registro primeiro para usar este modelo","warn");return;}
+                      const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                      if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                      else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                      else if(op.k==="descarga"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");}
+                      else if(op.k==="diarias"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");}
+                    }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"flex-start",gap:10,transition:"background .15s"}}
+                      onMouseOver={e=>e.currentTarget.style.background=t.card2}
+                      onMouseOut={e=>e.currentTarget.style.background="transparent"}
+                    >
+                      <span style={{fontSize:18,flexShrink:0}}>{op.ico}</span>
+                      <div><div style={{color:t.txt,fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* CONTENT */}
-      <div style={{padding:activeTab==="planilha"?"0 0 68px":"16px 16px 68px",maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
+      <div style={{padding:"16px 16px 100px",maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
 
         {/* ═══ BUSCA ═══ */}
         {activeTab === "busca" && (
@@ -2237,52 +2240,9 @@ export default function App() {
         )}
 
         {/* ═══ PLANILHA ═══ */}
-        {activeTab === "planilha" && (()=>{
-          // colunas com chave de campo para ordenação
-          const COLS = [
-            {h:"DT",        k:"dt",         w:"11%"},
-            {h:"Motorista", k:"nome",        w:"18%"},
-            {h:"Placa",     k:"placa",       w:"11%"},
-            {h:"Origem",    k:"origem",      w:"13%"},
-            {h:"Destino",   k:"destino",     w:"13%"},
-            {h:"Carreg.",   k:"data_carr",   w:"11%"},
-            {h:"Agenda",    k:"data_agenda", w:"11%"},
-            {h:"Desc.",     k:"data_desc",   w:"11%"},
-            {h:"Status",    k:"status",      w:"11%"},
-          ];
-          // --- função de ordenação ---
-          const sortarDados = (dados) => {
-            if (!planilhaSortKey) return dados;
-            return [...dados].sort((a, b) => {
-              const va = (a[planilhaSortKey] || "").toString().toLowerCase();
-              const vb = (b[planilhaSortKey] || "").toString().toLowerCase();
-              // datas no formato DD/MM/YYYY → converte para comparação correta
-              const isDate = /^\d{2}\/\d{2}\/\d{4}/.test(va) || /^\d{2}\/\d{2}\/\d{4}/.test(vb);
-              if (isDate) {
-                const toYMD = s => { if(!s) return ""; const p=s.split("/"); return p.length===3?`${p[2]}${p[1]}${p[0]}`:s; };
-                const da = toYMD(va), db = toYMD(vb);
-                return planilhaSortDir==="asc" ? da.localeCompare(db) : db.localeCompare(da);
-              }
-              return planilhaSortDir==="asc" ? va.localeCompare(vb,"pt-BR",{numeric:true}) : vb.localeCompare(va,"pt-BR",{numeric:true});
-            });
-          };
-          const dadosExibir = sortarDados(DADOS).slice(0, 500);
-          const toggleSort = (k) => {
-            if (planilhaSortKey === k) {
-              setPlanilhaSortDir(d => d==="asc"?"desc":"asc");
-            } else {
-              setPlanilhaSortKey(k);
-              setPlanilhaSortDir("asc");
-            }
-          };
-          return (
-          <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
-            {/* toolbar da planilha */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:t.headerBg,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <span style={{fontSize:10,color:t.txt2,fontWeight:600,letterSpacing:.5}}>
-                {DADOS.length} registros{DADOS.length>500?" · mostrando 500":""}
-                {planilhaSortKey && <span style={{color:t.ouro,marginLeft:8}}>ordenado por {planilhaSortKey} {planilhaSortDir==="asc"?"↑":"↓"} <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}} style={{background:"none",border:"none",color:t.txt2,cursor:"pointer",fontSize:10,padding:"0 2px",verticalAlign:"middle"}}>✕</button></span>}
-              </span>
+        {activeTab === "planilha" && (
+          <div>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:10}}>
               <ExportMenu
                 dados={DADOS}
                 cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"},{k:"status",l:"Status"},{k:"vl_cte",l:"VL CTE"},{k:"vl_contrato",l:"VL Contrato"},{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"}]}
@@ -2290,70 +2250,39 @@ export default function App() {
                 titulo="Planilha Operacional"
               />
             </div>
-            {/* tabela full-width */}
-            <div style={{flex:1,overflowX:"auto",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed",minWidth:480}}>
-                <colgroup>
-                  {COLS.map(c => <col key={c.k} style={{width:c.w}} />)}
-                </colgroup>
+            <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"calc(100vh - 220px)",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:600,tableLayout:"auto"}}>
                 <thead>
-                  <tr style={{background:t.tableHeader}}>
-                    {COLS.map(c => {
-                      const ativo = planilhaSortKey === c.k;
-                      return (
-                        <th key={c.k}
-                          onClick={()=>toggleSort(c.k)}
-                          title={`Ordenar por ${c.h}`}
-                          style={{
-                            padding:"9px 6px",textAlign:"left",fontSize:8,textTransform:"uppercase",
-                            letterSpacing:.8,color:ativo?t.ouro:t.txt2,
-                            borderBottom:`2px solid ${ativo?t.ouro:t.borda}`,
-                            whiteSpace:"nowrap",position:"sticky",top:0,zIndex:1,
-                            background:t.tableHeader,overflow:"hidden",textOverflow:"ellipsis",
-                            cursor:"pointer",userSelect:"none",
-                            transition:"color .15s, border-color .15s",
-                          }}
-                        >
-                          <span style={{display:"flex",alignItems:"center",gap:3}}>
-                            {c.h}
-                            <span style={{fontSize:9,lineHeight:1,opacity:ativo?1:.35,color:ativo?t.ouro:t.txt2}}>
-                              {ativo ? (planilhaSortDir==="asc"?"▲":"▼") : "⇅"}
-                            </span>
-                          </span>
-                        </th>
-                      );
-                    })}
-                  </tr>
+                  <tr>{["DT","Motorista","Placa","Origem","Destino","Carregamento","Agenda","Descarga","Status"].map(h => (
+                    <th key={h} style={{background:t.tableHeader,padding:"10px 10px",textAlign:"left",fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,borderBottom:`2px solid ${t.borda}`,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:1}}>{h}</th>
+                  ))}</tr>
                 </thead>
                 <tbody>
-                  {dadosExibir.map((r,i) => (
-                    <tr key={i} style={{cursor:"pointer",background:i%2===0?t.bg:t.bgAlt}} onClick={()=>{
+                  {DADOS.slice(0,500).map((r,i) => (
+                    <tr key={i} style={{cursor:"pointer"}} onClick={()=>{
                       const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
                       setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
                       const c=dt.replace(/\D/g,"");
                       const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
                       if(found){setBuscaResult(found);const cpfN=found.cpf?.replace(/\D/g,""),placaN=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN&&x.cpf?.replace(/\D/g,"")===cpfN)||(placaN&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}else{setBuscaError(dt);}
-                    }}
-                    onMouseOver={e=>{e.currentTarget.style.background=`rgba(240,185,11,.05)`;}}
-                    onMouseOut={e=>{e.currentTarget.style.background=i%2===0?t.bg:t.bgAlt;}}
-                    >
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.ouro,fontWeight:700,fontSize:11,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.dt}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt,fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.nome||"—"}>{r.nome||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:1.5,color:t.verde,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.placa||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.origem||"—"}>{r.origem||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.destino||"—"}>{r.destino||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.ouro,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.data_carr||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.data_agenda||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:r.data_desc?t.verde:t.danger,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.data_desc||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.status||"—"}</td>
+                    }}>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.txt,whiteSpace:"nowrap",fontWeight:700}}>{r.dt}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.txt,whiteSpace:"nowrap"}}>{r.nome||"—"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2,color:t.verde}}>{r.placa||"—"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,whiteSpace:"nowrap"}}>{r.origem||"—"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,whiteSpace:"nowrap"}}>{r.destino||"—"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.ouro}}>{r.data_carr||"—"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2}}>{r.data_agenda||"—"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:r.data_desc?t.verde:t.danger}}>{r.data_desc||"Pendente"}</td>
+                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2}}>{r.status||"—"}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            <div style={{fontSize:10,color:t.txt2,marginTop:8,textAlign:"center"}}>{DADOS.length} registros total{DADOS.length>500?" (mostrando 500)":""}</div>
           </div>
-          );
-        })()}
+        )}
 
         {/* ═══ DIÁRIAS ═══ */}
         {activeTab === "diarias" && (
@@ -3324,79 +3253,13 @@ function mapearColuna(n){
 
       {/* ═══ FAB ═══ */}
       {canEdit && (
-        <div style={{position:"fixed",bottom:74,right:14,zIndex:200}}>
-          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:50,height:50,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:14,border:"none",boxShadow:"0 5px 20px rgba(240,185,11,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
-            <span style={{fontSize:18,color:"#000"}}>＋</span>
+        <div style={{position:"fixed",bottom:20,right:14,zIndex:200}}>
+          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:54,height:54,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:15,border:"none",boxShadow:"0 5px 20px rgba(240,185,11,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
+            <span style={{fontSize:19,color:"#000"}}>＋</span>
             <span style={{fontSize:7,fontWeight:700,color:"#000",letterSpacing:.8,textTransform:"uppercase"}}>NOVO</span>
           </button>
         </div>
       )}
-
-      {/* ═══ BOTTOM NAVIGATION — estilo Binance ═══ */}
-      <nav style={{
-        position:"fixed",bottom:0,left:0,right:0,zIndex:190,
-        background:t.headerBg,
-        borderTop:`1px solid ${t.borda}`,
-        display:"flex",alignItems:"stretch",
-        height:62,
-        boxShadow:`0 -4px 20px ${t.shadow}`,
-        paddingBottom:"env(safe-area-inset-bottom,0)",
-        overflowX:"auto",
-        scrollbarWidth:"none",
-        WebkitOverflowScrolling:"touch",
-      }}>
-        {tabs.map(tb => {
-          const ativo = activeTab === tb.k;
-          return (
-            <button
-              key={tb.k}
-              onClick={()=>setActiveTab(tb.k)}
-              style={{
-                flex:"1 0 auto",
-                minWidth:56,
-                background:"transparent",
-                border:"none",
-                cursor:"pointer",
-                display:"flex",
-                flexDirection:"column",
-                alignItems:"center",
-                justifyContent:"center",
-                gap:3,
-                padding:"6px 2px 4px",
-                position:"relative",
-                transition:"all .18s",
-                fontFamily:"inherit",
-              }}
-            >
-              {/* indicador topo */}
-              {ativo && (
-                <span style={{
-                  position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
-                  width:28,height:2.5,borderRadius:"0 0 3px 3px",
-                  background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,
-                  boxShadow:`0 0 8px rgba(240,185,11,.6)`,
-                }} />
-              )}
-              <span style={{
-                fontSize:20,
-                lineHeight:1,
-                filter:ativo?"drop-shadow(0 0 4px rgba(240,185,11,.5))":"none",
-                transition:"filter .18s",
-              }}>{tb.ico}</span>
-              <span style={{
-                fontSize:9,
-                fontWeight:ativo?700:500,
-                letterSpacing:.4,
-                textTransform:"uppercase",
-                color:ativo?t.ouro:t.txt2,
-                lineHeight:1,
-                whiteSpace:"nowrap",
-                transition:"color .18s",
-              }}>{tb.l}</span>
-            </button>
-          );
-        })}
-      </nav>
 
       {/* ═══ EDIT MODAL ═══ */}
       {modalOpen === "edit" && (

@@ -1,0 +1,130 @@
+================================================================================
+LOG DE ALTERAÇÕES — controle-operacional / App.jsx
+DATA/HORA : 2026-03-20 16:06:03
+ARQUIVO   : App.jsx.bckp_20260320_160603
+================================================================================
+
+── CONTEXTO DA SESSÃO ───────────────────────────────────────────────────────────
+
+  Esta sessão (Sessão 6) registra e corrige inconsistências da Sessão 5 (que
+  ocorreu hoje 20/03 às ~11h08) e aplica 4 correções solicitadas pelo usuário.
+
+  O backup da Sessão 5 (App.jsx.bckp_20260320_110838) foi criado mas sem log
+  correspondente; o DEV_CHANGELOG também não havia sido atualizado com as
+  alterações da Sessão 5. Ambos estão corrigidos agora.
+
+── SOLICITAÇÕES DO USUÁRIO ──────────────────────────────────────────────────────
+
+  01  LOG ADMIN SÓ MOSTRA ATÉ ONTEM
+      - O DEV_CHANGELOG não tinha entrada para hoje (Sessão 5)
+      - Correção: entrada "Sessão 5 · 2026-03-20" adicionada ao DEV_CHANGELOG
+        com todos os itens implementados na sessão anterior (regras de diárias,
+        UI redesign, aba Operacional, relatórios PDF, etc.)
+
+  02  CADÊ AS ALTERAÇÕES REALIZADAS HOJE?
+      - A Sessão 5 (20/03 ~11h) não gerou arquivo de log em src/backups/
+      - Correção: este log documenta retroativamente o que foi feito na Sessão 5
+        e o que foi corrigido na Sessão 6 (agora)
+
+  03  BACKUPS — PROTOCOLO LEMBRADO
+      - Confirmado: protocolo de backup ativo
+      - Backup criado ANTES de qualquer alteração: App.jsx.bckp_20260320_160603
+      - Log criado APÓS as alterações: log_20260320_160603.txt
+
+  04  TODOS OS REGISTROS NO PERÍODO EM RELATÓRIOS — MODO PAISAGEM
+      - Problema: regra CSS @page{size:A4 landscape} estava dentro de @media print
+        (@page aninhado em @media é CSS inválido — não funciona em todos os
+        navegadores, especialmente Chrome no modo de impressão)
+      - Correção: @page{size:A4 landscape;margin:10mm 8mm} movido para fora do
+        @media print, como regra top-level no <style> do relHtmlBase
+      - Afeta: gerarRelatorioGeral (Todos os Registros no Período) e
+        gerarRelatorioMotorista
+
+  05  AO CLICAR EM WHATSAPP NA BARRA NADA ACONTECE
+      - Problema: css.tabBar tinha overflow:"auto" no container externo da tabBar
+        (display:flex com overflowX:"auto")
+        → O CSS clippa VERTICALMENTE qualquer filho posicionado absolutamente
+          quando o ancestor tem overflow diferente de "visible"
+        → O dropdown do WPP era renderizado (setWppTipoOpen funcionava) mas
+          ficava invisível pois era cortado pela borda inferior do tabBar
+      - Correção: css.tabBar alterado de overflowX:"auto" para overflow:"visible"
+        O scroll horizontal das abas continua funcionando via o div filho interno
+        que já tem seu próprio overflowX:"auto" com scrollbarWidth:"none"
+
+── O QUE FOI IMPLEMENTADO ───────────────────────────────────────────────────────
+
+  01  ✅ DEV_CHANGELOG atualizado — Sessão 5 inserida como primeiro item do array
+      com 9 itens descrevendo todas as alterações de hoje
+
+  02  ✅ Arquivo de log criado: log_20260320_160603.txt (este arquivo)
+
+  03  ✅ Relatórios em modo paisagem
+      - Função: relHtmlBase (usada por gerarRelatorioGeral e gerarRelatorioMotorista)
+      - Antes: @page dentro do @media print (inválido)
+      - Depois: @page{size:A4 landscape;margin:10mm 8mm} como regra top-level
+
+  04  ✅ WPP dropdown na barra corrigido
+      - Função: css.tabBar em useMemo(css, [t])
+      - Antes: overflowX:"auto" (clippava o dropdown)
+      - Depois: overflow:"visible" (dropdown aparece corretamente)
+
+── REGISTRO RETROATIVO — SESSÃO 5 (20/03/2026 ~11h08) ──────────────────────────
+
+  O backup App.jsx.bckp_20260320_110838 foi criado mas sem log. Segue abaixo
+  o registro retroativo do que foi implementado naquela sessão:
+
+  01  REGRAS DE DIÁRIAS COM DATA DE CHEGADA
+      - Antes: lógica simples data_agenda vs data_desc
+      - Depois: 4 regras explícitas envolvendo chegada, agenda, descarga e
+        informou_analista:
+          REGRA 1: chegou + descarregou antes/na agenda → tipo "sem_diaria"
+          REGRA 2: chegou na agenda, desc depois, informou analista → "diaria"
+          REGRA 3: chegou na agenda, desc depois, NÃO informou → "sem_diaria"
+          REGRA 4: chegou depois da agenda → "sem_diaria"
+          LEGADO: sem chegada → lógica antiga (dias entre agenda e desc)
+
+  02  UI REDESIGN COMPLETO
+      - Header: altura 44px no logo, padding 14px 20px, sombra mais forte
+      - TabBar: estilo underline (borderBottom dourado na aba ativa, sem bordas
+        laterais), padding 0 12px
+      - Botões: pill-shape (borderRadius 24px, minHeight 44px), peso 800,
+        novos: btnOutline e btnDanger
+      - secTitle: cor ouro, tamanho 10px, letterSpacing 2.5
+      - badge: borderRadius 20px (pills)
+      - cardKanban: borda lateral de cor de status (sem overflow:hidden)
+
+  03  ABA OPERACIONAL — SGS e APONTAMENTOS
+      - Nova aba "Operacional" (🗂️) na tab bar
+      - Sub-aba SGS: cadastro de chamados SGS (número, data_chamado,
+        ultimo_retorno, descricao, dt_rel, status: aberto/andamento/encerrado)
+      - Sub-aba Apontamentos: cadastro de apontamentos (número, pedido, mes_ref,
+        filial, valor, frs_folha, tipo: descarga/diárias/misto, dt_rel)
+      - Ambos persistidos em localStorage (co_sgs e co_aponts)
+
+  04  RELATÓRIO POR MOTORISTA (PDF)
+      - Função gerarRelatorioMotorista(mot)
+      - Botão 📄 em cada card de motorista na aba Motoristas
+      - Conteúdo: card do motorista (foto avatar, nome, vínculos, placas),
+        sumário financeiro (viagens, CTE, adiantamentos, saldo, diárias, SGS),
+        tabela de todas as viagens com status/badges de diária
+
+  05  RELATÓRIO GERAL DO PERÍODO (PDF)
+      - Função gerarRelatorioGeral(from, to)
+      - Botão 📊 fixo na tabBar (ao lado do WPP)
+      - Modal de seleção de período (de / até)
+      - Conteúdo: KPIs do período (viagens, motoristas, CTEs, contratos, ADTs,
+        saldos, diárias, SGS), resumo por motorista, tabela completa de registros,
+        seção de ocorrências SGS no período
+
+  06  PERMISSÃO OPERADOR — FINANCEIRO
+      - PERMS_PADRAO.operador.financeiro alterado de false para true
+      - Operador agora visualiza e edita dados financeiros
+
+── ARQUIVOS DE BACKUP ───────────────────────────────────────────────────────────
+  Sessão 5 (retroativo) : src/backups/App.jsx.bckp_20260320_110838
+  Sessão 6 (esta)       : src/backups/App.jsx.bckp_20260320_160603
+  Linhas antes (Sessão 6): 4535
+
+================================================================================
+FIM DO LOG
+================================================================================

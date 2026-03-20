@@ -1,0 +1,67 @@
+================================================================================
+LOG DE ALTERAÇÕES — controle-operacional / App.jsx
+DATA/HORA : 2026-03-20 16:52:08  (Sessão 7)
+ARQUIVO   : App.jsx.bckp_20260320_165208
+================================================================================
+
+── SOLICITAÇÕES DO USUÁRIO ──────────────────────────────────────────────────────
+
+  01  LAYOUT E CORES — ESTILO BINANCE
+      - Referência: https://www.binance.com/en/blog/markets/...
+      - Paleta do app já é idêntica à Binance: bg #0b0e11, ouro #f0b90b,
+        card #1e2026 — cores mantidas; ajustes visuais na navegação
+
+  02  BOTÕES NO RODAPÉ — ESQUEMA BINANCE
+      - Colocar esquema de botões de navegação no rodapé da tela
+      - Estilo Binance mobile: barra fixa no bottom com ícone + label
+
+  03  TELA INICIAL = PLANILHA
+      - Ao abrir o app, a planilha deve ser a primeira tela exibida
+
+  04  PLANILHA RESPONSIVA — OCUPA TODA A TELA
+      - A planilha deve se ajustar de lado a lado em qualquer dispositivo
+        (celular, tablet, desktop)
+
+── O QUE FOI IMPLEMENTADO ───────────────────────────────────────────────────────
+
+  01  ✅ TELA INICIAL = PLANILHA
+      - activeTab: useState("busca") → useState("planilha")
+
+  02  ✅ BOTTOM NAVIGATION ESTILO BINANCE
+      - Adicionado <nav> com position:fixed, bottom:0, left:0, right:0,
+        height:62px, zIndex:190
+      - Background: t.headerBg (#161a1e), borderTop 1px dourado
+      - Cada aba: ícone 20px + label 9px uppercase
+      - Aba ativa: indicador dourado no topo (barra 28px gradiente ouro),
+        glow filter no ícone, cor dourada no label
+      - Rolagem horizontal: overflowX:auto, scrollbarWidth:none para
+        quando há muitas abas no celular
+      - Safe area iOS: paddingBottom:env(safe-area-inset-bottom,0)
+      - FAB reposicionado para bottom:74px (acima da bottom nav)
+
+  03  ✅ BOTÕES WPP E RELATÓRIO NO HEADER
+      - Removido o tabBar do topo (com suas abas + botões WPP + relatório)
+      - Botão 📊 Relatório e 📲 WPP movidos para o header (direita),
+        ao lado do botão de tema e logout
+      - WPP dropdown ainda funcional no header (position:relative no pai,
+        dropdown position:fixed overlay + absolute dropdown)
+
+  04  ✅ PLANILHA FULL-WIDTH RESPONSIVA
+      - Container: height:calc(100vh - 130px), sem padding lateral
+      - Toolbar interna: barra com contador de registros + botão exportar
+      - Tabela: tableLayout:fixed com <colgroup> definindo % de cada coluna
+        DT:11%, Motorista:18%, Placa:11%, Origem:13%, Destino:13%,
+        Carreg:11%, Agenda:11%, Desc:11%, Status:11%
+      - minWidth:480 (funcional em celular pequeno com scroll horizontal)
+      - overflow:hidden + textOverflow:ellipsis + title nas colunas de texto
+      - Fundo alternado nas linhas (bg/bgAlt) — zebra pattern
+      - Hover: linha fica dourado suave
+
+── ARQUIVO DE BACKUP ────────────────────────────────────────────────────────────
+  Localização : src/backups/App.jsx.bckp_20260320_165208
+  Linhas (antes das alterações) : 4549
+  Linhas (após as alterações)   : ~4630
+
+================================================================================
+FIM DO LOG
+================================================================================
