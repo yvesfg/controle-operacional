@@ -3246,16 +3246,34 @@ function mapearColuna(n){
                         return contatos;
                       };
                       const parseCSV=(raw)=>{
-                        const lines=raw.trim().split("\n");if(lines.length<2)return[];
-                        const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim().toLowerCase());
-                        const nameIdx=headers.findIndex(h=>h==="name"||h==="full name"||h==="nome");
-                        const phoneIdx=headers.findIndex(h=>h.includes("phone")||h.includes("fone")||h.includes("tel"));
-                        const noteIdx=headers.findIndex(h=>h.includes("note")||h.includes("obs"));
+                        // FIX: normalizar \r\n e \r (Google exporta Windows line endings)
+                        const norm=raw.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+                        const lines=norm.trim().split("\n");
+                        if(lines.length<2)return[];
+                        // FIX: parser CSV real — suporta campos entre aspas com vírgulas internas
+                        const parseRow=(line)=>{
+                          const res=[];let cur="",inQ=false;
+                          for(let i=0;i<line.length;i++){
+                            const ch=line[i];
+                            if(ch==='"'){
+                              if(inQ&&line[i+1]==='"'){cur+='"';i++;}
+                              else inQ=!inQ;
+                            }else if(ch===','&&!inQ){res.push(cur.trim());cur="";}
+                            else cur+=ch;
+                          }
+                          res.push(cur.trim());return res;
+                        };
+                        const headers=parseRow(lines[0]).map(h=>h.replace(/"/g,"").toLowerCase().trim());
+                        // FIX: Google usa "Name", "Phone 1 - Value", "Notes"
+                        const nameIdx=headers.findIndex(h=>h==="name"||h==="full name"||h==="nome"||h==="nome completo");
+                        const phoneIdx=headers.findIndex(h=>(h.includes("phone")&&h.includes("value"))||h==="phone"||h.includes("fone")||h==="telefone");
+                        const noteIdx=headers.findIndex(h=>h.includes("note")||h.includes("obs")||h==="notas");
                         return lines.slice(1).map(line=>{
-                          const cols=line.split(",").map(c=>c.replace(/^"|"$/g,"").trim());
-                          const nome=nameIdx>=0?cols[nameIdx]||"":"";
-                          const tel=(phoneIdx>=0?cols[phoneIdx]||"":"").replace(/\D/g,"").replace(/^55/,"");
-                          const nota=noteIdx>=0?cols[noteIdx]||"":"";
+                          if(!line.trim())return null;
+                          const cols=parseRow(line);
+                          const nome=nameIdx>=0?(cols[nameIdx]||""):"";
+                          const tel=(phoneIdx>=0?(cols[phoneIdx]||""):"").replace(/\D/g,"").replace(/^55/,"");
+                          const nota=noteIdx>=0?(cols[noteIdx]||""):"";
                           const placaM=nota.match(/Placa[:\s]*([\w/| ]+)/i);
                           const placas=(placaM?.[1]||"").split(/[|\/]/).map(p=>p.trim()).filter(Boolean);
                           const cpfM=nota.match(/CPF[:\s]*([0-9./-]+)/i);
