@@ -142,9 +142,8 @@ const DEV_CHANGELOG = [
   },
 ];
 
-// ── Admin fixo ──
-const ADMIN_EMAIL = "yvesfg@icloud.com";
-const ADMIN_SENHA_PADRAO = "YFGroup@2024";
+// ── Admin email (configurável via admin panel, armazenado no localStorage) ──
+// Nenhuma credencial hardcoded no código-fonte.
 
 // ── Supabase padrão via variáveis de ambiente (Vite) ──
 const ENV_SUPA_URL = typeof import.meta !== "undefined" ? (import.meta.env?.VITE_SUPABASE_URL || "") : "";
@@ -243,8 +242,10 @@ function exportPDF(dados, cols, titulo) {
 <table><thead><tr>${cols.map(c=>`<th>${c.l}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>
 <div class="footer">Controle Operacional · YFGroup — Gerado automaticamente</div>
 <script>setTimeout(()=>window.print(),400)<\/script></body></html>`;
-  const w = window.open("","_blank","width=960,height=720");
-  if (w) { w.document.write(html); w.document.close(); }
+  const _blob2 = new Blob([html], {type:"text/html;charset=utf-8"});
+  const _url2 = URL.createObjectURL(_blob2);
+  window.open(_url2, "_blank", "width=960,height=720");
+  setTimeout(()=>URL.revokeObjectURL(_url2), 120000);
 }
 
 function ExportMenu({ dados, cols, filename, titulo }) {
@@ -489,7 +490,9 @@ export default function App() {
 
   // Alerts
   const [alertasOpen, setAlertasOpen] = useState(false);
+  const [conexoesOpen, setConexoesOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
+  const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email",""));
 
   // Item 7 — Email template e envio
   const [emailTemplateOpen, setEmailTemplateOpen] = useState(false);
@@ -645,14 +648,19 @@ export default function App() {
     }
   }, [getConexao, dadosExtras, showToast]);
 
-  // Auto-login from session
+  // Auto-login from session (com expiração de 24h)
   useEffect(() => {
     const s = loadJSON("co_sessao", null);
     if (s?.perfil) {
-      setPerfil(s.perfil);
-      setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
-      setUsuarioLogado(s.nome || s.perfil);
-      setAuthed(true);
+      const SESSION_TTL = 24 * 3600 * 1000; // 24 horas
+      if (s.ts && (Date.now() - s.ts) > SESSION_TTL) {
+        localStorage.removeItem("co_sessao");
+      } else {
+        setPerfil(s.perfil);
+        setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
+        setUsuarioLogado(s.nome || s.perfil);
+        setAuthed(true);
+      }
     }
   }, []);
 
@@ -685,12 +693,13 @@ export default function App() {
     const emailOAuth = payload.email.toLowerCase();
     const nomeOAuth = payload.user_metadata?.full_name || payload.user_metadata?.name || emailOAuth;
 
-    // Admin via OAuth
-    if (emailOAuth === ADMIN_EMAIL.toLowerCase()) {
+    // Admin via OAuth (email configurável — sem hardcode)
+    const adminEmailOAuth = loadJSON("co_admin_email","").toLowerCase();
+    if (adminEmailOAuth && emailOAuth === adminEmailOAuth) {
       const p = "admin"; const pm = {...PERMS_PADRAO.admin};
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado(nomeOAuth);
-      saveJSON("co_sessao", {perfil:p, perms:pm, nome:nomeOAuth});
+      saveJSON("co_sessao", {perfil:p, perms:pm, nome:nomeOAuth, ts:Date.now()});
       showToast(`✅ Login social realizado — bem-vindo, ${nomeOAuth}!`, "ok");
       return;
     }
@@ -706,7 +715,7 @@ export default function App() {
             const pm = typeof u.perms === "string" ? JSON.parse(u.perms) : (u.perms || {...PERMS_PADRAO[p]});
             setPerfil(p); setPerms(pm); setAuthed(true);
             setUsuarioLogado(u.nome || u.email);
-            saveJSON("co_sessao", {perfil:p, perms:pm, nome:u.nome||u.email});
+            saveJSON("co_sessao", {perfil:p, perms:pm, nome:u.nome||u.email, ts:Date.now()});
             showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
           } else {
             setAuthMsg({t:"err", m:`❌ Conta ${payload.email} não cadastrada no sistema`});
@@ -874,7 +883,8 @@ export default function App() {
     if (!authSenha) { setAuthMsg({t:"err",m:"⚠️ Digite a senha"}); return; }
 
     // ── Login ADMIN ──
-    if (login === ADMIN_EMAIL.toLowerCase() || login === "admin") {
+    const adminEmailCfg = loadJSON("co_admin_email","").toLowerCase();
+    if (login === "admin" || (adminEmailCfg && login === adminEmailCfg)) {
       // SEMPRE busca do Supabase primeiro — garante sincronização entre todos os dispositivos
       let storedHash = null;
       const conn = getConexao();
@@ -886,20 +896,20 @@ export default function App() {
       }
       if (!storedHash) storedHash = loadJSON("co_admin_senha", null);
 
-      let ok = false;
       if (!storedHash) {
-        ok = authSenha === ADMIN_SENHA_PADRAO;
-      } else {
-        try { ok = await verificarSenha(authSenha, storedHash); } catch { ok = authSenha === storedHash; }
+        setAuthMsg({t:"err",m:"⚠️ Senha admin não foi configurada. Acesse o painel admin e defina a senha."});
+        setAuthSenha("");
+        return;
       }
+      let ok = false;
+      try { ok = await verificarSenha(authSenha, storedHash); } catch { ok = authSenha === storedHash; }
       if (ok) {
         const p = "admin";
         const pm = {...PERMS_PADRAO.admin};
         setPerfil(p); setPerms(pm); setAuthed(true);
         setUsuarioLogado("Admin");
-        saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin"});
+        saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin",ts:Date.now()});
         setAuthSenha(""); setAuthEmail("");
-        if (!storedHash) setPrimeiroLogin(true);
       } else {
         setAuthMsg({t:"err",m:"❌ Senha incorreta"});
         setAuthSenha("");
@@ -946,7 +956,7 @@ export default function App() {
       const pm = found.perms || {...PERMS_PADRAO[p]};
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado(found.nome || found.email);
-      saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email});
+      saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email,ts:Date.now()});
       setAuthSenha(""); setAuthEmail("");
     } else {
       // Checar se existe na lista local para dar mensagem correta
@@ -1487,20 +1497,27 @@ export default function App() {
   // ══════════════════════════════════════════════════════
   const relHtmlBase = (titulo, subtitulo, corpo) => {
     const now = new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
-    const logoText = customLogo ? `<img src="${customLogo}" style="height:48px;object-fit:contain;filter:brightness(0) invert(1)" />` : `<span style="font-size:28px;font-weight:900;letter-spacing:3px;color:#fff;font-family:'Segoe UI',sans-serif">YF<span style="color:#f0b90b">GROUP</span></span>`;
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    const logoBlock = customLogo
+      ? `<img src="${customLogo}" style="height:42px;object-fit:contain" />`
+      : `<div style="width:44px;height:44px;background:linear-gradient(135deg,#f0b90b,#e5a800);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(240,185,11,.38)"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>`;
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=1200">
 <title>${titulo}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a202c;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .page{max-width:900px;margin:0 auto;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.1)}
-  .header{background:linear-gradient(135deg,#0a1628 0%,#1a3a6b 60%,#0d2d5e 100%);padding:28px 36px 22px;display:flex;align-items:center;justify-content:space-between}
-  .header-right{text-align:right;color:rgba(255,255,255,.7);font-size:10px;line-height:1.8}
-  .header-right strong{color:#f0b90b;font-size:13px;display:block;margin-bottom:2px}
-  .subheader{background:#f0b90b;padding:10px 36px;display:flex;align-items:center;gap:16px}
-  .subheader-title{font-size:16px;font-weight:800;color:#0a1628;letter-spacing:.5px;text-transform:uppercase}
+  html{width:297mm}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1421;color:#1a202c;font-size:12px;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-width:900px}
+  .page{max-width:1050px;margin:0 auto;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+  .header{background:linear-gradient(135deg,#0d1421 0%,#1a2744 60%,#0d1e3a 100%);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .header-brand{display:flex;align-items:center;gap:14px}
+  .brand-name{font-size:17px;font-weight:900;color:#fff;letter-spacing:2px;line-height:1.1;font-family:'Segoe UI',Arial,sans-serif}
+  .brand-sub{font-size:10px;color:rgba(255,255,255,.45);font-weight:400;margin-top:3px}
+  .brand-sub strong{color:#f0b90b;font-weight:700}
+  .header-right{text-align:right;color:rgba(255,255,255,.6);font-size:10px;line-height:1.8;flex-shrink:0}
+  .header-right strong{color:#f0b90b;font-size:12px;display:block;margin-bottom:2px;font-weight:800;letter-spacing:.5px}
+  .subheader{background:#f0b90b;padding:9px 32px;display:flex;align-items:center;gap:16px}
+  .subheader-title{font-size:15px;font-weight:800;color:#0a1628;letter-spacing:.5px;text-transform:uppercase}
   .subheader-sub{font-size:10px;color:#5a4200;font-weight:600}
-  .content{padding:28px 36px}
+  .content{padding:24px 32px}
   .section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#1a3a6b;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
   .section-title::after{content:'';flex:1;height:2px;background:linear-gradient(to right,#f0b90b55,transparent)}
   .kpi-row{display:grid;gap:12px;margin-bottom:8px}
@@ -1557,7 +1574,13 @@ export default function App() {
 </head><body>
 <div class="page">
   <div class="header">
-    <div>${logoText}</div>
+    <div class="header-brand">
+      ${logoBlock}
+      <div>
+        <div class="brand-name">CONTROLE OPERACIONAL</div>
+        <div class="brand-sub">by <strong>YFGroup</strong> · Imperatriz Logística</div>
+      </div>
+    </div>
     <div class="header-right">
       <strong>${titulo}</strong>
       ${subtitulo}<br>Gerado em ${now}
@@ -1565,13 +1588,13 @@ export default function App() {
   </div>
   ${corpo}
   <div class="footer">
-    <span class="footer-txt">Documento gerado automaticamente — Controle Operacional</span>
+    <span class="footer-txt">Documento gerado automaticamente — Controle Operacional · YFGroup</span>
     <span class="footer-brand">YF GROUP LOGÍSTICA</span>
   </div>
 </div>
-<div class="no-print" style="text-align:center;padding:20px;background:#1a3a6b">
-  <button onclick="window.print()" style="background:#f0b90b;color:#0a1628;border:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px">🖨️ IMPRIMIR / SALVAR PDF</button>
-  <button onclick="window.close()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-left:10px">✕ Fechar</button>
+<div class="no-print" style="text-align:center;padding:18px 20px;background:#0d1421;border-top:2px solid #f0b90b22">
+  <button onclick="window.print()" style="background:#f0b90b;color:#0a1628;border:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px">IMPRIMIR / SALVAR PDF</button>
+  <button onclick="window.close()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-left:10px">Fechar</button>
 </div>
 </body></html>`;
   };
@@ -1677,9 +1700,11 @@ export default function App() {
       </tbody>
     </table>`:""}
   </div>`;
-    const w = window.open("","_blank","width=1000,height=800");
-    w.document.write(relHtmlBase(`Motorista: ${mot.nome||"—"}`, `Relatório Individual · ${mot.nome||"—"}`, corpo));
-    w.document.close();
+    const _html = relHtmlBase(`Motorista: ${mot.nome||"—"}`, `Relatório Individual · ${mot.nome||"—"}`, corpo);
+    const _blob = new Blob([_html], {type:"text/html;charset=utf-8"});
+    const _url  = URL.createObjectURL(_blob);
+    window.open(_url, "_blank", "width=1200,height=850");
+    setTimeout(()=>URL.revokeObjectURL(_url), 120000);
   };
 
   const gerarRelatorioGeral = (from, to, filtros={}) => {
@@ -1831,9 +1856,11 @@ export default function App() {
       </div>
     </div>`).join("")}`:""}
   </div>`;
-    const w = window.open("","_blank","width=1200,height=850");
-    w.document.write(relHtmlBase(`Relatório Geral · ${periodoStr}`, periodoStr, corpo));
-    w.document.close();
+    const _html = relHtmlBase(`Relatório Geral · ${periodoStr}`, periodoStr, corpo);
+    const _blob = new Blob([_html], {type:"text/html;charset=utf-8"});
+    const _url  = URL.createObjectURL(_blob);
+    window.open(_url, "_blank", "width=1200,height=850");
+    setTimeout(()=>URL.revokeObjectURL(_url), 120000);
   };
 
   return (
@@ -3122,30 +3149,37 @@ export default function App() {
               </div>
             ))}
 
-            {/* Conexões */}
-            <div style={{...css.secTitle,marginTop:20}}>{hIco(<><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></>,t.ouro,12)} Conexões Supabase <span style={{flex:1,height:1,background:t.borda}} /></div>
-            {conexoes.map((c,i) => (
-              <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
-                {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.txt2,14)}
-                <div style={{flex:1,minWidth:0}}><div style={{fontSize:11,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name||c.url}</div></div>
-                <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:5,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger}}>✕</button>
-              </div>
-            ))}
-            <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
-              <input id="newSupaUrl" placeholder="https://xxx.supabase.co" style={css.inp} />
-              <input id="newSupaKey" placeholder="anon key" style={css.inp} />
-              <input id="newSupaName" placeholder="Nome da conexão" style={css.inp} />
-              <button onClick={()=>{
-                const url = document.getElementById("newSupaUrl").value.trim();
-                const key = document.getElementById("newSupaKey").value.trim();
-                const name = document.getElementById("newSupaName").value.trim() || "Conexão";
-                if (!url || !key) { showToast("⚠️ URL e Key obrigatórios","warn"); return; }
-                const nc = [...conexoes, {url,key,name}];
-                saveConexoesLS(nc);
-                saveJSON("co_conexao_ativa", nc.length-1);
-                showToast("✅ Conexão adicionada!","ok");
-              }} style={{...css.btnGreen,justifyContent:"center"}}>🗄️ CONECTAR</button>
+            {/* Conexões Supabase — colapsável */}
+            <div style={{...css.secTitle,marginTop:20,cursor:"pointer",userSelect:"none"}} onClick={()=>setConexoesOpen(!conexoesOpen)}>
+              {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.ouro,12)} Conexões Supabase <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{conexoesOpen?"▲":"▼"}</span>
+              <span style={{flex:1,height:1,background:t.borda}} />
             </div>
+            {conexoesOpen && (
+              <div style={{marginBottom:16}}>
+                {conexoes.map((c,i) => (
+                  <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
+                    {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.txt2,14)}
+                    <div style={{flex:1,minWidth:0}}><div style={{fontSize:11,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name||c.url}</div></div>
+                    <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:5,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger}}>✕</button>
+                  </div>
+                ))}
+                <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
+                  <input id="newSupaUrl" placeholder="https://xxx.supabase.co" style={css.inp} />
+                  <input id="newSupaKey" placeholder="anon key" style={css.inp} />
+                  <input id="newSupaName" placeholder="Nome da conexão" style={css.inp} />
+                  <button onClick={()=>{
+                    const url = document.getElementById("newSupaUrl").value.trim();
+                    const key = document.getElementById("newSupaKey").value.trim();
+                    const name = document.getElementById("newSupaName").value.trim() || "Conexão";
+                    if (!url || !key) { showToast("⚠️ URL e Key obrigatórios","warn"); return; }
+                    const nc = [...conexoes, {url,key,name}];
+                    saveConexoesLS(nc);
+                    saveJSON("co_conexao_ativa", nc.length-1);
+                    showToast("✅ Conexão adicionada!","ok");
+                  }} style={{...css.btnGreen,justifyContent:"center"}}>🗄️ CONECTAR</button>
+                </div>
+              </div>
+            )}
 
             {/* Google Sheets */}
             <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setGsheetsOpen(!gsheetsOpen)}>
@@ -3228,6 +3262,19 @@ function mapearColuna(n){
             {/* Alterar senha do Admin */}
             <AlterarSenhaAdmin t={t} css={css} showToast={showToast} onSalvar={async hash=>{await setConfigRemoto("admin_senha_hash",hash);await registrarLog("ALTERAR_SENHA_ADMIN","Senha do Admin alterada");}} />
 
+            {/* Email do Admin (para login e OAuth) */}
+            <div style={{marginTop:8,marginBottom:16}}>
+              <div style={{fontSize:10,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Email do Admin (login OAuth / identificação)</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={adminEmailVal} onChange={e=>setAdminEmailVal(e.target.value)} placeholder="seu@email.com" style={{...css.inp,flex:1,fontSize:11}} />
+                <button onClick={()=>{saveJSON("co_admin_email",adminEmailVal.trim().toLowerCase());showToast("✅ Email admin salvo","ok");}} style={{...css.btnGold,whiteSpace:"nowrap",fontSize:11}}>
+                  {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,t.bg,13,1.8)}
+                  Salvar
+                </button>
+              </div>
+              <div style={{fontSize:9,color:t.txt2,marginTop:4,lineHeight:1.6}}>Este email é usado para identificar o admin no login e via OAuth Google. Não fica visível no código-fonte.</div>
+            </div>
+
             {/* EMAIL BOAS-VINDAS */}
             <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setEmailTemplateOpen(!emailTemplateOpen)}>
               {hIco(<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,t.ouro,12)} Email de Boas-vindas<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{emailTemplateOpen?"▲":"▼"}</span>
@@ -3248,8 +3295,8 @@ function mapearColuna(n){
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   <button onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("✅ Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{...css.btnGreen,flex:1,justifyContent:"center",fontSize:12}}>💾 Salvar Template</button>
-                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:ADMIN_EMAIL,perfil:"operador"},"senha123",false)} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>📧 Testar (Gmail)</button>
-                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:ADMIN_EMAIL,perfil:"operador"},"senha123",true)} style={{...css.hBtn,flex:1,justifyContent:"center",fontSize:12}}>✉️ Outro Cliente</button>
+                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",false)} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>📧 Testar (Gmail)</button>
+                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",true)} style={{...css.hBtn,flex:1,justifyContent:"center",fontSize:12}}>✉️ Outro Cliente</button>
                 </div>
                 <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:"1px solid "+t.borda,fontSize:10,color:t.txt2,lineHeight:1.6}}>
                   O email abre no seu cliente de email ja preenchido. Para usuarios novos, clique no botao Email no cadastro.
