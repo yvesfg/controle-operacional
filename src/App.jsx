@@ -1850,27 +1850,24 @@ export default function App() {
         }
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
-          <div style={{fontSize:9,color:t.ouro,letterSpacing:1.5,textTransform:"uppercase",fontWeight:700}}>Imperatriz · YFGroup</div>
+          <div style={{fontSize:9,color:t.txt2,letterSpacing:1.5,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro,fontWeight:700}}>YFGroup</span></div>
         </div>
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:7}}>
-          <span style={css.badge(
-            perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
-            perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="gerente"?`rgba(22,119,255,.1)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
-            perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="gerente"?`rgba(22,119,255,.22)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
-          )} title={usuarioLogado||perfil} style={{...css.badge(
-            perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
-            perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="gerente"?`rgba(22,119,255,.1)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
-            perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="gerente"?`rgba(22,119,255,.22)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
-          ),display:"inline-flex",alignItems:"center",gap:4}}>
+          <div title={usuarioLogado||perfil} style={{
+            ...css.hBtn,
+            borderColor: perfil==="admin"?`rgba(240,185,11,.35)`:perfil==="gerente"?`rgba(22,119,255,.3)`:perfil==="operador"?t.borda:`rgba(22,119,255,.3)`,
+            color: perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
+            gap:5, padding:"7px 11px",
+          }}>
             {perfil==="admin"
-              ? <>{hIco(<><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,t.ouro,12,2)} ADMIN</>
+              ? <>{hIco(<><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,t.ouro,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>ADMIN</span></>
               : perfil==="gerente"
-              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,12,2)} {(usuarioLogado||"GER").split(" ")[0].substring(0,8).toUpperCase()}</>
+              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>{(usuarioLogado||"GER").split(" ")[0].substring(0,8).toUpperCase()}</span></>
               : perfil==="operador"
-              ? <>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,12,2)} {(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}</>
-              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,12,2)} {(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}</>
+              ? <>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>{(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}</span></>
+              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>{(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}</span></>
             }
-          </span>
+          </div>
 
           <button onClick={sincronizar} className="co-hbtn" style={css.hBtn}>
             <span style={{width:6,height:6,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.borda,boxShadow:connStatus==="online"?`0 0 5px rgba(2,192,118,.6)`:"none",flexShrink:0}} />
