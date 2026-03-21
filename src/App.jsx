@@ -1449,6 +1449,14 @@ export default function App() {
       {paths}
     </svg>
   );
+  // ── Ícone SVG para o header (16px, cor customizável) ──
+  const hIco = (paths, color, size=16, sw=1.8) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color||t.txt2} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"
+      style={{display:"block",flexShrink:0}}>
+      {paths}
+    </svg>
+  );
   const tabs = [
     {k:"busca", l:"Busca",
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
@@ -1838,7 +1846,7 @@ export default function App() {
       <div style={css.header}>
         {customLogo
           ? <img src={customLogo} alt="Logo" style={{width:44,height:44,borderRadius:13,objectFit:"contain",boxShadow:`0 4px 14px rgba(240,185,11,.38)`}} />
-          : <div style={css.logo}>🚛</div>
+          : <div style={css.logo}>{hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,22,2)}</div>
         }
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
@@ -1849,28 +1857,52 @@ export default function App() {
             perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
             perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="gerente"?`rgba(22,119,255,.1)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
             perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="gerente"?`rgba(22,119,255,.22)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
-          )} title={usuarioLogado||perfil}>{perfil==="admin"?"👑 ADMIN":perfil==="gerente"?`🏢 ${(usuarioLogado||"GER").split(" ")[0].substring(0,8).toUpperCase()}`:perfil==="operador"?`⚙️ ${(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}`:`👁️ ${(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}`}</span>
+          )} title={usuarioLogado||perfil} style={{...css.badge(
+            perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
+            perfil==="admin"?`rgba(240,185,11,.12)`:perfil==="gerente"?`rgba(22,119,255,.1)`:perfil==="operador"?`rgba(132,142,156,.12)`:`rgba(22,119,255,.1)`,
+            perfil==="admin"?`rgba(240,185,11,.25)`:perfil==="gerente"?`rgba(22,119,255,.22)`:perfil==="operador"?t.borda:`rgba(22,119,255,.22)`,
+          ),display:"inline-flex",alignItems:"center",gap:4}}>
+            {perfil==="admin"
+              ? <>{hIco(<><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,t.ouro,12,2)} ADMIN</>
+              : perfil==="gerente"
+              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,12,2)} {(usuarioLogado||"GER").split(" ")[0].substring(0,8).toUpperCase()}</>
+              : perfil==="operador"
+              ? <>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,12,2)} {(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}</>
+              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,12,2)} {(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}</>
+            }
+          </span>
 
           <button onClick={sincronizar} className="co-hbtn" style={css.hBtn}>
             <span style={{width:6,height:6,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.borda,boxShadow:connStatus==="online"?`0 0 5px rgba(2,192,118,.6)`:"none",flexShrink:0}} />
-            <span>{connStatus==="syncing"?"⏳":"☁️"}</span>
+            {connStatus==="syncing"
+              ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro)
+              : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2)
+            }
             <span style={{fontSize:10}}>SYNC</span>
           </button>
 
           {alertas.length > 0 && (
-            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",color:t.danger,position:"relative"}}>
-              🔔
+            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"8px 10px"}}>
+              {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger)}
               <span style={{position:"absolute",top:-6,right:-6,background:t.danger,color:"#fff",borderRadius:"50%",width:16,height:16,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
             </button>
           )}
 
-          <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,fontSize:14,padding:"6px 10px"}}>{theme==="dark"?"☀️":"🌙"}</button>
+          <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"8px 10px"}} title={theme==="dark"?"Tema claro":"Tema escuro"}>
+            {theme==="dark"
+              ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2)
+              : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2)
+            }
+          </button>
           {/* Relatório Geral */}
-          <button onClick={()=>setRelGeralOpen(true)} title="Relatório Geral PDF" style={{...css.hBtn,color:t.ouro,border:`1.5px solid rgba(240,185,11,.3)`,padding:"8px 10px",fontSize:13}}>📊</button>
+          <button onClick={()=>setRelGeralOpen(true)} title="Relatório Geral PDF" style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"8px 10px"}}>
+            {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro)}
+          </button>
           {/* WhatsApp Dropdown */}
           <div style={{position:"relative"}}>
-            <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,color:"#25D366",border:`1.5px solid rgba(37,211,102,.3)`,padding:"8px 10px",fontSize:13}}>
-              📲
+            <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"8px 10px"}}>
+              {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </>,"#25D366")}
             </button>
             {wppTipoOpen && (
               <>
@@ -1906,7 +1938,9 @@ export default function App() {
               </>
             )}
           </div>
-          <button onClick={handleLogout} style={css.hBtn}>🚪</button>
+          <button onClick={handleLogout} title="Sair" style={{...css.hBtn,padding:"8px 10px"}}>
+            {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2)}
+          </button>
         </div>
       </div>
 
