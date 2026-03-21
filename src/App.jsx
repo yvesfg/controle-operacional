@@ -1278,8 +1278,8 @@ export default function App() {
     app: { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:"'Barlow','Segoe UI',system-ui,sans-serif", transition:"background .3s, color .3s" },
     // Header — mais alto, mais refinado
     header: { background:t.headerBg, padding:"10px 16px", borderBottom:`2px solid ${t.ouro}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:8, boxShadow:`0 4px 20px ${t.shadow}`, transition:"background .3s" },
-    logo: { width:44, height:44, background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, borderRadius:13, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0, boxShadow:`0 4px 14px rgba(240,185,11,.38)` },
-    hBtn: { background:"rgba(128,128,128,.08)", border:`1.5px solid ${t.borda}`, borderRadius:10, padding:"9px 14px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:6, fontWeight:600, transition:"all .2s" },
+    logo: { width:40, height:40, background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:`0 4px 14px rgba(240,185,11,.38)` },
+    hBtn: { background:"rgba(128,128,128,.08)", border:`1.5px solid ${t.borda}`, borderRadius:9, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:600, transition:"all .2s" },
     // Tabs — underline style, mais altas
     tabBar: { display:"flex", background:t.headerBg, borderBottom:`2px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .3s", justifyContent:"space-between" },
     tab: (a) => ({ flex:"0 0 auto", padding:"14px 18px", fontSize:11, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .2s", borderBottom:a?`3px solid ${t.ouro}`:"3px solid transparent", marginBottom:"-2px", display:"flex", alignItems:"center", gap:5 }),
@@ -1846,60 +1846,62 @@ export default function App() {
       <div style={css.header}>
         {customLogo
           ? <img src={customLogo} alt="Logo" style={{width:44,height:44,borderRadius:13,objectFit:"contain",boxShadow:`0 4px 14px rgba(240,185,11,.38)`}} />
-          : <div style={css.logo}>{hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,22,2)}</div>
+          : <div style={css.logo}>{hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+          </>,"rgba(255,255,255,0.95)",22,2.4)}</div>
         }
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
           <div style={{fontSize:9,color:t.txt2,letterSpacing:1.5,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro,fontWeight:700}}>YFGroup</span></div>
         </div>
-        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:7}}>
+        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5}}>
+          {/* Badge de perfil — admin: só coroa; outros: ícone + nome curto */}
           <div title={usuarioLogado||perfil} style={{
             ...css.hBtn,
-            borderColor: perfil==="admin"?`rgba(240,185,11,.35)`:perfil==="gerente"?`rgba(22,119,255,.3)`:perfil==="operador"?t.borda:`rgba(22,119,255,.3)`,
+            borderColor: perfil==="admin"?`rgba(240,185,11,.45)`:perfil==="gerente"?`rgba(22,119,255,.3)`:perfil==="operador"?t.borda:`rgba(22,119,255,.3)`,
             color: perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
-            gap:5, padding:"7px 11px",
+            padding: perfil==="admin"?"7px 8px":"6px 8px",
+            background: perfil==="admin"?`rgba(240,185,11,.07)`:"rgba(128,128,128,.08)",
           }}>
             {perfil==="admin"
-              ? <>{hIco(<><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,t.ouro,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>ADMIN</span></>
+              ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,16,1.8)
               : perfil==="gerente"
-              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>{(usuarioLogado||"GER").split(" ")[0].substring(0,8).toUpperCase()}</span></>
+              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"GER").split(" ")[0].substring(0,6).toUpperCase()}</span></>
               : perfil==="operador"
-              ? <>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>{(usuarioLogado||"OP").split(" ")[0].substring(0,8).toUpperCase()}</span></>
-              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,14,2)}<span style={{fontSize:10,fontWeight:700,letterSpacing:.8}}>{(usuarioLogado||"VIEW").split(" ")[0].substring(0,8).toUpperCase()}</span></>
+              ? <>{hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"OP").split(" ")[0].substring(0,6).toUpperCase()}</span></>
+              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"VIEW").split(" ")[0].substring(0,6).toUpperCase()}</span></>
             }
           </div>
 
-          <button onClick={sincronizar} className="co-hbtn" style={css.hBtn}>
-            <span style={{width:6,height:6,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.borda,boxShadow:connStatus==="online"?`0 0 5px rgba(2,192,118,.6)`:"none",flexShrink:0}} />
+          <button onClick={sincronizar} className="co-hbtn" title={connStatus==="online"?"Sincronizado":connStatus==="syncing"?"Sincronizando…":"Offline — clique para sincronizar"} style={{...css.hBtn,padding:"7px 9px",position:"relative"}}>
             {connStatus==="syncing"
-              ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro)
-              : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2)
+              ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,15)
+              : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2,15)
             }
-            <span style={{fontSize:10}}>SYNC</span>
+            <span style={{position:"absolute",bottom:5,right:5,width:5,height:5,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger,boxShadow:connStatus==="online"?`0 0 4px rgba(2,192,118,.7)`:connStatus==="syncing"?`0 0 4px rgba(240,185,11,.7)`:`0 0 4px rgba(246,70,93,.7)`,flexShrink:0}} />
           </button>
 
           {alertas.length > 0 && (
-            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"8px 10px"}}>
-              {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger)}
-              <span style={{position:"absolute",top:-6,right:-6,background:t.danger,color:"#fff",borderRadius:"50%",width:16,height:16,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
+            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px"}}>
+              {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,15)}
+              <span style={{position:"absolute",top:-5,right:-5,background:t.danger,color:"#fff",borderRadius:"50%",width:14,height:14,fontSize:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
             </button>
           )}
 
-          <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"8px 10px"}} title={theme==="dark"?"Tema claro":"Tema escuro"}>
+          <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"7px 9px"}} title={theme==="dark"?"Tema claro":"Tema escuro"}>
             {theme==="dark"
-              ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2)
-              : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2)
+              ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,15)
+              : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,15)
             }
           </button>
           {/* Relatório Geral */}
-          <button onClick={()=>setRelGeralOpen(true)} title="Relatório Geral PDF" style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"8px 10px"}}>
-            {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro)}
+          <button onClick={()=>setRelGeralOpen(true)} title="Relatório Geral PDF" style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"7px 9px"}}>
+            {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,15)}
           </button>
           {/* WhatsApp Dropdown */}
           <div style={{position:"relative"}}>
-            <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"8px 10px"}}>
+            <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"7px 9px"}}>
               {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </>,"#25D366")}
+              </>,"#25D366",15)}
             </button>
             {wppTipoOpen && (
               <>
@@ -1935,8 +1937,8 @@ export default function App() {
               </>
             )}
           </div>
-          <button onClick={handleLogout} title="Sair" style={{...css.hBtn,padding:"8px 10px"}}>
-            {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2)}
+          <button onClick={handleLogout} title="Sair" style={{...css.hBtn,padding:"7px 9px"}}>
+            {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,15)}
           </button>
         </div>
       </div>
@@ -3485,13 +3487,15 @@ function mapearColuna(n){
                 {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:20}}>{tb.ico}</span>}
               </span>
               <span style={{
-                fontSize:9,
+                fontSize:"clamp(6px,2.2vw,9px)",
                 fontWeight:ativo?700:500,
-                letterSpacing:.4,
+                letterSpacing:.3,
                 textTransform:"uppercase",
                 color:ativo?t.ouro:t.txt2,
                 lineHeight:1,
                 whiteSpace:"nowrap",
+                overflow:"hidden",
+                maxWidth:"100%",
                 transition:"color .18s",
               }}>{tb.l}</span>
             </button>
