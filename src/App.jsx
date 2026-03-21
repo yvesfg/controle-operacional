@@ -551,6 +551,12 @@ export default function App() {
   const [relGeralOpen, setRelGeralOpen] = useState(false);
   const [relGeralFrom, setRelGeralFrom] = useState("");
   const [relGeralTo, setRelGeralTo] = useState("");
+  const [relGeralMotorista, setRelGeralMotorista] = useState("");
+  const [relGeralStatus, setRelGeralStatus] = useState("");
+  const [relGeralOrigem, setRelGeralOrigem] = useState("");
+  const [relGeralDestino, setRelGeralDestino] = useState("");
+  const [relGeralVinculo, setRelGeralVinculo] = useState("");
+  const [relGeralSecoes, setRelGeralSecoes] = useState({kpi:true,sumario:true,registros:true,sgs:true});
 
   // Chart refs
   const chartCarregRef = useRef(null);
@@ -1537,10 +1543,11 @@ export default function App() {
   .footer-txt{color:rgba(255,255,255,.4);font-size:9px}
   .footer-brand{color:#f0b90b;font-size:10px;font-weight:700;letter-spacing:1px}
   .info-box{background:#f0f8ff;border:1.5px solid #bcd4ff;border-radius:8px;padding:12px 16px;font-size:10px;color:#2c4aab;margin-bottom:12px}
-  @page{size:A4 landscape;margin:10mm 8mm}
+  @page{size:landscape;margin:10mm 8mm}
   @media print{
+    @page{size:landscape!important;margin:10mm 8mm}
     body{background:#fff}
-    .page{box-shadow:none;max-width:100%}
+    .page{box-shadow:none;max-width:100%;width:100%}
     .no-print{display:none!important}
     table{font-size:9px}
     thead th{font-size:8px;padding:6px 6px}
@@ -1675,13 +1682,16 @@ export default function App() {
     w.document.close();
   };
 
-  const gerarRelatorioGeral = (from, to) => {
+  const gerarRelatorioGeral = (from, to, filtros={}) => {
     // Mapa DT → tipo de diária (calculado no useMemo diariasData)
     const diariasMapG = new Map(diariasData.items.map(item=>[item.r.dt, item.tipo]));
     const parseD = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
     const fromD = from ? new Date(from) : null;
     const toD   = to   ? new Date(to)   : null;
     if(toD) toD.setHours(23,59,59,999);
+    const {motorista:fMot="",statusDiaria:fStatus="",origem:fOrigem="",destino:fDest="",vinculo:fVinc="",secoes:fSecoes={kpi:true,sumario:true,registros:true,sgs:true}} = filtros;
+    // Mapa nome→vínculo para filtro de vínculo
+    const motVincMap = new Map(motoristas.map(m=>[m.nome?.toUpperCase()?.trim()||"",m.vinculo||""]));
     const inRange = r => {
       const dateStr = r.data_carr || r.data_desc || r.chegada || "";
       const d = parseD(dateStr);
@@ -1690,7 +1700,15 @@ export default function App() {
       if(toD   && d > toD)   return false;
       return true;
     };
-    const regs = DADOS.filter(inRange).sort((a,b)=>{
+    const regs = DADOS.filter(r => {
+      if(!inRange(r)) return false;
+      if(fMot && !(r.nome||"").toUpperCase().includes(fMot.toUpperCase())) return false;
+      if(fOrigem && !(r.origem||"").toUpperCase().includes(fOrigem.toUpperCase())) return false;
+      if(fDest && !(r.destino||"").toUpperCase().includes(fDest.toUpperCase())) return false;
+      if(fVinc) { const v = motVincMap.get((r.nome||"").toUpperCase().trim()); if(v!==fVinc) return false; }
+      if(fStatus) { const tp=diariasMapG.get(r.dt)||""; if(tp!==fStatus) return false; }
+      return true;
+    }).sort((a,b)=>{
       const toSort = s => { if(!s)return ""; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return `${p[2]}-${p[1]}-${p[0]}`} return s; };
       return toSort(a.data_carr||"").localeCompare(toSort(b.data_carr||""));
     });
@@ -1725,15 +1743,24 @@ export default function App() {
       porMotorista[n].cte+=(parseFloat(r.vl_cte)||0);
       const tpG=diariasMapG.get(r.dt)||""; if(tpG==="diaria"||tpG==="atraso") porMotorista[n].diarias++;
     });
+    // Filtros ativos para exibição no cabeçalho do relatório
+    const filtrosAtivos = [
+      fMot?`Motorista: ${fMot}`:"",
+      fStatus?`Status: ${({diaria:"Com Diária",sem_diaria:"Sem Diária",atraso:"Perdeu Agenda",pendente:"Pendente"}[fStatus]||fStatus)}`:"",
+      fOrigem?`Origem: ${fOrigem}`:"",
+      fDest?`Destino: ${fDest}`:"",
+      fVinc?`Vínculo: ${fVinc}`:"",
+    ].filter(Boolean).join(" · ");
     const corpo = `
   <div class="subheader">
     <div>
-      <div class="subheader-title">📊 Relatório Geral de Operações</div>
-      <div class="subheader-sub">Período: ${periodoStr} · ${regs.length} registro${regs.length!==1?"s":""}</div>
+      <div class="subheader-title">Relatório Geral de Operações</div>
+      <div class="subheader-sub">Período: ${periodoStr} · ${regs.length} registro${regs.length!==1?"s":""}${filtrosAtivos?` · ${filtrosAtivos}`:""}</div>
     </div>
   </div>
   <div class="content">
-    <div class="section-title">📈 Indicadores do Período</div>
+    ${fSecoes.kpi!==false?`
+    <div class="section-title">Indicadores do Período</div>
     <div class="kpi-row cols4">
       <div class="kpi blue"><div class="kpi-val">${regs.length}</div><div class="kpi-lbl">Total de Viagens</div></div>
       <div class="kpi blue"><div class="kpi-val">${motoristasUnicos.size}</div><div class="kpi-lbl">Motoristas Ativos</div></div>
@@ -1745,33 +1772,36 @@ export default function App() {
       <div class="kpi"><div class="kpi-val" style="font-size:14px">${fmt(totalSaldo)}</div><div class="kpi-lbl">Saldos</div></div>
       <div class="kpi ${comDiaria>0?"yellow":"green"}"><div class="kpi-val">${comDiaria}</div><div class="kpi-lbl">Com Diárias</div></div>
       <div class="kpi ${comSGS>0?"red":"green"}"><div class="kpi-val">${comSGS}</div><div class="kpi-lbl">Ocorr. SGS</div></div>
-    </div>
-    ${Object.keys(porMotorista).length>0?`
-    <div class="section-title">🚛 Resumo por Motorista</div>
+    </div>`:""}
+    ${fSecoes.sumario!==false && Object.keys(porMotorista).length>0?`
+    <div class="section-title">Resumo por Motorista</div>
     <table>
-      <thead><tr><th>Motorista</th><th style="text-align:right">Viagens</th><th style="text-align:right">Valor CTE</th><th style="text-align:right">Diárias</th></tr></thead>
+      <thead><tr><th>Motorista</th><th>Vínculo</th><th style="text-align:right">Viagens</th><th style="text-align:right">Valor CTE</th><th style="text-align:right">Diárias</th></tr></thead>
       <tbody>
         ${Object.entries(porMotorista).sort((a,b)=>b[1].viagens-a[1].viagens).map(([n,v])=>`<tr>
           <td><strong>${n}</strong></td>
+          <td style="font-size:9px;color:#4a5568">${motVincMap.get(n.toUpperCase().trim())||"—"}</td>
           <td style="text-align:right;font-weight:700;color:#1a3a6b">${v.viagens}</td>
           <td style="text-align:right">${v.cte>0?`R$ ${v.cte.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
           <td style="text-align:right">${v.diarias>0?`<span class="badge badge-yellow">${v.diarias}</span>`:"<span class='badge badge-ok'>0</span>"}</td>
         </tr>`).join("")}
       </tbody>
     </table>`:""}
-    <div class="section-title">📋 Todos os Registros no Período</div>
-    ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para o período selecionado.</div>`:`
+    ${fSecoes.registros!==false?`
+    <div class="section-title">Todos os Registros no Período</div>
+    ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>`:`
     <table>
       <thead><tr>
-        <th>DT</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th>
+        <th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th>
         <th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th>
-        <th>Status</th><th>CTE</th><th>SGS</th><th>RO</th>
+        <th>Status</th><th>Vl. CTE</th><th>SGS</th><th>RO</th>
       </tr></thead>
       <tbody>
         ${regs.map(r=>{
           const tipo=diariasMapG.get(r.dt)||"";
           const rowClass=tipo==="diaria"?"trip-row-diaria":tipo==="atraso"?"trip-row-atraso":tipo==="sem_diaria"?"trip-row-ok":"trip-row-pend";
           return `<tr class="${rowClass}">
+            <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
             <td><span class="dt-chip">${r.dt||"—"}</span></td>
             <td><strong>${r.nome||"—"}</strong></td>
             <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
@@ -1788,20 +1818,20 @@ export default function App() {
           </tr>`;
         }).join("")}
       </tbody>
-    </table>`}
-    ${sgsRange.length>0?`
-    <div class="section-title">📞 Ocorrências SGS no Período</div>
+    </table>`}`:""}
+    ${fSecoes.sgs!==false && sgsRange.length>0?`
+    <div class="section-title">Ocorrências SGS no Período</div>
     ${sgsRange.map(s=>`<div class="sgs-item">
       <div><span class="sgs-num">SGS ${s.numero||"—"}</span></div>
       <div class="sgs-info">
         <strong style="color:#0a1628">${s.descricao||"—"}</strong><br>
-        📅 Abertura: ${s.data_chamado||"—"} · 🔄 Último Retorno: ${s.ultimo_retorno||"—"}<br>
+        Abertura: ${s.data_chamado||"—"} · Último Retorno: ${s.ultimo_retorno||"—"}<br>
         Status: <span class="badge ${s.status==="encerrado"?"badge-ok":s.status==="andamento"?"badge-diaria":"badge-atraso"}">${s.status||"aberto"}</span>
-        ${s.dt_rel?` · DT Relacionada: <span class="dt-chip">${s.dt_rel}</span>`:""}
+        ${s.dt_rel?` · Espelho Relacionado: <span class="dt-chip">${s.dt_rel}</span>`:""}
       </div>
     </div>`).join("")}`:""}
   </div>`;
-    const w = window.open("","_blank","width=1100,height=850");
+    const w = window.open("","_blank","width=1200,height=850");
     w.document.write(relHtmlBase(`Relatório Geral · ${periodoStr}`, periodoStr, corpo));
     w.document.close();
   };
@@ -4751,34 +4781,112 @@ function mapearColuna(n){
 
       {/* ═══ MODAL: RELATÓRIO GERAL ═══ */}
       {relGeralOpen && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelGeralOpen(false)}>
-          <div style={{background:t.card,borderRadius:16,padding:28,width:"100%",maxWidth:420,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
-              <div style={{width:40,height:40,borderRadius:10,background:`linear-gradient(135deg,#0a1628,#1a3a6b)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>📊</div>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelGeralOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:600,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            {/* Cabeçalho */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></>,t.ouro,20,1.8)}
+              </div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Geral de Operações</div>
-                <div style={{fontSize:10,color:t.txt2}}>Selecione o período para o relatório em PDF</div>
+                <div style={{fontSize:10,color:t.txt2}}>Configure os filtros e seções do relatório PDF</div>
               </div>
+              <button onClick={()=>setRelGeralOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:18}}>
+
+            {/* Período */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
-                <label style={{display:"block",fontSize:10,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Data Inicial</label>
-                <input type="date" value={relGeralFrom} onChange={e=>setRelGeralFrom(e.target.value)}
-                  style={{...css.inp,width:"100%"}} />
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relGeralFrom} onChange={e=>setRelGeralFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:10,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Data Final</label>
-                <input type="date" value={relGeralTo} onChange={e=>setRelGeralTo(e.target.value)}
-                  style={{...css.inp,width:"100%"}} />
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relGeralTo} onChange={e=>setRelGeralTo(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
             </div>
-            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.ouro,marginBottom:18}}>
-              💡 Deixe em branco para incluir <strong>todos os registros</strong> sem filtro de data.
+
+            {/* Filtros */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <input type="text" value={relGeralMotorista} onChange={e=>setRelGeralMotorista(e.target.value)} placeholder="Nome do motorista..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
+                <select value={relGeralStatus} onChange={e=>setRelGeralStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="diaria">Com Diária</option>
+                  <option value="sem_diaria">Sem Diária</option>
+                  <option value="atraso">Perdeu Agenda</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Origem contém</label>
+                <input type="text" value={relGeralOrigem} onChange={e=>setRelGeralOrigem(e.target.value)} placeholder="Cidade / UF..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Destino contém</label>
+                <input type="text" value={relGeralDestino} onChange={e=>setRelGeralDestino(e.target.value)} placeholder="Cidade / UF..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                <select value={relGeralVinculo} onChange={e=>setRelGeralVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="Agregado">Agregado</option>
+                  <option value="Terceiro">Terceiro</option>
+                  <option value="Frota">Frota</option>
+                </select>
+              </div>
             </div>
+
+            {/* Seções */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Seções do Relatório</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+              {[
+                {k:"kpi",l:"Indicadores / KPIs"},
+                {k:"sumario",l:"Resumo por Motorista"},
+                {k:"registros",l:"Tabela de Registros"},
+                {k:"sgs",l:"Ocorrências SGS"},
+              ].map(({k,l})=>(
+                <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relGeralSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
+                  <input type="checkbox" checked={!!relGeralSecoes[k]} onChange={e=>setRelGeralSecoes(p=>({...p,[k]:e.target.checked}))}
+                    style={{accentColor:t.ouro,width:14,height:14,cursor:"pointer"}} />
+                  <span style={{fontSize:11,fontWeight:600,color:relGeralSecoes[k]?t.txt:t.txt2}}>{l}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* Aviso */}
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span style={{marginLeft:6}}>Deixe datas em branco para incluir <strong style={{color:t.ouro}}>todos os registros</strong>. Filtros podem ser combinados.</span>
+            </div>
+
+            {/* Botões */}
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setRelGeralOpen(false)} style={{flex:1,padding:"12px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
-              <button onClick={()=>{setRelGeralOpen(false);gerarRelatorioGeral(relGeralFrom,relGeralTo);}} style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:`linear-gradient(135deg,#0a1628,#1a3a6b)`,color:"#f0b90b",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                📄 Gerar Relatório PDF
+              <button onClick={()=>setRelGeralOpen(false)}
+                style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>
+                Cancelar
+              </button>
+              <button
+                onClick={()=>{
+                  setRelGeralOpen(false);
+                  gerarRelatorioGeral(relGeralFrom,relGeralTo,{
+                    motorista:relGeralMotorista,statusDiaria:relGeralStatus,
+                    origem:relGeralOrigem,destino:relGeralDestino,
+                    vinculo:relGeralVinculo,secoes:relGeralSecoes
+                  });
+                }}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
+                Gerar Relatório PDF
               </button>
             </div>
           </div>
