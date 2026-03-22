@@ -493,6 +493,12 @@ export default function App() {
   const [conexoesOpen, setConexoesOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email",""));
+  const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
+  useEffect(()=>{
+    const fn=()=>setIsMobile(window.innerWidth<=600);
+    window.addEventListener("resize",fn);
+    return()=>window.removeEventListener("resize",fn);
+  },[]);
 
   // Item 7 — Email template e envio
   const [emailTemplateOpen, setEmailTemplateOpen] = useState(false);
@@ -1994,8 +2000,8 @@ export default function App() {
               </>
             )}
           </div>
-          <button onClick={handleLogout} title="Sair" style={{...css.hBtn,padding:"7px 9px"}}>
-            {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,15)}
+          <button onClick={handleLogout} title="Sair" style={{...css.hBtn,padding:isMobile?"4px 5px":"7px 9px",minWidth:isMobile?28:undefined}}>
+            {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,isMobile?13:15)}
           </button>
         </div>
       </div>
@@ -2487,6 +2493,37 @@ export default function App() {
                 titulo="Relatório de Diárias"
               />
             </div>
+            {/* ── Resumo financeiro de diárias (admin/gerente) ── */}
+            {(perfil==="admin"||perms.financeiro) && (()=>{
+              const comD = diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso");
+              const totalDevido = comD.reduce((s,{r})=>s+(parseFloat(r.diaria_prev)||0),0);
+              const totalPago   = comD.reduce((s,{r})=>s+(parseFloat(r.diaria_pg)||0),0);
+              const saldoD = totalDevido - totalPago;
+              if(comD.length===0) return null;
+              return (
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+                  <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(246,70,93,.25)`,padding:"12px 10px",textAlign:"center"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.danger,lineHeight:1}}>{fmtMoeda(totalDevido)}</div>
+                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                      {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.danger,9)} Total Devido
+                    </div>
+                  </div>
+                  <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(2,192,118,.25)`,padding:"12px 10px",textAlign:"center"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.verde,lineHeight:1}}>{fmtMoeda(totalPago)}</div>
+                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                      {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,9)} Total Pago
+                    </div>
+                  </div>
+                  <div style={{background:t.card,borderRadius:12,border:`1px solid ${saldoD>0?`rgba(246,70,93,.25)`:`rgba(2,192,118,.25)`}`,padding:"12px 10px",textAlign:"center"}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:saldoD>0?t.danger:t.verde,lineHeight:1}}>{fmtMoeda(Math.abs(saldoD))}</div>
+                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                      {hIco(saldoD>0?<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>:<><polyline points="22 11 12 22 2 11"/><line x1="12" y1="2" x2="12" y2="22"/></>,saldoD>0?t.danger:t.verde,9)}
+                      {saldoD>0 ? "A Pagar" : "Quitado"}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center",flexWrap:"wrap"}}>
               {[
                 {k:"resumo",l:"Resumo",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
@@ -2924,10 +2961,28 @@ export default function App() {
                           <div style={{fontSize:11,color:t.txt2}}>
                             🔢 {r.dt} · 📅 Agenda: {r.data_agenda||"—"} · 🏁 Descarga: {r.data_desc||"—"}
                           </div>
-                          <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
-                            {r.diaria_prev && <span style={{fontSize:9,color:t.txt2}}>Prev: <strong style={{color:t.ouro}}>{fmtMoeda(r.diaria_prev)}</strong></span>}
-                            {r.diaria_pg && <span style={{fontSize:9,color:t.txt2}}>Pago: <strong style={{color:t.verde}}>{fmtMoeda(r.diaria_pg)}</strong></span>}
-                          </div>
+                          {(r.diaria_prev||r.diaria_pg) && (
+                            <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
+                              <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.danger}}>
+                                Devido: <strong>{fmtMoeda(r.diaria_prev)}</strong>
+                              </span>
+                              <span style={{background:`rgba(2,192,118,.08)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.verde}}>
+                                Pago: <strong>{fmtMoeda(r.diaria_pg)}</strong>
+                              </span>
+                              {r.diaria_prev && r.diaria_pg && (()=>{
+                                const saldo = (parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);
+                                return saldo < 0 ? (
+                                  <span style={{background:`rgba(240,185,11,.08)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.ouro}}>
+                                    A pagar: <strong>{fmtMoeda(Math.abs(saldo))}</strong>
+                                  </span>
+                                ) : (
+                                  <span style={{background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.15)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.verde}}>
+                                    ✓ Quitado
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -3517,68 +3572,76 @@ function mapearColuna(n){
       )}
 
       {/* ═══ BOTTOM NAVIGATION — estilo Binance ═══ */}
-      <nav style={{
-        position:"fixed",bottom:0,left:0,right:0,zIndex:190,
-        background:t.headerBg,
-        borderTop:`1px solid ${t.borda}`,
-        display:"flex",alignItems:"stretch",
-        height:62,
-        boxShadow:`0 -4px 20px ${t.shadow}`,
-        paddingBottom:"env(safe-area-inset-bottom,0)",
-        overflow:"hidden",
-      }}>
-        {tabs.map(tb => {
-          const ativo = activeTab === tb.k;
-          return (
-            <button
-              key={tb.k}
-              onClick={()=>setActiveTab(tb.k)}
-              style={{
-                flex:"1 1 0",
-                minWidth:0,
-                background:"transparent",
-                border:"none",
-                cursor:"pointer",
-                display:"flex",
-                flexDirection:"column",
-                alignItems:"center",
-                justifyContent:"center",
-                gap:3,
-                padding:"6px 2px 4px",
-                position:"relative",
-                transition:"all .18s",
-                fontFamily:"inherit",
-                overflow:"hidden",
-              }}
-            >
-              {/* indicador topo */}
-              {ativo && (
-                <span style={{
-                  position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
-                  width:28,height:2.5,borderRadius:"0 0 3px 3px",
-                  background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,
-                  boxShadow:`0 0 8px rgba(240,185,11,.6)`,
-                }} />
-              )}
-              <span style={{lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:20}}>{tb.ico}</span>}
-              </span>
-              <span style={{
-                fontSize:"clamp(6px,2.2vw,9px)",
-                fontWeight:ativo?700:500,
-                letterSpacing:.3,
-                textTransform:"uppercase",
-                color:ativo?t.ouro:t.txt2,
-                lineHeight:1,
-                whiteSpace:"nowrap",
-                overflow:"hidden",
-                maxWidth:"100%",
-                transition:"color .18s",
-              }}>{tb.l}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* Admin no mobile: apenas ícones (sem label), altura reduzida */}
+      {(()=>{
+        const adminMobile = perfil==="admin" && isMobile;
+        const navH = adminMobile ? 50 : 62;
+        return (
+          <nav style={{
+            position:"fixed",bottom:0,left:0,right:0,zIndex:190,
+            background:t.headerBg,
+            borderTop:`1px solid ${t.borda}`,
+            display:"flex",alignItems:"stretch",
+            height:navH,
+            boxShadow:`0 -4px 20px ${t.shadow}`,
+            paddingBottom:"env(safe-area-inset-bottom,0)",
+            overflow:"hidden",
+          }}>
+            {tabs.map(tb => {
+              const ativo = activeTab === tb.k;
+              return (
+                <button
+                  key={tb.k}
+                  onClick={()=>setActiveTab(tb.k)}
+                  style={{
+                    flex:"1 1 0",
+                    minWidth:0,
+                    background:"transparent",
+                    border:"none",
+                    cursor:"pointer",
+                    display:"flex",
+                    flexDirection:"column",
+                    alignItems:"center",
+                    justifyContent:"center",
+                    gap: adminMobile ? 0 : 3,
+                    padding: adminMobile ? "4px 2px" : "6px 2px 4px",
+                    position:"relative",
+                    transition:"all .18s",
+                    fontFamily:"inherit",
+                    overflow:"hidden",
+                  }}
+                >
+                  {ativo && (
+                    <span style={{
+                      position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
+                      width:28,height:2.5,borderRadius:"0 0 3px 3px",
+                      background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,
+                      boxShadow:`0 0 8px rgba(240,185,11,.6)`,
+                    }} />
+                  )}
+                  <span style={{lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:20}}>{tb.ico}</span>}
+                  </span>
+                  {!adminMobile && (
+                    <span style={{
+                      fontSize:"clamp(6px,2.2vw,9px)",
+                      fontWeight:ativo?700:500,
+                      letterSpacing:.3,
+                      textTransform:"uppercase",
+                      color:ativo?t.ouro:t.txt2,
+                      lineHeight:1,
+                      whiteSpace:"nowrap",
+                      overflow:"hidden",
+                      maxWidth:"100%",
+                      transition:"color .18s",
+                    }}>{tb.l}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        );
+      })()}
 
       {/* ═══ EDIT MODAL ═══ */}
       {modalOpen === "edit" && (
@@ -3593,7 +3656,7 @@ function mapearColuna(n){
               {[
                 {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo"}]},
                 {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status"},{k:"dias",l:"Dias"}]},
-                {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"}]},
+                {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"},{k:"diaria_prev",l:"Diária Devida (R$)"},{k:"diaria_pg",l:"Diária Paga (R$)"}]},
                 {s:"Documentação",ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
                 {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"data_desc",l:"Descarga (data real de descarga)",type:"date"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",span:2}]},
               ].map((section,si) => (
