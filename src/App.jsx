@@ -566,6 +566,18 @@ export default function App() {
   const [relGeralDestino, setRelGeralDestino] = useState("");
   const [relGeralVinculo, setRelGeralVinculo] = useState("");
   const [relGeralSecoes, setRelGeralSecoes] = useState({kpi:true,sumario:true,registros:true,sgs:true});
+  const [relMenuOpen, setRelMenuOpen] = useState(false);
+  const [relDiariaOpen, setRelDiariaOpen] = useState(false);
+  const [relDiariaFrom, setRelDiariaFrom] = useState("");
+  const [relDiariaTo, setRelDiariaTo] = useState("");
+  const [relDiariaMotorista, setRelDiariaMotorista] = useState("");
+  const [relDiariaVinculo, setRelDiariaVinculo] = useState("");
+  const [relDiariaStatus, setRelDiariaStatus] = useState("");
+  const [relDescargaOpen, setRelDescargaOpen] = useState(false);
+  const [relDescargaFrom, setRelDescargaFrom] = useState("");
+  const [relDescargaTo, setRelDescargaTo] = useState("");
+  const [relDescargaMotorista, setRelDescargaMotorista] = useState("");
+  const [relDescargaStatus, setRelDescargaStatus] = useState("");
 
   // Chart refs
   const chartCarregRef = useRef(null);
@@ -1766,13 +1778,20 @@ export default function App() {
       return `<span class="badge ${x.c}">${x.l}</span>`;
     };
     // Agrupar por motorista para sumário
+    const totalDiariaPrev = regs.reduce((s,r)=>{const tp=diariasMapG.get(r.dt)||"";return(tp==="diaria"||tp==="atraso")?s+(parseFloat(r.diaria_prev)||0):s;},0);
+    const totalDiariaPg   = regs.reduce((s,r)=>{const tp=diariasMapG.get(r.dt)||"";return(tp==="diaria"||tp==="atraso")?s+(parseFloat(r.diaria_pg)||0):s;},0);
     const porMotorista = {};
     regs.forEach(r=>{
       const n=r.nome||"—";
-      if(!porMotorista[n]) porMotorista[n]={viagens:0,cte:0,diarias:0};
+      if(!porMotorista[n]) porMotorista[n]={viagens:0,cte:0,diarias:0,diariaPrev:0,diariaPg:0};
       porMotorista[n].viagens++;
       porMotorista[n].cte+=(parseFloat(r.vl_cte)||0);
-      const tpG=diariasMapG.get(r.dt)||""; if(tpG==="diaria"||tpG==="atraso") porMotorista[n].diarias++;
+      const tpG=diariasMapG.get(r.dt)||"";
+      if(tpG==="diaria"||tpG==="atraso"){
+        porMotorista[n].diarias++;
+        porMotorista[n].diariaPrev+=(parseFloat(r.diaria_prev)||0);
+        porMotorista[n].diariaPg+=(parseFloat(r.diaria_pg)||0);
+      }
     });
     // Filtros ativos para exibição no cabeçalho do relatório
     const filtrosAtivos = [
@@ -1803,18 +1822,27 @@ export default function App() {
       <div class="kpi"><div class="kpi-val" style="font-size:14px">${fmt(totalSaldo)}</div><div class="kpi-lbl">Saldos</div></div>
       <div class="kpi ${comDiaria>0?"yellow":"green"}"><div class="kpi-val">${comDiaria}</div><div class="kpi-lbl">Com Diárias</div></div>
       <div class="kpi ${comSGS>0?"red":"green"}"><div class="kpi-val">${comSGS}</div><div class="kpi-lbl">Ocorr. SGS</div></div>
-    </div>`:""}
+    </div>
+    ${totalDiariaPrev>0||totalDiariaPg>0?`
+    <div class="section-title">Financeiro de Diárias</div>
+    <div class="kpi-row cols3">
+      <div class="kpi red"><div class="kpi-val" style="font-size:15px">${fmt(totalDiariaPrev)}</div><div class="kpi-lbl">Total Devido (Diárias)</div></div>
+      <div class="kpi green"><div class="kpi-val" style="font-size:15px">${fmt(totalDiariaPg)}</div><div class="kpi-lbl">Total Pago (Diárias)</div></div>
+      <div class="kpi ${(totalDiariaPrev-totalDiariaPg)>0?"red":"green"}"><div class="kpi-val" style="font-size:15px">${fmt(Math.abs(totalDiariaPrev-totalDiariaPg))}</div><div class="kpi-lbl">${(totalDiariaPrev-totalDiariaPg)>0?"A Pagar":"Quitado"}</div></div>
+    </div>`:""}`:""}
     ${fSecoes.sumario!==false && Object.keys(porMotorista).length>0?`
     <div class="section-title">Resumo por Motorista</div>
     <table>
-      <thead><tr><th>Motorista</th><th>Vínculo</th><th style="text-align:right">Viagens</th><th style="text-align:right">Valor CTE</th><th style="text-align:right">Diárias</th></tr></thead>
+      <thead><tr><th>Motorista</th><th>Vínculo</th><th style="text-align:right">Viagens</th><th style="text-align:right">Valor CTE</th><th style="text-align:right">Diárias</th><th style="text-align:right">Devido</th><th style="text-align:right">Pago</th></tr></thead>
       <tbody>
         ${Object.entries(porMotorista).sort((a,b)=>b[1].viagens-a[1].viagens).map(([n,v])=>`<tr>
           <td><strong>${n}</strong></td>
           <td style="font-size:9px;color:#4a5568">${motVincMap.get(n.toUpperCase().trim())||"—"}</td>
           <td style="text-align:right;font-weight:700;color:#1a3a6b">${v.viagens}</td>
           <td style="text-align:right">${v.cte>0?`R$ ${v.cte.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
-          <td style="text-align:right">${v.diarias>0?`<span class="badge badge-yellow">${v.diarias}</span>`:"<span class='badge badge-ok'>0</span>"}</td>
+          <td style="text-align:right">${v.diarias>0?`<span class="badge badge-diaria">${v.diarias}</span>`:"<span class='badge badge-ok'>0</span>"}</td>
+          <td style="text-align:right;color:#c0392b">${v.diariaPrev>0?`R$ ${v.diariaPrev.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+          <td style="text-align:right;color:#0a7a45">${v.diariaPg>0?`R$ ${v.diariaPg.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
         </tr>`).join("")}
       </tbody>
     </table>`:""}
@@ -1867,6 +1895,192 @@ export default function App() {
     const _url  = URL.createObjectURL(_blob);
     window.open(_url, "_blank", "width=1200,height=850");
     setTimeout(()=>URL.revokeObjectURL(_url), 120000);
+  };
+
+  // ─── RELATÓRIO DE DIÁRIAS ──────────────────────────────────────────────────
+  const gerarRelatorioDiarias = (from, to, filtros={}) => {
+    const parseD2 = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
+    const fromD = from ? new Date(from) : null;
+    const toD   = to   ? new Date(to)   : null;
+    if(toD) toD.setHours(23,59,59,999);
+    const {motorista:fMot="", vinculo:fVinc="", status:fStatus=""} = filtros;
+    const diariasMapD = new Map(diariasData.items.map(i=>[i.r.dt,{tipo:i.tipo,dias:i.dias}]));
+    const motVincMapD = new Map(motoristas.map(m=>[m.nome?.toUpperCase()?.trim()||"",m.vinculo||""]));
+    const inRangeD = r => {
+      const d = parseD2(r.data_carr||r.data_desc||r.data_agenda||"");
+      if(!d) return !fromD && !toD;
+      if(fromD && d<fromD) return false;
+      if(toD && d>toD) return false;
+      return true;
+    };
+    const regs = DADOS.filter(r => {
+      if(!diariasMapD.has(r.dt)) return false;
+      if(!inRangeD(r)) return false;
+      const info = diariasMapD.get(r.dt);
+      if(fStatus && info.tipo!==fStatus) return false;
+      if(fMot && !(r.nome||"").toUpperCase().includes(fMot.toUpperCase())) return false;
+      if(fVinc && motVincMapD.get((r.nome||"").toUpperCase().trim())!==fVinc) return false;
+      return true;
+    }).sort((a,b)=>{const toSortD=s=>{if(!s)return"";if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return`${p[2]}-${p[1]}-${p[0]}`}return s;};return toSortD(a.data_carr||"").localeCompare(toSortD(b.data_carr||""));});
+    const comD = regs.filter(r=>{const i=diariasMapD.get(r.dt)||{};return i.tipo==="diaria"||i.tipo==="atraso";});
+    const totalDevido = comD.reduce((s,r)=>s+(parseFloat(r.diaria_prev)||0),0);
+    const totalPago   = comD.reduce((s,r)=>s+(parseFloat(r.diaria_pg)||0),0);
+    const aPagar = totalDevido-totalPago;
+    const fmtD = v => `R$ ${Math.abs(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    const periodoStr = fromD||toD?`${fromD?fromD.toLocaleDateString("pt-BR"):"início"} a ${toD?toD.toLocaleDateString("pt-BR"):"hoje"}`:"Todos os registros";
+    const sbD = tipo=>{const m={diaria:{c:"badge-diaria",l:"Com Diária"},sem_diaria:{c:"badge-sem",l:"Sem Diária"},atraso:{c:"badge-atraso",l:"Perdeu Agenda"},pendente:{c:"badge-pend",l:"Pendente"},ok:{c:"badge-ok",l:"OK"}};const x=m[tipo]||{c:"badge-pend",l:tipo||"—"};return`<span class="badge ${x.c}">${x.l}</span>`;};
+    const porMotD={};
+    comD.forEach(r=>{const n=r.nome||"—";if(!porMotD[n])porMotD[n]={qtd:0,dev:0,pag:0};porMotD[n].qtd++;porMotD[n].dev+=(parseFloat(r.diaria_prev)||0);porMotD[n].pag+=(parseFloat(r.diaria_pg)||0);});
+    const corpo=`
+  <div class="subheader">
+    <div>
+      <div class="subheader-title">🛏️ Relatório de Diárias</div>
+      <div class="subheader-sub">Período: ${periodoStr} · ${regs.length} registro${regs.length!==1?"s":""} · ${comD.length} com diária</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-title">Indicadores Financeiros de Diárias</div>
+    <div class="kpi-row cols4">
+      <div class="kpi blue"><div class="kpi-val">${regs.length}</div><div class="kpi-lbl">Registros no Período</div></div>
+      <div class="kpi ${comD.length>0?"yellow":"green"}"><div class="kpi-val">${comD.length}</div><div class="kpi-lbl">Com Diária</div></div>
+      <div class="kpi red"><div class="kpi-val" style="font-size:15px">${fmtD(totalDevido)}</div><div class="kpi-lbl">Total Devido</div></div>
+      <div class="kpi green"><div class="kpi-val" style="font-size:15px">${fmtD(totalPago)}</div><div class="kpi-lbl">Total Pago</div></div>
+    </div>
+    <div class="kpi-row cols3">
+      <div class="kpi ${aPagar>0?"red":"green"}"><div class="kpi-val" style="font-size:18px;font-weight:900">${fmtD(aPagar)}</div><div class="kpi-lbl">${aPagar>0?"💰 A Pagar":"✅ Quitado"}</div></div>
+      <div class="kpi blue"><div class="kpi-val">${regs.filter(r=>{const i=diariasMapD.get(r.dt)||{};return i.tipo==="sem_diaria";}).length}</div><div class="kpi-lbl">Sem Diária</div></div>
+      <div class="kpi"><div class="kpi-val">${regs.filter(r=>{const i=diariasMapD.get(r.dt)||{};return i.tipo==="pendente";}).length}</div><div class="kpi-lbl">Pendentes</div></div>
+    </div>
+    ${Object.keys(porMotD).length>0?`
+    <div class="section-title">Resumo por Motorista</div>
+    <table>
+      <thead><tr><th>Motorista</th><th>Vínculo</th><th style="text-align:right">Diárias</th><th style="text-align:right">Devido</th><th style="text-align:right">Pago</th><th style="text-align:right">A Pagar</th></tr></thead>
+      <tbody>${Object.entries(porMotD).sort((a,b)=>b[1].dev-a[1].dev).map(([n,v])=>`<tr>
+        <td><strong>${n}</strong></td>
+        <td style="font-size:9px;color:#4a5568">${motVincMapD.get(n.toUpperCase().trim())||"—"}</td>
+        <td style="text-align:right;font-weight:700">${v.qtd}</td>
+        <td style="text-align:right;color:#c0392b">${v.dev>0?`R$ ${v.dev.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+        <td style="text-align:right;color:#0a7a45">${v.pag>0?`R$ ${v.pag.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+        <td style="text-align:right;font-weight:800;color:${(v.dev-v.pag)>0?"#c0392b":"#0a7a45"}">${fmtD(v.dev-v.pag)}</td>
+      </tr>`).join("")}</tbody>
+    </table>`:""}
+    <div class="section-title">Todos os Registros</div>
+    ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>`:`
+    <table>
+      <thead><tr><th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th><th>Status</th><th>Dias</th><th>Devido</th><th>Pago</th><th>A Pagar</th></tr></thead>
+      <tbody>${regs.map(r=>{
+        const info=diariasMapD.get(r.dt)||{tipo:"pendente",dias:null};
+        const rc=info.tipo==="diaria"?"trip-row-diaria":info.tipo==="atraso"?"trip-row-atraso":info.tipo==="sem_diaria"?"trip-row-ok":"trip-row-pend";
+        const temD=info.tipo==="diaria"||info.tipo==="atraso";
+        const dev=parseFloat(r.diaria_prev)||0;
+        const pag=parseFloat(r.diaria_pg)||0;
+        const sal=dev-pag;
+        return`<tr class="${rc}">
+          <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
+          <td><span class="dt-chip">${r.dt||"—"}</span></td>
+          <td><strong>${r.nome||"—"}</strong></td>
+          <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
+          <td>${r.data_carr||"—"}</td>
+          <td>${r.data_agenda||"—"}</td>
+          <td>${r.chegada||"—"}</td>
+          <td>${r.data_desc||"—"}</td>
+          <td>${sbD(info.tipo)}</td>
+          <td style="text-align:center">${info.dias!=null?`<span class="badge badge-atraso">${info.dias}d</span>`:"—"}</td>
+          <td style="color:#c0392b;font-weight:700">${temD&&dev>0?`R$ ${dev.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+          <td style="color:#0a7a45;font-weight:700">${temD&&pag>0?`R$ ${pag.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+          <td style="font-weight:800;color:${sal>0?"#c0392b":"#0a7a45"}">${temD?fmtD(sal):"—"}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>`}
+  </div>`;
+    const _htmlD=relHtmlBase(`Relatório de Diárias · ${periodoStr}`,periodoStr,corpo);
+    const _blobD=new Blob([_htmlD],{type:"text/html;charset=utf-8"});
+    const _urlD=URL.createObjectURL(_blobD);
+    window.open(_urlD,"_blank","width=1200,height=850");
+    setTimeout(()=>URL.revokeObjectURL(_urlD),120000);
+  };
+
+  // ─── RELATÓRIO DE DESCARGAS ────────────────────────────────────────────────
+  const gerarRelatorioDescargas = (from, to, filtros={}) => {
+    const parseD3 = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
+    const fromD = from ? new Date(from) : null;
+    const toD   = to   ? new Date(to)   : null;
+    if(toD) toD.setHours(23,59,59,999);
+    const hojeD = new Date(); hojeD.setHours(0,0,0,0);
+    const {motorista:fMot3="", status:fStatus3=""} = filtros;
+    const inRange3 = r => {
+      const d = parseD3(r.data_desc||r.data_agenda||r.chegada||"");
+      if(!d) return !fromD && !toD;
+      if(fromD && d<fromD) return false;
+      if(toD && d>toD) return false;
+      return true;
+    };
+    const getStatusDsc = r => {
+      const dd = parseD3(r.data_desc); const da = parseD3(r.data_agenda);
+      if(dd) return "descarregado";
+      if(da && da<hojeD) return "atrasado";
+      return "pendente";
+    };
+    const regs = DADOS.filter(r => {
+      if(!r.data_agenda && !r.data_desc) return false;
+      if(!inRange3(r)) return false;
+      if(fMot3 && !(r.nome||"").toUpperCase().includes(fMot3.toUpperCase())) return false;
+      if(fStatus3 && getStatusDsc(r)!==fStatus3) return false;
+      return true;
+    }).sort((a,b)=>{const toSort3=s=>{if(!s)return"";if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return`${p[2]}-${p[1]}-${p[0]}`}return s;};return toSort3(a.data_agenda||"").localeCompare(toSort3(b.data_agenda||""));});
+    const descarregados=regs.filter(r=>!!r.data_desc);
+    const atrasados=regs.filter(r=>!r.data_desc&&parseD3(r.data_agenda)&&parseD3(r.data_agenda)<hojeD);
+    const pendentes=regs.filter(r=>!r.data_desc&&!(parseD3(r.data_agenda)&&parseD3(r.data_agenda)<hojeD));
+    const periodoStr=fromD||toD?`${fromD?fromD.toLocaleDateString("pt-BR"):"início"} a ${toD?toD.toLocaleDateString("pt-BR"):"hoje"}`:"Todos os registros";
+    const sbDsc=r=>{const s=getStatusDsc(r);if(s==="descarregado")return`<span class="badge badge-ok">Descarregado</span>`;if(s==="atrasado")return`<span class="badge badge-atraso">Atrasado</span>`;return`<span class="badge badge-pend">Aguardando</span>`;};
+    const getDias=r=>{const da=parseD3(r.data_agenda);const dd=parseD3(r.data_desc);if(!da)return null;const ref=dd||hojeD;const diff=Math.floor((ref-da)/86400000);return diff>0?diff:null;};
+    const txPercDesc = regs.length>0?Math.round(descarregados.length/regs.length*100):0;
+    const corpo=`
+  <div class="subheader">
+    <div>
+      <div class="subheader-title">📦 Relatório de Descargas</div>
+      <div class="subheader-sub">Período: ${periodoStr} · ${regs.length} registro${regs.length!==1?"s":""} · ${txPercDesc}% descarregados</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-title">Indicadores de Descarga</div>
+    <div class="kpi-row cols4">
+      <div class="kpi blue"><div class="kpi-val">${regs.length}</div><div class="kpi-lbl">Total de Registros</div></div>
+      <div class="kpi green"><div class="kpi-val">${descarregados.length}</div><div class="kpi-lbl">Descarregados</div></div>
+      <div class="kpi ${atrasados.length>0?"red":"green"}"><div class="kpi-val">${atrasados.length}</div><div class="kpi-lbl">Atrasados</div></div>
+      <div class="kpi yellow"><div class="kpi-val">${pendentes.length}</div><div class="kpi-lbl">Aguardando</div></div>
+    </div>
+    <div class="section-title">Registros de Descarga</div>
+    ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>`:`
+    <table>
+      <thead><tr><th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Data Descarga</th><th>Status</th><th>Dias</th><th>RO</th></tr></thead>
+      <tbody>${regs.map(r=>{
+        const st=getStatusDsc(r);
+        const rc=st==="descarregado"?"trip-row-ok":st==="atrasado"?"trip-row-atraso":"trip-row-pend";
+        const dias=getDias(r);
+        return`<tr class="${rc}">
+          <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
+          <td><span class="dt-chip">${r.dt||"—"}</span></td>
+          <td><strong>${r.nome||"—"}</strong></td>
+          <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
+          <td>${r.origem||"—"}</td>
+          <td>${r.destino||"—"}</td>
+          <td>${r.data_carr||"—"}</td>
+          <td>${r.data_agenda||"—"}</td>
+          <td>${r.chegada||"—"}</td>
+          <td>${r.data_desc||"—"}</td>
+          <td>${sbDsc(r)}</td>
+          <td style="text-align:center">${dias!=null?`<span class="badge badge-atraso">${dias}d</span>`:"—"}</td>
+          <td>${r.ro||"—"}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>`}
+  </div>`;
+    const _htmlDsc=relHtmlBase(`Relatório de Descargas · ${periodoStr}`,periodoStr,corpo);
+    const _blobDsc=new Blob([_htmlDsc],{type:"text/html;charset=utf-8"});
+    const _urlDsc=URL.createObjectURL(_blobDsc);
+    window.open(_urlDsc,"_blank","width=1200,height=850");
+    setTimeout(()=>URL.revokeObjectURL(_urlDsc),120000);
   };
 
   return (
@@ -1956,10 +2170,35 @@ export default function App() {
               : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,15)
             }
           </button>
-          {/* Relatório Geral */}
-          <button onClick={()=>setRelGeralOpen(true)} title="Relatório Geral PDF" style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"7px 9px"}}>
-            {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,15)}
-          </button>
+          {/* Relatórios — Dropdown */}
+          <div style={{position:"relative"}}>
+            <button onClick={()=>setRelMenuOpen(v=>!v)} title="Relatórios PDF" style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"7px 9px"}}>
+              {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,15)}
+            </button>
+            {relMenuOpen && (
+              <>
+                <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setRelMenuOpen(false)} />
+                <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:220,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .15s"}}>
+                  <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>📄 RELATÓRIOS PDF</div>
+                  {[
+                    {ico:"📊",l:"Geral de Operações",sub:"KPIs, resumo e tabela completa",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
+                    {ico:"🛏️",l:"Diárias",sub:"Financeiro e status de diárias",fn:()=>{setRelMenuOpen(false);setRelDiariaOpen(true);}},
+                    {ico:"📦",l:"Descargas",sub:"Agenda, status e atrasos",fn:()=>{setRelMenuOpen(false);setRelDescargaOpen(true);}},
+                  ].map((op,i,arr)=>(
+                    <button key={op.l} onClick={op.fn} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"11px 16px",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",cursor:"pointer",textAlign:"left",transition:"background .15s"}}
+                      onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <span style={{fontSize:18,flexShrink:0}}>{op.ico}</span>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:t.txt}}>{op.l}</div>
+                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           {/* WhatsApp Dropdown */}
           <div style={{position:"relative"}}>
             <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"7px 9px"}}>
@@ -4996,6 +5235,130 @@ function mapearColuna(n){
                 }}
                 style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
+                Gerar Relatório PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: RELATÓRIO DIÁRIAS ═══ */}
+      {relDiariaOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelDiariaOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:560,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>🛏️</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Diárias</div>
+                <div style={{fontSize:10,color:t.txt2}}>Financeiro e status de diárias por período</div>
+              </div>
+              <button onClick={()=>setRelDiariaOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relDiariaFrom} onChange={e=>setRelDiariaFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relDiariaTo} onChange={e=>setRelDiariaTo(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <input type="text" value={relDiariaMotorista} onChange={e=>setRelDiariaMotorista(e.target.value)} placeholder="Nome..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                <select value={relDiariaVinculo} onChange={e=>setRelDiariaVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="Agregado">Agregado</option>
+                  <option value="Terceiro">Terceiro</option>
+                  <option value="Frota">Frota</option>
+                </select>
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status da Diária</label>
+                <select value={relDiariaStatus} onChange={e=>setRelDiariaStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="diaria">Com Diária</option>
+                  <option value="sem_diaria">Sem Diária</option>
+                  <option value="atraso">Perdeu Agenda</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+              </div>
+            </div>
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setRelDiariaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
+              <button onClick={()=>{setRelDiariaOpen(false);gerarRelatorioDiarias(relDiariaFrom,relDiariaTo,{motorista:relDiariaMotorista,vinculo:relDiariaVinculo,status:relDiariaStatus});}}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
+                Gerar Relatório PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: RELATÓRIO DESCARGAS ═══ */}
+      {relDescargaOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelDescargaOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📦</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Descargas</div>
+                <div style={{fontSize:10,color:t.txt2}}>Agenda, status e atrasos de descarga</div>
+              </div>
+              <button onClick={()=>setRelDescargaOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relDescargaFrom} onChange={e=>setRelDescargaFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relDescargaTo} onChange={e=>setRelDescargaTo(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <input type="text" value={relDescargaMotorista} onChange={e=>setRelDescargaMotorista(e.target.value)} placeholder="Nome..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status</label>
+                <select value={relDescargaStatus} onChange={e=>setRelDescargaStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="descarregado">Descarregado</option>
+                  <option value="atrasado">Atrasado</option>
+                  <option value="pendente">Aguardando</option>
+                </select>
+              </div>
+            </div>
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setRelDescargaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
+              <button onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
               </button>
             </div>
