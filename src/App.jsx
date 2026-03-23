@@ -698,6 +698,16 @@ export default function App() {
     }
   }, [authed]);
 
+  // Auto-refresh a cada 15 minutos enquanto logado
+  useEffect(() => {
+    if (!authed) return;
+    const QUINZE_MIN = 15 * 60 * 1000;
+    const timer = setInterval(() => {
+      if (getConexao()) sincronizar();
+    }, QUINZE_MIN);
+    return () => clearInterval(timer);
+  }, [authed, sincronizar, getConexao]);
+
   // Save theme
   useEffect(() => { saveJSON("co_theme", theme); }, [theme]);
 
@@ -3606,7 +3616,7 @@ function mapearColuna(n){
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                   <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`}}>
                     <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:4}}>⏱️ Disparo automático</div>
-                    <div style={{fontSize:10,color:t.txt2,lineHeight:1.6}}>No Apps Script, clique no ícone de relógio → Adicionar acionador → sincronizarComSupabase → A cada hora</div>
+                    <div style={{fontSize:10,color:t.txt2,lineHeight:1.6}}>No Apps Script, clique no ícone de relógio (⏱) → <strong style={{color:t.txt}}>Adicionar acionador</strong> → Função: <code>sincronizarComSupabase</code> → Tipo: <em>Temporizador por minuto</em> → Intervalo: <strong style={{color:t.verde}}>A cada 15 minutos</strong></div>
                   </div>
                   <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`}}>
                     <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:4}}>🔑 Credenciais</div>
