@@ -4410,15 +4410,15 @@ function mapearColuna(n){
                         <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
                       </div>}
 
-                      {/* ─ CTE Complementar ─ */}
-                      {detalheTemDcc==="sim"&&<div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
+                      {/* ─ CTE Complementar ─ sempre visível, independente do DCC ─ */}
+                      <div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
                         <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:6,letterSpacing:.5}}>🔵 CTE COMPLEMENTAR</div>
                         <div className="co-min-g3">
                           <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
                           <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
                           <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
                         </div>
-                      </div>}
+                      </div>
 
                       {/* ─ Minutas Descarga (MAM/MRM) ─ */}
                       <div style={{marginBottom:12}}>
