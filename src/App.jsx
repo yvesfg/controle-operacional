@@ -482,6 +482,12 @@ export default function App() {
   const [novaOcorrTipo, setNovaOcorrTipo] = useState("info"); // info | alerta | status
   const [ocorrLoading, setOcorrLoading] = useState(false);
 
+  // Minutas no modal de detalhe (Supabase)
+  const [detalheMinDcc, setDetalheMinDcc] = useState([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
+  const [detalheCteComp, setDetalheCteComp] = useState({cte:"",mdf:"",mat:""});
+  const [detalheMinDsc, setDetalheMinDsc] = useState([{tipo:"MAM",cte:"",mdf:"",num:""}]);
+  const [salvandoMins, setSalvandoMins] = useState(false);
+
   // Item 4 - Acompanhamento dia a dia da DT
   const [acompDias, setAcompDias] = useState([]);
   const [acompDiaSel, setAcompDiaSel] = useState(null);
@@ -707,6 +713,16 @@ export default function App() {
     }, QUINZE_MIN);
     return () => clearInterval(timer);
   }, [authed, sincronizar, getConexao]);
+
+  // Reset minutas quando detalheDT muda
+  useEffect(() => {
+    if (!detalheDT) return;
+    const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
+    setDetalheMinDcc(pj(detalheDT.minutas_dcc, [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]));
+    setDetalheCteComp({cte:detalheDT.cte_comp||"", mdf:detalheDT.mdf_comp||"", mat:detalheDT.mat_comp||""});
+    setDetalheMinDsc(pj(detalheDT.minutas_dsc, [{tipo:"MAM",cte:"",mdf:"",num:""}]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detalheDT?.dt]);
 
   // Save theme
   useEffect(() => { saveJSON("co_theme", theme); }, [theme]);
@@ -1309,6 +1325,46 @@ export default function App() {
       showToast("✅ Salvo localmente!","ok");
     }
     setModalOpen(null);
+  };
+
+  // Salva minutas DCC / MAM-MRM no Supabase via PATCH
+  const salvarMinutasDetalhe = async () => {
+    if (!detalheDT) return;
+    const conn = getConexao();
+    if (!conn) { showToast("⚠️ Sem conexão","warn"); return; }
+    setSalvandoMins(true);
+    try {
+      const payload = {
+        minutas_dcc: JSON.stringify(detalheMinDcc),
+        cte_comp:  detalheCteComp.cte||null,
+        mdf_comp:  detalheCteComp.mdf||null,
+        mat_comp:  detalheCteComp.mat||null,
+        minutas_dsc: JSON.stringify(detalheMinDsc),
+      };
+      await supaFetch(conn.url, conn.key, "PATCH", `${TABLE}?dt=eq.${encodeURIComponent(detalheDT.dt)}`, payload);
+      const updated = {...detalheDT, ...payload};
+      setDetalheDT(updated);
+      setDadosBase(prev => prev.map(r => r.dt === detalheDT.dt ? {...r, ...payload} : r));
+      showToast("✅ Documentos salvos!","ok");
+    } catch(e) {
+      showToast("⚠️ Erro: "+e.message,"warn");
+    } finally {
+      setSalvandoMins(false);
+    }
+  };
+
+  // Abre o modal WPP pré-preenchido com minutas salvas no registro
+  const abrirWppPagModal = (reg, mot, tipo) => {
+    const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
+    const dcc = pj(reg?.minutas_dcc, [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
+    const comp = {cte:reg?.cte_comp||"", mdf:reg?.mdf_comp||"", mat:reg?.mat_comp||""};
+    const dsc = pj(reg?.minutas_dsc, [{tipo:"MAM",cte:"",mdf:"",num:""}]);
+    const temDados = dcc.some(m=>m.cte||m.mdf||m.num) || comp.cte || dsc.some(m=>m.cte||m.mdf||m.num);
+    setWppPagModal({reg, mot: mot||null, tipo});
+    setWppFortes(temDados);
+    setWppDccMinutas(dcc);
+    setWppCteComp(comp);
+    setWppDscMinutas(dsc);
   };
 
   const isAdmin = perfil === "admin";
@@ -1985,7 +2041,7 @@ export default function App() {
     <div class="section-title">Todos os Registros</div>
     ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>`:`
     <table>
-      <thead><tr><th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th><th>Status</th><th>Dias</th><th>Devido</th><th>Pago</th><th>A Pagar</th></tr></thead>
+      <thead><tr><th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th><th>Status</th><th>Dias</th><th>Devido</th><th>Pago</th><th>A Pagar</th><th>CTE DCC</th><th>MDF DCC</th><th>DCC nº</th><th>Valor DCC</th><th>CTE COMP</th><th>MDF COMP</th><th>MAT COMP</th></tr></thead>
       <tbody>${regs.map(r=>{
         const info=diariasMapD.get(r.dt)||{tipo:"pendente",dias:null};
         const rc=info.tipo==="diaria"?"trip-row-diaria":info.tipo==="atraso"?"trip-row-atraso":info.tipo==="sem_diaria"?"trip-row-ok":"trip-row-pend";
@@ -1993,6 +2049,12 @@ export default function App() {
         const dev=parseFloat(r.diaria_prev)||0;
         const pag=parseFloat(r.diaria_pg)||0;
         const sal=dev-pag;
+        let dccArr=[]; try{dccArr=Array.isArray(r.minutas_dcc)?r.minutas_dcc:(r.minutas_dcc?JSON.parse(r.minutas_dcc):[]);}catch{}
+        const dcc0=dccArr[0]||{};
+        const moreD=dccArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.cte||""}</span>`).join("");
+        const moreMdf=dccArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.mdf||""}</span>`).join("");
+        const moreNum=dccArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.num||""}</span>`).join("");
+        const moreVal=dccArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.valor||""}</span>`).join("");
         return`<tr class="${rc}">
           <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
           <td><span class="dt-chip">${r.dt||"—"}</span></td>
@@ -2007,6 +2069,13 @@ export default function App() {
           <td style="color:#c0392b;font-weight:700">${temD&&dev>0?`R$ ${dev.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
           <td style="color:#0a7a45;font-weight:700">${temD&&pag>0?`R$ ${pag.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
           <td style="font-weight:800;color:${sal>0?"#c0392b":"#0a7a45"}">${temD?fmtD(sal):"—"}</td>
+          <td style="font-size:9px;font-family:monospace">${dcc0.cte||"—"}${moreD}</td>
+          <td style="font-size:9px;font-family:monospace">${dcc0.mdf||"—"}${moreMdf}</td>
+          <td style="font-size:9px;font-family:monospace">${dcc0.num||"—"}${moreNum}</td>
+          <td style="font-size:9px;color:#c0392b">${dcc0.valor||"—"}${moreVal}</td>
+          <td style="font-size:9px;font-family:monospace">${r.cte_comp||"—"}</td>
+          <td style="font-size:9px;font-family:monospace">${r.mdf_comp||"—"}</td>
+          <td style="font-size:9px;font-family:monospace">${r.mat_comp||"—"}</td>
         </tr>`;
       }).join("")}</tbody>
     </table>`}
@@ -2071,11 +2140,17 @@ export default function App() {
     <div class="section-title">Registros de Descarga</div>
     ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>`:`
     <table>
-      <thead><tr><th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Data Descarga</th><th>Status</th><th>Dias</th><th>RO</th></tr></thead>
+      <thead><tr><th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Data Descarga</th><th>Status</th><th>Dias</th><th>RO</th><th>Tipo</th><th>CTE</th><th>MDF</th><th>Nº</th></tr></thead>
       <tbody>${regs.map(r=>{
         const st=getStatusDsc(r);
         const rc=st==="descarregado"?"trip-row-ok":st==="atrasado"?"trip-row-atraso":"trip-row-pend";
         const dias=getDias(r);
+        let dscArr=[]; try{dscArr=Array.isArray(r.minutas_dsc)?r.minutas_dsc:(r.minutas_dsc?JSON.parse(r.minutas_dsc):[]);}catch{}
+        const dsc0=dscArr[0]||{};
+        const moreTyp=dscArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.tipo||""}</span>`).join("");
+        const moreCte=dscArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.cte||""}</span>`).join("");
+        const moreMdf=dscArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.mdf||""}</span>`).join("");
+        const moreNum=dscArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.num||""}</span>`).join("");
         return`<tr class="${rc}">
           <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
           <td><span class="dt-chip">${r.dt||"—"}</span></td>
@@ -2090,6 +2165,10 @@ export default function App() {
           <td>${sbDsc(r)}</td>
           <td style="text-align:center">${dias!=null?`<span class="badge badge-atraso">${dias}d</span>`:"—"}</td>
           <td>${r.ro||"—"}</td>
+          <td style="font-size:9px;font-weight:700;color:#1677ff">${dsc0.tipo||"—"}${moreTyp}</td>
+          <td style="font-size:9px;font-family:monospace">${dsc0.cte||"—"}${moreCte}</td>
+          <td style="font-size:9px;font-family:monospace">${dsc0.mdf||"—"}${moreMdf}</td>
+          <td style="font-size:9px;font-family:monospace">${dsc0.num||"—"}${moreNum}</td>
         </tr>`;
       }).join("")}</tbody>
     </table>`}
@@ -2243,8 +2322,8 @@ export default function App() {
                       const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                       if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
                       else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                      else if(op.k==="descarga"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);}
-                      else if(op.k==="diarias"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);}
+                      else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                      else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
                     }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
                       onMouseOver={e=>e.currentTarget.style.background=t.card2}
                       onMouseOut={e=>e.currentTarget.style.background="transparent"}
@@ -2426,16 +2505,14 @@ export default function App() {
                           {/* Descarga/Stretch */}
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});
-                            setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
+                            abrirWppPagModal(buscaResult,mot,"descarga");
                           }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(22,119,255,.07)`,border:`1px solid rgba(22,119,255,.25)`,color:t.azulLt,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
                             📦 Descarga<br/><span style={{fontSize:8}}>Stretch</span>
                           </button>
                           {/* Diárias */}
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});
-                            setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
+                            abrirWppPagModal(buscaResult,mot,"diarias");
                           }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.25)`,color:t.danger,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
                             🛏️ Diárias
                           </button>
@@ -4272,6 +4349,88 @@ function mapearColuna(n){
                     ))}
                   </div>
                 </div>
+
+                {/* ── Documentos / Minutas ── */}
+                {(()=>{
+                  const isDiariaReg = diariasData.items.some(it=>it.r.dt===r.dt&&(it.tipo==="diaria"||it.tipo==="atraso"));
+                  const isDescargaReg = !!(r.data_agenda||r.data_desc);
+                  const lblP2 = {fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginBottom:3};
+                  const inpP2 = {...css.inp,fontSize:12,padding:"7px 9px",height:"auto"};
+                  return (
+                    <div>
+                      <div style={{...css.secTitle,marginBottom:10}}>
+                        {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
+                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4}}>🛏️ DIÁRIA</span>}
+                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4}}>📦 DESCARGA</span>}
+                        <span style={{flex:1,height:1,background:t.borda}} />
+                      </div>
+
+                      {/* ─ Minutas DCC (Diárias) ─ */}
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:10,fontWeight:700,color:t.ouro,marginBottom:8,letterSpacing:.5}}>🟡 MINUTAS DCC</div>
+                        {detalheMinDcc.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                              <div style={{display:"flex",gap:5}}>
+                                {["D01","D02"].map(tp=>(
+                                  <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                ))}
+                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
+                              </div>
+                              {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
+                              <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>MDF DCC</div><input value={mn.mdf} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>Valor</div><input value={mn.valor} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} style={inpP2} placeholder="0,00" /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                      </div>
+
+                      {/* ─ CTE Complementar ─ */}
+                      <div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
+                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:6,letterSpacing:.5}}>🔵 CTE COMPLEMENTAR</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                          <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
+                          <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
+                          <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
+                        </div>
+                      </div>
+
+                      {/* ─ Minutas Descarga (MAM/MRM) ─ */}
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8,letterSpacing:.5}}>📦 MINUTAS DESCARGA</div>
+                        {detalheMinDsc.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                              <div style={{display:"flex",gap:5}}>
+                                {["MAM","MRM"].map(tp=>(
+                                  <button key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                ))}
+                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
+                              </div>
+                              {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                              <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>MDF {mn.tipo}</div><input value={mn.mdf} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.05)`,border:`1px dashed rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta Descarga</button>
+                      </div>
+
+                      {/* ─ Botão Salvar ─ */}
+                      <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
+                        {salvandoMins?"⏳ Salvando...":"💾 SALVAR DOCUMENTOS"}
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 {/* ── Histórico de Ocorrências ── */}
                 <div>
