@@ -56,18 +56,6 @@ const PERMS_LISTA = [
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
-    data: "2026-03-23", sessao: "Sessão 11",
-    itens: [
-      "FEAT · Dashboard Carregamentos interativo: clique nas barras/pizza dos grupos Motorista, Destino e Status abre painel drill-down com viagens detalhadas; cursor pointer sinaliza interatividade",
-      "FEAT · Dashboard Por UF Destino: cada linha de UF clicável → painel lista motoristas que fizeram a rota com contagem de viagens",
-      "FEAT · DCC nas Diárias: toggle 'Existe DCC? Sim/Não' antes das Minutas DCC — auto-detecta existência de dados; quando 'Não', oculta formulário de minutas DCC e CTE Complementar; evita formulários em branco desnecessários",
-      "FEAT · Registro de data de entrada: novos DTs recebem campo data_criacao (ISO) automaticamente; exibido no header do modal de detalhe como '📥 Registrado em DD/MM/AAAA HH:MM'",
-      "FIX · Descarga: botão ao lado da barra de data agora usa estilo css.btnGold (igual ao da aba Buscar) com ícone de lupa em cor contrastante",
-      "FIX · Bottom nav: label 'Busca' corrigido para 'Buscar'",
-      "INFO · Relatório Geral verificado: ocorrências SGS (seção sgs), descargas (coluna na tabela de registros) e diárias (KPIs + Financeiro) já estavam presentes — nenhuma alteração necessária",
-    ],
-  },
-  {
     data: "2026-03-20 19:55", sessao: "Sessão 10",
     itens: [
       "FEAT · Ícones SVG Stroke Clean (estilo Lucide/Feather) na bottom nav — substituídos emojis por SVGs monocromáticos; stroke ativo = dourado com glow; inativo = cinza; stroke-width 1.8px; transição suave de cor",
@@ -499,7 +487,6 @@ export default function App() {
   const [detalheCteComp, setDetalheCteComp] = useState({cte:"",mdf:"",mat:""});
   const [detalheMinDsc, setDetalheMinDsc] = useState([{tipo:"MAM",cte:"",mdf:"",num:""}]);
   const [salvandoMins, setSalvandoMins] = useState(false);
-  const [detalheTemDcc, setDetalheTemDcc] = useState(null); // null=auto | "sim" | "nao"
 
   // Item 4 - Acompanhamento dia a dia da DT
   const [acompDias, setAcompDias] = useState([]);
@@ -558,7 +545,6 @@ export default function App() {
   // Dashboard extras
   const [dashChartType, setDashChartType] = useState("bar"); // bar | pie
   const [dashGroupBy, setDashGroupBy] = useState("mes"); // mes | motorista | destino | status
-  const [dashDrillModal, setDashDrillModal] = useState(null); // {type, label, regs}
 
   // ── Aba Operacional ──
   const [operSubTab, setOperSubTab] = useState("sgs");
@@ -612,7 +598,6 @@ export default function App() {
   const chartCTERef = useRef(null);
   const chartPieRef = useRef(null);
   const chartInstances = useRef({c:null,f:null,p:null});
-  const dashChartItemsRef = useRef([]); // armazena [{label, fullLabel, regs}] para clique
 
   // Combined data
   const DADOS = useMemo(() => {
@@ -733,13 +718,9 @@ export default function App() {
   useEffect(() => {
     if (!detalheDT) return;
     const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
-    const dccArr = pj(detalheDT.minutas_dcc, [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
-    setDetalheMinDcc(dccArr);
+    setDetalheMinDcc(pj(detalheDT.minutas_dcc, [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]));
     setDetalheCteComp({cte:detalheDT.cte_comp||"", mdf:detalheDT.mdf_comp||"", mat:detalheDT.mat_comp||""});
     setDetalheMinDsc(pj(detalheDT.minutas_dsc, [{tipo:"MAM",cte:"",mdf:"",num:""}]));
-    // Auto-detecta existência de DCC: se alguma minuta tem dados → "sim", senão → null (para usuário informar)
-    const hasDcc = dccArr.some(m => m.cte||m.mdf||m.num||m.valor) || !!(detalheDT.cte_comp||detalheDT.mdf_comp);
-    setDetalheTemDcc(hasDcc ? "sim" : null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detalheDT?.dt]);
 
@@ -1233,55 +1214,40 @@ export default function App() {
 
     // Dados agrupados dinamicamente
     let labelsC, dataC;
-    // ── Armazena itens completos para clique interativo ──
     if (dashGroupBy === "mes") {
       labelsC = meses.map(m => {const p=m.split("/"); return MESES_LABEL[+p[0]-1]+"/"+p[1].slice(2);});
       dataC = meses.map(m => grupos[m].regs.length);
-      dashChartItemsRef.current = [];
     } else if (dashGroupBy === "motorista") {
       const motMap = {};
       dashData.filtrado.forEach(r => { if (r.nome) motMap[r.nome] = (motMap[r.nome]||0)+1; });
       const sorted = Object.entries(motMap).sort((a,b)=>b[1]-a[1]).slice(0,12);
       labelsC = sorted.map(([k])=>k.split(" ")[0]);
       dataC = sorted.map(([,v])=>v);
-      dashChartItemsRef.current = sorted.map(([k,v])=>({label:k.split(" ")[0], fullLabel:k, count:v, regs:dashData.filtrado.filter(r=>r.nome===k)}));
     } else if (dashGroupBy === "destino") {
       const ufMap = {};
       dashData.filtrado.forEach(r => { if (!r.destino) return; const uf=r.destino.split("-").pop().trim().toUpperCase(); if(uf.length===2) ufMap[uf]=(ufMap[uf]||0)+1; });
       const sorted = Object.entries(ufMap).sort((a,b)=>b[1]-a[1]).slice(0,12);
       labelsC = sorted.map(([k])=>k);
       dataC = sorted.map(([,v])=>v);
-      dashChartItemsRef.current = sorted.map(([k,v])=>({label:k, fullLabel:k, count:v, regs:dashData.filtrado.filter(r=>{const uf=(r.destino||"").split("-").pop().trim().toUpperCase();return uf===k;})}));
     } else {
       const stMap = {};
       dashData.filtrado.forEach(r => { const s=r.status||"Sem status"; stMap[s]=(stMap[s]||0)+1; });
       const sorted = Object.entries(stMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
       labelsC = sorted.map(([k])=>k);
       dataC = sorted.map(([,v])=>v);
-      dashChartItemsRef.current = sorted.map(([k,v])=>({label:k, fullLabel:k, count:v, regs:dashData.filtrado.filter(r=>(r.status||"Sem status")===k)}));
     }
-
-    // Função de clique no gráfico
-    const onChartClick = (e, elements) => {
-      if (!elements || elements.length === 0 || dashGroupBy === "mes") return;
-      const item = dashChartItemsRef.current[elements[0].index];
-      if (item) setDashDrillModal({type: dashGroupBy, label: item.fullLabel, regs: item.regs});
-    };
 
     if (dashChartType === "bar" && chartCarregRef.current) {
       chartInstances.current.c = new Chart(chartCarregRef.current, {
         type:"bar", data:{labels:labelsC, datasets:[{label:"Carregamentos",data:dataC,backgroundColor:"rgba(240,185,11,.65)",borderColor:"rgba(240,185,11,1)",borderWidth:1.5,borderRadius:6}]},
-        options:{responsive:true,maintainAspectRatio:false,onClick:onChartClick,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>dashGroupBy!=="mes"?`${ctx.raw} viagens · toque para detalhes`:`${ctx.raw}`}}},scales:{y:{ticks:{color:tickC},grid:{color:gridC}},x:{ticks:{color:tickC,maxRotation:45},grid:{display:false}}}}
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tickC},grid:{color:gridC}},x:{ticks:{color:tickC,maxRotation:45},grid:{display:false}}}}
       });
-      if (dashGroupBy !== "mes" && chartCarregRef.current) chartCarregRef.current.style.cursor = "pointer";
-      else if (chartCarregRef.current) chartCarregRef.current.style.cursor = "default";
     } else if (dashChartType === "pie" && chartPieRef.current) {
       chartInstances.current.p = new Chart(chartPieRef.current, {
         type:"doughnut",
         data:{labels:labelsC, datasets:[{data:dataC,backgroundColor:PIE_COLORS,borderColor:isDark?"#1e2026":"#fff",borderWidth:2}]},
-        options:{responsive:true,maintainAspectRatio:false,onClick:onChartClick,plugins:{legend:{display:true,position:"bottom",labels:{color:tickC,padding:10,font:{size:10}}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/dataC.reduce((a,b)=>a+b,0)*100)}%)${dashGroupBy!=="mes"?" · clique para detalhes":""}`}}}}
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:"bottom",labels:{color:tickC,padding:10,font:{size:10}}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/dataC.reduce((a,b)=>a+b,0)*100)}%)`}}}}
       });
-      if (dashGroupBy !== "mes" && chartPieRef.current) chartPieRef.current.style.cursor = "pointer";
     }
 
     const dcte = meses.map(m => Math.round(grupos[m].cte));
@@ -1336,8 +1302,6 @@ export default function App() {
         saveJSON("dados_extras", newExtras);
       }
     } else {
-      // Novo registro: registra data/hora de criação
-      if (!reg.data_criacao) reg.data_criacao = new Date().toISOString();
       newExtras.push(reg);
       setDadosExtras(newExtras);
       saveJSON("dados_extras", newExtras);
@@ -1602,7 +1566,7 @@ export default function App() {
     </svg>
   );
   const tabs = [
-    {k:"busca", l:"Buscar",
+    {k:"busca", l:"Busca",
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
@@ -2742,16 +2706,16 @@ export default function App() {
               </div>
             )}
 
-            {/* Top UF — clicável para ver motoristas da rota */}
+            {/* Top UF */}
             <div style={{...css.card,padding:14,marginBottom:14}}>
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:8,color:t.ouro,fontWeight:500}}>· toque na UF para ver motoristas</span></div>
+              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10}}>Por UF Destino</div>
               {(() => {
                 const ufMap = {};
                 dashData.filtrado.forEach(r => { if (!r.destino) return; const uf=r.destino.split("-").pop().trim().toUpperCase(); if (uf.length===2) ufMap[uf]=(ufMap[uf]||0)+1; });
                 const ufArr = Object.keys(ufMap).sort((a,b)=>ufMap[b]-ufMap[a]).slice(0,8);
                 const maxUF = ufArr.length ? ufMap[ufArr[0]] : 1;
                 return ufArr.length ? ufArr.map(uf => (
-                  <div key={uf} onClick={()=>setDashDrillModal({type:"destino",label:uf,regs:dashData.filtrado.filter(r=>{const u=(r.destino||"").split("-").pop().trim().toUpperCase();return u===uf;})})} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7,cursor:"pointer",borderRadius:6,padding:"3px 4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                  <div key={uf} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
                     <span style={{width:28,fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,textAlign:"right",flexShrink:0}}>{uf}</span>
                     <div style={{flex:1,background:t.borda,borderRadius:4,height:8,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(ufMap[uf]/maxUF*100)}%`,background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,borderRadius:4,transition:"width .4s"}} /></div>
                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.txt2,width:24,textAlign:"right",flexShrink:0}}>{ufMap[uf]}</span>
@@ -3124,7 +3088,7 @@ export default function App() {
 
             <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
               <input type="date" value={dscData} onChange={e=>setDscData(e.target.value)} style={{...css.inp,flex:1}} />
-              <button onClick={()=>{}} style={{...css.btnGold,padding:"10px 14px",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.card,16)}</button>
+              <button onClick={()=>{}} style={{...css.btnGreen,padding:"10px 14px",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,null,16)}</button>
             </div>
 
             {/* Toolbar view Descarga */}
@@ -4303,7 +4267,6 @@ function mapearColuna(n){
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
                   <div style={{fontSize:9,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
-                  {r.data_criacao && <div style={{fontSize:8,color:t.txt2,opacity:.7,marginTop:1}}>📥 Registrado em {new Date(r.data_criacao).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
                 </div>
                 <div style={{display:"flex",gap:6,flexShrink:0}}>
                   {canEditDetalhe && (
@@ -4373,20 +4336,8 @@ function mapearColuna(n){
                         <span style={{flex:1,height:1,background:t.borda}} />
                       </div>
 
-                      {/* ─ Pergunta DCC ─ */}
-                      <div style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:9,padding:"9px 12px",marginBottom:12}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                          <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>🟡 Existe DCC?</span>
-                          <span style={{fontSize:9,color:t.txt2,flex:1}}>Documento de Cobrança Complementar</span>
-                          {["sim","nao"].map(op=>(
-                            <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(240,185,11,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s"}}>{op==="sim"?"✅ Sim":"❌ Não"}</button>
-                          ))}
-                        </div>
-                        {detalheTemDcc===null&&<div style={{fontSize:9,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
-                      </div>
-
                       {/* ─ Minutas DCC (Diárias) ─ */}
-                      {detalheTemDcc==="sim"&&<div style={{marginBottom:12}}>
+                      <div style={{marginBottom:12}}>
                         <div style={{fontSize:10,fontWeight:700,color:t.ouro,marginBottom:8,letterSpacing:.5}}>🟡 MINUTAS DCC</div>
                         {detalheMinDcc.map((mn,idx)=>(
                           <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
@@ -4408,17 +4359,17 @@ function mapearColuna(n){
                           </div>
                         ))}
                         <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
-                      </div>}
+                      </div>
 
                       {/* ─ CTE Complementar ─ */}
-                      {detalheTemDcc==="sim"&&<div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
+                      <div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
                         <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:6,letterSpacing:.5}}>🔵 CTE COMPLEMENTAR</div>
                         <div className="co-min-g3">
                           <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
                           <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
                           <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
                         </div>
-                      </div>}
+                      </div>
 
                       {/* ─ Minutas Descarga (MAM/MRM) ─ */}
                       <div style={{marginBottom:12}}>
@@ -5485,63 +5436,6 @@ function mapearColuna(n){
           </div>
         );
       })()}
-
-      {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
-      {dashDrillModal && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.72)",zIndex:9990,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 68px"}} onClick={()=>setDashDrillModal(null)}>
-          <div style={{background:t.card,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:640,border:`1px solid ${t.borda}`,boxShadow:"0 -12px 48px rgba(0,0,0,.5)",maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
-            {/* Header */}
-            <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
-                {dashDrillModal.type==="motorista"?"👨‍✈️":dashDrillModal.type==="destino"?"📍":"📊"}
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
-                <div style={{fontSize:9,color:t.txt2,marginTop:2}}>{dashDrillModal.regs.length} viagem{dashDrillModal.regs.length!==1?"s":""} · {dashDrillModal.type==="motorista"?"Histórico do motorista":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}</div>
-              </div>
-              <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✕</button>
-            </div>
-            {/* Conteúdo */}
-            <div style={{flex:1,overflowY:"auto",padding:"10px 14px 14px"}}>
-              {dashDrillModal.type==="destino"?(
-                /* Destino: lista de motoristas únicos com contagem */
-                (() => {
-                  const motMap = {};
-                  dashDrillModal.regs.forEach(r=>{if(r.nome){if(!motMap[r.nome])motMap[r.nome]={count:0,dts:[],destinos:new Set()};motMap[r.nome].count++;motMap[r.nome].dts.push(r.dt);motMap[r.nome].destinos.add(r.destino||"—");}});
-                  return Object.entries(motMap).sort((a,b)=>b[1].count-a[1].count).map(([nome,info])=>(
-                    <div key={nome} style={{background:t.card2,borderRadius:10,padding:"10px 12px",marginBottom:7,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:t.ouro,flexShrink:0}}>{nome.charAt(0)}</div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome}</div>
-                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{info.count} viagem{info.count!==1?"s":""} · DTs: {info.dts.slice(0,3).join(", ")}{info.dts.length>3?`... +${info.dts.length-3}`:""}</div>
-                      </div>
-                      <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.ouro,flexShrink:0}}>{info.count}</span>
-                    </div>
-                  ));
-                })()
-              ):(
-                /* Motorista ou Status: lista de viagens resumida */
-                dashDrillModal.regs.sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;}).map((r,i)=>(
-                  <div key={i} onClick={()=>{setDashDrillModal(null);abrirDetalhe(r);}} style={{background:t.card2,borderRadius:10,padding:"9px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`} onMouseLeave={e=>e.currentTarget.style.background=t.card2}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
-                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,letterSpacing:1}}>{r.dt}</span>
-                        {dashDrillModal.type==="motorista"&&<span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</span>}
-                        {r.status&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
-                      </div>
-                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.5}}>
-                        📍 {r.destino||"—"} · 📦 {r.data_carr||"—"} · {r.data_desc?`✅ ${r.data_desc}`:"⏳ Pendente"}
-                      </div>
-                    </div>
-                    <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>
-                  </div>
-                ))
-              )}
-              {dashDrillModal.regs.length===0&&<div style={{textAlign:"center",color:t.txt2,fontSize:12,padding:20}}>Nenhum registro encontrado.</div>}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══ MODAL: RELATÓRIO GERAL ═══ */}
       {relGeralOpen && (
