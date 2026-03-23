@@ -554,8 +554,16 @@ export default function App() {
   const [wppFatModal, setWppFatModal] = useState(null); // {reg, mot}
   const [wppPagModal, setWppPagModal] = useState(null); // {reg, mot, tipo:'descarga'|'diarias'}
   const [wppFortes, setWppFortes] = useState(false);
-  const [wppFortesData, setWppFortesData] = useState({minuta:"", cte_fortes:"", mdf_fortes:"", num_fortes:"", tipo_diaria:"D01"});
-  const [wppValorPag, setWppValorPag] = useState("");
+  // DCC Minutas (Diárias) — suporta múltiplas minutas
+  const _initDcc = () => [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}];
+  const [wppDccMinutas, setWppDccMinutas] = useState(_initDcc());
+  const [wppCteComp, setWppCteComp] = useState({cte:"",mdf:"",mat:""});
+  // Minutas Descarga (MAM/MRM) — suporta múltiplas minutas
+  const _initDsc = () => [{tipo:"MAM",cte:"",mdf:"",num:""}];
+  const [wppDscMinutas, setWppDscMinutas] = useState(_initDsc());
+  // SGS: retornos interativos
+  const [expandedSgsId, setExpandedSgsId] = useState(null);
+  const [sgsRetornoForm, setSgsRetornoForm] = useState({data:"",descricao:""});
   // ── Relatórios PDF ──
   const [relGeralOpen, setRelGeralOpen] = useState(false);
   const [relGeralFrom, setRelGeralFrom] = useState("");
@@ -2225,8 +2233,8 @@ export default function App() {
                       const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                       if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
                       else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                      else if(op.k==="descarga"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");}
-                      else if(op.k==="diarias"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");}
+                      else if(op.k==="descarga"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);}
+                      else if(op.k==="diarias"){setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);}
                     }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
                       onMouseOver={e=>e.currentTarget.style.background=t.card2}
                       onMouseOut={e=>e.currentTarget.style.background="transparent"}
@@ -2409,7 +2417,7 @@ export default function App() {
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                             setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"descarga"});
-                            setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");
+                            setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
                           }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(22,119,255,.07)`,border:`1px solid rgba(22,119,255,.25)`,color:t.azulLt,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
                             📦 Descarga<br/><span style={{fontSize:8}}>Stretch</span>
                           </button>
@@ -2417,7 +2425,7 @@ export default function App() {
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                             setWppPagModal({reg:buscaResult,mot:mot||null,tipo:"diarias"});
-                            setWppFortes(false);setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"});setWppValorPag("");
+                            setWppFortes(false);setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);setWppCteComp({cte:"",mdf:"",mat:""});setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
                           }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.25)`,color:t.danger,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
                             🛏️ Diárias
                           </button>
@@ -3148,32 +3156,87 @@ export default function App() {
                       {sgsItems.map((s,i)=>{
                         const statusC = s.status==="encerrado"?t.verde:s.status==="andamento"?t.ouro:t.danger;
                         const statusIco = s.status==="encerrado"?"🟢":s.status==="andamento"?"🟡":"🔴";
-                        const diasSemRetorno = s.ultimo_retorno ? diffDias(parseData(inputToBr(s.ultimo_retorno)), new Date()) : null;
+                        const retornos = Array.isArray(s.retornos) ? s.retornos : [];
+                        const ultimoRet = retornos.length>0 ? retornos[retornos.length-1] : null;
+                        const dataUltimoRet = ultimoRet?.data || s.ultimo_retorno;
+                        const diasSemRetorno = dataUltimoRet ? diffDias(parseData(inputToBr(dataUltimoRet)), new Date()) : null;
                         const alertaRetorno = diasSemRetorno !== null && diasSemRetorno > 5;
+                        const isExpanded = expandedSgsId === (s.id||i);
+                        const toggleExpand = () => {
+                          setExpandedSgsId(isExpanded ? null : (s.id||i));
+                          setSgsRetornoForm({data:"",descricao:""});
+                        };
                         return (
-                          <div key={s.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${statusC}`,padding:12}}>
-                            <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:6}}>
-                              <div style={{flex:1}}>
-                                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:1,color:t.ouro}}>{s.numero||"—"}</span>
-                                  <span style={{fontSize:9,fontWeight:700,color:statusC,background:`${statusC}18`,border:`1px solid ${statusC}33`,borderRadius:4,padding:"2px 7px"}}>{statusIco} {s.status?.toUpperCase()||"ABERTO"}</span>
-                                  {s.dt_rel && <span style={{fontSize:9,color:t.txt2}}>DT: {s.dt_rel}</span>}
-                                  {alertaRetorno && <span style={{fontSize:9,color:t.danger,fontWeight:700,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ {diasSemRetorno}d sem retorno</span>}
+                          <div key={s.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${isExpanded?statusC:t.borda}`,borderLeft:`3px solid ${statusC}`,overflow:"hidden",transition:"border .2s"}}>
+                            {/* Cabeçalho do card — clicável para expandir */}
+                            <div onClick={toggleExpand} style={{padding:12,cursor:"pointer"}}>
+                              <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                                <div style={{flex:1}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:1,color:t.ouro}}>{s.numero||"—"}</span>
+                                    <span style={{fontSize:9,fontWeight:700,color:statusC,background:`${statusC}18`,border:`1px solid ${statusC}33`,borderRadius:4,padding:"2px 7px"}}>{statusIco} {s.status?.toUpperCase()||"ABERTO"}</span>
+                                    {s.dt_rel && <span style={{fontSize:9,color:t.txt2}}>DT: {s.dt_rel}</span>}
+                                    {alertaRetorno && <span style={{fontSize:9,color:t.danger,fontWeight:700,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ {diasSemRetorno}d sem retorno</span>}
+                                    <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,flexShrink:0}}>{isExpanded?"▲":"▼"}</span>
+                                  </div>
+                                  <div style={{fontSize:11,color:t.txt2,marginTop:3,lineHeight:1.5}}>
+                                    📅 Chamado: <strong style={{color:t.txt}}>{s.data_chamado?new Date(s.data_chamado+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</strong>
+                                    {dataUltimoRet && <> · 🔄 Último retorno: <strong style={{color:t.txt}}>{new Date(dataUltimoRet+"T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
+                                    {retornos.length>0 && <span style={{marginLeft:6,fontSize:9,background:`rgba(240,185,11,.1)`,color:t.ouro,borderRadius:4,padding:"1px 5px"}}>{retornos.length} retorno{retornos.length>1?"s":""}</span>}
+                                  </div>
+                                  {s.descricao && <div style={{fontSize:11,color:t.txt,marginTop:4,lineHeight:1.4}}>{s.descricao}</div>}
                                 </div>
-                                <div style={{fontSize:11,color:t.txt2,marginTop:3,lineHeight:1.5}}>
-                                  📅 Chamado: <strong style={{color:t.txt}}>{s.data_chamado?new Date(s.data_chamado+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</strong>
-                                  {s.ultimo_retorno && <> · 🔄 Último retorno: <strong style={{color:t.txt}}>{new Date(s.ultimo_retorno+"T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
+                                <div style={{display:"flex",gap:5,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                                  <button onClick={()=>{const a=[...sgsItems];a[i]={...a[i],status:a[i].status==="encerrado"?"aberto":"encerrado"};saveSGS(a);}} style={{background:s.status==="encerrado"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,border:`1px solid ${s.status==="encerrado"?t.danger:t.verde}33`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{s.status==="encerrado"?"🔴":"🟢"}</button>
+                                  <button onClick={()=>{if(confirm("Excluir este chamado?")){const n=[...sgsItems];n.splice(i,1);saveSGS(n);}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
                                 </div>
-                                {s.descricao && <div style={{fontSize:11,color:t.txt,marginTop:4,lineHeight:1.4}}>{s.descricao}</div>}
-                              </div>
-                              <div style={{display:"flex",gap:5,flexShrink:0}}>
-                                <button onClick={()=>{
-                                  const atualizados=[...sgsItems];atualizados[i]={...atualizados[i],status:atualizados[i].status==="encerrado"?"aberto":"encerrado"};
-                                  saveSGS(atualizados);
-                                }} style={{background:s.status==="encerrado"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,border:`1px solid ${s.status==="encerrado"?t.danger:t.verde}33`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{s.status==="encerrado"?"🔴":"🟢"}</button>
-                                <button onClick={()=>{if(confirm("Excluir este chamado?")){const n=[...sgsItems];n.splice(i,1);saveSGS(n);}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
                               </div>
                             </div>
+                            {/* Seção expandida: retornos + form */}
+                            {isExpanded && (
+                              <div style={{borderTop:`1px solid ${t.borda}`,padding:"10px 12px",background:`rgba(240,185,11,.02)`}}>
+                                <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.ouro,marginBottom:8}}>🔄 Histórico de Retornos</div>
+                                {retornos.length===0 ? (
+                                  <div style={{fontSize:10,color:t.txt2,marginBottom:10}}>Nenhum retorno registrado ainda.</div>
+                                ) : (
+                                  <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10}}>
+                                    {retornos.map((r,ri)=>(
+                                      <div key={ri} style={{display:"flex",alignItems:"flex-start",gap:8,background:t.card2,borderRadius:7,padding:"7px 10px",border:`1px solid ${t.borda}`}}>
+                                        <span style={{fontSize:9,fontWeight:700,color:t.azulLt,whiteSpace:"nowrap"}}>{r.data?new Date(r.data+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</span>
+                                        <span style={{fontSize:10,color:t.txt,flex:1}}>{r.descricao||"-"}</span>
+                                        <button onClick={()=>{const a=[...sgsItems];a[i]={...a[i],retornos:retornos.filter((_,j)=>j!==ri),ultimo_retorno:retornos.filter((_,j)=>j!==ri).at(-1)?.data||s.data_chamado||""};saveSGS(a);}} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:11,flexShrink:0,padding:2}}>✕</button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Form inline para novo retorno */}
+                                <div style={{background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid rgba(240,185,11,.2)`}}>
+                                  <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:6}}>＋ NOVO RETORNO</div>
+                                  <div style={{display:"grid",gridTemplateColumns:"130px 1fr auto",gap:6,alignItems:"end"}}>
+                                    <div>
+                                      <div style={{fontSize:8,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Data</div>
+                                      <input type="date" value={sgsRetornoForm.data} onChange={e=>setSgsRetornoForm(p=>({...p,data:e.target.value}))} style={{...css.inp,fontSize:11,padding:"6px 8px",width:"100%"}} />
+                                    </div>
+                                    <div>
+                                      <div style={{fontSize:8,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Descrição</div>
+                                      <input value={sgsRetornoForm.descricao} onChange={e=>setSgsRetornoForm(p=>({...p,descricao:e.target.value}))} placeholder="Resumo do retorno..." style={{...css.inp,fontSize:11,padding:"6px 8px",width:"100%"}} onKeyDown={e=>{
+                                        if(e.key==="Enter"&&sgsRetornoForm.data){
+                                          const novoRet={data:sgsRetornoForm.data,descricao:sgsRetornoForm.descricao};
+                                          const novosRets=[...retornos,novoRet];
+                                          const a=[...sgsItems];a[i]={...a[i],retornos:novosRets,ultimo_retorno:sgsRetornoForm.data};saveSGS(a);setSgsRetornoForm({data:"",descricao:""});
+                                        }
+                                      }} />
+                                    </div>
+                                    <button onClick={()=>{
+                                      if(!sgsRetornoForm.data){showToast("⚠️ Informe a data do retorno","warn");return;}
+                                      const novoRet={data:sgsRetornoForm.data,descricao:sgsRetornoForm.descricao};
+                                      const novosRets=[...retornos,novoRet];
+                                      const a=[...sgsItems];a[i]={...a[i],retornos:novosRets,ultimo_retorno:sgsRetornoForm.data};saveSGS(a);setSgsRetornoForm({data:"",descricao:""});
+                                    }} style={{...css.btnGold,padding:"6px 12px",fontSize:11,flexShrink:0}}>Salvar</button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -4914,8 +4977,9 @@ function mapearColuna(n){
         const lblF = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
 
         const gerarFat = () => {
+          const cleanNome = s => (s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();
           const ln = "\n";
-          let m = `MOT: ${reg.nome||"—"}${ln}`;
+          let m = `MOT: ${cleanNome(reg.nome)||"—"}${ln}`;
           m += `CTE: ${reg.cte||"—"}${ln}`;
           m += `MDF: ${reg.mdf||"—"}${ln}`;
           m += `MAT: ${reg.mat||"—"}${ln}`;
@@ -4937,7 +5001,7 @@ function mapearColuna(n){
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
                   <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
-                    {`MOT: ${reg.nome||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id||"—"}`}
+                    {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();return`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id||"—"}`;})()}
                   </div>
                 </div>
                 {(()=>{
@@ -4984,10 +5048,11 @@ function mapearColuna(n){
         const inpP = {...css.inp,fontSize:12,padding:"7px 10px"};
         const lblP = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
 
+        const cleanNome = s => (s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();
         const gerarPag = () => {
           const ln = "\n";
           let m = `PREZADAS,${ln}SOLICITO O PAGAMENTO:${ln}`;
-          m += `MOT: ${reg.nome||"—"}${ln}`;
+          m += `MOT: ${cleanNome(reg.nome)||"—"}${ln}`;
           m += `CTE: ${reg.cte||"—"}${ln}`;
           m += `MDF: ${reg.mdf||"—"}${ln}`;
           m += `MAR: ${reg.mat||"—"}${ln}`;
@@ -4995,27 +5060,40 @@ function mapearColuna(n){
           m += `DT: ${reg.dt||"—"} NF: ${reg.nf||"—"} ID: ${reg.id||"—"}${ln}`;
           m += `${ln}`;
           m += `BCO: ${mot?.banco||"—"}${ln}`;
-          m += `FAV: ${mot?.favorecido||mot?.nome||reg.nome||"—"}${ln}`;
+          m += `FAV: ${cleanNome(mot?.favorecido||mot?.nome||reg.nome)||"—"}${ln}`;
           m += `PIX: ${pixLabel}${ln}`;
           m += `AGE: ${mot?.agencia||"—"}${ln}`;
           m += `C/C: ${mot?.conta||"—"}${ln}`;
           if (wppFortes) {
             m += `${ln}`;
             if (isDiaria) {
-              const td = wppFortesData.tipo_diaria;
-              m += `MINUTA DIARIA${ln}`;
-              m += `CTE ${td}: ${wppFortesData.cte_fortes||"—"}${ln}`;
-              m += `MDF ${td}: ${wppFortesData.mdf_fortes||"—"}${ln}`;
-              m += `${td}: ${wppFortesData.num_fortes||"—"}${ln}`;
+              wppDccMinutas.forEach((mn,idx)=>{
+                const td = mn.tipo||"D01";
+                m += `MINUTA DCC${wppDccMinutas.length>1?` (${idx+1})`:""}${ln}`;
+                m += `CTE ${td}: ${mn.cte||"—"}${ln}`;
+                m += `MDF ${td}: ${mn.mdf||"—"}${ln}`;
+                m += `${td}: ${mn.num||"—"}${ln}`;
+                if(mn.valor) m += `VALOR: ${fmtMoeda(mn.valor)}${ln}`;
+                m += `${ln}`;
+              });
+              if(wppCteComp.cte||wppCteComp.mdf||wppCteComp.mat){
+                m += `CTE COMPLEMENTAR:${ln}`;
+                if(wppCteComp.cte) m += `CTE COMP: ${wppCteComp.cte}${ln}`;
+                if(wppCteComp.mdf) m += `MDF COMP: ${wppCteComp.mdf}${ln}`;
+                if(wppCteComp.mat) m += `MAT COMP: ${wppCteComp.mat}${ln}`;
+              }
             } else {
-              m += `MINUTA MAM${ln}`;
-              m += `CTE MAM: ${wppFortesData.cte_fortes||"—"}${ln}`;
-              m += `MDF MAM: ${wppFortesData.mdf_fortes||"—"}${ln}`;
-              m += `MAM: ${wppFortesData.num_fortes||"—"}${ln}`;
+              wppDscMinutas.forEach((mn,idx)=>{
+                const tp = mn.tipo||"MAM";
+                m += `MINUTA ${tp}${wppDscMinutas.length>1?` (${idx+1})`:""}${ln}`;
+                m += `CTE ${tp}: ${mn.cte||"—"}${ln}`;
+                m += `MDF ${tp}: ${mn.mdf||"—"}${ln}`;
+                m += `${tp}: ${mn.num||"—"}${ln}`;
+                m += `${ln}`;
+              });
             }
-            m += `${ln}VALOR: ${wppValorPag?fmtMoeda(wppValorPag):"—"}`;
           }
-          return m;
+          return m.trim();
         };
 
         return (
@@ -5063,44 +5141,69 @@ function mapearColuna(n){
                   <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.ouro}}>⚠️ Motorista sem dados bancários. Cadastre na aba Motoristas.</div>
                 )}
 
-                {/* Dados Fortes */}
+                {/* ── Minutas (DCC para Diárias / MAM-MRM para Descarga) ── */}
                 <div style={{background:t.card2,borderRadius:10,border:`1px solid ${t.borda}`,overflow:"hidden"}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer"}} onClick={()=>setWppFortes(v=>!v)}>
                     <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${wppFortes?t.verde:t.borda}`,background:wppFortes?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
                       {wppFortes && <span style={{color:"#fff",fontSize:10,fontWeight:700}}>✓</span>}
                     </div>
-                    <span style={{fontSize:11,fontWeight:700,color:wppFortes?t.verde:t.txt2}}>Incluir dados do Fortes (MAM{isDiaria?" / Diária":""})</span>
+                    <span style={{fontSize:11,fontWeight:700,color:wppFortes?t.verde:t.txt2}}>{isDiaria?"Incluir Minuta DCC + CTE Complementar":"Incluir Minuta Descarga (MAM/MRM)"}</span>
                   </div>
                   {wppFortes && (
-                    <div style={{padding:"0 12px 12px",display:"flex",flexDirection:"column",gap:8,borderTop:`1px solid ${t.borda}`}}>
-                      {isDiaria && (
-                        <div style={{paddingTop:8}}>
-                          <label style={lblP}>Tipo Diária</label>
-                          <div style={{display:"flex",gap:8}}>
-                            {["D01","D02"].map(d=>(
-                              <button key={d} onClick={()=>setWppFortesData(p=>({...p,tipo_diaria:d}))} style={{flex:1,padding:"8px",borderRadius:8,border:`1.5px solid ${wppFortesData.tipo_diaria===d?t.ouro:t.borda}`,background:wppFortesData.tipo_diaria===d?`rgba(240,185,11,.1)`:t.card,color:wppFortesData.tipo_diaria===d?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:13}}>
-                                {d}
-                              </button>
-                            ))}
+                    <div style={{padding:"0 12px 12px",display:"flex",flexDirection:"column",gap:10,borderTop:`1px solid ${t.borda}`}}>
+                      {isDiaria ? (<>
+                        {/* Minutas DCC */}
+                        {wppDccMinutas.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(240,185,11,.04)`,borderRadius:8,border:`1px solid rgba(240,185,11,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                              <span style={{fontSize:10,fontWeight:700,color:t.ouro}}>{"MINUTA DCC "+(wppDccMinutas.length>1?"("+(idx+1)+")":"")}</span>
+                              {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div style={{display:"flex",gap:6,marginBottom:6}}>
+                              {["D01","D02"].map(d=>(
+                                <button key={d} onClick={()=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:d}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===d?t.ouro:t.borda}`,background:mn.tipo===d?`rgba(240,185,11,.12)`:t.card,color:mn.tipo===d?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{d}</button>
+                              ))}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                              <div><label style={lblP}>CTE {mn.tipo}</label><input value={mn.cte} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>MDF {mn.tipo}</label><input value={mn.mdf} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>{mn.tipo} (nº)</label><input value={mn.num} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>Valor (R$)</label><input type="number" value={mn.valor} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} placeholder="0,00" style={inpP} /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setWppDccMinutas(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.07)`,border:`1px dashed rgba(240,185,11,.4)`,borderRadius:8,padding:"7px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta DCC</button>
+                        {/* CTE Complementar */}
+                        <div style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px"}}>
+                          <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>CTE COMPLEMENTAR DE DIÁRIAS</div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                            <div><label style={lblP}>CTE COMP</label><input value={wppCteComp.cte} onChange={e=>setWppCteComp(p=>({...p,cte:e.target.value}))} style={inpP} /></div>
+                            <div><label style={lblP}>MDF COMP</label><input value={wppCteComp.mdf} onChange={e=>setWppCteComp(p=>({...p,mdf:e.target.value}))} style={inpP} /></div>
+                            <div><label style={lblP}>MAT COMP</label><input value={wppCteComp.mat} onChange={e=>setWppCteComp(p=>({...p,mat:e.target.value}))} style={inpP} /></div>
                           </div>
                         </div>
-                      )}
-                      <div style={{paddingTop:isDiaria?0:8}}>
-                        <label style={lblP}>{isDiaria?`CTE ${wppFortesData.tipo_diaria}`:"CTE MAM"}</label>
-                        <input value={wppFortesData.cte_fortes} onChange={e=>setWppFortesData(p=>({...p,cte_fortes:e.target.value}))} style={inpP} />
-                      </div>
-                      <div>
-                        <label style={lblP}>{isDiaria?`MDF ${wppFortesData.tipo_diaria}`:"MDF MAM"}</label>
-                        <input value={wppFortesData.mdf_fortes} onChange={e=>setWppFortesData(p=>({...p,mdf_fortes:e.target.value}))} style={inpP} />
-                      </div>
-                      <div>
-                        <label style={lblP}>{isDiaria?wppFortesData.tipo_diaria:"MAM"}</label>
-                        <input value={wppFortesData.num_fortes} onChange={e=>setWppFortesData(p=>({...p,num_fortes:e.target.value}))} style={inpP} />
-                      </div>
-                      <div>
-                        <label style={lblP}>VALOR (R$)</label>
-                        <input type="number" value={wppValorPag} onChange={e=>setWppValorPag(e.target.value)} placeholder="0,00" style={inpP} />
-                      </div>
+                      </>) : (<>
+                        {/* Minutas Descarga MAM/MRM */}
+                        {wppDscMinutas.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                              <span style={{fontSize:10,fontWeight:700,color:t.azulLt}}>{"MINUTA DESCARGA "+(wppDscMinutas.length>1?"("+(idx+1)+")":"")}</span>
+                              {wppDscMinutas.length>1 && <button onClick={()=>setWppDscMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div style={{display:"flex",gap:6,marginBottom:6}}>
+                              {["MAM","MRM"].map(tp=>(
+                                <button key={tp} onClick={()=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{tp}</button>
+                              ))}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                              <div><label style={lblP}>CTE {mn.tipo}</label><input value={mn.cte} onChange={e=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>MDF {mn.tipo}</label><input value={mn.mdf} onChange={e=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>{mn.tipo} (nº)</label><input value={mn.num} onChange={e=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP} /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setWppDscMinutas(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.07)`,border:`1px dashed rgba(22,119,255,.4)`,borderRadius:8,padding:"7px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta Descarga</button>
+                      </>)}
                     </div>
                   )}
                 </div>
@@ -5118,7 +5221,7 @@ function mapearColuna(n){
                   const tel=(mot?.tel||"").replace(/\D/g,"");
                   const msg=encodeURIComponent(gerarPag());
                   window.open(tel?`https://wa.me/55${tel}?text=${msg}`:`https://wa.me/?text=${msg}`,"_blank");
-                  setWppPagModal(null); setWppFortes(false); setWppFortesData({minuta:"",cte_fortes:"",mdf_fortes:"",num_fortes:"",tipo_diaria:"D01"}); setWppValorPag("");
+                  setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
                 }} style={{flex:1,border:"none",borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   📲 ENVIAR NO WHATSAPP
                 </button>
