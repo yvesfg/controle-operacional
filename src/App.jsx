@@ -2214,6 +2214,35 @@ export default function App() {
         .co-tr:hover td{background:rgba(240,185,11,.04)!important}
         /* ─── Tooltip chip DT ─── */
         .dt-chip{font-family:'Bebas Neue',monospace;font-size:13px;letter-spacing:1.5px;color:${t.ouro};background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.25);border-radius:7px;padding:2px 9px;font-weight:700}
+        /* ─── Modal Detalhe Responsivo ─── */
+        .co-dt-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center}
+        .co-dt-modal{width:100%;max-width:520px;max-height:96vh;background:${t.modalBg};border-radius:22px 22px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:mslide .32s cubic-bezier(.34,1.3,.64,1)}
+        .co-dt-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+        .co-dt-panel{padding:14px;display:flex;flex-direction:column;gap:14px}
+        .co-dt-right{padding:14px;display:flex;flex-direction:column;gap:14px}
+        .co-dados-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+        .co-min-g4{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+        .co-min-g3{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+        @media(min-width:640px){
+          .co-dt-overlay{align-items:center!important}
+          .co-dt-modal{max-width:620px;border-radius:20px!important;max-height:90vh!important}
+          .co-dados-grid{grid-template-columns:repeat(3,1fr)!important}
+          .co-min-g4{grid-template-columns:repeat(3,1fr)!important}
+          .co-min-g3{grid-template-columns:repeat(3,1fr)!important}
+        }
+        @media(min-width:1024px){
+          .co-dt-modal{max-width:900px!important;width:88vw!important;max-height:88vh!important}
+          .co-dt-body{flex-direction:row!important;align-items:stretch!important}
+          .co-dt-panel{flex:0 0 52%;border-right:1px solid ${t.borda};overflow-y:auto;max-height:calc(88vh - 65px)}
+          .co-dt-right{flex:1;overflow-y:auto;max-height:calc(88vh - 65px);border-left:none}
+          .co-dados-grid{grid-template-columns:repeat(4,1fr)!important}
+          .co-min-g4{grid-template-columns:repeat(4,1fr)!important}
+          .co-min-g3{grid-template-columns:repeat(3,1fr)!important}
+        }
+        @media(min-width:1280px){
+          .co-dt-modal{max-width:1060px!important;width:86vw!important}
+          .co-dt-panel{flex:0 0 54%}
+        }
       `}</style>
 
       {/* HEADER */}
@@ -4230,8 +4259,8 @@ function mapearColuna(n){
         const tipoColors = {info:t.azulLt, alerta:t.danger, status:t.verde};
         const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
         return (
-          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
-            <div style={{...css.modal,maxHeight:"96vh"}}>
+          <div className="co-dt-overlay" onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
+            <div className="co-dt-modal">
               {/* Header */}
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
                 <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
@@ -4250,7 +4279,9 @@ function mapearColuna(n){
                 </div>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:14}}>
+              <div className="co-dt-body" style={{flex:1,overflow:"hidden"}}>
+              {/* ── PAINEL ESQUERDO: Timeline + Dados + Minutas ── */}
+              <div className="co-dt-panel">
 
                 {/* ── Timeline ── */}
                 <div>
@@ -4271,7 +4302,113 @@ function mapearColuna(n){
                   </div>
                 </div>
 
-                {/* ITEM 4 */}
+                {/* ── Dados completos ── */}
+                <div>
+                  <div style={{...css.secTitle,marginBottom:8}}>{hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>,t.ouro,12)} Dados do Registro <span style={{flex:1,height:1,background:t.borda}} /></div>
+                  <div className="co-dados-grid">
+                    {[
+                      {l:"Motorista",v:r.nome},{l:"CPF",v:r.cpf},{l:"Placa",v:r.placa},{l:"Vínculo",v:r.vinculo},
+                      {l:"Origem",v:r.origem},{l:"Destino",v:r.destino},{l:"Status",v:r.status},{l:"Dias",v:r.dias},
+                      {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
+                      ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
+                      {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"Cliente",v:r.cliente},
+                    ].filter(f=>f.v).map((f,fi)=>(
+                      <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:t.txt,marginTop:1}}>{f.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── Documentos / Minutas ── */}
+                {(()=>{
+                  const isDiariaReg = diariasData.items.some(it=>it.r.dt===r.dt&&(it.tipo==="diaria"||it.tipo==="atraso"));
+                  const isDescargaReg = !!(r.data_agenda||r.data_desc);
+                  const lblP2 = {fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginBottom:3};
+                  const inpP2 = {...css.inp,fontSize:12,padding:"7px 9px",height:"auto"};
+                  return (
+                    <div>
+                      <div style={{...css.secTitle,marginBottom:10}}>
+                        {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
+                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4}}>🛏️ DIÁRIA</span>}
+                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4}}>📦 DESCARGA</span>}
+                        <span style={{flex:1,height:1,background:t.borda}} />
+                      </div>
+
+                      {/* ─ Minutas DCC (Diárias) ─ */}
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:10,fontWeight:700,color:t.ouro,marginBottom:8,letterSpacing:.5}}>🟡 MINUTAS DCC</div>
+                        {detalheMinDcc.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                              <div style={{display:"flex",gap:5}}>
+                                {["D01","D02"].map(tp=>(
+                                  <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                ))}
+                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
+                              </div>
+                              {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div className="co-min-g4">
+                              <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>MDF DCC</div><input value={mn.mdf} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>Valor</div><input value={mn.valor} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} style={inpP2} placeholder="0,00" /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                      </div>
+
+                      {/* ─ CTE Complementar ─ */}
+                      <div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
+                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:6,letterSpacing:.5}}>🔵 CTE COMPLEMENTAR</div>
+                        <div className="co-min-g3">
+                          <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
+                          <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
+                          <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
+                        </div>
+                      </div>
+
+                      {/* ─ Minutas Descarga (MAM/MRM) ─ */}
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8,letterSpacing:.5}}>📦 MINUTAS DESCARGA</div>
+                        {detalheMinDsc.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                              <div style={{display:"flex",gap:5}}>
+                                {["MAM","MRM"].map(tp=>(
+                                  <button key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                ))}
+                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
+                              </div>
+                              {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div className="co-min-g3">
+                              <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>MDF {mn.tipo}</div><input value={mn.mdf} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
+                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.05)`,border:`1px dashed rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta Descarga</button>
+                      </div>
+
+                      {/* ─ Botão Salvar ─ */}
+                      <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
+                        {salvandoMins?"⏳ Salvando...":"💾 SALVAR DOCUMENTOS"}
+                      </button>
+                    </div>
+                  );
+                })()}
+
+              </div>{/* fim co-dt-panel (esquerdo) */}
+
+              {/* ── PAINEL DIREITO: Acompanhamento + Ocorrências ── */}
+              <div className="co-dt-right">
+
+                {/* Acompanhamento Dia a Dia */}
                 {(()=>{
                   const dcArr = acompDias;
                   const toISO = s => { if(!s)return null; const p=s.split("/"); return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:s; };
@@ -4331,107 +4468,6 @@ function mapearColuna(n){
                   );
                 })()}
 
-                {/* ── Dados completos ── */}
-                <div>
-                  <div style={{...css.secTitle,marginBottom:8}}>{hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>,t.ouro,12)} Dados do Registro <span style={{flex:1,height:1,background:t.borda}} /></div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                    {[
-                      {l:"Motorista",v:r.nome},{l:"CPF",v:r.cpf},{l:"Placa",v:r.placa},{l:"Vínculo",v:r.vinculo},
-                      {l:"Origem",v:r.origem},{l:"Destino",v:r.destino},{l:"Status",v:r.status},{l:"Dias",v:r.dias},
-                      {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
-                      ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
-                      {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"Cliente",v:r.cliente},
-                    ].filter(f=>f.v).map((f,fi)=>(
-                      <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
-                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
-                        <div style={{fontSize:12,fontWeight:600,color:t.txt,marginTop:1}}>{f.v}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ── Documentos / Minutas ── */}
-                {(()=>{
-                  const isDiariaReg = diariasData.items.some(it=>it.r.dt===r.dt&&(it.tipo==="diaria"||it.tipo==="atraso"));
-                  const isDescargaReg = !!(r.data_agenda||r.data_desc);
-                  const lblP2 = {fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginBottom:3};
-                  const inpP2 = {...css.inp,fontSize:12,padding:"7px 9px",height:"auto"};
-                  return (
-                    <div>
-                      <div style={{...css.secTitle,marginBottom:10}}>
-                        {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
-                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4}}>🛏️ DIÁRIA</span>}
-                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4}}>📦 DESCARGA</span>}
-                        <span style={{flex:1,height:1,background:t.borda}} />
-                      </div>
-
-                      {/* ─ Minutas DCC (Diárias) ─ */}
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.ouro,marginBottom:8,letterSpacing:.5}}>🟡 MINUTAS DCC</div>
-                        {detalheMinDcc.map((mn,idx)=>(
-                          <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
-                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                              <div style={{display:"flex",gap:5}}>
-                                {["D01","D02"].map(tp=>(
-                                  <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
-                                ))}
-                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
-                              </div>
-                              {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
-                            </div>
-                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
-                              <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>MDF DCC</div><input value={mn.mdf} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>Valor</div><input value={mn.valor} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} style={inpP2} placeholder="0,00" /></div>
-                            </div>
-                          </div>
-                        ))}
-                        <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
-                      </div>
-
-                      {/* ─ CTE Complementar ─ */}
-                      <div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:6,letterSpacing:.5}}>🔵 CTE COMPLEMENTAR</div>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                          <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
-                          <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
-                          <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
-                        </div>
-                      </div>
-
-                      {/* ─ Minutas Descarga (MAM/MRM) ─ */}
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8,letterSpacing:.5}}>📦 MINUTAS DESCARGA</div>
-                        {detalheMinDsc.map((mn,idx)=>(
-                          <div key={idx} style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
-                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                              <div style={{display:"flex",gap:5}}>
-                                {["MAM","MRM"].map(tp=>(
-                                  <button key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
-                                ))}
-                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
-                              </div>
-                              {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
-                            </div>
-                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                              <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>MDF {mn.tipo}</div><input value={mn.mdf} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
-                            </div>
-                          </div>
-                        ))}
-                        <button onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.05)`,border:`1px dashed rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta Descarga</button>
-                      </div>
-
-                      {/* ─ Botão Salvar ─ */}
-                      <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
-                        {salvandoMins?"⏳ Salvando...":"💾 SALVAR DOCUMENTOS"}
-                      </button>
-                    </div>
-                  );
-                })()}
-
                 {/* ── Histórico de Ocorrências ── */}
                 <div>
                   <div style={{...css.secTitle,marginBottom:8}}>
@@ -4487,9 +4523,10 @@ function mapearColuna(n){
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
+              </div>{/* fim co-dt-right */}
+            </div>{/* fim co-dt-body */}
+          </div>{/* fim co-dt-modal */}
+        </div>
         );
       })()}
 
