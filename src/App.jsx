@@ -56,6 +56,16 @@ const PERMS_LISTA = [
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
+    data: "2026-03-24", sessao: "Sessão 13",
+    itens: [
+      "FEAT · Planilha: ao clicar em uma linha, abre bottom-sheet modal com layout estilo navbar (dark/gold) — exibe detalhe completo do registro com botões Editar, Ver Completo e Ocorrências",
+      "FEAT · DCC: siglas renomeadas de D01→D01-MAT e D02→D05-MAR em todos os dropdowns, estados iniciais e mensagens WhatsApp",
+      "FEAT · Apontamentos: adicionados tipos Deslocamento e Outros no select de Tipo",
+      "FEAT · Apontamentos: novo botão 'Planilha Financeiro' — gera XLS de controle de Descargas/Stretch por período selecionável (DCC D01-MAT/D05-MAR com CTE, MDF, valores e apontamentos vinculados) para conferência Suzano e NFSE",
+      "FEAT · Apontamentos: alerta aprimorado de FRS — destaca individualmente os apontamentos com mais de 2 dias sem FRS emitida, mostrando contador de dias em tempo real",
+    ],
+  },
+  {
     data: "2026-03-23", sessao: "Sessão 12",
     itens: [
       "FEAT · Relatório Operacional (PDF): novo relatório com SGS (chamados + retornos) e Apontamentos (descarga/stretch); acessível via menu de relatórios; modal com período e seleção de seções",
@@ -461,6 +471,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("planilha");
   const [planilhaSortKey, setPlanilhaSortKey] = useState(null);   // coluna ativa: 'dt'|'nome'|'placa'|...
   const [planilhaSortDir, setPlanilhaSortDir] = useState("asc");  // 'asc'|'desc'
+  const [planilhaDetalheReg, setPlanilhaDetalheReg] = useState(null); // modal detalhe da planilha
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
   const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
@@ -512,7 +523,7 @@ export default function App() {
   const [ocorrModalTipo, setOcorrModalTipo] = useState("info");
 
   // Minutas no modal de detalhe (Supabase)
-  const [detalheMinDcc, setDetalheMinDcc] = useState([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
+  const [detalheMinDcc, setDetalheMinDcc] = useState([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]);
   const [detalheCteComp, setDetalheCteComp] = useState({cte:"",mdf:"",mat:""});
   const [detalheMinDsc, setDetalheMinDsc] = useState([{tipo:"MAM",cte:"",mdf:"",num:""}]);
   const [salvandoMins, setSalvandoMins] = useState(false);
@@ -592,7 +603,7 @@ export default function App() {
   const [wppPagModal, setWppPagModal] = useState(null); // {reg, mot, tipo:'descarga'|'diarias'}
   const [wppFortes, setWppFortes] = useState(false);
   // DCC Minutas (Diárias) — suporta múltiplas minutas
-  const _initDcc = () => [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}];
+  const _initDcc = () => [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}];
   const [wppDccMinutas, setWppDccMinutas] = useState(_initDcc());
   const [wppCteComp, setWppCteComp] = useState({cte:"",mdf:"",mat:""});
   // Minutas Descarga (MAM/MRM) — suporta múltiplas minutas
@@ -624,6 +635,10 @@ export default function App() {
   const [relDiariaVinculo, setRelDiariaVinculo] = useState("");
   const [relDiariaStatus, setRelDiariaStatus] = useState("");
   const [relDescargaOpen, setRelDescargaOpen] = useState(false);
+  // Planilha Controle Financeiro Descargas
+  const [relCtrlDccOpen, setRelCtrlDccOpen] = useState(false);
+  const [relCtrlDccFrom, setRelCtrlDccFrom] = useState("");
+  const [relCtrlDccTo, setRelCtrlDccTo] = useState("");
   const [relDescargaFrom, setRelDescargaFrom] = useState("");
   const [relDescargaTo, setRelDescargaTo] = useState("");
   const [relDescargaMotorista, setRelDescargaMotorista] = useState("");
@@ -755,7 +770,7 @@ export default function App() {
   useEffect(() => {
     if (!detalheDT) return;
     const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
-    const dccArr = pj(detalheDT.minutas_dcc, [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
+    const dccArr = pj(detalheDT.minutas_dcc, [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]);
     setDetalheMinDcc(dccArr);
     setDetalheCteComp({cte:detalheDT.cte_comp||"", mdf:detalheDT.mdf_comp||"", mat:detalheDT.mat_comp||""});
     setDetalheMinDsc(pj(detalheDT.minutas_dsc, [{tipo:"MAM",cte:"",mdf:"",num:""}]));
@@ -1460,7 +1475,7 @@ export default function App() {
   // Abre o modal WPP pré-preenchido com minutas salvas no registro
   const abrirWppPagModal = (reg, mot, tipo) => {
     const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
-    const dcc = pj(reg?.minutas_dcc, [{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
+    const dcc = pj(reg?.minutas_dcc, [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]);
     const comp = {cte:reg?.cte_comp||"", mdf:reg?.mdf_comp||"", mat:reg?.mat_comp||""};
     const dsc = pj(reg?.minutas_dsc, [{tipo:"MAM",cte:"",mdf:"",num:""}]);
     const temDados = dcc.some(m=>m.cte||m.mdf||m.num) || comp.cte || dsc.some(m=>m.cte||m.mdf||m.num);
@@ -3157,11 +3172,7 @@ export default function App() {
                 <tbody>
                   {dadosExibir.map((r,i) => (
                     <tr key={i} style={{cursor:"pointer",background:i%2===0?t.bg:t.bgAlt}} onClick={()=>{
-                      const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
-                      setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
-                      const c=dt.replace(/\D/g,"");
-                      const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
-                      if(found){setBuscaResult(found);const cpfN=found.cpf?.replace(/\D/g,""),placaN=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN&&x.cpf?.replace(/\D/g,"")===cpfN)||(placaN&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}else{setBuscaError(dt);}
+                      setPlanilhaDetalheReg(r);
                     }}
                     onMouseOver={e=>{e.currentTarget.style.background=`rgba(240,185,11,.05)`;}}
                     onMouseOut={e=>{e.currentTarget.style.background=i%2===0?t.bg:t.bgAlt;}}
@@ -3771,14 +3782,48 @@ export default function App() {
                 <div>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                     <div style={{...css.secTitle,margin:0}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Apontamentos <span style={{fontSize:8,color:t.txt2,fontWeight:400,marginLeft:4}}>Descargas/Stretch</span> <span style={{flex:1,height:1,background:t.borda}} /></div>
-                    <button onClick={()=>{setApontForm({numero:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:""});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={()=>setRelCtrlDccOpen(true)} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:8,padding:"8px 12px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>📊 Planilha Financeiro</button>
+                      <button onClick={()=>{setApontForm({numero:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:""});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
+                    </div>
                   </div>
 
-                  {apontItems.some(a=>!a.frs_folha) && (
-                    <div style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:11,color:t.danger,fontWeight:600}}>
-                      🚨 {apontItems.filter(a=>!a.frs_folha).length} apontamento(s) com campo FRS · Folha em branco!
-                    </div>
-                  )}
+                  {(()=>{
+                    const semFrs = apontItems.filter(a=>!a.frs_folha);
+                    if(semFrs.length===0) return null;
+                    const agora = Date.now();
+                    const urgentes = semFrs.filter(a=>{
+                      if(!a.criado_em) return false;
+                      const dias = (agora - new Date(a.criado_em).getTime()) / 86400000;
+                      return dias >= 2;
+                    });
+                    return (
+                      <div style={{marginBottom:12}}>
+                        {/* Banner geral */}
+                        <div style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:10,padding:"10px 14px",marginBottom:urgentes.length>0?8:0,display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:18,flexShrink:0}}>🚨</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:11,color:t.danger,fontWeight:700}}>{semFrs.length} apontamento(s) sem FRS · Folha</div>
+                            {urgentes.length>0 && <div style={{fontSize:10,color:t.danger,opacity:.8,marginTop:2}}>{urgentes.length} deles já passaram de <strong>2 dias</strong> sem FRS!</div>}
+                          </div>
+                        </div>
+                        {/* Lista de urgentes (> 2 dias sem FRS) */}
+                        {urgentes.map((a,i)=>{
+                          const dias = Math.floor((agora - new Date(a.criado_em).getTime()) / 86400000);
+                          return (
+                            <div key={a.id||i} style={{background:`rgba(246,70,93,.05)`,border:`1.5px solid rgba(246,70,93,.35)`,borderRadius:8,padding:"8px 12px",marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
+                              <span style={{fontSize:16,flexShrink:0}}>⏰</span>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:11,fontWeight:700,color:t.txt}}>Apontamento {a.numero||"s/nº"}{a.dt_rel?` · DT ${a.dt_rel}`:""}</div>
+                                <div style={{fontSize:10,color:t.danger,marginTop:2}}>Sem FRS há <strong>{dias} dia{dias!==1?"s":""}</strong> — emitir urgente!</div>
+                              </div>
+                              <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:t.danger,lineHeight:1}}>{dias}d</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {apontFormOpen && (
                     <div style={{background:t.card,borderRadius:12,border:`1px solid ${t.ouro}44`,padding:14,marginBottom:14}}>
@@ -3797,6 +3842,8 @@ export default function App() {
                           <select value={apontForm.tipo} onChange={e=>setApontForm(p=>({...p,tipo:e.target.value}))} style={{...inpO,appearance:"none"}}>
                             <option value="descarga">📦 Descarga</option>
                             <option value="stretch">📏 Stretch</option>
+                            <option value="deslocamento">🚗 Deslocamento</option>
+                            <option value="outros">📋 Outros</option>
                           </select>
                         </div>
                         <div><label style={lblO}>DT Relacionado</label><input value={apontForm.dt_rel} onChange={e=>setApontForm(p=>({...p,dt_rel:e.target.value}))} style={inpO} /></div>
@@ -3821,7 +3868,7 @@ export default function App() {
                         <div key={a.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${a.frs_folha?t.verde:t.danger}`,padding:12}}>
                           <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:6,flexWrap:"wrap"}}>
                             <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:t.ouro}}>{a.numero||"—"}</span>
-                            <span style={{fontSize:9,fontWeight:700,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 7px"}}>{a.tipo==="stretch"?"📏 Stretch":"📦 Descarga"}</span>
+                            <span style={{fontSize:9,fontWeight:700,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 7px"}}>{a.tipo==="stretch"?"📏 Stretch":a.tipo==="deslocamento"?"🚗 Deslocamento":a.tipo==="outros"?"📋 Outros":"📦 Descarga"}</span>
                             {!a.frs_folha && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ FRS vazio!</span>}
                           </div>
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:10,color:t.txt2}}>
@@ -4695,7 +4742,7 @@ function mapearColuna(n){
                           <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                               <div style={{display:"flex",gap:5}}>
-                                {["D01","D02"].map(tp=>(
+                                {["D01-MAT","D05-MAR"].map(tp=>(
                                   <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
                                 ))}
                                 <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
@@ -4710,7 +4757,7 @@ function mapearColuna(n){
                             </div>
                           </div>
                         ))}
-                        <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                        <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
                       </div>}
 
                       {/* ─ CTE Complementar ─ sempre visível, independente do DCC ─ */}
@@ -5637,7 +5684,7 @@ function mapearColuna(n){
             m += `${ln}`;
             if (isDiaria) {
               wppDccMinutas.forEach((mn,idx)=>{
-                const td = mn.tipo||"D01";
+                const td = mn.tipo||"D01-MAT";
                 m += `MINUTA DCC${wppDccMinutas.length>1?` (${idx+1})`:""}${ln}`;
                 m += `CTE ${td}: ${mn.cte||"—"}${ln}`;
                 m += `MDF ${td}: ${mn.mdf||"—"}${ln}`;
@@ -5729,7 +5776,7 @@ function mapearColuna(n){
                               {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
                             </div>
                             <div style={{display:"flex",gap:6,marginBottom:6}}>
-                              {["D01","D02"].map(d=>(
+                              {["D01-MAT","D05-MAR"].map(d=>(
                                 <button key={d} onClick={()=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:d}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===d?t.ouro:t.borda}`,background:mn.tipo===d?`rgba(240,185,11,.12)`:t.card,color:mn.tipo===d?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{d}</button>
                               ))}
                             </div>
@@ -5741,7 +5788,7 @@ function mapearColuna(n){
                             </div>
                           </div>
                         ))}
-                        <button onClick={()=>setWppDccMinutas(p=>[...p,{tipo:"D01",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.07)`,border:`1px dashed rgba(240,185,11,.4)`,borderRadius:8,padding:"7px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta DCC</button>
+                        <button onClick={()=>setWppDccMinutas(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.07)`,border:`1px dashed rgba(240,185,11,.4)`,borderRadius:8,padding:"7px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta DCC</button>
                         {/* CTE Complementar */}
                         <div style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px"}}>
                           <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>CTE COMPLEMENTAR DE DIÁRIAS</div>
@@ -5790,7 +5837,7 @@ function mapearColuna(n){
                   const tel=(mot?.tel||"").replace(/\D/g,"");
                   const msg=encodeURIComponent(gerarPag());
                   window.open(tel?`https://wa.me/55${tel}?text=${msg}`:`https://wa.me/?text=${msg}`,"_blank");
-                  setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
+                  setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
                 }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   📲 ENVIAR NO WHATSAPP
                 </button>
@@ -6181,6 +6228,229 @@ function mapearColuna(n){
           </div>
         </div>
       )}
+
+      {/* ═══ MODAL DETALHE PLANILHA ═══ */}
+      {planilhaDetalheReg && (()=>{
+        const r = planilhaDetalheReg;
+        const cpfN = r.cpf?.replace(/\D/g,"");
+        const placaN = r.placa?.toUpperCase().replace(/\W/g,"");
+        const motCad = motoristas.find(m=>
+          (cpfN && m.cpf?.replace(/\D/g,"")===cpfN) ||
+          [m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p.toUpperCase().replace(/\W/g,"")===placaN)
+        );
+        const statusDesc = r.data_desc ? {cor:t.verde,ico:"✅",txt:"Descarregado"} :
+                           r.data_agenda ? {cor:t.ouro,ico:"⏳",txt:"Aguardando Descarga"} :
+                           {cor:t.danger,ico:"🚨",txt:"Sem Agenda"};
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:9999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setPlanilhaDetalheReg(null)}>
+            <div style={{background:t.headerBg,borderRadius:"20px 20px 0 0",padding:0,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:`0 -12px 48px ${t.shadow}`,maxHeight:"92vh",overflowY:"auto",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+
+              {/* ── Handle / barra superior ── */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"10px 16px 0"}}>
+                <div style={{width:40,height:4,borderRadius:99,background:t.borda,opacity:.7}} />
+              </div>
+
+              {/* ── Header estilo nav ── */}
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px 10px",borderBottom:`1px solid ${t.borda}`}}>
+                <div style={{width:44,height:44,borderRadius:12,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 0 16px rgba(240,185,11,.3)`}}>
+                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,20,2)}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:2,color:t.ouro,lineHeight:1}}>{r.nome||"—"}</div>
+                  <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}}>DT {r.dt} · <span style={{color:t.verde,fontFamily:"'Bebas Neue',sans-serif",fontSize:11,letterSpacing:2}}>{r.placa||"—"}</span></div>
+                </div>
+                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda}`,borderRadius:9,width:32,height:32,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              {/* ── Status banner ── */}
+              <div style={{margin:"10px 16px 0",padding:"8px 14px",borderRadius:10,background:`rgba(${statusDesc.cor===t.verde?"2,192,118":statusDesc.cor===t.ouro?"240,185,11":"246,70,93"},.08)`,border:`1px solid ${statusDesc.cor}33`,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:18}}>{statusDesc.ico}</span>
+                <span style={{fontSize:12,fontWeight:700,color:statusDesc.cor}}>{statusDesc.txt}</span>
+                {r.data_desc && <span style={{marginLeft:"auto",fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1.5,color:statusDesc.cor}}>{r.data_desc}</span>}
+              </div>
+
+              {/* ── Grid de info ── */}
+              <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                {[
+                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Origem",val:r.origem,full:false},
+                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Destino",val:r.destino,full:false},
+                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Carregamento",val:r.data_carr,full:false},
+                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Agenda Desc.",val:r.data_agenda,full:false},
+                  {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"Vínculo",val:r.vinculo,full:false},
+                  {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status,full:false},
+                ].map((it,i)=>(
+                  <div key={i} style={{background:t.card,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`,gridColumn:it.full?"1/-1":"auto"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
+                      {hIco(it.ico,t.txt2,12,1.8)}
+                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600}}>{it.lbl}</div>
+                    </div>
+                    <div style={{fontWeight:600,color:t.txt,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.val||"—"}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Financeiro (se permissão) ── */}
+              {canFin && (
+                <div style={{margin:"0 16px",padding:"12px",background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:4}}>
+                  {[
+                    {lbl:"CTE (empresa)",val:fmtMoeda(r.vl_cte),cor:t.verde},
+                    {lbl:"Contrato (mot.)",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
+                    {lbl:"Adiantamento",val:fmtMoeda(r.adiant),cor:t.ouro},
+                    {lbl:"Diária Devida",val:fmtMoeda(r.diaria_prev),cor:t.danger},
+                    {lbl:"Diária Paga",val:fmtMoeda(r.diaria_pg),cor:t.verde},
+                    {lbl:"Saldo",val:fmtMoeda(r.saldo),cor:t.txt},
+                  ].map((f,i)=>(
+                    <div key={i} style={{textAlign:"center"}}>
+                      <div style={{fontSize:7,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:3}}>{f.lbl}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:f.cor}}>{f.val}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Botões de ação ── */}
+              <div style={{padding:"12px 16px 20px",display:"flex",flexDirection:"column",gap:8}}>
+                {canEdit && (
+                  <button onClick={()=>{
+                    const idx=DADOS.findIndex(x=>x.dt===r.dt);
+                    setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
+                    setPlanilhaDetalheReg(null);
+                  }} style={{...css.btnGold,justifyContent:"center",padding:12,fontSize:13}}>
+                    {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)}
+                    ✏️ EDITAR REGISTRO
+                  </button>
+                )}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <button onClick={()=>{
+                    setPlanilhaDetalheReg(null);
+                    const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
+                    setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
+                    const c=dt.replace(/\D/g,"");
+                    const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
+                    if(found){setBuscaResult(found);const cpfN2=found.cpf?.replace(/\D/g,""),placaN2=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN2&&x.cpf?.replace(/\D/g,"")===cpfN2)||(placaN2&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN2))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}
+                  }} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:10,padding:"11px 8px",cursor:"pointer",color:t.azulLt,fontWeight:700,fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,16,2)} VER COMPLETO
+                  </button>
+                  <button onClick={()=>{abrirOcorrModal(r);setPlanilhaDetalheReg(null);}} style={{background:`rgba(232,130,12,.08)`,border:`1px solid rgba(232,130,12,.3)`,borderRadius:10,padding:"11px 8px",cursor:"pointer",color:"#E8820C",fontWeight:700,fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    📌 OCORRÊNCIAS
+                  </button>
+                </div>
+                {!motCad && canEdit && (
+                  <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.22)`,borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
+                    <div style={{flex:1,fontSize:10,color:t.txt2}}>Motorista <strong style={{color:t.ouro}}>não cadastrado</strong></div>
+                    <button onClick={()=>{setFormData({nome:r.nome||"",cpf:r.cpf||"",placa1:r.placa||"",vinculo:r.vinculo||""});setEditIdx(-1);setModalOpen("motorista");setPlanilhaDetalheReg(null);}} style={{background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"6px 10px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>＋ Cadastrar</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ MODAL: PLANILHA CONTROLE FINANCEIRO DESCARGAS ═══ */}
+      {relCtrlDccOpen && (()=>{
+        const gerarCtrlDcc = () => {
+          if(!relCtrlDccFrom||!relCtrlDccTo){showToast("⚠️ Selecione o período","warn");return;}
+          const [fyy,fmm,fdd] = relCtrlDccFrom.split("-").map(Number);
+          const [tyy,tmm,tdd] = relCtrlDccTo.split("-").map(Number);
+          const dFrom = new Date(fyy,fmm-1,fdd);
+          const dTo   = new Date(tyy,tmm-1,tdd,23,59,59);
+          const linhas = [];
+          DADOS.forEach(reg=>{
+            // Pega data de referência: data_desc ou data_carr
+            const dataRef = reg.data_desc || reg.data_carr || "";
+            if(!dataRef) return;
+            const [d,m,y] = dataRef.split("/").map(Number);
+            if(!d||!m||!y) return;
+            const dt = new Date(y,m-1,d);
+            if(dt<dFrom||dt>dTo) return;
+            // minutas DCC (D01-MAT / D05-MAR)
+            const dccs = pj(reg.minutas_dcc,[]);
+            if(dccs.length===0) return; // só registros com DCC
+            dccs.forEach(mn=>{
+              // apontamento vinculado (se houver dt_rel ou filial)
+              const apont = apontItems.find(a=>a.dt_rel===reg.dt)||null;
+              linhas.push({
+                dt: reg.dt||"",
+                motorista: reg.nome||"",
+                placa: reg.placa||"",
+                data_carr: reg.data_carr||"",
+                data_desc: reg.data_desc||"",
+                tipo_dcc: mn.tipo||"",
+                cte_dcc: mn.cte||"",
+                mdf_dcc: mn.mdf||"",
+                num_dcc: mn.num||"",
+                valor_dcc: mn.valor||"",
+                cte_comp: reg.minutas_cte_comp?.cte || pj(reg.minutas_cte_comp,{}).cte || "",
+                mdf_comp: reg.minutas_cte_comp?.mdf || pj(reg.minutas_cte_comp,{}).mdf || "",
+                mat_comp: reg.minutas_cte_comp?.mat || pj(reg.minutas_cte_comp,{}).mat || "",
+                nf_apontamento: apont?.numero||"",
+                frs_folha: apont?.frs_folha||"",
+                mes_ref: apont?.mes_ref||"",
+                filial: apont?.filial||"",
+                valor_apont: apont?.valor||"",
+              });
+            });
+          });
+          if(linhas.length===0){showToast("Nenhum registro com DCC no período","warn");return;}
+          const cols = [
+            {k:"dt",l:"DT"},
+            {k:"motorista",l:"Motorista"},
+            {k:"placa",l:"Placa"},
+            {k:"data_carr",l:"Carregamento"},
+            {k:"data_desc",l:"Descarga"},
+            {k:"tipo_dcc",l:"Tipo DCC"},
+            {k:"cte_dcc",l:"CTE DCC"},
+            {k:"mdf_dcc",l:"MDF DCC"},
+            {k:"num_dcc",l:"Nº DCC"},
+            {k:"valor_dcc",l:"Valor DCC"},
+            {k:"cte_comp",l:"CTE Comp."},
+            {k:"mdf_comp",l:"MDF Comp."},
+            {k:"mat_comp",l:"MAT Comp."},
+            {k:"nf_apontamento",l:"Nº Apontamento"},
+            {k:"frs_folha",l:"FRS · Folha"},
+            {k:"mes_ref",l:"Mês Ref."},
+            {k:"filial",l:"Filial"},
+            {k:"valor_apont",l:"Valor Apont."},
+          ];
+          const per = `${relCtrlDccFrom}_${relCtrlDccTo}`;
+          exportODS(linhas, cols, `controle-descargas-${per}`);
+          showToast(`✅ Planilha gerada — ${linhas.length} linha(s)`,"ok");
+          setRelCtrlDccOpen(false);
+        };
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setRelCtrlDccOpen(false)}>
+            <div style={{background:t.card,borderRadius:16,padding:20,width:"100%",maxWidth:440,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)"}} onClick={e=>e.stopPropagation()}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"rgba(22,119,255,.12)",border:"1.5px solid rgba(22,119,255,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📊</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:15,fontWeight:800,color:t.txt}}>Planilha Controle Financeiro</div>
+                  <div style={{fontSize:10,color:t.azulLt,fontWeight:600}}>Descargas / Stretch — DCC</div>
+                </div>
+                <button onClick={()=>setRelCtrlDccOpen(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:18,lineHeight:1,padding:4}}>✕</button>
+              </div>
+              <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:8,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.6}}>
+                Gera planilha com todos os <strong style={{color:t.azulLt}}>documentos DCC (D01-MAT / D05-MAR)</strong> no período selecionado, incluindo CTE, MDF, valores e apontamentos vinculados. Ideal para conferência com a Suzano e geração de NFSE.
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+                <div>
+                  <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>De (início)</label>
+                  <input type="date" value={relCtrlDccFrom} onChange={e=>setRelCtrlDccFrom(e.target.value)} style={{width:"100%",background:t.bg,border:`1.5px solid ${t.borda2}`,borderRadius:8,padding:"9px 10px",color:t.txt,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}} />
+                </div>
+                <div>
+                  <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Até (fim)</label>
+                  <input type="date" value={relCtrlDccTo} onChange={e=>setRelCtrlDccTo(e.target.value)} style={{width:"100%",background:t.bg,border:`1.5px solid ${t.borda2}`,borderRadius:8,padding:"9px 10px",color:t.txt,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}} />
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setRelCtrlDccOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 16px",color:t.txt2,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+                <button onClick={gerarCtrlDcc} style={{flex:1,background:`linear-gradient(135deg,rgba(22,119,255,.2),rgba(22,119,255,.1))`,border:`1.5px solid rgba(22,119,255,.5)`,borderRadius:9,padding:"10px",color:t.azulLt,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>📥 Gerar Planilha .XLS</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ MINI-MODAL OCORRÊNCIAS (Busca / Planilha) ═══ */}
       {ocorrModalDT && (()=>{
