@@ -2732,11 +2732,18 @@ export default function App() {
         {/* ═══ BUSCA ═══ */}
         {activeTab === "busca" && (
           <div>
-            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,marginBottom:8,fontWeight:600}}>🔍 Buscar Registro</div>
+            <div style={{...css.secTitle,marginBottom:12}}>
+              {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13,2)} Buscar Registro
+              <span style={{flex:1,height:1,background:t.borda,marginLeft:4}}/>
+            </div>
             <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
-              {[{k:"dt",ico:"🔢",l:"DT"},{k:"cpf",ico:"🪪",l:"CPF"},{k:"placa",ico:"🚛",l:"PLACA"}].map(b => (
-                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");setBuscaResult(null);setBuscaError(null)}} style={{padding:"10px 22px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:8,cursor:"pointer",background:buscaTipo===b.k?`rgba(240,185,11,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
-                  <span style={{fontSize:16}}>{b.ico}</span> {b.l}
+              {[
+                {k:"dt",    ico:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>,    l:"DT"},
+                {k:"cpf",   ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,                  l:"CPF"},
+                {k:"placa", ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>, l:"PLACA"},
+              ].map(b => (
+                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");setBuscaResult(null);setBuscaError(null)}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:24,cursor:"pointer",background:buscaTipo===b.k?`rgba(240,185,11,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
+                  {hIco(b.ico,buscaTipo===b.k?t.ouro:t.txt2,15,2)} {b.l}
                 </button>
               ))}
             </div>
@@ -2754,45 +2761,58 @@ export default function App() {
             {/* Result card */}
             {buscaResult && (
               <div className="co-card" style={{...css.card,animation:"slideUp .3s ease"}}>
-                <div style={{background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,padding:"14px 16px",display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:44,height:44,background:"rgba(0,0,0,.2)",borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🚛</div>
-                  <div>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:1.5,color:"#000",lineHeight:1.1}}>{buscaResult.nome||"—"}</div>
-                    <div style={{fontSize:9,color:"rgba(0,0,0,.55)",fontWeight:600,letterSpacing:1,textTransform:"uppercase"}}>DT {buscaResult.dt}</div>
+                <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,background:t.headerBg}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 4px 14px rgba(240,185,11,.3)`}}>
+                    {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,18,2)}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{buscaResult.nome||"—"}</div>
+                    <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,marginTop:2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>DT {buscaResult.dt}</span>
+                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:4,padding:"1px 6px",color:t.verde,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{buscaResult.placa}</span>}
+                      {buscaResult.data_desc?<span style={{...css.badge(t.verde,`rgba(2,192,118,.1)`,`rgba(2,192,118,.3)`)}}> DESCARREGADO</span>:buscaResult.data_agenda?<span style={{...css.badge(t.ouro,`rgba(240,185,11,.08)`,`rgba(240,185,11,.3)`)}}>AGUARDANDO</span>:<span style={{...css.badge(t.danger,`rgba(246,70,93,.08)`,`rgba(246,70,93,.3)`)}}>SEM AGENDA</span>}
+                    </div>
                   </div>
                 </div>
                 <div style={{padding:14,display:"grid",gap:8}}>
                   {[
-                    {ico:"🪪",lbl:"CPF",val:buscaResult.cpf},
-                    {ico:"🚛",lbl:"Placa",val:buscaResult.placa,highlight:true},
-                    {ico:"📍",lbl:"Rota",val:`${buscaResult.origem||"—"} → ${buscaResult.destino||"—"}`},
-                    {ico:"📋",lbl:"Status",val:buscaResult.status},
-                  ].map((item,i) => (
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:10,background:t.bg,borderRadius:9,border:`1px solid ${t.borda}`}}>
-                      <span style={{fontSize:16,width:28,textAlign:"center"}}>{item.ico}</span>
-                      <div>
-                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:2}}>{item.lbl}</div>
-                        <div style={{fontWeight:600,color:item.highlight?t.verde:t.txt,fontFamily:item.highlight?"'Bebas Neue',sans-serif":"inherit",letterSpacing:item.highlight?3:0,fontSize:item.highlight?17:13}}>{item.val||"—"}</div>
+                    {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"CPF",val:buscaResult.cpf},
+                    {ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,lbl:"Placa",val:buscaResult.placa,highlight:true,cor:t.verde},
+                    {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Rota",val:`${buscaResult.origem||"—"} → ${buscaResult.destino||"—"}`},
+                    {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:buscaResult.status},
+                  ].map((item,i)=>(
+                    <div key={i} style={{...css.card,padding:"9px 11px",display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{flexShrink:0}}>{hIco(item.ico,item.cor||t.txt2,16,1.8)}</div>
+                      <div style={{minWidth:0}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:2}}>{item.lbl}</div>
+                        <div style={{fontWeight:600,color:item.cor||t.txt,fontFamily:item.highlight?"'Bebas Neue',sans-serif":"inherit",letterSpacing:item.highlight?3:0,fontSize:item.highlight?17:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.val||"—"}</div>
                       </div>
                     </div>
                   ))}
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                    <div style={{background:t.bg,borderRadius:9,padding:12,border:`1px solid ${t.borda}`,textAlign:"center",borderTop:`3px solid ${t.ouro}`}}>
-                      <span style={{fontSize:13}}>📦</span>
-                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,margin:"4px 0"}}>Carregamento</div>
-                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.ouro}}>{buscaResult.data_carr||"—"}</div>
+                    <div style={{...css.kpi(t.ouro),padding:"12px 10px"}}>
+                      {hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.ouro,14,2)}
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.ouro,marginTop:4}}>{buscaResult.data_carr||"—"}</div>
+                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamento</div>
                     </div>
-                    <div style={{background:t.bg,borderRadius:9,padding:12,border:`1px solid ${t.borda}`,textAlign:"center",borderTop:`3px solid ${t.verde}`}}>
-                      <span style={{fontSize:13}}>🏁</span>
-                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,margin:"4px 0"}}>Agenda Desc.</div>
-                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.verde}}>{buscaResult.data_agenda||"—"}</div>
+                    <div style={{...css.kpi(t.verde),padding:"12px 10px"}}>
+                      {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,14,2)}
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.verde,marginTop:4}}>{buscaResult.data_agenda||"—"}</div>
+                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Agenda Desc.</div>
                     </div>
                   </div>
                   {canFin && (
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,padding:10,background:t.bg,borderRadius:9,border:`1px solid ${t.borda}`}}>
-                      <div style={{textAlign:"center"}}><div style={{fontSize:8,textTransform:"uppercase",color:t.txt2,fontWeight:600,marginBottom:2}}>Empresa</div><div style={{fontSize:11,fontWeight:700,color:t.verde}}>{fmtMoeda(buscaResult.vl_cte)}</div></div>
-                      <div style={{textAlign:"center"}}><div style={{fontSize:8,textTransform:"uppercase",color:t.txt2,fontWeight:600,marginBottom:2}}>Motorista</div><div style={{fontSize:11,fontWeight:700,color:t.azulLt}}>{fmtMoeda(buscaResult.vl_contrato)}</div></div>
-                      <div style={{textAlign:"center"}}><div style={{fontSize:8,textTransform:"uppercase",color:t.txt2,fontWeight:600,marginBottom:2}}>Adiant.</div><div style={{fontSize:11,fontWeight:700,color:t.ouro}}>{fmtMoeda(buscaResult.adiant)}</div></div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                      {[
+                        {lbl:"Empresa",val:fmtMoeda(buscaResult.vl_cte),cor:t.verde},
+                        {lbl:"Motorista",val:fmtMoeda(buscaResult.vl_contrato),cor:t.azulLt},
+                        {lbl:"Adiantam.",val:fmtMoeda(buscaResult.adiant),cor:t.ouro},
+                      ].map((f,i)=>(
+                        <div key={i} style={{...css.kpi(f.cor),padding:"10px 8px"}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
+                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
+                        </div>
+                      ))}
                     </div>
                   )}
                   {/* ── Banner: Motorista não cadastrado ── */}
@@ -2806,7 +2826,7 @@ export default function App() {
                     if (motCadastrado) return null;
                     return (
                       <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:18,flexShrink:0}}>⚠️</span>
+                        <div style={{flexShrink:0}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,18,2)}</div>
                         <div style={{flex:1}}>
                           <div style={{fontSize:12,fontWeight:700,color:t.ouro}}>Motorista não cadastrado</div>
                           <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Este motorista não está no cadastro. Deseja cadastrar?</div>
@@ -2834,12 +2854,14 @@ export default function App() {
                       <button onClick={()=>{
                         const idx = DADOS.findIndex(r=>r.dt===buscaResult.dt);
                         setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
-                      }} style={{...css.btnGold,justifyContent:"center",padding:11}}>✏️ EDITAR</button>
+                      }} style={{...css.btnGold,justifyContent:"center",padding:11,width:"100%"}}>
+                        {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)} EDITAR
+                      </button>
 
                       {/* WhatsApp - 4 modelos */}
                       <div style={{background:t.card2,borderRadius:12,padding:12,border:`1px solid rgba(37,211,102,.25)`}}>
                         <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#25D366",fontWeight:700,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{fontSize:14}}>📲</span> WHATSAPP · Escolha o modelo
+                          {hIco(<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l1.05-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,`#25D366`,14,2)} WHATSAPP · Escolha o modelo
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                           {/* Faturamento */}
@@ -2908,7 +2930,7 @@ export default function App() {
                     onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(232,130,12,.3)";}}
                     onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
                     style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"#E8820C",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
-                    <span style={{fontSize:16}}>📌</span> Ocorrências
+                    {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`#E8820C`,16,2)} Ocorrências
                   </button>
                 </div>
               </div>
@@ -2918,13 +2940,13 @@ export default function App() {
             {buscaResult && buscaRelacionados.length > 0 && (
               <div style={{marginTop:12,animation:"slideUp .3s"}}>
                 <div style={{...css.secTitle,marginBottom:8}}>
-                  {buscaTipo==="cpf"?"🪪 Outros DTs com este CPF":buscaTipo==="placa"?"🚛 Outros DTs com esta Placa":"📋 Outros registros (mesmo CPF / Placa)"}
+                  {buscaTipo==="cpf"?<>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.ouro,11,2)}&nbsp;Outros DTs com este CPF</>:buscaTipo==="placa"?<>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,11,2)}&nbsp;Outros DTs com esta Placa</>:<>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,11,2)}&nbsp;Outros registros (mesmo CPF / Placa)</>}
                   <span style={{flex:1,height:1,background:t.borda}} />
                   <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{buscaRelacionados.length} registro{buscaRelacionados.length>1?"s":""}</span>
                 </div>
                 {buscaRelacionados.slice(0,10).map((r,i) => {
                   const statusC = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.txt2;
-                  const statusL = r.data_desc ? "✅ Descarregado" : r.data_agenda ? "⏳ Aguardando" : "—";
+                  const statusL = r.data_desc ? "Descarregado" : r.data_agenda ? "Aguardando" : "—";
                   return (
                     <div key={i} onClick={()=>{
                       setBuscaInput(r.dt);
@@ -2948,9 +2970,9 @@ export default function App() {
                           <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
                           <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde}}>{r.placa||""}</span>
                         </div>
-                        <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap"}}>
-                          <span>📦 {r.data_carr||"—"}</span>
-                          <span>📅 {r.data_agenda||"—"}</span>
+                        <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+                          <span style={{display:"flex",alignItems:"center",gap:3}}>{hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.txt2,10,2)} {r.data_carr||"—"}</span>
+                          <span style={{display:"flex",alignItems:"center",gap:3}}>{hIco(<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,t.txt2,10,2)} {r.data_agenda||"—"}</span>
                           <span style={{color:statusC,fontWeight:600}}>{statusL}</span>
                         </div>
                       </div>
@@ -2967,7 +2989,7 @@ export default function App() {
             {/* Error */}
             {buscaError && !buscaError.startsWith("__cpf_sem_dt__") && (
               <div style={{...css.card,padding:"24px 16px",textAlign:"center",borderTop:`3px solid ${t.danger}`,animation:"slideUp .3s"}}>
-                <div style={{fontSize:30,marginBottom:10}}>❌</div>
+                <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}>{hIco(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,t.danger,32,2)}</div>
                 <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.danger,marginBottom:5}}>NÃO ENCONTRADO</h3>
                 <p style={{color:t.txt2,fontSize:11,marginBottom:4}}>Nenhum registro encontrado para <strong style={{color:t.txt}}>"{buscaError}"</strong></p>
                 <p style={{color:t.txt2,fontSize:10,marginBottom:14}}>
@@ -6238,144 +6260,139 @@ function mapearColuna(n){
           (cpfN && m.cpf?.replace(/\D/g,"")===cpfN) ||
           [m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p.toUpperCase().replace(/\W/g,"")===placaN)
         );
-        const statusDesc = r.data_desc ? {cor:t.verde,ico:"✅",txt:"Descarregado"} :
-                           r.data_agenda ? {cor:t.ouro,ico:"⏳",txt:"Aguardando Descarga"} :
-                           {cor:t.danger,ico:"🚨",txt:"Sem Agenda"};
-        // Breakpoints responsivos
+        const statusCor = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.danger;
+        const statusTxt = r.data_desc ? "DESCARREGADO" : r.data_agenda ? "AGUARDANDO DESCARGA" : "SEM AGENDA";
+        const statusIco = r.data_desc ? <><polyline points="20 6 9 17 4 12"/></> : r.data_agenda ? <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></> : <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>;
+        // Grid responsivo: desktop 3 colunas, resto 2
         const vw = window.innerWidth;
-        const isTablet = vw >= 600 && vw < 960;
-        const isDesktop = vw >= 960;
-        // Largura do modal: celular=100%-32px | tablet=560px | desktop=640px
-        const modalW = isDesktop ? 640 : isTablet ? 560 : "100%";
-        // Colunas do grid de info: desktop=3 | tablet/celular=2
-        const gridCols = isDesktop ? "1fr 1fr 1fr" : "1fr 1fr";
-        // Colunas do financeiro: sempre 3, mas tamanhos de fonte maiores no desktop
-        const finFontVal  = isDesktop ? 14 : 12;
-        const finFontLbl  = isDesktop ? 8  : 7;
+        const isDesk = vw >= 900;
+        const gridCols = isDesk ? "1fr 1fr 1fr" : "1fr 1fr";
+
+        // Seção divisória — mesmo padrão que css.secTitle
+        const Secao = ({ico, label}) => (
+          <div style={{...css.secTitle, margin:"4px 0 6px"}}>
+            {hIco(ico, t.ouro, 11)} {label}
+            <span style={{flex:1, height:1, background:t.borda, marginLeft:4}} />
+          </div>
+        );
 
         return (
-          <div
-            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.80)",zIndex:9999,
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    padding:isMobile ? "12px" : "24px",
-                    overflowY:"auto",
-            }}
-            onClick={()=>setPlanilhaDetalheReg(null)}
-          >
-            <div
-              style={{
-                background:t.headerBg,
-                borderRadius:16,
-                width:modalW,
-                maxWidth: isDesktop ? 640 : 560,
-                border:`1px solid ${t.borda}`,
-                boxShadow:`0 8px 48px rgba(0,0,0,.6)`,
-                maxHeight:"calc(100vh - 48px)",
-                overflowY:"auto",
-                display:"flex",
-                flexDirection:"column",
-                animation:"fadeIn .18s ease",
-                flexShrink:0,
-              }}
-              onClick={e=>e.stopPropagation()}
-            >
+          <div style={{...css.overlay, alignItems:"center", backdropFilter:"blur(12px)", padding: isDesk?"24px":"12px"}}
+               onClick={()=>setPlanilhaDetalheReg(null)}>
+            <div style={{...css.modal, borderRadius:20, maxWidth: isDesk?620:520, maxHeight:"calc(100vh - 48px)", animation:"fadeIn .2s ease"}}
+                 onClick={e=>e.stopPropagation()}>
 
-              {/* ── Header ── */}
-              <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px 12px",borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-                <div style={{width:46,height:46,borderRadius:12,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 0 18px rgba(240,185,11,.3)`}}>
-                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,22,2)}
+              {/* ══ CABEÇALHO — padrão do Edit Modal ══ */}
+              <div style={{padding:"14px 16px 10px", display:"flex", alignItems:"center", gap:10, borderBottom:`1px solid ${t.borda}`, flexShrink:0}}>
+                <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 4px 14px rgba(240,185,11,.3)`}}>
+                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,18,2)}
                 </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isDesktop?24:20,letterSpacing:2,color:t.ouro,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                  <div style={{fontSize:isDesktop?10:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,textTransform:"uppercase",marginTop:3}}>
-                    DT <span style={{color:t.txt}}>{r.dt}</span>
-                    {" · "}
-                    <span style={{color:t.verde,fontFamily:"'Bebas Neue',sans-serif",fontSize:isDesktop?13:11,letterSpacing:2}}>{r.placa||"—"}</span>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:t.txt, lineHeight:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
+                  <div style={{fontSize:9, color:t.txt2, fontWeight:600, letterSpacing:1.5, marginTop:2, display:"flex", alignItems:"center", gap:6}}>
+                    <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>DT {r.dt}</span>
+                    <span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:4,padding:"1px 6px",color:t.verde,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{r.placa||"—"}</span>
+                    <span style={{...css.badge(statusCor,`rgba(0,0,0,0)`,`${statusCor}44`)}}>{statusTxt}</span>
                   </div>
                 </div>
-                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda}`,borderRadius:9,width:34,height:34,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
               </div>
 
-              {/* ── Status banner ── */}
-              <div style={{margin:"12px 16px 0",padding:"10px 14px",borderRadius:10,background:`rgba(${statusDesc.cor===t.verde?"2,192,118":statusDesc.cor===t.ouro?"240,185,11":"246,70,93"},.08)`,border:`1px solid ${statusDesc.cor}33`,display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>{statusDesc.ico}</span>
-                <span style={{fontSize:isDesktop?13:12,fontWeight:700,color:statusDesc.cor}}>{statusDesc.txt}</span>
-                {r.data_desc && <span style={{marginLeft:"auto",fontFamily:"'Bebas Neue',sans-serif",fontSize:isDesktop?15:13,letterSpacing:1.5,color:statusDesc.cor}}>{r.data_desc}</span>}
-              </div>
+              {/* ══ CONTEÚDO ══ */}
+              <div style={{flex:1, overflowY:"auto", padding:16, display:"flex", flexDirection:"column", gap:14}}>
 
-              {/* ── Grid de info ── */}
-              <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:gridCols,gap:8}}>
-                {[
-                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Origem",val:r.origem},
-                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Destino",val:r.destino},
-                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Carregamento",val:r.data_carr},
-                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Agenda Desc.",val:r.data_agenda},
-                  {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"Vínculo",val:r.vinculo},
-                  {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status},
-                ].map((it,i)=>(
-                  <div key={i} style={{background:t.card,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
-                    <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
-                      {hIco(it.ico,t.txt2,12,1.8)}
-                      <div style={{fontSize:isDesktop?9:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600}}>{it.lbl}</div>
-                    </div>
-                    <div style={{fontWeight:600,color:t.txt,fontSize:isDesktop?13:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={it.val||"—"}>{it.val||"—"}</div>
+                {/* Status bar */}
+                <div style={{...css.kpi(statusCor), padding:"10px 14px", display:"flex", alignItems:"center", gap:10, textAlign:"left"}}>
+                  {hIco(statusIco, statusCor, 18, 2)}
+                  <div>
+                    <div style={{fontSize:10, textTransform:"uppercase", letterSpacing:2, color:statusCor, fontWeight:700}}>{statusTxt}</div>
+                    {r.data_desc && <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:statusCor, marginTop:1}}>{r.data_desc}</div>}
                   </div>
-                ))}
-              </div>
-
-              {/* ── Financeiro (se permissão) ── */}
-              {canFin && (
-                <div style={{margin:"0 16px 4px",padding:"12px 14px",background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isDesktop?12:8}}>
-                  {[
-                    {lbl:"CTE empresa",val:fmtMoeda(r.vl_cte),cor:t.verde},
-                    {lbl:"Contrato mot.",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
-                    {lbl:"Adiantamento",val:fmtMoeda(r.adiant),cor:t.ouro},
-                    {lbl:"Diária Devida",val:fmtMoeda(r.diaria_prev),cor:t.danger},
-                    {lbl:"Diária Paga",val:fmtMoeda(r.diaria_pg),cor:t.verde},
-                    {lbl:"Saldo",val:fmtMoeda(r.saldo),cor:t.txt},
-                  ].map((f,i)=>(
-                    <div key={i} style={{textAlign:"center",padding:"4px 0"}}>
-                      <div style={{fontSize:finFontLbl,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:4}}>{f.lbl}</div>
-                      <div style={{fontSize:finFontVal,fontWeight:700,color:f.cor}}>{f.val}</div>
-                    </div>
-                  ))}
                 </div>
-              )}
 
-              {/* ── Botões de ação ── */}
-              <div style={{padding:"12px 16px 18px",display:"flex",flexDirection:"column",gap:8}}>
-                {canEdit && (
-                  <button onClick={()=>{
-                    const idx=DADOS.findIndex(x=>x.dt===r.dt);
-                    setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
-                    setPlanilhaDetalheReg(null);
-                  }} style={{...css.btnGold,justifyContent:"center",padding:isDesktop?14:12,fontSize:isDesktop?14:13}}>
-                    {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)}
-                    ✏️ EDITAR REGISTRO
-                  </button>
+                {/* Rota e Agenda */}
+                <div>
+                  <Secao ico={<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>} label="Rota e Agenda" />
+                  <div style={{display:"grid", gridTemplateColumns:gridCols, gap:8}}>
+                    {[
+                      {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Origem",val:r.origem},
+                      {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Destino",val:r.destino},
+                      {ico:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Carregamento",val:r.data_carr},
+                      {ico:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Agenda Descarga",val:r.data_agenda},
+                      {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"Vínculo",val:r.vinculo},
+                      {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status},
+                    ].map((it,i)=>(
+                      <div key={i} style={{...css.card, padding:"9px 11px"}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.8,color:t.txt2,fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:4}}>
+                          {hIco(it.ico,t.txt2,10,1.8)} {it.lbl}
+                        </div>
+                        <div style={{fontWeight:600,color:t.txt,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={it.val||"—"}>{it.val||"—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Financeiro */}
+                {canFin && (
+                  <div>
+                    <Secao ico={<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>} label="Financeiro" />
+                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8}}>
+                      {[
+                        {lbl:"CTE Empresa",val:fmtMoeda(r.vl_cte),cor:t.verde},
+                        {lbl:"Contrato Mot.",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
+                        {lbl:"Adiantamento",val:fmtMoeda(r.adiant),cor:t.ouro},
+                        {lbl:"Diária Devida",val:fmtMoeda(r.diaria_prev),cor:t.danger},
+                        {lbl:"Diária Paga",val:fmtMoeda(r.diaria_pg),cor:t.verde},
+                        {lbl:"Saldo",val:fmtMoeda(r.saldo),cor:t.txt2},
+                      ].map((f,i)=>(
+                        <div key={i} style={{...css.kpi(f.cor), padding:"10px 8px"}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
+                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  <button onClick={()=>{
-                    setPlanilhaDetalheReg(null);
-                    const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
-                    setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
-                    const c=dt.replace(/\D/g,"");
-                    const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
-                    if(found){setBuscaResult(found);const cpfN2=found.cpf?.replace(/\D/g,""),placaN2=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN2&&x.cpf?.replace(/\D/g,"")===cpfN2)||(placaN2&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN2))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}
-                  }} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:10,padding:isDesktop?"13px 8px":"11px 8px",cursor:"pointer",color:t.azulLt,fontWeight:700,fontSize:isDesktop?12:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                    {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,16,2)} VER COMPLETO
-                  </button>
-                  <button onClick={()=>{abrirOcorrModal(r);setPlanilhaDetalheReg(null);}} style={{background:`rgba(232,130,12,.08)`,border:`1px solid rgba(232,130,12,.3)`,borderRadius:10,padding:isDesktop?"13px 8px":"11px 8px",cursor:"pointer",color:"#E8820C",fontWeight:700,fontSize:isDesktop?12:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                    📌 OCORRÊNCIAS
-                  </button>
-                </div>
+
+                {/* Aviso motorista não cadastrado */}
                 {!motCad && canEdit && (
-                  <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.22)`,borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
-                    <div style={{flex:1,fontSize:isDesktop?11:10,color:t.txt2}}>Motorista <strong style={{color:t.ouro}}>não cadastrado</strong></div>
-                    <button onClick={()=>{setFormData({nome:r.nome||"",cpf:r.cpf||"",placa1:r.placa||"",vinculo:r.vinculo||""});setEditIdx(-1);setModalOpen("motorista");setPlanilhaDetalheReg(null);}} style={{background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"6px 10px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>＋ Cadastrar</button>
+                  <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:12,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
+                    {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,16,2)}
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:11,fontWeight:700,color:t.ouro}}>Motorista não cadastrado</div>
+                      <div style={{fontSize:10,color:t.txt2,marginTop:1}}>Deseja cadastrar no sistema?</div>
+                    </div>
+                    <button onClick={()=>{setFormData({nome:r.nome||"",cpf:r.cpf||"",placa1:r.placa||"",vinculo:r.vinculo||""});setEditIdx(-1);setModalOpen("motorista");setPlanilhaDetalheReg(null);}} style={{...css.btnOutline,padding:"7px 12px",fontSize:11,minHeight:36}}>＋ Cadastrar</button>
                   </div>
                 )}
+
+                {/* Ações */}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {canEdit && (
+                    <button onClick={()=>{const idx=DADOS.findIndex(x=>x.dt===r.dt);setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");setPlanilhaDetalheReg(null);}}
+                      style={{...css.btnGold,justifyContent:"center",width:"100%",padding:13,fontSize:14}}>
+                      {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)}
+                      EDITAR REGISTRO
+                    </button>
+                  )}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <button onClick={()=>{
+                      setPlanilhaDetalheReg(null);
+                      const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
+                      setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
+                      const c=dt.replace(/\D/g,"");
+                      const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
+                      if(found){setBuscaResult(found);const cpfN2=found.cpf?.replace(/\D/g,""),placaN2=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN2&&x.cpf?.replace(/\D/g,"")===cpfN2)||(placaN2&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN2))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}
+                    }} style={{...css.btnOutline,justifyContent:"center",padding:12,fontSize:12}}>
+                      {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,16,2)} VER COMPLETO
+                    </button>
+                    <button onClick={()=>{abrirOcorrModal(r);setPlanilhaDetalheReg(null);}}
+                      style={{...css.btnDanger,justifyContent:"center",padding:12,fontSize:12}}>
+                      {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,t.danger,16,2)} OCORRÊNCIAS
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
