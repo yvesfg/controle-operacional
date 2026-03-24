@@ -51,10 +51,48 @@ const PERMS_LISTA = [
   {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
 ];
 
+// ════════════════════════════════════════════════════════════
+//  DESIGN SYSTEM — TOKEN CENTRAL
+//  ► Altere aqui → propaga em TODO o código que usa css.*
+//  ► Para detectar estilos fora do padrão:
+//      Painel Admin > aba Desenvolvimento > Auditar Design
+//      (ou via console do navegador: auditarDesign())
+// ════════════════════════════════════════════════════════════
+const DESIGN = {
+  // Raios de borda — btn=pílula, card=painel, tile=grade, inp=campo
+  r:   { btn:24, card:14, modal:20, tile:12, badge:20, inp:10, tag:4, ico:10, logo:11, sm:8 },
+  // Tamanhos de ícone SVG (px)
+  ico: { xs:10, sm:13, md:16, lg:20, xl:24 },
+  // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
+  sw:  { thin:1.5, md:2, thick:2.5 },
+  // Famílias tipográficas
+  fnt: { h:"'Bebas Neue',sans-serif", b:"'Barlow','Segoe UI',system-ui,sans-serif" },
+  // Letter-spacing
+  ls:  { label:2.5, badge:1.5, mono:3, btn:.5 },
+};
+// Utilitário: converte cor hex + alpha em rgba (use com cores do tema t.*)
+const hexRgb = (hex, a) => {
+  const h = (hex||"#000000").replace("#","");
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+};
+
 // ══════════════════════════════════════════════
 //  DEV CHANGELOG (histórico de sessões de desenvolvimento)
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
+  {
+    data: "2026-03-24", sessao: "Sessão 14",
+    itens: [
+      "FEAT · DESIGN tokens centralizados: objeto DESIGN no topo do arquivo — DESIGN.r (borderRadius), DESIGN.ico (tamanhos ícone), DESIGN.sw (stroke SVG), DESIGN.fnt (famílias), DESIGN.ls (letter-spacing)",
+      "FEAT · css.* atualizado para derivar de DESIGN.*: qualquer mudança em DESIGN propaga automaticamente para todos os elementos que usam css.btnGold, css.btnCard, css.kpi, css.card, css.inp, css.badge etc.",
+      "FEAT · hexRgb(hex, a) utilitário: converte cor hex do tema + alpha → rgba, elimina rgba hardcoded no css.*",
+      "FEAT · css.btnCard(c) novo helper: tile colorido com acento superior para grades de botões (WPP, ações secundárias)",
+      "FEAT · Auditoria de Design: Admin > Desenvolvimento > Auditar Design — detecta borderRadius e fontFamily fora dos tokens DESIGN.*; também acessível via console: auditarDesign()",
+      "FEAT · Busca > WPP: botões de modelo convertidos para css.btnCard + ícones SVG (sem emojis)",
+      "FIX · Busca: cabeçalho resultado usa padrão dark/gold (era gradiente verde); info rows usam css.card + hIco; KPIs de data usam css.kpi; financeiro usa css.kpi",
+    ],
+  },
   {
     data: "2026-03-24", sessao: "Sessão 13",
     itens: [
@@ -639,6 +677,7 @@ export default function App() {
   const [relCtrlDccOpen, setRelCtrlDccOpen] = useState(false);
   const [relCtrlDccFrom, setRelCtrlDccFrom] = useState("");
   const [relCtrlDccTo, setRelCtrlDccTo] = useState("");
+  const [auditReport, setAuditReport] = useState(null); // resultado da auditoria de design
   const [relDescargaFrom, setRelDescargaFrom] = useState("");
   const [relDescargaTo, setRelDescargaTo] = useState("");
   const [relDescargaMotorista, setRelDescargaMotorista] = useState("");
@@ -1501,40 +1540,93 @@ export default function App() {
     return t.borda;
   };
 
+  // ── css: todos os valores de design derivam de DESIGN.* e t.*
+  // ── Para alterar globalmente: edite DESIGN no topo do arquivo
   const css = {
-    app: { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:"'Barlow','Segoe UI',system-ui,sans-serif", transition:"background .3s, color .3s" },
-    // Header — mais alto, mais refinado
-    header: { background:t.headerBg, padding:"10px 16px", borderBottom:`2px solid ${t.ouro}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:8, boxShadow:`0 4px 20px ${t.shadow}`, transition:"background .3s" },
-    logo: { width:40, height:40, background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:`0 4px 14px rgba(240,185,11,.38)` },
-    hBtn: { background:"rgba(128,128,128,.08)", border:`1.5px solid ${t.borda}`, borderRadius:9, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:600, transition:"all .2s" },
-    // Tabs — underline style, mais altas
-    tabBar: { display:"flex", background:t.headerBg, borderBottom:`2px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .3s", justifyContent:"space-between" },
-    tab: (a) => ({ flex:"0 0 auto", padding:"14px 18px", fontSize:11, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .2s", borderBottom:a?`3px solid ${t.ouro}`:"3px solid transparent", marginBottom:"-2px", display:"flex", alignItems:"center", gap:5 }),
-    // Cards base
-    card: { background:t.card, borderRadius:14, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .3s, border-color .3s" },
-    // Card com borda lateral de status (Kanban style)
-    cardKanban: (statusColor) => ({ background:t.card, borderRadius:14, border:`1px solid ${t.borda}`, borderLeft:`4px solid ${statusColor}`, overflow:"visible", transition:"all .2s, background .3s" }),
-    kpi: (color) => ({ background:t.card, borderRadius:14, padding:"18px 16px", border:`1px solid ${t.borda}`, textAlign:"center", borderTop:`3px solid ${color}`, cursor:"default", transition:"all .2s, background .3s" }),
-    // ── btnCard: botão tile com acento superior colorido (grade WPP, ações secundárias)
-    // Para mudar o visual de TODOS os tiles de uma vez, edite apenas esta linha ──
-    btnCard: (c) => ({ background:t.card, borderRadius:12, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`2.5px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:"inherit", cursor:"pointer", transition:"all .18s", lineHeight:1.3 }),
-    // Inputs
-    inp: { background:t.inputBg, border:`1.5px solid ${t.borda2}`, borderRadius:10, padding:"11px 14px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:"inherit", transition:"border-color .2s, background .3s" },
-    // Buttons — pill-shaped 44px+, bold
-    btnGold: { border:"none", borderRadius:24, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:.5, cursor:"pointer", background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 16px rgba(240,185,11,.3)`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    btnGreen: { border:"none", borderRadius:24, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:.5, cursor:"pointer", background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 14px rgba(2,192,118,.2)`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    btnOutline: { borderRadius:24, padding:"11px 20px", color:t.ouro, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid rgba(240,185,11,.4)`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    btnDanger: { borderRadius:24, padding:"11px 20px", color:t.danger, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid rgba(246,70,93,.35)`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    // Section title — mais elegante
-    secTitle: { fontSize:10, textTransform:"uppercase", letterSpacing:2.5, color:t.ouro, marginBottom:14, fontWeight:700, display:"flex", alignItems:"center", gap:10 },
-    // Badge — pill rounded
-    badge: (c,bg,bc) => ({ padding:"3px 10px", borderRadius:20, fontSize:9, fontWeight:700, letterSpacing:.8, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
-    // Empty state
-    empty: { textAlign:"center", padding:"48px 20px", color:t.txt2 },
-    // Modal overlay
-    overlay: { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.88)", backdropFilter:"blur(10px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
-    modal: { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"22px 22px 0 0", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .32s cubic-bezier(.34,1.3,.64,1)", transition:"background .3s" },
+    app:       { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:DESIGN.fnt.b, transition:"background .3s, color .3s" },
+    header:    { background:t.headerBg, padding:"10px 16px", borderBottom:`2px solid ${t.ouro}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:8, boxShadow:`0 4px 20px ${t.shadow}`, transition:"background .3s" },
+    logo:      { width:40, height:40, background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, borderRadius:DESIGN.r.logo, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:`0 4px 14px ${hexRgb(t.ouro,.38)}` },
+    hBtn:      { background:"rgba(128,128,128,.08)", border:`1.5px solid ${t.borda}`, borderRadius:DESIGN.r.sm, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:600, transition:"all .2s" },
+    tabBar:    { display:"flex", background:t.headerBg, borderBottom:`2px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .3s", justifyContent:"space-between" },
+    tab:       (a) => ({ flex:"0 0 auto", padding:"14px 18px", fontSize:11, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .2s", borderBottom:a?`3px solid ${t.ouro}`:"3px solid transparent", marginBottom:"-2px", display:"flex", alignItems:"center", gap:5 }),
+    card:      { background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .3s, border-color .3s" },
+    cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderLeft:`4px solid ${c}`, overflow:"visible", transition:"all .2s, background .3s" }),
+    kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"18px 16px", border:`1px solid ${t.borda}`, textAlign:"center", borderTop:`3px solid ${c}`, cursor:"default", transition:"all .2s, background .3s" }),
+    // tile-card colorido — grade WPP, ações em grade
+    btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`${DESIGN.sw.thick}px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:"inherit", cursor:"pointer", transition:"all .18s", lineHeight:1.3 }),
+    inp:       { background:t.inputBg, border:`1.5px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 14px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:"inherit", transition:"border-color .2s, background .3s" },
+    btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 16px ${hexRgb(t.ouro,.3)}`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
+    btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 14px ${hexRgb(t.verde,.2)}`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
+    btnOutline:{ borderRadius:DESIGN.r.btn, padding:"11px 20px", color:t.ouro, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
+    btnDanger: { borderRadius:DESIGN.r.btn, padding:"11px 20px", color:t.danger, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid ${hexRgb(t.danger,.35)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
+    secTitle:  { fontSize:10, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:14, fontWeight:700, display:"flex", alignItems:"center", gap:10 },
+    badge:     (c,bg,bc) => ({ padding:"3px 10px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
+    empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
+    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.88)", backdropFilter:"blur(10px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
+    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"22px 22px 0 0", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .32s cubic-bezier(.34,1.3,.64,1)", transition:"background .3s" },
   };
+
+  // ══════════════════════════════════════════════
+  //  AUDITORIA DE DESIGN
+  //  Detecta estilos fora do padrão DESIGN.*
+  //  Acessível via: Admin > Desenvolvimento > Auditar
+  //  Ou no console do navegador: auditarDesign()
+  // ══════════════════════════════════════════════
+  const auditarDesign = React.useCallback(() => {
+    const allowedRadii = new Set(Object.values(DESIGN.r));
+    const allowedFonts = new Set(Object.values(DESIGN.fnt));
+    const violations = [];
+
+    document.querySelectorAll('[style]').forEach(el => {
+      // ── Verificação 1: borderRadius fora de DESIGN.r ──
+      const br = el.style.borderRadius;
+      if (br && !/px\s+/.test(br)) { // ignora "X Y Z W" (canto individual)
+        const v = parseInt(br);
+        if (v && !allowedRadii.has(v)) {
+          const label = (el.textContent||"").trim().slice(0,28)||el.tagName.toLowerCase();
+          violations.push({ tipo:"borderRadius", valor:`${v}px`, sugestao:closest(allowedRadii,v), label });
+        }
+      }
+      // ── Verificação 2: fontFamily hardcoded fora de DESIGN.fnt ──
+      const ff = el.style.fontFamily;
+      if (ff && ff.trim()) {
+        const norm = ff.replace(/\s/g,"");
+        const inDesign = [...allowedFonts].some(f => norm.includes(f.replace(/\s/g,"").split(",")[0].replace(/'/g,"")));
+        if (!inDesign) {
+          violations.push({ tipo:"fontFamily", valor:ff.slice(0,40), sugestao:"DESIGN.fnt.h ou DESIGN.fnt.b", label:(el.textContent||"").trim().slice(0,28)||el.tagName.toLowerCase() });
+        }
+      }
+    });
+
+    // Auxiliar: raio mais próximo permitido
+    function closest(set, v) {
+      let best = null, diff = Infinity;
+      set.forEach(r => { if(Math.abs(r-v)<diff){diff=Math.abs(r-v);best=r;} });
+      const key = Object.entries(DESIGN.r).find(([,val])=>val===best)?.[0]||"?";
+      return `DESIGN.r.${key} (${best}px)`;
+    }
+
+    const tipos = {};
+    violations.forEach(v => { tipos[v.tipo] = (tipos[v.tipo]||0)+1; });
+    const report = {
+      timestamp: new Date().toLocaleString("pt-BR"),
+      total: violations.length,
+      tipos,
+      items: violations.slice(0, 30),
+    };
+    setAuditReport(report);
+    // Também acessível pelo console
+    if (typeof window !== "undefined") window.__auditReport = report;
+    return report;
+  }, []);
+
+  // Expor auditarDesign() no console do navegador (somente admin)
+  React.useEffect(() => {
+    if (perfil === "admin") {
+      window.auditarDesign = auditarDesign;
+      return () => { try { delete window.auditarDesign; } catch(_){} };
+    }
+  }, [perfil, auditarDesign]);
 
   // ══════════════════════════════════════════════
   //  AUTH SCREEN
@@ -4314,6 +4406,62 @@ function mapearColuna(n){
                 {/* ABA DESENVOLVIMENTO */}
                 {logsSubTab==="dev" && (
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
+
+                    {/* ── PAINEL AUDITORIA DE DESIGN ── */}
+                    <div style={{...css.card,borderLeft:`3px solid ${t.ouro}`,overflow:"visible"}}>
+                      <div style={{padding:"10px 14px 8px",borderBottom:`1px solid ${t.borda}`}}>
+                        <div style={{...css.secTitle,marginBottom:4}}>
+                          {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></>,t.ouro,13,2)}
+                          Auditoria de Design
+                          <span style={{flex:1,height:1,background:t.borda,marginLeft:4}}/>
+                        </div>
+                        <div style={{fontSize:10,color:t.txt2,lineHeight:1.6,marginBottom:8}}>
+                          Detecta elementos com estilos fora do padrão <strong style={{color:t.ouro}}>DESIGN.*</strong>.<br/>
+                          Para alterar qualquer elemento globalmente: edite <strong style={{color:t.ouro}}>DESIGN</strong> no topo do arquivo → propaga em todo o código que usa <strong style={{color:t.ouro}}>css.*</strong>.
+                        </div>
+                        <div style={{background:t.card2,borderRadius:DESIGN.r.sm,padding:"8px 10px",fontSize:9,color:t.txt2,fontFamily:"monospace",marginBottom:10,lineHeight:1.8}}>
+                          {Object.entries(DESIGN).filter(([k])=>k!=="c").map(([k,v])=>(
+                            <div key={k}><span style={{color:t.ouro}}>DESIGN.{k}</span> = {JSON.stringify(v)}</div>
+                          ))}
+                        </div>
+                        <button onClick={auditarDesign} style={{...css.btnOutline,fontSize:11,padding:"8px 16px",minHeight:36}}>
+                          {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,14,2)} Executar Auditoria
+                        </button>
+                      </div>
+                      {auditReport && (
+                        <div style={{padding:"10px 14px"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                            <span style={{...css.badge(auditReport.total===0?t.verde:t.danger, auditReport.total===0?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`, auditReport.total===0?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>
+                              {auditReport.total===0?"✓ TUDO OK":`${auditReport.total} VIOLAÇÕES`}
+                            </span>
+                            <span style={{fontSize:9,color:t.txt2}}>{auditReport.timestamp}</span>
+                          </div>
+                          {auditReport.total > 0 && (
+                            <>
+                              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+                                {Object.entries(auditReport.tipos).map(([tipo,count])=>(
+                                  <span key={tipo} style={{...css.badge(t.ouro,`rgba(240,185,11,.08)`,`rgba(240,185,11,.25)`)}}>{tipo}: {count}</span>
+                                ))}
+                              </div>
+                              <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>
+                                {auditReport.items.map((item,i)=>(
+                                  <div key={i} style={{background:t.card2,borderRadius:DESIGN.r.tag,padding:"5px 8px",fontSize:9,color:t.txt2,display:"flex",gap:8,alignItems:"flex-start"}}>
+                                    <span style={{color:t.danger,fontWeight:700,flexShrink:0}}>{item.tipo}</span>
+                                    <span style={{color:t.txt,fontWeight:600}}>{item.valor}</span>
+                                    <span style={{color:t.txt2,flex:1}}>→ {item.sugestao}</span>
+                                    <span style={{color:t.txt2,flexShrink:0,fontStyle:"italic"}}>{item.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              {auditReport.total > 30 && (
+                                <div style={{fontSize:9,color:t.txt2,marginTop:4,textAlign:"center"}}>… e mais {auditReport.total-30} (ver window.__auditReport no console)</div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {DEV_CHANGELOG.map((sessao,si)=>(
                       <div key={si} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.azulLt}`,overflow:"hidden"}}>
                         <div style={{padding:"8px 12px",background:t.card2,display:"flex",alignItems:"center",gap:8}}>
