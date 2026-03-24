@@ -1515,6 +1515,9 @@ export default function App() {
     // Card com borda lateral de status (Kanban style)
     cardKanban: (statusColor) => ({ background:t.card, borderRadius:14, border:`1px solid ${t.borda}`, borderLeft:`4px solid ${statusColor}`, overflow:"visible", transition:"all .2s, background .3s" }),
     kpi: (color) => ({ background:t.card, borderRadius:14, padding:"18px 16px", border:`1px solid ${t.borda}`, textAlign:"center", borderTop:`3px solid ${color}`, cursor:"default", transition:"all .2s, background .3s" }),
+    // ── btnCard: botão tile com acento superior colorido (grade WPP, ações secundárias)
+    // Para mudar o visual de TODOS os tiles de uma vez, edite apenas esta linha ──
+    btnCard: (c) => ({ background:t.card, borderRadius:12, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`2.5px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:"inherit", cursor:"pointer", transition:"all .18s", lineHeight:1.3 }),
     // Inputs
     inp: { background:t.inputBg, border:`1.5px solid ${t.borda2}`, borderRadius:10, padding:"11px 14px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:"inherit", transition:"border-color .2s, background .3s" },
     // Buttons — pill-shaped 44px+, bold
@@ -2858,68 +2861,44 @@ export default function App() {
                         {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)} EDITAR
                       </button>
 
-                      {/* WhatsApp - 4 modelos */}
+                      {/* WhatsApp - 4 modelos (css.btnCard — alteração aqui propaga para todos os tiles WPP) */}
                       <div style={{background:t.card2,borderRadius:12,padding:12,border:`1px solid rgba(37,211,102,.25)`}}>
-                        <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#25D366",fontWeight:700,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
-                          {hIco(<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l1.05-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,`#25D366`,14,2)} WHATSAPP · Escolha o modelo
+                        <div style={{...css.secTitle,color:"#25D366",marginBottom:10}}>
+                          {hIco(<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l1.05-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,`#25D366`,13,2)}
+                          WHATSAPP · Escolha o modelo
+                          <span style={{flex:1,height:1,background:"rgba(37,211,102,.2)",marginLeft:4}}/>
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                          {/* Faturamento */}
-                          <button onClick={()=>{
-                            const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            setWppFatModal({reg:buscaResult,mot:mot||null});
-                          }}
-                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(37,211,102,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(37,211,102,.25)";}}
-                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(37,211,102,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
-                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.3)",color:"#25D366",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .15s",lineHeight:1.3}}>
-                            <span style={{fontSize:22,lineHeight:1}}>🧾</span>
-                            Faturamento
-                          </button>
-                          {/* Contratação (modal original) */}
-                          <button onClick={()=>{
-                            const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            setWppModal({reg:buscaResult,mot:mot||null});
-                            setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");
-                          }}
-                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(37,211,102,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(37,211,102,.25)";}}
-                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(37,211,102,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
-                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.3)",color:"#25D366",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .15s",lineHeight:1.3}}>
-                            <span style={{fontSize:22,lineHeight:1}}>📝</span>
-                            Contratação
-                          </button>
-                          {/* Descarga/Stretch */}
-                          <button onClick={()=>{
-                            const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            abrirWppPagModal(buscaResult,mot,"descarga");
-                          }}
-                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(22,119,255,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(22,119,255,.25)";}}
-                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(22,119,255,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
-                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(22,119,255,.08)",border:"1px solid rgba(22,119,255,.3)",color:t.azulLt,fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .15s",lineHeight:1.3}}>
-                            <span style={{fontSize:22,lineHeight:1}}>📦</span>
-                            Descarga
-                            <span style={{fontSize:9,opacity:.7,fontWeight:400,marginTop:-2}}>Stretch</span>
-                          </button>
-                          {/* Diárias */}
-                          <button onClick={()=>{
-                            const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            abrirWppPagModal(buscaResult,mot,"diarias");
-                          }}
-                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(246,70,93,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(246,70,93,.25)";}}
-                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(246,70,93,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
-                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(246,70,93,.08)",border:"1px solid rgba(246,70,93,.3)",color:t.danger,fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .15s",lineHeight:1.3}}>
-                            <span style={{fontSize:22,lineHeight:1}}>🛏️</span>
-                            Diárias
-                          </button>
+                          {[
+                            {l:"Faturamento", sub:"CTE · MDF · MAT",   cor:"#25D366",
+                             ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,
+                             fn:(mot)=>setWppFatModal({reg:buscaResult,mot})},
+                            {l:"Contratação", sub:"Pgto completo",     cor:"#25D366",
+                             ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+                             fn:(mot)=>{setWppModal({reg:buscaResult,mot});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}},
+                            {l:"Descarga",    sub:"Stretch",           cor:t.azulLt,
+                             ico:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
+                             fn:(mot)=>abrirWppPagModal(buscaResult,mot,"descarga")},
+                            {l:"Diárias",    sub:"Pgto diária",        cor:t.danger,
+                             ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,
+                             fn:(mot)=>abrirWppPagModal(buscaResult,mot,"diarias")},
+                          ].map((op,i)=>(
+                            <button key={i} onClick={()=>{
+                              const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                              op.fn(mot||null);
+                            }} style={{...css.btnCard(op.cor)}}>
+                              {hIco(op.ico, op.cor, 22, 2)}
+                              <span>{op.l}</span>
+                              <span style={{fontSize:9,opacity:.65,fontWeight:400,marginTop:-2}}>{op.sub}</span>
+                            </button>
+                          ))}
                         </div>
-                        {/* DOC - mantém o modelo anterior */}
+                        {/* DOC (com RO) */}
                         <button onClick={()=>{
                           const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                           setWppModal2({reg:buscaResult,mot:mot||null});setWpp2Ro(buscaResult.ro||"");setWpp2IncluirObs(false);
-                        }}
-                        onMouseEnter={e=>{e.currentTarget.style.background="rgba(128,128,128,.15)";e.currentTarget.style.transform="translateY(-1px)";}}
-                        onMouseLeave={e=>{e.currentTarget.style.background="rgba(128,128,128,.07)";e.currentTarget.style.transform="none";}}
-                        style={{width:"100%",marginTop:8,borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(128,128,128,.07)",border:`1px solid ${t.borda}`,color:t.txt2,fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
-                          <span style={{fontSize:16}}>📄</span> DOC (com RO)
+                        }} style={{...css.btnCard(t.txt2),width:"100%",marginTop:8,flexDirection:"row",justifyContent:"center",gap:8}}>
+                          {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.txt2,16,2)} DOC (com RO)
                         </button>
                       </div>
                     </div>
