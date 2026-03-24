@@ -6241,81 +6241,115 @@ function mapearColuna(n){
         const statusDesc = r.data_desc ? {cor:t.verde,ico:"✅",txt:"Descarregado"} :
                            r.data_agenda ? {cor:t.ouro,ico:"⏳",txt:"Aguardando Descarga"} :
                            {cor:t.danger,ico:"🚨",txt:"Sem Agenda"};
+        // Breakpoints responsivos
+        const vw = window.innerWidth;
+        const isTablet = vw >= 600 && vw < 960;
+        const isDesktop = vw >= 960;
+        // Largura do modal: celular=100%-32px | tablet=560px | desktop=640px
+        const modalW = isDesktop ? 640 : isTablet ? 560 : "100%";
+        // Colunas do grid de info: desktop=3 | tablet/celular=2
+        const gridCols = isDesktop ? "1fr 1fr 1fr" : "1fr 1fr";
+        // Colunas do financeiro: sempre 3, mas tamanhos de fonte maiores no desktop
+        const finFontVal  = isDesktop ? 14 : 12;
+        const finFontLbl  = isDesktop ? 8  : 7;
+
         return (
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:9999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setPlanilhaDetalheReg(null)}>
-            <div style={{background:t.headerBg,borderRadius:"20px 20px 0 0",padding:0,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:`0 -12px 48px ${t.shadow}`,maxHeight:"92vh",overflowY:"auto",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+          <div
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.80)",zIndex:9999,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    padding:isMobile ? "12px" : "24px",
+                    overflowY:"auto",
+            }}
+            onClick={()=>setPlanilhaDetalheReg(null)}
+          >
+            <div
+              style={{
+                background:t.headerBg,
+                borderRadius:16,
+                width:modalW,
+                maxWidth: isDesktop ? 640 : 560,
+                border:`1px solid ${t.borda}`,
+                boxShadow:`0 8px 48px rgba(0,0,0,.6)`,
+                maxHeight:"calc(100vh - 48px)",
+                overflowY:"auto",
+                display:"flex",
+                flexDirection:"column",
+                animation:"fadeIn .18s ease",
+                flexShrink:0,
+              }}
+              onClick={e=>e.stopPropagation()}
+            >
 
-              {/* ── Handle / barra superior ── */}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"10px 16px 0"}}>
-                <div style={{width:40,height:4,borderRadius:99,background:t.borda,opacity:.7}} />
-              </div>
-
-              {/* ── Header estilo nav ── */}
-              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px 10px",borderBottom:`1px solid ${t.borda}`}}>
-                <div style={{width:44,height:44,borderRadius:12,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 0 16px rgba(240,185,11,.3)`}}>
-                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,20,2)}
+              {/* ── Header ── */}
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px 12px",borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+                <div style={{width:46,height:46,borderRadius:12,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 0 18px rgba(240,185,11,.3)`}}>
+                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,22,2)}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:2,color:t.ouro,lineHeight:1}}>{r.nome||"—"}</div>
-                  <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,textTransform:"uppercase",marginTop:2}}>DT {r.dt} · <span style={{color:t.verde,fontFamily:"'Bebas Neue',sans-serif",fontSize:11,letterSpacing:2}}>{r.placa||"—"}</span></div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isDesktop?24:20,letterSpacing:2,color:t.ouro,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
+                  <div style={{fontSize:isDesktop?10:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,textTransform:"uppercase",marginTop:3}}>
+                    DT <span style={{color:t.txt}}>{r.dt}</span>
+                    {" · "}
+                    <span style={{color:t.verde,fontFamily:"'Bebas Neue',sans-serif",fontSize:isDesktop?13:11,letterSpacing:2}}>{r.placa||"—"}</span>
+                  </div>
                 </div>
-                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda}`,borderRadius:9,width:32,height:32,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda}`,borderRadius:9,width:34,height:34,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
               </div>
 
               {/* ── Status banner ── */}
-              <div style={{margin:"10px 16px 0",padding:"8px 14px",borderRadius:10,background:`rgba(${statusDesc.cor===t.verde?"2,192,118":statusDesc.cor===t.ouro?"240,185,11":"246,70,93"},.08)`,border:`1px solid ${statusDesc.cor}33`,display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:18}}>{statusDesc.ico}</span>
-                <span style={{fontSize:12,fontWeight:700,color:statusDesc.cor}}>{statusDesc.txt}</span>
-                {r.data_desc && <span style={{marginLeft:"auto",fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1.5,color:statusDesc.cor}}>{r.data_desc}</span>}
+              <div style={{margin:"12px 16px 0",padding:"10px 14px",borderRadius:10,background:`rgba(${statusDesc.cor===t.verde?"2,192,118":statusDesc.cor===t.ouro?"240,185,11":"246,70,93"},.08)`,border:`1px solid ${statusDesc.cor}33`,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>{statusDesc.ico}</span>
+                <span style={{fontSize:isDesktop?13:12,fontWeight:700,color:statusDesc.cor}}>{statusDesc.txt}</span>
+                {r.data_desc && <span style={{marginLeft:"auto",fontFamily:"'Bebas Neue',sans-serif",fontSize:isDesktop?15:13,letterSpacing:1.5,color:statusDesc.cor}}>{r.data_desc}</span>}
               </div>
 
               {/* ── Grid de info ── */}
-              <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div style={{padding:"12px 16px",display:"grid",gridTemplateColumns:gridCols,gap:8}}>
                 {[
-                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Origem",val:r.origem,full:false},
-                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Destino",val:r.destino,full:false},
-                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Carregamento",val:r.data_carr,full:false},
-                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Agenda Desc.",val:r.data_agenda,full:false},
-                  {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"Vínculo",val:r.vinculo,full:false},
-                  {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status,full:false},
+                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Origem",val:r.origem},
+                  {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Destino",val:r.destino},
+                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Carregamento",val:r.data_carr},
+                  {ico:<><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Agenda Desc.",val:r.data_agenda},
+                  {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"Vínculo",val:r.vinculo},
+                  {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status},
                 ].map((it,i)=>(
-                  <div key={i} style={{background:t.card,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`,gridColumn:it.full?"1/-1":"auto"}}>
+                  <div key={i} style={{background:t.card,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                     <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:4}}>
                       {hIco(it.ico,t.txt2,12,1.8)}
-                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600}}>{it.lbl}</div>
+                      <div style={{fontSize:isDesktop?9:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600}}>{it.lbl}</div>
                     </div>
-                    <div style={{fontWeight:600,color:t.txt,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.val||"—"}</div>
+                    <div style={{fontWeight:600,color:t.txt,fontSize:isDesktop?13:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={it.val||"—"}>{it.val||"—"}</div>
                   </div>
                 ))}
               </div>
 
               {/* ── Financeiro (se permissão) ── */}
               {canFin && (
-                <div style={{margin:"0 16px",padding:"12px",background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:4}}>
+                <div style={{margin:"0 16px 4px",padding:"12px 14px",background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isDesktop?12:8}}>
                   {[
-                    {lbl:"CTE (empresa)",val:fmtMoeda(r.vl_cte),cor:t.verde},
-                    {lbl:"Contrato (mot.)",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
+                    {lbl:"CTE empresa",val:fmtMoeda(r.vl_cte),cor:t.verde},
+                    {lbl:"Contrato mot.",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
                     {lbl:"Adiantamento",val:fmtMoeda(r.adiant),cor:t.ouro},
                     {lbl:"Diária Devida",val:fmtMoeda(r.diaria_prev),cor:t.danger},
                     {lbl:"Diária Paga",val:fmtMoeda(r.diaria_pg),cor:t.verde},
                     {lbl:"Saldo",val:fmtMoeda(r.saldo),cor:t.txt},
                   ].map((f,i)=>(
-                    <div key={i} style={{textAlign:"center"}}>
-                      <div style={{fontSize:7,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:3}}>{f.lbl}</div>
-                      <div style={{fontSize:12,fontWeight:700,color:f.cor}}>{f.val}</div>
+                    <div key={i} style={{textAlign:"center",padding:"4px 0"}}>
+                      <div style={{fontSize:finFontLbl,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:4}}>{f.lbl}</div>
+                      <div style={{fontSize:finFontVal,fontWeight:700,color:f.cor}}>{f.val}</div>
                     </div>
                   ))}
                 </div>
               )}
 
               {/* ── Botões de ação ── */}
-              <div style={{padding:"12px 16px 20px",display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{padding:"12px 16px 18px",display:"flex",flexDirection:"column",gap:8}}>
                 {canEdit && (
                   <button onClick={()=>{
                     const idx=DADOS.findIndex(x=>x.dt===r.dt);
                     setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
                     setPlanilhaDetalheReg(null);
-                  }} style={{...css.btnGold,justifyContent:"center",padding:12,fontSize:13}}>
+                  }} style={{...css.btnGold,justifyContent:"center",padding:isDesktop?14:12,fontSize:isDesktop?14:13}}>
                     {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)}
                     ✏️ EDITAR REGISTRO
                   </button>
@@ -6328,17 +6362,17 @@ function mapearColuna(n){
                     const c=dt.replace(/\D/g,"");
                     const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
                     if(found){setBuscaResult(found);const cpfN2=found.cpf?.replace(/\D/g,""),placaN2=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN2&&x.cpf?.replace(/\D/g,"")===cpfN2)||(placaN2&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN2))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}
-                  }} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:10,padding:"11px 8px",cursor:"pointer",color:t.azulLt,fontWeight:700,fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  }} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:10,padding:isDesktop?"13px 8px":"11px 8px",cursor:"pointer",color:t.azulLt,fontWeight:700,fontSize:isDesktop?12:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                     {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,16,2)} VER COMPLETO
                   </button>
-                  <button onClick={()=>{abrirOcorrModal(r);setPlanilhaDetalheReg(null);}} style={{background:`rgba(232,130,12,.08)`,border:`1px solid rgba(232,130,12,.3)`,borderRadius:10,padding:"11px 8px",cursor:"pointer",color:"#E8820C",fontWeight:700,fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  <button onClick={()=>{abrirOcorrModal(r);setPlanilhaDetalheReg(null);}} style={{background:`rgba(232,130,12,.08)`,border:`1px solid rgba(232,130,12,.3)`,borderRadius:10,padding:isDesktop?"13px 8px":"11px 8px",cursor:"pointer",color:"#E8820C",fontWeight:700,fontSize:isDesktop?12:11,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                     📌 OCORRÊNCIAS
                   </button>
                 </div>
                 {!motCad && canEdit && (
                   <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.22)`,borderRadius:10,padding:"9px 12px",display:"flex",alignItems:"center",gap:8}}>
                     <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
-                    <div style={{flex:1,fontSize:10,color:t.txt2}}>Motorista <strong style={{color:t.ouro}}>não cadastrado</strong></div>
+                    <div style={{flex:1,fontSize:isDesktop?11:10,color:t.txt2}}>Motorista <strong style={{color:t.ouro}}>não cadastrado</strong></div>
                     <button onClick={()=>{setFormData({nome:r.nome||"",cpf:r.cpf||"",placa1:r.placa||"",vinculo:r.vinculo||""});setEditIdx(-1);setModalOpen("motorista");setPlanilhaDetalheReg(null);}} style={{background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"6px 10px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>＋ Cadastrar</button>
                   </div>
                 )}
