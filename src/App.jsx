@@ -502,6 +502,14 @@ export default function App() {
   const [novaOcorr, setNovaOcorr] = useState("");
   const [novaOcorrTipo, setNovaOcorrTipo] = useState("info"); // info | alerta | status
   const [ocorrLoading, setOcorrLoading] = useState(false);
+  const [ocorrListExpanded, setOcorrListExpanded] = useState(false); // expande lista no modal detalhe
+  // Mini-modal de ocorrências na tela de busca (planilha)
+  const [ocorrModalDT, setOcorrModalDT] = useState(null);
+  const [ocorrModalList, setOcorrModalList] = useState([]);
+  const [ocorrModalLoading, setOcorrModalLoading] = useState(false);
+  const [ocorrModalExpanded, setOcorrModalExpanded] = useState(false);
+  const [ocorrModalNova, setOcorrModalNova] = useState("");
+  const [ocorrModalTipo, setOcorrModalTipo] = useState("info");
 
   // Minutas no modal de detalhe (Supabase)
   const [detalheMinDcc, setDetalheMinDcc] = useState([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]);
@@ -910,6 +918,7 @@ export default function App() {
     setDetalheDT(reg);
     setOcorrencias([]);
     setNovaOcorr("");
+    setOcorrListExpanded(false);
     setAcompDias([]);
     setAcompDiaSel(null);
     setAcompTexto("");
@@ -959,6 +968,51 @@ export default function App() {
     }
     showToast("✅ Ocorrência registrada","ok");
   }, [novaOcorr, novaOcorrTipo, detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
+
+  // Abre mini-modal de ocorrências a partir da tela de busca (planilha)
+  const abrirOcorrModal = useCallback(async (reg) => {
+    setOcorrModalDT(reg);
+    setOcorrModalList([]);
+    setOcorrModalNova("");
+    setOcorrModalTipo("info");
+    setOcorrModalExpanded(false);
+    const local = loadJSON(`co_ocorr_${reg.dt}`, []);
+    setOcorrModalList(local);
+    const conn = getConexao();
+    if (conn) {
+      setOcorrModalLoading(true);
+      try {
+        const data = await supaFetch(conn.url, conn.key, "GET",
+          `${TABLE_OCORR}?dt=eq.${encodeURIComponent(reg.dt)}&order=data_hora.asc&select=*`);
+        if (Array.isArray(data)) {
+          setOcorrModalList(data);
+          saveJSON(`co_ocorr_${reg.dt}`, data);
+        }
+      } catch { /* usa local */ }
+      finally { setOcorrModalLoading(false); }
+    }
+  }, [getConexao]);
+
+  const adicionarOcorrenciaModal = useCallback(async () => {
+    if (!ocorrModalNova.trim() || !ocorrModalDT) return;
+    const nova = {
+      dt: ocorrModalDT.dt,
+      data_hora: new Date().toISOString(),
+      texto: ocorrModalNova.trim(),
+      tipo: ocorrModalTipo,
+      usuario: usuarioLogado || perfil || "sistema",
+    };
+    const updated = [...ocorrModalList, nova];
+    setOcorrModalList(updated);
+    saveJSON(`co_ocorr_${ocorrModalDT.dt}`, updated);
+    setOcorrModalNova("");
+    const conn = getConexao();
+    if (conn) {
+      try { await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]); }
+      catch { /* silencioso */ }
+    }
+    showToast("✅ Ocorrência registrada","ok");
+  }, [ocorrModalNova, ocorrModalTipo, ocorrModalDT, ocorrModalList, getConexao, usuarioLogado, perfil, showToast]);
 
   // Login handler
   const handleLogin = async () => {
@@ -2833,6 +2887,14 @@ export default function App() {
                       </div>
                     </div>
                   )}
+                  {/* ── Botão Ocorrências (visível para todos) ── */}
+                  <button
+                    onClick={()=>abrirOcorrModal(buscaResult)}
+                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(232,130,12,.3)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
+                    style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"#E8820C",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
+                    <span style={{fontSize:16}}>📌</span> Ocorrências
+                  </button>
                 </div>
               </div>
             )}
@@ -4771,12 +4833,11 @@ function mapearColuna(n){
                     <div style={{fontSize:11,color:t.txt2,textAlign:"center",padding:"12px 0"}}>Nenhuma ocorrência registrada.</div>
                   ) : (
                     <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                      {ocorrencias.map((o,oi)=>(
+                      {(ocorrListExpanded ? ocorrencias : ocorrencias.slice(0,3)).map((o,oi,arr)=>(
                         <div key={oi} style={{display:"flex",gap:9,alignItems:"flex-start"}}>
-                          {/* Linha vertical */}
                           <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
                             <div style={{width:24,height:24,borderRadius:"50%",background:`${tipoColors[o.tipo]||t.azulLt}18`,border:`1.5px solid ${tipoColors[o.tipo]||t.azulLt}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>{tipoIcos[o.tipo]||"💬"}</div>
-                            {oi < ocorrencias.length-1 && <div style={{width:1,flex:1,minHeight:12,background:t.borda,margin:"3px 0"}} />}
+                            {oi < arr.length-1 && <div style={{width:1,flex:1,minHeight:12,background:t.borda,margin:"3px 0"}} />}
                           </div>
                           <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
@@ -4787,6 +4848,11 @@ function mapearColuna(n){
                           </div>
                         </div>
                       ))}
+                      {ocorrencias.length > 3 && (
+                        <button onClick={()=>setOcorrListExpanded(v=>!v)} style={{fontSize:11,color:"#E8820C",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
+                          {ocorrListExpanded ? "▲ Ver menos" : `▼ Ver mais (${ocorrencias.length - 3} ocultas)`}
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -4797,7 +4863,7 @@ function mapearColuna(n){
                       {/* Tipo */}
                       <div style={{display:"flex",gap:6,marginBottom:9}}>
                         {[{k:"info",l:"💬 Info"},{k:"status",l:"✅ Status"},{k:"alerta",l:"🚨 Alerta"}].map(tp=>(
-                          <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,padding:"10px 6px",fontSize:12,fontWeight:700,border:`1.5px solid ${novaOcorrTipo===tp.k?tipoColors[tp.k]:t.borda}`,borderRadius:8,cursor:"pointer",background:novaOcorrTipo===tp.k?`${tipoColors[tp.k]}15`:t.card,color:novaOcorrTipo===tp.k?tipoColors[tp.k]:t.txt2,fontFamily:"inherit"}}>{tp.l}</button>
+                          <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,padding:"9px 6px",fontSize:12,fontWeight:700,border:`1.5px solid ${novaOcorrTipo===tp.k?tipoColors[tp.k]:t.borda}`,borderRadius:50,cursor:"pointer",background:novaOcorrTipo===tp.k?tipoColors[tp.k]:"transparent",color:novaOcorrTipo===tp.k?"#fff":t.txt2,fontFamily:"inherit",transition:"all .15s"}}>{tp.l}</button>
                         ))}
                       </div>
                       <textarea
@@ -6108,6 +6174,86 @@ function mapearColuna(n){
           </div>
         </div>
       )}
+
+      {/* ═══ MINI-MODAL OCORRÊNCIAS (Busca / Planilha) ═══ */}
+      {ocorrModalDT && (()=>{
+        const tc = {info:t.azulLt, alerta:t.danger, status:t.verde};
+        const tic = {info:"💬", alerta:"🚨", status:"✅"};
+        const visibles = ocorrModalExpanded ? ocorrModalList : ocorrModalList.slice(0,3);
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setOcorrModalDT(null)}>
+            <div style={{background:t.card,borderRadius:16,padding:20,width:"100%",maxWidth:480,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}} onClick={e=>e.stopPropagation()}>
+
+              {/* Header */}
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>📌</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>Ocorrências</div>
+                  <div style={{fontSize:10,color:"#E8820C",fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{ocorrModalDT.dt} · {ocorrModalDT.nome||"—"}</div>
+                </div>
+                {ocorrModalLoading && <span style={{fontSize:10,color:t.txt2}}>carregando…</span>}
+                <button onClick={()=>setOcorrModalDT(null)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:18,lineHeight:1,padding:4}}>✕</button>
+              </div>
+
+              {/* Lista */}
+              <div>
+                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#E8820C",fontWeight:700,marginBottom:8}}>Histórico</div>
+                {ocorrModalList.length === 0 ? (
+                  <div style={{fontSize:11,color:t.txt2,textAlign:"center",padding:"14px 0",borderRadius:8,border:`1px dashed ${t.borda}`}}>Nenhuma ocorrência registrada.</div>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {visibles.map((o,oi)=>(
+                      <div key={oi} style={{display:"flex",gap:9,alignItems:"flex-start"}}>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
+                          <div style={{width:24,height:24,borderRadius:"50%",background:`${tc[o.tipo]||t.azulLt}18`,border:`1.5px solid ${tc[o.tipo]||t.azulLt}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>{tic[o.tipo]||"💬"}</div>
+                          {oi < visibles.length-1 && <div style={{width:1,flex:1,minHeight:10,background:t.borda,margin:"2px 0"}} />}
+                        </div>
+                        <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
+                            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tc[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
+                            <span style={{fontSize:8,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"} · {new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+                          </div>
+                          <div style={{fontSize:12,color:t.txt,lineHeight:1.5}}>{o.texto}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {ocorrModalList.length > 3 && (
+                      <button onClick={()=>setOcorrModalExpanded(v=>!v)} style={{fontSize:11,color:"#E8820C",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
+                        {ocorrModalExpanded ? "▲ Ver menos" : `▼ Ver mais (${ocorrModalList.length - 3} ocultas)`}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Adicionar nova ocorrência */}
+              {canOcorr && (
+                <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`}}>
+                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:9}}>＋ Nova Ocorrência</div>
+                  <div style={{display:"flex",gap:6,marginBottom:9}}>
+                    {[{k:"info",l:"💬 Info"},{k:"status",l:"✅ Status"},{k:"alerta",l:"🚨 Alerta"}].map(tp=>(
+                      <button key={tp.k} onClick={()=>setOcorrModalTipo(tp.k)} style={{flex:1,padding:"9px 6px",fontSize:12,fontWeight:700,border:`1.5px solid ${ocorrModalTipo===tp.k?tc[tp.k]:t.borda}`,borderRadius:50,cursor:"pointer",background:ocorrModalTipo===tp.k?tc[tp.k]:"transparent",color:ocorrModalTipo===tp.k?"#fff":t.txt2,fontFamily:"inherit",transition:"all .15s"}}>{tp.l}</button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={ocorrModalNova}
+                    onChange={e=>setOcorrModalNova(e.target.value)}
+                    placeholder="Descreva a ocorrência, atualização ou observação…"
+                    rows={3}
+                    style={{width:"100%",borderRadius:8,border:`1px solid ${t.borda}`,background:t.bg,color:t.txt,fontSize:12,lineHeight:1.5,padding:"8px 10px",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}
+                  />
+                  <button onClick={adicionarOcorrenciaModal} disabled={!ocorrModalNova.trim()}
+                    onMouseEnter={e=>{if(ocorrModalNova.trim()){e.currentTarget.style.background="rgba(232,130,12,.25)";e.currentTarget.style.transform="translateY(-1px)";}}}
+                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.12)";e.currentTarget.style.transform="none";}}
+                    style={{width:"100%",marginTop:8,borderRadius:10,padding:"11px",cursor:ocorrModalNova.trim()?"pointer":"not-allowed",background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.4)",color:"#E8820C",fontWeight:800,fontSize:13,fontFamily:"inherit",textAlign:"center",transition:"all .15s",opacity:ocorrModalNova.trim()?1:.5}}>
+                    💾 Registrar Ocorrência
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       <Toast {...toast} />
     </div>

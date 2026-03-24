@@ -58,12 +58,12 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo ╔══════════════════════════════════════════════╗
-echo ║        Deploy concluido com sucesso!         ║
-echo ╠══════════════════════════════════════════════╣
-echo ║  GitHub Pages: yvesfg.github.io/controle... ║
-echo ║  Vercel:       controle-operacional-omega... ║
-echo ╚══════════════════════════════════════════════╝
+echo ================================================
+echo    Deploy concluido com sucesso!
+echo ================================================
+echo    GitHub Pages: yvesfg.github.io/controle...
+echo    Vercel:       controle-operacional-omega...
+echo ================================================
 echo.
 echo Aguarde ~1 min para o GitHub Pages atualizar.
 echo.
