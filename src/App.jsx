@@ -4862,9 +4862,16 @@ function mapearColuna(n){
                       <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:9}}>＋ Nova Ocorrência</div>
                       {/* Tipo */}
                       <div style={{display:"flex",gap:6,marginBottom:9}}>
-                        {[{k:"info",l:"💬 Info"},{k:"status",l:"✅ Status"},{k:"alerta",l:"🚨 Alerta"}].map(tp=>(
-                          <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,padding:"9px 6px",fontSize:12,fontWeight:700,border:`1.5px solid ${novaOcorrTipo===tp.k?tipoColors[tp.k]:t.borda}`,borderRadius:50,cursor:"pointer",background:novaOcorrTipo===tp.k?tipoColors[tp.k]:"transparent",color:novaOcorrTipo===tp.k?"#fff":t.txt2,fontFamily:"inherit",transition:"all .15s"}}>{tp.l}</button>
-                        ))}
+                        {[{k:"info",l:"Info",svg:<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4M12 16h.01"/></>,c:tipoColors.info},{k:"status",l:"Status",svg:<><polyline points="20 6 9 17 4 12"/></>,c:tipoColors.status},{k:"alerta",l:"Alerta",svg:<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></>,c:tipoColors.alerta}].map(tp=>{
+                          const ativo=novaOcorrTipo===tp.k;
+                          return (
+                            <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
+                              {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
+                              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
+                              <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
+                            </button>
+                          );
+                        })}
                       </div>
                       <textarea
                         value={novaOcorr}
@@ -5589,7 +5596,7 @@ function mapearColuna(n){
                   const msg=encodeURIComponent(gerarFat());
                   window.open(tel?`https://wa.me/55${tel}?text=${msg}`:`https://wa.me/?text=${msg}`,"_blank");
                   setWppFatModal(null);
-                }} style={{flex:1,border:"none",borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   📲 ENVIAR NO WHATSAPP
                 </button>
               </div>
@@ -5784,7 +5791,7 @@ function mapearColuna(n){
                   const msg=encodeURIComponent(gerarPag());
                   window.open(tel?`https://wa.me/55${tel}?text=${msg}`:`https://wa.me/?text=${msg}`,"_blank");
                   setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
-                }} style={{flex:1,border:"none",borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   📲 ENVIAR NO WHATSAPP
                 </button>
               </div>
@@ -6227,13 +6234,20 @@ function mapearColuna(n){
               </div>
 
               {/* Adicionar nova ocorrência */}
-              {canOcorr && (
+              {(isAdmin || perms.ocorrencias) && (
                 <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:9}}>＋ Nova Ocorrência</div>
                   <div style={{display:"flex",gap:6,marginBottom:9}}>
-                    {[{k:"info",l:"💬 Info"},{k:"status",l:"✅ Status"},{k:"alerta",l:"🚨 Alerta"}].map(tp=>(
-                      <button key={tp.k} onClick={()=>setOcorrModalTipo(tp.k)} style={{flex:1,padding:"9px 6px",fontSize:12,fontWeight:700,border:`1.5px solid ${ocorrModalTipo===tp.k?tc[tp.k]:t.borda}`,borderRadius:50,cursor:"pointer",background:ocorrModalTipo===tp.k?tc[tp.k]:"transparent",color:ocorrModalTipo===tp.k?"#fff":t.txt2,fontFamily:"inherit",transition:"all .15s"}}>{tp.l}</button>
-                    ))}
+                    {[{k:"info",l:"Info",svg:<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4M12 16h.01"/></>,c:tc.info},{k:"status",l:"Status",svg:<><polyline points="20 6 9 17 4 12"/></>,c:tc.status},{k:"alerta",l:"Alerta",svg:<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></>,c:tc.alerta}].map(tp=>{
+                      const ativo=ocorrModalTipo===tp.k;
+                      return (
+                        <button key={tp.k} onClick={()=>setOcorrModalTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
+                          {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
+                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
+                          <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                   <textarea
                     value={ocorrModalNova}
