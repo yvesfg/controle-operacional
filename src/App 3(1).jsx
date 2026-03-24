@@ -56,15 +56,6 @@ const PERMS_LISTA = [
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
-    data: "2026-03-23", sessao: "Sessão 12",
-    itens: [
-      "FEAT · Relatório Operacional (PDF): novo relatório com SGS (chamados + retornos) e Apontamentos (descarga/stretch); acessível via menu de relatórios; modal com período e seleção de seções",
-      "FEAT · Relatório Geral: adicionadas 3 novas seções configuráveis — Ocorrências por DT (co_ocorr_${dt} via localStorage), Diárias do Período (financeiro + status) e Descargas do Período (agenda + atrasos)",
-      "FEAT · Menu de Relatórios: adicionada entrada 📋 Operacional (SGS, Apontamentos e ID Diárias)",
-      "FIX · DCC × CTE Complementar independentes: CTE Complementar sempre visível independentemente do toggle DCC; somente o bloco de Minutas DCC é controlado pelo toggle 'Existe DCC?'",
-    ],
-  },
-  {
     data: "2026-03-23", sessao: "Sessão 11",
     itens: [
       "FEAT · Dashboard Carregamentos interativo: clique nas barras/pizza dos grupos Motorista, Destino e Status abre painel drill-down com viagens detalhadas; cursor pointer sinaliza interatividade",
@@ -1983,7 +1974,7 @@ export default function App() {
           const tipo=diariasMapG.get(r.dt)||"";
           const rowClass=tipo==="diaria"?"trip-row-diaria":tipo==="atraso"?"trip-row-atraso":tipo==="sem_diaria"?"trip-row-ok":"trip-row-pend";
           return `<tr class="${rowClass}">
-            <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id_doc||"—"}</td>
+            <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
             <td><span class="dt-chip">${r.dt||"—"}</span></td>
             <td><strong>${r.nome||"—"}</strong></td>
             <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
@@ -2012,101 +2003,6 @@ export default function App() {
         ${s.dt_rel?` · Espelho Relacionado: <span class="dt-chip">${s.dt_rel}</span>`:""}
       </div>
     </div>`).join("")}`:""}
-    ${fSecoes.ocorr_dt!==false?(()=>{
-      // Ocorrências registradas por DT (localStorage co_ocorr_XX)
-      const ocorrDtList = [];
-      regs.forEach(r => {
-        const ocs = loadJSON(`co_ocorr_${r.dt}`,[]);
-        if(ocs.length>0) ocorrDtList.push({r, ocs});
-      });
-      if(ocorrDtList.length===0) return "";
-      return `<div class="section-title">Ocorrências por DT (Acompanhamento)</div>
-      <table>
-        <thead><tr><th>Espelho</th><th>Motorista</th><th>Tipo</th><th>Data/Hora</th><th>Texto</th><th>Usuário</th></tr></thead>
-        <tbody>
-          ${ocorrDtList.map(({r,ocs})=>ocs.map(o=>`<tr>
-            <td><span class="dt-chip">${r.dt||"—"}</span></td>
-            <td style="font-size:10px">${r.nome||"—"}</td>
-            <td><span class="badge ${o.tipo==="alerta"?"badge-atraso":o.tipo==="status"?"badge-ok":"badge-pend"}">${o.tipo||"info"}</span></td>
-            <td style="font-size:9px;white-space:nowrap">${o.data_hora?new Date(o.data_hora).toLocaleString("pt-BR"):"—"}</td>
-            <td style="max-width:280px">${o.texto||"—"}</td>
-            <td style="font-size:9px;color:#6b7a99">${o.usuario||"—"}</td>
-          </tr>`).join("")).join("")}
-        </tbody>
-      </table>`;
-    })():""}
-    ${fSecoes.diarias!==false?(()=>{
-      const diariasMapD2 = new Map(diariasData.items.map(i=>[i.r.dt,{tipo:i.tipo,dias:i.dias}]));
-      const regsDiaria = regs.filter(r=>{const i=diariasMapD2.get(r.dt);return i&&(i.tipo==="diaria"||i.tipo==="atraso");});
-      if(regsDiaria.length===0) return `<div class="section-title">Diárias no Período</div><p style="color:#666;font-size:11px;margin:8px 0">Nenhuma diária registrada no período.</p>`;
-      const totD = regsDiaria.reduce((s,r)=>s+(parseFloat(r.diaria_prev)||0),0);
-      const totPgD = regsDiaria.reduce((s,r)=>s+(parseFloat(r.diaria_pg)||0),0);
-      const fmtD2 = v=>v>0?`R$ ${v.toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—";
-      return `<div class="section-title">Diárias no Período</div>
-      <div class="kpi-row cols3" style="margin-bottom:10px">
-        <div class="kpi yellow"><div class="kpi-val">${regsDiaria.length}</div><div class="kpi-lbl">Com Diária</div></div>
-        <div class="kpi red"><div class="kpi-val" style="font-size:14px">${fmtD2(totD)}</div><div class="kpi-lbl">Total Devido</div></div>
-        <div class="kpi green"><div class="kpi-val" style="font-size:14px">${fmtD2(totPgD)}</div><div class="kpi-lbl">Total Pago</div></div>
-      </div>
-      <table>
-        <thead><tr><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th><th>Dias</th><th>Diária Prev.</th><th>Diária Paga</th><th>Saldo</th></tr></thead>
-        <tbody>
-          ${regsDiaria.map(r=>{
-            const info=diariasMapD2.get(r.dt)||{};
-            return `<tr class="trip-row-diaria">
-              <td><span class="dt-chip">${r.dt||"—"}</span></td>
-              <td><strong>${r.nome||"—"}</strong></td>
-              <td style="font-size:9px;font-family:monospace">${r.placa||"—"}</td>
-              <td>${r.data_carr||"—"}</td>
-              <td>${r.data_agenda||"—"}</td>
-              <td>${r.chegada||"—"}</td>
-              <td>${r.data_desc||"—"}</td>
-              <td style="text-align:center;font-weight:700">${info.dias!=null?info.dias:"—"}</td>
-              <td>${r.diaria_prev?`R$ ${parseFloat(r.diaria_prev).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
-              <td>${r.diaria_pg?`R$ ${parseFloat(r.diaria_pg).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
-              <td style="font-weight:700;color:${(parseFloat(r.diaria_prev)||0)-(parseFloat(r.diaria_pg)||0)>0?"#c0392b":"#0a7a45"}">${fmtD2((parseFloat(r.diaria_prev)||0)-(parseFloat(r.diaria_pg)||0))}</td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>`;
-    })():""}
-    ${fSecoes.descargas!==false?(()=>{
-      const hojeG = new Date(); hojeG.setHours(0,0,0,0);
-      const parseDA = s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);}if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s);return null;};
-      const regsDesc = regs.filter(r=>r.data_agenda||r.data_desc);
-      if(regsDesc.length===0) return `<div class="section-title">Descargas no Período</div><p style="color:#666;font-size:11px;margin:8px 0">Nenhuma descarga registrada no período.</p>`;
-      const descOK=regsDesc.filter(r=>r.data_desc).length;
-      const descAtrs=regsDesc.filter(r=>!r.data_desc&&parseDA(r.data_agenda)&&parseDA(r.data_agenda)<hojeG).length;
-      const descPend=regsDesc.length-descOK-descAtrs;
-      return `<div class="section-title">Descargas no Período</div>
-      <div class="kpi-row cols3" style="margin-bottom:10px">
-        <div class="kpi green"><div class="kpi-val">${descOK}</div><div class="kpi-lbl">Descarregados</div></div>
-        <div class="kpi ${descAtrs>0?"red":"green"}"><div class="kpi-val">${descAtrs}</div><div class="kpi-lbl">Atrasados</div></div>
-        <div class="kpi yellow"><div class="kpi-val">${descPend}</div><div class="kpi-lbl">Aguardando</div></div>
-      </div>
-      <table>
-        <thead><tr><th>Espelho</th><th>Motorista</th><th>Destino</th><th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Data Descarga</th><th>Status</th><th>RO</th></tr></thead>
-        <tbody>
-          ${regsDesc.map(r=>{
-            const dd=parseDA(r.data_desc),da=parseDA(r.data_agenda);
-            const st=dd?"descarregado":(da&&da<hojeG?"atrasado":"pendente");
-            const rc=st==="descarregado"?"trip-row-ok":st==="atrasado"?"trip-row-atraso":"trip-row-pend";
-            const sbD=st==="descarregado"?`<span class="badge badge-ok">Descarregado</span>`:st==="atrasado"?`<span class="badge badge-atraso">Atrasado</span>`:`<span class="badge badge-pend">Aguardando</span>`;
-            return `<tr class="${rc}">
-              <td><span class="dt-chip">${r.dt||"—"}</span></td>
-              <td><strong>${r.nome||"—"}</strong></td>
-              <td>${r.destino||"—"}</td>
-              <td>${r.data_carr||"—"}</td>
-              <td>${r.data_agenda||"—"}</td>
-              <td>${r.chegada||"—"}</td>
-              <td>${r.data_desc||"—"}</td>
-              <td>${sbD}</td>
-              <td>${r.ro||"—"}</td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>`;
-    })():""}
   </div>`;
     const _html = relHtmlBase(`Relatório Geral · ${periodoStr}`, periodoStr, corpo);
     const _blob = new Blob([_html], {type:"text/html;charset=utf-8"});
@@ -2200,7 +2096,7 @@ export default function App() {
         const moreNum=dccArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.num||""}</span>`).join("");
         const moreVal=dccArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.valor||""}</span>`).join("");
         return`<tr class="${rc}">
-          <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id_doc||"—"}</td>
+          <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
           <td><span class="dt-chip">${r.dt||"—"}</span></td>
           <td><strong>${r.nome||"—"}</strong></td>
           <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
@@ -2296,7 +2192,7 @@ export default function App() {
         const moreMdf=dscArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.mdf||""}</span>`).join("");
         const moreNum=dscArr.slice(1).map(m=>`<br/><span style="font-size:8px;color:#888">${m.num||""}</span>`).join("");
         return`<tr class="${rc}">
-          <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id_doc||"—"}</td>
+          <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id||"—"}</td>
           <td><span class="dt-chip">${r.dt||"—"}</span></td>
           <td><strong>${r.nome||"—"}</strong></td>
           <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
@@ -2540,7 +2436,6 @@ export default function App() {
                   <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>📄 RELATÓRIOS PDF</div>
                   {[
                     {ico:"📊",l:"Geral de Operações",sub:"KPIs, resumo e tabela completa",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
-                    {ico:"📋",l:"Operacional",sub:"SGS, Apontamentos e ID Diárias",fn:()=>{setRelMenuOpen(false);setRelOperOpen(true);}},
                     {ico:"🛏️",l:"Diárias",sub:"Financeiro e status de diárias",fn:()=>{setRelMenuOpen(false);setRelDiariaOpen(true);}},
                     {ico:"📦",l:"Descargas",sub:"Agenda, status e atrasos",fn:()=>{setRelMenuOpen(false);setRelDescargaOpen(true);}},
                   ].map((op,i,arr)=>(
@@ -5308,7 +5203,7 @@ function mapearColuna(n){
           msg += `${b("MAT:")} ${reg.mat||"—"}${ln}`;
           msg += `${b("PLACAS:")} ${placas}${ln}`;
           msg += `────────────────${ln}`;
-          msg += `${b("DT:")} ${reg.dt||"—"}  ${b("NF:")} ${reg.nf||"—"}  ${b("ID:")} ${reg.id_doc||"—"}${ln}`;
+          msg += `${b("DT:")} ${reg.dt||"—"}  ${b("NF:")} ${reg.nf||"—"}  ${b("ID:")} ${reg.id||"—"}${ln}`;
           msg += `${b("RO:")} ${wpp2Ro.trim()}${ln}`;
           if (wpp2IncluirObs && wpp2Obs.trim()) msg += `${b("OBS:")} ${wpp2Obs.trim()}${ln}`;
           msg += `────────────────${ln}`;
@@ -5369,7 +5264,7 @@ function mapearColuna(n){
 
                 {/* DT / NF / ID */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                  {[{l:"DT",v:reg.dt},{l:"NF",v:reg.nf},{l:"ID",v:reg.id_doc}].map(f=>(
+                  {[{l:"DT",v:reg.dt},{l:"NF",v:reg.nf},{l:"ID",v:reg.id}].map(f=>(
                     <div key={f.l} style={{background:t.card2,borderRadius:8,padding:"7px 9px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
                       <div style={{fontSize:7,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
                       <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1.5,color:t.ouro}}>{f.v||"—"}</div>
@@ -5403,7 +5298,7 @@ function mapearColuna(n){
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
                   <div style={{fontFamily:"monospace",fontSize:9,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>
-                    {`📄 DOCUMENTO\n────────────────\nMOT: ${nomeMotorista||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nPLACAS: ${placas}\n────────────────\nDT: ${reg.dt||"—"}  NF: ${reg.nf||"—"}  ID: ${reg.id_doc||"—"}\nRO: ${wpp2Ro||"[obrigatório]"}${wpp2IncluirObs&&wpp2Obs?`\nOBS: ${wpp2Obs}`:""}\n────────────────\nYFGroup · Controle Operacional`}
+                    {`📄 DOCUMENTO\n────────────────\nMOT: ${nomeMotorista||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nPLACAS: ${placas}\n────────────────\nDT: ${reg.dt||"—"}  NF: ${reg.nf||"—"}  ID: ${reg.id||"—"}\nRO: ${wpp2Ro||"[obrigatório]"}${wpp2IncluirObs&&wpp2Obs?`\nOBS: ${wpp2Obs}`:""}\n────────────────\nYFGroup · Controle Operacional`}
                   </div>
                 </div>
 
@@ -5437,7 +5332,7 @@ function mapearColuna(n){
           m += `MAT: ${reg.mat||"—"}${ln}`;
           m += `DT: ${reg.dt||"—"}${ln}`;
           m += `NF: ${reg.nf||"—"}${ln}`;
-          m += `ID: ${reg.id_doc||"—"}${ln}`;
+          m += `ID: ${reg.id||"—"}${ln}`;
           return m;
         };
 
@@ -5453,7 +5348,7 @@ function mapearColuna(n){
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
                   <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
-                    {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();return`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id_doc||"—"}`;})()}
+                    {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();return`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id||"—"}`;})()}
                   </div>
                 </div>
                 {(()=>{
@@ -5509,7 +5404,7 @@ function mapearColuna(n){
           m += `MDF: ${reg.mdf||"—"}${ln}`;
           m += `MAR: ${reg.mat||"—"}${ln}`;
           m += `PLACAS: ${placas}${ln}`;
-          m += `DT: ${reg.dt||"—"} NF: ${reg.nf||"—"} ID: ${reg.id_doc||"—"}${ln}`;
+          m += `DT: ${reg.dt||"—"} NF: ${reg.nf||"—"} ID: ${reg.id||"—"}${ln}`;
           m += `${ln}`;
           m += `BCO: ${mot?.banco||"—"}${ln}`;
           m += `FAV: ${cleanNome(mot?.favorecido||mot?.nome||reg.nome)||"—"}${ln}`;
@@ -5561,7 +5456,7 @@ function mapearColuna(n){
                 {/* Dados do registro */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                    {[{l:"DT",v:reg.dt,c:t.ouro},{l:"NF",v:reg.nf,c:t.txt},{l:"ID",v:reg.id_doc,c:t.txt}].map(f=>(
+                    {[{l:"DT",v:reg.dt,c:t.ouro},{l:"NF",v:reg.nf,c:t.txt},{l:"ID",v:reg.id,c:t.txt}].map(f=>(
                       <div key={f.l} style={{textAlign:"center"}}>
                         <div style={{fontSize:7,textTransform:"uppercase",color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
                         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:f.c}}>{f.v||"—"}</div>
@@ -5815,9 +5710,6 @@ function mapearColuna(n){
                 {k:"sumario",l:"Resumo por Motorista"},
                 {k:"registros",l:"Tabela de Registros"},
                 {k:"sgs",l:"Ocorrências SGS"},
-                {k:"ocorr_dt",l:"Ocorrências por DT"},
-                {k:"diarias",l:"Diárias do Período"},
-                {k:"descargas",l:"Descargas do Período"},
               ].map(({k,l})=>(
                 <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relGeralSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
                   <input type="checkbox" checked={!!relGeralSecoes[k]} onChange={e=>setRelGeralSecoes(p=>({...p,[k]:e.target.checked}))}
@@ -5974,67 +5866,6 @@ function mapearColuna(n){
               <button onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}}
                 style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
-                Gerar Relatório PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ MODAL: RELATÓRIO OPERACIONAL ═══ */}
-      {relOperOpen && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelOperOpen(false)}>
-          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:500,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📋</div>
-              <div>
-                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Operacional</div>
-                <div style={{fontSize:10,color:t.txt2}}>SGS, Apontamentos e ID Diárias por período</div>
-              </div>
-              <button onClick={()=>setRelOperOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
-                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-              </button>
-            </div>
-            {/* Período */}
-            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-              <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
-                <input type="date" value={relOperFrom} onChange={e=>setRelOperFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
-              </div>
-              <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
-                <input type="date" value={relOperTo} onChange={e=>setRelOperTo(e.target.value)} style={{...css.inp,width:"100%"}} />
-              </div>
-            </div>
-            {/* Seções */}
-            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Seções do Relatório</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
-              {[
-                {k:"sgs",l:"Chamados SGS"},
-                {k:"apontamentos",l:"Apontamentos (Descarga/Stretch)"},
-              ].map(({k,l})=>(
-                <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relOperSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
-                  <input type="checkbox" checked={!!relOperSecoes[k]} onChange={e=>setRelOperSecoes(p=>({...p,[k]:e.target.checked}))}
-                    style={{accentColor:t.ouro,width:14,height:14,cursor:"pointer"}} />
-                  <span style={{fontSize:11,fontWeight:600,color:relOperSecoes[k]?t.txt:t.txt2}}>{l}</span>
-                </label>
-              ))}
-            </div>
-            {/* Info */}
-            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"flex-start",gap:6}}>
-              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
-              <span>Deixe datas em branco para incluir <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
-            </div>
-            {/* Botões */}
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setRelOperOpen(false)}
-                style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>
-                Cancelar
-              </button>
-              <button onClick={()=>{setRelOperOpen(false);gerarRelatorioOperacional(relOperFrom,relOperTo,relOperSecoes);}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
               </button>
             </div>
