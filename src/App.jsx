@@ -603,6 +603,7 @@ export default function App() {
   const [relGeralDestino, setRelGeralDestino] = useState("");
   const [relGeralVinculo, setRelGeralVinculo] = useState("");
   const [relGeralSecoes, setRelGeralSecoes] = useState({kpi:true,sumario:true,registros:true,sgs:true,ocorr_dt:true,diarias:false,descargas:false});
+  const [relGeralLoading, setRelGeralLoading] = useState(false);
   const [relMenuOpen, setRelMenuOpen] = useState(false);
   const [relOperOpen, setRelOperOpen] = useState(false);
   const [relOperFrom, setRelOperFrom] = useState("");
@@ -1848,6 +1849,27 @@ export default function App() {
     setTimeout(()=>URL.revokeObjectURL(_url), 120000);
   };
 
+  // Pré-carrega ocorrências do Supabase para uma lista de DTs antes de gerar o relatório
+  const preCarregarOcorrencias = async (dtList) => {
+    if (!dtList || dtList.length === 0) return;
+    const conn = getConexao();
+    if (!conn) return;
+    try {
+      // Busca todas as ocorrências dos DTs em uma única query (PostgREST IN filter)
+      const dtsCod = dtList.map(dt => dt.replace(/'/g,"''")).join(",");
+      const data = await supaFetch(conn.url, conn.key, "GET",
+        `${TABLE_OCORR}?dt=in.(${encodeURIComponent(dtsCod)})&order=data_hora.asc&select=*`);
+      if (Array.isArray(data)) {
+        // Agrupa por DT e salva no localStorage
+        const porDt = {};
+        data.forEach(o => { if(!porDt[o.dt]) porDt[o.dt]=[]; porDt[o.dt].push(o); });
+        dtList.forEach(dt => {
+          if (porDt[dt]) saveJSON(`co_ocorr_${dt}`, porDt[dt]);
+        });
+      }
+    } catch { /* silencioso — usa cache local se falhar */ }
+  };
+
   const gerarRelatorioGeral = (from, to, filtros={}) => {
     // Mapa DT → tipo de diária (calculado no useMemo diariasData)
     const diariasMapG = new Map(diariasData.items.map(item=>[item.r.dt, item.tipo]));
@@ -2746,45 +2768,67 @@ export default function App() {
                       }} style={{...css.btnGold,justifyContent:"center",padding:11}}>✏️ EDITAR</button>
 
                       {/* WhatsApp - 4 modelos */}
-                      <div style={{background:t.card2,borderRadius:11,padding:10,border:`1px solid rgba(37,211,102,.2)`}}>
-                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:"#25D366",fontWeight:700,marginBottom:8}}>📲 WHATSAPP · Escolha o modelo</div>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                      <div style={{background:t.card2,borderRadius:12,padding:12,border:`1px solid rgba(37,211,102,.25)`}}>
+                        <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#25D366",fontWeight:700,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{fontSize:14}}>📲</span> WHATSAPP · Escolha o modelo
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                           {/* Faturamento */}
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                             setWppFatModal({reg:buscaResult,mot:mot||null});
-                          }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(37,211,102,.07)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
-                            🧾 Faturamento
+                          }}
+                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(37,211,102,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(37,211,102,.25)";}}
+                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(37,211,102,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
+                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.3)",color:"#25D366",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .15s",lineHeight:1.3}}>
+                            <span style={{fontSize:22,lineHeight:1}}>🧾</span>
+                            Faturamento
                           </button>
                           {/* Contratação (modal original) */}
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                             setWppModal({reg:buscaResult,mot:mot||null});
                             setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");
-                          }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(37,211,102,.07)`,border:`1px solid rgba(37,211,102,.25)`,color:"#25D366",fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
-                            📝 Contratação
+                          }}
+                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(37,211,102,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(37,211,102,.25)";}}
+                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(37,211,102,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
+                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.3)",color:"#25D366",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .15s",lineHeight:1.3}}>
+                            <span style={{fontSize:22,lineHeight:1}}>📝</span>
+                            Contratação
                           </button>
                           {/* Descarga/Stretch */}
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                             abrirWppPagModal(buscaResult,mot,"descarga");
-                          }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(22,119,255,.07)`,border:`1px solid rgba(22,119,255,.25)`,color:t.azulLt,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
-                            📦 Descarga<br/><span style={{fontSize:8}}>Stretch</span>
+                          }}
+                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(22,119,255,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(22,119,255,.25)";}}
+                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(22,119,255,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
+                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(22,119,255,.08)",border:"1px solid rgba(22,119,255,.3)",color:t.azulLt,fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .15s",lineHeight:1.3}}>
+                            <span style={{fontSize:22,lineHeight:1}}>📦</span>
+                            Descarga
+                            <span style={{fontSize:9,opacity:.7,fontWeight:400,marginTop:-2}}>Stretch</span>
                           </button>
                           {/* Diárias */}
                           <button onClick={()=>{
                             const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                             abrirWppPagModal(buscaResult,mot,"diarias");
-                          }} style={{borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.25)`,color:t.danger,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center",lineHeight:1.5}}>
-                            🛏️ Diárias
+                          }}
+                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(246,70,93,.15)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 4px 14px rgba(246,70,93,.25)";}}
+                          onMouseLeave={e=>{e.currentTarget.style.background="rgba(246,70,93,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
+                          style={{borderRadius:11,padding:"14px 8px",cursor:"pointer",background:"rgba(246,70,93,.08)",border:"1px solid rgba(246,70,93,.3)",color:t.danger,fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:5,transition:"all .15s",lineHeight:1.3}}>
+                            <span style={{fontSize:22,lineHeight:1}}>🛏️</span>
+                            Diárias
                           </button>
                         </div>
                         {/* DOC - mantém o modelo anterior */}
                         <button onClick={()=>{
                           const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
                           setWppModal2({reg:buscaResult,mot:mot||null});setWpp2Ro(buscaResult.ro||"");setWpp2IncluirObs(false);
-                        }} style={{width:"100%",marginTop:6,borderRadius:9,padding:"9px 6px",cursor:"pointer",background:`rgba(128,128,128,.07)`,border:`1px solid ${t.borda}`,color:t.txt2,fontWeight:700,fontSize:10,fontFamily:"inherit",textAlign:"center"}}>
-                          📄 DOC (com RO)
+                        }}
+                        onMouseEnter={e=>{e.currentTarget.style.background="rgba(128,128,128,.15)";e.currentTarget.style.transform="translateY(-1px)";}}
+                        onMouseLeave={e=>{e.currentTarget.style.background="rgba(128,128,128,.07)";e.currentTarget.style.transform="none";}}
+                        style={{width:"100%",marginTop:8,borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(128,128,128,.07)",border:`1px solid ${t.borda}`,color:t.txt2,fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
+                          <span style={{fontSize:16}}>📄</span> DOC (com RO)
                         </button>
                       </div>
                     </div>
@@ -5840,17 +5884,40 @@ function mapearColuna(n){
                 Cancelar
               </button>
               <button
-                onClick={()=>{
+                disabled={relGeralLoading}
+                onClick={async ()=>{
                   setRelGeralOpen(false);
+                  // Se seção de ocorrências estiver ativa, pré-carrega do Supabase
+                  if (relGeralSecoes.ocorr_dt !== false) {
+                    setRelGeralLoading(true);
+                    try {
+                      // Calcula os DTs do período para pré-carregar suas ocorrências
+                      const parseD2 = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
+                      const fromD2 = relGeralFrom ? new Date(relGeralFrom) : null;
+                      const toD2 = relGeralTo ? new Date(relGeralTo) : null;
+                      if(toD2) toD2.setHours(23,59,59,999);
+                      const dtsNoPeriodo = DADOS.filter(r => {
+                        const d = parseD2(r.data_carr || r.data_desc || r.chegada || "");
+                        if(!d) return !fromD2 && !toD2;
+                        if(fromD2 && d < fromD2) return false;
+                        if(toD2 && d > toD2) return false;
+                        return true;
+                      }).map(r => r.dt).filter(Boolean);
+                      await preCarregarOcorrencias(dtsNoPeriodo);
+                    } catch { /* silencioso */ }
+                    finally { setRelGeralLoading(false); }
+                  }
                   gerarRelatorioGeral(relGeralFrom,relGeralTo,{
                     motorista:relGeralMotorista,statusDiaria:relGeralStatus,
                     origem:relGeralOrigem,destino:relGeralDestino,
                     vinculo:relGeralVinculo,secoes:relGeralSecoes
                   });
                 }}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
-                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
-                Gerar Relatório PDF
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:relGeralLoading?`rgba(240,185,11,.06)`:`rgba(240,185,11,.13)`,color:t.ouro,cursor:relGeralLoading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s",opacity:relGeralLoading?.6:1}}>
+                {relGeralLoading
+                  ? <><span style={{fontSize:14,animation:"spin 1s linear infinite",display:"inline-block"}}>⏳</span> Buscando ocorrências...</>
+                  : <>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}Gerar Relatório PDF</>
+                }
               </button>
             </div>
           </div>
