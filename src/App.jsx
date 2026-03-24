@@ -2757,7 +2757,7 @@ export default function App() {
                       <span style={{fontSize:16,width:28,textAlign:"center"}}>{item.ico}</span>
                       <div>
                         <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:2}}>{item.lbl}</div>
-                        <div style={{fontSize:13,fontWeight:600,color:item.highlight?t.verde:t.txt,fontFamily:item.highlight?"'Bebas Neue',sans-serif":"inherit",letterSpacing:item.highlight?3:0,fontSize:item.highlight?17:13}}>{item.val||"—"}</div>
+                        <div style={{fontWeight:600,color:item.highlight?t.verde:t.txt,fontFamily:item.highlight?"'Bebas Neue',sans-serif":"inherit",letterSpacing:item.highlight?3:0,fontSize:item.highlight?17:13}}>{item.val||"—"}</div>
                       </div>
                     </div>
                   ))}
