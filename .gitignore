@@ -31,3 +31,8 @@ vite.config.js.timestamp-*
 src/App\ *.jsx
 src/App(*).jsx
 "src/App *.jsx"
+
+# Backups locais e logs de desenvolvimento
+src/backups/
+*.bckp*
+SUPABASE_REGRAS.md
