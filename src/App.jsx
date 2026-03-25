@@ -82,6 +82,19 @@ const hexRgb = (hex, a) => {
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
+    data: "2026-03-25", sessao: "Sessão 16",
+    itens: [
+      "FEAT · Diária — Nova Lógica Simplificada: REGRA chegada ≤ agenda → COM DIÁRIA (dias = descarga - agenda); REGRA chegada > agenda → PERDA DE AGENDA; sem chegada → legado. Remove exigência de 'informou_analista' como critério.",
+      "FEAT · Descarga — Campo Data+Hora: campo 'data_desc' agora aceita data E hora (datetime-local); armazena 'DD/MM/YYYY HH:MM'. Compatível com registros antigos (somente data).",
+      "FEAT · Descarga — Checkbox Aguardando: novo campo 'Aguardando Descarga' no modal de edição (Operacional); quando marcado, bloqueia o campo data/hora e sinaliza status de espera; ao preencher a data, desativa o checkbox automaticamente.",
+      "FEAT · Apontamentos — Resumo Mensal: painel exibido acima da lista com totais por tipo (📦 Descarga / 📏 Stretch / 🚗 Deslocamento / 📋 Outros) e total geral do mês de referência mais recente.",
+      "FEAT · ID Diárias — Verificação RO: banner de alerta quando há DTs com diária sem RO preenchido; badge ⚠️ RO vazio em cada card; label 'Perdeu Agenda' para tipo=atraso (era genérico).",
+      "FIX · parseData: corrigido para suportar strings 'DD/MM/YYYY HH:MM' sem quebrar a conversão de ano (usava split('/')[2] que incluía a hora); agora extrai apenas os primeiros 4 dígitos do ano.",
+      "FIX · brToInput: corrigido para usar regex e extrair apenas a parte de data, ignorando o componente de hora se presente.",
+      "FIX · Header — Ícone padrão: quando não há logo customizada, o ícone superior esquerdo exibe 🚛 emoji (mesmo padrão da tela de login e do favicon mobile), em vez do SVG stroke.",
+    ],
+  },
+  {
     data: "2026-03-25", sessao: "Sessão 15",
     itens: [
       "FEAT · Ocorrência/RO na Chegada: ao preencher data de chegada real no modal de edição, abre alerta para registrar o RO (Registro de Ocorrência) — inerente à existência de NFD; campo RO preenchido inline e salvo no registro",
@@ -243,14 +256,34 @@ const ENV_SUPA_KEY = typeof import.meta !== "undefined" ? (import.meta.env?.VITE
 function parseData(d) {
   if (!d) return null;
   d = String(d).trim();
-  if (/^\d{2}\/\d{2}\/\d{4}/.test(d)) { const p = d.split("/"); return new Date(+p[2], +p[1]-1, +p[0]); }
-  if (/^\d{4}-\d{2}-\d{2}/.test(d)) { const p = d.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  // suporta "DD/MM/YYYY" e "DD/MM/YYYY HH:MM" (ignora a parte de hora para comparações de data)
+  const m1 = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
+  if (/^\d{4}-\d{2}-\d{2}/.test(d)) { const p = d.split("-"); return new Date(+p[0], +p[1]-1, +p[2].slice(0,2)); }
   return null;
 }
 function diffDias(d1, d2) { return d1 && d2 ? Math.round((d2-d1)/(864e5)) : null; }
 function fmtMoeda(v) { const n = parseFloat(v); return !v || isNaN(n) ? "—" : "R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function brToInput(d) { if (!d) return ""; d = String(d).trim(); if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10); const p = d.split("/"); return p.length===3 ? `${p[2]}-${p[1]}-${p[0]}` : ""; }
-function inputToBr(v) { if (!v) return ""; const p = v.split("-"); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : ""; }
+function brToInput(d) { if (!d) return ""; d = String(d).trim(); if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10); const m=d.match(/^(\d{2})\/(\d{2})\/(\d{4})/); return m?`${m[3]}-${m[2]}-${m[1]}`:""; }
+function inputToBr(v) { if (!v) return ""; const p = v.split("-"); return p.length===3 ? `${p[2].slice(0,2)}/${p[1]}/${p[0]}` : ""; }
+// Helpers para campo datetime-local (data + hora)
+function brToInputDT(d) {
+  if (!d) return "";
+  d = String(d).trim();
+  const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2})/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}T${m[4]}`;
+  const m2 = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (m2) return `${m2[3]}-${m2[2]}-${m2[1]}T00:00`;
+  if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10)+"T00:00";
+  return "";
+}
+function inputToBrDT(v) {
+  if (!v) return "";
+  const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]} ${m[4]}`;
+  const p = v.split("-");
+  return p.length>=3 ? `${p[2].slice(0,2)}/${p[1]}/${p[0]}` : "";
+}
 function dtBase(dt) { return dt ? dt.replace(/[.\-\/\s]/g,"") : ""; }
 function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 async function hashSenha(s) {
@@ -1297,52 +1330,39 @@ export default function App() {
     return { grupos, meses, filtrado, dtsU, cteT };
   }, [DADOS, dashMes]);
 
-  // Diarias data — nova lógica:
-  // REGRA 1: chegada < agenda E descarga <= agenda → SEM DIÁRIA (chegou e descarregou antes da agenda)
-  // REGRA 2: chegada == agenda E descarga > agenda E informou_analista == "sim" → COM DIÁRIA
-  // REGRA 3: chegada > agenda E descarga > agenda → SEM DIÁRIA (chegou após a agenda)
-  // REGRA 4: sem chegada (legado) → usa lógica anterior de comparação agenda vs descarga
+  // Diarias data — lógica simplificada Sessão 16:
+  // REGRA 1: chegada <= agenda E descarga > agenda → COM DIÁRIA (dias = descarga - agenda)
+  // REGRA 2: chegada <= agenda E descarga <= agenda → SEM DIÁRIA (chegou e descarregou no prazo)
+  // REGRA 3: chegada > agenda → PERDA DE AGENDA (tipo="atraso"), SEM DIÁRIA
+  // REGRA 4: sem chegada → lógica legado (compara agenda vs descarga)
   const diariasData = useMemo(() => {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const regs = DADOS.filter(r => (r.data_agenda || r.data_desc) && (r.status||"").toUpperCase() !== "CANCELADA");
-    let ok=0, atraso=0, pend=0, semDiaria=0;
+    let ok=0, atraso=0, pend=0;
     const items = regs.map(r => {
       const da = parseData(r.data_agenda);
       const dd = parseData(r.data_desc);
       const dc = parseData(r.chegada);
-      const informou = (r.informou_analista||"").toLowerCase() === "sim";
       let tipo = "pendente", dias = null, temDiaria = false;
 
-      if (da && dd && dc) {
-        // Todas as datas preenchidas — aplica regras completas
-        const chegouAntes = dc < da;
-        const chegouNaDia = dc.toISOString().slice(0,10) === da.toISOString().slice(0,10);
-        const chegouDepois = dc > da;
-        const descarregouAntesOuNaDia = dd <= da;
-        const descarregouDepois = dd > da;
-
-        if ((chegouAntes || chegouNaDia) && descarregouAntesOuNaDia) {
-          // Chegou antes/na agenda e descarregou antes/na agenda → SEM DIÁRIA
-          tipo = "sem_diaria"; temDiaria = false;
-        } else if (chegouNaDia && descarregouDepois && informou) {
-          // Chegou na agenda, descarregou depois, informou analista → COM DIÁRIA
-          dias = diffDias(da, dd);
-          tipo = "diaria"; temDiaria = true;
-        } else if (chegouNaDia && descarregouDepois && !informou) {
-          // Chegou na agenda, descarregou depois, MAS não informou analista
-          tipo = "sem_diaria"; temDiaria = false;
-        } else if (chegouDepois) {
-          // Chegou DEPOIS da agenda → SEM DIÁRIA
-          tipo = "sem_diaria"; temDiaria = false;
-        } else if (chegouAntes && descarregouDepois) {
-          // Chegou antes mas descarregou depois — edge case, aplica lógica antiga
-          dias = diffDias(da, dd);
-          tipo = dias > 0 ? "atraso" : "ok";
+      if (da && dc) {
+        // Tem data de chegada — aplica regras definitivas
+        if (dc <= da) {
+          // Chegou NA DATA ou ANTES da agenda
+          if (dd && dd > da) {
+            // Descarregou DEPOIS da agenda → COM DIÁRIA
+            dias = diffDias(da, dd);
+            tipo = "diaria"; temDiaria = true;
+          } else {
+            // Descarregou antes/na agenda ou ainda não descarregou
+            tipo = dd ? "sem_diaria" : "pendente";
+          }
         } else {
-          tipo = "ok";
+          // Chegou DEPOIS da agenda → PERDA DE AGENDA
+          tipo = "atraso"; temDiaria = false;
         }
       } else if (da && dd) {
-        // Sem data de chegada → lógica legado
+        // Sem chegada → lógica legado (agenda vs descarga)
         dias = diffDias(da, dd);
         tipo = dias > 0 ? "atraso" : "ok";
       } else if (da && !dd) {
@@ -2708,8 +2728,7 @@ export default function App() {
       <div style={css.header}>
         {customLogo
           ? <img src={customLogo} alt="Logo" style={{width:44,height:44,borderRadius:13,objectFit:"contain",boxShadow:`0 4px 14px rgba(240,185,11,.38)`}} />
-          : <div style={css.logo}>{hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-          </>,"rgba(255,255,255,0.95)",22,2.4)}</div>
+          : <div style={{...css.logo,fontSize:24,lineHeight:1}}>🚛</div>
         }
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
@@ -3855,14 +3874,33 @@ export default function App() {
                 <div>
                   <div style={{...css.secTitle,marginBottom:12}}>{hIco(<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,t.ouro,12)} ID Diárias <span style={{flex:1,height:1,background:t.borda}} /></div>
                   {diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").length===0?(
-                    <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>🛏️</div><div style={{fontSize:13,color:t.txt2}}>Nenhum registro com diária identificado</div><div style={{fontSize:10,color:t.txt2,marginTop:4}}>Preencha o campo "Chegada" e "Informou analista" para calcular diárias.</div></div>
+                    <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>🛏️</div><div style={{fontSize:13,color:t.txt2}}>Nenhum registro com diária identificado</div><div style={{fontSize:10,color:t.txt2,marginTop:4}}>Preencha o campo "Chegada" para calcular diárias.</div></div>
                   ):(
                     <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                      {diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").map(({r,tipo,dias},i)=>(
-                        <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.danger}`,padding:12,cursor:"pointer"}}>
+                      {/* Alerta de verificação: RO pendente */}
+                      {(()=>{
+                        const semRo = diariasData.items.filter(i=>(i.tipo==="diaria"||i.tipo==="atraso")&&!i.r.ro);
+                        if(semRo.length===0) return null;
+                        return (
+                          <div style={{background:`rgba(255,152,0,.07)`,border:`1px solid rgba(255,152,0,.28)`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                            <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
+                            <div>
+                              <div style={{fontSize:11,color:"#f57c00",fontWeight:700}}>{semRo.length} DT{semRo.length>1?"s":""} com diária sem RO preenchido</div>
+                              <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Preencha o campo RO em Documentação para cada DT. DTs: {semRo.map(i=>i.r.dt).join(", ")}</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").map(({r,tipo,dias},i)=>{
+                        const semRo = !r.ro;
+                        const tipoLabel = tipo==="diaria" ? `🛏️ ${dias||0}d de diária` : `⚠️ Perdeu Agenda`;
+                        const tipoColor = tipo==="diaria" ? t.danger : t.ouro;
+                        return (
+                        <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${tipoColor}`,padding:12,cursor:"pointer"}}>
                           <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                             {r.nome||"—"}
-                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(246,70,93,.08)`,color:t.danger,border:`1px solid rgba(246,70,93,.2)`}}>🛏️ {dias||0}d de diária</span>
+                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(246,70,93,.08)`,color:tipoColor,border:`1px solid ${tipoColor}33`}}>{tipoLabel}</span>
+                            {semRo && <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.07)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.3)`}}>⚠️ RO vazio</span>}
                             <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>›</span>
                           </div>
                           <div style={{fontSize:11,color:t.txt2}}>
@@ -3891,7 +3929,8 @@ export default function App() {
                             </div>
                           )}
                         </div>
-                      ))}
+                      );
+                      })}
                     </div>
                   )}
                 </div>
@@ -3997,6 +4036,40 @@ export default function App() {
                       <button onClick={()=>{setApontForm({numero:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:""});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
                     </div>
                   </div>
+
+                  {/* ── RESUMO MENSAL DE VALORES ── */}
+                  {apontItems.length > 0 && (()=>{
+                    // Agrupa por mes_ref e tipo, soma valores
+                    const meses = [...new Set(apontItems.map(a=>a.mes_ref).filter(Boolean))].sort().reverse();
+                    const mesSel = meses[0] || "";
+                    const itensMes = apontItems.filter(a=>!mesSel || a.mes_ref===mesSel);
+                    const tipos = ["descarga","stretch","deslocamento","outros"];
+                    const tipoLabel = {descarga:"📦 Descarga",stretch:"📏 Stretch",deslocamento:"🚗 Deslocamento",outros:"📋 Outros"};
+                    const tipoColor = {descarga:t.azulLt,stretch:t.verde,deslocamento:t.ouro,outros:t.txt2};
+                    const totais = tipos.map(tp=>({tp,total:itensMes.filter(a=>a.tipo===tp).reduce((s,a)=>s+(parseFloat(a.valor)||0),0),qtd:itensMes.filter(a=>a.tipo===tp).length})).filter(x=>x.qtd>0);
+                    const grandTotal = totais.reduce((s,x)=>s+x.total,0);
+                    if(totais.length===0) return null;
+                    return (
+                      <div style={{background:`rgba(240,185,11,.04)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:12,padding:"12px 14px",marginBottom:14}}>
+                        <div style={{fontSize:9,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                          {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,10)} Resumo Mensal {mesSel?`— ${mesSel}`:""}
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:8,marginBottom:10}}>
+                          {totais.map(({tp,total,qtd})=>(
+                            <div key={tp} style={{background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
+                              <div style={{fontSize:10,color:tipoColor[tp],fontWeight:700,marginBottom:2}}>{tipoLabel[tp]}</div>
+                              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:t.txt,lineHeight:1}}>{fmtMoeda(total)}</div>
+                              <div style={{fontSize:8,color:t.txt2,marginTop:2}}>{qtd} apontamento{qtd!==1?"s":""}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{borderTop:`1px solid ${t.borda}`,paddingTop:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                          <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>TOTAL DO MÊS</span>
+                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.verde,letterSpacing:1}}>{fmtMoeda(grandTotal)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {(()=>{
                     const semFrs = apontItems.filter(a=>!a.frs_folha);
@@ -4740,7 +4813,7 @@ function mapearColuna(n){
                 {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status"},{k:"dias",l:"Dias"}]},
                 {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"},{k:"diaria_prev",l:"Diária Devida (R$)"},{k:"diaria_pg",l:"Diária Paga (R$)"}]},
                 {s:"Documentação",ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
-                {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"data_desc",l:"Descarga (data real de descarga)",type:"date"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",span:2}]},
+                {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",span:2}]},
               ].map((section,si) => (
                 <div key={si}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,margin:"14px 0 8px",display:"flex",alignItems:"center",gap:6}}>{hIco(section.ico,t.azulLt,10)} {section.s}<span style={{flex:1,height:1,background:`rgba(22,119,255,.12)`}} /></div>
@@ -4752,13 +4825,31 @@ function mapearColuna(n){
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
                     {section.fields.map(f => {
                       const isLocked = f.lock || (section.s==="Financeiro" && !canFin);
-                      const fieldVal = f.type==="date" ? brToInput(formData[f.k]) : (formData[f.k]||"");
+                      // Descarga aguardando: bloqueia data_desc quando desc_aguardando="sim"
+                      const isDescAguardando = f.k==="data_desc" && formData.desc_aguardando==="sim";
+                      const fieldVal = f.type==="date" ? brToInput(formData[f.k]) : f.type==="datetime" ? brToInputDT(formData[f.k]) : (formData[f.k]||"");
                       return (
                         <div key={f.k} style={{gridColumn:f.span===2?"1/-1":"auto",display:"flex",flexDirection:"column",gap:3}}>
                           <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:isLocked?t.txt2:t.txt2,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
                             {f.l} {isLocked && <span style={{color:t.ouro,fontSize:9}}>🔒</span>}
                           </label>
-                          {f.type==="select_sim_nao" ? (
+                          {f.type==="checkbox" ? (
+                            // ── CHECKBOX (ex: desc_aguardando) ──
+                            <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${formData[f.k]==="sim"?t.ouro:t.borda}`,background:formData[f.k]==="sim"?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
+                              <input
+                                type="checkbox"
+                                checked={formData[f.k]==="sim"}
+                                onChange={e=>{
+                                  const checked = e.target.checked;
+                                  setFormData(p=>({...p,[f.k]:checked?"sim":"", ...(checked?{data_desc:""}:{})}));
+                                }}
+                                style={{width:15,height:15,accentColor:t.ouro,cursor:"pointer"}}
+                              />
+                              <span style={{fontSize:11,color:formData[f.k]==="sim"?t.ouro:t.txt2,fontWeight:formData[f.k]==="sim"?700:400}}>
+                                {formData[f.k]==="sim" ? "⏳ Aguardando descarga" : "Marcar como Aguardando"}
+                              </span>
+                            </label>
+                          ) : f.type==="select_sim_nao" ? (
                             <select
                               value={formData[f.k]||""}
                               onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))}
@@ -4771,25 +4862,27 @@ function mapearColuna(n){
                             </select>
                           ) : (
                             <input
-                              type={f.type||"text"}
+                              type={f.type==="datetime"?"datetime-local":(f.type||"text")}
                               value={fieldVal}
-                              readOnly={isLocked}
-                              onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
-                              onChange={isLocked?undefined:e=>{
+                              readOnly={isLocked || isDescAguardando}
+                              onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):isDescAguardando?()=>alert("⏳ Desmarque 'Aguardando Descarga' para inserir a data/hora."):undefined}
+                              onChange={(isLocked || isDescAguardando)?undefined:e=>{
                                 const v = e.target.value;
-                                const newVal = f.type==="date"?inputToBr(v):v;
+                                const newVal = f.type==="date"?inputToBr(v):f.type==="datetime"?inputToBrDT(v):v;
                                 setFormData(p=>({...p,[f.k]:newVal}));
                                 // NFD alert: ao preencher data da descarga real
                                 if(f.k==="data_desc" && v){
                                   setNfdForm({numero:"",valor:"",tipo:"avaria"});
                                   setNfdAlertOpen(true);
+                                  // Remove o flag aguardando quando a descarga é preenchida
+                                  setFormData(p=>({...p,[f.k]:newVal, desc_aguardando:""}));
                                 }
                                 // Ocorrência/RO: ao preencher chegada, sugerir registro se RO ainda vazio
                                 if(f.k==="chegada" && v){
                                   setOcorrChegadaAlert(true);
                                 }
                               }}
-                              style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?.6:1,background:isLocked?`${t.inputBg}`:t.inputBg}}
+                              style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:(isLocked||isDescAguardando)?"not-allowed":"text",opacity:(isLocked||isDescAguardando)?.5:1,background:isDescAguardando?`rgba(240,185,11,.04)`:t.inputBg}}
                             />
                           )}
                         </div>
