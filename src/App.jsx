@@ -60,7 +60,7 @@ const PERMS_LISTA = [
 // ════════════════════════════════════════════════════════════
 const DESIGN = {
   // Raios de borda — btn=pílula, card=painel, tile=grade, inp=campo
-  r:   { btn:24, card:14, modal:20, tile:12, badge:20, inp:10, tag:4, ico:10, logo:11, sm:8 },
+  r:   { btn:10, card:14, modal:20, tile:12, badge:6, inp:10, tag:4, ico:10, logo:11, sm:8 },
   // Tamanhos de ícone SVG (px)
   ico: { xs:10, sm:13, md:16, lg:20, xl:24 },
   // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
@@ -2897,7 +2897,7 @@ export default function App() {
                 {k:"cpf",   ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,                  l:"CPF"},
                 {k:"placa", ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>, l:"PLACA"},
               ].map(b => (
-                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");setBuscaResult(null);setBuscaError(null)}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:24,cursor:"pointer",background:buscaTipo===b.k?`rgba(240,185,11,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
+                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");setBuscaResult(null);setBuscaError(null)}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.btn,cursor:"pointer",background:buscaTipo===b.k?`rgba(240,185,11,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
                   {hIco(b.ico,buscaTipo===b.k?t.ouro:t.txt2,15,2)} {b.l}
                 </button>
               ))}
@@ -2923,8 +2923,8 @@ export default function App() {
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{buscaResult.nome||"—"}</div>
                     <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,marginTop:2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                      <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>DT {buscaResult.dt}</span>
-                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:4,padding:"1px 6px",color:t.verde,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{buscaResult.placa}</span>}
+                      <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif"}}>DT {buscaResult.dt}</span>
+                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.verde,fontFamily:"'Bebas Neue',sans-serif"}}>{buscaResult.placa}</span>}
                       {buscaResult.data_desc?<span style={{...css.badge(t.verde,`rgba(2,192,118,.1)`,`rgba(2,192,118,.3)`)}}> DESCARREGADO</span>:buscaResult.data_agenda?<span style={{...css.badge(t.ouro,`rgba(240,185,11,.08)`,`rgba(240,185,11,.3)`)}}>AGUARDANDO</span>:<span style={{...css.badge(t.danger,`rgba(246,70,93,.08)`,`rgba(246,70,93,.3)`)}}>SEM AGENDA</span>}
                     </div>
                   </div>
@@ -4810,7 +4810,7 @@ function mapearColuna(n){
             <div style={{flex:1,overflowY:"auto",padding:16}}>
               {[
                 {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo"}]},
-                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status"},{k:"dias",l:"Dias"}]},
+                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias"}]},
                 {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"},{k:"diaria_prev",l:"Diária Devida (R$)"},{k:"diaria_pg",l:"Diária Paga (R$)"}]},
                 {s:"Documentação",ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
                 {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",span:2}]},
@@ -4859,6 +4859,21 @@ function mapearColuna(n){
                               <option value="">— Selecione —</option>
                               <option value="sim">✅ Sim</option>
                               <option value="nao">❌ Não</option>
+                            </select>
+                          ) : f.type==="select_status" ? (
+                            <select
+                              value={formData[f.k]||""}
+                              onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))}
+                              disabled={isLocked}
+                              style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?.6:1}}
+                            >
+                              <option value="">— Selecione —</option>
+                              <option value="CARREGADO">📦 CARREGADO</option>
+                              <option value="PENDENTE">⏳ PENDENTE</option>
+                              <option value="NO-SHOW">🚫 NO-SHOW</option>
+                              <option value="NÃO ACEITE">❌ NÃO ACEITE</option>
+                              <option value="EM ABERTO">🔓 EM ABERTO</option>
+                              <option value="CANCELADO">🛑 CANCELADO</option>
                             </select>
                           ) : (
                             <input
