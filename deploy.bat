@@ -37,14 +37,8 @@ echo.
 REM ════════════════════════════════════════
 REM  [0] BACKUP AUTOMATICO antes de tudo
 REM ════════════════════════════════════════
-for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set dt=%%I
-set ano=%dt:~0,4%
-set mes=%dt:~4,2%
-set dia=%dt:~6,2%
-set hora=%dt:~8,2%
-set min=%dt:~10,2%
-set seg=%dt:~12,2%
-set STAMP=%ano%%mes%%dia%_%hora%%min%%seg%
+REM Usa PowerShell para timestamp (compativel com Windows 10/11)
+for /f "tokens=*" %%I in ('powershell -NoProfile -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set STAMP=%%I
 set BKPFILE=src\backups\App.jsx.bckp_%STAMP%
 set LOGFILE=src\backups\log_%STAMP%.txt
 
@@ -53,7 +47,7 @@ copy /Y "src\App.jsx" "%BKPFILE%" >nul
 echo [BACKUP] %BKPFILE% criado.
 
 REM ── Log do backup ──
-echo BACKUP DEPLOY - %ano%/%mes%/%dia% %hora%:%min%:%seg% > "%LOGFILE%"
+echo BACKUP DEPLOY - %STAMP% > "%LOGFILE%"
 git log --oneline -3 >> "%LOGFILE%"
 echo. >> "%LOGFILE%"
 echo Arquivo salvo: %BKPFILE% >> "%LOGFILE%"
@@ -89,7 +83,7 @@ REM ═════════════════════════�
 echo.
 set /p msg=[3/5] Mensagem do commit (Enter = timestamp automatico):
 if "!msg!"=="" (
-  set "msg=deploy: %ano%-%mes%-%dia% %hora%:%min%"
+  set "msg=deploy: %STAMP%"
 )
 
 echo Commitando: !msg!
