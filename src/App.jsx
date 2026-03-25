@@ -82,6 +82,18 @@ const hexRgb = (hex, a) => {
 // ══════════════════════════════════════════════
 const DEV_CHANGELOG = [
   {
+    data: "2026-03-25", sessao: "Sessão 15",
+    itens: [
+      "FEAT · Ocorrência/RO na Chegada: ao preencher data de chegada real no modal de edição, abre alerta para registrar o RO (Registro de Ocorrência) — inerente à existência de NFD; campo RO preenchido inline e salvo no registro",
+      "FEAT · Auditoria por Sessão: LOGIN e LOGOUT agora registrados automaticamente em co_logs_alteracoes com usuário, perfil e data/hora — Admin > Log > Operacional mostra histórico por sessão",
+      "FEAT · Admin > Contatos/Motoristas: seção agora colapsável (mesmo padrão de Conexões Supabase e GSheets)",
+      "FEAT · Dashboard KPIs: ícones emoji substituídos por SVG no padrão DESIGN.* (Carregamentos, DTs Únicas, Motoristas, Total CTE, Alertas)",
+      "FEAT · Dashboard Filtros/Botões: cabeçalho Filtros usa SVG; botões de agrupamento e tipo de gráfico padronizados com DESIGN.r.tag, hexRgb e DESIGN.fnt.b; ícones de gráfico substituídos por SVG (bar/pie)",
+      "FEAT · Diárias e Descargas: modo padrão alterado para 'blocos' (2 colunas) — se adequa melhor a desktops padrão mantendo a opção de alternar para linhas",
+      "INFO · Design Audit: para encontrar modais com layout antigo, acesse Admin > Log de Alterações > aba Desenvolvimento > Auditar Design (ou console: auditarDesign())",
+    ],
+  },
+  {
     data: "2026-03-24", sessao: "Sessão 14",
     itens: [
       "FEAT · DESIGN tokens centralizados: objeto DESIGN no topo do arquivo — DESIGN.r (borderRadius), DESIGN.ico (tamanhos ícone), DESIGN.sw (stroke SVG), DESIGN.fnt (famílias), DESIGN.ls (letter-spacing)",
@@ -91,6 +103,13 @@ const DEV_CHANGELOG = [
       "FEAT · Auditoria de Design: Admin > Desenvolvimento > Auditar Design — detecta borderRadius e fontFamily fora dos tokens DESIGN.*; também acessível via console: auditarDesign()",
       "FEAT · Busca > WPP: botões de modelo convertidos para css.btnCard + ícones SVG (sem emojis)",
       "FIX · Busca: cabeçalho resultado usa padrão dark/gold (era gradiente verde); info rows usam css.card + hIco; KPIs de data usam css.kpi; financeiro usa css.kpi",
+      "FIX · deploy.bat: removidos caracteres Unicode (╔ ║ ╚ ═) que causavam erro no CMD Windows; adicionado cd /d %~dp0 para garantir execução na pasta correta; diagnóstico aprimorado com verificação de npm/git no PATH",
+      "FIX · Planilha Controle Financeiro (Apontamentos): corrigido bug 'abre nada' — filtro DCC-only removido; agora exporta TODOS os registros do período",
+      "FEAT · Planilha Controle Financeiro: expandida para todos os campos operacionais — DT, Motorista, CPF, Placa, Status, Carregamento, Descarga, Origem, Destino, Cliente, Valor CTE, Valor Motorista, ADT, Saldo, Diárias Devida/Paga, Data Manifesto, CTE, MDF, MAT, NF, RO, Chegada, Gerenciadora, SGS, CTE Comp., DCC#1 e DCC#2, Apontamento vinculado",
+      "FEAT · NFD Alert: ao preencher data de descarga real no modal de edição, abre alerta para registrar NFD (Nota de Devolução) com Nº, Valor e Motivo (Avaria/Falta/Devolução); salvo no registro como campo nfd",
+      "FEAT · Barra de Navegação: ícone Buscar movido para último à direita",
+      "FEAT · Operacional > Ocorrências: reformulado — lista todas as DTs com qualquer ocorrência (SGS, ocorrência local, diária/atraso, DCC) com badges coloridos e ordenação por prioridade",
+      "FEAT · Modal Detalhe: seções Minutas DCC, CTE Complementar e Minutas Descarga agora são colapsáveis — DCC e Minutas Descarga abertos por padrão; CTE Complementar fechado por padrão (indica 'preenchido' quando há dados)",
     ],
   },
   {
@@ -534,9 +553,9 @@ export default function App() {
   const [dscData, setDscData] = useState(new Date().toISOString().slice(0,10));
 
   // View mode state (linhas | blocos) + colunas para Diarias e Descarga
-  const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","linhas"));
+  const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","blocos"));
   const [diariaCols, setDiariaCols] = useState(() => loadJSON("co_diaria_cols", 2));
-  const [descargaView, setDescargaView] = useState(() => loadJSON("co_descarga_view","linhas"));
+  const [descargaView, setDescargaView] = useState(() => loadJSON("co_descarga_view","blocos"));
   const [descargaCols, setDescargaCols] = useState(() => loadJSON("co_descarga_cols", 2));
 
   // Modal state
@@ -566,6 +585,15 @@ export default function App() {
   const [detalheMinDsc, setDetalheMinDsc] = useState([{tipo:"MAM",cte:"",mdf:"",num:""}]);
   const [salvandoMins, setSalvandoMins] = useState(false);
   const [detalheTemDcc, setDetalheTemDcc] = useState(null); // null=auto | "sim" | "nao"
+  // Seções colapsáveis do modal de detalhe
+  const [detalheSecDcc,    setDetalheSecDcc]    = useState(true);
+  const [detalheSecCteComp,setDetalheSecCteComp]= useState(false);
+  const [detalheSecMinDsc, setDetalheSecMinDsc] = useState(true);
+  // NFD — Nota de Devolução
+  const [nfdAlertOpen, setNfdAlertOpen] = useState(false);
+  const [nfdForm, setNfdForm]           = useState({numero:"",valor:"",tipo:"avaria"});
+  // Alerta de Ocorrência/RO na chegada do motorista
+  const [ocorrChegadaAlert, setOcorrChegadaAlert] = useState(false);
 
   // Item 4 - Acompanhamento dia a dia da DT
   const [acompDias, setAcompDias] = useState([]);
@@ -576,6 +604,7 @@ export default function App() {
   // Alerts
   const [alertasOpen, setAlertasOpen] = useState(false);
   const [conexoesOpen, setConexoesOpen] = useState(false);
+  const [contatosAdminOpen, setContatosAdminOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email",""));
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
@@ -816,6 +845,10 @@ export default function App() {
     // Auto-detecta existência de DCC: se alguma minuta tem dados → "sim", senão → null (para usuário informar)
     const hasDcc = dccArr.some(m => m.cte||m.mdf||m.num||m.valor) || !!(detalheDT.cte_comp||detalheDT.mdf_comp);
     setDetalheTemDcc(hasDcc ? "sim" : null);
+    // Reset seções colapsáveis
+    setDetalheSecDcc(true);
+    setDetalheSecCteComp(false);
+    setDetalheSecMinDsc(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detalheDT?.dt]);
 
@@ -1102,6 +1135,7 @@ export default function App() {
         setPerfil(p); setPerms(pm); setAuthed(true);
         setUsuarioLogado("Admin");
         saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin",ts:Date.now()});
+        registrarLog("LOGIN", `Admin logou no sistema (admin) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
         setAuthSenha(""); setAuthEmail("");
       } else {
         setAuthMsg({t:"err",m:"❌ Senha incorreta"});
@@ -1150,6 +1184,7 @@ export default function App() {
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado(found.nome || found.email);
       saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email,ts:Date.now()});
+      registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
     } else {
       // Checar se existe na lista local para dar mensagem correta
@@ -1160,6 +1195,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    registrarLog("LOGOUT", `${usuarioLogado||perfil||"usuário"} saiu do sistema · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
     localStorage.removeItem("co_sessao");
     setAuthed(false); setPerfil(null); setPerms({});
     setActiveTab("busca"); setAuthSenha(""); setAuthEmail("");
@@ -1780,8 +1816,6 @@ export default function App() {
     </svg>
   );
   const tabs = [
-    {k:"busca", l:"Buscar",
-      ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
     {k:"planilha", l:"Planilha", perm:"planilha",
@@ -1796,6 +1830,9 @@ export default function App() {
       ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
     ...(isAdmin ? [{k:"admin", l:"Admin",
       ico:(a)=>svgIco(a,<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>)}] : []),
+    // Buscar — último ícone à direita
+    {k:"busca", l:"Buscar",
+      ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
   ].filter(tb => !tb.perm || perms[tb.perm] !== false);
 
   // ══════════════════════════════════════════════════════
@@ -3105,11 +3142,13 @@ export default function App() {
         {activeTab === "dashboard" && (
           <div>
             <div style={{...css.card,padding:12,marginBottom:14}}>
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8}}>🔍 Filtros</div>
+              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
+                {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,12,2)} Filtrar por Mês
+              </div>
               <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                <button onClick={()=>setDashMes("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dashMes==="todos"?`rgba(240,185,11,.07)`:t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:"inherit"}}>Todos</button>
+                <button onClick={()=>setDashMes("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
                 {dashData.meses.map(m => (
-                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dashMes===m?`rgba(240,185,11,.07)`:t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:"inherit"}}>{m}</button>
+                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
                 ))}
               </div>
             </div>
@@ -3118,11 +3157,11 @@ export default function App() {
               const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
               return (
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))",gap:10,marginBottom:14}}>
-                  <div className="co-kpi" style={css.kpi(t.ouro)}><div style={{fontSize:20,marginBottom:4}}>🚛</div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1,color:t.ouro}}>{dashData.filtrado.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamentos</div></div>
-                  <div style={css.kpi(t.verde)}><div style={{fontSize:20,marginBottom:4}}>🔢</div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1,color:t.verde}}>{dashData.dtsU.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>DTs Únicas</div></div>
-                  <div style={{...css.kpi(t.azulLt),cursor:"pointer"}} onClick={()=>setActiveTab("motoristas")}><div style={{fontSize:20,marginBottom:4}}>👨‍✈️</div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1,color:t.azulLt}}>{motsUniq.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Motoristas</div></div>
-                  {canFin && <div style={css.kpi(t.azul)}><div style={{fontSize:20,marginBottom:4}}>💰</div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:1,color:t.azulLt}}>R$ {(dashData.cteT/1000).toFixed(1)}k</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Total CTE</div></div>}
-                  <div style={{...css.kpi(t.danger),cursor:"pointer"}} onClick={()=>setAlertasOpen(!alertasOpen)}><div style={{fontSize:20,marginBottom:4}}>🚨</div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,letterSpacing:1,color:t.danger}}>{alertas.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Alertas</div></div>
+                  <div className="co-kpi" style={css.kpi(t.ouro)}><div style={{marginBottom:6}}>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.ouro}}>{dashData.filtrado.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamentos</div></div>
+                  <div style={css.kpi(t.verde)}><div style={{marginBottom:6}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>,t.verde,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.verde}}>{dashData.dtsU.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>DTs Únicas</div></div>
+                  <div style={{...css.kpi(t.azulLt),cursor:"pointer"}} onClick={()=>setActiveTab("motoristas")}><div style={{marginBottom:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.azulLt}}>{motsUniq.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Motoristas</div></div>
+                  {canFin && <div style={css.kpi(t.azul)}><div style={{marginBottom:6}}>{hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:20,letterSpacing:1,color:t.azulLt}}>R$ {(dashData.cteT/1000).toFixed(1)}k</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Total CTE</div></div>}
+                  <div style={{...css.kpi(t.danger),cursor:"pointer"}} onClick={()=>setAlertasOpen(!alertasOpen)}><div style={{marginBottom:6}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.danger}}>{alertas.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Alertas</div></div>
                 </div>
               );
             })()}
@@ -3134,11 +3173,14 @@ export default function App() {
                 <span style={{flex:1,height:1,background:t.borda}} />
                 {/* Toggle agrupamento */}
                 {[{k:"mes",l:"Mês"},{k:"motorista",l:"Motorista"},{k:"destino",l:"Destino"},{k:"status",l:"Status"}].map(g=>(
-                  <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:5,cursor:"pointer",background:dashGroupBy===g.k?`rgba(240,185,11,.07)`:t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{g.l}</button>
+                  <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
                 ))}
                 {/* Toggle tipo de gráfico */}
-                {[{k:"bar",ico:"📊"},{k:"pie",ico:"🥧"}].map(tp=>(
-                  <button key={tp.k} onClick={()=>setDashChartType(tp.k)} style={{padding:"3px 8px",fontSize:11,fontWeight:700,border:`1.5px solid ${dashChartType===tp.k?t.azul:t.borda}`,borderRadius:5,cursor:"pointer",background:dashChartType===tp.k?`rgba(22,119,255,.09)`:t.card2,color:dashChartType===tp.k?t.azulLt:t.txt2,fontFamily:"inherit"}}>{tp.ico}</button>
+                {[
+                  {k:"bar",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
+                  {k:"pie",svg:<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>}
+                ].map(tp=>(
+                  <button key={tp.k} onClick={()=>setDashChartType(tp.k)} style={{padding:"3px 8px",fontWeight:700,border:`1.5px solid ${dashChartType===tp.k?t.azul:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashChartType===tp.k?hexRgb(t.azul,.09):t.card2,color:dashChartType===tp.k?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center"}}>{hIco(tp.svg,dashChartType===tp.k?t.azulLt:t.txt2,14,DESIGN.sw.md)}</button>
                 ))}
               </div>
               <div style={{height:dashChartType==="pie"?300:220}}>
@@ -3852,23 +3894,81 @@ export default function App() {
               )}
 
               {/* ──── OCORRÊNCIAS ──── */}
-              {operSubTab==="ocorrencias" && (
-                <div>
-                  <div style={{...css.secTitle,marginBottom:12}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,12)} Ocorrências Gerais <span style={{flex:1,height:1,background:t.borda}} /></div>
-                  <div style={{background:t.card2,borderRadius:10,padding:"12px 14px",border:`1px solid ${t.borda}`,fontSize:11,color:t.txt2,lineHeight:1.6}}>
-                    💡 Para registrar ou ver ocorrências de um DT específico, abra o card do motorista (nas abas Busca, Diárias ou Descarga) e clique em <strong style={{color:t.txt}}>ver detalhes</strong>. As ocorrências ficam registradas no histórico de cada DT.
-                  </div>
-                  <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
-                    {DADOS.filter(r=>r.sgs).slice(0,30).map((r,i)=>(
-                      <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.ouro}`,padding:"10px 12px",cursor:"pointer"}}>
-                        <div style={{fontSize:12,fontWeight:700,color:t.txt,marginBottom:3}}>{r.nome||"—"} <span style={{fontSize:9,color:t.txt2}}>· DT {r.dt}</span></div>
-                        <div style={{fontSize:10,color:t.ouro}}>📞 SGS: {r.sgs}</div>
+              {operSubTab==="ocorrencias" && (()=>{
+                // Monta lista de DTs com qualquer tipo de ocorrência
+                const pjOcorr = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
+                const diariasSet = new Set(diariasData.items.filter(it=>it.tipo==="diaria"||it.tipo==="atraso").map(it=>it.r.dt));
+                const dccSet = new Set(DADOS.filter(r=>{
+                  const dccs = pjOcorr(r.minutas_dcc,[]);
+                  return dccs.some(m=>m.cte||m.mdf||m.num||m.valor)||!!(r.cte_comp||r.mdf_comp);
+                }).map(r=>r.dt));
+                // Build entries
+                const ocorrEntries = DADOS.map(r=>{
+                  const badges = [];
+                  const hasOcorrLocal = (()=>{try{const v=localStorage.getItem(`co_ocorr_${r.dt}`);if(!v)return false;const arr=JSON.parse(v);return Array.isArray(arr)&&arr.length>0;}catch{return false;}})();
+                  if(r.sgs)               badges.push({cor:t.ouro,   label:`SGS: ${r.sgs}`});
+                  if(hasOcorrLocal)       badges.push({cor:"#E8820C", label:"Ocorrência"});
+                  if(diariasSet.has(r.dt)) badges.push({cor:t.danger, label:"Diária"});
+                  if(dccSet.has(r.dt))    badges.push({cor:t.azulLt,  label:"DCC"});
+                  if(r.data_agenda&&!r.data_desc){
+                    const da=parseData(r.data_agenda),hoje2=new Date();hoje2.setHours(0,0,0,0);
+                    const dif=da?Math.floor((hoje2-da)/(1000*60*60*24)):0;
+                    if(dif>=1) badges.push({cor:t.danger,label:`Atraso ${dif}d`});
+                  }
+                  return badges.length>0 ? {r, badges} : null;
+                }).filter(Boolean);
+                // Sort: atraso/diaria first, then sgs, then dcc, then ocorr
+                const prioScore = b => {
+                  if(b.label.startsWith("Atraso")||b.label==="Diária") return 0;
+                  if(b.label.startsWith("SGS"))    return 1;
+                  if(b.label==="DCC")              return 2;
+                  return 3;
+                };
+                ocorrEntries.sort((a,b)=>Math.min(...a.badges.map(prioScore))-Math.min(...b.badges.map(prioScore)));
+                return (
+                  <div>
+                    <div style={{...css.secTitle,marginBottom:8}}>
+                      {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,12)} Ocorrências por DT
+                      <span style={{fontSize:9,background:"rgba(240,185,11,.12)",border:"1px solid rgba(240,185,11,.25)",borderRadius:10,padding:"1px 7px",color:t.ouro,fontWeight:700,marginLeft:4}}>{ocorrEntries.length}</span>
+                      <span style={{flex:1,height:1,background:t.borda}} />
+                    </div>
+                    <div style={{fontSize:9,color:t.txt2,marginBottom:10,lineHeight:1.6}}>
+                      DTs com ocorrências registradas (SGS · Ocorrência · Diária · DCC · Atraso). Clique para abrir o detalhe.
+                    </div>
+                    {/* Legenda */}
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+                      {[{cor:t.ouro,l:"SGS"},{cor:"#E8820C",l:"Ocorrência"},{cor:t.danger,l:"Diária/Atraso"},{cor:t.azulLt,l:"DCC"}].map(({cor,l})=>(
+                        <span key={l} style={{fontSize:8,background:`${cor}18`,border:`1px solid ${cor}44`,borderRadius:10,padding:"2px 7px",color:cor,fontWeight:700}}>{l}</span>
+                      ))}
+                    </div>
+                    {ocorrEntries.length===0 ? (
+                      <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📭</div><div style={{fontSize:12,color:t.txt2}}>Nenhum DT com ocorrências registradas</div></div>
+                    ) : (
+                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                        {ocorrEntries.map(({r,badges},i)=>{
+                          const topBadge = badges.sort((a,b)=>prioScore(a)-prioScore(b))[0];
+                          return (
+                            <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${topBadge.cor}`,padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"all .15s"}}>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:12,fontWeight:700,color:t.txt,marginBottom:3}}>
+                                  {r.nome||"—"} <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>· DT {r.dt}</span>
+                                  {r.placa&&<span style={{fontSize:9,color:t.txt2,fontWeight:400}}> · {r.placa}</span>}
+                                </div>
+                                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                                  {badges.map((b,bi)=>(
+                                    <span key={bi} style={{fontSize:8,background:`${b.cor}18`,border:`1px solid ${b.cor}44`,borderRadius:8,padding:"1px 6px",color:b.cor,fontWeight:700}}>{b.label}</span>
+                                  ))}
+                                </div>
+                              </div>
+                              {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt2,14,2)}
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                    {DADOS.filter(r=>r.sgs).length===0 && <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📭</div><div style={{fontSize:12,color:t.txt2}}>Nenhum registro com SGS preenchido</div></div>}
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* ──── APONTAMENTOS ──── */}
               {operSubTab==="apontamentos" && (
@@ -4256,11 +4356,12 @@ function mapearColuna(n){
               </div>
             )}
 
-            {/* NORMALIZAR CONTATOS (Item 3) */}
-            <div style={{...css.secTitle,marginTop:24}}>
-              {hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Contatos / Motoristas <span style={{flex:1,height:1,background:t.borda}} />
+            {/* NORMALIZAR CONTATOS (Item 3) — colapsável */}
+            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setContatosAdminOpen(!contatosAdminOpen)}>
+              {hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Contatos / Motoristas <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{contatosAdminOpen?"▲":"▼"}</span>
+              <span style={{flex:1,height:1,background:t.borda}} />
             </div>
-            <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
+            {contatosAdminOpen && <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
               <p style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:10}}>
                 Normaliza os dados de todos os motoristas cadastrados: capitalização dos nomes, formato de telefone <strong style={{color:t.txt}}>(XX) XXXXX-XXXX</strong> e placas em maiúsculas sem caracteres extras.
               </p>
@@ -4386,7 +4487,7 @@ function mapearColuna(n){
               <div style={{padding:"8px 10px",background:t.bg,borderRadius:8,border:`1px solid ${t.borda}`,fontSize:10,color:t.txt2,lineHeight:1.5}}>
                 💡 Google Contacts: <strong style={{color:t.txt}}>contacts.google.com</strong> → Exportar → CSV Google. Para importar, exporte da aba Motoristas ou baixe o .csv/.vcf e importe aqui.
               </div>
-            </div>
+            </div>}
 
             {/* LOG DE ALTERACOES */}
             <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={async()=>{const next=!logsOpen;setLogsOpen(next);if(next)await carregarLogs();}}>
@@ -4648,7 +4749,17 @@ function mapearColuna(n){
                               onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
                               onChange={isLocked?undefined:e=>{
                                 const v = e.target.value;
-                                setFormData(p=>({...p,[f.k]:f.type==="date"?inputToBr(v):v}));
+                                const newVal = f.type==="date"?inputToBr(v):v;
+                                setFormData(p=>({...p,[f.k]:newVal}));
+                                // NFD alert: ao preencher data da descarga real
+                                if(f.k==="data_desc" && v){
+                                  setNfdForm({numero:"",valor:"",tipo:"avaria"});
+                                  setNfdAlertOpen(true);
+                                }
+                                // Ocorrência/RO: ao preencher chegada, sugerir registro se RO ainda vazio
+                                if(f.k==="chegada" && v){
+                                  setOcorrChegadaAlert(true);
+                                }
                               }}
                               style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?.6:1,background:isLocked?`${t.inputBg}`:t.inputBg}}
                             />
@@ -4884,63 +4995,84 @@ function mapearColuna(n){
                         {detalheTemDcc===null&&<div style={{fontSize:9,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
                       </div>
 
-                      {/* ─ Minutas DCC (Diárias) ─ */}
-                      {detalheTemDcc==="sim"&&<div style={{marginBottom:12}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.ouro,marginBottom:8,letterSpacing:.5}}>🟡 MINUTAS DCC</div>
-                        {detalheMinDcc.map((mn,idx)=>(
-                          <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
-                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                              <div style={{display:"flex",gap:5}}>
-                                {["D01-MAT","D05-MAR"].map(tp=>(
-                                  <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
-                                ))}
-                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
+                      {/* ─ Minutas DCC — colapsável (aberto por padrão) ─ */}
+                      {detalheTemDcc==="sim"&&<div style={{marginBottom:10}}>
+                        <button onClick={()=>setDetalheSecDcc(p=>!p)} style={{width:"100%",background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecDcc?6:0}}>
+                          {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,13,2)}
+                          <span style={{fontSize:10,fontWeight:700,color:t.ouro,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DCC</span>
+                          <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDcc.length} minuta(s)</span>
+                          {hIco(detalheSecDcc?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
+                        </button>
+                        {detalheSecDcc&&<div>
+                          {detalheMinDcc.map((mn,idx)=>(
+                            <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                                <div style={{display:"flex",gap:5}}>
+                                  {["D01-MAT","D05-MAR"].map(tp=>(
+                                    <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                  ))}
+                                  <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
+                                </div>
+                                {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
                               </div>
-                              {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                              <div className="co-min-g4">
+                                <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
+                                <div><div style={lblP2}>MDF DCC</div><input value={mn.mdf} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
+                                <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
+                                <div><div style={lblP2}>Valor</div><input value={mn.valor} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} style={inpP2} placeholder="0,00" /></div>
+                              </div>
                             </div>
-                            <div className="co-min-g4">
-                              <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>MDF DCC</div><input value={mn.mdf} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>Valor</div><input value={mn.valor} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} style={inpP2} placeholder="0,00" /></div>
-                            </div>
-                          </div>
-                        ))}
-                        <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                          ))}
+                          <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                        </div>}
                       </div>}
 
-                      {/* ─ CTE Complementar ─ sempre visível, independente do DCC ─ */}
-                      <div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px",marginBottom:12}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:6,letterSpacing:.5}}>🔵 CTE COMPLEMENTAR</div>
-                        <div className="co-min-g3">
-                          <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
-                          <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
-                          <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
-                        </div>
+                      {/* ─ CTE Complementar — colapsável (fechado por padrão) ─ */}
+                      <div style={{marginBottom:10}}>
+                        <button onClick={()=>setDetalheSecCteComp(p=>!p)} style={{width:"100%",background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecCteComp?6:0}}>
+                          {hIco(<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,t.azulLt,13,2)}
+                          <span style={{fontSize:10,fontWeight:700,color:t.azulLt,letterSpacing:.5,flex:1,textAlign:"left"}}>CTE COMPLEMENTAR</span>
+                          {(detalheCteComp.cte||detalheCteComp.mdf||detalheCteComp.mat)&&<span style={{fontSize:8,background:"rgba(22,119,255,.12)",borderRadius:8,padding:"1px 6px",color:t.azulLt,fontWeight:700}}>preenchido</span>}
+                          {hIco(detalheSecCteComp?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
+                        </button>
+                        {detalheSecCteComp&&<div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px"}}>
+                          <div className="co-min-g3">
+                            <div><div style={lblP2}>CTE COMP</div><input value={detalheCteComp.cte} onChange={e=>setDetalheCteComp(p=>({...p,cte:e.target.value}))} style={inpP2} /></div>
+                            <div><div style={lblP2}>MDF COMP</div><input value={detalheCteComp.mdf} onChange={e=>setDetalheCteComp(p=>({...p,mdf:e.target.value}))} style={inpP2} /></div>
+                            <div><div style={lblP2}>MAT COMP</div><input value={detalheCteComp.mat} onChange={e=>setDetalheCteComp(p=>({...p,mat:e.target.value}))} style={inpP2} /></div>
+                          </div>
+                        </div>}
                       </div>
 
-                      {/* ─ Minutas Descarga (MAM/MRM) ─ */}
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8,letterSpacing:.5}}>📦 MINUTAS DESCARGA</div>
-                        {detalheMinDsc.map((mn,idx)=>(
-                          <div key={idx} style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
-                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                              <div style={{display:"flex",gap:5}}>
-                                {["MAM","MRM"].map(tp=>(
-                                  <button key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
-                                ))}
-                                <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
+                      {/* ─ Minutas Descarga — colapsável (aberto por padrão) ─ */}
+                      <div style={{marginBottom:10}}>
+                        <button onClick={()=>setDetalheSecMinDsc(p=>!p)} style={{width:"100%",background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecMinDsc?6:0}}>
+                          {hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.04 8.73-5.04M12 22V12"/></>,t.azulLt,13,2)}
+                          <span style={{fontSize:10,fontWeight:700,color:t.azulLt,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DESCARGA</span>
+                          <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDsc.length} minuta(s)</span>
+                          {hIco(detalheSecMinDsc?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
+                        </button>
+                        {detalheSecMinDsc&&<div>
+                          {detalheMinDsc.map((mn,idx)=>(
+                            <div key={idx} style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                                <div style={{display:"flex",gap:5}}>
+                                  {["MAM","MRM"].map(tp=>(
+                                    <button key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                  ))}
+                                  <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
+                                </div>
+                                {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
                               </div>
-                              {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                              <div className="co-min-g3">
+                                <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
+                                <div><div style={lblP2}>MDF {mn.tipo}</div><input value={mn.mdf} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
+                                <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
+                              </div>
                             </div>
-                            <div className="co-min-g3">
-                              <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>MDF {mn.tipo}</div><input value={mn.mdf} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP2} /></div>
-                              <div><div style={lblP2}>{mn.tipo} (nº)</div><input value={mn.num} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP2} /></div>
-                            </div>
-                          </div>
-                        ))}
-                        <button onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.05)`,border:`1px dashed rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta Descarga</button>
+                          ))}
+                          <button onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.05)`,border:`1px dashed rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta Descarga</button>
+                        </div>}
                       </div>
 
                       {/* ─ Botão Salvar ─ */}
@@ -6526,7 +6658,7 @@ function mapearColuna(n){
         );
       })()}
 
-      {/* ═══ MODAL: PLANILHA CONTROLE FINANCEIRO DESCARGAS ═══ */}
+      {/* ═══ MODAL: PLANILHA CONTROLE FINANCEIRO OPERACIONAL ═══ */}
       {relCtrlDccOpen && (()=>{
         const gerarCtrlDcc = () => {
           if(!relCtrlDccFrom||!relCtrlDccTo){showToast("⚠️ Selecione o período","warn");return;}
@@ -6534,82 +6666,153 @@ function mapearColuna(n){
           const [tyy,tmm,tdd] = relCtrlDccTo.split("-").map(Number);
           const dFrom = new Date(fyy,fmm-1,fdd);
           const dTo   = new Date(tyy,tmm-1,tdd,23,59,59);
+          const parseDataBr = s => {
+            if(!s) return null;
+            if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));}
+            if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
+            return null;
+          };
           const linhas = [];
           DADOS.forEach(reg=>{
-            // Pega data de referência: data_desc ou data_carr
-            const dataRef = reg.data_desc || reg.data_carr || "";
-            if(!dataRef) return;
-            const [d,m,y] = dataRef.split("/").map(Number);
-            if(!d||!m||!y) return;
-            const dt = new Date(y,m-1,d);
-            if(dt<dFrom||dt>dTo) return;
-            // minutas DCC (D01-MAT / D05-MAR)
+            // Usa data_carr OU data_desc como referência do período
+            const dataRef = reg.data_carr || reg.data_desc || "";
+            const dtRef = parseDataBr(dataRef);
+            if(!dtRef) return;
+            if(dtRef<dFrom||dtRef>dTo) return;
+            // Apontamento vinculado pela DT
+            const apont = apontItems.find(a=>a.dt_rel===reg.dt)||null;
+            // DCC minutas
             const dccs = pj(reg.minutas_dcc,[]);
-            if(dccs.length===0) return; // só registros com DCC
-            dccs.forEach(mn=>{
-              // apontamento vinculado (se houver dt_rel ou filial)
-              const apont = apontItems.find(a=>a.dt_rel===reg.dt)||null;
-              linhas.push({
-                dt: reg.dt||"",
-                motorista: reg.nome||"",
-                placa: reg.placa||"",
-                data_carr: reg.data_carr||"",
-                data_desc: reg.data_desc||"",
-                tipo_dcc: mn.tipo||"",
-                cte_dcc: mn.cte||"",
-                mdf_dcc: mn.mdf||"",
-                num_dcc: mn.num||"",
-                valor_dcc: mn.valor||"",
-                cte_comp: reg.minutas_cte_comp?.cte || pj(reg.minutas_cte_comp,{}).cte || "",
-                mdf_comp: reg.minutas_cte_comp?.mdf || pj(reg.minutas_cte_comp,{}).mdf || "",
-                mat_comp: reg.minutas_cte_comp?.mat || pj(reg.minutas_cte_comp,{}).mat || "",
-                nf_apontamento: apont?.numero||"",
-                frs_folha: apont?.frs_folha||"",
-                mes_ref: apont?.mes_ref||"",
-                filial: apont?.filial||"",
-                valor_apont: apont?.valor||"",
-              });
+            const dcc0 = dccs[0]||{};
+            const dcc1 = dccs[1]||{};
+            // CTE Complementares
+            const cteCompObj = pj(reg.minutas_cte_comp,{});
+            linhas.push({
+              dt:           reg.dt||"",
+              motorista:    reg.nome||"",
+              cpf:          reg.cpf||"",
+              placa:        reg.placa||"",
+              status:       reg.status||"",
+              data_carr:    reg.data_carr||"",
+              data_desc:    reg.data_desc||"",
+              origem:       reg.origem||"",
+              destino:      reg.destino||"",
+              cliente:      reg.cliente||"",
+              vl_cte:       reg.vl_cte||"",
+              vl_contrato:  reg.vl_contrato||"",
+              adiant:       reg.adiant||"",
+              saldo:        reg.saldo||"",
+              diaria_prev:  reg.diaria_prev||"",
+              diaria_pg:    reg.diaria_pg||"",
+              data_manifesto: reg.data_manifesto||"",
+              cte:          reg.cte||"",
+              mdf:          reg.mdf||"",
+              mat:          reg.mat||"",
+              nf:           reg.nf||"",
+              ro:           reg.ro||"",
+              chegada:      reg.chegada||"",
+              gerenc:       reg.gerenc||"",
+              sgs:          reg.sgs||"",
+              // CTE Complementares
+              cte_comp:     cteCompObj.cte||"",
+              mdf_comp:     cteCompObj.mdf||"",
+              mat_comp:     cteCompObj.mat||"",
+              // DCC D01-MAT (primeira minuta)
+              dcc0_tipo:    dcc0.tipo||"",
+              dcc0_cte:     dcc0.cte||"",
+              dcc0_mdf:     dcc0.mdf||"",
+              dcc0_num:     dcc0.num||"",
+              dcc0_valor:   dcc0.valor||"",
+              // DCC D05-MAR (segunda minuta)
+              dcc1_tipo:    dcc1.tipo||"",
+              dcc1_cte:     dcc1.cte||"",
+              dcc1_mdf:     dcc1.mdf||"",
+              dcc1_num:     dcc1.num||"",
+              dcc1_valor:   dcc1.valor||"",
+              // Apontamento vinculado
+              apont_num:    apont?.numero||"",
+              apont_frs:    apont?.frs_folha||"",
+              apont_mes:    apont?.mes_ref||"",
+              apont_filial: apont?.filial||"",
+              apont_valor:  apont?.valor||"",
             });
           });
-          if(linhas.length===0){showToast("Nenhum registro com DCC no período","warn");return;}
+          if(linhas.length===0){showToast("Nenhum registro no período selecionado","warn");return;}
           const cols = [
-            {k:"dt",l:"DT"},
-            {k:"motorista",l:"Motorista"},
-            {k:"placa",l:"Placa"},
-            {k:"data_carr",l:"Carregamento"},
-            {k:"data_desc",l:"Descarga"},
-            {k:"tipo_dcc",l:"Tipo DCC"},
-            {k:"cte_dcc",l:"CTE DCC"},
-            {k:"mdf_dcc",l:"MDF DCC"},
-            {k:"num_dcc",l:"Nº DCC"},
-            {k:"valor_dcc",l:"Valor DCC"},
-            {k:"cte_comp",l:"CTE Comp."},
-            {k:"mdf_comp",l:"MDF Comp."},
-            {k:"mat_comp",l:"MAT Comp."},
-            {k:"nf_apontamento",l:"Nº Apontamento"},
-            {k:"frs_folha",l:"FRS · Folha"},
-            {k:"mes_ref",l:"Mês Ref."},
-            {k:"filial",l:"Filial"},
-            {k:"valor_apont",l:"Valor Apont."},
+            // Identificação
+            {k:"dt",          l:"DT"},
+            {k:"motorista",   l:"Motorista"},
+            {k:"cpf",         l:"CPF"},
+            {k:"placa",       l:"Placa"},
+            {k:"status",      l:"Status"},
+            // Datas e rota
+            {k:"data_carr",   l:"Carregamento"},
+            {k:"data_desc",   l:"Descarga"},
+            {k:"origem",      l:"Origem"},
+            {k:"destino",     l:"Destino"},
+            {k:"cliente",     l:"Cliente"},
+            // Financeiro
+            {k:"vl_cte",      l:"Valor CTE (Empresa)"},
+            {k:"vl_contrato", l:"Valor Motorista"},
+            {k:"adiant",      l:"Adiantamento"},
+            {k:"saldo",       l:"Saldo"},
+            {k:"diaria_prev", l:"Diária Devida (R$)"},
+            {k:"diaria_pg",   l:"Diária Paga (R$)"},
+            // Documentação
+            {k:"data_manifesto",l:"Data Manifesto"},
+            {k:"cte",         l:"CTE"},
+            {k:"mdf",         l:"MDF"},
+            {k:"mat",         l:"MAT / Contrato"},
+            {k:"nf",          l:"NF"},
+            {k:"ro",          l:"RO"},
+            {k:"chegada",     l:"Chegada no Cliente"},
+            {k:"gerenc",      l:"Gerenciadora"},
+            {k:"sgs",         l:"SGS"},
+            // CTE Complementares
+            {k:"cte_comp",    l:"CTE Comp."},
+            {k:"mdf_comp",    l:"MDF Comp."},
+            {k:"mat_comp",    l:"MAT Comp."},
+            // DCC D01-MAT
+            {k:"dcc0_tipo",   l:"DCC#1 Tipo"},
+            {k:"dcc0_cte",    l:"DCC#1 CTE"},
+            {k:"dcc0_mdf",    l:"DCC#1 MDF"},
+            {k:"dcc0_num",    l:"DCC#1 Nº"},
+            {k:"dcc0_valor",  l:"DCC#1 Valor"},
+            // DCC D05-MAR
+            {k:"dcc1_tipo",   l:"DCC#2 Tipo"},
+            {k:"dcc1_cte",    l:"DCC#2 CTE"},
+            {k:"dcc1_mdf",    l:"DCC#2 MDF"},
+            {k:"dcc1_num",    l:"DCC#2 Nº"},
+            {k:"dcc1_valor",  l:"DCC#2 Valor"},
+            // Apontamento
+            {k:"apont_num",   l:"Apontamento Nº"},
+            {k:"apont_frs",   l:"FRS · Folha"},
+            {k:"apont_mes",   l:"Mês Ref."},
+            {k:"apont_filial",l:"Filial"},
+            {k:"apont_valor", l:"Valor Apont."},
           ];
           const per = `${relCtrlDccFrom}_${relCtrlDccTo}`;
-          exportODS(linhas, cols, `controle-descargas-${per}`);
-          showToast(`✅ Planilha gerada — ${linhas.length} linha(s)`,"ok");
+          exportODS(linhas, cols, `controle-financeiro-${per}`);
+          showToast(`✅ Planilha gerada — ${linhas.length} registro(s)`,"ok");
           setRelCtrlDccOpen(false);
         };
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setRelCtrlDccOpen(false)}>
             <div style={{background:t.card,borderRadius:16,padding:20,width:"100%",maxWidth:440,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)"}} onClick={e=>e.stopPropagation()}>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"rgba(22,119,255,.12)",border:"1.5px solid rgba(22,119,255,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📊</div>
+                <div style={{width:40,height:40,borderRadius:10,background:"rgba(22,119,255,.12)",border:"1.5px solid rgba(22,119,255,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>,t.azulLt,20,1.8)}
+                </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:15,fontWeight:800,color:t.txt}}>Planilha Controle Financeiro</div>
-                  <div style={{fontSize:10,color:t.azulLt,fontWeight:600}}>Descargas / Stretch — DCC</div>
+                  <div style={{fontSize:10,color:t.azulLt,fontWeight:600}}>Todos os dados operacionais do período</div>
                 </div>
-                <button onClick={()=>setRelCtrlDccOpen(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:18,lineHeight:1,padding:4}}>✕</button>
+                <button onClick={()=>setRelCtrlDccOpen(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                  {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+                </button>
               </div>
-              <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:8,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.6}}>
-                Gera planilha com todos os <strong style={{color:t.azulLt}}>documentos DCC (D01-MAT / D05-MAR)</strong> no período selecionado, incluindo CTE, MDF, valores e apontamentos vinculados. Ideal para conferência com a Suzano e geração de NFSE.
+              <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:8,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.7}}>
+                Exporta <strong style={{color:t.txt}}>todos os registros</strong> do período com todos os campos operacionais: DT, Motorista, CPF, Placa, Status, Datas, Origem/Destino, Cliente, <strong style={{color:t.verde}}>Financeiro</strong> (CTE, Contrato, ADT, Saldo, Diárias), Documentação (CTE, MDF, MAT, NF, RO), <strong style={{color:t.azulLt}}>CTE Comp.</strong>, DCC e Apontamentos vinculados.
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                 <div>
@@ -6623,12 +6826,121 @@ function mapearColuna(n){
               </div>
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>setRelCtrlDccOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 16px",color:t.txt2,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
-                <button onClick={gerarCtrlDcc} style={{flex:1,background:`linear-gradient(135deg,rgba(22,119,255,.2),rgba(22,119,255,.1))`,border:`1.5px solid rgba(22,119,255,.5)`,borderRadius:9,padding:"10px",color:t.azulLt,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>📥 Gerar Planilha .XLS</button>
+                <button onClick={gerarCtrlDcc} style={{flex:1,background:`linear-gradient(135deg,rgba(22,119,255,.2),rgba(22,119,255,.1))`,border:`1.5px solid rgba(22,119,255,.5)`,borderRadius:9,padding:"10px",color:t.azulLt,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  {hIco(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,t.azulLt,15,2)} Gerar Planilha .XLS
+                </button>
               </div>
             </div>
           </div>
         );
       })()}
+
+      {/* ═══ MODAL NFD — Nota de Devolução ═══ */}
+      {nfdAlertOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setNfdAlertOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:20,width:"100%",maxWidth:400,border:`1.5px solid rgba(246,70,93,.35)`,boxShadow:"0 24px 64px rgba(0,0,0,.6)"}} onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <div style={{width:42,height:42,borderRadius:11,background:"rgba(246,70,93,.12)",border:"1.5px solid rgba(246,70,93,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,t.danger,20,2)}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>NFD — Nota de Devolução</div>
+                <div style={{fontSize:10,color:t.danger,fontWeight:600}}>Descarga registrada · Houve NFD?</div>
+              </div>
+              <button onClick={()=>setNfdAlertOpen(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:8,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.7}}>
+              Ao registrar a data de descarga, informe se houve <strong style={{color:t.txt}}>Nota de Devolução (NFD)</strong> por avaria, falta ou devolução de mercadoria.
+            </div>
+            {/* Tipo */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginBottom:6}}>Motivo da NFD</div>
+              <div style={{display:"flex",gap:6}}>
+                {["avaria","falta","devolução"].map(op=>(
+                  <button key={op} onClick={()=>setNfdForm(p=>({...p,tipo:op}))} style={{flex:1,padding:"8px 4px",borderRadius:9,border:`1.5px solid ${nfdForm.tipo===op?t.danger:t.borda}`,background:nfdForm.tipo===op?`rgba(246,70,93,.1)`:`transparent`,color:nfdForm.tipo===op?t.danger:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:10,textTransform:"uppercase",letterSpacing:.5,transition:"all .15s"}}>
+                    {op==="avaria"?"🔴":op==="falta"?"🟡":"🔵"} {op}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Numero e Valor */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+              <div>
+                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Nº da Nota</label>
+                <input value={nfdForm.numero} onChange={e=>setNfdForm(p=>({...p,numero:e.target.value}))} placeholder="Ex: 00123456" style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
+              </div>
+              <div>
+                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Valor (R$)</label>
+                <input value={nfdForm.valor} onChange={e=>setNfdForm(p=>({...p,valor:e.target.value}))} placeholder="0,00" style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
+              </div>
+            </div>
+            {/* Ações */}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setNfdAlertOpen(false)} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                Não houve NFD
+              </button>
+              <button onClick={()=>{
+                if(!nfdForm.numero){showToast("⚠️ Informe o número da NFD","warn");return;}
+                setFormData(p=>({...p,nfd:{...nfdForm}}));
+                showToast(`✅ NFD registrada — ${nfdForm.tipo.toUpperCase()} · Nº ${nfdForm.numero}`,"ok");
+                setNfdAlertOpen(false);
+              }} style={{flex:1,background:`linear-gradient(135deg,rgba(246,70,93,.2),rgba(246,70,93,.1))`,border:`1.5px solid rgba(246,70,93,.5)`,borderRadius:9,padding:"10px",color:t.danger,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,t.danger,14,2)} Registrar NFD
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ ALERTA OCORRÊNCIA/RO — CHEGADA DO MOTORISTA ═══ */}
+      {ocorrChegadaAlert && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setOcorrChegadaAlert(false)}>
+          <div style={{background:t.card,borderRadius:DESIGN.r.modal,padding:20,width:"100%",maxWidth:420,border:`1.5px solid rgba(232,130,12,.35)`,boxShadow:"0 24px 64px rgba(0,0,0,.6)"}} onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+              <div style={{width:42,height:42,borderRadius:DESIGN.r.ico,background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,"#E8820C",20,2)}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>Motorista Chegou ao Cliente</div>
+                <div style={{fontSize:10,color:"#E8820C",fontWeight:600}}>Ocorrência/RO — registrar agora?</div>
+              </div>
+              <button onClick={()=>setOcorrChegadaAlert(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:DESIGN.r.sm,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.7}}>
+              A <strong style={{color:t.txt}}>Ocorrência (RO)</strong> é inerente à existência de NFD e deve ser registrada a partir da chegada do motorista ao cliente. Se houver RO, preencha o número abaixo.
+            </div>
+            {/* Campo RO */}
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:5}}>Nº RO (Registro de Ocorrência)</label>
+              <input
+                value={formData.ro||""}
+                onChange={e=>setFormData(p=>({...p,ro:e.target.value}))}
+                placeholder="Ex: RO-2024-001 ou deixe vazio se não houver"
+                style={{...css.inp,fontSize:12,padding:"10px 12px"}}
+                autoFocus
+              />
+            </div>
+            {/* Ações */}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setOcorrChegadaAlert(false)} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:DESIGN.r.inp,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:DESIGN.fnt.b}}>
+                Sem Ocorrência
+              </button>
+              <button onClick={()=>{
+                setOcorrChegadaAlert(false);
+                if(formData.ro) showToast(`✅ RO registrado: ${formData.ro}`,"ok");
+              }} style={{flex:1,background:`linear-gradient(135deg,rgba(232,130,12,.2),rgba(232,130,12,.1))`,border:`1.5px solid rgba(232,130,12,.5)`,borderRadius:DESIGN.r.inp,padding:"10px",color:"#E8820C",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,"#E8820C",14,2)} Confirmar RO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ MINI-MODAL OCORRÊNCIAS (Busca / Planilha) ═══ */}
       {ocorrModalDT && (()=>{

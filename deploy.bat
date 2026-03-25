@@ -1,32 +1,62 @@
 @echo off
-chcp 65001 >nul
+cd /d "%~dp0"
+
 echo.
-echo ╔══════════════════════════════════════╗
-echo ║  CONTROLE OPERACIONAL v21 — DEPLOY   ║
-echo ╚══════════════════════════════════════╝
+echo ========================================
+echo   CONTROLE OPERACIONAL v21 - DEPLOY
+echo ========================================
+echo.
+echo Pasta: %CD%
 echo.
 
 REM ── Verifica se está na pasta certa ──
 if not exist "src\App.jsx" (
-  echo [ERRO] Execute dentro da pasta do projeto (src\App.jsx nao encontrado)
-  pause & exit /b 1
+  echo.
+  echo [ERRO] src\App.jsx nao encontrado nesta pasta:
+  echo        %CD%
+  echo.
+  echo  Certifique-se de que deploy.bat esta na raiz do projeto.
+  echo.
+  pause
+  exit /b 1
 )
+echo [OK] Projeto encontrado.
+
+REM ── Verifica npm ──
+where npm >nul 2>&1
+if %errorlevel% neq 0 (
+  echo.
+  echo [ERRO] npm nao encontrado no PATH.
+  echo  Instale o Node.js em https://nodejs.org
+  echo.
+  pause
+  exit /b 1
+)
+echo [OK] npm encontrado.
 
 REM ── Verifica git ──
-git rev-parse --git-dir >nul 2>&1
+where git >nul 2>&1
 if %errorlevel% neq 0 (
-  echo [ERRO] Git nao inicializado nesta pasta.
-  pause & exit /b 1
+  echo.
+  echo [ERRO] git nao encontrado no PATH.
+  echo  Instale o Git em https://git-scm.com
+  echo.
+  pause
+  exit /b 1
 )
+echo [OK] git encontrado.
+echo.
 
 echo [1/5] Gerando build local...
 call npm run build
 if %errorlevel% neq 0 (
   echo.
   echo [ERRO] Build falhou! Corrija os erros acima antes de publicar.
-  pause & exit /b 1
+  echo.
+  pause
+  exit /b 1
 )
-echo       Build OK.
+echo [OK] Build concluido.
 
 echo.
 echo [2/5] Adicionando arquivos ao git...
@@ -37,22 +67,18 @@ git add .github/ 2>nul
 git add public/ 2>nul
 
 echo.
-set /p msg=[3/5] Mensagem do commit (Enter = usar timestamp automatico):
+set /p msg=[3/5] Mensagem do commit (Enter = timestamp automatico):
 if "%msg%"=="" (
-  for /f "tokens=1-6 delims=/: " %%a in ("%date% %time%") do (
-    set "msg=deploy: %%a-%%b-%%c %%d:%%e"
-  )
+  for /f "tokens=2-4 delims=/ " %%a in ('date /t') do set hoje=%%c-%%b-%%a
+  for /f "tokens=1-2 delims=: " %%a in ('time /t') do set hora=%%a:%%b
+  set "msg=deploy: %hoje% %hora%"
 )
 
-echo       Commitando: "%msg%"
+echo Commitando: %msg%
 git commit -m "%msg%"
 if %errorlevel% neq 0 (
-  echo       Nenhum arquivo alterado. Criando commit vazio para forcar deploy no Vercel...
+  echo Nenhuma alteracao. Forcando redeploy no Vercel...
   git commit --allow-empty -m "%msg% (force-redeploy)"
-  if %errorlevel% neq 0 (
-    echo [AVISO] Nao foi possivel criar commit. Verifique o git.
-    pause & exit /b 1
-  )
 )
 
 echo.
@@ -61,24 +87,19 @@ git push -u origin main
 if %errorlevel% neq 0 (
   echo.
   echo [ERRO] Push falhou. Verifique conexao ou credenciais do GitHub.
-  echo        Tente: git push -u origin main
-  pause & exit /b 1
+  echo.
+  pause
+  exit /b 1
 )
 
 echo.
-echo [5/5] Verificando ultimo commit enviado...
+echo [5/5] Ultimo commit:
 git log --oneline -1
 echo.
-echo ╔══════════════════════════════════════════════════════╗
-echo ║  Deploy enviado para o GitHub com sucesso!           ║
-echo ║                                                      ║
-echo ║  O Vercel ira detectar o push em ~1-2 minutos.      ║
-echo ║                                                      ║
-echo ║  Acompanhe o build em:                              ║
-echo ║  https://vercel.com/dashboard                       ║
-echo ║                                                      ║
-echo ║  App publicado em:                                  ║
-echo ║  https://controle-operacional-omega.vercel.app/     ║
-echo ╚══════════════════════════════════════════════════════╝
+echo ========================================================
+echo   DEPLOY CONCLUIDO COM SUCESSO!
+echo   Vercel detecta em ~1-2 min.
+echo   https://controle-operacional-omega.vercel.app/
+echo ========================================================
 echo.
 pause
