@@ -36,3 +36,7 @@ src/App(*).jsx
 src/backups/
 *.bckp*
 SUPABASE_REGRAS.md
+
+# Token GitHub para push via VM (NUNCA versionar!)
+.github_token
+setup_vm_git.sh
