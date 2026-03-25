@@ -657,6 +657,7 @@ export default function App() {
 
   // ── Aba Operacional ──
   const [operSubTab, setOperSubTab] = useState("sgs");
+  const [filtroOcorr, setFiltroOcorr] = useState(null); // null = todos | "SGS" | "Ocorrência" | "Diária/Atraso" | "DCC"
   const [sgsItems, setSgsItems] = useState(() => loadJSON("co_sgs", []));
   const [sgsFormOpen, setSgsFormOpen] = useState(false);
   const [sgsForm, setSgsForm] = useState({numero:"", data_chamado:"", ultimo_retorno:"", descricao:"", dt_rel:"", status:"aberto"});
@@ -1303,7 +1304,7 @@ export default function App() {
   // REGRA 4: sem chegada (legado) → usa lógica anterior de comparação agenda vs descarga
   const diariasData = useMemo(() => {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const regs = DADOS.filter(r => r.data_agenda || r.data_desc);
+    const regs = DADOS.filter(r => (r.data_agenda || r.data_desc) && (r.status||"").toUpperCase() !== "CANCELADA");
     let ok=0, atraso=0, pend=0, semDiaria=0;
     const items = regs.map(r => {
       const da = parseData(r.data_agenda);
@@ -1361,11 +1362,14 @@ export default function App() {
   // Descarga data
   const descargaData = useMemo(() => {
     const dataBusca = new Date(dscData+"T00:00:00");
+    const naoCancel = r => (r.status||"").toUpperCase() !== "CANCELADA";
     const hoje = DADOS.filter(r => {
+      if (!naoCancel(r)) return false;
       const d = parseData(r.data_desc) || parseData(r.data_agenda);
       return d && d.toISOString().slice(0,10) === dscData;
     });
     const atrasados = DADOS.filter(r => {
+      if (!naoCancel(r)) return false;
       const da = parseData(r.data_agenda);
       if (!da || da >= dataBusca) return false;
       return !r.data_desc?.trim();
@@ -3899,11 +3903,12 @@ export default function App() {
                 const pjOcorr = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
                 const diariasSet = new Set(diariasData.items.filter(it=>it.tipo==="diaria"||it.tipo==="atraso").map(it=>it.r.dt));
                 const dccSet = new Set(DADOS.filter(r=>{
+                  if((r.status||"").toUpperCase()==="CANCELADA") return false;
                   const dccs = pjOcorr(r.minutas_dcc,[]);
                   return dccs.some(m=>m.cte||m.mdf||m.num||m.valor)||!!(r.cte_comp||r.mdf_comp);
                 }).map(r=>r.dt));
-                // Build entries
-                const ocorrEntries = DADOS.map(r=>{
+                // Build entries (excluir DTs Canceladas)
+                const ocorrEntries = DADOS.filter(r=>(r.status||"").toUpperCase()!=="CANCELADA").map(r=>{
                   const badges = [];
                   const hasOcorrLocal = (()=>{try{const v=localStorage.getItem(`co_ocorr_${r.dt}`);if(!v)return false;const arr=JSON.parse(v);return Array.isArray(arr)&&arr.length>0;}catch{return false;}})();
                   if(r.sgs)               badges.push({cor:t.ouro,   label:`SGS: ${r.sgs}`});
@@ -3937,15 +3942,26 @@ export default function App() {
                     </div>
                     {/* Legenda */}
                     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-                      {[{cor:t.ouro,l:"SGS"},{cor:"#E8820C",l:"Ocorrência"},{cor:t.danger,l:"Diária/Atraso"},{cor:t.azulLt,l:"DCC"}].map(({cor,l})=>(
-                        <span key={l} style={{fontSize:8,background:`${cor}18`,border:`1px solid ${cor}44`,borderRadius:10,padding:"2px 7px",color:cor,fontWeight:700}}>{l}</span>
-                      ))}
+                      {[{cor:t.ouro,l:"SGS"},{cor:"#E8820C",l:"Ocorrência"},{cor:t.danger,l:"Diária/Atraso"},{cor:t.azulLt,l:"DCC"}].map(({cor,l})=>{
+                        const ativo = filtroOcorr===l;
+                        return (
+                          <span key={l} onClick={()=>setFiltroOcorr(ativo?null:l)} style={{fontSize:8,background:ativo?`${cor}35`:`${cor}18`,border:`1.5px solid ${ativo?cor:cor+"44"}`,borderRadius:10,padding:"2px 7px",color:cor,fontWeight:700,cursor:"pointer",userSelect:"none",transition:"all .15s",boxShadow:ativo?`0 0 6px ${cor}55`:"none"}}>
+                            {l}{ativo?" ✕":""}
+                          </span>
+                        );
+                      })}
+                      {filtroOcorr && <span onClick={()=>setFiltroOcorr(null)} style={{fontSize:8,background:"rgba(128,128,128,.1)",border:"1px solid rgba(128,128,128,.3)",borderRadius:10,padding:"2px 7px",color:t.txt2,fontWeight:700,cursor:"pointer"}}>Limpar filtro</span>}
                     </div>
-                    {ocorrEntries.length===0 ? (
-                      <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📭</div><div style={{fontSize:12,color:t.txt2}}>Nenhum DT com ocorrências registradas</div></div>
+                    {(()=>{
+                      const labelMap = {"SGS":(b)=>b.label.startsWith("SGS"),"Ocorrência":(b)=>b.label==="Ocorrência","Diária/Atraso":(b)=>b.label==="Diária"||b.label.startsWith("Atraso"),"DCC":(b)=>b.label==="DCC"};
+                      const entradaFiltrada = filtroOcorr
+                        ? ocorrEntries.filter(({badges})=>badges.some(labelMap[filtroOcorr]||(_=>false)))
+                        : ocorrEntries;
+                    return entradaFiltrada.length===0 ? (
+                      <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📭</div><div style={{fontSize:12,color:t.txt2}}>{filtroOcorr?`Nenhum DT com ocorrência do tipo "${filtroOcorr}"`:"Nenhum DT com ocorrências registradas"}</div></div>
                     ) : (
                       <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                        {ocorrEntries.map(({r,badges},i)=>{
+                        {entradaFiltrada.map(({r,badges},i)=>{
                           const topBadge = badges.sort((a,b)=>prioScore(a)-prioScore(b))[0];
                           return (
                             <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${topBadge.cor}`,padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"all .15s"}}>
@@ -3965,7 +3981,8 @@ export default function App() {
                           );
                         })}
                       </div>
-                    )}
+                    )
+                    ;})()}
                   </div>
                 );
               })()}
@@ -4294,7 +4311,18 @@ function mapearColuna(n){
     'vl cte':'vl_cte','valor cte':'vl_cte','vl_cte':'vl_cte',
     'vl contrato':'vl_contrato','vl_contrato':'vl_contrato',
     'adiant':'adiant','adiantamento':'adiant',
-    'cte':'cte','mdf':'mdf','nf':'nf','cliente':'cliente'};
+    'cte':'cte','mdf':'mdf','nf':'nf','cliente':'cliente',
+    // Campos adicionais (colunas AA, AG e outros)
+    'shipmente id':'id_doc','shipment id':'id_doc','id_doc':'id_doc','id doc':'id_doc',
+    'ro':'ro','r.o.':'ro','reg. ocorrencia':'ro','reg ocorrencia':'ro',
+    'mat':'mat','contrato':'mat','contrato [mat ou mar]':'mat',
+    'sgs':'sgs','alguma ocorrencia / sgs':'sgs','alguma ocorrencia':'sgs',
+    'chegada':'chegada','chegada no cliente':'chegada',
+    'gerenc':'gerenc','gerenciadora':'gerenc',
+    'data manifesto':'data_manifesto','data do manifesto':'data_manifesto','data_manifesto':'data_manifesto',
+    'diaria_prev':'diaria_prev','diarias devida':'diaria_prev','diarias (devida r$)':'diaria_prev',
+    'diaria_pg':'diaria_pg','diarias paga':'diaria_pg','diarias (paga r$)':'diaria_pg',
+    'dias':'dias','saldo':'saldo','informou analista':'informou_analista','informou_analista':'informou_analista'};
   return m[n]||null;
 }`}</pre>
                 </div>
@@ -4958,7 +4986,9 @@ function mapearColuna(n){
                       {l:"Origem",v:r.origem},{l:"Destino",v:r.destino},{l:"Status",v:r.status},{l:"Dias",v:r.dias},
                       {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
                       ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
-                      {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"Cliente",v:r.cliente},
+                      {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"MAT",v:r.mat},
+                      {l:"RO",v:r.ro},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
+                      {l:"ID (Shipmente)",v:r.id_doc},
                     ].filter(f=>f.v).map((f,fi)=>(
                       <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
                         <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
