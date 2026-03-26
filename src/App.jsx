@@ -1527,7 +1527,7 @@ export default function App() {
   const supaUpsert = async (reg) => {
     const conn = getConexao();
     if (!conn) throw new Error("Sem conexão");
-    const clean = {...reg}; delete clean._override; delete clean._overrideDT; delete clean.informou_analista; // coluna não existe no schema Supabase
+    const clean = {...reg}; delete clean._override; delete clean._overrideDT; delete clean.informou_analista;
     if (!clean.dt) throw new Error("DT obrigatório");
     try {
       await supaFetch(conn.url, conn.key, "POST", TABLE, [clean]);
@@ -1768,7 +1768,7 @@ export default function App() {
           {/* Badge */}
           <div style={{fontSize:9,background:theme==="dark"?"rgba(240,185,11,.14)":"rgba(240,185,11,.18)",border:"1px solid rgba(240,185,11,.35)",color:t.ouro,borderRadius:20,padding:"3px 12px",letterSpacing:2.5,fontWeight:700,marginBottom:22}}>YFGROUP</div>
 
-          {/* Icon B — Minimalista Outline SVG (fixo; customLogo não sobrescreve tela de login) */}
+          {/* Ícone carreta outline */}
           <div style={{width:80,height:80,background:theme==="dark"?"rgba(240,185,11,.07)":"rgba(240,185,11,.1)",borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.28)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)",boxShadow:theme==="dark"?"0 0 44px rgba(240,185,11,.1)":"0 0 30px rgba(240,185,11,.12)"}}>
             <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
               <rect x="7" y="25" width="32" height="18" rx="3" stroke="#f0b90b" strokeWidth="2"/>
