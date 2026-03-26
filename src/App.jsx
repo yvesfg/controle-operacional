@@ -1768,24 +1768,21 @@ export default function App() {
           {/* Badge */}
           <div style={{fontSize:9,background:theme==="dark"?"rgba(240,185,11,.14)":"rgba(240,185,11,.18)",border:"1px solid rgba(240,185,11,.35)",color:t.ouro,borderRadius:20,padding:"3px 12px",letterSpacing:2.5,fontWeight:700,marginBottom:22}}>YFGROUP</div>
 
-          {/* Icon B — Minimalista Outline SVG */}
-          {customLogo
-            ? <img src={customLogo} alt="Logo" style={{width:76,height:76,borderRadius:20,objectFit:"contain",marginBottom:18,animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}} />
-            : <div style={{width:80,height:80,background:theme==="dark"?"rgba(240,185,11,.07)":"rgba(240,185,11,.1)",borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.28)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)",boxShadow:theme==="dark"?"0 0 44px rgba(240,185,11,.1)":"0 0 30px rgba(240,185,11,.12)"}}>
-                <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
-                  <rect x="7" y="25" width="32" height="18" rx="3" stroke="#f0b90b" strokeWidth="2"/>
-                  <path d="M39 32 L55 32 L55 43 L39 43 Z" stroke="#f0b90b" strokeWidth="2"/>
-                  <path d="M41 32 L41 26 L52 26 L55 32" stroke="#f0b90b" strokeWidth="2"/>
-                  <circle cx="17" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
-                  <circle cx="17" cy="45" r="1.5" fill="#f0b90b"/>
-                  <circle cx="29" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
-                  <circle cx="29" cy="45" r="1.5" fill="#f0b90b"/>
-                  <circle cx="49" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
-                  <circle cx="49" cy="45" r="1.5" fill="#f0b90b"/>
-                  <rect x="43" y="28" width="9" height="6" rx="1" stroke="#f0b90b" strokeWidth="1.5"/>
-                </svg>
-              </div>
-          }
+          {/* Icon B — Minimalista Outline SVG (fixo; customLogo não sobrescreve tela de login) */}
+          <div style={{width:80,height:80,background:theme==="dark"?"rgba(240,185,11,.07)":"rgba(240,185,11,.1)",borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.28)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)",boxShadow:theme==="dark"?"0 0 44px rgba(240,185,11,.1)":"0 0 30px rgba(240,185,11,.12)"}}>
+            <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+              <rect x="7" y="25" width="32" height="18" rx="3" stroke="#f0b90b" strokeWidth="2"/>
+              <path d="M39 32 L55 32 L55 43 L39 43 Z" stroke="#f0b90b" strokeWidth="2"/>
+              <path d="M41 32 L41 26 L52 26 L55 32" stroke="#f0b90b" strokeWidth="2"/>
+              <circle cx="17" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
+              <circle cx="17" cy="45" r="1.5" fill="#f0b90b"/>
+              <circle cx="29" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
+              <circle cx="29" cy="45" r="1.5" fill="#f0b90b"/>
+              <circle cx="49" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
+              <circle cx="49" cy="45" r="1.5" fill="#f0b90b"/>
+              <rect x="43" y="28" width="9" height="6" rx="1" stroke="#f0b90b" strokeWidth="1.5"/>
+            </svg>
+          </div>
 
           {/* Title */}
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:23,letterSpacing:4,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
