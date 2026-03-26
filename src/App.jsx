@@ -431,13 +431,13 @@ export default function App() {
   }, []); // Roda uma única vez no mount — processa hash OAuth do redirect
 
   // ── Helpers para co_config no Supabase ──
-  // ── co_config: colunas reais = key (PK) + value + updated_at ────────────
+  // ── co_config: colunas reais = chave + valor + updated_at ────────────────
   const getConfigRemoto = useCallback(async (key) => {
     const conn = getConexao();
     if (!conn) return null;
     try {
-      const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_CONFIG}?key=eq.${key}&select=value`);
-      return Array.isArray(data) && data.length > 0 ? data[0].value : null;
+      const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_CONFIG}?chave=eq.${key}&select=valor`);
+      return Array.isArray(data) && data.length > 0 ? data[0].valor : null;
     } catch { return null; }
   }, [getConexao]);
 
@@ -445,7 +445,7 @@ export default function App() {
     const conn = getConexao();
     if (!conn) return;
     try {
-      await supaFetch(conn.url, conn.key, "POST", `${TABLE_CONFIG}?on_conflict=key`, [{key, value, updated_at: new Date().toISOString()}]);
+      await supaFetch(conn.url, conn.key, "POST", `${TABLE_CONFIG}?on_conflict=chave`, [{chave: key, valor: value, updated_at: new Date().toISOString()}]);
     } catch { /* silencioso */ }
   }, [getConexao]);
 
