@@ -639,6 +639,8 @@ export default function App() {
   const [conexoesOpen, setConexoesOpen] = useState(false);
   const [contatosAdminOpen, setContatosAdminOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);       // último status gravado pelo Apps Script
+  const [syncStatusLoading, setSyncStatusLoading] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email",""));
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
   useEffect(()=>{
@@ -673,8 +675,9 @@ export default function App() {
 
   // Importação de contatos (Item 1 sessão 4)
   const [motImportOpen, setMotImportOpen] = useState(false);
-  const [motImportData, setMotImportData] = useState(null); // {novos:[], conflitos:[{atual,import,escolha}]}
+  const [motImportData, setMotImportData] = useState(null); // {novos:[], conflitos:[{atual,import,escolha}], vinculos:[]}
   const [motImportConfirm, setMotImportConfirm] = useState("");
+  const [motImportStep, setMotImportStep] = useState(1); // 1=revisão, 2=sugestões de vínculo
 
   // Segundo WhatsApp — formato documentário (Item 3 sessão 4)
   const [wppModal2, setWppModal2] = useState(null); // {reg, mot}
@@ -1337,7 +1340,7 @@ export default function App() {
   // REGRA 4: sem chegada → lógica legado (compara agenda vs descarga)
   const diariasData = useMemo(() => {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const regs = DADOS.filter(r => (r.data_agenda || r.data_desc) && (r.status||"").toUpperCase() !== "CANCELADA");
+    const regs = DADOS.filter(r => (r.data_agenda || r.data_desc) && (r.status||"").toUpperCase() === "CARREGADO");
     let ok=0, atraso=0, pend=0;
     const items = regs.map(r => {
       const da = parseData(r.data_agenda);
@@ -1380,16 +1383,19 @@ export default function App() {
   }, [DADOS]);
 
   // Descarga data
+  // Regra: mostrar todos os registros EXCETO os explicitamente encerrados/cancelados
+  // (Diárias usam filtro mais restrito: somente CARREGADO)
   const descargaData = useMemo(() => {
     const dataBusca = new Date(dscData+"T00:00:00");
-    const naoCancel = r => (r.status||"").toUpperCase() !== "CANCELADA";
+    const STATUS_EXCLUIR = ["CANCELADO","NO-SHOW","NÃO ACEITE","NAO ACEITE"];
+    const naoEncerrado = r => !STATUS_EXCLUIR.includes((r.status||"").toUpperCase().trim());
     const hoje = DADOS.filter(r => {
-      if (!naoCancel(r)) return false;
+      if (!naoEncerrado(r)) return false;
       const d = parseData(r.data_desc) || parseData(r.data_agenda);
       return d && d.toISOString().slice(0,10) === dscData;
     });
     const atrasados = DADOS.filter(r => {
-      if (!naoCancel(r)) return false;
+      if (!naoEncerrado(r)) return false;
       const da = parseData(r.data_agenda);
       if (!da || da >= dataBusca) return false;
       return !r.data_desc?.trim();
@@ -4324,89 +4330,224 @@ export default function App() {
             )}
 
             {/* Google Sheets */}
-            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setGsheetsOpen(!gsheetsOpen)}>
+            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={async()=>{
+              const next=!gsheetsOpen; setGsheetsOpen(next);
+              if(next&&!syncStatus){
+                setSyncStatusLoading(true);
+                const v=await getConfigRemoto("gsheet_sync_status");
+                setSyncStatus(v?JSON.parse(v):null);
+                setSyncStatusLoading(false);
+              }
+            }}>
               {hIco(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>,t.verde,12)} Sincronização Google Sheets <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{gsheetsOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
             {gsheetsOpen && (
-              <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
-                <p style={{fontSize:11,color:t.txt2,lineHeight:1.7,marginBottom:10}}>
-                  Sincronize sua planilha Google Sheets com o Supabase automaticamente usando Apps Script.<br/>
-                  Cole o script abaixo em <strong style={{color:t.txt}}>Extensões → Apps Script</strong> na sua planilha.
-                </p>
-                <div style={{background:t.bg,borderRadius:8,padding:10,marginBottom:10,border:`1px solid ${t.borda}`,overflowX:"auto"}}>
-                  <pre style={{fontSize:9,color:t.verde,margin:0,whiteSpace:"pre-wrap",lineHeight:1.6}}>{`function sincronizarComSupabase() {
-  var SUPA_URL = 'SUA_URL_SUPABASE';
-  var SUPA_KEY = 'SUA_ANON_KEY';
-  var TABELA   = 'controle_operacional';
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
 
-  var sheet  = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var dados  = sheet.getDataRange().getValues();
-  var header = dados[0];
-  var mapa   = {};
-  header.forEach(function(col,i){
-    var c = mapearColuna(col.toString().toLowerCase().trim());
-    if(c) mapa[i]=c;
-  });
+                {/* ── PAINEL DE STATUS DA ÚLTIMA SINCRONIZAÇÃO ── */}
+                <div style={{...css.card,padding:12,borderLeft:`3px solid ${syncStatus?(syncStatus.ok?t.verde:(syncStatus.erros_http>0?t.danger:t.ouro)):t.borda}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                    <div style={{fontSize:11,fontWeight:700,color:t.txt}}>📡 Última Sincronização</div>
+                    <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto("gsheet_sync_status");setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading?"⏳":"↺ Atualizar"}</button>
+                  </div>
+                  {syncStatusLoading && <div style={{fontSize:10,color:t.txt2}}>Buscando status...</div>}
+                  {!syncStatusLoading && !syncStatus && (
+                    <div style={{fontSize:10,color:t.txt2}}>⚠️ Nenhum status encontrado — o script ainda não rodou ou não está gravando no Supabase.</div>
+                  )}
+                  {!syncStatusLoading && syncStatus && (
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                        <span style={{...css.badge(syncStatus.ok?t.verde:t.danger,syncStatus.ok?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`,syncStatus.ok?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>{syncStatus.ok?"✅ OK":"❌ COM ERROS"}</span>
+                        <span style={{fontSize:10,color:t.txt2}}>🕐 {syncStatus.timestamp}</span>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                        <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
+                          <div style={{fontSize:16,fontWeight:700,color:t.azulLt}}>{syncStatus.total_planilha||0}</div>
+                          <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Linhas na planilha</div>
+                        </div>
+                        <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
+                          <div style={{fontSize:16,fontWeight:700,color:t.verde}}>{syncStatus.sincronizados||0}</div>
+                          <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Sincronizados</div>
+                        </div>
+                        <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
+                          <div style={{fontSize:16,fontWeight:700,color:syncStatus.ignorados>0?t.ouro:t.txt2}}>{syncStatus.ignorados||0}</div>
+                          <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Ignorados</div>
+                        </div>
+                      </div>
+                      {syncStatus.motivos_ignorados?.length>0&&(
+                        <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:7,padding:"8px 10px"}}>
+                          <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:4}}>⚠️ Linhas ignoradas (sem DT preenchida):</div>
+                          {syncStatus.motivos_ignorados.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
+                        </div>
+                      )}
+                      {syncStatus.erros_detalhes?.length>0&&(
+                        <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:7,padding:"8px 10px"}}>
+                          <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:4}}>❌ Erros de envio:</div>
+                          {syncStatus.erros_detalhes.map((e,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {e}</div>)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-  var registros = [];
-  for(var r=1;r<dados.length;r++){
-    var reg={};var temDT=false;
-    Object.keys(mapa).forEach(function(i){
-      var v=dados[r][i];
-      if(v instanceof Date) v=Utilities.formatDate(v,'America/Sao_Paulo','dd/MM/yyyy');
-      reg[mapa[i]]=v?v.toString().trim():'';
-      if(mapa[i]==='dt'&&reg.dt) temDT=true;
+                {/* ── SCRIPT APPS SCRIPT v2 ── */}
+                <div style={{...css.card,padding:12,background:t.card2}}>
+                  <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:4}}>📋 Apps Script v2 — Cole na planilha</div>
+                  <div style={{fontSize:10,color:t.txt2,lineHeight:1.6,marginBottom:8}}>
+                    <strong style={{color:t.ouro}}>Planilha → Extensões → Apps Script</strong> → cole o código abaixo → salve → rode <code style={{background:t.bg,padding:"1px 5px",borderRadius:4,color:t.verde}}>configurarGatilho()</code> <strong>UMA VEZ</strong> para ativar o sync automático de 15 em 15 min.
+                  </div>
+                  <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`,overflowX:"auto",maxHeight:260,overflowY:"auto"}}>
+                    <pre style={{fontSize:8.5,color:t.verde,margin:0,whiteSpace:"pre",lineHeight:1.55}}>{`// ═══════════════════════════════════════════════════════
+// CONTROLE OPERACIONAL — Apps Script v2
+// 1) Cole aqui  2) Preencha SUPA_URL e SUPA_KEY
+// 3) Rode configurarGatilho() UMA VEZ → sync automático
+// ═══════════════════════════════════════════════════════
+
+var SUPA_URL = 'SUA_URL_SUPABASE';  // https://xxx.supabase.co
+var SUPA_KEY = 'SUA_ANON_KEY';
+var TABELA   = 'controle_operacional';
+var TAB_CFG  = 'co_config';
+
+// ── Função principal (chamada automaticamente a cada 15min) ──
+function sincronizarComSupabase() {
+  var inicio = new Date();
+  var status = {
+    timestamp: Utilities.formatDate(inicio,'America/Sao_Paulo','dd/MM/yyyy HH:mm:ss'),
+    total_planilha:0, sincronizados:0, ignorados:0, erros_http:0,
+    motivos_ignorados:[], erros_detalhes:[], ok:false
+  };
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var dados = sheet.getDataRange().getValues();
+    var header = dados[0];
+    var mapa = {};
+    header.forEach(function(col,i){
+      var c=mapearColuna(col.toString().toLowerCase().trim());
+      if(c) mapa[i]=c;
     });
-    if(temDT) registros.push(reg);
+    var temColDT = Object.values(mapa).indexOf('dt')>=0;
+    if(!temColDT){
+      status.erros_detalhes.push('CRÍTICO: coluna DT/Espelho não encontrada. Cabeçalhos: '+header.slice(0,8).join(', '));
+      return gravarStatus(status);
+    }
+    status.total_planilha = dados.length-1;
+    var registros = [];
+    for(var r=1;r<dados.length;r++){
+      var reg={}; var temDT=false; var linhaVazia=true;
+      Object.keys(mapa).forEach(function(i){
+        var v=dados[r][i];
+        if(v instanceof Date) v=Utilities.formatDate(v,'America/Sao_Paulo','dd/MM/yyyy');
+        var vs=v?v.toString().trim():'';
+        reg[mapa[i]]=vs;
+        if(vs) linhaVazia=false;
+        if(mapa[i]==='dt'&&vs) temDT=true;
+      });
+      if(linhaVazia) continue;
+      if(!temDT){
+        status.ignorados++;
+        if(status.motivos_ignorados.length<20)
+          status.motivos_ignorados.push('Linha '+(r+1)+': DT/Espelho vazio');
+        continue;
+      }
+      registros.push(reg);
+    }
+    // Envia em lotes de 50
+    for(var i=0;i<registros.length;i+=50){
+      try {
+        var resp=UrlFetchApp.fetch(SUPA_URL+'/rest/v1/'+TABELA+'?on_conflict=dt',{
+          method:'POST',
+          headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,
+            'Content-Type':'application/json',
+            Prefer:'return=minimal,resolution=merge-duplicates'},
+          payload:JSON.stringify(registros.slice(i,i+50)),
+          muteHttpExceptions:true
+        });
+        var code=resp.getResponseCode();
+        if(code>=200&&code<300){ status.sincronizados+=Math.min(50,registros.length-i); }
+        else {
+          status.erros_http++;
+          var msg='Lote '+(Math.floor(i/50)+1)+': HTTP '+code;
+          try{var b=JSON.parse(resp.getContentText());if(b.message)msg+=' — '+b.message;}catch(e){}
+          if(status.erros_detalhes.length<10) status.erros_detalhes.push(msg);
+        }
+      } catch(he){
+        status.erros_http++;
+        if(status.erros_detalhes.length<10) status.erros_detalhes.push('Lote '+(Math.floor(i/50)+1)+': '+he.message);
+      }
+    }
+    status.ok = status.erros_http===0;
+  } catch(e) {
+    status.erros_detalhes.push('ERRO GERAL: '+e.message);
+    status.ok=false;
   }
-  // Envia em lotes de 50
-  for(var i=0;i<registros.length;i+=50){
-    UrlFetchApp.fetch(SUPA_URL+'/rest/v1/'+TABELA+'?on_conflict=dt',{
+  gravarStatus(status);
+  Logger.log(JSON.stringify(status,null,2));
+}
+
+// ── Grava status no Supabase para o app ler ──────────────────
+function gravarStatus(status){
+  try{
+    UrlFetchApp.fetch(SUPA_URL+'/rest/v1/'+TAB_CFG+'?on_conflict=key',{
       method:'POST',
       headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,
         'Content-Type':'application/json',
         Prefer:'return=minimal,resolution=merge-duplicates'},
-      payload:JSON.stringify(registros.slice(i,i+50)),
+      payload:JSON.stringify([{key:'gsheet_sync_status',
+        value:JSON.stringify(status),updated_at:new Date().toISOString()}]),
       muteHttpExceptions:true
     });
-  }
-  Logger.log('Sincronizados '+registros.length+' registros');
+  }catch(e){Logger.log('Erro ao gravar status: '+e.message);}
 }
 
+// ── Rodar UMA VEZ para ativar sync automático ────────────────
+function configurarGatilho(){
+  ScriptApp.getProjectTriggers().forEach(function(t){
+    if(t.getHandlerFunction()==='sincronizarComSupabase') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('sincronizarComSupabase').timeBased().everyMinutes(15).create();
+  Logger.log('✅ Gatilho de 15 min criado! Rodando sincronização agora...');
+  sincronizarComSupabase();
+}
+
+// ── Mapeamento de colunas da planilha ────────────────────────
 function mapearColuna(n){
-  var m={'dt espelho':'dt','espelho':'dt','dt':'dt','nome':'nome',
-    'cpf':'cpf','placa':'placa','vinculo':'vinculo','status':'status',
+  var m={
+    'dt espelho':'dt','espelho':'dt','dt':'dt',
+    'nome':'nome','cpf':'cpf','placa':'placa','vinculo':'vinculo','status':'status',
     'origem':'origem','destino':'destino',
-    'data carr.':'data_carr','data_carr':'data_carr',
-    'data agenda':'data_agenda','data_agenda':'data_agenda',
-    'data desc.':'data_desc','data_desc':'data_desc',
+    'data carr.':'data_carr','data carregamento':'data_carr','data_carr':'data_carr',
+    'data agenda':'data_agenda','data_agenda':'data_agenda','agenda':'data_agenda',
+    'data desc.':'data_desc','data descarga':'data_desc','data_desc':'data_desc',
     'vl cte':'vl_cte','valor cte':'vl_cte','vl_cte':'vl_cte',
-    'vl contrato':'vl_contrato','vl_contrato':'vl_contrato',
+    'vl contrato':'vl_contrato','vl_contrato':'vl_contrato','valor contrato':'vl_contrato',
     'adiant':'adiant','adiantamento':'adiant',
-    'cte':'cte','mdf':'mdf','nf':'nf','cliente':'cliente',
-    // Campos adicionais (colunas AA, AG e outros)
+    'cte':'cte','mdf':'mdf','nf':'nf','nota fiscal':'nf','cliente':'cliente',
     'shipmente id':'id_doc','shipment id':'id_doc','id_doc':'id_doc','id doc':'id_doc',
     'ro':'ro','r.o.':'ro','reg. ocorrencia':'ro','reg ocorrencia':'ro',
     'mat':'mat','contrato':'mat','contrato [mat ou mar]':'mat',
     'sgs':'sgs','alguma ocorrencia / sgs':'sgs','alguma ocorrencia':'sgs',
-    'chegada':'chegada','chegada no cliente':'chegada',
+    'chegada':'chegada','chegada no cliente':'chegada','data chegada':'chegada',
     'gerenc':'gerenc','gerenciadora':'gerenc',
-    'data manifesto':'data_manifesto','data do manifesto':'data_manifesto','data_manifesto':'data_manifesto',
+    'data manifesto':'data_manifesto','data do manifesto':'data_manifesto',
     'diaria_prev':'diaria_prev','diarias devida':'diaria_prev','diarias (devida r$)':'diaria_prev',
     'diaria_pg':'diaria_pg','diarias paga':'diaria_pg','diarias (paga r$)':'diaria_pg',
-    'dias':'dias','saldo':'saldo','informou analista':'informou_analista','informou_analista':'informou_analista'};
+    'dias':'dias','saldo':'saldo',
+    'informou analista':'informou_analista','informou_analista':'informou_analista',
+    'desc_aguardando':'desc_aguardando','aguardando descarga':'desc_aguardando'
+  };
   return m[n]||null;
 }`}</pre>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`}}>
-                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:4}}>⏱️ Disparo automático</div>
-                    <div style={{fontSize:10,color:t.txt2,lineHeight:1.6}}>No Apps Script, clique no ícone de relógio (⏱) → <strong style={{color:t.txt}}>Adicionar acionador</strong> → Função: <code>sincronizarComSupabase</code> → Tipo: <em>Temporizador por minuto</em> → Intervalo: <strong style={{color:t.verde}}>A cada 15 minutos</strong></div>
                   </div>
-                  <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`}}>
-                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:4}}>🔑 Credenciais</div>
-                    <div style={{fontSize:10,color:t.txt2,lineHeight:1.6}}>Substitua <strong style={{color:t.ouro}}>SUA_URL_SUPABASE</strong> e <strong style={{color:t.ouro}}>SUA_ANON_KEY</strong> pelos valores do seu projeto Supabase.</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+                    <div style={{background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:7,padding:"8px 10px"}}>
+                      <div style={{fontSize:9,fontWeight:700,color:t.verde,marginBottom:3}}>▶ Como ativar (1x apenas)</div>
+                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>1. Cole o script acima no Apps Script<br/>2. Preencha <code>SUPA_URL</code> e <code>SUPA_KEY</code><br/>3. No menu <strong style={{color:t.txt}}>Executar</strong> → <strong style={{color:t.verde}}>configurarGatilho</strong><br/>4. Autorize quando pedido<br/>✅ Pronto — sync automático a cada 15min</div>
+                    </div>
+                    <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:7,padding:"8px 10px"}}>
+                      <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:3}}>🔍 Diagnóstico de registros ausentes</div>
+                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>Se uma DT está na planilha mas não no app:<br/>• Verifique a coluna DT/Espelho da linha<br/>• Rode o script manualmente e veja o painel acima<br/>• "Ignorados" lista as linhas com problema<br/>• Confirme que SUPA_URL e SUPA_KEY estão corretos</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -4529,7 +4670,7 @@ function mapearColuna(n){
                         const norm=raw.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
                         const lines=norm.trim().split("\n");
                         if(lines.length<2)return[];
-                        // FIX: parser CSV real — suporta campos entre aspas com vírgulas internas
+                        // parser CSV real — suporta campos entre aspas com vírgulas internas
                         const parseRow=(line)=>{
                           const res=[];let cur="",inQ=false;
                           for(let i=0;i<line.length;i++){
@@ -4543,20 +4684,38 @@ function mapearColuna(n){
                           res.push(cur.trim());return res;
                         };
                         const headers=parseRow(lines[0]).map(h=>h.replace(/"/g,"").toLowerCase().trim());
-                        // FIX: Google usa "Name", "Phone 1 - Value", "Notes"
-                        const nameIdx=headers.findIndex(h=>h==="name"||h==="full name"||h==="nome"||h==="nome completo");
-                        const phoneIdx=headers.findIndex(h=>(h.includes("phone")&&h.includes("value"))||h==="phone"||h.includes("fone")||h==="telefone");
-                        const noteIdx=headers.findIndex(h=>h.includes("note")||h.includes("obs")||h==="notas");
+                        // Suporte ao formato Google Contacts (First Name / Middle Name / Last Name)
+                        const nameIdx    = headers.findIndex(h=>h==="name"||h==="full name"||h==="nome"||h==="nome completo");
+                        const firstIdx   = headers.findIndex(h=>h==="first name");
+                        const midIdx     = headers.findIndex(h=>h==="middle name");
+                        const lastIdx    = headers.findIndex(h=>h==="last name");
+                        // Todos os índices de telefone (Phone 1 - Value, Phone 2 - Value, ...)
+                        const phoneIdxs  = headers.map((h,i)=>((h.includes("phone")&&h.includes("value"))||h==="phone"||h.includes("fone")||h==="telefone")?i:-1).filter(i=>i>=0);
+                        const noteIdx    = headers.findIndex(h=>h.includes("note")||h.includes("obs")||h==="notas");
+                        // Regex placa brasileira: antiga ABC1234 e Mercosul ABC1D23
+                        const PLACA_RE   = /\b([A-Z]{3}[0-9][A-Z0-9][0-9]{2})\b/g;
+                        const extractPlacas=(txt)=>[...txt.toUpperCase().matchAll(PLACA_RE)].map(m=>m[1]);
                         return lines.slice(1).map(line=>{
                           if(!line.trim())return null;
                           const cols=parseRow(line);
-                          const nome=nameIdx>=0?(cols[nameIdx]||""):"";
-                          const tel=(phoneIdx>=0?(cols[phoneIdx]||""):"").replace(/\D/g,"").replace(/^55/,"");
+                          // Montar nome: campo único ou concatenar First+Middle+Last
+                          let nome="";
+                          if(nameIdx>=0){ nome=cols[nameIdx]||""; }
+                          else if(firstIdx>=0){
+                            nome=[cols[firstIdx]||"", cols[midIdx>=0?midIdx:0]||"", cols[lastIdx>=0?lastIdx:0]||""]
+                              .filter(Boolean).join(" ").trim();
+                          }
+                          // Primeiro telefone válido (≥8 dígitos)
+                          let tel="";
+                          for(const pi of phoneIdxs){
+                            const v=(cols[pi]||"").replace(/\D/g,"").replace(/^55/,"");
+                            if(v.length>=8){tel=v;break;}
+                          }
                           const nota=noteIdx>=0?(cols[noteIdx]||""):"";
-                          const placaM=nota.match(/Placa[:\s]*([\w/| ]+)/i);
-                          const placas=(placaM?.[1]||"").split(/[|\/]/).map(p=>p.trim()).filter(Boolean);
+                          // Placas: extrair da nota E do nome (evitar duplicatas)
+                          const allPlacas=[...new Set([...extractPlacas(nota),...extractPlacas(nome)])];
                           const cpfM=nota.match(/CPF[:\s]*([0-9./-]+)/i);
-                          return nome?{nome,tel,cpf:(cpfM?.[1]||"").trim(),placa1:placas[0]||"",placa2:placas[1]||"",placa3:placas[2]||"",placa4:placas[3]||""}:null;
+                          return nome?{nome,tel,cpf:(cpfM?.[1]||"").trim(),placa1:allPlacas[0]||"",placa2:allPlacas[1]||"",placa3:allPlacas[2]||"",placa4:allPlacas[3]||""}:null;
                         }).filter(Boolean);
                       };
                       const isVCard=txt.toUpperCase().includes("BEGIN:VCARD");
@@ -4576,8 +4735,30 @@ function mapearColuna(n){
                         if(existente){conflitos.push({atual:existente,imp,escolha:"manter"});}
                         else{novos.push(imp);}
                       });
-                      setMotImportData({novos,conflitos});
+                      // ── Sugestões de vínculo: contato importado × DADOS (por placa) ──
+                      const vinculos=[];
+                      const allImportados=[...novos,...conflitos.map(c=>c.imp)];
+                      allImportados.forEach(imp=>{
+                        const impPlacas=[imp.placa1,imp.placa2,imp.placa3,imp.placa4].filter(Boolean).map(p=>p.toUpperCase().replace(/[^A-Z0-9]/g,""));
+                        if(!impPlacas.length)return;
+                        DADOS.forEach(reg=>{
+                          const regPlaca=(reg.placa||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+                          if(!regPlaca)return;
+                          if(impPlacas.includes(regPlaca)){
+                            // Só sugerir se o nome no registro for diferente ou vazio
+                            const nomeReg=(reg.nome||"").toUpperCase().trim();
+                            const nomeImp=imp.nome.toUpperCase().trim();
+                            if(!nomeReg||nomeReg!==nomeImp){
+                              vinculos.push({contato:imp,reg,placa:regPlaca,aceito:null});
+                            }
+                          }
+                        });
+                      });
+                      // Deduplicar por DT (pegar só a 1ª sugestão por DT)
+                      const vinculosUniq=vinculos.filter((v,i)=>vinculos.findIndex(x=>x.reg.dt===v.reg.dt&&x.contato.nome===v.contato.nome)===i);
+                      setMotImportData({novos,conflitos,vinculos:vinculosUniq});
                       setMotImportConfirm("");
+                      setMotImportStep(1);
                       setMotImportOpen(true);
                     };
                     reader.readAsText(f,"utf-8");
@@ -5537,7 +5718,7 @@ function mapearColuna(n){
 
       {/* ═══ IMPORT CONTACTS MODAL (Item 1 Sessão 4) ═══ */}
       {motImportOpen && motImportData && (()=>{
-        const {novos, conflitos} = motImportData;
+        const {novos, conflitos, vinculos=[]} = motImportData;
         const totalOps = novos.length + conflitos.length;
         const needsConfirm = totalOps >= 5;
         const confirmOk = !needsConfirm || motImportConfirm.trim() === "ESTOU DE ACORDO";
@@ -5561,6 +5742,28 @@ function mapearColuna(n){
           saveMotoristasLS(updated);
           registrarLog("IMPORTAR_CONTATOS", `${novos.length} novos + ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`);
           showToast(`✅ ${novos.length} novos importados, ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`, "ok");
+          // Se há sugestões de vínculo, ir para etapa 2; caso contrário, fechar
+          if(vinculos.length>0){
+            setMotImportStep(2);
+          } else {
+            setMotImportOpen(false);
+            setMotImportData(null);
+            setMotImportConfirm("");
+          }
+        };
+
+        const aplicarVinculos = () => {
+          const aceitos = vinculos.filter(v=>v.aceito===true);
+          if(!aceitos.length){ setMotImportOpen(false); setMotImportData(null); return; }
+          // Atualizar DADOS: preencher nome do motorista nos registros vinculados
+          const novosD = DADOS.map(reg=>{
+            const match = aceitos.find(v=>v.reg.dt===reg.dt&&v.placa===(reg.placa||"").toUpperCase().replace(/[^A-Z0-9]/g,""));
+            if(!match)return reg;
+            return {...reg, nome:match.contato.nome, cpf:match.contato.cpf||reg.cpf||""};
+          });
+          setDadosBase(novosD.filter(r=>!dadosExtras.find(e=>e.dt===r.dt)));
+          registrarLog("VINCULAR_CONTATOS", `${aceitos.length} DT(s) vinculadas via placa`);
+          showToast(`🔗 ${aceitos.length} DT${aceitos.length>1?"s":""} vinculada${aceitos.length>1?"s":""}`, "ok");
           setMotImportOpen(false);
           setMotImportData(null);
           setMotImportConfirm("");
@@ -5573,16 +5776,53 @@ function mapearColuna(n){
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📥</div>
                 <div style={{flex:1}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>IMPORTAR CONTATOS</div>
-                  <div style={{fontSize:9,color:t.txt2}}>{novos.length} novos · {conflitos.length} conflito{conflitos.length!==1?"s":""}</div>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>
+                    {motImportStep===1?"IMPORTAR CONTATOS":"SUGESTÕES DE VÍNCULO"}
+                  </div>
+                  <div style={{fontSize:9,color:t.txt2}}>
+                    {motImportStep===1
+                      ? `${novos.length} novos · ${conflitos.length} conflito${conflitos.length!==1?"s":""}`
+                      : `${vinculos.length} DT${vinculos.length!==1?"s":""} com placa correspondente`}
+                  </div>
                 </div>
                 <button onClick={()=>setMotImportOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
               <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:12}}>
 
+                {/* ══ ETAPA 2: SUGESTÕES DE VÍNCULO ══ */}
+                {motImportStep===2 && (
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    <div style={{background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.azulLt,lineHeight:1.5}}>
+                      🔗 Encontramos placas dos contatos importados em DTs do sistema. Aceite para preencher o nome do motorista automaticamente.
+                    </div>
+                    {vinculos.map((v,vi)=>(
+                      <div key={vi} style={{background:t.card,borderRadius:10,border:`1px solid ${v.aceito===true?t.verde:v.aceito===false?t.borda:t.borda}`,borderLeft:`3px solid ${v.aceito===true?t.verde:v.aceito===false?`rgba(128,128,128,.3)`:t.azulLt}`,padding:"10px 12px",opacity:v.aceito===false?.5:1,transition:"all .18s"}}>
+                        <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:3}}>{v.contato.nome}</div>
+                            <div style={{fontSize:9,color:t.txt2,display:"flex",gap:8,flexWrap:"wrap"}}>
+                              {v.contato.tel&&<span>📞 {v.contato.tel}</span>}
+                              <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700}}>🚛 {v.placa}</span>
+                            </div>
+                            <div style={{fontSize:9,color:t.txt2,marginTop:5,paddingTop:5,borderTop:`1px solid ${t.borda}`}}>
+                              <span style={{color:t.azulLt,fontWeight:700}}>DT {v.reg.dt}</span>
+                              {" · "}{v.reg.origem||"?"} → {v.reg.destino||"?"}
+                              {v.reg.nome&&<span style={{color:t.txt2}}> · atual: <em>{v.reg.nome}</em></span>}
+                            </div>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+                            <button onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:true};setMotImportData({...motImportData,vinculos:nv});}} style={{padding:"5px 12px",fontSize:10,fontWeight:700,borderRadius:7,border:`1.5px solid ${t.verde}`,background:v.aceito===true?`rgba(2,192,118,.2)`:`rgba(2,192,118,.07)`,color:t.verde,cursor:"pointer",fontFamily:"inherit"}}>✔ Vincular</button>
+                            <button onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:false};setMotImportData({...motImportData,vinculos:nv});}} style={{padding:"5px 12px",fontSize:10,fontWeight:700,borderRadius:7,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>✕ Pular</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* NOVOS */}
-                {novos.length > 0 && (
+                {motImportStep===1 && novos.length > 0 && (
                   <div>
                     <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ {novos.length} novo{novos.length!==1?"s":""} a adicionar</div>
                     <div style={{display:"flex",flexDirection:"column",gap:4}}>
@@ -5599,7 +5839,7 @@ function mapearColuna(n){
                 )}
 
                 {/* CONFLITOS */}
-                {conflitos.length > 0 && (
+                {motImportStep===1 && conflitos.length > 0 && (
                   <div>
                     <div style={{fontSize:10,fontWeight:700,color:t.warn,marginBottom:6}}>⚠️ {conflitos.length} conflito{conflitos.length!==1?"s":""} — escolha o que manter</div>
                     <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -5641,7 +5881,7 @@ function mapearColuna(n){
                 )}
 
                 {/* Confirmação para operações grandes */}
-                {needsConfirm && (
+                {motImportStep===1 && needsConfirm && (
                   <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:10,padding:"10px 12px"}}>
                     <div style={{fontSize:10,fontWeight:700,color:t.warn,marginBottom:6}}>🔐 Operação com {totalOps} contato{totalOps!==1?"s":""} — confirmação obrigatória</div>
                     <div style={{marginBottom:6}}>
@@ -5656,10 +5896,18 @@ function mapearColuna(n){
 
               {/* Footer */}
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
-                <button onClick={()=>setMotImportOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
-                <button onClick={aplicar} disabled={!confirmOk} style={{flex:1,border:`1.5px solid ${confirmOk?t.azulLt:t.borda}`,borderRadius:10,padding:"12px 18px",cursor:confirmOk?"pointer":"not-allowed",background:confirmOk?`rgba(22,119,255,.12)`:`rgba(128,128,128,.08)`,color:confirmOk?t.azulLt:t.txt2,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
-                  📥 IMPORTAR ({novos.length} novos + {conflitos.filter(c=>c.escolha==="usar").length} atualizações)
-                </button>
+                <button onClick={()=>{setMotImportOpen(false);setMotImportData(null);setMotImportConfirm("");}} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                {motImportStep===1 ? (
+                  <button onClick={aplicar} disabled={!confirmOk} style={{flex:1,border:`1.5px solid ${confirmOk?t.azulLt:t.borda}`,borderRadius:10,padding:"12px 18px",cursor:confirmOk?"pointer":"not-allowed",background:confirmOk?`rgba(22,119,255,.12)`:`rgba(128,128,128,.08)`,color:confirmOk?t.azulLt:t.txt2,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
+                    📥 IMPORTAR ({novos.length} novos + {conflitos.filter(c=>c.escolha==="usar").length} atualizações)
+                    {vinculos.length>0&&<span style={{fontSize:10,opacity:.7,marginLeft:6}}>→ depois {vinculos.length} sugestão{vinculos.length>1?"ões":""}</span>}
+                  </button>
+                ) : (
+                  <button onClick={aplicarVinculos} style={{flex:1,border:`1.5px solid ${t.verde}`,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(2,192,118,.1)`,color:t.verde,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
+                    🔗 CONFIRMAR {vinculos.filter(v=>v.aceito===true).length} VÍNCULO{vinculos.filter(v=>v.aceito===true).length!==1?"S":""}
+                    {vinculos.some(v=>v.aceito===null)&&<span style={{fontSize:10,opacity:.7,marginLeft:6}}>(pular restantes)</span>}
+                  </button>
+                )}
               </div>
             </div>
           </div>
