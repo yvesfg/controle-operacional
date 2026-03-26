@@ -72,6 +72,7 @@ REM ═════════════════════════�
 echo.
 echo [2/5] Adicionando arquivos ao git...
 git add src/App.jsx
+git add SyncSupabase.gs 2>nul
 git add index.html package.json package-lock.json vite.config.js vercel.json
 git add .gitignore deploy.bat deploy_fix.bat 2>nul
 git add .github/ 2>nul

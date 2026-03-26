@@ -641,7 +641,7 @@ export default function App() {
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);       // último status gravado pelo Apps Script
   const [syncStatusLoading, setSyncStatusLoading] = useState(false);
-  const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email",""));
+  const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email","yvesfg@gmail.com"));
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
   useEffect(()=>{
     const fn=()=>setIsMobile(window.innerWidth<=600);
@@ -911,7 +911,7 @@ export default function App() {
     const nomeOAuth = payload.user_metadata?.full_name || payload.user_metadata?.name || emailOAuth;
 
     // Admin via OAuth (email configurável — sem hardcode)
-    const adminEmailOAuth = loadJSON("co_admin_email","").toLowerCase();
+    const adminEmailOAuth = loadJSON("co_admin_email","yvesfg@gmail.com").toLowerCase();
     if (adminEmailOAuth && emailOAuth === adminEmailOAuth) {
       const p = "admin"; const pm = {...PERMS_PADRAO.admin};
       setPerfil(p); setPerms(pm); setAuthed(true);
@@ -1389,21 +1389,39 @@ export default function App() {
     const dataBusca = new Date(dscData+"T00:00:00");
     const STATUS_EXCLUIR = ["CANCELADO","NO-SHOW","NÃO ACEITE","NAO ACEITE"];
     const naoEncerrado = r => !STATUS_EXCLUIR.includes((r.status||"").toUpperCase().trim());
+    // Descarga real = data_desc tem valor que parseData consegue interpretar como data
+    // Valores como "AG" (Aguardando) sao ignorados — tratados como vazio
+    const temDescReal = r => !!parseData(r.data_desc);
+    // Hoje: data_agenda = dscData E sem data descarga real
     const hoje = DADOS.filter(r => {
       if (!naoEncerrado(r)) return false;
-      const d = parseData(r.data_desc) || parseData(r.data_agenda);
-      return d && d.toISOString().slice(0,10) === dscData;
+      if (temDescReal(r)) return false;
+      const da = parseData(r.data_agenda);
+      return da && da.toISOString().slice(0,10) === dscData;
     });
     const atrasados = DADOS.filter(r => {
       if (!naoEncerrado(r)) return false;
       const da = parseData(r.data_agenda);
       if (!da || da >= dataBusca) return false;
-      return !r.data_desc?.trim();
+      return !temDescReal(r);
     }).sort((a,b) => {
       const da = parseData(a.data_agenda), db = parseData(b.data_agenda);
       return da && db ? da-db : 0;
     });
-    return { hoje, atrasados };
+    // Aguardando: chegada preenchida, chegada <= data_agenda, sem data descarga real
+    const aguardando = DADOS.filter(r => {
+      if (!naoEncerrado(r)) return false;
+      if (temDescReal(r)) return false;
+      const ch = parseData(r.chegada);
+      if (!ch) return false;
+      const da = parseData(r.data_agenda);
+      if (!da) return false;
+      return ch <= da;
+    }).sort((a,b) => {
+      const ca = parseData(a.chegada), cb = parseData(b.chegada);
+      return ca && cb ? ca-cb : 0;
+    });
+    return { hoje, atrasados, aguardando };
   }, [DADOS, dscData]);
 
   // Charts
@@ -1494,12 +1512,34 @@ export default function App() {
   const saveConexoesLS = (c) => { setConexoes(c); saveJSON("co_conexoes",c); };
 
   // Supabase upsert
+  // Colunas conhecidas do Supabase. Se a tabela não tiver desc_aguardando ainda,
+  // o retry remove campos desconhecidos automaticamente para não bloquear o save.
+  const SUPA_KNOWN_COLS = [
+    "dt","nome","cpf","placa","vinculo","origem","destino",
+    "data_carr","data_agenda","status","dias",
+    "vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg",
+    "cte","mdf","nf","mat","ro","cliente","sgs",
+    "chegada","desc_aguardando","data_desc","informou_analista","data_manifesto","gerenc",
+    "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
+    "obs","sinistro","ocorrencias"
+  ];
   const supaUpsert = async (reg) => {
     const conn = getConexao();
     if (!conn) throw new Error("Sem conexão");
     const clean = {...reg}; delete clean._override; delete clean._overrideDT;
     if (!clean.dt) throw new Error("DT obrigatório");
-    await supaFetch(conn.url, conn.key, "POST", TABLE, [clean]);
+    try {
+      await supaFetch(conn.url, conn.key, "POST", TABLE, [clean]);
+    } catch(e) {
+      // PGRST204: coluna não existe no schema cache → tenta novamente só com colunas conhecidas
+      if (e.message && (e.message.includes("PGRST204") || e.message.includes("column") || e.message.includes("schema cache") || e.message.includes("400"))) {
+        const safeClean = {};
+        for (const k of SUPA_KNOWN_COLS) { if (clean[k] !== undefined) safeClean[k] = clean[k]; }
+        await supaFetch(conn.url, conn.key, "POST", TABLE, [safeClean]);
+      } else {
+        throw e;
+      }
+    }
   };
 
   // Save record
@@ -1629,7 +1669,7 @@ export default function App() {
     badge:     (c,bg,bc) => ({ padding:"3px 10px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
     overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.88)", backdropFilter:"blur(10px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
-    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"22px 22px 0 0", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .32s cubic-bezier(.34,1.3,.64,1)", transition:"background .3s" },
+    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"22px 22px 0 0", display:"flex", flexDirection:"column", overflow:"clip", animation:"mslide .32s cubic-bezier(.34,1.3,.64,1)", transition:"background .3s" },
   };
 
   // ══════════════════════════════════════════════
@@ -1724,61 +1764,27 @@ export default function App() {
         <div style={{width:"100%",maxWidth:340,...css.card,boxShadow:`0 24px 60px ${t.shadow}`}}>
           <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
             <div style={{width:32,height:32,borderRadius:8,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🔐</div>
-            <div><div style={{fontWeight:700,fontSize:13,color:t.txt}}>Acesso ao Sistema</div><div style={{fontSize:10,color:t.txt2}}>Entre com suas credenciais</div></div>
+            <div><div style={{fontWeight:700,fontSize:13,color:t.txt}}>Acesso ao Sistema</div><div style={{fontSize:10,color:t.txt2}}>Entre com sua conta Google</div></div>
           </div>
 
-          <div style={{padding:16}}>
-            {/* Email/Login */}
-            <div style={{marginBottom:12}}>
-              <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Email</label>
-              <input value={authEmail} onChange={e=>setAuthEmail(e.target.value)} placeholder="seu@email.com" style={css.inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()} autoComplete="username" />
-            </div>
-
-            {/* Password */}
-            <div style={{marginBottom:16}}>
-              <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Senha</label>
-              <input type="password" value={authSenha} onChange={e=>setAuthSenha(e.target.value)} placeholder="Digite sua senha..." style={css.inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()} autoComplete="current-password" />
-            </div>
-
-            <button onClick={handleLogin} style={{...css.btnGold,width:"100%",justifyContent:"center",padding:14,fontSize:18,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>🔓 ENTRAR</button>
-
+          <div style={{padding:"20px 16px 22px"}}>
             {authMsg && (
-              <div style={{padding:"10px 12px",borderRadius:8,fontSize:12,fontWeight:600,textAlign:"center",marginTop:8,lineHeight:1.5,background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
+              <div style={{padding:"10px 12px",borderRadius:8,fontSize:12,fontWeight:600,textAlign:"center",marginBottom:14,lineHeight:1.5,background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
             )}
 
-            {/* ── Login Social (OAuth) ── */}
-            {ENV_SUPA_URL && (
-              <>
-                <div style={{display:"flex",alignItems:"center",gap:8,margin:"14px 0 2px"}}>
-                  <div style={{flex:1,height:1,background:t.borda}} />
-                  <span style={{fontSize:10,color:t.txt2,fontWeight:600,letterSpacing:1}}>OU ENTRE COM</span>
-                  <div style={{flex:1,height:1,background:t.borda}} />
-                </div>
-                <div style={{display:"flex",gap:8,marginTop:10}}>
-                  <button
-                    onClick={() => iniciarOAuth("google")}
-                    style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)",border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 8px",cursor:"pointer",fontSize:12,fontWeight:600,color:t.txt,fontFamily:"inherit",transition:"background .2s"}}
-                    onMouseEnter={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.12)":"rgba(0,0,0,.08)"}
-                    onMouseLeave={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)"}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-                    Google
-                  </button>
-                  <button
-                    onClick={() => iniciarOAuth("apple")}
-                    style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)",border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 8px",cursor:"pointer",fontSize:12,fontWeight:600,color:t.txt,fontFamily:"inherit",transition:"background .2s"}}
-                    onMouseEnter={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.12)":"rgba(0,0,0,.08)"}
-                    onMouseLeave={e=>e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)"}
-                  >
-                    <svg width="15" height="18" viewBox="0 0 814 1000" fill={t.txt}><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-105L46.1 840.6C27.4 812.5 0 775.8 0 707.2c0-130.3 77.7-227.2 240-227.2 61.6 0 104.2 34.8 139.6 34.8 33.7 0 87.5-37 152.2-37zm-8.8-175.8c31-37 53.1-88.1 53.1-139.1 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.5-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.5z"/></svg>
-                    Apple
-                  </button>
-                </div>
-                <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:8,lineHeight:1.5}}>
-                  ⚠️ OAuth requer configuração no painel Supabase → Authentication → Providers
-                </div>
-              </>
-            )}
+            <button
+              onClick={() => iniciarOAuth("google")}
+              style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)",border:`1.5px solid ${t.borda2}`,borderRadius:12,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:700,color:t.txt,fontFamily:"inherit",transition:"background .2s, transform .1s",letterSpacing:.5}}
+              onMouseEnter={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.13)":"rgba(0,0,0,.09)";e.currentTarget.style.transform="scale(1.01)"}}
+              onMouseLeave={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)";e.currentTarget.style.transform="scale(1)"}}
+            >
+              <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+              Continuar com Google
+            </button>
+
+            <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:12,lineHeight:1.6,opacity:.7}}>
+              Apenas contas autorizadas têm acesso ao sistema.
+            </div>
           </div>
         </div>
         <Toast {...toast} />
@@ -3581,21 +3587,22 @@ export default function App() {
           <div>
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
               <ExportMenu
-                dados={dscTab==="hoje"?descargaData.hoje:descargaData.atrasados}
-                cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"placa",l:"Placa"},{k:"destino",l:"Destino"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"}]}
+                dados={dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados}
+                cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"placa",l:"Placa"},{k:"destino",l:"Destino"},{k:"chegada",l:"Chegada"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"}]}
                 filename={`descarga-${dscData}`}
-                titulo={`Descarga ${dscTab==="hoje"?"do Dia":"- Atrasos"} · ${dscData}`}
+                titulo={`Descarga ${dscTab==="hoje"?"do Dia":dscTab==="aguardando"?"- Aguardando":"- Atrasos"} · ${dscData}`}
               />
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,maxWidth:400,margin:"0 auto 14px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,maxWidth:560,margin:"0 auto 14px"}}>
               {[
-                {k:"hoje",svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,l:"Descarrega Hoje",ct:descargaData.hoje.length},
-                {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length}
+                {k:"hoje",svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,l:"Descarrega Hoje",ct:descargaData.hoje.length,cor:t.azul,corLt:t.azulLt,bg:"rgba(22,119,255,.07)"},
+                {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length,cor:t.danger,corLt:"#f6465d",bg:"rgba(246,70,93,.07)"},
+                {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"#f0b90b",corLt:"#ffe57a",bg:"rgba(240,185,11,.07)"}
               ].map(tb => (
-                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?t.azul:t.borda}`,borderRadius:10,padding:12,cursor:"pointer",background:dscTab===tb.k?`rgba(22,119,255,.07)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s"}}>
-                  {hIco(tb.svg,dscTab===tb.k?t.azulLt:t.txt2,24)}
-                  <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:dscTab===tb.k?t.azulLt:t.txt2}}>{tb.l}</span>
-                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,color:dscTab===tb.k?t.azulLt:t.txt2}}>{tb.ct}</span>
+                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:10,padding:12,cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s"}}>
+                  {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,24)}
+                  <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:dscTab===tb.k?tb.corLt:t.txt2}}>{tb.l}</span>
+                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,color:dscTab===tb.k?tb.corLt:t.txt2}}>{tb.ct}</span>
                 </div>
               ))}
             </div>
@@ -3628,7 +3635,7 @@ export default function App() {
             {descargaView==="linhas" ? (
               // ── MODO LINHAS (original) ──
               <>
-                {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).slice(0,50).map((r,i) => {
+                {(dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados).slice(0,50).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
@@ -3653,12 +3660,13 @@ export default function App() {
             ) : (
               // ── MODO BLOCOS (Opção C com avatar) ──
               <div style={{display:"grid",gridTemplateColumns:`repeat(${descargaCols},minmax(0,1fr))`,gap:10}}>
-                {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).slice(0,80).map((r,i) => {
+                {(dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados).slice(0,80).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
-                  const accentC = isAtrasado ? t.danger : t.azul;
-                  const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : `rgba(22,119,255,.1)`;
+                  const isAguardando = dscTab === "aguardando";
+                  const accentC = isAtrasado ? t.danger : isAguardando ? "#f0b90b" : t.azul;
+                  const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : isAguardando ? `rgba(240,185,11,.1)` : `rgba(22,119,255,.1)`;
                   const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
                   const saldoPg = parseFloat(r.saldo), vl = parseFloat(r.vl_contrato);
                   const pgStatus = !isNaN(saldoPg)&&saldoPg===0&&!isNaN(vl)&&vl>0 ? "pago" : !isNaN(saldoPg)&&saldoPg>0 ? "pendente" : null;
@@ -3666,7 +3674,8 @@ export default function App() {
                     {l:"DT",v:r.dt,c:t.ouro},
                     {l:"Placa",v:r.placa||"—",c:t.verde},
                     {l:"Destino",v:r.destino||"—",c:t.txt2},
-                    {l:"Agenda",v:r.data_agenda||"—",c:isAtrasado?t.danger:t.ouro},
+                    ...(isAguardando&&r.chegada?[{l:"Chegada",v:r.chegada,c:"#f0b90b"}]:[]),
+                    {l:"Agenda",v:r.data_agenda||"—",c:isAtrasado?t.danger:isAguardando?"#f0b90b":t.ouro},
                     {l:"Descarga",v:r.data_desc||"Pendente",c:r.data_desc?t.verde:t.txt2},
                     ...(r.origem?[{l:"Origem",v:r.origem,c:t.txt2}]:[]),
                     ...(r.ro?[{l:"RO",v:r.ro,c:"#f57c00"}]:[]),
@@ -3707,8 +3716,8 @@ export default function App() {
                 })}
               </div>
             )}
-            {(dscTab==="hoje"?descargaData.hoje:descargaData.atrasados).length === 0 && (
-              <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":"✅"}</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":"SEM ATRASOS"}</h3></div>
+            {(dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados).length === 0 && (
+              <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":dscTab==="aguardando"?"⏳":"✅"}</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":dscTab==="aguardando"?"NENHUM AGUARDANDO AGENDA":"SEM ATRASOS"}</h3></div>
             )}
           </div>
         )}
@@ -4990,11 +4999,11 @@ function mapearColuna(n){
             </div>
             <div style={{flex:1,overflowY:"auto",padding:16}}>
               {[
-                {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo"}]},
-                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias"}]},
+                {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo",type:"select_opts",opts:["TERCEIRO","FROTA","AGREGADO"]}]},
+                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias",type:"computed_dias",lock:true}]},
                 {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"},{k:"diaria_prev",l:"Diária Devida (R$)"},{k:"diaria_pg",l:"Diária Paga (R$)"}]},
                 {s:"Documentação",ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
-                {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",span:2}]},
+                {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",type:"select_opts",opts:["SKYMARK (FRETEBRAS)","INFINITY","MUNDIAL","OPENTECH"],span:2}]},
               ].map((section,si) => (
                 <div key={si}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,margin:"14px 0 8px",display:"flex",alignItems:"center",gap:6}}>{hIco(section.ico,t.azulLt,10)} {section.s}<span style={{flex:1,height:1,background:`rgba(22,119,255,.12)`}} /></div>
@@ -5056,6 +5065,32 @@ function mapearColuna(n){
                               <option value="EM ABERTO">🔓 EM ABERTO</option>
                               <option value="CANCELADO">🛑 CANCELADO</option>
                             </select>
+                          ) : f.type==="select_opts" ? (
+                            <select
+                              value={formData[f.k]||""}
+                              onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))}
+                              disabled={isLocked}
+                              style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?.6:1}}
+                            >
+                              <option value="">— Selecione —</option>
+                              {(f.opts||[]).map(o=><option key={o} value={o}>{o}</option>)}
+                            </select>
+                          ) : f.type==="computed_dias" ? (
+                            (() => {
+                              const parseFormD = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
+                              const da = parseFormD(formData.data_agenda);
+                              const dd = parseFormD(formData.data_desc);
+                              const ref = dd || new Date();
+                              const diasCalc = da ? Math.max(0, Math.floor((ref - da) / 86400000)) : null;
+                              const diasLabel = diasCalc !== null ? String(diasCalc) : "—";
+                              const diasColor = diasCalc === null ? t.txt2 : diasCalc > 3 ? t.danger : diasCalc > 1 ? t.ouro : t.verde;
+                              return (
+                                <div style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:"default",color:diasColor,fontWeight:700,background:t.inputBg,display:"flex",alignItems:"center",gap:6}}>
+                                  📅 {diasLabel} {diasCalc !== null && (diasCalc === 1 ? "dia" : "dias")}
+                                  <span style={{fontSize:9,color:t.txt2,fontWeight:400,marginLeft:4}}>auto</span>
+                                </div>
+                              );
+                            })()
                           ) : (
                             <input
                               type={f.type==="datetime"?"datetime-local":(f.type||"text")}
