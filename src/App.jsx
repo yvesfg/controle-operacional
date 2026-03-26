@@ -639,6 +639,7 @@ export default function App() {
   const [conexoesOpen, setConexoesOpen] = useState(false);
   const [contatosAdminOpen, setContatosAdminOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
+  const [oauthAccessOpen, setOauthAccessOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);       // último status gravado pelo Apps Script
   const [syncStatusLoading, setSyncStatusLoading] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email","yvesfg@gmail.com"));
@@ -1739,54 +1740,78 @@ export default function App() {
   // ══════════════════════════════════════════════
   if (!authed) {
     return (
-      <div style={{...css.app, background:t.gradientAuth, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh"}}>
+      <div style={{...css.app, background:theme==="dark"?"linear-gradient(135deg,#0a0e1a 0%,#0f1829 40%,#131522 100%)":"linear-gradient(135deg,#e8edf5 0%,#f0f4fa 40%,#e4e8f5 100%)", display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
         <style>{`
           @keyframes logoPop{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0)}}
-          @keyframes mslide{from{transform:translateY(100%)}to{transform:none}}
+          @keyframes auroraFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-20px) scale(1.05)}}
+          @keyframes auroraFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-15px,15px) scale(1.08)}}
+          @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
           @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');
           *{box-sizing:border-box;margin:0;padding:0}
           ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.scrollThumb};border-radius:2px}
           input::placeholder{color:${t.txt2}}
         `}</style>
+
+        {/* Aurora halos */}
+        <div style={{position:"absolute",top:"-100px",left:"-100px",width:"480px",height:"480px",background:"radial-gradient(circle,rgba(100,120,255,.18) 0%,transparent 65%)",animation:"auroraFloat 9s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
+        <div style={{position:"absolute",bottom:"-80px",right:"-80px",width:"420px",height:"420px",background:"radial-gradient(circle,rgba(240,185,11,.13) 0%,transparent 65%)",animation:"auroraFloat2 11s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
+        <div style={{position:"absolute",top:"35%",right:"-60px",width:"260px",height:"260px",background:"radial-gradient(circle,rgba(80,180,255,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0}} />
+
         {/* Theme toggle */}
-        <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px"}}>
+        <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>
           {theme==="dark"?"☀️":"🌙"}
         </button>
 
-        {/* Logo */}
-        {customLogo
-          ? <img src={customLogo} alt="Logo" style={{width:72,height:72,borderRadius:20,objectFit:"contain",marginBottom:12,boxShadow:"0 0 36px rgba(240,185,11,.35)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}} />
-          : <div style={{width:72,height:72,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,marginBottom:12,boxShadow:"0 0 36px rgba(240,185,11,.35)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}}>🚛</div>
-        }
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:4,color:t.txt,textAlign:"center"}}>CONTROLE OPERACIONAL</div>
-        <div style={{fontSize:11,color:t.txt2,textAlign:"center",margin:"4px 0 18px"}}>YFGroup · Imperatriz</div>
+        {/* Glass card */}
+        <div style={{width:"100%",maxWidth:360,background:theme==="dark"?"rgba(255,255,255,.05)":"rgba(255,255,255,.72)",border:`1px solid ${theme==="dark"?"rgba(255,255,255,.1)":"rgba(255,255,255,.95)"}`,borderRadius:26,padding:"34px 30px",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",boxShadow:theme==="dark"?"0 28px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.05)":"0 24px 80px rgba(0,0,0,.1), 0 0 0 1px rgba(255,255,255,.8)",display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .5s cubic-bezier(.34,1.2,.64,1)",position:"relative",zIndex:1}}>
 
-        <div style={{width:"100%",maxWidth:340,...css.card,boxShadow:`0 24px 60px ${t.shadow}`}}>
-          <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
-            <div style={{width:32,height:32,borderRadius:8,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🔐</div>
-            <div><div style={{fontWeight:700,fontSize:13,color:t.txt}}>Acesso ao Sistema</div><div style={{fontSize:10,color:t.txt2}}>Entre com sua conta Google</div></div>
-          </div>
+          {/* Badge */}
+          <div style={{fontSize:9,background:theme==="dark"?"rgba(240,185,11,.14)":"rgba(240,185,11,.18)",border:"1px solid rgba(240,185,11,.35)",color:t.ouro,borderRadius:20,padding:"3px 12px",letterSpacing:2.5,fontWeight:700,marginBottom:22}}>YFGROUP</div>
 
-          <div style={{padding:"20px 16px 22px"}}>
-            {authMsg && (
-              <div style={{padding:"10px 12px",borderRadius:8,fontSize:12,fontWeight:600,textAlign:"center",marginBottom:14,lineHeight:1.5,background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
-            )}
+          {/* Icon B — Minimalista Outline SVG */}
+          {customLogo
+            ? <img src={customLogo} alt="Logo" style={{width:76,height:76,borderRadius:20,objectFit:"contain",marginBottom:18,animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)"}} />
+            : <div style={{width:80,height:80,background:theme==="dark"?"rgba(240,185,11,.07)":"rgba(240,185,11,.1)",borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.28)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)",boxShadow:theme==="dark"?"0 0 44px rgba(240,185,11,.1)":"0 0 30px rgba(240,185,11,.12)"}}>
+                <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
+                  <rect x="7" y="25" width="32" height="18" rx="3" stroke="#f0b90b" strokeWidth="2"/>
+                  <path d="M39 32 L55 32 L55 43 L39 43 Z" stroke="#f0b90b" strokeWidth="2"/>
+                  <path d="M41 32 L41 26 L52 26 L55 32" stroke="#f0b90b" strokeWidth="2"/>
+                  <circle cx="17" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
+                  <circle cx="17" cy="45" r="1.5" fill="#f0b90b"/>
+                  <circle cx="29" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
+                  <circle cx="29" cy="45" r="1.5" fill="#f0b90b"/>
+                  <circle cx="49" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
+                  <circle cx="49" cy="45" r="1.5" fill="#f0b90b"/>
+                  <rect x="43" y="28" width="9" height="6" rx="1" stroke="#f0b90b" strokeWidth="1.5"/>
+                </svg>
+              </div>
+          }
 
-            <button
-              onClick={() => iniciarOAuth("google")}
-              style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)",border:`1.5px solid ${t.borda2}`,borderRadius:12,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:700,color:t.txt,fontFamily:"inherit",transition:"background .2s, transform .1s",letterSpacing:.5}}
-              onMouseEnter={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.13)":"rgba(0,0,0,.09)";e.currentTarget.style.transform="scale(1.01)"}}
-              onMouseLeave={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.07)":"rgba(0,0,0,.04)";e.currentTarget.style.transform="scale(1)"}}
-            >
-              <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-              Continuar com Google
-            </button>
+          {/* Title */}
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:23,letterSpacing:4,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
+          <div style={{fontSize:10,color:t.txt2,textAlign:"center",marginTop:5,marginBottom:26,letterSpacing:2.5,textTransform:"uppercase",opacity:.8}}>Logística · Transporte</div>
 
-            <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:12,lineHeight:1.6,opacity:.7}}>
-              Apenas contas autorizadas têm acesso ao sistema.
-            </div>
+          {/* Auth message */}
+          {authMsg && (
+            <div style={{padding:"10px 12px",borderRadius:10,fontSize:12,fontWeight:600,textAlign:"center",marginBottom:16,lineHeight:1.5,width:"100%",background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
+          )}
+
+          {/* Google button */}
+          <button
+            onClick={() => iniciarOAuth("google")}
+            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)",border:`1.5px solid ${theme==="dark"?"rgba(255,255,255,.16)":"rgba(0,0,0,.1)"}`,borderRadius:13,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:700,color:t.txt,fontFamily:"inherit",transition:"all .2s",letterSpacing:.5,backdropFilter:"blur(8px)"}}
+            onMouseEnter={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.15)":"rgba(255,255,255,1)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow=theme==="dark"?"0 10px 28px rgba(0,0,0,.3)":"0 8px 24px rgba(0,0,0,.12)"}}
+            onMouseLeave={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}
+          >
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+            Continuar com Google
+          </button>
+
+          <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:14,lineHeight:1.6,opacity:.65}}>
+            Apenas contas autorizadas têm acesso ao sistema.
           </div>
         </div>
+
         <Toast {...toast} />
       </div>
     );
@@ -4305,6 +4330,53 @@ export default function App() {
                 </div>
               </div>
             ))}
+
+            {/* Acesso Google OAuth — colapsável */}
+            <div style={{...css.secTitle,marginTop:20,cursor:"pointer",userSelect:"none"}} onClick={()=>setOauthAccessOpen(!oauthAccessOpen)}>
+              <svg width="14" height="14" viewBox="0 0 48 48" style={{flexShrink:0,marginRight:2}}><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              Acesso Google OAuth <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{oauthAccessOpen?"▲":"▼"}</span>
+              <span style={{flex:1,height:1,background:t.borda}} />
+            </div>
+            {oauthAccessOpen && (
+              <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
+                <div style={{fontSize:10,color:t.txt2,marginBottom:12,lineHeight:1.6,padding:"8px 10px",background:`rgba(240,185,11,.06)`,borderRadius:7,border:`1px solid rgba(240,185,11,.15)`}}>
+                  ℹ️ Usuários desta lista acessam o sistema via <b>Continuar com Google</b>. O perfil define o nível de acesso. O Admin é identificado pelo e-mail configurado na seção acima.
+                </div>
+                {usuarios.length===0 && <div style={{textAlign:"center",color:t.txt2,fontSize:11,padding:"12px 0"}}>Nenhum usuário cadastrado ainda.</div>}
+                {usuarios.map((u,i)=>{
+                  const corPerfil=u.perfil==="admin"?`linear-gradient(135deg,${t.ouroDk},${t.ouro})`:u.perfil==="gerente"?`linear-gradient(135deg,${t.azul},${t.azulLt})`:u.perfil==="operador"?`linear-gradient(135deg,#555,#848e9c)`:`linear-gradient(135deg,#444,#666)`;
+                  return (
+                    <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:"10px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{width:34,height:34,borderRadius:9,background:corPerfil,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#000",flexShrink:0}}>{u.nome?.[0]?.toUpperCase()||"?"}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nome||u.email}</div>
+                        <div style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📧 {u.email}</div>
+                      </div>
+                      <select value={u.perfil} onChange={async e=>{
+                        const np=e.target.value;
+                        const pm={...PERMS_PADRAO[np]||PERMS_PADRAO.visualizador};
+                        const nu=[...usuarios];
+                        nu[i]={...nu[i],perfil:np,perms:pm};
+                        setUsuarios(nu);
+                        saveJSON("co_usuarios_local",nu);
+                        const conn=getConexao();
+                        if(conn){await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{perfil:np,perms:JSON.stringify(pm)}).catch(()=>{});}
+                        showToast(`✅ ${u.nome||u.email} → ${np}`,"ok");
+                      }} style={{background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:6,padding:"4px 8px",fontSize:10,color:t.ouro,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>
+                        <option value="visualizador">Visualizador</option>
+                        <option value="operador">Operador</option>
+                        <option value="gerente">Gerente</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button onClick={()=>{if(confirm(`Revogar acesso de "${u.nome||u.email}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios_local",nu);const conn=getConexao();if(conn){supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});}showToast("🚫 Acesso revogado");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                        {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.danger,12)}
+                      </button>
+                    </div>
+                  );
+                })}
+                <button onClick={()=>{setFormData({perfil:"operador",perms:{...PERMS_PADRAO.operador}});setEditIdx(-1);setModalOpen("usuario");}} style={{...css.btnGold,width:"100%",justifyContent:"center",marginTop:4}}>＋ ADICIONAR ACESSO GOOGLE</button>
+              </div>
+            )}
 
             {/* Conexões Supabase — colapsável */}
             <div style={{...css.secTitle,marginTop:20,cursor:"pointer",userSelect:"none"}} onClick={()=>setConexoesOpen(!conexoesOpen)}>
