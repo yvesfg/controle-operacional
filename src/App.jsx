@@ -1520,14 +1520,14 @@ export default function App() {
     "data_carr","data_agenda","status","dias",
     "vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg",
     "cte","mdf","nf","mat","ro","cliente","sgs",
-    "chegada","desc_aguardando","data_desc","informou_analista","data_manifesto","gerenc",
+    "chegada","desc_aguardando","data_desc","data_manifesto","gerenc",
     "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
     "obs","sinistro","ocorrencias"
   ];
   const supaUpsert = async (reg) => {
     const conn = getConexao();
     if (!conn) throw new Error("Sem conexão");
-    const clean = {...reg}; delete clean._override; delete clean._overrideDT;
+    const clean = {...reg}; delete clean._override; delete clean._overrideDT; delete clean.informou_analista; // coluna não existe no schema Supabase
     if (!clean.dt) throw new Error("DT obrigatório");
     try {
       await supaFetch(conn.url, conn.key, "POST", TABLE, [clean]);
