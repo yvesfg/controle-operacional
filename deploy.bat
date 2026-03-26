@@ -95,15 +95,26 @@ if %errorlevel% neq 0 (
 )
 
 REM ════════════════════════════════════════
-REM  [4] PUSH
+REM  [4] PULL + PUSH
 REM ════════════════════════════════════════
 echo.
-echo [4/5] Enviando para o GitHub...
-git push -u origin main
+echo [4/5] Sincronizando com GitHub (pull + push)...
+git pull --rebase origin main
 if %errorlevel% neq 0 (
   echo.
-  echo [ERRO] Push falhou. Verifique conexao ou credenciais do GitHub.
-  pause & exit /b 1
+  echo [AVISO] Pull com conflito. Tentando push forcado...
+  git push --force-with-lease origin main
+  if %errorlevel% neq 0 (
+    echo [ERRO] Push falhou. Verifique conexao ou credenciais do GitHub.
+    pause & exit /b 1
+  )
+) else (
+  git push -u origin main
+  if %errorlevel% neq 0 (
+    echo.
+    echo [ERRO] Push falhou. Verifique conexao ou credenciais do GitHub.
+    pause & exit /b 1
+  )
 )
 
 REM ════════════════════════════════════════
