@@ -129,9 +129,14 @@ echo   DEPLOY CONCLUIDO COM SUCESSO!
 echo   Backup salvo em: %BKPFILE%
 echo   Vercel detecta em ~1-2 min:
 echo   https://controle-operacional-omega.vercel.app/
-echo   Dashboard Vercel:
-echo   https://vercel.com/yvesfg-8492s-projects
 echo ========================================================
 echo.
+
+REM Oferece opcao de verificar Vercel
+set /p CHECK_VERCEL=Deseja verificar sincronizacao com Vercel (S/N)?
+if /i "!CHECK_VERCEL!"=="S" (
+  call deploy_check_vercel.bat
+)
+
 pause
 endlocal

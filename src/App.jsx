@@ -36,6 +36,12 @@ export default function App() {
   const [customLogo, setCustomLogo] = useState(() => loadJSON("co_custom_logo", null));
   const [usuarioLogado, setUsuarioLogado] = useState(null); // nome do usuário logado
   const [usuarios, setUsuarios] = useState(() => loadJSON("co_usuarios_local",[]));
+  // Aprovação de acesso Google
+  const [aguardandoAprovacao, setAguardandoAprovacao] = useState(false);
+  const [pendingUserInfo, setPendingUserInfo] = useState(null); // {email, nome}
+  const [usuariosPendentes, setUsuariosPendentes] = useState([]);
+  const [aprovarModal, setAprovarModal] = useState(null); // usuário pendente a ser aprovado
+  const [aprovarPerfil, setAprovarPerfil] = useState("operador");
 
   // Data state
   const [dadosBase, setDadosBase] = useState([]);
@@ -47,6 +53,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("planilha");
   const [planilhaSortKey, setPlanilhaSortKey] = useState(null);   // coluna ativa: 'dt'|'nome'|'placa'|...
   const [planilhaSortDir, setPlanilhaSortDir] = useState("asc");  // 'asc'|'desc'
+  const [planilhaPagina, setPlanilhaPagina] = useState(1);        // página atual (começa em 1)
   const [planilhaDetalheReg, setPlanilhaDetalheReg] = useState(null); // modal detalhe da planilha
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
@@ -309,8 +316,9 @@ export default function App() {
         offset += limit;
       }
       setDadosBase(all);
+      // Permite DT sem motorista sincronizarem normalmente
       const dts = new Set(all.map(r => r.dt));
-      const newExtras = dadosExtras.filter(r => !dts.has(r.dt) && !dts.has(r._overrideDT));
+      const newExtras = dadosExtras.filter(r => !dts.has(r.dt) && !dts.has(r._overrideDT) && r.nome);
       setDadosExtras(newExtras);
       saveJSON("dados_extras", newExtras);
       const now = new Date().toLocaleString("pt-BR");
@@ -336,7 +344,14 @@ export default function App() {
         setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
         setUsuarioLogado(s.nome || s.perfil);
         setAuthed(true);
+        return; // sessão válida — não verifica pendentes
       }
+    }
+    // Verifica se há solicitação de acesso pendente de aprovação
+    const pending = loadJSON("co_pending_user", null);
+    if (pending?.email) {
+      setPendingUserInfo(pending);
+      setAguardandoAprovacao(true);
     }
   }, []);
 
@@ -412,9 +427,18 @@ export default function App() {
     if (ENV_SUPA_URL && ENV_SUPA_KEY) {
       supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "GET",
         `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(payload.email)}&select=*&limit=1`)
-        .then(data => {
+        .then(async data => {
           if (Array.isArray(data) && data.length > 0) {
             const u = data[0];
+            // Verifica se usuário ainda está aguardando aprovação
+            if (u.status === "pendente") {
+              const info = {email: emailOAuth, nome: nomeOAuth};
+              saveJSON("co_pending_user", info);
+              setPendingUserInfo(info);
+              setAguardandoAprovacao(true);
+              showToast("⏳ Aguardando aprovação do administrador", "warn");
+              return;
+            }
             const p = u.perfil || "visualizador";
             const pm = typeof u.perms === "string" ? JSON.parse(u.perms) : (u.perms || {...PERMS_PADRAO[p]});
             setPerfil(p); setPerms(pm); setAuthed(true);
@@ -422,7 +446,18 @@ export default function App() {
             saveJSON("co_sessao", {perfil:p, perms:pm, nome:u.nome||u.email, ts:Date.now()});
             showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
           } else {
-            setAuthMsg({t:"err", m:`❌ Conta ${payload.email} não cadastrada no sistema`});
+            // Usuário novo — registrar como pendente de aprovação
+            const info = {email: emailOAuth, nome: nomeOAuth};
+            saveJSON("co_pending_user", info);
+            setPendingUserInfo(info);
+            setAguardandoAprovacao(true);
+            showToast("✅ Solicitação registrada! Aguardando aprovação.", "ok");
+            // Persiste no Supabase para o admin visualizar
+            supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "POST",
+              `${TABLE_USUARIOS}?on_conflict=email`,
+              [{email: emailOAuth, nome: nomeOAuth, perfil: "pendente", status: "pendente",
+                perms: JSON.stringify({}), solicitado_em: new Date().toISOString()}]
+            ).catch(() => {});
           }
         })
         .catch(() => setAuthMsg({t:"err", m:"❌ Erro ao verificar conta no banco"}));
@@ -436,8 +471,13 @@ export default function App() {
     const conn = getConexao();
     if (!conn) return null;
     try {
-      const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_CONFIG}?chave=eq.${key}&select=valor`);
-      return Array.isArray(data) && data.length > 0 ? data[0].valor : null;
+      // Tenta convenção pt-BR (chave/valor) — usada pelo app internamente
+      const d1 = await supaFetch(conn.url, conn.key, "GET", `${TABLE_CONFIG}?chave=eq.${key}&select=valor`);
+      if (Array.isArray(d1) && d1.length > 0 && d1[0].valor != null) return d1[0].valor;
+      // Fallback: convenção en (key/value) — usada pelo Apps Script legado
+      const d2 = await supaFetch(conn.url, conn.key, "GET", `${TABLE_CONFIG}?key=eq.${key}&select=value`);
+      if (Array.isArray(d2) && d2.length > 0 && d2[0].value != null) return d2[0].value;
+      return null;
     } catch { return null; }
   }, [getConexao]);
 
@@ -518,9 +558,24 @@ export default function App() {
     try {
       const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?select=*`);
       if (Array.isArray(data)) {
-        setUsuarios(data);
-        saveJSON("co_usuarios_local", data);
+        // Separa aprovados de pendentes
+        const aprovados = data.filter(u => !u.status || u.status === "aprovado");
+        const pendentes = data.filter(u => u.status === "pendente");
+        setUsuarios(aprovados);
+        saveJSON("co_usuarios_local", aprovados);
+        setUsuariosPendentes(pendentes);
       }
+    } catch { /* silencioso */ }
+  }, [getConexao]);
+
+  // Recarrega apenas os pendentes de aprovação (uso no painel admin)
+  const carregarPendentes = useCallback(async () => {
+    const conn = getConexao();
+    if (!conn) return;
+    try {
+      const data = await supaFetch(conn.url, conn.key, "GET",
+        `${TABLE_USUARIOS}?status=eq.pendente&select=*&order=solicitado_em.desc`);
+      if (Array.isArray(data)) setUsuariosPendentes(data);
     } catch { /* silencioso */ }
   }, [getConexao]);
 
@@ -1146,8 +1201,8 @@ export default function App() {
     cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderLeft:`4px solid ${c}`, overflow:"visible", transition:"all .2s, background .3s" }),
     kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"18px 16px", border:`1px solid ${t.borda}`, textAlign:"center", borderTop:`3px solid ${c}`, cursor:"default", transition:"all .2s, background .3s" }),
     // tile-card colorido — grade WPP, ações em grade
-    btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`${DESIGN.sw.thick}px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:"inherit", cursor:"pointer", transition:"all .18s", lineHeight:1.3 }),
-    inp:       { background:t.inputBg, border:`1.5px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 14px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:"inherit", transition:"border-color .2s, background .3s" },
+    btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`${DESIGN.sw.thick}px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:DESIGN.fnt.b, cursor:"pointer", transition:"all .18s", lineHeight:1.3 }),
+    inp:       { background:t.inputBg, border:`1.5px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 14px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:DESIGN.fnt.b, transition:"border-color .2s, background .3s" },
     btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 16px ${hexRgb(t.ouro,.3)}`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
     btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 14px ${hexRgb(t.verde,.2)}`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
     btnOutline:{ borderRadius:DESIGN.r.btn, padding:"11px 20px", color:t.ouro, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
@@ -1222,6 +1277,70 @@ export default function App() {
   }, [perfil, auditarDesign]);
 
   // ══════════════════════════════════════════════
+  //  TELA: AGUARDANDO APROVAÇÃO
+  // ══════════════════════════════════════════════
+  if (aguardandoAprovacao && !authed) {
+    return (
+      <div style={{...css.app, background:theme==="dark"?"linear-gradient(135deg,#0a0e1a 0%,#0f1829 40%,#131522 100%)":"linear-gradient(135deg,#e8edf5 0%,#f0f4fa 40%,#e4e8f5 100%)", display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
+        <div style={{position:"absolute",top:"-100px",left:"-100px",width:"480px",height:"480px",background:"radial-gradient(circle,rgba(240,185,11,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0}}/>
+        <div style={{position:"absolute",bottom:"-80px",right:"-80px",width:"420px",height:"420px",background:"radial-gradient(circle,rgba(100,120,255,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0}}/>
+        <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>{theme==="dark"?"☀️":"🌙"}</button>
+        <div style={{width:"100%",maxWidth:360,background:theme==="dark"?"rgba(255,255,255,.05)":"rgba(255,255,255,.75)",border:`1px solid ${theme==="dark"?"rgba(255,255,255,.1)":"rgba(255,255,255,.95)"}`,borderRadius:26,padding:"34px 30px",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",boxShadow:theme==="dark"?"0 28px 80px rgba(0,0,0,.55)":"0 24px 80px rgba(0,0,0,.1)",display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:1}}>
+          <div style={{fontSize:9,background:"rgba(240,185,11,.14)",border:"1px solid rgba(240,185,11,.35)",color:t.ouro,borderRadius:20,padding:"3px 12px",letterSpacing:2.5,fontWeight:700,marginBottom:22}}>YFGROUP</div>
+          <div style={{width:74,height:74,background:"rgba(240,185,11,.06)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.25)",boxShadow:"0 0 30px rgba(240,185,11,.08)"}}>
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#f0b90b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:21,letterSpacing:3,color:t.txt,textAlign:"center",lineHeight:1.1,marginBottom:8}}>Aguardando Aprovação</div>
+          <div style={{fontSize:12,color:t.txt2,textAlign:"center",marginBottom:10,lineHeight:1.7}}>
+            Sua solicitação de acesso foi registrada.<br/>
+            Aguarde o administrador liberar seu acesso.
+          </div>
+          {pendingUserInfo?.email && (
+            <div style={{fontSize:11,color:t.ouro,fontWeight:600,marginBottom:22,padding:"7px 16px",background:"rgba(240,185,11,.07)",borderRadius:9,border:"1px solid rgba(240,185,11,.2)"}}>
+              📧 {pendingUserInfo.email}
+            </div>
+          )}
+          <button onClick={async()=>{
+            const conn=getConexao();
+            if(!conn){showToast("⚠️ Sem conexão com banco","warn");return;}
+            showToast("🔄 Verificando status...","ok");
+            try{
+              const data=await supaFetch(conn.url,conn.key,"GET",
+                `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(pendingUserInfo.email)}&select=*&limit=1`);
+              if(Array.isArray(data)&&data.length>0){
+                const u=data[0];
+                if(u.status!=="pendente"){
+                  const p=u.perfil||"visualizador";
+                  const pm=typeof u.perms==="string"?JSON.parse(u.perms):(u.perms||{...PERMS_PADRAO[p]});
+                  setPerfil(p);setPerms(pm);setAuthed(true);
+                  setUsuarioLogado(u.nome||u.email);
+                  setAguardandoAprovacao(false);
+                  localStorage.removeItem("co_pending_user");
+                  saveJSON("co_sessao",{perfil:p,perms:pm,nome:u.nome||u.email,ts:Date.now()});
+                  showToast(`✅ Acesso aprovado! Bem-vindo, ${u.nome||u.email}!`,"ok");
+                } else {
+                  showToast("⏳ Ainda aguardando aprovação...","warn");
+                }
+              } else {
+                showToast("⚠️ Solicitação não encontrada. Tente fazer login novamente.","warn");
+              }
+            }catch{showToast("❌ Erro ao verificar status","err");}
+          }} style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:12,color:"#000",fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:10,letterSpacing:.5,fontFamily:"inherit"}}>
+            🔄 Verificar Status
+          </button>
+          <button onClick={()=>{setAguardandoAprovacao(false);localStorage.removeItem("co_pending_user");setPendingUserInfo(null);}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:10,padding:"10px",color:t.txt2,fontSize:12,cursor:"pointer",width:"100%",fontFamily:"inherit"}}>
+            ← Voltar ao Login
+          </button>
+        </div>
+        <Toast {...toast} />
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════
   //  AUTH SCREEN
   // ══════════════════════════════════════════════
   if (!authed) {
@@ -1282,7 +1401,7 @@ export default function App() {
           {/* Google button */}
           <button
             onClick={() => iniciarOAuth("google")}
-            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)",border:`1.5px solid ${theme==="dark"?"rgba(255,255,255,.16)":"rgba(0,0,0,.1)"}`,borderRadius:13,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:700,color:t.txt,fontFamily:"inherit",transition:"all .2s",letterSpacing:.5,backdropFilter:"blur(8px)"}}
+            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)",border:`1.5px solid ${theme==="dark"?"rgba(255,255,255,.16)":"rgba(0,0,0,.1)"}`,borderRadius:DESIGN.r.card,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:700,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .2s",letterSpacing:.5,backdropFilter:"blur(8px)"}}
             onMouseEnter={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.15)":"rgba(255,255,255,1)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow=theme==="dark"?"0 10px 28px rgba(0,0,0,.3)":"0 8px 24px rgba(0,0,0,.12)"}}
             onMouseLeave={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}
           >
@@ -2247,7 +2366,7 @@ export default function App() {
       {/* HEADER */}
       <div style={css.header}>
         {customLogo
-          ? <img src={customLogo} alt="Logo" style={{width:44,height:44,borderRadius:13,objectFit:"contain",boxShadow:`0 4px 14px rgba(240,185,11,.38)`}} />
+          ? <img src={customLogo} alt="Logo" style={{width:44,height:44,borderRadius:DESIGN.r.card,objectFit:"contain",boxShadow:`0 4px 14px rgba(240,185,11,.38)`}} />
           : <div style={{...css.logo,fontSize:24,lineHeight:1}}>🚛</div>
         }
         <div>
@@ -2282,9 +2401,9 @@ export default function App() {
           </button>
 
           {alertas.length > 0 && (
-            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px"}}>
+            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px",overflow:"visible"}}>
               {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,15)}
-              <span style={{position:"absolute",top:-5,right:-5,background:t.danger,color:"#fff",borderRadius:"50%",width:14,height:14,fontSize:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
+              <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`,minWidth:18,minHeight:18}}>{alertas.length}</span>
             </button>
           )}
 
@@ -2788,7 +2907,13 @@ export default function App() {
               return planilhaSortDir==="asc" ? va.localeCompare(vb,"pt-BR",{numeric:true}) : vb.localeCompare(va,"pt-BR",{numeric:true});
             });
           };
-          const dadosExibir = sortarDados(DADOS).slice(0, 500);
+          const dadosSortados = sortarDados(DADOS);
+          const REGISTROS_POR_PAGINA = 200;
+          const totalPaginas = Math.ceil(dadosSortados.length / REGISTROS_POR_PAGINA);
+          const paginaAtual = Math.max(1, Math.min(planilhaPagina, totalPaginas || 1));
+          const inicio = (paginaAtual - 1) * REGISTROS_POR_PAGINA;
+          const fim = inicio + REGISTROS_POR_PAGINA;
+          const dadosExibir = dadosSortados.slice(inicio, fim);
           const toggleSort = (k) => {
             if (planilhaSortKey === k) {
               setPlanilhaSortDir(d => d==="asc"?"desc":"asc");
@@ -2800,11 +2925,17 @@ export default function App() {
           return (
           <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
             {/* toolbar da planilha */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:t.headerBg,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:t.headerBg,borderBottom:`1px solid ${t.borda}`,flexShrink:0,flexWrap:"wrap",gap:8}}>
               <span style={{fontSize:10,color:t.txt2,fontWeight:600,letterSpacing:.5}}>
-                {DADOS.length} registros{DADOS.length>500?" · mostrando 500":""}
+                {DADOS.length} registros · página {paginaAtual} de {totalPaginas}
                 {planilhaSortKey && <span style={{color:t.ouro,marginLeft:8}}>ordenado por {planilhaSortKey} {planilhaSortDir==="asc"?"↑":"↓"} <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}} style={{background:"none",border:"none",color:t.txt2,cursor:"pointer",fontSize:10,padding:"0 2px",verticalAlign:"middle"}}>✕</button></span>}
               </span>
+              <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>⏮</button>
+                <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>◀</button>
+                <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>▶</button>
+                <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>⏭</button>
+              </div>
               <ExportMenu
                 dados={DADOS}
                 cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"},{k:"status",l:"Status"},{k:"vl_cte",l:"VL CTE"},{k:"vl_contrato",l:"VL Contrato"},{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"}]}
@@ -3789,75 +3920,131 @@ export default function App() {
               <div style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid ${t.borda}`}}>
                 <div style={{width:24,height:24,background:t.azul,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.azulLt,12)}</div>
                 <div><div style={{fontSize:12,fontWeight:600,color:t.txt}}>Supabase PostgreSQL</div><div style={{fontSize:9,color:t.txt2}}>{ultimaSync?`Sync: ${ultimaSync}`:"Nunca sincronizado"}</div></div>
-                <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:5,...(connStatus==="online"?{background:`rgba(2,192,118,.08)`,color:t.verde,border:`1px solid rgba(2,192,118,.2)`}:{background:`rgba(246,70,93,.06)`,color:t.danger,border:`1px solid rgba(246,70,93,.15)`})}}>{connStatus==="online"?"ONLINE":"OFFLINE"}</span>
+                <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:DESIGN.r.badge,...(connStatus==="online"?{background:`rgba(2,192,118,.08)`,color:t.verde,border:`1px solid rgba(2,192,118,.2)`}:{background:`rgba(246,70,93,.06)`,color:t.danger,border:`1px solid rgba(246,70,93,.15)`})}}>{connStatus==="online"?"ONLINE":"OFFLINE"}</span>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:t.borda}}>
-                <button onClick={sincronizar} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:"inherit"}}>{hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.azulLt,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Sincronizar</span></button>
-                <button onClick={()=>setModalOpen("configdb")} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:"inherit"}}>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,t.txt2,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Config DB</span></button>
+                <button onClick={sincronizar} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.azulLt,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Sincronizar</span></button>
+                <button onClick={()=>setModalOpen("configdb")} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,t.txt2,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Config DB</span></button>
               </div>
             </div>
 
-            <div style={css.secTitle}>{hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Usuários <span style={{flex:1,height:1,background:t.borda}} /></div>
-            <button onClick={()=>{setFormData({perfil:"visualizador",perms:{financeiro:true,editar:false,dashboard:true,diarias:true,descarga:true,planilha:true}});setEditIdx(-1);setModalOpen("usuario")}} style={{...css.btnGold,width:"100%",justifyContent:"center",marginBottom:14}}>＋ NOVO USUÁRIO</button>
-            {usuarios.map((u,i) => (
-              <div key={i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,padding:12,marginBottom:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                  <div style={{width:34,height:34,borderRadius:9,background:u.perfil==="admin"?`linear-gradient(135deg,${t.ouroDk},${t.ouro})`:u.perfil==="gerente"?`linear-gradient(135deg,${t.azul},${t.azulLt})`:u.perfil==="operador"?`linear-gradient(135deg,#555,#848e9c)`:`linear-gradient(135deg,#444,#666)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:"#000",flexShrink:0}}>{u.nome?.[0]?.toUpperCase()||"U"}</div>
-                  <div style={{flex:1}}><div style={{fontSize:13,fontWeight:700,color:t.txt}}>{u.nome}</div><div style={{fontSize:10,color:t.txt2}}>📧 {u.email} · <span style={{color:t.ouro}}>{u.perfil}</span></div></div>
-                  <button onClick={()=>{setFormData({...u});setEditIdx(i);setModalOpen("usuario")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.azulLt,12)}</button>
-                  <button onClick={()=>{if(confirm(`Excluir "${u.nome}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios_local",nu);
-                    // Remove do Supabase também
-                    const conn=getConexao();
-                    if(conn){supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});}
-                    showToast("Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,12)}</button>
+            {/* ── GESTÃO DE USUÁRIOS ─────────────────────────── */}
+            <div style={css.secTitle}>{hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Gestão de Usuários <span style={{flex:1,height:1,background:t.borda}} /></div>
+
+            {/* ── Pendentes de Aprovação ── */}
+            {usuariosPendentes.length > 0 ? (
+              <div style={{...css.card,marginBottom:12,border:`1px solid rgba(240,185,11,.28)`,background:`rgba(240,185,11,.03)`}}>
+                <div style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid rgba(240,185,11,.14)`}}>
+                  <span style={{fontSize:11,fontWeight:700,color:t.ouro,letterSpacing:.5}}>⏳ AGUARDANDO APROVAÇÃO ({usuariosPendentes.length})</span>
+                  <button onClick={carregarPendentes} title="Atualizar lista" style={{marginLeft:"auto",background:"transparent",border:`1px solid ${t.borda}`,borderRadius:DESIGN.r.badge,padding:"2px 9px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:DESIGN.fnt.b}}>↻</button>
+                </div>
+                {usuariosPendentes.map((u,i)=>(
+                  <div key={i} style={{padding:"11px 14px",display:"flex",alignItems:"center",gap:10,borderBottom:i<usuariosPendentes.length-1?`1px solid ${t.borda}`:"none"}}>
+                    <div style={{width:38,height:38,borderRadius:10,background:"rgba(240,185,11,.1)",border:"1.5px solid rgba(240,185,11,.28)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:t.ouro,flexShrink:0}}>{u.nome?.[0]?.toUpperCase()||"?"}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:t.txt}}>{u.nome||u.email}</div>
+                      <div style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📧 {u.email}</div>
+                      {u.solicitado_em&&<div style={{fontSize:9,color:t.txt2,marginTop:1}}>Solicitado: {new Date(u.solicitado_em).toLocaleString("pt-BR")}</div>}
+                    </div>
+                    <div style={{display:"flex",gap:6,flexShrink:0}}>
+                      <button onClick={()=>{setAprovarModal(u);setAprovarPerfil("operador");}} style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:8,padding:"5px 10px",fontSize:10,color:t.verde,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>✓ Aprovar</button>
+                      <button onClick={async()=>{if(!confirm(`Rejeitar acesso de "${u.nome||u.email}"?`))return;const conn=getConexao();if(conn)await supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});setUsuariosPendentes(p=>p.filter(x=>x.email!==u.email));showToast("🚫 Acesso rejeitado");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:8,width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.danger,12)}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{textAlign:"center",marginBottom:10}}>
+                <button onClick={carregarPendentes} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"4px 14px",fontSize:10,color:t.txt2,cursor:"pointer"}}>↻ Verificar solicitações pendentes</button>
+              </div>
+            )}
+
+            {/* ── Modal de Aprovação com seleção de perfil ── */}
+            {aprovarModal&&(
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000,padding:20}}>
+                <div style={{background:t.card,borderRadius:18,padding:"24px 22px",width:"100%",maxWidth:340,border:`1px solid ${t.borda}`,boxShadow:`0 24px 60px ${t.shadow}`}}>
+                  <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4}}>✅ Aprovar Acesso</div>
+                  <div style={{fontSize:11,color:t.txt2,marginBottom:16,lineHeight:1.5}}>Definindo tipo de acesso para <b style={{color:t.ouro}}>{aprovarModal.nome||aprovarModal.email}</b></div>
+                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Tipo de Usuário</label>
+                  <select value={aprovarPerfil} onChange={e=>setAprovarPerfil(e.target.value)} style={{...css.inp,marginBottom:10,color:t.ouro,fontWeight:700}}>
+                    <option value="visualizador">Visualizador — Apenas visualiza dados</option>
+                    <option value="operador">Operador — Edita registros operacionais</option>
+                    <option value="gerente">Gerente — Acesso amplo (exceto DB/Usuários)</option>
+                    <option value="admin">Admin — Acesso total ao sistema</option>
+                  </select>
+                  <div style={{background:t.card2,borderRadius:9,padding:"10px 12px",marginBottom:16,border:`1px solid ${t.borda}`}}>
+                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,marginBottom:7}}>Permissões incluídas neste perfil</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 10px"}}>
+                      {Object.entries(PERMS_PADRAO[aprovarPerfil]||{}).map(([k,v])=>(
+                        <div key={k} style={{fontSize:10,color:v?t.verde:t.txt2,display:"flex",alignItems:"center",gap:4}}>
+                          <span style={{fontWeight:700,fontSize:11}}>{v?"✓":"✗"}</span>
+                          <span style={{textTransform:"capitalize"}}>{k}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setAprovarModal(null)} style={{flex:1,padding:"10px",background:"transparent",border:`1px solid ${t.borda}`,borderRadius:9,color:t.txt2,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+                    <button onClick={async()=>{
+                      const pm={...PERMS_PADRAO[aprovarPerfil]};
+                      const conn=getConexao();
+                      if(conn){await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(aprovarModal.email)}`,{status:"aprovado",perfil:aprovarPerfil,perms:JSON.stringify(pm),aprovado_em:new Date().toISOString()}).catch(()=>{});}
+                      const novoUser={...aprovarModal,status:"aprovado",perfil:aprovarPerfil,perms:pm};
+                      setUsuariosPendentes(p=>p.filter(u=>u.email!==aprovarModal.email));
+                      setUsuarios(p=>{const nova=[...p,novoUser];saveJSON("co_usuarios_local",nova);return nova;});
+                      await registrarLog("APROVAR_USUARIO",`Acesso concedido para ${aprovarModal.email} como ${aprovarPerfil}`);
+                      showToast(`✅ ${aprovarModal.nome||aprovarModal.email} aprovado como ${aprovarPerfil}!`,"ok");
+                      setAprovarModal(null);
+                    }} style={{flex:2,padding:"10px",background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:9,color:"#000",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                      ✅ Confirmar Aprovação
+                    </button>
+                  </div>
                 </div>
               </div>
-            ))}
+            )}
 
-            {/* Acesso Google OAuth — colapsável */}
-            <div style={{...css.secTitle,marginTop:20,cursor:"pointer",userSelect:"none"}} onClick={()=>setOauthAccessOpen(!oauthAccessOpen)}>
+            {/* ── Usuários com Acesso Ativo — colapsável ── */}
+            <div style={{...css.secTitle,marginTop:10,cursor:"pointer",userSelect:"none"}} onClick={()=>setOauthAccessOpen(!oauthAccessOpen)}>
               <svg width="14" height="14" viewBox="0 0 48 48" style={{flexShrink:0,marginRight:2}}><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-              Acesso Google OAuth <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{oauthAccessOpen?"▲":"▼"}</span>
+              Usuários com Acesso ({usuarios.length}) <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{oauthAccessOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
-            {oauthAccessOpen && (
+            {oauthAccessOpen&&(
               <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
-                <div style={{fontSize:10,color:t.txt2,marginBottom:12,lineHeight:1.6,padding:"8px 10px",background:`rgba(240,185,11,.06)`,borderRadius:7,border:`1px solid rgba(240,185,11,.15)`}}>
-                  ℹ️ Usuários desta lista acessam o sistema via <b>Continuar com Google</b>. O perfil define o nível de acesso. O Admin é identificado pelo e-mail configurado na seção acima.
+                <div style={{fontSize:10,color:t.txt2,marginBottom:10,lineHeight:1.6,padding:"7px 10px",background:`rgba(240,185,11,.05)`,borderRadius:7,border:`1px solid rgba(240,185,11,.12)`}}>
+                  ℹ️ Acesso via Google. Altere o <b>Tipo</b> para redefinir o que o usuário pode ver e fazer.
                 </div>
-                {usuarios.length===0 && <div style={{textAlign:"center",color:t.txt2,fontSize:11,padding:"12px 0"}}>Nenhum usuário cadastrado ainda.</div>}
+                {usuarios.length===0&&<div style={{textAlign:"center",color:t.txt2,fontSize:11,padding:"12px 0"}}>Nenhum usuário aprovado ainda.</div>}
                 {usuarios.map((u,i)=>{
                   const corPerfil=u.perfil==="admin"?`linear-gradient(135deg,${t.ouroDk},${t.ouro})`:u.perfil==="gerente"?`linear-gradient(135deg,${t.azul},${t.azulLt})`:u.perfil==="operador"?`linear-gradient(135deg,#555,#848e9c)`:`linear-gradient(135deg,#444,#666)`;
-                  return (
+                  return(
                     <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:"10px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
                       <div style={{width:34,height:34,borderRadius:9,background:corPerfil,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#000",flexShrink:0}}>{u.nome?.[0]?.toUpperCase()||"?"}</div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nome||u.email}</div>
                         <div style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📧 {u.email}</div>
                       </div>
-                      <select value={u.perfil} onChange={async e=>{
-                        const np=e.target.value;
-                        const pm={...PERMS_PADRAO[np]||PERMS_PADRAO.visualizador};
-                        const nu=[...usuarios];
-                        nu[i]={...nu[i],perfil:np,perms:pm};
-                        setUsuarios(nu);
-                        saveJSON("co_usuarios_local",nu);
+                      <select value={u.perfil||"visualizador"} onChange={async e=>{
+                        const np=e.target.value;const pm={...PERMS_PADRAO[np]||PERMS_PADRAO.visualizador};
+                        const nu=[...usuarios];nu[i]={...nu[i],perfil:np,perms:pm};
+                        setUsuarios(nu);saveJSON("co_usuarios_local",nu);
                         const conn=getConexao();
-                        if(conn){await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{perfil:np,perms:JSON.stringify(pm)}).catch(()=>{});}
+                        if(conn)await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{perfil:np,perms:JSON.stringify(pm)}).catch(()=>{});
                         showToast(`✅ ${u.nome||u.email} → ${np}`,"ok");
-                      }} style={{background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:6,padding:"4px 8px",fontSize:10,color:t.ouro,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>
+                      }} style={{background:t.card2,border:`1px solid ${t.borda2||t.borda}`,borderRadius:6,padding:"4px 8px",fontSize:10,color:t.ouro,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>
                         <option value="visualizador">Visualizador</option>
                         <option value="operador">Operador</option>
                         <option value="gerente">Gerente</option>
                         <option value="admin">Admin</option>
                       </select>
-                      <button onClick={()=>{if(confirm(`Revogar acesso de "${u.nome||u.email}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios_local",nu);const conn=getConexao();if(conn){supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});}showToast("🚫 Acesso revogado");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      <button onClick={()=>{if(confirm(`Revogar acesso de "${u.nome||u.email}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios_local",nu);const conn=getConexao();if(conn)supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});showToast("🚫 Acesso revogado");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.danger,12)}
                       </button>
                     </div>
                   );
                 })}
-                <button onClick={()=>{setFormData({perfil:"operador",perms:{...PERMS_PADRAO.operador}});setEditIdx(-1);setModalOpen("usuario");}} style={{...css.btnGold,width:"100%",justifyContent:"center",marginTop:4}}>＋ ADICIONAR ACESSO GOOGLE</button>
               </div>
             )}
 
@@ -3872,7 +4059,7 @@ export default function App() {
                   <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
                     {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.txt2,14)}
                     <div style={{flex:1,minWidth:0}}><div style={{fontSize:11,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name||c.url}</div></div>
-                    <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:5,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger}}>✕</button>
+                    <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:DESIGN.r.badge,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:DESIGN.fnt.b}}>✕</button>
                   </div>
                 ))}
                 <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
@@ -4052,13 +4239,13 @@ function sincronizarComSupabase() {
 // ── Grava status no Supabase para o app ler ──────────────────
 function gravarStatus(status){
   try{
-    UrlFetchApp.fetch(SUPA_URL+'/rest/v1/'+TAB_CFG+'?on_conflict=key',{
+    UrlFetchApp.fetch(SUPA_URL+'/rest/v1/'+TAB_CFG+'?on_conflict=chave',{
       method:'POST',
       headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,
         'Content-Type':'application/json',
         Prefer:'return=minimal,resolution=merge-duplicates'},
-      payload:JSON.stringify([{key:'gsheet_sync_status',
-        value:JSON.stringify(status),updated_at:new Date().toISOString()}]),
+      payload:JSON.stringify([{chave:'gsheet_sync_status',
+        valor:JSON.stringify(status),updated_at:new Date().toISOString()}]),
       muteHttpExceptions:true
     });
   }catch(e){Logger.log('Erro ao gravar status: '+e.message);}
@@ -4078,14 +4265,22 @@ function configurarGatilho(){
 function mapearColuna(n){
   var m={
     'dt espelho':'dt','espelho':'dt','dt':'dt',
-    'nome':'nome','cpf':'cpf','placa':'placa','vinculo':'vinculo','status':'status',
-    'origem':'origem','destino':'destino',
+    // Motorista / nome (aceita variações)
+    'nome':'nome','motorista':'nome','nome motorista':'nome','nome do motorista':'nome',
+    'cpf':'cpf','placa':'placa','vinculo':'vinculo','status':'status',
+    // Origem / Destino (aceita "- CIDADE/UF" e variações)
+    'origem':'origem','origem - cidade/uf':'origem','origem cidade/uf':'origem','origem/uf':'origem','origem cidade':'origem',
+    'destino':'destino','destino - cidade/uf':'destino','destino cidade/uf':'destino','destino/uf':'destino','destino cidade':'destino',
     'data carr.':'data_carr','data carregamento':'data_carr','data_carr':'data_carr',
     'data agenda':'data_agenda','data_agenda':'data_agenda','agenda':'data_agenda',
     'data desc.':'data_desc','data descarga':'data_desc','data_desc':'data_desc',
-    'vl cte':'vl_cte','valor cte':'vl_cte','vl_cte':'vl_cte',
-    'vl contrato':'vl_contrato','vl_contrato':'vl_contrato','valor contrato':'vl_contrato',
+    // Valores (aceita "VALOR DO CTE", "VL CTE", etc.)
+    'vl cte':'vl_cte','valor cte':'vl_cte','vl_cte':'vl_cte','valor do cte':'vl_cte',
+    'vl contrato':'vl_contrato','vl_contrato':'vl_contrato','valor contrato':'vl_contrato','valor do contrato':'vl_contrato',
     'adiant':'adiant','adiantamento':'adiant',
+    // Dias (aceita "QUANT. DIAS", "DIAS", etc.)
+    'dias':'dias','quant. dias':'dias','quant dias':'dias','quantidade dias':'dias','qtd dias':'dias',
+    'saldo':'saldo',
     'cte':'cte','mdf':'mdf','nf':'nf','nota fiscal':'nf','cliente':'cliente',
     'shipmente id':'id_doc','shipment id':'id_doc','id_doc':'id_doc','id doc':'id_doc',
     'ro':'ro','r.o.':'ro','reg. ocorrencia':'ro','reg ocorrencia':'ro',
@@ -4096,7 +4291,6 @@ function mapearColuna(n){
     'data manifesto':'data_manifesto','data do manifesto':'data_manifesto',
     'diaria_prev':'diaria_prev','diarias devida':'diaria_prev','diarias (devida r$)':'diaria_prev',
     'diaria_pg':'diaria_pg','diarias paga':'diaria_pg','diarias (paga r$)':'diaria_pg',
-    'dias':'dias','saldo':'saldo',
     'informou analista':'informou_analista','informou_analista':'informou_analista',
     'desc_aguardando':'desc_aguardando','aguardando descarga':'desc_aguardando'
   };
@@ -4345,7 +4539,7 @@ function mapearColuna(n){
                 {/* Sub-abas */}
                 <div style={{display:"flex",gap:5,marginBottom:12}}>
                   {[{k:"dev",l:"🧑‍💻 Desenvolvimento"},{k:"op",l:"⚙️ Operacional"}].map(st=>(
-                    <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:logsSubTab===st.k?`rgba(240,185,11,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{st.l}</button>
+                    <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.badge,cursor:"pointer",background:logsSubTab===st.k?`rgba(240,185,11,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{st.l}</button>
                   ))}
                   {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}>↺ Atualizar</button>}
                 </div>
@@ -4366,7 +4560,7 @@ function mapearColuna(n){
                           Detecta elementos com estilos fora do padrão <strong style={{color:t.ouro}}>DESIGN.*</strong>.<br/>
                           Para alterar qualquer elemento globalmente: edite <strong style={{color:t.ouro}}>DESIGN</strong> no topo do arquivo → propaga em todo o código que usa <strong style={{color:t.ouro}}>css.*</strong>.
                         </div>
-                        <div style={{background:t.card2,borderRadius:DESIGN.r.sm,padding:"8px 10px",fontSize:9,color:t.txt2,fontFamily:"monospace",marginBottom:10,lineHeight:1.8}}>
+                        <div style={{background:t.card2,borderRadius:DESIGN.r.sm,padding:"8px 10px",fontSize:9,color:t.txt2,fontFamily:DESIGN.fnt.b,marginBottom:10,lineHeight:1.8}}>
                           {Object.entries(DESIGN).filter(([k])=>k!=="c").map(([k,v])=>(
                             <div key={k}><span style={{color:t.ouro}}>DESIGN.{k}</span> = {JSON.stringify(v)}</div>
                           ))}
@@ -4507,7 +4701,7 @@ function mapearColuna(n){
                     padding: adminMobile ? "4px 2px" : "6px 2px 4px",
                     position:"relative",
                     transition:"all .18s",
-                    fontFamily:"inherit",
+                    fontFamily:DESIGN.fnt.b,
                     overflow:"hidden",
                   }}
                 >
@@ -4552,7 +4746,7 @@ function mapearColuna(n){
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO REGISTRO"}</div><div style={{fontSize:9,color:t.txt2}}>Preencha os dados</div></div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:"auto",padding:16}}>
+            <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {[
                 {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Nome",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo",type:"select_opts",opts:["TERCEIRO","FROTA","AGREGADO"]}]},
                 {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias",type:"computed_dias",lock:true}]},
@@ -4695,7 +4889,7 @@ function mapearColuna(n){
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} MOTORISTA</div></div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
 
               {/* ── Identificação ── */}
               <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,10)} Identificação<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
@@ -5142,7 +5336,7 @@ function mapearColuna(n){
               </div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:"auto",padding:16}}>
+            <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {/* Dados básicos */}
               {[{k:"nome",l:"Nome Completo",req:true},{k:"email",l:"Email",req:true,type:"email"},{k:"tel",l:"Telefone"}].map(f => (
                 <div key={f.k} style={{marginBottom:12}}>
@@ -5274,7 +5468,7 @@ function mapearColuna(n){
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt}}>BANCO DE DADOS</div><div style={{fontSize:10,color:t.txt2}}>Conexões Supabase</div></div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
-            <div style={{flex:1,overflowY:"auto",padding:16}}>
+            <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {conexoes.map((c,i) => (
                 <div key={i} style={{background:t.card2,borderRadius:9,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
                   <span>🗄️</span>
@@ -5378,7 +5572,7 @@ function mapearColuna(n){
                 <button onClick={()=>setMotImportOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:12}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:12,maxHeight:"calc(96vh - 120px)"}}>
 
                 {/* ══ ETAPA 2: SUGESTÕES DE VÍNCULO ══ */}
                 {motImportStep===2 && (
@@ -5581,7 +5775,7 @@ function mapearColuna(n){
                 <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
 
                 {/* Linha DT + DESTINO */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
@@ -5607,7 +5801,7 @@ function mapearColuna(n){
                   <label style={labelStyle}>Placas</label>
                   <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                     {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
-                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2.5,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:5,padding:"3px 9px"}}>{p}</span>
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2.5,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"3px 9px"}}>{p}</span>
                     ))}
                   </div>
                 </div>
@@ -5637,7 +5831,7 @@ function mapearColuna(n){
                   <label style={{...labelStyle,marginBottom:7}}>PGTO · Forma de Pagamento</label>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                     {pgtoOptions.map(op=>(
-                      <button key={op.k} onClick={()=>setWppPgto(op.k)} style={{padding:"9px 6px",borderRadius:9,border:`1.5px solid ${wppPgto===op.k?t.verde:t.borda}`,background:wppPgto===op.k?`rgba(2,192,118,.1)`:t.card2,color:wppPgto===op.k?t.verde:t.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",textAlign:"center",transition:"all .2s"}}>
+                      <button key={op.k} onClick={()=>setWppPgto(op.k)} style={{padding:"9px 6px",borderRadius:DESIGN.r.btn,border:`1.5px solid ${wppPgto===op.k?t.verde:t.borda}`,background:wppPgto===op.k?`rgba(2,192,118,.1)`:t.card2,color:wppPgto===op.k?t.verde:t.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,textAlign:"center",transition:"all .2s"}}>
                         {op.l}
                       </button>
                     ))}
@@ -5762,7 +5956,7 @@ function mapearColuna(n){
                 <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
 
                 {/* Motorista + Placas */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
@@ -5773,7 +5967,7 @@ function mapearColuna(n){
                   <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3}}>{nomeMotorista||"—"}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
                     {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
-                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:5,padding:"2px 8px"}}>{p}</span>
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"2px 8px"}}>{p}</span>
                     ))}
                   </div>
                 </div>
@@ -5870,7 +6064,7 @@ function mapearColuna(n){
                 <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>CTE · MDF · MAT · DT · NF · ID</div></div>
                 <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
-              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
                   <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
@@ -5978,7 +6172,7 @@ function mapearColuna(n){
                 <button onClick={()=>setWppPagModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
                 {/* Dados do registro */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
@@ -6120,7 +6314,7 @@ function mapearColuna(n){
               <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✕</button>
             </div>
             {/* Conteúdo */}
-            <div style={{flex:1,overflowY:"auto",padding:"10px 14px 14px"}}>
+            <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"10px 14px 14px",maxHeight:"calc(96vh - 120px)"}}>
               {dashDrillModal.type==="destino"?(
                 /* Destino: lista de motoristas únicos com contagem */
                 (() => {
