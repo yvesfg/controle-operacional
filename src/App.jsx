@@ -69,6 +69,7 @@ export default function App() {
 
   // Dashboard state
   const [dashMes, setDashMes] = useState("todos");
+  const [dashOrigem, setDashOrigem] = useState("todos");
 
   // Diarias state
   const [dFiltro, setDFiltro] = useState("todos");
@@ -871,11 +872,20 @@ export default function App() {
       const pa=a.split("/"),pb=b.split("/");
       return (+pa[1]*12+ +pa[0])-(+pb[1]*12+ +pb[0]);
     });
-    const filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
+    // Cidades de origem únicas — extrai a parte antes do "-" (ex: "BELEM - PA" → "BELEM")
+    const normOrigem = (s) => (s||"").split(/\s*[-–]\s*/)[0].trim().toUpperCase();
+    const cidadeSet = new Set();
+    DADOS.forEach(r => { const c = normOrigem(r.origem); if (c) cidadeSet.add(c); });
+    const cidades = [...cidadeSet].sort();
+
+    // Aplica filtros: mês + cidade origem
+    let filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
+    if (dashOrigem !== "todos") filtrado = filtrado.filter(r => normOrigem(r.origem) === dashOrigem);
+
     const dtsU = new Set(filtrado.map(r=>dtBase(r.dt)));
     let cteT = 0; filtrado.forEach(r=>{ const v=parseFloat(r.vl_cte); if(!isNaN(v)) cteT+=v; });
-    return { grupos, meses, filtrado, dtsU, cteT };
-  }, [DADOS, dashMes]);
+    return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem };
+  }, [DADOS, dashMes, dashOrigem]);
 
   // Diarias data — lógica simplificada Sessão 16:
   // REGRA 1: chegada <= agenda E descarga > agenda → COM DIÁRIA (dias = descarga - agenda)
@@ -2826,15 +2836,32 @@ export default function App() {
         {/* ═══ DASHBOARD ═══ */}
         {activeTab === "dashboard" && (
           <div>
+            {/* Filtros: Mês + Cidade Origem */}
             <div style={{...css.card,padding:12,marginBottom:14}}>
+              {/* Filtro Mês */}
               <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,12,2)} Filtrar por Mês
               </div>
-              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+              <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
                 <button onClick={()=>setDashMes("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
                 {dashData.meses.map(m => (
                   <button key={m} onClick={()=>setDashMes(m)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
                 ))}
+              </div>
+              {/* Filtro Cidade Origem */}
+              <div style={{borderTop:`1px solid ${t.borda}`,paddingTop:10}}>
+                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
+                  {hIco(<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,t.txt2,12,2)} Filtrar por Cidade Origem
+                  {dashOrigem !== "todos" && (
+                    <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:"auto",fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"2px 7px",fontFamily:DESIGN.fnt.b}}>✕ limpar</button>
+                  )}
+                </div>
+                <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                  <button onClick={()=>setDashOrigem("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashOrigem==="todos"?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem==="todos"?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem==="todos"?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>Todas</button>
+                  {dashData.cidades.map(c => (
+                    <button key={c} onClick={()=>setDashOrigem(c)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashOrigem===c?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem===c?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem===c?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>{c}</button>
+                  ))}
+                </div>
               </div>
             </div>
 
