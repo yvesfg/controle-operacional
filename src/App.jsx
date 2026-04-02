@@ -89,6 +89,8 @@ export default function App() {
   const [editIdx, setEditIdx] = useState(-1);
   const [editStep, setEditStep] = useState(1);
   const [formData, setFormData] = useState({});
+  const [excluirConfirm, setExcluirConfirm] = useState(null); // null | 'edit' | 'detalhe'
+  const [excluirTexto, setExcluirTexto] = useState("");
 
   // Detalhe / Ocorrências
   const [detalheDT, setDetalheDT] = useState(null);       // registro aberto no modal
@@ -1133,6 +1135,24 @@ export default function App() {
     setModalOpen(null);
   };
 
+  // Delete record
+  const deletarRegistro = async (dt) => {
+    const newExtras = dadosExtras.filter(x => x._overrideDT !== dt && x.dt !== dt);
+    setDadosExtras(newExtras);
+    saveJSON("dados_extras", newExtras);
+    setDadosBase(prev => prev.filter(r => r.dt !== dt));
+    const conn = getConexao();
+    if (conn) {
+      try {
+        await supaFetch(conn.url, conn.key, "DELETE", `${TABLE}?dt=eq.${encodeURIComponent(dt)}`);
+        await registrarLog("EXCLUIR_REGISTRO", `DT ${dt} excluido`);
+        showToast("🗑️ Registro excluído!", "ok");
+      } catch(e) { showToast("⚠️ Excluído local. Sync: "+e.message, "warn"); }
+    } else { showToast("🗑️ Registro excluído localmente!", "ok"); }
+    setModalOpen(null); setDetalheDT(null);
+    setExcluirConfirm(null); setExcluirTexto("");
+  };
+
   // Salva minutas DCC / MAM-MRM no Supabase via PATCH
   const salvarMinutasDetalhe = async () => {
     if (!detalheDT) return;
@@ -1191,27 +1211,36 @@ export default function App() {
   // ── css: todos os valores de design derivam de DESIGN.* e t.*
   // ── Para alterar globalmente: edite DESIGN no topo do arquivo
   const css = {
-    app:       { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:DESIGN.fnt.b, transition:"background .3s, color .3s" },
-    header:    { background:t.headerBg, padding:"10px 16px", borderBottom:`2px solid ${t.ouro}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:8, boxShadow:`0 4px 20px ${t.shadow}`, transition:"background .3s" },
-    logo:      { width:40, height:40, background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, borderRadius:DESIGN.r.logo, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, boxShadow:`0 4px 14px ${hexRgb(t.ouro,.38)}` },
-    hBtn:      { background:"rgba(128,128,128,.08)", border:`1.5px solid ${t.borda}`, borderRadius:DESIGN.r.sm, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:600, transition:"all .2s" },
-    tabBar:    { display:"flex", background:t.headerBg, borderBottom:`2px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .3s", justifyContent:"space-between" },
-    tab:       (a) => ({ flex:"0 0 auto", padding:"14px 18px", fontSize:11, fontWeight:700, letterSpacing:.6, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .2s", borderBottom:a?`3px solid ${t.ouro}`:"3px solid transparent", marginBottom:"-2px", display:"flex", alignItems:"center", gap:5 }),
-    card:      { background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .3s, border-color .3s" },
-    cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderLeft:`4px solid ${c}`, overflow:"visible", transition:"all .2s, background .3s" }),
-    kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"18px 16px", border:`1px solid ${t.borda}`, textAlign:"center", borderTop:`3px solid ${c}`, cursor:"default", transition:"all .2s, background .3s" }),
+    app:       { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:DESIGN.fnt.b, transition:"background .25s, color .25s" },
+    // Header sem borda dourada pesada — linha fina define sem competir
+    header:    { background:t.headerBg, padding:"10px 16px", borderBottom:`1px solid ${t.borda}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:8, boxShadow:`0 1px 0 ${t.borda}`, transition:"background .25s" },
+    // Logo flat — sem gradiente, borda dourada sutil define o acento
+    logo:      { width:40, height:40, background:t.card2, borderRadius:DESIGN.r.logo, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, border:`1px solid ${hexRgb(t.ouro,.28)}` },
+    // Botão header — transparente, borda mínima
+    hBtn:      { background:"transparent", border:`1px solid ${t.borda2}`, borderRadius:DESIGN.r.sm, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:500, transition:"all .15s" },
+    tabBar:    { display:"flex", background:t.headerBg, borderBottom:`1px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .25s", justifyContent:"space-between" },
+    tab:       (a) => ({ flex:"0 0 auto", padding:"13px 16px", fontSize:10, fontWeight:a?700:500, letterSpacing:.5, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .15s", borderBottom:a?`2px solid ${t.ouro}`:"2px solid transparent", marginBottom:"-1px", display:"flex", alignItems:"center", gap:5 }),
+    card:      { background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .25s, border-color .25s" },
+    cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderLeft:`3px solid ${c}`, overflow:"visible", transition:"all .2s, background .25s" }),
+    // KPI com borda lateral (mais premium que borda superior)
+    kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"20px 16px", border:`1px solid ${t.borda}`, borderLeft:`3px solid ${c}`, textAlign:"center", cursor:"default", transition:"all .2s, background .25s" }),
     // tile-card colorido — grade WPP, ações em grade
-    btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`${DESIGN.sw.thick}px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:DESIGN.fnt.b, cursor:"pointer", transition:"all .18s", lineHeight:1.3 }),
-    inp:       { background:t.inputBg, border:`1.5px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 14px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:DESIGN.fnt.b, transition:"border-color .2s, background .3s" },
-    btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 16px ${hexRgb(t.ouro,.3)}`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"12px 22px", color:"#000", fontWeight:800, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`, display:"inline-flex", alignItems:"center", gap:8, boxShadow:`0 4px 14px ${hexRgb(t.verde,.2)}`, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    btnOutline:{ borderRadius:DESIGN.r.btn, padding:"11px 20px", color:t.ouro, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    btnDanger: { borderRadius:DESIGN.r.btn, padding:"11px 20px", color:t.danger, fontWeight:700, fontSize:13, cursor:"pointer", background:"transparent", border:`1.5px solid ${hexRgb(t.danger,.35)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .2s", minHeight:44, whiteSpace:"nowrap" },
-    secTitle:  { fontSize:10, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:14, fontWeight:700, display:"flex", alignItems:"center", gap:10 },
-    badge:     (c,bg,bc) => ({ padding:"3px 10px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
+    btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`2px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:DESIGN.fnt.b, cursor:"pointer", transition:"all .15s", lineHeight:1.3 }),
+    // Inputs — borda mais definida, sem efeito de blur
+    inp:       { background:t.inputBg, border:`1px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 13px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:DESIGN.fnt.b, transition:"border-color .15s, background .25s" },
+    // Botões — cor sólida (sem gradiente), mais limpos
+    // cor do texto adapta ao tema: dark=preto sobre ouro claro / light=branco sobre ouro escuro
+    btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:theme==="dark"?"#0a0a0a":"#ffffff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.ouro, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
+    btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:"#fff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.verde, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
+    btnOutline:{ borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.ouro, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
+    btnDanger: { borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.danger, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.danger,.3)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
+    secTitle:  { fontSize:9, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
+    badge:     (c,bg,bc) => ({ padding:"2px 8px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
-    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.88)", backdropFilter:"blur(10px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
-    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"22px 22px 0 0", display:"flex", flexDirection:"column", overflow:"clip", animation:"mslide .32s cubic-bezier(.34,1.3,.64,1)", transition:"background .3s" },
+    // Overlay com blur mais pronunciado para foco no modal
+    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
+    // Modal — borda fina define a separação do overlay
+    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"16px 16px 0 0", border:`1px solid ${t.borda}`, borderBottom:"none", display:"flex", flexDirection:"column", overflow:"clip", animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
   };
 
   // ══════════════════════════════════════════════
@@ -1281,15 +1310,13 @@ export default function App() {
   // ══════════════════════════════════════════════
   if (aguardandoAprovacao && !authed) {
     return (
-      <div style={{...css.app, background:theme==="dark"?"linear-gradient(135deg,#0a0e1a 0%,#0f1829 40%,#131522 100%)":"linear-gradient(135deg,#e8edf5 0%,#f0f4fa 40%,#e4e8f5 100%)", display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
-        <div style={{position:"absolute",top:"-100px",left:"-100px",width:"480px",height:"480px",background:"radial-gradient(circle,rgba(240,185,11,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0}}/>
-        <div style={{position:"absolute",bottom:"-80px",right:"-80px",width:"420px",height:"420px",background:"radial-gradient(circle,rgba(100,120,255,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0}}/>
+      <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
         <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>{theme==="dark"?"☀️":"🌙"}</button>
-        <div style={{width:"100%",maxWidth:360,background:theme==="dark"?"rgba(255,255,255,.05)":"rgba(255,255,255,.75)",border:`1px solid ${theme==="dark"?"rgba(255,255,255,.1)":"rgba(255,255,255,.95)"}`,borderRadius:26,padding:"34px 30px",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",boxShadow:theme==="dark"?"0 28px 80px rgba(0,0,0,.55)":"0 24px 80px rgba(0,0,0,.1)",display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:1}}>
-          <div style={{fontSize:9,background:"rgba(240,185,11,.14)",border:"1px solid rgba(240,185,11,.35)",color:t.ouro,borderRadius:20,padding:"3px 12px",letterSpacing:2.5,fontWeight:700,marginBottom:22}}>YFGROUP</div>
-          <div style={{width:74,height:74,background:"rgba(240,185,11,.06)",borderRadius:20,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.25)",boxShadow:"0 0 30px rgba(240,185,11,.08)"}}>
-            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#f0b90b" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <div style={{width:"100%",maxWidth:340,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"36px 28px",boxShadow:`0 24px 64px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:1}}>
+          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:24,textTransform:"uppercase"}}>YFGROUP</div>
+          <div style={{width:68,height:68,background:t.card2,borderRadius:DESIGN.r.card,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
@@ -1299,7 +1326,7 @@ export default function App() {
             Aguarde o administrador liberar seu acesso.
           </div>
           {pendingUserInfo?.email && (
-            <div style={{fontSize:11,color:t.ouro,fontWeight:600,marginBottom:22,padding:"7px 16px",background:"rgba(240,185,11,.07)",borderRadius:9,border:"1px solid rgba(240,185,11,.2)"}}>
+            <div style={{fontSize:11,color:t.ouro,fontWeight:600,marginBottom:22,padding:"7px 14px",background:hexRgb(t.ouro,.07),borderRadius:DESIGN.r.inp,border:`1px solid ${hexRgb(t.ouro,.2)}`}}>
               📧 {pendingUserInfo.email}
             </div>
           )}
@@ -1345,71 +1372,67 @@ export default function App() {
   // ══════════════════════════════════════════════
   if (!authed) {
     return (
-      <div style={{...css.app, background:theme==="dark"?"linear-gradient(135deg,#0a0e1a 0%,#0f1829 40%,#131522 100%)":"linear-gradient(135deg,#e8edf5 0%,#f0f4fa 40%,#e4e8f5 100%)", display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
+      <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
         <style>{`
-          @keyframes logoPop{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0)}}
-          @keyframes auroraFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-20px) scale(1.05)}}
-          @keyframes auroraFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-15px,15px) scale(1.08)}}
-          @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');
+          @keyframes logoPop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+          @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
           *{box-sizing:border-box;margin:0;padding:0}
           ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.scrollThumb};border-radius:2px}
           input::placeholder{color:${t.txt2}}
         `}</style>
 
-        {/* Aurora halos */}
-        <div style={{position:"absolute",top:"-100px",left:"-100px",width:"480px",height:"480px",background:"radial-gradient(circle,rgba(100,120,255,.18) 0%,transparent 65%)",animation:"auroraFloat 9s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
-        <div style={{position:"absolute",bottom:"-80px",right:"-80px",width:"420px",height:"420px",background:"radial-gradient(circle,rgba(240,185,11,.13) 0%,transparent 65%)",animation:"auroraFloat2 11s ease-in-out infinite",pointerEvents:"none",zIndex:0}} />
-        <div style={{position:"absolute",top:"35%",right:"-60px",width:"260px",height:"260px",background:"radial-gradient(circle,rgba(80,180,255,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0}} />
+        {/* Acento de fundo — sutil, estático */}
+        <div style={{position:"absolute",top:"10%",left:"50%",transform:"translateX(-50%)",width:"600px",height:"300px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.04)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}} />
 
         {/* Theme toggle */}
         <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>
           {theme==="dark"?"☀️":"🌙"}
         </button>
 
-        {/* Glass card */}
-        <div style={{width:"100%",maxWidth:360,background:theme==="dark"?"rgba(255,255,255,.05)":"rgba(255,255,255,.72)",border:`1px solid ${theme==="dark"?"rgba(255,255,255,.1)":"rgba(255,255,255,.95)"}`,borderRadius:26,padding:"34px 30px",backdropFilter:"blur(22px)",WebkitBackdropFilter:"blur(22px)",boxShadow:theme==="dark"?"0 28px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.05)":"0 24px 80px rgba(0,0,0,.1), 0 0 0 1px rgba(255,255,255,.8)",display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .5s cubic-bezier(.34,1.2,.64,1)",position:"relative",zIndex:1}}>
+        {/* Card de login */}
+        <div style={{width:"100%",maxWidth:340,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"36px 28px",boxShadow:`0 24px 64px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .4s ease-out",position:"relative",zIndex:1}}>
 
-          {/* Badge */}
-          <div style={{fontSize:9,background:theme==="dark"?"rgba(240,185,11,.14)":"rgba(240,185,11,.18)",border:"1px solid rgba(240,185,11,.35)",color:t.ouro,borderRadius:20,padding:"3px 12px",letterSpacing:2.5,fontWeight:700,marginBottom:22}}>YFGROUP</div>
+          {/* Badge empresa */}
+          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:24,textTransform:"uppercase"}}>YFGROUP</div>
 
-          {/* Ícone carreta outline */}
-          <div style={{width:80,height:80,background:theme==="dark"?"rgba(240,185,11,.07)":"rgba(240,185,11,.1)",borderRadius:22,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:"1.5px solid rgba(240,185,11,.28)",animation:"logoPop .5s cubic-bezier(.34,1.56,.64,1)",boxShadow:theme==="dark"?"0 0 44px rgba(240,185,11,.1)":"0 0 30px rgba(240,185,11,.12)"}}>
-            <svg width="56" height="56" viewBox="0 0 64 64" fill="none">
-              <rect x="7" y="25" width="32" height="18" rx="3" stroke="#f0b90b" strokeWidth="2"/>
-              <path d="M39 32 L55 32 L55 43 L39 43 Z" stroke="#f0b90b" strokeWidth="2"/>
-              <path d="M41 32 L41 26 L52 26 L55 32" stroke="#f0b90b" strokeWidth="2"/>
-              <circle cx="17" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
-              <circle cx="17" cy="45" r="1.5" fill="#f0b90b"/>
-              <circle cx="29" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
-              <circle cx="29" cy="45" r="1.5" fill="#f0b90b"/>
-              <circle cx="49" cy="45" r="4.5" stroke="#f0b90b" strokeWidth="2"/>
-              <circle cx="49" cy="45" r="1.5" fill="#f0b90b"/>
-              <rect x="43" y="28" width="9" height="6" rx="1" stroke="#f0b90b" strokeWidth="1.5"/>
+          {/* Ícone carreta */}
+          <div style={{width:72,height:72,background:t.card2,borderRadius:DESIGN.r.card,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,border:`1px solid ${hexRgb(t.ouro,.25)}`,animation:"logoPop .4s ease-out"}}>
+            <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+              <rect x="7" y="25" width="32" height="18" rx="3" stroke={t.ouro} strokeWidth="1.8"/>
+              <path d="M39 32 L55 32 L55 43 L39 43 Z" stroke={t.ouro} strokeWidth="1.8"/>
+              <path d="M41 32 L41 26 L52 26 L55 32" stroke={t.ouro} strokeWidth="1.8"/>
+              <circle cx="17" cy="45" r="4.5" stroke={t.ouro} strokeWidth="1.8"/>
+              <circle cx="17" cy="45" r="1.5" fill={t.ouro}/>
+              <circle cx="29" cy="45" r="4.5" stroke={t.ouro} strokeWidth="1.8"/>
+              <circle cx="29" cy="45" r="1.5" fill={t.ouro}/>
+              <circle cx="49" cy="45" r="4.5" stroke={t.ouro} strokeWidth="1.8"/>
+              <circle cx="49" cy="45" r="1.5" fill={t.ouro}/>
+              <rect x="43" y="28" width="9" height="6" rx="1" stroke={t.ouro} strokeWidth="1.5"/>
             </svg>
           </div>
 
           {/* Title */}
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:23,letterSpacing:4,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
-          <div style={{fontSize:10,color:t.txt2,textAlign:"center",marginTop:5,marginBottom:26,letterSpacing:2.5,textTransform:"uppercase",opacity:.8}}>Logística · Transporte</div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:3,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
+          <div style={{fontSize:10,color:t.txt2,textAlign:"center",marginTop:5,marginBottom:28,letterSpacing:2,textTransform:"uppercase"}}>Logística · Transporte</div>
 
           {/* Auth message */}
           {authMsg && (
-            <div style={{padding:"10px 12px",borderRadius:10,fontSize:12,fontWeight:600,textAlign:"center",marginBottom:16,lineHeight:1.5,width:"100%",background:authMsg.t==="err"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?"rgba(246,70,93,.2)":"rgba(2,192,118,.2)"}`}}>{authMsg.m}</div>
+            <div style={{padding:"10px 12px",borderRadius:DESIGN.r.inp,fontSize:12,fontWeight:600,textAlign:"center",marginBottom:16,lineHeight:1.5,width:"100%",background:authMsg.t==="err"?hexRgb(t.danger,.08):hexRgb(t.verde,.08),color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?hexRgb(t.danger,.2):hexRgb(t.verde,.2)}`}}>{authMsg.m}</div>
           )}
 
           {/* Google button */}
           <button
             onClick={() => iniciarOAuth("google")}
-            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)",border:`1.5px solid ${theme==="dark"?"rgba(255,255,255,.16)":"rgba(0,0,0,.1)"}`,borderRadius:DESIGN.r.card,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:700,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .2s",letterSpacing:.5,backdropFilter:"blur(8px)"}}
-            onMouseEnter={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.15)":"rgba(255,255,255,1)";e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow=theme==="dark"?"0 10px 28px rgba(0,0,0,.3)":"0 8px 24px rgba(0,0,0,.12)"}}
-            onMouseLeave={e=>{e.currentTarget.style.background=theme==="dark"?"rgba(255,255,255,.09)":"rgba(255,255,255,.92)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none"}}
+            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"13px 12px",cursor:"pointer",fontSize:14,fontWeight:600,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .15s",letterSpacing:.3}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.4);e.currentTarget.style.background=t.bgAlt}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2;e.currentTarget.style.background=t.card2}}
           >
-            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
             Continuar com Google
           </button>
 
-          <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:14,lineHeight:1.6,opacity:.65}}>
+          <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:14,lineHeight:1.6,opacity:.6}}>
             Apenas contas autorizadas têm acesso ao sistema.
           </div>
         </div>
@@ -1424,9 +1447,9 @@ export default function App() {
   // ══════════════════════════════════════════════
   if (primeiroLogin) {
     return (
-      <div style={{...css.app, background:t.gradientAuth, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh"}}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}input::placeholder{color:${t.txt2}}`}</style>
-        <div style={{width:64,height:64,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,marginBottom:14,boxShadow:"0 0 30px rgba(240,185,11,.35)"}}>🔑</div>
+      <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}input::placeholder{color:${t.txt2}}`}</style>
+        <div style={{width:56,height:56,background:t.card2,borderRadius:DESIGN.r.card,border:`1px solid ${hexRgb(t.ouro,.3)}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:14}}>🔑</div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:3,color:t.txt,marginBottom:4}}>PRIMEIRO ACESSO</div>
         <div style={{fontSize:11,color:t.txt2,marginBottom:20,textAlign:"center"}}>Configure sua senha de administrador e, opcionalmente, sua logo.</div>
 
@@ -2306,7 +2329,7 @@ export default function App() {
         @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.scrollThumb};border-radius:3px}
         input::placeholder,textarea::placeholder{color:${t.txt2}!important}
@@ -2314,27 +2337,27 @@ export default function App() {
         html{background:${t.bg}!important}
         body{background:${t.bg};overflow-x:hidden;overscroll-behavior-x:none}
         /* ─── Hover lift nos cards ─── */
-        .co-card{transition:transform .18s ease,box-shadow .18s ease!important}
-        .co-card:hover{transform:translateY(-2px)!important;box-shadow:0 8px 24px rgba(240,185,11,.1)!important}
+        .co-card{transition:transform .15s ease,box-shadow .15s ease!important}
+        .co-card:hover{transform:translateY(-1px)!important;box-shadow:0 6px 20px rgba(0,0,0,.18)!important}
         /* ─── Press effect nos botões ─── */
-        button:active{transform:scale(0.97)!important;transition:transform .08s!important}
+        button:active{transform:scale(0.97)!important;transition:transform .07s!important}
         /* ─── Tab hover ─── */
-        .co-tab:hover{color:${t.ouro}!important;background:rgba(240,185,11,.05)!important}
-        /* ─── Section divider dourado ─── */
-        .sec-divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(240,185,11,.35),transparent)}
-        /* ─── Input focus glow ─── */
-        input:focus,textarea:focus,select:focus{border-color:${t.ouro}!important;box-shadow:0 0 0 3px rgba(240,185,11,.12)!important;outline:none!important}
+        .co-tab:hover{color:${t.ouro}!important;background:${hexRgb(t.ouro,.04)}!important}
+        /* ─── Section divider ─── */
+        .sec-divider::after{content:'';flex:1;height:1px;background:${t.borda}}
+        /* ─── Input focus ─── */
+        input:focus,textarea:focus,select:focus{border-color:${t.ouro}!important;box-shadow:0 0 0 2px ${hexRgb(t.ouro,.1)}!important;outline:none!important}
         /* ─── hBtn hover ─── */
-        .co-hbtn:hover{border-color:${t.ouro}!important;color:${t.ouro}!important;background:rgba(240,185,11,.07)!important}
+        .co-hbtn:hover{border-color:${t.borda2}!important;color:${t.txt}!important;background:${t.card2}!important}
         /* ─── KPI hover ─── */
-        .co-kpi:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.15)!important}
+        .co-kpi:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12)!important}
         /* ─── Row table hover ─── */
-        .co-tr:hover td{background:rgba(240,185,11,.04)!important}
+        .co-tr:hover td{background:${hexRgb(t.ouro,.03)}!important}
         /* ─── Tooltip chip DT ─── */
-        .dt-chip{font-family:'Bebas Neue',monospace;font-size:13px;letter-spacing:1.5px;color:${t.ouro};background:rgba(240,185,11,.1);border:1px solid rgba(240,185,11,.25);border-radius:7px;padding:2px 9px;font-weight:700}
+        .dt-chip{font-family:'Bebas Neue',monospace;font-size:13px;letter-spacing:1.5px;color:${t.ouro};background:${hexRgb(t.ouro,.1)};border:1px solid ${hexRgb(t.ouro,.22)};border-radius:${DESIGN.r.tag}px;padding:2px 8px;font-weight:700}
         /* ─── Modal Detalhe Responsivo ─── */
-        .co-dt-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center}
-        .co-dt-modal{width:100%;max-width:520px;max-height:96vh;background:${t.modalBg};border-radius:22px 22px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:mslide .32s cubic-bezier(.34,1.3,.64,1)}
+        .co-dt-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:flex-end;justify-content:center}
+        .co-dt-modal{width:100%;max-width:520px;max-height:96vh;background:${t.modalBg};border:1px solid ${t.borda};border-bottom:none;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:mslide .26s cubic-bezier(.34,1.1,.64,1)}
         .co-dt-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0}
         .co-dt-panel{padding:14px;display:flex;flex-direction:column;gap:14px}
         .co-dt-right{padding:14px;display:flex;flex-direction:column;gap:14px}
@@ -4872,9 +4895,33 @@ function mapearColuna(n){
                 </div>
               ))}
             </div>
-            <div style={{display:"flex",gap:8,padding:"10px 16px 18px",flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
-              <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
-              <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+            <div style={{display:"flex",flexDirection:"column",gap:0,flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
+              {excluirConfirm==="edit" && (
+                <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 16px 8px",background:"rgba(220,38,38,.06)",borderBottom:`1px solid rgba(220,38,38,.2)`}}>
+                  <span style={{fontSize:11,color:"#ef4444",fontWeight:600,whiteSpace:"nowrap"}}>Digite EXCLUIR para confirmar:</span>
+                  <input
+                    autoFocus
+                    value={excluirTexto}
+                    onChange={e=>setExcluirTexto(e.target.value.toUpperCase())}
+                    onKeyDown={e=>{if(e.key==="Escape"){setExcluirConfirm(null);setExcluirTexto("");}}}
+                    placeholder="EXCLUIR"
+                    style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:"#ef4444",fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
+                  />
+                  <button
+                    onClick={()=>{ if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt); }}
+                    disabled={excluirTexto!=="EXCLUIR"}
+                    style={{background:excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}
+                  >CONFIRMAR</button>
+                  <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                </div>
+              )}
+              <div style={{display:"flex",gap:8,padding:"10px 16px 18px"}}>
+                <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                {editIdx>=0 && excluirConfirm!=="edit" && (
+                  <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:"#ef4444",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑️ EXCLUIR</button>
+                )}
+                <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+              </div>
             </div>
           </div>
         </div>
@@ -5009,22 +5056,46 @@ function mapearColuna(n){
           <div className="co-dt-overlay" onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
             <div className="co-dt-modal">
               {/* Header */}
-              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
-                <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
-                  <div style={{fontSize:9,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
-                  {r.data_criacao && <div style={{fontSize:8,color:t.txt2,opacity:.7,marginTop:1}}>📥 Registrado em {new Date(r.data_criacao).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
+              <div style={{flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
+                <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:excluirConfirm==="detalhe"?`1px solid rgba(220,38,38,.25)`:`1px solid ${t.borda}`}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
+                    <div style={{fontSize:9,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
+                    {r.data_criacao && <div style={{fontSize:8,color:t.txt2,opacity:.7,marginTop:1}}>📥 Registrado em {new Date(r.data_criacao).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
+                  </div>
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
+                    {canEditDetalhe && (
+                      <button onClick={()=>{
+                        const idx=DADOS.findIndex(x=>x.dt===r.dt);
+                        setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
+                      }} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"9px 16px",color:t.ouro,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,14)} Editar</button>
+                    )}
+                    {canEditDetalhe && excluirConfirm!=="detalhe" && (
+                      <button onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}} style={{background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.3)`,borderRadius:8,padding:"9px 16px",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>🗑️ Excluir</button>
+                    )}
+                    <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                  </div>
                 </div>
-                <div style={{display:"flex",gap:6,flexShrink:0}}>
-                  {canEditDetalhe && (
-                    <button onClick={()=>{
-                      const idx=DADOS.findIndex(x=>x.dt===r.dt);
-                      setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
-                    }} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"9px 16px",color:t.ouro,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,14)} Editar</button>
-                  )}
-                  <button onClick={()=>setModalOpen(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-                </div>
+                {excluirConfirm==="detalhe" && (
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 16px",background:"rgba(220,38,38,.06)",borderBottom:`1px solid rgba(220,38,38,.2)`}}>
+                    <span style={{fontSize:11,color:"#ef4444",fontWeight:600,whiteSpace:"nowrap"}}>Digite EXCLUIR para confirmar:</span>
+                    <input
+                      autoFocus
+                      value={excluirTexto}
+                      onChange={e=>setExcluirTexto(e.target.value.toUpperCase())}
+                      onKeyDown={e=>{if(e.key==="Escape"){setExcluirConfirm(null);setExcluirTexto("");}}}
+                      placeholder="EXCLUIR"
+                      style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:"#ef4444",fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
+                    />
+                    <button
+                      onClick={()=>{ if(excluirTexto==="EXCLUIR") deletarRegistro(r.dt); }}
+                      disabled={excluirTexto!=="EXCLUIR"}
+                      style={{background:excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}
+                    >CONFIRMAR</button>
+                    <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                  </div>
+                )}
               </div>
 
               <div className="co-dt-body" style={{flex:1,overflow:"hidden"}}>
