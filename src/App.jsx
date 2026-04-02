@@ -4182,6 +4182,12 @@ export default function App() {
                           {syncStatus.motivos_ignorados.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
                         </div>
                       )}
+                      {syncStatus.info?.length>0&&(
+                        <div style={{background:`rgba(59,130,246,.06)`,border:`1px solid rgba(59,130,246,.2)`,borderRadius:7,padding:"8px 10px"}}>
+                          <div style={{fontSize:9,fontWeight:700,color:t.azulLt,marginBottom:4}}>📋 Abas processadas:</div>
+                          {syncStatus.info.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
+                        </div>
+                      )}
                       {syncStatus.erros_detalhes?.length>0&&(
                         <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:7,padding:"8px 10px"}}>
                           <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:4}}>❌ Erros de envio:</div>

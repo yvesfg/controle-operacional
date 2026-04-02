@@ -29,6 +29,7 @@ function sincronizarComSupabase() {
     erros_http: 0,
     motivos_ignorados: [],
     erros_detalhes: [],
+    info: [],
     ok: false
   };
 
@@ -73,11 +74,11 @@ function sincronizarComSupabase() {
       // Pula aba se nao tem coluna DT (nao e uma aba de dados operacionais)
       var temColDT = Object.values(mapa).indexOf('dt') >= 0;
       if (!temColDT) {
-        statusGlobal.erros_detalhes.push('Aba "' + nomAba + '" ignorada: coluna DT nao encontrada (' + melhorContagem + ' cols mapeadas)');
+        statusGlobal.info.push('Aba "' + nomAba + '" ignorada: coluna DT nao encontrada (' + melhorContagem + ' cols mapeadas)');
         continue;
       }
 
-      statusGlobal.erros_detalhes.push('Aba "' + nomAba + '": cabecalho na linha ' + linhaInicio + ', ' + melhorContagem + ' colunas mapeadas');
+      statusGlobal.info.push('Aba "' + nomAba + '": cabecalho linha ' + linhaInicio + ', ' + melhorContagem + ' cols mapeadas');
       statusGlobal.total_planilha += dados.length - linhaInicio;
 
       var registros = [];
@@ -110,6 +111,11 @@ function sincronizarComSupabase() {
 
         registros.push(reg);
       }
+
+      // Deduplicar por DT (ultimo valor vence) — evita HTTP 500 no upsert
+      var vistosDT = {};
+      registros.forEach(function(reg) { vistosDT[reg.dt] = reg; });
+      registros = Object.values(vistosDT);
 
       // Enviar para Supabase em lotes de 50
       var totalLotes = Math.ceil(registros.length / 50);
