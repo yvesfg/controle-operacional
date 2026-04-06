@@ -1343,8 +1343,8 @@ export default function App() {
     btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:"#fff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.verde, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnOutline:{ borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.ouro, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnDanger: { borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.danger, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.danger,.3)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
-    secTitle:  { fontSize:9, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
-    badge:     (c,bg,bc) => ({ padding:"2px 8px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
+    secTitle:  { fontSize:11, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
+    badge:     (c,bg,bc) => ({ padding:"3px 10px", borderRadius:DESIGN.r.badge, fontSize:11, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
     // Overlay — bottom-sheet no mobile, centralizado no desktop
     overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems: isMobile ? "flex-end" : "center", justifyContent:"center", padding: isMobile ? 0 : 24 },
@@ -1423,7 +1423,7 @@ export default function App() {
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
         <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>{theme==="dark"?"☀️":"🌙"}</button>
         <div style={{width:"100%",maxWidth:340,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"36px 28px",boxShadow:`0 24px 64px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:1}}>
-          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:24,textTransform:"uppercase"}}>YFGROUP</div>
+          <div style={{fontSize:11,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"4px 12px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:24,textTransform:"uppercase"}}>YFGROUP</div>
           <div style={{width:68,height:68,background:t.card2,borderRadius:DESIGN.r.card,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -1510,7 +1510,7 @@ export default function App() {
           {/* Title */}
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:3,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
           <div style={{fontSize:10,color:t.txt2,textAlign:"center",marginTop:5,marginBottom:6,letterSpacing:2,textTransform:"uppercase"}}>Logística · Transporte</div>
-          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:28,textTransform:"uppercase"}}>YFGroup</div>
+          <div style={{fontSize:11,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:28,textTransform:"uppercase"}}>YFGroup</div>
 
           {/* Auth message */}
           {authMsg && (
@@ -1528,7 +1528,7 @@ export default function App() {
             Continuar com Google
           </button>
 
-          <div style={{fontSize:9,color:t.txt2,textAlign:"center",marginTop:14,lineHeight:1.6,opacity:.6}}>
+          <div style={{fontSize:11,color:t.txt2,textAlign:"center",marginTop:14,lineHeight:1.6,opacity:.6}}>
             Apenas contas autorizadas têm acesso ao sistema.
           </div>
         </div>
@@ -1551,15 +1551,15 @@ export default function App() {
 
         <div style={{width:"100%",maxWidth:360,...css.card,boxShadow:`0 24px 60px ${t.shadow}`,padding:18,display:"flex",flexDirection:"column",gap:14}}>
           <div>
-            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Nova Senha *</label>
+            <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Nova Senha *</label>
             <input type="password" value={primLoginSenha} onChange={e=>setPrimLoginSenha(e.target.value)} placeholder="Mínimo 6 caracteres" style={css.inp} />
           </div>
           <div>
-            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Confirmar Senha *</label>
+            <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Confirmar Senha *</label>
             <input type="password" value={primLoginSenha2} onChange={e=>setPrimLoginSenha2(e.target.value)} placeholder="Repita a senha" style={css.inp} onKeyDown={e=>e.key==="Enter"&&handlePrimeiroLoginSalvar()} />
           </div>
           <div>
-            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Logo da Empresa (opcional)</label>
+            <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Logo da Empresa (opcional)</label>
             <input type="file" accept="image/*" onChange={e=>{
               const f = e.target.files?.[0];
               if (!f) return;
@@ -2494,7 +2494,7 @@ export default function App() {
         }
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
-          <div style={{fontSize:9,color:t.txt2,letterSpacing:1.5,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro,fontWeight:700}}>YFGroup</span></div>
+          <div style={{fontSize:11,color:t.txt2,letterSpacing:1.5,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro,fontWeight:700}}>YFGroup</span></div>
         </div>
         <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5}}>
           {/* Badge de perfil — admin: só coroa; outros: ícone + nome curto */}
@@ -2508,10 +2508,10 @@ export default function App() {
             {perfil==="admin"
               ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,16,1.8)
               : perfil==="gerente"
-              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"GER").split(" ")[0].substring(0,6).toUpperCase()}</span></>
+              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,14,2)}<span style={{fontSize:11,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"GER").split(" ")[0].substring(0,6).toUpperCase()}</span></>
               : perfil==="operador"
-              ? <>{hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"OP").split(" ")[0].substring(0,6).toUpperCase()}</span></>
-              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"VIEW").split(" ")[0].substring(0,6).toUpperCase()}</span></>
+              ? <>{hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,14,2)}<span style={{fontSize:11,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"OP").split(" ")[0].substring(0,6).toUpperCase()}</span></>
+              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,14,2)}<span style={{fontSize:11,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"VIEW").split(" ")[0].substring(0,6).toUpperCase()}</span></>
             }
           </div>
 
@@ -2526,7 +2526,7 @@ export default function App() {
           {alertas.length > 0 && (
             <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px",overflow:"visible"}}>
               {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,15)}
-              <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`,minWidth:18,minHeight:18}}>{alertas.length}</span>
+              <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`,minWidth:18,minHeight:18}}>{alertas.length}</span>
             </button>
           )}
 
@@ -2545,7 +2545,7 @@ export default function App() {
               <>
                 <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setRelMenuOpen(false)} />
                 <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:220,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .15s"}}>
-                  <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>📄 RELATÓRIOS PDF</div>
+                  <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:11,color:t.ouro,fontWeight:700,letterSpacing:.8}}>📄 RELATÓRIOS PDF</div>
                   {[
                     {ico:"📊",l:"Geral de Operações",sub:"KPIs, resumo e tabela completa",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
                     {ico:"📋",l:"Operacional",sub:"SGS, Apontamentos e ID Diárias",fn:()=>{setRelMenuOpen(false);setRelOperOpen(true);}},
@@ -2558,7 +2558,7 @@ export default function App() {
                       <span style={{fontSize:18,flexShrink:0}}>{op.ico}</span>
                       <div>
                         <div style={{fontSize:12,fontWeight:700,color:t.txt}}>{op.l}</div>
-                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div>
+                        <div style={{fontSize:11,color:t.txt2,marginTop:1}}>{op.sub}</div>
                       </div>
                     </button>
                   ))}
@@ -2577,8 +2577,8 @@ export default function App() {
                 <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)} />
                 <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
                   {buscaResult
-                    ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700,display:"flex",alignItems:"center",gap:5}}>✅ DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
-                    : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>⚠️ Busque um registro primeiro</div>
+                    ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:11,color:"#25D366",fontWeight:700,display:"flex",alignItems:"center",gap:5}}>✅ DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                    : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:11,color:t.ouro,fontWeight:700}}>⚠️ Busque um registro primeiro</div>
                   }
                   {[
                     {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
@@ -2599,7 +2599,7 @@ export default function App() {
                       onMouseOut={e=>e.currentTarget.style.background="transparent"}
                     >
                       <div style={{flexShrink:0,width:32,height:32,borderRadius:8,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",16)}</div>
-                      <div><div style={{color:t.txt,fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                      <div><div style={{color:t.txt,fontWeight:700}}>{op.l}</div><div style={{fontSize:11,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
                     </button>
                   ))}
                 </div>
@@ -2672,7 +2672,7 @@ export default function App() {
 
             <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:14,padding:"8px 12px",background:t.card,borderRadius:9,borderLeft:`3px solid ${t.verde}`}}>
               <span style={{width:6,height:6,background:t.verde,borderRadius:"50%",animation:"pulse 2s infinite"}} />
-              <span style={{fontSize:11,color:t.txt2,fontWeight:500}}><strong style={{color:t.verde}}>{DADOS.length}</strong> registros · <span style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:4,padding:"1px 6px",fontSize:9,color:t.azulLt,fontWeight:700}}>{connStatus==="online"?"🟢 ONLINE":"⚫ LOCAL"}</span></span>
+              <span style={{fontSize:11,color:t.txt2,fontWeight:500}}><strong style={{color:t.verde}}>{DADOS.length}</strong> registros · <span style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:4,padding:"1px 6px",fontSize:11,color:t.azulLt,fontWeight:700}}>{connStatus==="online"?"🟢 ONLINE":"⚫ LOCAL"}</span></span>
             </div>
 
             {/* Result card */}
@@ -2684,9 +2684,9 @@ export default function App() {
                   </div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{buscaResult.nome||"—"}</div>
-                    <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,marginTop:2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                      <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif"}}>DT {buscaResult.dt}</span>
-                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.verde,fontFamily:"'Bebas Neue',sans-serif"}}>{buscaResult.placa}</span>}
+                    <div style={{fontSize:11,color:t.txt2,fontWeight:600,letterSpacing:1.5,marginTop:2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif"}}>DT {buscaResult.dt}</span>
+                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.verde,fontFamily:"'Bebas Neue',sans-serif"}}>{buscaResult.placa}</span>}
                       {buscaResult.data_desc?<span style={{...css.badge(t.verde,`rgba(2,192,118,.1)`,`rgba(2,192,118,.3)`)}}> DESCARREGADO</span>:buscaResult.data_agenda?<span style={{...css.badge(t.ouro,`rgba(240,185,11,.08)`,`rgba(240,185,11,.3)`)}}>AGUARDANDO</span>:<span style={{...css.badge(t.danger,`rgba(246,70,93,.08)`,`rgba(246,70,93,.3)`)}}>SEM AGENDA</span>}
                     </div>
                   </div>
@@ -2701,7 +2701,7 @@ export default function App() {
                     <div key={i} style={{...css.card,padding:"9px 11px",display:"flex",alignItems:"center",gap:10}}>
                       <div style={{flexShrink:0}}>{hIco(item.ico,item.cor||t.txt2,16,1.8)}</div>
                       <div style={{minWidth:0}}>
-                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:2}}>{item.lbl}</div>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:2}}>{item.lbl}</div>
                         <div style={{fontWeight:600,color:item.cor||t.txt,fontFamily:item.highlight?"'Bebas Neue',sans-serif":"inherit",letterSpacing:item.highlight?3:0,fontSize:item.highlight?17:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.val||"—"}</div>
                       </div>
                     </div>
@@ -2710,12 +2710,12 @@ export default function App() {
                     <div style={{...css.kpi(t.ouro),padding:"12px 10px"}}>
                       {hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.ouro,14,2)}
                       <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.ouro,marginTop:4}}>{buscaResult.data_carr||"—"}</div>
-                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamento</div>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamento</div>
                     </div>
                     <div style={{...css.kpi(t.verde),padding:"12px 10px"}}>
                       {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,14,2)}
                       <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.verde,marginTop:4}}>{buscaResult.data_agenda||"—"}</div>
-                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Agenda Desc.</div>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Agenda Desc.</div>
                     </div>
                   </div>
                   {canFin && (
@@ -2727,7 +2727,7 @@ export default function App() {
                       ].map((f,i)=>(
                         <div key={i} style={{...css.kpi(f.cor),padding:"10px 8px"}}>
                           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
-                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
+                          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
                         </div>
                       ))}
                     </div>
@@ -2803,7 +2803,7 @@ export default function App() {
                             }} style={{...css.btnCard(op.cor)}}>
                               {hIco(op.ico, op.cor, 22, 2)}
                               <span>{op.l}</span>
-                              <span style={{fontSize:9,opacity:.65,fontWeight:400,marginTop:-2}}>{op.sub}</span>
+                              <span style={{fontSize:11,opacity:.65,fontWeight:400,marginTop:-2}}>{op.sub}</span>
                             </button>
                           ))}
                         </div>
@@ -2929,27 +2929,27 @@ export default function App() {
             {/* Filtros: Mês + Cidade Origem */}
             <div style={{...css.card,padding:12,marginBottom:14}}>
               {/* Filtro Mês */}
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,12,2)} Filtrar por Mês
               </div>
               <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
-                <button onClick={()=>setDashMes("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
+                <button onClick={()=>setDashMes("todos")} style={{padding:"5px 10px",fontSize:11,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
                 {dashData.meses.map(m => (
-                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
+                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"5px 10px",fontSize:11,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
                 ))}
               </div>
               {/* Filtro Cidade Origem */}
               <div style={{borderTop:`1px solid ${t.borda}`,paddingTop:10}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
                   {hIco(<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,t.txt2,12,2)} Filtrar por Cidade Origem
                   {dashOrigem !== "todos" && (
-                    <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:"auto",fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"2px 7px",fontFamily:DESIGN.fnt.b}}>✕ limpar</button>
+                    <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:"auto",fontSize:11,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"2px 7px",fontFamily:DESIGN.fnt.b}}>✕ limpar</button>
                   )}
                 </div>
                 <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                  <button onClick={()=>setDashOrigem("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashOrigem==="todos"?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem==="todos"?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem==="todos"?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>Todas</button>
+                  <button onClick={()=>setDashOrigem("todos")} style={{padding:"5px 10px",fontSize:11,fontWeight:700,border:`1.5px solid ${dashOrigem==="todos"?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem==="todos"?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem==="todos"?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>Todas</button>
                   {dashData.cidades.map(c => (
-                    <button key={c} onClick={()=>setDashOrigem(c)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashOrigem===c?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem===c?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem===c?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>{c}</button>
+                    <button key={c} onClick={()=>setDashOrigem(c)} style={{padding:"5px 10px",fontSize:11,fontWeight:700,border:`1.5px solid ${dashOrigem===c?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem===c?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem===c?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>{c}</button>
                   ))}
                 </div>
               </div>
@@ -2959,23 +2959,23 @@ export default function App() {
               const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
               return (
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))",gap:10,marginBottom:14}}>
-                  <div className="co-kpi" style={css.kpi(t.ouro)}><div style={{marginBottom:6}}>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.ouro}}>{dashData.filtrado.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamentos</div></div>
-                  <div style={css.kpi(t.verde)}><div style={{marginBottom:6}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>,t.verde,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.verde}}>{dashData.dtsU.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>DTs Únicas</div></div>
-                  <div style={{...css.kpi(t.azulLt),cursor:"pointer"}} onClick={()=>setActiveTab("motoristas")}><div style={{marginBottom:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.azulLt}}>{motsUniq.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Motoristas</div></div>
-                  {canFin && <div style={css.kpi(t.azul)}><div style={{marginBottom:6}}>{hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:20,letterSpacing:1,color:t.azulLt}}>R$ {(dashData.cteT/1000).toFixed(1)}k</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Total CTE</div></div>}
-                  <div style={{...css.kpi(t.danger),cursor:"pointer"}} onClick={()=>setAlertasOpen(!alertasOpen)}><div style={{marginBottom:6}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.danger}}>{alertas.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Alertas</div></div>
+                  <div className="co-kpi" style={css.kpi(t.ouro)}><div style={{marginBottom:6}}>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.ouro}}>{dashData.filtrado.length}</div><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamentos</div></div>
+                  <div style={css.kpi(t.verde)}><div style={{marginBottom:6}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>,t.verde,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.verde}}>{dashData.dtsU.size}</div><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>DTs Únicas</div></div>
+                  <div style={{...css.kpi(t.azulLt),cursor:"pointer"}} onClick={()=>setActiveTab("motoristas")}><div style={{marginBottom:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.azulLt}}>{motsUniq.size}</div><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Motoristas</div></div>
+                  {canFin && <div style={css.kpi(t.azul)}><div style={{marginBottom:6}}>{hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:20,letterSpacing:1,color:t.azulLt}}>R$ {(dashData.cteT/1000).toFixed(1)}k</div><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Total CTE</div></div>}
+                  <div style={{...css.kpi(t.danger),cursor:"pointer"}} onClick={()=>setAlertasOpen(!alertasOpen)}><div style={{marginBottom:6}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.danger}}>{alertas.length}</div><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Alertas</div></div>
                 </div>
               );
             })()}
 
             {/* Gráfico de Carregamentos — toggle bar/pizza */}
             <div style={{...css.card,padding:14,marginBottom:14}}>
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
                 Carregamentos
                 <span style={{flex:1,height:1,background:t.borda}} />
                 {/* Toggle agrupamento */}
                 {[{k:"mes",l:"Mês"},{k:"motorista",l:"Motorista"},{k:"destino",l:"Destino"},{k:"status",l:"Status"}].map(g=>(
-                  <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
+                  <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:11,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
                 ))}
                 {/* Toggle tipo de gráfico */}
                 {[
@@ -2992,14 +2992,14 @@ export default function App() {
 
             {canFin && (
               <div style={{...css.card,padding:14,marginBottom:14}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>Valor CTE por Mês (R$)<span style={{flex:1,height:1,background:t.borda}} /></div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>Valor CTE por Mês (R$)<span style={{flex:1,height:1,background:t.borda}} /></div>
                 <div style={{height:200}}><canvas ref={chartCTERef} /></div>
               </div>
             )}
 
             {/* Top UF — clicável para ver motoristas da rota */}
             <div style={{...css.card,padding:14,marginBottom:14}}>
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:8,color:t.ouro,fontWeight:500}}>· toque na UF para ver motoristas</span></div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:11,color:t.ouro,fontWeight:500}}>· toque na UF para ver motoristas</span></div>
               {(() => {
                 const ufMap = {};
                 dashData.filtrado.forEach(r => { if (!r.destino) return; const uf=r.destino.split("-").pop().trim().toUpperCase(); if (uf.length===2) ufMap[uf]=(ufMap[uf]||0)+1; });
@@ -3071,10 +3071,10 @@ export default function App() {
                 {planilhaSortKey && <span style={{color:t.ouro,marginLeft:8}}>ordenado por {planilhaSortKey} {planilhaSortDir==="asc"?"↑":"↓"} <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}} style={{background:"none",border:"none",color:t.txt2,cursor:"pointer",fontSize:10,padding:"0 2px",verticalAlign:"middle"}}>✕</button></span>}
               </span>
               <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>⏮</button>
-                <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>◀</button>
-                <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>▶</button>
-                <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>⏭</button>
+                <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:11,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>⏮</button>
+                <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:11,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>◀</button>
+                <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:11,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>▶</button>
+                <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:11,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>⏭</button>
               </div>
               <ExportMenu
                 dados={DADOS}
@@ -3098,7 +3098,7 @@ export default function App() {
                           onClick={()=>toggleSort(c.k)}
                           title={`Ordenar por ${c.h}`}
                           style={{
-                            padding:"9px 6px",textAlign:"left",fontSize:8,textTransform:"uppercase",
+                            padding:"9px 6px",textAlign:"left",fontSize:11,textTransform:"uppercase",
                             letterSpacing:.8,color:ativo?t.ouro:t.txt2,
                             borderBottom:`2px solid ${ativo?t.ouro:t.borda}`,
                             whiteSpace:"nowrap",position:"sticky",top:0,zIndex:1,
@@ -3109,7 +3109,7 @@ export default function App() {
                         >
                           <span style={{display:"flex",alignItems:"center",gap:3}}>
                             {c.h}
-                            <span style={{fontSize:9,lineHeight:1,opacity:ativo?1:.35,color:ativo?t.ouro:t.txt2}}>
+                            <span style={{fontSize:11,lineHeight:1,opacity:ativo?1:.35,color:ativo?t.ouro:t.txt2}}>
                               {ativo ? (planilhaSortDir==="asc"?"▲":"▼") : "⇅"}
                             </span>
                           </span>
@@ -3166,19 +3166,19 @@ export default function App() {
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
                   <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(246,70,93,.25)`,padding:"12px 10px",textAlign:"center"}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.danger,lineHeight:1}}>{fmtMoeda(totalDevido)}</div>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
                       {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.danger,9)} Total Devido
                     </div>
                   </div>
                   <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(2,192,118,.25)`,padding:"12px 10px",textAlign:"center"}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.verde,lineHeight:1}}>{fmtMoeda(totalPago)}</div>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
                       {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,9)} Total Pago
                     </div>
                   </div>
                   <div style={{background:t.card,borderRadius:12,border:`1px solid ${saldoD>0?`rgba(246,70,93,.25)`:`rgba(2,192,118,.25)`}`,padding:"12px 10px",textAlign:"center"}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:saldoD>0?t.danger:t.verde,lineHeight:1}}>{fmtMoeda(Math.abs(saldoD))}</div>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
                       {hIco(saldoD>0?<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>:<><polyline points="22 11 12 22 2 11"/><line x1="12" y1="2" x2="12" y2="22"/></>,saldoD>0?t.danger:t.verde,9)}
                       {saldoD>0 ? "A Pagar" : "Quitado"}
                     </div>
@@ -3201,18 +3201,18 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
               <div style={{...css.kpi(t.verde),cursor:"pointer",outline:dFiltro==="ok"?`2px solid ${t.verde}`:"none"}} onClick={()=>{setDFiltro(dFiltro==="ok"?"todos":"ok");setDSubTab("resumo");}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:t.verde}}>{diariasData.ok}</div>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,10)} No Prazo</div>
-                <div style={{fontSize:8,color:t.verde,marginTop:2,opacity:.7}}>{dFiltro==="ok"?"● filtrado":"toque p/ filtrar"}</div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,10)} No Prazo</div>
+                <div style={{fontSize:11,color:t.verde,marginTop:2,opacity:.7}}>{dFiltro==="ok"?"● filtrado":"toque p/ filtrar"}</div>
               </div>
               <div style={{...css.kpi(t.danger),cursor:"pointer",outline:dFiltro==="atraso"?`2px solid ${t.danger}`:"none"}} onClick={()=>{setDFiltro(dFiltro==="atraso"?"todos":"atraso");setDSubTab("resumo");}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:t.danger}}>{diariasData.atraso}</div>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,10)} Perdeu Agenda</div>
-                <div style={{fontSize:8,color:t.danger,marginTop:2,opacity:.7}}>{dFiltro==="atraso"?"● filtrado":"toque p/ filtrar"}</div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,10)} Perdeu Agenda</div>
+                <div style={{fontSize:11,color:t.danger,marginTop:2,opacity:.7}}>{dFiltro==="atraso"?"● filtrado":"toque p/ filtrar"}</div>
               </div>
               <div style={{...css.kpi(t.ouro),cursor:"pointer",outline:dFiltro==="pendente"?`2px solid ${t.ouro}`:"none"}} onClick={()=>{setDFiltro(dFiltro==="pendente"?"todos":"pendente");setDSubTab("resumo");}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:t.ouro}}>{diariasData.pend}</div>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,10)} Sem Descarga</div>
-                <div style={{fontSize:8,color:t.ouro,marginTop:2,opacity:.7}}>{dFiltro==="pendente"?"● filtrado":"toque p/ filtrar"}</div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,10)} Sem Descarga</div>
+                <div style={{fontSize:11,color:t.ouro,marginTop:2,opacity:.7}}>{dFiltro==="pendente"?"● filtrado":"toque p/ filtrar"}</div>
               </div>
             </div>
 
@@ -3221,7 +3221,7 @@ export default function App() {
                 {/* Filtro + toolbar de view */}
                 <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
                   {[{k:"todos",l:"Todos"},{k:"diaria",l:"Com Diária"},{k:"atraso",l:"Perdeu Agenda"},{k:"sem_diaria",l:"Sem Diária"},{k:"pendente",l:"Aguardando"}].map(f => (
-                    <button key={f.k} onClick={()=>setDFiltro(f.k)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dFiltro===f.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dFiltro===f.k?`rgba(240,185,11,.07)`:t.card2,color:dFiltro===f.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{f.l}</button>
+                    <button key={f.k} onClick={()=>setDFiltro(f.k)} style={{padding:"5px 10px",fontSize:11,fontWeight:700,border:`1.5px solid ${dFiltro===f.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dFiltro===f.k?`rgba(240,185,11,.07)`:t.card2,color:dFiltro===f.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{f.l}</button>
                   ))}
                 </div>
                 {/* Toolbar view */}
@@ -3236,7 +3236,7 @@ export default function App() {
                   ))}
                   {diariaView==="blocos" && (
                     <>
-                      <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
+                      <span style={{fontSize:11,color:t.txt2,marginLeft:6}}>Colunas:</span>
                       {[1,2,3,4].map(n => (
                         <button key={n} onClick={()=>{setDiariaCols(n);saveJSON("co_diaria_cols",n);}} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${diariaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:diariaCols===n?`rgba(22,119,255,.09)`:t.card2,color:diariaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
                       ))}
@@ -3305,15 +3305,15 @@ export default function App() {
                               <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
                               {/* Diária + RO abaixo do nome */}
                               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:2}}>
-                                {(r.diaria_prev||r.diaria_pg) && <span style={{fontSize:9,color:t.txt2}}>Diária: <strong style={{color:r.diaria_pg?t.verde:t.ouro}}>{r.diaria_pg ? `R$${r.diaria_pg}` : `R$${r.diaria_prev}`}</strong></span>}
-                                {r.ro && <span style={{fontSize:9,color:"#f57c00",fontWeight:600}}>RO: {r.ro}</span>}
+                                {(r.diaria_prev||r.diaria_pg) && <span style={{fontSize:11,color:t.txt2}}>Diária: <strong style={{color:r.diaria_pg?t.verde:t.ouro}}>{r.diaria_pg ? `R$${r.diaria_pg}` : `R$${r.diaria_prev}`}</strong></span>}
+                                {r.ro && <span style={{fontSize:11,color:"#f57c00",fontWeight:600}}>RO: {r.ro}</span>}
                               </div>
                               <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
-                                <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
+                                <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
                                   {tipo==="ok"?hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,9):tipo==="atraso"?hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9):hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,9)}
                                   {tipo==="ok"?"No prazo":tipo==="atraso"?`${dias>0?dias+"d":"Atrasado"}`:"Aguardando"}
                                 </span>
-                                {pgStatus && <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
+                                {pgStatus && <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
                                   {pgStatus==="pago"?hIco(<><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,t.verde,9):hIco(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,t.danger,9)}
                                   {pgStatus==="pago"?"Pago":"Não Pago"}
                                 </span>}
@@ -3324,7 +3324,7 @@ export default function App() {
                           <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                             {chips.map((ch,ci) => (
                               <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 7px",fontSize:10}}>
-                                <span style={{color:t.txt2,fontSize:8}}>{ch.l} </span>
+                                <span style={{color:t.txt2,fontSize:11}}>{ch.l} </span>
                                 <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
                               </div>
                             ))}
@@ -3341,7 +3341,7 @@ export default function App() {
               <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"70vh",overflowY:"auto"}}>
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:600}}>
                   <thead><tr>{["DT","Motorista","Placa","Agenda","Descarga","Atraso","Prev.","Pago"].map(h => (
-                    <th key={h} style={{background:t.tableHeader,padding:"9px 10px",textAlign:"left",fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap",position:"sticky",top:0}}>{h}</th>
+                    <th key={h} style={{background:t.tableHeader,padding:"9px 10px",textAlign:"left",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap",position:"sticky",top:0}}>{h}</th>
                   ))}</tr></thead>
                   <tbody>{diariasData.items.slice(0,100).map(({r,tipo,dias},i) => (
                     <tr key={i}>
@@ -3403,7 +3403,7 @@ export default function App() {
               ))}
               {descargaView==="blocos" && (
                 <>
-                  <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
+                  <span style={{fontSize:11,color:t.txt2,marginLeft:6}}>Colunas:</span>
                   {[1,2,3,4].map(n => (
                     <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?`rgba(22,119,255,.09)`:t.card2,color:descargaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
                   ))}
@@ -3421,9 +3421,9 @@ export default function App() {
                   return (
                     <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer"}}>
                       <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                        {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
+                        {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:11,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
-                        {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.08)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
+                        {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:11,fontWeight:700,background:`rgba(255,152,0,.08)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
                         <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
                       <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
@@ -3467,14 +3467,14 @@ export default function App() {
                           <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
                           {/* Diária + RO abaixo do nome */}
                           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:2}}>
-                            {r.diaria_prev && <span style={{fontSize:9,color:t.txt2}}>Diária: <strong style={{color:t.ouro}}>R${r.diaria_prev}</strong></span>}
-                            {r.ro && <span style={{fontSize:9,color:"#f57c00",fontWeight:600}}>RO: {r.ro}</span>}
+                            {r.diaria_prev && <span style={{fontSize:11,color:t.txt2}}>Diária: <strong style={{color:t.ouro}}>R${r.diaria_prev}</strong></span>}
+                            {r.ro && <span style={{fontSize:11,color:"#f57c00",fontWeight:600}}>RO: {r.ro}</span>}
                           </div>
                           <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
                             {isAtrasado && dias !== null && (
-                              <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9)} {dias}d atraso</span>
+                              <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9)} {dias}d atraso</span>
                             )}
-                            {pgStatus && <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
+                            {pgStatus && <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
                               {pgStatus==="pago"?hIco(<><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,t.verde,9):hIco(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,t.danger,9)}
                               {pgStatus==="pago"?"Pago":"Pendente"}
                             </span>}
@@ -3485,7 +3485,7 @@ export default function App() {
                       <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                         {chips.map((ch,ci) => (
                           <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 7px",fontSize:10}}>
-                            <span style={{color:t.txt2,fontSize:8}}>{ch.l} </span>
+                            <span style={{color:t.txt2,fontSize:11}}>{ch.l} </span>
                             <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
                           </div>
                         ))}
@@ -3504,7 +3504,7 @@ export default function App() {
         {/* ═══ OPERACIONAL ═══ */}
         {activeTab === "operacional" && (()=>{
           const inpO = {...css.inp, fontSize:12, padding:"8px 10px"};
-          const lblO = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+          const lblO = {fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
           const saveSGS = (arr) => { setSgsItems(arr); saveJSON("co_sgs", arr); };
           const saveAponts = async (arr, novoItem = null) => {
             setApontItems(arr);
@@ -3545,7 +3545,7 @@ export default function App() {
                   <button key={sb.k} onClick={()=>setOperSubTab(sb.k)} style={{border:`1.5px solid ${operSubTab===sb.k?t.azul:t.borda}`,borderRadius:11,padding:"12px 10px",cursor:"pointer",background:operSubTab===sb.k?`rgba(22,119,255,.08)`:t.card,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",fontFamily:"inherit"}}>
                     {hIco(sb.svg,operSubTab===sb.k?t.azulLt:t.txt2,24)}
                     <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:operSubTab===sb.k?t.azulLt:t.txt}}>{sb.l}</span>
-                    <span style={{fontSize:8,color:t.txt2}}>{sb.sub}</span>
+                    <span style={{fontSize:11,color:t.txt2}}>{sb.sub}</span>
                   </button>
                 ))}
               </div>
@@ -3614,15 +3614,15 @@ export default function App() {
                                 <div style={{flex:1}}>
                                   <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:1,color:t.ouro}}>{s.numero||"—"}</span>
-                                    <span style={{fontSize:9,fontWeight:700,color:statusC,background:`${statusC}18`,border:`1px solid ${statusC}33`,borderRadius:4,padding:"2px 7px"}}>{statusIco} {s.status?.toUpperCase()||"ABERTO"}</span>
-                                    {s.dt_rel && <span style={{fontSize:9,color:t.txt2}}>DT: {s.dt_rel}</span>}
-                                    {alertaRetorno && <span style={{fontSize:9,color:t.danger,fontWeight:700,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ {diasSemRetorno}d sem retorno</span>}
+                                    <span style={{fontSize:11,fontWeight:700,color:statusC,background:`${statusC}18`,border:`1px solid ${statusC}33`,borderRadius:4,padding:"2px 7px"}}>{statusIco} {s.status?.toUpperCase()||"ABERTO"}</span>
+                                    {s.dt_rel && <span style={{fontSize:11,color:t.txt2}}>DT: {s.dt_rel}</span>}
+                                    {alertaRetorno && <span style={{fontSize:11,color:t.danger,fontWeight:700,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ {diasSemRetorno}d sem retorno</span>}
                                     <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,flexShrink:0}}>{isExpanded?"▲":"▼"}</span>
                                   </div>
                                   <div style={{fontSize:11,color:t.txt2,marginTop:3,lineHeight:1.5}}>
                                     📅 Chamado: <strong style={{color:t.txt}}>{s.data_chamado?new Date(s.data_chamado+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</strong>
                                     {dataUltimoRet && <> · 🔄 Último retorno: <strong style={{color:t.txt}}>{new Date(dataUltimoRet+"T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
-                                    {retornos.length>0 && <span style={{marginLeft:6,fontSize:9,background:`rgba(240,185,11,.1)`,color:t.ouro,borderRadius:4,padding:"1px 5px"}}>{retornos.length} retorno{retornos.length>1?"s":""}</span>}
+                                    {retornos.length>0 && <span style={{marginLeft:6,fontSize:11,background:`rgba(240,185,11,.1)`,color:t.ouro,borderRadius:4,padding:"1px 5px"}}>{retornos.length} retorno{retornos.length>1?"s":""}</span>}
                                   </div>
                                   {s.descricao && <div style={{fontSize:11,color:t.txt,marginTop:4,lineHeight:1.4}}>{s.descricao}</div>}
                                 </div>
@@ -3635,14 +3635,14 @@ export default function App() {
                             {/* Seção expandida: retornos + form */}
                             {isExpanded && (
                               <div style={{borderTop:`1px solid ${t.borda}`,padding:"10px 12px",background:`rgba(240,185,11,.02)`}}>
-                                <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.ouro,marginBottom:8}}>🔄 Histórico de Retornos</div>
+                                <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.ouro,marginBottom:8}}>🔄 Histórico de Retornos</div>
                                 {retornos.length===0 ? (
                                   <div style={{fontSize:10,color:t.txt2,marginBottom:10}}>Nenhum retorno registrado ainda.</div>
                                 ) : (
                                   <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10}}>
                                     {retornos.map((r,ri)=>(
                                       <div key={ri} style={{display:"flex",alignItems:"flex-start",gap:8,background:t.card2,borderRadius:7,padding:"7px 10px",border:`1px solid ${t.borda}`}}>
-                                        <span style={{fontSize:9,fontWeight:700,color:t.azulLt,whiteSpace:"nowrap"}}>{r.data?new Date(r.data+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</span>
+                                        <span style={{fontSize:11,fontWeight:700,color:t.azulLt,whiteSpace:"nowrap"}}>{r.data?new Date(r.data+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</span>
                                         <span style={{fontSize:10,color:t.txt,flex:1}}>{r.descricao||"-"}</span>
                                         <button onClick={()=>{const a=[...sgsItems];a[i]={...a[i],retornos:retornos.filter((_,j)=>j!==ri),ultimo_retorno:retornos.filter((_,j)=>j!==ri).at(-1)?.data||s.data_chamado||""};saveSGS(a);}} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:11,flexShrink:0,padding:2}}>✕</button>
                                       </div>
@@ -3651,14 +3651,14 @@ export default function App() {
                                 )}
                                 {/* Form inline para novo retorno */}
                                 <div style={{background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid rgba(240,185,11,.2)`}}>
-                                  <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:6}}>＋ NOVO RETORNO</div>
+                                  <div style={{fontSize:11,fontWeight:700,color:t.ouro,marginBottom:6}}>＋ NOVO RETORNO</div>
                                   <div style={{display:"grid",gridTemplateColumns:"130px 1fr auto",gap:6,alignItems:"end"}}>
                                     <div>
-                                      <div style={{fontSize:8,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Data</div>
+                                      <div style={{fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Data</div>
                                       <input type="date" value={sgsRetornoForm.data} onChange={e=>setSgsRetornoForm(p=>({...p,data:e.target.value}))} style={{...css.inp,fontSize:11,padding:"6px 8px",width:"100%"}} />
                                     </div>
                                     <div>
-                                      <div style={{fontSize:8,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Descrição</div>
+                                      <div style={{fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Descrição</div>
                                       <input value={sgsRetornoForm.descricao} onChange={e=>setSgsRetornoForm(p=>({...p,descricao:e.target.value}))} placeholder="Resumo do retorno..." style={{...css.inp,fontSize:11,padding:"6px 8px",width:"100%"}} onKeyDown={e=>{
                                         if(e.key==="Enter"&&sgsRetornoForm.data){
                                           const novoRet={data:sgsRetornoForm.data,descricao:sgsRetornoForm.descricao};
@@ -3702,7 +3702,7 @@ export default function App() {
                             <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
                             <div>
                               <div style={{fontSize:11,color:"#f57c00",fontWeight:700}}>{semRo.length} DT{semRo.length>1?"s":""} com diária sem RO preenchido</div>
-                              <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Preencha o campo RO em Documentação para cada DT. DTs: {semRo.map(i=>i.r.dt).join(", ")}</div>
+                              <div style={{fontSize:11,color:t.txt2,marginTop:2}}>Preencha o campo RO em Documentação para cada DT. DTs: {semRo.map(i=>i.r.dt).join(", ")}</div>
                             </div>
                           </div>
                         );
@@ -3715,8 +3715,8 @@ export default function App() {
                         <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${tipoColor}`,padding:12,cursor:"pointer"}}>
                           <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                             {r.nome||"—"}
-                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(246,70,93,.08)`,color:tipoColor,border:`1px solid ${tipoColor}33`}}>{tipoLabel}</span>
-                            {semRo && <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.07)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.3)`}}>⚠️ RO vazio</span>}
+                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:11,fontWeight:700,background:`rgba(246,70,93,.08)`,color:tipoColor,border:`1px solid ${tipoColor}33`}}>{tipoLabel}</span>
+                            {semRo && <span style={{padding:"2px 8px",borderRadius:4,fontSize:11,fontWeight:700,background:`rgba(255,152,0,.07)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.3)`}}>⚠️ RO vazio</span>}
                             <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>›</span>
                           </div>
                           <div style={{fontSize:11,color:t.txt2}}>
@@ -3789,10 +3789,10 @@ export default function App() {
                   <div>
                     <div style={{...css.secTitle,marginBottom:8}}>
                       {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,12)} Ocorrências por DT
-                      <span style={{fontSize:9,background:"rgba(240,185,11,.12)",border:"1px solid rgba(240,185,11,.25)",borderRadius:10,padding:"1px 7px",color:t.ouro,fontWeight:700,marginLeft:4}}>{ocorrEntries.length}</span>
+                      <span style={{fontSize:11,background:"rgba(240,185,11,.12)",border:"1px solid rgba(240,185,11,.25)",borderRadius:10,padding:"1px 7px",color:t.ouro,fontWeight:700,marginLeft:4}}>{ocorrEntries.length}</span>
                       <span style={{flex:1,height:1,background:t.borda}} />
                     </div>
-                    <div style={{fontSize:9,color:t.txt2,marginBottom:10,lineHeight:1.6}}>
+                    <div style={{fontSize:11,color:t.txt2,marginBottom:10,lineHeight:1.6}}>
                       DTs com ocorrências registradas (SGS · Ocorrência · Diária · DCC · Atraso). Clique para abrir o detalhe.
                     </div>
                     {/* Legenda */}
@@ -3800,12 +3800,12 @@ export default function App() {
                       {[{cor:t.ouro,l:"SGS"},{cor:"#E8820C",l:"Ocorrência"},{cor:t.danger,l:"Diária/Atraso"},{cor:t.azulLt,l:"DCC"}].map(({cor,l})=>{
                         const ativo = filtroOcorr===l;
                         return (
-                          <span key={l} onClick={()=>setFiltroOcorr(ativo?null:l)} style={{fontSize:8,background:ativo?`${cor}35`:`${cor}18`,border:`1.5px solid ${ativo?cor:cor+"44"}`,borderRadius:10,padding:"2px 7px",color:cor,fontWeight:700,cursor:"pointer",userSelect:"none",transition:"all .15s",boxShadow:ativo?`0 0 6px ${cor}55`:"none"}}>
+                          <span key={l} onClick={()=>setFiltroOcorr(ativo?null:l)} style={{fontSize:11,background:ativo?`${cor}35`:`${cor}18`,border:`1.5px solid ${ativo?cor:cor+"44"}`,borderRadius:10,padding:"2px 7px",color:cor,fontWeight:700,cursor:"pointer",userSelect:"none",transition:"all .15s",boxShadow:ativo?`0 0 6px ${cor}55`:"none"}}>
                             {l}{ativo?" ✕":""}
                           </span>
                         );
                       })}
-                      {filtroOcorr && <span onClick={()=>setFiltroOcorr(null)} style={{fontSize:8,background:"rgba(128,128,128,.1)",border:"1px solid rgba(128,128,128,.3)",borderRadius:10,padding:"2px 7px",color:t.txt2,fontWeight:700,cursor:"pointer"}}>Limpar filtro</span>}
+                      {filtroOcorr && <span onClick={()=>setFiltroOcorr(null)} style={{fontSize:11,background:"rgba(128,128,128,.1)",border:"1px solid rgba(128,128,128,.3)",borderRadius:10,padding:"2px 7px",color:t.txt2,fontWeight:700,cursor:"pointer"}}>Limpar filtro</span>}
                     </div>
                     {(()=>{
                       const labelMap = {"SGS":(b)=>b.label.startsWith("SGS"),"Ocorrência":(b)=>b.label==="Ocorrência","Diária/Atraso":(b)=>b.label==="Diária"||b.label.startsWith("Atraso"),"DCC":(b)=>b.label==="DCC"};
@@ -3822,12 +3822,12 @@ export default function App() {
                             <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${topBadge.cor}`,padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"all .15s"}}>
                               <div style={{flex:1,minWidth:0}}>
                                 <div style={{fontSize:12,fontWeight:700,color:t.txt,marginBottom:3}}>
-                                  {r.nome||"—"} <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>· DT {r.dt}</span>
-                                  {r.placa&&<span style={{fontSize:9,color:t.txt2,fontWeight:400}}> · {r.placa}</span>}
+                                  {r.nome||"—"} <span style={{fontSize:11,color:t.txt2,fontWeight:400}}>· DT {r.dt}</span>
+                                  {r.placa&&<span style={{fontSize:11,color:t.txt2,fontWeight:400}}> · {r.placa}</span>}
                                 </div>
                                 <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                                   {badges.map((b,bi)=>(
-                                    <span key={bi} style={{fontSize:8,background:`${b.cor}18`,border:`1px solid ${b.cor}44`,borderRadius:8,padding:"1px 6px",color:b.cor,fontWeight:700}}>{b.label}</span>
+                                    <span key={bi} style={{fontSize:11,background:`${b.cor}18`,border:`1px solid ${b.cor}44`,borderRadius:8,padding:"1px 6px",color:b.cor,fontWeight:700}}>{b.label}</span>
                                   ))}
                                 </div>
                               </div>
@@ -3846,7 +3846,7 @@ export default function App() {
               {operSubTab==="apontamentos" && (
                 <div>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                    <div style={{...css.secTitle,margin:0}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Apontamentos <span style={{fontSize:8,color:t.txt2,fontWeight:400,marginLeft:4}}>Descargas/Stretch</span> <span style={{flex:1,height:1,background:t.borda}} /></div>
+                    <div style={{...css.secTitle,margin:0}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Apontamentos <span style={{fontSize:11,color:t.txt2,fontWeight:400,marginLeft:4}}>Descargas/Stretch</span> <span style={{flex:1,height:1,background:t.borda}} /></div>
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={()=>setRelCtrlDccOpen(true)} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:8,padding:"8px 12px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>📊 Planilha Financeiro</button>
                       <button onClick={()=>{setApontForm({numero:"",item:"",linha:"",descricao_apontamento:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:"",cidade:"",nf_numero:"",data_emissao:"",data_apontamento:new Date().toISOString().split("T")[0]});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
@@ -3867,7 +3867,7 @@ export default function App() {
                     if(totais.length===0) return null;
                     return (
                       <div style={{background:`rgba(240,185,11,.04)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:12,padding:"12px 14px",marginBottom:14}}>
-                        <div style={{fontSize:9,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                        <div style={{fontSize:11,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
                           {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,10)} Resumo Mensal {mesSel?`— ${mesSel}`:""}
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:8,marginBottom:10}}>
@@ -3875,7 +3875,7 @@ export default function App() {
                             <div key={tp} style={{background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
                               <div style={{fontSize:10,color:tipoColor[tp],fontWeight:700,marginBottom:2}}>{tipoLabel[tp]}</div>
                               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:t.txt,lineHeight:1}}>{fmtMoeda(total)}</div>
-                              <div style={{fontSize:8,color:t.txt2,marginTop:2}}>{qtd} apontamento{qtd!==1?"s":""}</div>
+                              <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{qtd} apontamento{qtd!==1?"s":""}</div>
                             </div>
                           ))}
                         </div>
@@ -3959,8 +3959,8 @@ export default function App() {
                         <div><label style={lblO}>Cidade</label><input value={apontForm.cidade} onChange={e=>setApontForm(p=>({...p,cidade:e.target.value}))} style={inpO} /></div>
                         <div><label style={lblO}>Data Apontamento</label><input type="date" value={apontForm.data_apontamento} onChange={e=>setApontForm(p=>({...p,data_apontamento:e.target.value}))} style={inpO} /></div>
                         {/* Linha 8 — NF (preencher depois) */}
-                        <div><label style={{...lblO,color:t.txt2}}>NF-e / NFS-e <span style={{fontSize:8,opacity:.7}}>(depois)</span></label><input value={apontForm.nf_numero} onChange={e=>setApontForm(p=>({...p,nf_numero:e.target.value}))} placeholder="Preencher depois" style={inpO} /></div>
-                        <div><label style={{...lblO,color:t.txt2}}>Data Emissão NF <span style={{fontSize:8,opacity:.7}}>(depois)</span></label><input type="date" value={apontForm.data_emissao} onChange={e=>setApontForm(p=>({...p,data_emissao:e.target.value}))} style={inpO} /></div>
+                        <div><label style={{...lblO,color:t.txt2}}>NF-e / NFS-e <span style={{fontSize:11,opacity:.7}}>(depois)</span></label><input value={apontForm.nf_numero} onChange={e=>setApontForm(p=>({...p,nf_numero:e.target.value}))} placeholder="Preencher depois" style={inpO} /></div>
+                        <div><label style={{...lblO,color:t.txt2}}>Data Emissão NF <span style={{fontSize:11,opacity:.7}}>(depois)</span></label><input type="date" value={apontForm.data_emissao} onChange={e=>setApontForm(p=>({...p,data_emissao:e.target.value}))} style={inpO} /></div>
                       </div>
                       <div style={{display:"flex",gap:8}}>
                         <button onClick={()=>setApontFormOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:8,padding:"8px 12px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
@@ -3991,11 +3991,11 @@ export default function App() {
                         <div key={a.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${bordaC}`,padding:12}}>
                           <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:6,flexWrap:"wrap"}}>
                             <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:t.ouro}}>{a.numero||a.apontamento||"—"}</span>
-                            {(a.item||a.linha)&&<span style={{fontSize:9,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 6px"}}>It.{a.item||"?"} / Ln.{a.linha||"?"}</span>}
-                            <span style={{fontSize:9,fontWeight:700,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 7px"}}>{a.tipo==="stretch"?"📏 Stretch":a.tipo==="deslocamento"?"🚗 Deslocamento":a.tipo==="outros"?"📋 Outros":"📦 Descarga"}</span>
-                            {semFRS && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ FRS vazio!</span>}
-                            {semNF && !semFRS && <span style={{fontSize:9,fontWeight:700,color:t.warn,background:`rgba(245,158,11,.08)`,border:`1px solid rgba(245,158,11,.2)`,borderRadius:4,padding:"2px 7px"}}>📄 NF pendente</span>}
-                            {a.status_alerta && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>🚨 ALERTA</span>}
+                            {(a.item||a.linha)&&<span style={{fontSize:11,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 6px"}}>It.{a.item||"?"} / Ln.{a.linha||"?"}</span>}
+                            <span style={{fontSize:11,fontWeight:700,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 7px"}}>{a.tipo==="stretch"?"📏 Stretch":a.tipo==="deslocamento"?"🚗 Deslocamento":a.tipo==="outros"?"📋 Outros":"📦 Descarga"}</span>
+                            {semFRS && <span style={{fontSize:11,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ FRS vazio!</span>}
+                            {semNF && !semFRS && <span style={{fontSize:11,fontWeight:700,color:t.warn,background:`rgba(245,158,11,.08)`,border:`1px solid rgba(245,158,11,.2)`,borderRadius:4,padding:"2px 7px"}}>📄 NF pendente</span>}
+                            {a.status_alerta && <span style={{fontSize:11,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>🚨 ALERTA</span>}
                           </div>
                           {a.descricao_apontamento&&<div style={{fontSize:10,color:t.txt2,marginBottom:6,fontStyle:"italic"}}>{a.descricao_apontamento}</div>}
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:10,color:t.txt2}}>
@@ -4008,7 +4008,7 @@ export default function App() {
                             <div style={{gridColumn:"1/-1"}}>FRS · Folha: <strong style={{color:semFRS?t.danger:t.verde}}>{a.frs_folha||a.folha_registro||"⚠️ NÃO PREENCHIDO"}</strong></div>
                             {(a.nf_numero)&&<div>NF-e/NFS-e: <strong style={{color:t.azulLt}}>{a.nf_numero}</strong></div>}
                             {(a.data_emissao)&&<div>Emissão NF: <strong style={{color:t.txt}}>{a.data_emissao}</strong></div>}
-                            {a.data_apontamento&&<div style={{gridColumn:"1/-1",fontSize:9,color:t.txt2,marginTop:2}}>📅 {a.data_apontamento}{a.updated_at?` · Atualizado: ${new Date(a.updated_at).toLocaleDateString("pt-BR")}`:""}</div>}
+                            {a.data_apontamento&&<div style={{gridColumn:"1/-1",fontSize:11,color:t.txt2,marginTop:2}}>📅 {a.data_apontamento}{a.updated_at?` · Atualizado: ${new Date(a.updated_at).toLocaleDateString("pt-BR")}`:""}</div>}
                           </div>
                           <button onClick={async()=>{if(confirm("Excluir apontamento?")){const n=[...apontItems];n.splice(i,1);await deleteApontSupabase(a.numero||a.apontamento);await saveAponts(n);}}} style={{marginTop:8,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,padding:"4px 9px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:"inherit"}}>🗑️ Excluir</button>
                         </div>
@@ -4082,7 +4082,7 @@ export default function App() {
                         <div style={{fontSize:13,fontWeight:700,color:t.txt}}>{m.nome||"—"}</div>
                         <div style={{fontSize:10,color:t.txt2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           {m.cpf && <span>{m.cpf}</span>}
-                          {m.vinculo && <span style={{background:vincBadgeBg,border:`1px solid ${vincBadgeC}33`,borderRadius:4,padding:"1px 6px",color:vincBadgeC,fontWeight:700,fontSize:9,textTransform:"uppercase"}}>{m.vinculo}</span>}
+                          {m.vinculo && <span style={{background:vincBadgeBg,border:`1px solid ${vincBadgeC}33`,borderRadius:4,padding:"1px 6px",color:vincBadgeC,fontWeight:700,fontSize:11,textTransform:"uppercase"}}>{m.vinculo}</span>}
                         </div>
                       </div>
                       <button onClick={()=>gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista" style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>📄</button>
@@ -4114,12 +4114,12 @@ export default function App() {
             <div style={css.secTitle} className="sec-divider">{hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.ouro,12)} Banco de Dados</div>            <div style={{...css.card,marginBottom:16}}>
               <div style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:8,borderBottom:`1px solid ${t.borda}`}}>
                 <div style={{width:24,height:24,background:t.azul,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.azulLt,12)}</div>
-                <div><div style={{fontSize:12,fontWeight:600,color:t.txt}}>Supabase PostgreSQL</div><div style={{fontSize:9,color:t.txt2}}>{ultimaSync?`Sync: ${ultimaSync}`:"Nunca sincronizado"}</div></div>
+                <div><div style={{fontSize:12,fontWeight:600,color:t.txt}}>Supabase PostgreSQL</div><div style={{fontSize:11,color:t.txt2}}>{ultimaSync?`Sync: ${ultimaSync}`:"Nunca sincronizado"}</div></div>
                 <span style={{marginLeft:"auto",fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:DESIGN.r.badge,...(connStatus==="online"?{background:`rgba(2,192,118,.08)`,color:t.verde,border:`1px solid rgba(2,192,118,.2)`}:{background:`rgba(246,70,93,.06)`,color:t.danger,border:`1px solid rgba(246,70,93,.15)`})}}>{connStatus==="online"?"ONLINE":"OFFLINE"}</span>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:t.borda}}>
-                <button onClick={sincronizar} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.azulLt,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Sincronizar</span></button>
-                <button onClick={()=>setModalOpen("configdb")} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,t.txt2,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Config DB</span></button>
+                <button onClick={sincronizar} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.azulLt,20)}<span style={{fontSize:11,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Sincronizar</span></button>
+                <button onClick={()=>setModalOpen("configdb")} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,t.txt2,20)}<span style={{fontSize:11,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Config DB</span></button>
               </div>
             </div>
 
@@ -4139,7 +4139,7 @@ export default function App() {
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:12,fontWeight:700,color:t.txt}}>{u.nome||u.email}</div>
                       <div style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📧 {u.email}</div>
-                      {u.solicitado_em&&<div style={{fontSize:9,color:t.txt2,marginTop:1}}>Solicitado: {new Date(u.solicitado_em).toLocaleString("pt-BR")}</div>}
+                      {u.solicitado_em&&<div style={{fontSize:11,color:t.txt2,marginTop:1}}>Solicitado: {new Date(u.solicitado_em).toLocaleString("pt-BR")}</div>}
                     </div>
                     <div style={{display:"flex",gap:6,flexShrink:0}}>
                       <button onClick={()=>{setAprovarModal(u);setAprovarPerfil("operador");}} style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:8,padding:"5px 10px",fontSize:10,color:t.verde,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>✓ Aprovar</button>
@@ -4162,7 +4162,7 @@ export default function App() {
                 <div style={{background:t.card,borderRadius:18,padding:"24px 22px",width:"100%",maxWidth:340,border:`1px solid ${t.borda}`,boxShadow:`0 24px 60px ${t.shadow}`}}>
                   <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4}}>✅ Aprovar Acesso</div>
                   <div style={{fontSize:11,color:t.txt2,marginBottom:16,lineHeight:1.5}}>Definindo tipo de acesso para <b style={{color:t.ouro}}>{aprovarModal.nome||aprovarModal.email}</b></div>
-                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Tipo de Usuário</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Tipo de Usuário</label>
                   <select value={aprovarPerfil} onChange={e=>setAprovarPerfil(e.target.value)} style={{...css.inp,marginBottom:10,color:t.ouro,fontWeight:700}}>
                     <option value="visualizador">Visualizador — Apenas visualiza dados</option>
                     <option value="operador">Operador — Edita registros operacionais</option>
@@ -4170,7 +4170,7 @@ export default function App() {
                     <option value="admin">Admin — Acesso total ao sistema</option>
                   </select>
                   <div style={{background:t.card2,borderRadius:9,padding:"10px 12px",marginBottom:16,border:`1px solid ${t.borda}`}}>
-                    <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,marginBottom:7}}>Permissões incluídas neste perfil</div>
+                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,marginBottom:7}}>Permissões incluídas neste perfil</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px 10px"}}>
                       {Object.entries(PERMS_PADRAO[aprovarPerfil]||{}).map(([k,v])=>(
                         <div key={k} style={{fontSize:10,color:v?t.verde:t.txt2,display:"flex",alignItems:"center",gap:4}}>
@@ -4310,33 +4310,33 @@ export default function App() {
                       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
                         <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
                           <div style={{fontSize:16,fontWeight:700,color:t.azulLt}}>{syncStatus.total_planilha||0}</div>
-                          <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Linhas na planilha</div>
+                          <div style={{fontSize:11,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Linhas na planilha</div>
                         </div>
                         <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
                           <div style={{fontSize:16,fontWeight:700,color:t.verde}}>{syncStatus.sincronizados||0}</div>
-                          <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Sincronizados</div>
+                          <div style={{fontSize:11,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Sincronizados</div>
                         </div>
                         <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
                           <div style={{fontSize:16,fontWeight:700,color:syncStatus.ignorados>0?t.ouro:t.txt2}}>{syncStatus.ignorados||0}</div>
-                          <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Ignorados</div>
+                          <div style={{fontSize:11,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Ignorados</div>
                         </div>
                       </div>
                       {syncStatus.motivos_ignorados?.length>0&&(
                         <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:4}}>⚠️ Linhas ignoradas (sem DT preenchida):</div>
-                          {syncStatus.motivos_ignorados.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
+                          <div style={{fontSize:11,fontWeight:700,color:t.ouro,marginBottom:4}}>⚠️ Linhas ignoradas (sem DT preenchida):</div>
+                          {syncStatus.motivos_ignorados.map((m,i)=><div key={i} style={{fontSize:11,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
                         </div>
                       )}
                       {syncStatus.info?.length>0&&(
                         <div style={{background:`rgba(59,130,246,.06)`,border:`1px solid rgba(59,130,246,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,fontWeight:700,color:t.azulLt,marginBottom:4}}>📋 Abas processadas:</div>
-                          {syncStatus.info.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
+                          <div style={{fontSize:11,fontWeight:700,color:t.azulLt,marginBottom:4}}>📋 Abas processadas:</div>
+                          {syncStatus.info.map((m,i)=><div key={i} style={{fontSize:11,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
                         </div>
                       )}
                       {syncStatus.erros_detalhes?.length>0&&(
                         <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:4}}>❌ Erros de envio:</div>
-                          {syncStatus.erros_detalhes.map((e,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {e}</div>)}
+                          <div style={{fontSize:11,fontWeight:700,color:t.danger,marginBottom:4}}>❌ Erros de envio:</div>
+                          {syncStatus.erros_detalhes.map((e,i)=><div key={i} style={{fontSize:11,color:t.txt2,lineHeight:1.6}}>• {e}</div>)}
                         </div>
                       )}
                     </div>
@@ -4350,7 +4350,7 @@ export default function App() {
                     <strong style={{color:t.ouro}}>Planilha → Extensões → Apps Script</strong> → cole o código abaixo → salve → rode <code style={{background:t.bg,padding:"1px 5px",borderRadius:4,color:t.verde}}>configurarGatilho()</code> <strong>UMA VEZ</strong> para ativar o sync automático de 15 em 15 min.
                   </div>
                   <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`,overflowX:"auto",maxHeight:260,overflowY:"auto"}}>
-                    <pre style={{fontSize:8.5,color:t.verde,margin:0,whiteSpace:"pre",lineHeight:1.55}}>{`// ═══════════════════════════════════════════════════════
+                    <pre style={{fontSize:11.5,color:t.verde,margin:0,whiteSpace:"pre",lineHeight:1.55}}>{`// ═══════════════════════════════════════════════════════
 // CONTROLE OPERACIONAL — Apps Script v2
 // 1) Cole aqui  2) Preencha SUPA_URL e SUPA_KEY
 // 3) Rode configurarGatilho() UMA VEZ → sync automático
@@ -4500,12 +4500,12 @@ function mapearColuna(n){
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
                     <div style={{background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                      <div style={{fontSize:9,fontWeight:700,color:t.verde,marginBottom:3}}>▶ Como ativar (1x apenas)</div>
-                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>1. Cole o script acima no Apps Script<br/>2. Preencha <code>SUPA_URL</code> e <code>SUPA_KEY</code><br/>3. No menu <strong style={{color:t.txt}}>Executar</strong> → <strong style={{color:t.verde}}>configurarGatilho</strong><br/>4. Autorize quando pedido<br/>✅ Pronto — sync automático a cada 15min</div>
+                      <div style={{fontSize:11,fontWeight:700,color:t.verde,marginBottom:3}}>▶ Como ativar (1x apenas)</div>
+                      <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>1. Cole o script acima no Apps Script<br/>2. Preencha <code>SUPA_URL</code> e <code>SUPA_KEY</code><br/>3. No menu <strong style={{color:t.txt}}>Executar</strong> → <strong style={{color:t.verde}}>configurarGatilho</strong><br/>4. Autorize quando pedido<br/>✅ Pronto — sync automático a cada 15min</div>
                     </div>
                     <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:7,padding:"8px 10px"}}>
-                      <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:3}}>🔍 Diagnóstico de registros ausentes</div>
-                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>Se uma DT está na planilha mas não no app:<br/>• Verifique a coluna DT/Espelho da linha<br/>• Rode o script manualmente e veja o painel acima<br/>• "Ignorados" lista as linhas com problema<br/>• Confirme que SUPA_URL e SUPA_KEY estão corretos</div>
+                      <div style={{fontSize:11,fontWeight:700,color:t.danger,marginBottom:3}}>🔍 Diagnóstico de registros ausentes</div>
+                      <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>Se uma DT está na planilha mas não no app:<br/>• Verifique a coluna DT/Espelho da linha<br/>• Rode o script manualmente e veja o painel acima<br/>• "Ignorados" lista as linhas com problema<br/>• Confirme que SUPA_URL e SUPA_KEY estão corretos</div>
                     </div>
                   </div>
                 </div>
@@ -4525,7 +4525,7 @@ function mapearColuna(n){
                   Salvar
                 </button>
               </div>
-              <div style={{fontSize:9,color:t.txt2,marginTop:4,lineHeight:1.6}}>Este email é usado para identificar o admin no login e via OAuth Google. Não fica visível no código-fonte.</div>
+              <div style={{fontSize:11,color:t.txt2,marginTop:4,lineHeight:1.6}}>Este email é usado para identificar o admin no login e via OAuth Google. Não fica visível no código-fonte.</div>
             </div>
 
             {/* EMAIL BOAS-VINDAS */}
@@ -4539,11 +4539,11 @@ function mapearColuna(n){
                   Configure o email enviado ao criar novo usuario. Use <strong style={{color:t.ouro}}>&#123;nome&#125;</strong>, <strong style={{color:t.ouro}}>&#123;email&#125;</strong>, <strong style={{color:t.ouro}}>&#123;senha&#125;</strong>, <strong style={{color:t.ouro}}>&#123;perfil&#125;</strong>.
                 </p>
                 <div style={{marginBottom:10}}>
-                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Assunto</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Assunto</label>
                   <input value={emailTemplate.assunto} onChange={e=>setEmailTemplate(p=>({...p,assunto:e.target.value}))} style={{...css.inp,fontSize:12}} />
                 </div>
                 <div style={{marginBottom:10}}>
-                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Corpo do Email</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Corpo do Email</label>
                   <textarea value={emailTemplate.corpo} onChange={e=>setEmailTemplate(p=>({...p,corpo:e.target.value}))} rows={9} style={{...css.inp,resize:"vertical",fontSize:11,lineHeight:1.6,fontFamily:"monospace"}} />
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -4567,7 +4567,7 @@ function mapearColuna(n){
                 Normaliza os dados de todos os motoristas cadastrados: capitalização dos nomes, formato de telefone <strong style={{color:t.txt}}>(XX) XXXXX-XXXX</strong> e placas em maiúsculas sem caracteres extras.
               </p>
               {/* ── Exportar ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6}}>📤 Exportar</div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6}}>📤 Exportar</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
                 <button onClick={()=>{
                   if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("❌ Exportação cancelada","err");return;}}
@@ -4597,7 +4597,7 @@ function mapearColuna(n){
               </div>
 
               {/* ── Importar ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6,marginTop:8}}>📥 Importar</div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6,marginTop:8}}>📥 Importar</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
                 <label style={{...css.hBtn,fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
                   📥 CSV Google / vCard
@@ -4761,7 +4761,7 @@ function mapearColuna(n){
                           Detecta elementos com estilos fora do padrão <strong style={{color:t.ouro}}>DESIGN.*</strong>.<br/>
                           Para alterar qualquer elemento globalmente: edite <strong style={{color:t.ouro}}>DESIGN</strong> no topo do arquivo → propaga em todo o código que usa <strong style={{color:t.ouro}}>css.*</strong>.
                         </div>
-                        <div style={{background:t.card2,borderRadius:DESIGN.r.sm,padding:"8px 10px",fontSize:9,color:t.txt2,fontFamily:DESIGN.fnt.b,marginBottom:10,lineHeight:1.8}}>
+                        <div style={{background:t.card2,borderRadius:DESIGN.r.sm,padding:"8px 10px",fontSize:11,color:t.txt2,fontFamily:DESIGN.fnt.b,marginBottom:10,lineHeight:1.8}}>
                           {Object.entries(DESIGN).filter(([k])=>k!=="c").map(([k,v])=>(
                             <div key={k}><span style={{color:t.ouro}}>DESIGN.{k}</span> = {JSON.stringify(v)}</div>
                           ))}
@@ -4776,7 +4776,7 @@ function mapearColuna(n){
                             <span style={{...css.badge(auditReport.total===0?t.verde:t.danger, auditReport.total===0?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`, auditReport.total===0?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>
                               {auditReport.total===0?"✓ TUDO OK":`${auditReport.total} VIOLAÇÕES`}
                             </span>
-                            <span style={{fontSize:9,color:t.txt2}}>{auditReport.timestamp}</span>
+                            <span style={{fontSize:11,color:t.txt2}}>{auditReport.timestamp}</span>
                           </div>
                           {auditReport.total > 0 && (
                             <>
@@ -4787,7 +4787,7 @@ function mapearColuna(n){
                               </div>
                               <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>
                                 {auditReport.items.map((item,i)=>(
-                                  <div key={i} style={{background:t.card2,borderRadius:DESIGN.r.tag,padding:"5px 8px",fontSize:9,color:t.txt2,display:"flex",gap:8,alignItems:"flex-start"}}>
+                                  <div key={i} style={{background:t.card2,borderRadius:DESIGN.r.tag,padding:"5px 8px",fontSize:11,color:t.txt2,display:"flex",gap:8,alignItems:"flex-start"}}>
                                     <span style={{color:t.danger,fontWeight:700,flexShrink:0}}>{item.tipo}</span>
                                     <span style={{color:t.txt,fontWeight:600}}>{item.valor}</span>
                                     <span style={{color:t.txt2,flex:1}}>→ {item.sugestao}</span>
@@ -4796,7 +4796,7 @@ function mapearColuna(n){
                                 ))}
                               </div>
                               {auditReport.total > 30 && (
-                                <div style={{fontSize:9,color:t.txt2,marginTop:4,textAlign:"center"}}>… e mais {auditReport.total-30} (ver window.__auditReport no console)</div>
+                                <div style={{fontSize:11,color:t.txt2,marginTop:4,textAlign:"center"}}>… e mais {auditReport.total-30} (ver window.__auditReport no console)</div>
                               )}
                             </>
                           )}
@@ -4809,7 +4809,7 @@ function mapearColuna(n){
                         <div style={{padding:"8px 12px",background:t.card2,display:"flex",alignItems:"center",gap:8}}>
                           <span style={{fontSize:12}}>🧑‍💻</span>
                           <span style={{fontSize:11,fontWeight:700,color:t.txt}}>{sessao.sessao}</span>
-                          <span style={{fontSize:9,color:t.txt2,marginLeft:"auto"}}>{sessao.data}</span>
+                          <span style={{fontSize:11,color:t.txt2,marginLeft:"auto"}}>{sessao.data}</span>
                         </div>
                         <div style={{padding:"8px 12px",display:"flex",flexDirection:"column",gap:5}}>
                           {sessao.itens.map((item,ii)=>(
@@ -4832,7 +4832,7 @@ function mapearColuna(n){
                       <div style={{...css.empty,padding:"16px 0",fontSize:11,color:t.txt2}}>
                         <div style={{fontSize:28,marginBottom:8}}>📭</div>
                         Nenhum evento operacional registrado ainda.<br/>
-                        <span style={{fontSize:9}}>Eventos são criados ao editar, criar ou excluir registros no app.</span>
+                        <span style={{fontSize:11}}>Eventos são criados ao editar, criar ou excluir registros no app.</span>
                       </div>
                     ):(
                       <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:360,overflowY:"auto"}}>
@@ -4840,10 +4840,10 @@ function mapearColuna(n){
                           <div key={li} style={{background:t.card,borderRadius:9,padding:"8px 12px",border:"1px solid "+t.borda,borderLeft:"3px solid "+(log.acao&&log.acao.includes("DELETAR")?t.danger:log.acao&&log.acao.includes("NOVO")?t.verde:t.ouro)}}>
                             <div style={{display:"flex",justifyContent:"space-between",gap:8,marginBottom:2}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.txt}}>{log.acao}</span>
-                              <span style={{fontSize:8,color:t.txt2,flexShrink:0}}>{new Date(log.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+                              <span style={{fontSize:11,color:t.txt2,flexShrink:0}}>{new Date(log.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
                             </div>
                             <div style={{fontSize:11,color:t.txt2}}>{log.descricao}</div>
-                            <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Autor: {log.usuario} ({log.perfil_usuario})</div>
+                            <div style={{fontSize:11,color:t.txt2,marginTop:2}}>Autor: {log.usuario} ({log.perfil_usuario})</div>
                           </div>
                         ))}
                       </div>
@@ -4944,7 +4944,7 @@ function mapearColuna(n){
           <div style={css.modal}>
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
               <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${editIdx>=0?t.ouroDk:t.azul},${editIdx>=0?t.ouro:t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center"}}>{editIdx>=0?hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,null,18,2):hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>,null,18,2)}</div>
-              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO REGISTRO"}</div><div style={{fontSize:9,color:t.txt2}}>Preencha os dados</div></div>
+              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO REGISTRO"}</div><div style={{fontSize:11,color:t.txt2}}>Preencha os dados</div></div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
@@ -4956,7 +4956,7 @@ function mapearColuna(n){
                 {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",type:"select_opts",opts:["SKYMARK (FRETEBRAS)","INFINITY","MUNDIAL","OPENTECH"],span:2},{k:"forms",l:"FORMS",type:"select_sim_nao"}]},
               ].map((section,si) => (
                 <div key={si}>
-                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,margin:"14px 0 8px",display:"flex",alignItems:"center",gap:6}}>{hIco(section.ico,t.azulLt,10)} {section.s}<span style={{flex:1,height:1,background:`rgba(22,119,255,.12)`}} /></div>
+                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,margin:"14px 0 8px",display:"flex",alignItems:"center",gap:6}}>{hIco(section.ico,t.azulLt,10)} {section.s}<span style={{flex:1,height:1,background:`rgba(22,119,255,.12)`}} /></div>
                   {section.s==="Financeiro" && !canFin && (
                     <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"8px 10px",fontSize:10,color:t.ouro,marginBottom:8}}>
                       🔒 Campos financeiros visíveis apenas para Admin/Gerente. Contate o administrador para alterar.
@@ -4970,8 +4970,8 @@ function mapearColuna(n){
                       const fieldVal = f.type==="date" ? brToInput(formData[f.k]) : f.type==="datetime" ? brToInputDT(formData[f.k]) : (formData[f.k]||"");
                       return (
                         <div key={f.k} style={{gridColumn:f.span===2?"1/-1":"auto",display:"flex",flexDirection:"column",gap:3}}>
-                          <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:isLocked?t.txt2:t.txt2,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
-                            {f.l} {isLocked && <span style={{color:t.ouro,fontSize:9}}>🔒</span>}
+                          <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:isLocked?t.txt2:t.txt2,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
+                            {f.l} {isLocked && <span style={{color:t.ouro,fontSize:11}}>🔒</span>}
                           </label>
                           {f.type==="checkbox" ? (
                             // ── CHECKBOX (ex: desc_aguardando) ──
@@ -5037,7 +5037,7 @@ function mapearColuna(n){
                               return (
                                 <div style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:"default",color:diasColor,fontWeight:700,background:t.inputBg,display:"flex",alignItems:"center",gap:6}}>
                                   📅 {diasLabel} {diasCalc !== null && (diasCalc === 1 ? "dia" : "dias")}
-                                  <span style={{fontSize:9,color:t.txt2,fontWeight:400,marginLeft:4}}>auto</span>
+                                  <span style={{fontSize:11,color:t.txt2,fontWeight:400,marginLeft:4}}>auto</span>
                                 </div>
                               );
                             })()
@@ -5117,17 +5117,17 @@ function mapearColuna(n){
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
 
               {/* ── Identificação ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,10)} Identificação<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,10)} Identificação<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
               {[{k:"nome",l:"Nome Completo",req:true},{k:"cpf",l:"CPF",req:true},{k:"tel",l:"Telefone"}].map(f=>(
                 <div key={f.k}>
-                  <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
                   <input value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} style={css.inp} />
                 </div>
               ))}
 
               {/* ── Vínculo dropdown ── */}
               <div>
-                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Vínculo</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Vínculo</label>
                 <select value={formData.vinculo||""} onChange={e=>setFormData(p=>({...p,vinculo:e.target.value}))} style={{...css.inp,appearance:"none",cursor:"pointer"}}>
                   <option value="">— Selecione —</option>
                   <option value="Agregado">Agregado</option>
@@ -5137,38 +5137,38 @@ function mapearColuna(n){
               </div>
 
               {/* ── Placas ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>🚛 Placas<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>🚛 Placas<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {[{k:"placa1",l:"Placa Cavalo",req:true},{k:"placa2",l:"Placa Carreta 1"},{k:"placa3",l:"Placa Carreta 2"},{k:"placa4",l:"Placa Carreta 3"}].map(f=>(
                   <div key={f.k}>
-                    <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
+                    <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
                     <input value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value.toUpperCase()}))} style={{...css.inp,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:3,fontSize:15}} placeholder="AAA0000" />
                   </div>
                 ))}
               </div>
 
               {/* ── Dados Bancários ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>💳 Dados Bancários<span style={{flex:1,height:1,background:`rgba(240,185,11,.15)`}} /></div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>💳 Dados Bancários<span style={{flex:1,height:1,background:`rgba(240,185,11,.15)`}} /></div>
               <div>
-                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>BCO · Nome do Banco</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>BCO · Nome do Banco</label>
                 <input value={formData.banco||""} onChange={e=>setFormData(p=>({...p,banco:e.target.value}))} placeholder="Ex: Banco do Brasil, Bradesco, Nubank..." style={css.inp} />
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 <div>
-                  <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>AGE · Agência</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>AGE · Agência</label>
                   <input value={formData.agencia||""} onChange={e=>setFormData(p=>({...p,agencia:e.target.value}))} placeholder="0000-0" style={css.inp} />
                 </div>
                 <div>
-                  <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>C/C · Conta Corrente</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>C/C · Conta Corrente</label>
                   <input value={formData.conta||""} onChange={e=>setFormData(p=>({...p,conta:e.target.value}))} placeholder="00000-0" style={css.inp} />
                 </div>
               </div>
               <div>
-                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>FAV · Favorecido</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>FAV · Favorecido</label>
                 <input value={formData.favorecido||""} onChange={e=>setFormData(p=>({...p,favorecido:e.target.value}))} placeholder="Nome do titular" style={css.inp} />
               </div>
               <div>
-                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>PIX · Tipo de Chave</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>PIX · Tipo de Chave</label>
                 <select value={formData.pix_tipo||""} onChange={e=>setFormData(p=>({...p,pix_tipo:e.target.value,pix_chave:""}))} style={{...css.inp,appearance:"none",cursor:"pointer",marginBottom:6}}>
                   <option value="">— Sem PIX —</option>
                   <option value="CPF">CPF</option>
@@ -5193,7 +5193,7 @@ function mapearColuna(n){
 
               {/* ── Observações ── */}
               <div>
-                <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Observações</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Observações</label>
                 <textarea value={formData.obs||""} onChange={e=>setFormData(p=>({...p,obs:e.target.value}))} rows={2} style={{...css.inp,resize:"vertical",fontSize:12}} />
               </div>
             </div>
@@ -5244,8 +5244,8 @@ function mapearColuna(n){
                   <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
-                    <div style={{fontSize:9,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
-                    {r.data_criacao && <div style={{fontSize:8,color:t.txt2,opacity:.7,marginTop:1}}>📥 Registrado em {new Date(r.data_criacao).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
+                    <div style={{fontSize:11,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
+                    {r.data_criacao && <div style={{fontSize:11,color:t.txt2,opacity:.7,marginTop:1}}>📥 Registrado em {new Date(r.data_criacao).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
                   </div>
                   <div style={{display:"flex",gap:6,flexShrink:0}}>
                     {canEditDetalhe && (
@@ -5297,8 +5297,8 @@ function mapearColuna(n){
                         )}
                         {/* Círculo */}
                         <div style={{width:28,height:28,borderRadius:"50%",background:s.done?s.c:t.card2,border:`2px solid ${s.done?s.c:t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,zIndex:1,flexShrink:0,transition:"all .3s"}}>{s.done?<span style={{fontSize:11}}>✓</span>:<span style={{fontSize:12}}>{s.ico}</span>}</div>
-                        <div style={{fontSize:8,color:s.done?s.c:t.txt2,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginTop:4,textAlign:"center",lineHeight:1.3}}>{s.lbl}</div>
-                        {s.val && <div style={{fontSize:8,color:t.txt2,marginTop:2,textAlign:"center",maxWidth:60,wordBreak:"break-word"}}>{s.val}</div>}
+                        <div style={{fontSize:11,color:s.done?s.c:t.txt2,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginTop:4,textAlign:"center",lineHeight:1.3}}>{s.lbl}</div>
+                        {s.val && <div style={{fontSize:11,color:t.txt2,marginTop:2,textAlign:"center",maxWidth:60,wordBreak:"break-word"}}>{s.val}</div>}
                       </div>
                     ))}
                   </div>
@@ -5318,7 +5318,7 @@ function mapearColuna(n){
                       {l:"ID (Shipmente)",v:r.id_doc},
                     ].filter(f=>f.v).map((f,fi)=>(
                       <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
-                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
                         <div style={{fontSize:12,fontWeight:600,color:t.txt,marginTop:1}}>{f.v}</div>
                       </div>
                     ))}
@@ -5329,14 +5329,14 @@ function mapearColuna(n){
                 {(()=>{
                   const isDiariaReg = diariasData.items.some(it=>it.r.dt===r.dt&&(it.tipo==="diaria"||it.tipo==="atraso"));
                   const isDescargaReg = !!(r.data_agenda||r.data_desc);
-                  const lblP2 = {fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginBottom:3};
+                  const lblP2 = {fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginBottom:3};
                   const inpP2 = {...css.inp,fontSize:12,padding:"7px 9px",height:"auto"};
                   return (
                     <div>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
-                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4}}>🛏️ DIÁRIA</span>}
-                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4}}>📦 DESCARGA</span>}
+                        {isDiariaReg&&<span style={{fontSize:11,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4}}>🛏️ DIÁRIA</span>}
+                        {isDescargaReg&&<span style={{fontSize:11,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4}}>📦 DESCARGA</span>}
                         <span style={{flex:1,height:1,background:t.borda}} />
                       </div>
 
@@ -5344,12 +5344,12 @@ function mapearColuna(n){
                       <div style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:9,padding:"9px 12px",marginBottom:12}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                           <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>🟡 Existe DCC?</span>
-                          <span style={{fontSize:9,color:t.txt2,flex:1}}>Documento de Cobrança Complementar</span>
+                          <span style={{fontSize:11,color:t.txt2,flex:1}}>Documento de Cobrança Complementar</span>
                           {["sim","nao"].map(op=>(
                             <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(240,185,11,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s"}}>{op==="sim"?"✅ Sim":"❌ Não"}</button>
                           ))}
                         </div>
-                        {detalheTemDcc===null&&<div style={{fontSize:9,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
+                        {detalheTemDcc===null&&<div style={{fontSize:11,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
                       </div>
 
                       {/* ─ Minutas DCC — colapsável (aberto por padrão) ─ */}
@@ -5357,7 +5357,7 @@ function mapearColuna(n){
                         <button onClick={()=>setDetalheSecDcc(p=>!p)} style={{width:"100%",background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecDcc?6:0}}>
                           {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,13,2)}
                           <span style={{fontSize:10,fontWeight:700,color:t.ouro,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DCC</span>
-                          <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDcc.length} minuta(s)</span>
+                          <span style={{fontSize:11,color:t.txt2,fontWeight:400}}>{detalheMinDcc.length} minuta(s)</span>
                           {hIco(detalheSecDcc?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
                         {detalheSecDcc&&<div>
@@ -5389,7 +5389,7 @@ function mapearColuna(n){
                         <button onClick={()=>setDetalheSecCteComp(p=>!p)} style={{width:"100%",background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecCteComp?6:0}}>
                           {hIco(<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,t.azulLt,13,2)}
                           <span style={{fontSize:10,fontWeight:700,color:t.azulLt,letterSpacing:.5,flex:1,textAlign:"left"}}>CTE COMPLEMENTAR</span>
-                          {(detalheCteComp.cte||detalheCteComp.mdf||detalheCteComp.mat)&&<span style={{fontSize:8,background:"rgba(22,119,255,.12)",borderRadius:8,padding:"1px 6px",color:t.azulLt,fontWeight:700}}>preenchido</span>}
+                          {(detalheCteComp.cte||detalheCteComp.mdf||detalheCteComp.mat)&&<span style={{fontSize:11,background:"rgba(22,119,255,.12)",borderRadius:8,padding:"1px 6px",color:t.azulLt,fontWeight:700}}>preenchido</span>}
                           {hIco(detalheSecCteComp?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
                         {detalheSecCteComp&&<div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px"}}>
@@ -5406,7 +5406,7 @@ function mapearColuna(n){
                         <button onClick={()=>setDetalheSecMinDsc(p=>!p)} style={{width:"100%",background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecMinDsc?6:0}}>
                           {hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.04 8.73-5.04M12 22V12"/></>,t.azulLt,13,2)}
                           <span style={{fontSize:10,fontWeight:700,color:t.azulLt,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DESCARGA</span>
-                          <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDsc.length} minuta(s)</span>
+                          <span style={{fontSize:11,color:t.txt2,fontWeight:400}}>{detalheMinDsc.length} minuta(s)</span>
                           {hIco(detalheSecMinDsc?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
                         {detalheSecMinDsc&&<div>
@@ -5463,7 +5463,7 @@ function mapearColuna(n){
                     <div>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,t.ouro,12)} Acompanhamento Dia a Dia
-                        {dias.length>0&&<span style={{fontSize:9,color:t.txt2,fontWeight:400,marginLeft:4}}>{dias.length} dias</span>}
+                        {dias.length>0&&<span style={{fontSize:11,color:t.txt2,fontWeight:400,marginLeft:4}}>{dias.length} dias</span>}
                         <span style={{flex:1,height:1,background:t.borda}} />
                       </div>
                       {dias.length===0?(
@@ -5474,9 +5474,9 @@ function mapearColuna(n){
                             {dias.map(d=>{
                               const ent=getE(d);const isHoje=d===new Date().toISOString().slice(0,10);const isSel=acompDiaSel===d;
                               return(<button key={d} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}} style={{flexShrink:0,padding:"5px 7px",borderRadius:8,border:"1.5px solid "+(isSel?t.azul:ent?t.verde:t.borda),background:isSel?"rgba(22,119,255,.1)":ent?"rgba(2,192,118,.06)":"transparent",cursor:"pointer",minWidth:46,textAlign:"center"}}>
-                                <div style={{fontSize:8,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</div>
+                                <div style={{fontSize:11,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</div>
                                 {isHoje&&<div style={{fontSize:7,color:t.ouro,fontWeight:700}}>HOJE</div>}
-                                {ent&&<div style={{fontSize:9}}>{"\u2705"}</div>}
+                                {ent&&<div style={{fontSize:11}}>{"\u2705"}</div>}
                               </button>);
                             })}
                           </div>
@@ -5484,14 +5484,14 @@ function mapearColuna(n){
                             <div style={{background:t.card2,borderRadius:10,padding:12,border:"1px solid "+t.borda,marginBottom:6}}>
                               <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>{"\U0001F4C5"} {new Date(acompDiaSel+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
                               <textarea value={acompTexto} onChange={e=>setAcompTexto(e.target.value)} placeholder="Status, localização, ocorrências deste dia..." rows={3} style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,marginBottom:8}} />
-                              <label style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Anexar Fotos</label>
+                              <label style={{fontSize:11,color:t.txt2,fontWeight:600,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Anexar Fotos</label>
                               <input type="file" accept="image/*" multiple onChange={e=>{Array.from(e.target.files||[]).forEach(f=>{const rd=new FileReader();rd.onload=ev=>setAcompImagens(p=>[...p,{nome:f.name,base64:ev.target.result}]);rd.readAsDataURL(f);});e.target.value="";}} style={{...css.inp,padding:"7px 10px",fontSize:11,marginBottom:8}} />
                               {acompImagens.length>0&&(
                                 <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
                                   {acompImagens.map((img,ii)=>(
                                     <div key={ii} style={{position:"relative"}}>
                                       <img src={img.base64} alt={img.nome} style={{width:60,height:60,objectFit:"cover",borderRadius:8,border:"1px solid "+t.borda}} />
-                                      <button onClick={()=>setAcompImagens(p=>p.filter((_,j)=>j!==ii))} style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:t.danger,border:"none",color:"#fff",fontSize:9,cursor:"pointer",lineHeight:"1"}}>{"x"}</button>
+                                      <button onClick={()=>setAcompImagens(p=>p.filter((_,j)=>j!==ii))} style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:t.danger,border:"none",color:"#fff",fontSize:11,cursor:"pointer",lineHeight:"1"}}>{"x"}</button>
                                     </div>
                                   ))}
                                 </div>
@@ -5509,7 +5509,7 @@ function mapearColuna(n){
                 <div>
                   <div style={{...css.secTitle,marginBottom:8}}>
                     {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Histórico de Ocorrências
-                    {ocorrLoading && <span style={{fontSize:9,color:t.txt2,fontWeight:400}}> carregando…</span>}
+                    {ocorrLoading && <span style={{fontSize:11,color:t.txt2,fontWeight:400}}> carregando…</span>}
                     <span style={{flex:1,height:1,background:t.borda}} />
                   </div>
 
@@ -5526,11 +5526,11 @@ function mapearColuna(n){
                           </div>
                           <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
                             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
-                              <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tipoColors[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
-                              <span style={{fontSize:8,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"}{o.data_hora?" · "+new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""}</span>
+                              <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tipoColors[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
+                              <span style={{fontSize:11,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"}{o.data_hora?" · "+new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):""}</span>
                             </div>
                             <div style={{fontSize:12,color:t.txt,lineHeight:1.5}}>{o.texto}</div>
-                            {o._origem && <div style={{fontSize:9,color:t.txt2,marginTop:4,fontStyle:"italic",opacity:.8}}>obs de {o._origem==="chegada"?"chegada":"descarga"}</div>}
+                            {o._origem && <div style={{fontSize:11,color:t.txt2,marginTop:4,fontStyle:"italic",opacity:.8}}>obs de {o._origem==="chegada"?"chegada":"descarga"}</div>}
                           </div>
                         </div>
                       ))}
@@ -5554,7 +5554,7 @@ function mapearColuna(n){
                             <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
                               {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
                               <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
-                              <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
+                              <span style={{fontSize:11,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
                             </button>
                           );
                         })}
@@ -5592,7 +5592,7 @@ function mapearColuna(n){
               <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>👤</div>
               <div>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} USUÁRIO</div>
-                <div style={{fontSize:9,color:t.txt2}}>Preencha os dados do usuário</div>
+                <div style={{fontSize:11,color:t.txt2}}>Preencha os dados do usuário</div>
               </div>
               <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
             </div>
@@ -5600,13 +5600,13 @@ function mapearColuna(n){
               {/* Dados básicos */}
               {[{k:"nome",l:"Nome Completo",req:true},{k:"email",l:"Email",req:true,type:"email"},{k:"tel",l:"Telefone"}].map(f => (
                 <div key={f.k} style={{marginBottom:12}}>
-                  <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
+                  <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>{f.l}{f.req&&<span style={{color:t.danger}}> *</span>}</label>
                   <input type={f.type||"text"} value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} style={css.inp} />
                 </div>
               ))}
               {/* Senha */}
               <div style={{marginBottom:12}}>
-                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>
                   Senha{editIdx<0&&<span style={{color:t.danger}}> *</span>}
                   {editIdx>=0&&<span style={{color:t.txt2,fontWeight:400,textTransform:"none"}}> (deixe em branco para manter)</span>}
                 </label>
@@ -5614,7 +5614,7 @@ function mapearColuna(n){
               </div>
               {/* Perfil */}
               <div style={{marginBottom:14}}>
-                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Perfil</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Perfil</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                   {[
                     {k:"gerente",ico:"🏢",l:"Gerente",desc:"Financeiro + edita tudo"},
@@ -5624,14 +5624,14 @@ function mapearColuna(n){
                     <div key={r.k} onClick={()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}}))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
                       <span style={{fontSize:16}}>{r.ico}</span>
                       <span style={{fontSize:10,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
-                      <span style={{fontSize:8,color:t.txt2,lineHeight:1.2}}>{r.desc}</span>
+                      <span style={{fontSize:11,color:t.txt2,lineHeight:1.2}}>{r.desc}</span>
                     </div>
                   ))}
                 </div>
               </div>
               {/* Permissões */}
               <div>
-                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:8}}>Permissões</label>
+                <label style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:8}}>Permissões</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                   {PERMS_LISTA.filter(p=>p.key!=="config_db"&&p.key!=="usuarios").map(p => {
                     const val = (formData.perms||PERMS_PADRAO[formData.perfil||"operador"])[p.key];
@@ -5696,7 +5696,7 @@ function mapearColuna(n){
           <div style={{...css.modal,maxWidth:420}}>
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
               <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📧</div>
-              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>EMAIL DE BOAS-VINDAS</div><div style={{fontSize:9,color:t.txt2}}>Notificar o novo usuário?</div></div>
+              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>EMAIL DE BOAS-VINDAS</div><div style={{fontSize:11,color:t.txt2}}>Notificar o novo usuário?</div></div>
               <button onClick={()=>setUsuarioEmailPreview(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2}}>✕</button>
             </div>
             <div style={{padding:16}}>
@@ -5733,11 +5733,11 @@ function mapearColuna(n){
                 <div key={i} style={{background:t.card2,borderRadius:9,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
                   <span>🗄️</span>
                   <span style={{flex:1,fontSize:11,fontWeight:600,color:t.txt}}>{c.name||"Conexão"}</span>
-                  <span style={{fontSize:9,color:t.verde}}>✅</span>
+                  <span style={{fontSize:11,color:t.verde}}>✅</span>
                 </div>
               ))}
               <div style={{marginTop:12}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:7}}>Adicionar Conexão</div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:7}}>Adicionar Conexão</div>
                 <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   <input id="cdbUrl" placeholder="https://xxx.supabase.co" style={css.inp} />
                   <input id="cdbKey" placeholder="anon key" style={css.inp} />
@@ -5767,7 +5767,7 @@ function mapearColuna(n){
         const needsConfirm = totalOps >= 5;
         const confirmOk = !needsConfirm || motImportConfirm.trim() === "ESTOU DE ACORDO";
         const inpS = {...css.inp, fontSize:11, padding:"6px 9px"};
-        const lblS = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:2};
+        const lblS = {fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:2};
 
         const aplicar = () => {
           if (!confirmOk) { showToast("⚠️ Digite ESTOU DE ACORDO para confirmar","warn"); return; }
@@ -5823,7 +5823,7 @@ function mapearColuna(n){
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>
                     {motImportStep===1?"IMPORTAR CONTATOS":"SUGESTÕES DE VÍNCULO"}
                   </div>
-                  <div style={{fontSize:9,color:t.txt2}}>
+                  <div style={{fontSize:11,color:t.txt2}}>
                     {motImportStep===1
                       ? `${novos.length} novos · ${conflitos.length} conflito${conflitos.length!==1?"s":""}`
                       : `${vinculos.length} DT${vinculos.length!==1?"s":""} com placa correspondente`}
@@ -5845,11 +5845,11 @@ function mapearColuna(n){
                         <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
                           <div style={{flex:1}}>
                             <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:3}}>{v.contato.nome}</div>
-                            <div style={{fontSize:9,color:t.txt2,display:"flex",gap:8,flexWrap:"wrap"}}>
+                            <div style={{fontSize:11,color:t.txt2,display:"flex",gap:8,flexWrap:"wrap"}}>
                               {v.contato.tel&&<span>📞 {v.contato.tel}</span>}
                               <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700}}>🚛 {v.placa}</span>
                             </div>
-                            <div style={{fontSize:9,color:t.txt2,marginTop:5,paddingTop:5,borderTop:`1px solid ${t.borda}`}}>
+                            <div style={{fontSize:11,color:t.txt2,marginTop:5,paddingTop:5,borderTop:`1px solid ${t.borda}`}}>
                               <span style={{color:t.azulLt,fontWeight:700}}>DT {v.reg.dt}</span>
                               {" · "}{v.reg.origem||"?"} → {v.reg.destino||"?"}
                               {v.reg.nome&&<span style={{color:t.txt2}}> · atual: <em>{v.reg.nome}</em></span>}
@@ -5898,10 +5898,10 @@ function mapearColuna(n){
                                 <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${c.escolha==="manter"?t.verde:t.borda}`,background:c.escolha==="manter"?t.verde:"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                                   {c.escolha==="manter" && <div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}} />}
                                 </div>
-                                <span style={{fontSize:9,fontWeight:700,color:c.escolha==="manter"?t.verde:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Manter atual</span>
+                                <span style={{fontSize:11,fontWeight:700,color:c.escolha==="manter"?t.verde:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Manter atual</span>
                               </div>
                               {[{l:"Nome",v:c.atual.nome},{l:"Tel",v:c.atual.tel},{l:"Placa",v:c.atual.placa1},{l:"CPF",v:c.atual.cpf}].filter(f=>f.v).map(f=>(
-                                <div key={f.l} style={{fontSize:9,color:t.txt2}}>{f.l}: <strong style={{color:t.txt}}>{f.v}</strong></div>
+                                <div key={f.l} style={{fontSize:11,color:t.txt2}}>{f.l}: <strong style={{color:t.txt}}>{f.v}</strong></div>
                               ))}
                             </div>
                             <div style={{padding:"6px 10px",background:c.escolha==="usar"?`rgba(22,119,255,.08)`:t.card2,cursor:"pointer",transition:"background .2s"}} onClick={()=>{
@@ -5911,10 +5911,10 @@ function mapearColuna(n){
                                 <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${c.escolha==="usar"?t.azulLt:t.borda}`,background:c.escolha==="usar"?t.azulLt:"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                                   {c.escolha==="usar" && <div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}} />}
                                 </div>
-                                <span style={{fontSize:9,fontWeight:700,color:c.escolha==="usar"?t.azulLt:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Usar importado</span>
+                                <span style={{fontSize:11,fontWeight:700,color:c.escolha==="usar"?t.azulLt:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Usar importado</span>
                               </div>
                               {[{l:"Nome",v:c.imp.nome},{l:"Tel",v:c.imp.tel},{l:"Placa",v:c.imp.placa1},{l:"CPF",v:c.imp.cpf}].filter(f=>f.v).map(f=>(
-                                <div key={f.l} style={{fontSize:9,color:t.txt2}}>{f.l}: <strong style={{color:t.azulLt}}>{f.v}</strong></div>
+                                <div key={f.l} style={{fontSize:11,color:t.txt2}}>{f.l}: <strong style={{color:t.azulLt}}>{f.v}</strong></div>
                               ))}
                             </div>
                           </div>
@@ -5932,7 +5932,7 @@ function mapearColuna(n){
                       <label style={lblS}>Digite <strong style={{color:t.ouro}}>ESTOU DE ACORDO</strong> para prosseguir</label>
                       <input value={motImportConfirm} onChange={e=>setMotImportConfirm(e.target.value)} placeholder="ESTOU DE ACORDO" style={{...inpS,width:"100%",boxSizing:"border-box",border:`1.5px solid ${confirmOk?t.verde:t.borda}`,color:confirmOk?t.verde:t.txt}} />
                     </div>
-                    {confirmOk && <div style={{fontSize:9,color:t.verde}}>✅ Confirmado</div>}
+                    {confirmOk && <div style={{fontSize:11,color:t.verde}}>✅ Confirmado</div>}
                   </div>
                 )}
 
@@ -6019,7 +6019,7 @@ function mapearColuna(n){
         };
 
         const inpStyle = {...css.inp, fontSize:12, padding:"7px 10px"};
-        const labelStyle = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+        const labelStyle = {fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
         const pgtoOptions = [{k:"cheque",l:"📝 Cheque"},{k:"conta",l:"🏦 Conta"},{k:"ambos",l:"📝 + 🏦 Ambos"}];
 
         return (
@@ -6030,7 +6030,7 @@ function mapearColuna(n){
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
                 <div style={{flex:1}}>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>WHATSAPP</div>
-                  <div style={{fontSize:9,color:t.txt2}}>Revise os dados antes de enviar</div>
+                  <div style={{fontSize:11,color:t.txt2}}>Revise os dados antes de enviar</div>
                 </div>
                 <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
@@ -6051,9 +6051,9 @@ function mapearColuna(n){
 
                 {/* Telefone — editável */}
                 <div>
-                  <label style={labelStyle}>Telefone <span style={{color:t.verde,fontSize:8}}>(editável)</span></label>
+                  <label style={labelStyle}>Telefone <span style={{color:t.verde,fontSize:11}}>(editável)</span></label>
                   <input value={wppTel} onChange={e=>setWppTel(e.target.value)} placeholder="(XX) XXXXX-XXXX" style={inpStyle} />
-                  {!wppTel && <div style={{fontSize:9,color:t.warn,marginTop:3}}>⚠️ Motorista sem telefone cadastrado — o WhatsApp abrirá sem número</div>}
+                  {!wppTel && <div style={{fontSize:11,color:t.warn,marginTop:3}}>⚠️ Motorista sem telefone cadastrado — o WhatsApp abrirá sem número</div>}
                 </div>
 
                 {/* Placas */}
@@ -6170,7 +6170,7 @@ function mapearColuna(n){
         const roOk = wpp2Ro.trim().length > 0;
 
         const inpStyle2 = {...css.inp, fontSize:12, padding:"7px 10px"};
-        const lbl2 = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+        const lbl2 = {fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
 
         const gerarMsgDoc = () => {
           const ln = "%0A";
@@ -6211,7 +6211,7 @@ function mapearColuna(n){
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📄</div>
                 <div style={{flex:1}}>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>WHATSAPP DOC</div>
-                  <div style={{fontSize:9,color:t.txt2}}>Mensagem documentária · RO obrigatório</div>
+                  <div style={{fontSize:11,color:t.txt2}}>Mensagem documentária · RO obrigatório</div>
                 </div>
                 <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
@@ -6221,8 +6221,8 @@ function mapearColuna(n){
                 {/* Motorista + Placas */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700}}>Motorista</div>
-                    {telMot && <div style={{fontSize:9,color:t.txt2}}>📞 {telMot}</div>}
+                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700}}>Motorista</div>
+                    {telMot && <div style={{fontSize:11,color:t.txt2}}>📞 {telMot}</div>}
                   </div>
                   <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3}}>{nomeMotorista||"—"}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
@@ -6256,28 +6256,28 @@ function mapearColuna(n){
                 <div>
                   <label style={{...lbl2,color:roOk?t.verde:t.danger}}>RO — Registro de Ocorrência <span style={{color:t.danger}}>*obrigatório</span></label>
                   <input value={wpp2Ro} onChange={e=>setWpp2Ro(e.target.value)} placeholder="Nº do Registro de Ocorrência" style={{...inpStyle2,border:`1.5px solid ${roOk?t.verde:t.danger}`,width:"100%",boxSizing:"border-box"}} />
-                  {!roOk && <div style={{fontSize:9,color:t.danger,marginTop:3}}>⚠️ Informe o número do RO para prosseguir</div>}
+                  {!roOk && <div style={{fontSize:11,color:t.danger,marginTop:3}}>⚠️ Informe o número do RO para prosseguir</div>}
                 </div>
 
                 {/* OBS — opcional com memória */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <label style={{...lbl2,margin:0,flex:1}}>OBS — Observação <span style={{color:t.txt2,fontSize:7}}>(opcional)</span></label>
-                    <button onClick={()=>setWpp2IncluirObs(v=>!v)} style={{background:wpp2IncluirObs?`rgba(2,192,118,.12)`:`rgba(128,128,128,.08)`,border:`1.5px solid ${wpp2IncluirObs?t.verde:t.borda}`,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:9,fontWeight:700,color:wpp2IncluirObs?t.verde:t.txt2,fontFamily:"inherit"}}>
+                    <button onClick={()=>setWpp2IncluirObs(v=>!v)} style={{background:wpp2IncluirObs?`rgba(2,192,118,.12)`:`rgba(128,128,128,.08)`,border:`1.5px solid ${wpp2IncluirObs?t.verde:t.borda}`,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:11,fontWeight:700,color:wpp2IncluirObs?t.verde:t.txt2,fontFamily:"inherit"}}>
                       {wpp2IncluirObs?"✅ Incluir":"⬜ Incluir"}
                     </button>
                   </div>
                   <textarea value={wpp2Obs} onChange={e=>setWpp2Obs(e.target.value)} rows={2} placeholder={wpp2Obs?"Última OBS salva — edite se necessário":"Digite uma observação..."}
                     style={{...inpStyle2,resize:"vertical",lineHeight:1.5,width:"100%",boxSizing:"border-box",opacity:wpp2IncluirObs?1:.55}} />
                   {!wpp2IncluirObs && wpp2Obs && (
-                    <div style={{fontSize:8,color:t.txt2,marginTop:3}}>💾 Última OBS salva — clique em "Incluir" para adicionar à mensagem</div>
+                    <div style={{fontSize:11,color:t.txt2,marginTop:3}}>💾 Última OBS salva — clique em "Incluir" para adicionar à mensagem</div>
                   )}
                 </div>
 
                 {/* Preview da mensagem */}
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
-                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
-                  <div style={{fontFamily:"monospace",fontSize:9,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>
+                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
+                  <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>
                     {`📄 DOCUMENTO\n────────────────\nMOT: ${nomeMotorista||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nPLACAS: ${placas}\n────────────────\nDT: ${reg.dt||"—"}  NF: ${reg.nf||"—"}  ID: ${reg.id_doc||"—"}\nRO: ${wpp2Ro||"[obrigatório]"}${wpp2IncluirObs&&wpp2Obs?`\nOBS: ${wpp2Obs}`:""}\n────────────────\nYFGroup · Controle Operacional`}
                   </div>
                 </div>
@@ -6301,7 +6301,7 @@ function mapearColuna(n){
         const {reg,mot} = wppFatModal;
         const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
         const inpF = {...css.inp,fontSize:12,padding:"7px 10px"};
-        const lblF = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+        const lblF = {fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
 
         const gerarFat = () => {
           const cleanNome = s => (s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();
@@ -6321,12 +6321,12 @@ function mapearColuna(n){
             <div style={{...css.modal,maxHeight:"90vh"}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.05)"}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>🧾</div>
-                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>CTE · MDF · MAT · DT · NF · ID</div></div>
+                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:11,color:t.txt2}}>CTE · MDF · MAT · DT · NF · ID</div></div>
                 <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
               <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
-                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
+                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
                   <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
                     {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();return`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id_doc||"—"}`;})()}
                   </div>
@@ -6373,7 +6373,7 @@ function mapearColuna(n){
         const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
         const pixLabel = mot?.pix_tipo ? `${mot.pix_tipo}: ${mot.pix_chave||"—"}` : "—";
         const inpP = {...css.inp,fontSize:12,padding:"7px 10px"};
-        const lblP = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+        const lblP = {fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
 
         const cleanNome = s => (s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();
         const gerarPag = () => {
@@ -6428,7 +6428,7 @@ function mapearColuna(n){
             <div style={{...css.modal,maxHeight:"96vh"}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:headerBg}}>
                 <div style={{width:36,height:36,borderRadius:9,background:`${headerColor}22`,border:`1px solid ${headerColor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>{isDiaria?"🛏️":"📦"}</div>
-                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:headerColor}}>{nomeLabel}</div><div style={{fontSize:9,color:t.txt2}}>Solicitar pagamento · {reg.nome||"—"}</div></div>
+                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:headerColor}}>{nomeLabel}</div><div style={{fontSize:11,color:t.txt2}}>Solicitar pagamento · {reg.nome||"—"}</div></div>
                 <button onClick={()=>setWppPagModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
@@ -6537,8 +6537,8 @@ function mapearColuna(n){
 
                 {/* Preview */}
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
-                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
-                  <div style={{fontFamily:"monospace",fontSize:9,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{gerarPag()}</div>
+                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
+                  <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{gerarPag()}</div>
                 </div>
               </div>
 
@@ -6569,7 +6569,7 @@ function mapearColuna(n){
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
-                <div style={{fontSize:9,color:t.txt2,marginTop:2}}>{dashDrillModal.regs.length} viagem{dashDrillModal.regs.length!==1?"s":""} · {dashDrillModal.type==="motorista"?"Histórico do motorista":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}</div>
+                <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{dashDrillModal.regs.length} viagem{dashDrillModal.regs.length!==1?"s":""} · {dashDrillModal.type==="motorista"?"Histórico do motorista":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}</div>
               </div>
               <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✕</button>
             </div>
@@ -6585,7 +6585,7 @@ function mapearColuna(n){
                       <div style={{width:36,height:36,borderRadius:"50%",background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:t.ouro,flexShrink:0}}>{nome.charAt(0)}</div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome}</div>
-                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{info.count} viagem{info.count!==1?"s":""} · DTs: {info.dts.slice(0,3).join(", ")}{info.dts.length>3?`... +${info.dts.length-3}`:""}</div>
+                        <div style={{fontSize:11,color:t.txt2,marginTop:1}}>{info.count} viagem{info.count!==1?"s":""} · DTs: {info.dts.slice(0,3).join(", ")}{info.dts.length>3?`... +${info.dts.length-3}`:""}</div>
                       </div>
                       <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.ouro,flexShrink:0}}>{info.count}</span>
                     </div>
@@ -6599,13 +6599,13 @@ function mapearColuna(n){
                       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
                         <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,letterSpacing:1}}>{r.dt}</span>
                         {dashDrillModal.type==="motorista"&&<span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</span>}
-                        {r.status&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
+                        {r.status&&<span style={{fontSize:11,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
                       </div>
-                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.5}}>
+                      <div style={{fontSize:11,color:t.txt2,lineHeight:1.5}}>
                         📍 {r.destino||"—"} · 📦 {r.data_carr||"—"} · {r.data_desc?`✅ ${r.data_desc}`:"⏳ Pendente"}
                       </div>
                     </div>
-                    <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>
+                    <span style={{fontSize:11,color:t.txt2,flexShrink:0}}>›</span>
                   </div>
                 ))
               )}
@@ -6637,11 +6637,11 @@ function mapearColuna(n){
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
                 <input type="date" value={relGeralFrom} onChange={e=>setRelGeralFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
                 <input type="date" value={relGeralTo} onChange={e=>setRelGeralTo(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
             </div>
@@ -6650,11 +6650,11 @@ function mapearColuna(n){
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
                 <input type="text" value={relGeralMotorista} onChange={e=>setRelGeralMotorista(e.target.value)} placeholder="Nome do motorista..." style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
                 <select value={relGeralStatus} onChange={e=>setRelGeralStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
                   <option value="">Todos</option>
                   <option value="diaria">Com Diária</option>
@@ -6664,15 +6664,15 @@ function mapearColuna(n){
                 </select>
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Origem contém</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Origem contém</label>
                 <input type="text" value={relGeralOrigem} onChange={e=>setRelGeralOrigem(e.target.value)} placeholder="Cidade / UF..." style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Destino contém</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Destino contém</label>
                 <input type="text" value={relGeralDestino} onChange={e=>setRelGeralDestino(e.target.value)} placeholder="Cidade / UF..." style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
                 <select value={relGeralVinculo} onChange={e=>setRelGeralVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
                   <option value="">Todos</option>
                   <option value="Agregado">Agregado</option>
@@ -6772,22 +6772,22 @@ function mapearColuna(n){
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
                 <input type="date" value={relDiariaFrom} onChange={e=>setRelDiariaFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
                 <input type="date" value={relDiariaTo} onChange={e=>setRelDiariaTo(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
             </div>
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
                 <input type="text" value={relDiariaMotorista} onChange={e=>setRelDiariaMotorista(e.target.value)} placeholder="Nome..." style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
                 <select value={relDiariaVinculo} onChange={e=>setRelDiariaVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
                   <option value="">Todos</option>
                   <option value="Agregado">Agregado</option>
@@ -6796,7 +6796,7 @@ function mapearColuna(n){
                 </select>
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status da Diária</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status da Diária</label>
                 <select value={relDiariaStatus} onChange={e=>setRelDiariaStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
                   <option value="">Todos</option>
                   <option value="diaria">Com Diária</option>
@@ -6839,22 +6839,22 @@ function mapearColuna(n){
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
                 <input type="date" value={relDescargaFrom} onChange={e=>setRelDescargaFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
                 <input type="date" value={relDescargaTo} onChange={e=>setRelDescargaTo(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
             </div>
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
                 <input type="text" value={relDescargaMotorista} onChange={e=>setRelDescargaMotorista(e.target.value)} placeholder="Nome..." style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status</label>
                 <select value={relDescargaStatus} onChange={e=>setRelDescargaStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
                   <option value="">Todos</option>
                   <option value="descarregado">Descarregado</option>
@@ -6897,11 +6897,11 @@ function mapearColuna(n){
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
                 <input type="date" value={relOperFrom} onChange={e=>setRelOperFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <label style={{display:"block",fontSize:11,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
                 <input type="date" value={relOperTo} onChange={e=>setRelOperTo(e.target.value)} style={{...css.inp,width:"100%"}} />
               </div>
             </div>
@@ -6978,7 +6978,7 @@ function mapearColuna(n){
                 </div>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:t.txt, lineHeight:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                  <div style={{fontSize:9, color:t.txt2, fontWeight:600, letterSpacing:1.5, marginTop:2, display:"flex", alignItems:"center", gap:6}}>
+                  <div style={{fontSize:11, color:t.txt2, fontWeight:600, letterSpacing:1.5, marginTop:2, display:"flex", alignItems:"center", gap:6}}>
                     <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>DT {r.dt}</span>
                     <span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:4,padding:"1px 6px",color:t.verde,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{r.placa||"—"}</span>
                     <span style={{...css.badge(statusCor,`rgba(0,0,0,0)`,`${statusCor}44`)}}>{statusTxt}</span>
@@ -7012,7 +7012,7 @@ function mapearColuna(n){
                       {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status},
                     ].map((it,i)=>(
                       <div key={i} style={{...css.card, padding:"9px 11px"}}>
-                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.8,color:t.txt2,fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:4}}>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.8,color:t.txt2,fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:4}}>
                           {hIco(it.ico,t.txt2,10,1.8)} {it.lbl}
                         </div>
                         <div style={{fontWeight:600,color:t.txt,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={it.val||"—"}>{it.val||"—"}</div>
@@ -7036,7 +7036,7 @@ function mapearColuna(n){
                       ].map((f,i)=>(
                         <div key={i} style={{...css.kpi(f.cor), padding:"10px 8px"}}>
                           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
-                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
+                          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
                         </div>
                       ))}
                     </div>
@@ -7248,11 +7248,11 @@ function mapearColuna(n){
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                 <div>
-                  <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>De (início)</label>
+                  <label style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>De (início)</label>
                   <input type="date" value={relCtrlDccFrom} onChange={e=>setRelCtrlDccFrom(e.target.value)} style={{width:"100%",background:t.bg,border:`1.5px solid ${t.borda2}`,borderRadius:8,padding:"9px 10px",color:t.txt,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}} />
                 </div>
                 <div>
-                  <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Até (fim)</label>
+                  <label style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Até (fim)</label>
                   <input type="date" value={relCtrlDccTo} onChange={e=>setRelCtrlDccTo(e.target.value)} style={{width:"100%",background:t.bg,border:`1.5px solid ${t.borda2}`,borderRadius:8,padding:"9px 10px",color:t.txt,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}} />
                 </div>
               </div>
@@ -7289,7 +7289,7 @@ function mapearColuna(n){
             </div>
             {/* Tipo */}
             <div style={{marginBottom:12}}>
-              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginBottom:6}}>Motivo da NFD</div>
+              <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginBottom:6}}>Motivo da NFD</div>
               <div style={{display:"flex",gap:6}}>
                 {["avaria","falta","devolução"].map(op=>(
                   <button key={op} onClick={()=>setNfdForm(p=>({...p,tipo:op}))} style={{flex:1,padding:"8px 4px",borderRadius:9,border:`1.5px solid ${nfdForm.tipo===op?t.danger:t.borda}`,background:nfdForm.tipo===op?`rgba(246,70,93,.1)`:`transparent`,color:nfdForm.tipo===op?t.danger:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:10,textTransform:"uppercase",letterSpacing:.5,transition:"all .15s"}}>
@@ -7301,11 +7301,11 @@ function mapearColuna(n){
             {/* Numero e Valor */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
               <div>
-                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Nº da Nota</label>
+                <label style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Nº da Nota</label>
                 <input value={nfdForm.numero} onChange={e=>setNfdForm(p=>({...p,numero:e.target.value}))} placeholder="Ex: 00123456" style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
               </div>
               <div>
-                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Valor (R$)</label>
+                <label style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Valor (R$)</label>
                 <input value={nfdForm.valor} onChange={e=>setNfdForm(p=>({...p,valor:e.target.value}))} placeholder="0,00" style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
               </div>
             </div>
@@ -7349,7 +7349,7 @@ function mapearColuna(n){
             </div>
             {/* Campo RO */}
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:5}}>Nº RO (Registro de Ocorrência)</label>
+              <label style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:5}}>Nº RO (Registro de Ocorrência)</label>
               <input
                 value={formData.ro||""}
                 onChange={e=>setFormData(p=>({...p,ro:e.target.value}))}
@@ -7396,7 +7396,7 @@ function mapearColuna(n){
 
               {/* Lista */}
               <div>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#E8820C",fontWeight:700,marginBottom:8}}>Histórico</div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"#E8820C",fontWeight:700,marginBottom:8}}>Histórico</div>
                 {ocorrModalList.length === 0 ? (
                   <div style={{fontSize:11,color:t.txt2,textAlign:"center",padding:"14px 0",borderRadius:8,border:`1px dashed ${t.borda}`}}>Nenhuma ocorrência registrada.</div>
                 ) : (
@@ -7409,8 +7409,8 @@ function mapearColuna(n){
                         </div>
                         <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
-                            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tc[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
-                            <span style={{fontSize:8,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"} · {new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
+                            <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tc[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
+                            <span style={{fontSize:11,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"} · {new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
                           </div>
                           <div style={{fontSize:12,color:t.txt,lineHeight:1.5}}>{o.texto}</div>
                         </div>
@@ -7428,7 +7428,7 @@ function mapearColuna(n){
               {/* Adicionar nova ocorrência */}
               {(isAdmin || perms.ocorrencias) && (
                 <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`}}>
-                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:9}}>＋ Nova Ocorrência</div>
+                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:9}}>＋ Nova Ocorrência</div>
                   <div style={{display:"flex",gap:6,marginBottom:9}}>
                     {[{k:"info",l:"Chegada",svg:<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4M12 16h.01"/></>,c:tc.info},{k:"status",l:"Descarga",svg:<><polyline points="20 6 9 17 4 12"/></>,c:tc.status},{k:"alerta",l:"Alerta",svg:<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></>,c:tc.alerta}].map(tp=>{
                       const ativo=ocorrModalTipo===tp.k;
@@ -7436,7 +7436,7 @@ function mapearColuna(n){
                         <button key={tp.k} onClick={()=>setOcorrModalTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
                           {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
                           <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
-                          <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
+                          <span style={{fontSize:11,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
                         </button>
                       );
                     })}

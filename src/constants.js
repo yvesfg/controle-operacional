@@ -8,8 +8,8 @@ export const themes = {
     borda: "#1c1c2a", borda2: "#262638",
     // Texto — leve tonalidade fria para premium
     txt: "#e8e8f2", txt2: "#8888b0",   // txt2 ≥5.86:1 sobre bg (WCAG AA ✓)
-    // Acento principal — ouro refinado (menos saturado, mais elegante)
-    ouro: "#e9b84a", ouroDk: "#c49535",
+    // Acento principal — ouro Binance (redesign v22)
+    ouro: "#F3BA2F", ouroDk: "#C99923",
     // Status
     verde: "#22c55e", verdeDk: "#16a34a",
     danger: "#ef4444", warn: "#f59e0b",
@@ -26,8 +26,8 @@ export const themes = {
     borda: "#e0e2f0", borda2: "#cccee0",
     // Texto
     txt: "#16162a", txt2: "#5a5a8a",
-    // Acento principal — escurecido para ≥4.5:1 em fundo branco (WCAG AA ✓)
-    ouro: "#8f6518", ouroDk: "#7a5510",
+    // Acento principal — ajustado para novo #F3BA2F em dark (WCAG AA ✓)
+    ouro: "#a07018", ouroDk: "#8f5f14",
     // Status
     verde: "#16a34a", verdeDk: "#148040",
     danger: "#dc2626", warn: "#d97706",
@@ -66,6 +66,25 @@ export const PERMS_LISTA = [
 ];
 
 // ════════════════════════════════════════════════════════════
+//  BREAKPOINTS & LAYOUT TOKENS (redesign v22)
+// ════════════════════════════════════════════════════════════
+export const BP = {
+  xs: 0,           // Mobile pequeno
+  sm: 480,         // Mobile padrão
+  md: 768,         // Tablet
+  lg: 1200,        // Desktop
+  xl: 1536,        // Desktop grande
+};
+
+export const LAYOUT = {
+  SIDEBAR_W: 220,
+  SIDEBAR_COLLAPSED_W: 64,
+  HEADER_H_DESKTOP: 56,
+  HEADER_H_MOBILE: 48,
+  NAV_H: 60,
+};
+
+// ════════════════════════════════════════════════════════════
 //  DESIGN SYSTEM — TOKEN CENTRAL
 //  ► Altere aqui → propaga em TODO o código que usa css.*
 //  ► Para detectar estilos fora do padrão:
@@ -73,8 +92,8 @@ export const PERMS_LISTA = [
 //      (ou via console do navegador: auditarDesign())
 // ════════════════════════════════════════════════════════════
 export const DESIGN = {
-  // Raios de borda — reduzidos para visual mais sólido e profissional
-  r:   { btn:7, card:10, modal:14, tile:9, badge:4, inp:8, tag:3, ico:8, logo:10, sm:6 },
+  // Raios de borda — refinados para look premium (redesign v22)
+  r:   { btn:8, card:12, modal:16, tile:10, badge:6, inp:10, tag:4, ico:10, logo:12, sm:6, sidebar:8 },
   // Tamanhos de ícone SVG (px)
   ico: { xs:10, sm:13, md:16, lg:20, xl:24 },
   // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
