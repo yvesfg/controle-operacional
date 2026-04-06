@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController);
 
-import { themes, TABLE, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS,
+import { themes, TABLE, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
   DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY } from './constants.js';
 import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
@@ -196,7 +196,14 @@ export default function App() {
   const [sgsForm, setSgsForm] = useState({numero:"", data_chamado:"", ultimo_retorno:"", descricao:"", dt_rel:"", status:"aberto"});
   const [apontItems, setApontItems] = useState(() => loadJSON("co_aponts", []));
   const [apontFormOpen, setApontFormOpen] = useState(false);
-  const [apontForm, setApontForm] = useState({numero:"", pedido:"", mes_ref:"", filial:"", valor:"", frs_folha:"", tipo:"descarga", dt_rel:""});
+  const [apontLoading, setApontLoading] = useState(false);
+  const [apontForm, setApontForm] = useState({
+    numero:"", item:"", linha:"", descricao_apontamento:"",
+    pedido:"", mes_ref:"", filial:"", valor:"", frs_folha:"",
+    tipo:"descarga", dt_rel:"", cidade:"",
+    nf_numero:"", data_emissao:"",
+    data_apontamento: new Date().toISOString().split("T")[0],
+  });
 
   // ── WhatsApp tipos ──
   const [wppTipoOpen, setWppTipoOpen] = useState(false);
@@ -362,7 +369,8 @@ export default function App() {
   useEffect(() => {
     if (authed && getConexao()) {
       sincronizar();
-      syncUsuariosRemoto(); // Sincronizar usuários do Supabase ao logar
+      syncUsuariosRemoto();
+      carregarAponts();
     }
   }, [authed]);
 
@@ -555,6 +563,66 @@ export default function App() {
   }, [getConexao]);
 
   // Sincronizar usuários do Supabase
+  // ── Helpers de mapeamento co_apontamentos ──────────────────────────────
+  const apontToSupabase = (a) => ({
+    apontamento:           a.numero || a.apontamento,
+    item:                  a.item   ? parseInt(a.item)  : null,
+    linha:                 a.linha  ? parseInt(a.linha) : null,
+    descricao_apontamento: a.descricao_apontamento || null,
+    pedido:                a.pedido || null,
+    valor_rs:              a.valor  ? parseFloat(String(a.valor).replace(",",".")) : null,
+    filial:                a.filial || null,
+    tipo:                  a.tipo   || "descarga",
+    dt_relacionado:        a.dt_rel || a.dt_relacionado || null,
+    folha_registro:        a.frs_folha || a.folha_registro || null,
+    nf_numero:             a.nf_numero || null,
+    data_emissao:          a.data_emissao || null,
+    cidade:                a.cidade || null,
+    periodo_referente:     a.mes_ref || a.periodo_referente || null,
+    data_apontamento:      a.data_apontamento || null,
+  });
+  const apontFromSupabase = (r) => ({
+    id:                    r.id,
+    numero:                r.apontamento,
+    apontamento:           r.apontamento,
+    item:                  r.item   != null ? String(r.item)  : "",
+    linha:                 r.linha  != null ? String(r.linha) : "",
+    descricao_apontamento: r.descricao_apontamento || "",
+    pedido:                r.pedido || "",
+    mes_ref:               r.periodo_referente || "",
+    periodo_referente:     r.periodo_referente || "",
+    filial:                r.filial || "",
+    valor:                 r.valor_rs != null ? String(r.valor_rs) : "",
+    frs_folha:             r.folha_registro || "",
+    folha_registro:        r.folha_registro || "",
+    tipo:                  r.tipo || "descarga",
+    dt_rel:                r.dt_relacionado || "",
+    dt_relacionado:        r.dt_relacionado || "",
+    nf_numero:             r.nf_numero || "",
+    data_emissao:          r.data_emissao || "",
+    cidade:                r.cidade || "",
+    data_apontamento:      r.data_apontamento || "",
+    criado_em:             r.created_at || "",
+    updated_at:            r.updated_at || "",
+    status_alerta:         r.status_alerta || false,
+  });
+
+  const carregarAponts = useCallback(async () => {
+    const conn = getConexao();
+    if (!conn) return;
+    try {
+      setApontLoading(true);
+      const data = await supaFetch(conn.url, conn.key, "GET",
+        `${TABLE_APOINTS}?select=*&order=created_at.desc&limit=500`);
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = data.map(apontFromSupabase);
+        setApontItems(mapped);
+        saveJSON("co_aponts", mapped);
+      }
+    } catch { /* usa localStorage */ }
+    finally { setApontLoading(false); }
+  }, [getConexao]);
+
   const syncUsuariosRemoto = useCallback(async () => {
     const conn = getConexao();
     if (!conn) return;
@@ -3407,7 +3475,29 @@ export default function App() {
           const inpO = {...css.inp, fontSize:12, padding:"8px 10px"};
           const lblO = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
           const saveSGS = (arr) => { setSgsItems(arr); saveJSON("co_sgs", arr); };
-          const saveAponts = (arr) => { setApontItems(arr); saveJSON("co_aponts", arr); };
+          const saveAponts = async (arr, novoItem = null) => {
+            setApontItems(arr);
+            saveJSON("co_aponts", arr);
+            if (novoItem) {
+              const conn = getConexao();
+              if (conn) {
+                try {
+                  await supaFetch(conn.url, conn.key, "POST",
+                    `${TABLE_APOINTS}?on_conflict=apontamento`,
+                    [apontToSupabase(novoItem)]);
+                } catch(e) { console.warn("Apontamento salvo apenas local:", e.message); }
+              }
+            }
+          };
+          const deleteApontSupabase = async (apontamento) => {
+            const conn = getConexao();
+            if (conn && apontamento) {
+              try {
+                await supaFetch(conn.url, conn.key, "DELETE",
+                  `${TABLE_APOINTS}?apontamento=eq.${encodeURIComponent(apontamento)}`);
+              } catch(e) { console.warn("Erro ao excluir no Supabase:", e.message); }
+            }
+          };
 
           const subBtns = [
             {k:"sgs",svg:<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,l:"SGS · Chamados",sub:"Chamados SGS"},
@@ -3728,7 +3818,7 @@ export default function App() {
                     <div style={{...css.secTitle,margin:0}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Apontamentos <span style={{fontSize:8,color:t.txt2,fontWeight:400,marginLeft:4}}>Descargas/Stretch</span> <span style={{flex:1,height:1,background:t.borda}} /></div>
                     <div style={{display:"flex",gap:6}}>
                       <button onClick={()=>setRelCtrlDccOpen(true)} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:8,padding:"8px 12px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>📊 Planilha Financeiro</button>
-                      <button onClick={()=>{setApontForm({numero:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:""});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
+                      <button onClick={()=>{setApontForm({numero:"",item:"",linha:"",descricao_apontamento:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:"",cidade:"",nf_numero:"",data_emissao:"",data_apontamento:new Date().toISOString().split("T")[0]});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
                     </div>
                   </div>
 
@@ -3807,15 +3897,24 @@ export default function App() {
                     <div style={{background:t.card,borderRadius:12,border:`1px solid ${t.ouro}44`,padding:14,marginBottom:14}}>
                       <div style={{fontWeight:700,color:t.ouro,fontSize:12,marginBottom:10}}>📑 Novo Apontamento</div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                        <div><label style={lblO}>Nº Apontamento</label><input value={apontForm.numero} onChange={e=>setApontForm(p=>({...p,numero:e.target.value}))} style={inpO} /></div>
-                        <div><label style={lblO}>Pedido</label><input value={apontForm.pedido} onChange={e=>setApontForm(p=>({...p,pedido:e.target.value}))} style={inpO} /></div>
+                        {/* Linha 1 */}
+                        <div><label style={lblO}>Nº Apontamento</label><input value={apontForm.numero} onChange={e=>setApontForm(p=>({...p,numero:e.target.value}))} placeholder="Ex: 1000000002580650" style={inpO} /></div>
+                        <div><label style={lblO}>Pedido</label><input value={apontForm.pedido} onChange={e=>setApontForm(p=>({...p,pedido:e.target.value}))} placeholder="Ex: 4502384474" style={inpO} /></div>
+                        {/* Linha 2 */}
+                        <div><label style={lblO}>Item</label><input type="number" value={apontForm.item} onChange={e=>setApontForm(p=>({...p,item:e.target.value}))} placeholder="Ex: 1" style={inpO} /></div>
+                        <div><label style={lblO}>Linha</label><input type="number" value={apontForm.linha} onChange={e=>setApontForm(p=>({...p,linha:e.target.value}))} placeholder="Ex: 10" style={inpO} /></div>
+                        {/* Linha 3 — Descrição full width */}
+                        <div style={{gridColumn:"1/-1"}}><label style={lblO}>Descrição do Apontamento</label><input value={apontForm.descricao_apontamento} onChange={e=>setApontForm(p=>({...p,descricao_apontamento:e.target.value}))} placeholder="Ex: ARMAZENAGEM OU CARGA E DESCARGA S/ M.O." style={inpO} /></div>
+                        {/* Linha 4 */}
                         <div><label style={lblO}>Mês Referência</label><input value={apontForm.mes_ref} onChange={e=>setApontForm(p=>({...p,mes_ref:e.target.value}))} placeholder="MM/AAAA" style={inpO} /></div>
                         <div><label style={lblO}>Filial</label><input value={apontForm.filial} onChange={e=>setApontForm(p=>({...p,filial:e.target.value}))} style={inpO} /></div>
+                        {/* Linha 5 */}
                         <div><label style={lblO}>Valor (R$)</label><input type="number" value={apontForm.valor} onChange={e=>setApontForm(p=>({...p,valor:e.target.value}))} placeholder="0,00" style={inpO} /></div>
                         <div>
                           <label style={{...lblO,color:apontForm.frs_folha?"":t.danger}}>FRS · Folha {!apontForm.frs_folha&&<span style={{color:t.danger}}>⚠️ obrigatório</span>}</label>
                           <input value={apontForm.frs_folha} onChange={e=>setApontForm(p=>({...p,frs_folha:e.target.value}))} style={{...inpO,border:`1.5px solid ${apontForm.frs_folha?t.borda2:t.danger}`}} />
                         </div>
+                        {/* Linha 6 */}
                         <div><label style={lblO}>Tipo</label>
                           <select value={apontForm.tipo} onChange={e=>setApontForm(p=>({...p,tipo:e.target.value}))} style={{...inpO,appearance:"none"}}>
                             <option value="descarga">📦 Descarga</option>
@@ -3825,41 +3924,65 @@ export default function App() {
                           </select>
                         </div>
                         <div><label style={lblO}>DT Relacionado</label><input value={apontForm.dt_rel} onChange={e=>setApontForm(p=>({...p,dt_rel:e.target.value}))} style={inpO} /></div>
+                        {/* Linha 7 */}
+                        <div><label style={lblO}>Cidade</label><input value={apontForm.cidade} onChange={e=>setApontForm(p=>({...p,cidade:e.target.value}))} style={inpO} /></div>
+                        <div><label style={lblO}>Data Apontamento</label><input type="date" value={apontForm.data_apontamento} onChange={e=>setApontForm(p=>({...p,data_apontamento:e.target.value}))} style={inpO} /></div>
+                        {/* Linha 8 — NF (preencher depois) */}
+                        <div><label style={{...lblO,color:t.txt2}}>NF-e / NFS-e <span style={{fontSize:8,opacity:.7}}>(depois)</span></label><input value={apontForm.nf_numero} onChange={e=>setApontForm(p=>({...p,nf_numero:e.target.value}))} placeholder="Preencher depois" style={inpO} /></div>
+                        <div><label style={{...lblO,color:t.txt2}}>Data Emissão NF <span style={{fontSize:8,opacity:.7}}>(depois)</span></label><input type="date" value={apontForm.data_emissao} onChange={e=>setApontForm(p=>({...p,data_emissao:e.target.value}))} style={inpO} /></div>
                       </div>
                       <div style={{display:"flex",gap:8}}>
                         <button onClick={()=>setApontFormOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:8,padding:"8px 12px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
-                        <button onClick={()=>{
+                        <button onClick={async ()=>{
                           if(!apontForm.numero){showToast("⚠️ Informe o nº do apontamento","warn");return;}
-                          const nova=[{...apontForm,id:Date.now(),criado_em:new Date().toISOString()},...apontItems];
-                          saveAponts(nova);setApontFormOpen(false);
-                          showToast("✅ Apontamento registrado!","ok");
+                          const novoItem={...apontForm,id:Date.now(),criado_em:new Date().toISOString()};
+                          const nova=[novoItem,...apontItems];
+                          await saveAponts(nova, novoItem);
+                          setApontFormOpen(false);
+                          setApontForm({numero:"",item:"",linha:"",descricao_apontamento:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:"",cidade:"",nf_numero:"",data_emissao:"",data_apontamento:new Date().toISOString().split("T")[0]});
+                          showToast("✅ Apontamento salvo!","ok");
                         }} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>💾 Salvar Apontamento</button>
                       </div>
                     </div>
                   )}
 
-                  {apontItems.length===0?(
+                  {apontLoading?(
+                    <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:12}}>Carregando apontamentos...</div>
+                  ):apontItems.length===0?(
                     <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📑</div><div style={{fontSize:13,color:t.txt2}}>Nenhum apontamento registrado</div></div>
                   ):(
                     <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                      {apontItems.map((a,i)=>(
-                        <div key={a.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${a.frs_folha?t.verde:t.danger}`,padding:12}}>
+                      {apontItems.map((a,i)=>{
+                        const semNF = !a.nf_numero;
+                        const semFRS = !a.frs_folha;
+                        const bordaC = semFRS ? t.danger : semNF ? t.warn : t.verde;
+                        return (
+                        <div key={a.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${bordaC}`,padding:12}}>
                           <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:6,flexWrap:"wrap"}}>
-                            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:t.ouro}}>{a.numero||"—"}</span>
+                            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:t.ouro}}>{a.numero||a.apontamento||"—"}</span>
+                            {(a.item||a.linha)&&<span style={{fontSize:9,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 6px"}}>It.{a.item||"?"} / Ln.{a.linha||"?"}</span>}
                             <span style={{fontSize:9,fontWeight:700,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 7px"}}>{a.tipo==="stretch"?"📏 Stretch":a.tipo==="deslocamento"?"🚗 Deslocamento":a.tipo==="outros"?"📋 Outros":"📦 Descarga"}</span>
-                            {!a.frs_folha && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ FRS vazio!</span>}
+                            {semFRS && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ FRS vazio!</span>}
+                            {semNF && !semFRS && <span style={{fontSize:9,fontWeight:700,color:t.warn,background:`rgba(245,158,11,.08)`,border:`1px solid rgba(245,158,11,.2)`,borderRadius:4,padding:"2px 7px"}}>📄 NF pendente</span>}
+                            {a.status_alerta && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>🚨 ALERTA</span>}
                           </div>
+                          {a.descricao_apontamento&&<div style={{fontSize:10,color:t.txt2,marginBottom:6,fontStyle:"italic"}}>{a.descricao_apontamento}</div>}
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:10,color:t.txt2}}>
                             <div>Pedido: <strong style={{color:t.txt}}>{a.pedido||"—"}</strong></div>
-                            <div>Mês ref: <strong style={{color:t.txt}}>{a.mes_ref||"—"}</strong></div>
+                            <div>Mês ref: <strong style={{color:t.txt}}>{a.mes_ref||a.periodo_referente||"—"}</strong></div>
                             <div>Filial: <strong style={{color:t.txt}}>{a.filial||"—"}</strong></div>
                             <div>Valor: <strong style={{color:t.verde}}>{a.valor?fmtMoeda(a.valor):"—"}</strong></div>
-                            <div style={{gridColumn:"1/-1"}}>FRS · Folha: <strong style={{color:a.frs_folha?t.verde:t.danger}}>{a.frs_folha||"⚠️ NÃO PREENCHIDO"}</strong></div>
-                            {a.dt_rel && <div>DT: <strong style={{color:t.ouro}}>{a.dt_rel}</strong></div>}
+                            {a.cidade&&<div>Cidade: <strong style={{color:t.txt}}>{a.cidade}</strong></div>}
+                            {(a.dt_rel||a.dt_relacionado)&&<div>DT: <strong style={{color:t.ouro}}>{a.dt_rel||a.dt_relacionado}</strong></div>}
+                            <div style={{gridColumn:"1/-1"}}>FRS · Folha: <strong style={{color:semFRS?t.danger:t.verde}}>{a.frs_folha||a.folha_registro||"⚠️ NÃO PREENCHIDO"}</strong></div>
+                            {(a.nf_numero)&&<div>NF-e/NFS-e: <strong style={{color:t.azulLt}}>{a.nf_numero}</strong></div>}
+                            {(a.data_emissao)&&<div>Emissão NF: <strong style={{color:t.txt}}>{a.data_emissao}</strong></div>}
+                            {a.data_apontamento&&<div style={{gridColumn:"1/-1",fontSize:9,color:t.txt2,marginTop:2}}>📅 {a.data_apontamento}{a.updated_at?` · Atualizado: ${new Date(a.updated_at).toLocaleDateString("pt-BR")}`:""}</div>}
                           </div>
-                          <button onClick={()=>{if(confirm("Excluir apontamento?")){const n=[...apontItems];n.splice(i,1);saveAponts(n);}}} style={{marginTop:8,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,padding:"4px 9px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:"inherit"}}>🗑️ Excluir</button>
+                          <button onClick={async()=>{if(confirm("Excluir apontamento?")){const n=[...apontItems];n.splice(i,1);await deleteApontSupabase(a.numero||a.apontamento);await saveAponts(n);}}} style={{marginTop:8,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,padding:"4px 9px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:"inherit"}}>🗑️ Excluir</button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

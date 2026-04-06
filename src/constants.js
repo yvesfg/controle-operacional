@@ -47,6 +47,7 @@ export const TABLE_USUARIOS = "co_usuarios";
 export const TABLE_CONFIG   = "co_config";
 export const TABLE_OCORR    = "co_ocorrencias";
 export const TABLE_LOGS     = "co_logs_alteracoes";
+export const TABLE_APOINTS  = "co_apontamentos";
 export const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 export const PERMS_PADRAO = {
   // ── Admin: acesso total ──
