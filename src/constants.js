@@ -2,22 +2,40 @@
 
 export const themes = {
   dark: {
-    bg: "#0b0e11", bgAlt: "#0f1217", card: "#1e2026", card2: "#2b2f36",
-    borda: "#2b2f36", borda2: "#3c4047", txt: "#eaecef", txt2: "#848e9c",
-    ouro: "#f0b90b", ouroDk: "#d4a017", verde: "#02c076", verdeDk: "#019a60",
-    danger: "#f6465d", warn: "#f0b90b", azul: "#1677ff", azulLt: "#47a8ff",
-    headerBg: "#161a1e", modalBg: "#1a1e24", inputBg: "#2b2f36",
-    shadow: "rgba(0,0,0,.5)", gradientAuth: "linear-gradient(160deg,#0b0e11,#161a1e 60%,#0b0e11)",
-    scrollThumb: "#3c4047", tableHeader: "#161a1e",
+    // Backgrounds — profundidade progressiva com leve matiz fria
+    bg: "#09090f", bgAlt: "#0d0d16", card: "#111119", card2: "#181825",
+    // Bordas — sutis mas definidas
+    borda: "#1c1c2a", borda2: "#262638",
+    // Texto — leve tonalidade fria para premium
+    txt: "#e8e8f2", txt2: "#8888b0",   // txt2 ≥5.86:1 sobre bg (WCAG AA ✓)
+    // Acento principal — ouro refinado (menos saturado, mais elegante)
+    ouro: "#e9b84a", ouroDk: "#c49535",
+    // Status
+    verde: "#22c55e", verdeDk: "#16a34a",
+    danger: "#ef4444", warn: "#f59e0b",
+    azul: "#3b82f6", azulLt: "#60a5fa",
+    // Estrutura
+    headerBg: "#09090f", modalBg: "#111119", inputBg: "#181825",
+    shadow: "rgba(0,0,0,.65)", gradientAuth: "#09090f",
+    scrollThumb: "#262638", tableHeader: "#0d0d16",
   },
   light: {
-    bg: "#f4f5f7", bgAlt: "#eef0f3", card: "#ffffff", card2: "#f0f1f3",
-    borda: "#e2e4e8", borda2: "#d1d5db", txt: "#1a1d21", txt2: "#6b7280",
-    ouro: "#d4a017", ouroDk: "#b8860b", verde: "#019a60", verdeDk: "#017a4c",
-    danger: "#dc3545", warn: "#d4a017", azul: "#1677ff", azulLt: "#3b8efc",
-    headerBg: "#ffffff", modalBg: "#ffffff", inputBg: "#f0f1f3",
-    shadow: "rgba(0,0,0,.08)", gradientAuth: "linear-gradient(160deg,#f4f5f7,#e8eaed 60%,#f4f5f7)",
-    scrollThumb: "#c5c8ce", tableHeader: "#f0f1f3",
+    // Backgrounds
+    bg: "#f6f7fc", bgAlt: "#eef0f8", card: "#ffffff", card2: "#f0f2fa",
+    // Bordas
+    borda: "#e0e2f0", borda2: "#cccee0",
+    // Texto
+    txt: "#16162a", txt2: "#5a5a8a",
+    // Acento principal — escurecido para ≥4.5:1 em fundo branco (WCAG AA ✓)
+    ouro: "#8f6518", ouroDk: "#7a5510",
+    // Status
+    verde: "#16a34a", verdeDk: "#148040",
+    danger: "#dc2626", warn: "#d97706",
+    azul: "#2563eb", azulLt: "#3b82f6",
+    // Estrutura
+    headerBg: "#ffffff", modalBg: "#ffffff", inputBg: "#f0f2fa",
+    shadow: "rgba(0,0,0,.05)", gradientAuth: "#f6f7fc",
+    scrollThumb: "#c8cae0", tableHeader: "#eef0f8",
   },
 };
 
@@ -54,16 +72,16 @@ export const PERMS_LISTA = [
 //      (ou via console do navegador: auditarDesign())
 // ════════════════════════════════════════════════════════════
 export const DESIGN = {
-  // Raios de borda — btn=pílula, card=painel, tile=grade, inp=campo
-  r:   { btn:10, card:14, modal:20, tile:12, badge:6, inp:10, tag:4, ico:10, logo:11, sm:8 },
+  // Raios de borda — reduzidos para visual mais sólido e profissional
+  r:   { btn:7, card:10, modal:14, tile:9, badge:4, inp:8, tag:3, ico:8, logo:10, sm:6 },
   // Tamanhos de ícone SVG (px)
   ico: { xs:10, sm:13, md:16, lg:20, xl:24 },
   // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
   sw:  { thin:1.5, md:2, thick:2.5 },
-  // Famílias tipográficas
-  fnt: { h:"'Bebas Neue',sans-serif", b:"'Barlow','Segoe UI',system-ui,sans-serif" },
-  // Letter-spacing
-  ls:  { label:2.5, badge:1.5, mono:3, btn:.5 },
+  // Famílias tipográficas — Inter para body (mais limpo e legível)
+  fnt: { h:"'Bebas Neue',sans-serif", b:"'Inter','Segoe UI',system-ui,sans-serif" },
+  // Letter-spacing — levemente reduzido para look mais refinado
+  ls:  { label:2, badge:1, mono:2.5, btn:.2 },
 };
 // Utilitário: converte cor hex + alpha em rgba (use com cores do tema t.*)
 export const hexRgb = (hex, a) => {
