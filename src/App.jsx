@@ -1250,7 +1250,7 @@ export default function App() {
     // Overlay com blur mais pronunciado para foco no modal
     overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
     // Modal — borda fina define a separação do overlay
-    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"16px 16px 0 0", border:`1px solid ${t.borda}`, borderBottom:"none", display:"flex", flexDirection:"column", overflow:"clip", animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
+    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"16px 16px 0 0", border:`1px solid ${t.borda}`, borderBottom:"none", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
   };
 
   // ══════════════════════════════════════════════
@@ -1401,30 +1401,17 @@ export default function App() {
         </button>
 
         {/* Card de login */}
-        <div style={{width:"100%",maxWidth:340,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"36px 28px",boxShadow:`0 24px 64px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .4s ease-out",position:"relative",zIndex:1}}>
+        <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,padding:"40px 32px 32px",boxShadow:`0 32px 80px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .4s ease-out",position:"relative",zIndex:1}}>
 
-          {/* Badge empresa */}
-          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:24,textTransform:"uppercase"}}>YFGROUP</div>
-
-          {/* Ícone carreta */}
-          <div style={{width:72,height:72,background:t.card2,borderRadius:DESIGN.r.card,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,border:`1px solid ${hexRgb(t.ouro,.25)}`,animation:"logoPop .4s ease-out"}}>
-            <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
-              <rect x="7" y="25" width="32" height="18" rx="3" stroke={t.ouro} strokeWidth="1.8"/>
-              <path d="M39 32 L55 32 L55 43 L39 43 Z" stroke={t.ouro} strokeWidth="1.8"/>
-              <path d="M41 32 L41 26 L52 26 L55 32" stroke={t.ouro} strokeWidth="1.8"/>
-              <circle cx="17" cy="45" r="4.5" stroke={t.ouro} strokeWidth="1.8"/>
-              <circle cx="17" cy="45" r="1.5" fill={t.ouro}/>
-              <circle cx="29" cy="45" r="4.5" stroke={t.ouro} strokeWidth="1.8"/>
-              <circle cx="29" cy="45" r="1.5" fill={t.ouro}/>
-              <circle cx="49" cy="45" r="4.5" stroke={t.ouro} strokeWidth="1.8"/>
-              <circle cx="49" cy="45" r="1.5" fill={t.ouro}/>
-              <rect x="43" y="28" width="9" height="6" rx="1" stroke={t.ouro} strokeWidth="1.5"/>
-            </svg>
+          {/* Ícone caminhão — tile colorido clean */}
+          <div style={{width:80,height:80,borderRadius:18,background:"linear-gradient(135deg,#3b7dd8,#5a9ff5)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22,boxShadow:"0 8px 28px rgba(59,125,216,.38)",animation:"logoPop .4s ease-out",flexShrink:0}}>
+            <span style={{fontSize:40,lineHeight:1,userSelect:"none"}}>🚛</span>
           </div>
 
           {/* Title */}
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:3,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
-          <div style={{fontSize:10,color:t.txt2,textAlign:"center",marginTop:5,marginBottom:28,letterSpacing:2,textTransform:"uppercase"}}>Logística · Transporte</div>
+          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:3,color:t.txt,textAlign:"center",lineHeight:1.1}}>Controle Operacional</div>
+          <div style={{fontSize:10,color:t.txt2,textAlign:"center",marginTop:5,marginBottom:6,letterSpacing:2,textTransform:"uppercase"}}>Logística · Transporte</div>
+          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:28,textTransform:"uppercase"}}>YFGroup</div>
 
           {/* Auth message */}
           {authMsg && (
@@ -1434,7 +1421,7 @@ export default function App() {
           {/* Google button */}
           <button
             onClick={() => iniciarOAuth("google")}
-            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"13px 12px",cursor:"pointer",fontSize:14,fontWeight:600,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .15s",letterSpacing:.3}}
+            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"14px 12px",cursor:"pointer",fontSize:14,fontWeight:600,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .15s",letterSpacing:.3}}
             onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.4);e.currentTarget.style.background=t.bgAlt}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2;e.currentTarget.style.background=t.card2}}
           >
@@ -2368,7 +2355,8 @@ export default function App() {
         /* ─── Modal Detalhe Responsivo ─── */
         .co-dt-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:flex-end;justify-content:center}
         .co-dt-modal{width:100%;max-width:520px;max-height:96vh;background:${t.modalBg};border:1px solid ${t.borda};border-bottom:none;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:mslide .26s cubic-bezier(.34,1.1,.64,1)}
-        .co-dt-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+        .co-dt-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:0}
+        .co-dt-close-bar{display:block!important}
         .co-dt-panel{padding:14px;display:flex;flex-direction:column;gap:14px}
         .co-dt-right{padding:14px;display:flex;flex-direction:column;gap:14px}
         .co-dados-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
@@ -2380,6 +2368,7 @@ export default function App() {
           .co-dados-grid{grid-template-columns:repeat(3,1fr)!important}
           .co-min-g4{grid-template-columns:repeat(3,1fr)!important}
           .co-min-g3{grid-template-columns:repeat(3,1fr)!important}
+          .co-dt-close-bar{display:none!important}
         }
         @media(min-width:1024px){
           .co-dt-modal{max-width:900px!important;width:88vw!important;max-height:88vh!important}
@@ -2399,8 +2388,10 @@ export default function App() {
       {/* HEADER */}
       <div style={css.header}>
         {customLogo
-          ? <img src={customLogo} alt="Logo" style={{width:44,height:44,borderRadius:DESIGN.r.card,objectFit:"contain",boxShadow:`0 4px 14px rgba(240,185,11,.38)`}} />
-          : <div style={{...css.logo,fontSize:24,lineHeight:1}}>🚛</div>
+          ? <img src={customLogo} alt="Logo" style={{width:40,height:40,borderRadius:DESIGN.r.card,objectFit:"contain",boxShadow:"0 4px 14px rgba(59,125,216,.35)"}} />
+          : <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#3b7dd8,#5a9ff5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 4px 14px rgba(59,125,216,.35)"}}>
+              <span style={{fontSize:22,lineHeight:1,userSelect:"none"}}>🚛</span>
+            </div>
         }
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
@@ -5136,7 +5127,7 @@ function mapearColuna(n){
                 )}
               </div>
 
-              <div className="co-dt-body" style={{flex:1,overflow:"hidden"}}>
+              <div className="co-dt-body" style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
               {/* ── PAINEL ESQUERDO: Timeline + Dados + Minutas ── */}
               <div className="co-dt-panel">
 
@@ -5429,6 +5420,11 @@ function mapearColuna(n){
                 </div>
               </div>{/* fim co-dt-right */}
             </div>{/* fim co-dt-body */}
+
+            {/* Botão fechar — sticky no fundo, visível no mobile */}
+            <div style={{flexShrink:0,padding:"10px 16px",borderTop:`1px solid ${t.borda}`,background:t.modalBg,display:"none"}} className="co-dt-close-bar">
+              <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{width:"100%",padding:"13px",background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.btn,color:t.txt2,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,letterSpacing:.5}}>✕ FECHAR</button>
+            </div>
           </div>{/* fim co-dt-modal */}
         </div>
         );
@@ -6282,7 +6278,7 @@ function mapearColuna(n){
                 <button onClick={()=>setWppPagModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+              <div style={{flex:1,minHeight:0,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10}}>
                 {/* Dados do registro */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
