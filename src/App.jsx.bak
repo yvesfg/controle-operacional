@@ -140,10 +140,13 @@ export default function App() {
   const [syncStatusLoading, setSyncStatusLoading] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email","yvesfg@gmail.com"));
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
-  const isDesktop = !isMobile && window.innerWidth >= 1200;
+  const isDesktop = isMobile ? false : window.innerWidth >= 1200;
   const isTablet = !isMobile && !isDesktop;
   useEffect(()=>{
-    const fn=()=>setIsMobile(window.innerWidth<=600);
+    const fn=()=>{
+    const w = window.innerWidth;
+    setIsMobile(w <= 600);
+  };
     window.addEventListener("resize",fn);
     return()=>window.removeEventListener("resize",fn);
   },[]);
@@ -2646,23 +2649,48 @@ export default function App() {
       )}
 
       {/* CONTENT */}
-      <div style={{display:"flex",minHeight:"100vh"}}>
-        {/* ═══ DESKTOP SIDEBAR ═══ */}
+      <div style={{display:"flex",width:"100%"}}>
+        {/* DESKTOP SIDEBAR */}
         {isDesktop && (
-          <nav style={{
-            width:LAYOUT.SIDEBAR_W,background:t.card2,borderRight:`1px solid ${t.borda}`,display:"flex",flexDirection:"column",gap:0,paddingTop:LAYOUT.HEADER_H_DESKTOP,height:"100vh",position:"fixed",left:0,top:0,zIndex:100,overflowY:"auto",overflowX:"hidden"
+          <div style={{
+            width: LAYOUT.SIDEBAR_W,
+            background: t.card2,
+            borderRight: `1px solid ${t.borda}`,
+            display: "flex",
+            flexDirection: "column",
+            gap: 0,
+            paddingTop: LAYOUT.HEADER_H_DESKTOP,
+            height: `100vh`,
+            position: "fixed",
+            left: 0,
+            top: 0,
+            zIndex: 100,
+            overflowY: "auto"
           }}>
-            {[{id:"planilha",label:"Planilha",ico:"📋"},{id:"dashboard",label:"Dashboard",ico:"📊"},{id:"diarias",label:"Diárias",ico:"💰"},{id:"descarga",label:"Descarga",ico:"📦"},{id:"motoristas",label:"Motoristas",ico:"👥"},{id:"config_db",label:"Configurar",ico:"⚙️"}].filter(t=>perms[t.id]!==false).map(tab=>(
-              <button key={tab.id} onClick={()=>setActiveTab(tab.id)} style={{width:"100%",padding:"12px 14px",textAlign:"left",border:"none",background:"transparent",color:activeTab===tab.id?t.ouro:t.txt2,fontWeight:activeTab===tab.id?700:600,fontSize:11,cursor:"pointer",borderLeft:`3px solid ${activeTab===tab.id?t.ouro:"transparent"}`,transition:"all .15s",display:"flex",flexDirection:"column",gap:6}}>
-                <span style={{fontSize:18}}>{tab.ico}</span>
-                <span style={{fontSize:10,letterSpacing:0.5,lineHeight:1}}>{tab.label}</span>
+            {[
+              {id:"planilha",label:"Planilha",ico:"📋"},
+              {id:"dashboard",label:"Dashboard",ico:"📊"},
+              {id:"diarias",label:"Diárias",ico:"💰"},
+              {id:"descarga",label:"Descarga",ico:"📦"},
+              {id:"motoristas",label:"Motoristas",ico:"👥"},
+              {id:"config_db",label:"Config",ico:"⚙️"},
+            ].map(tab=>perms[tab.id]!==false && (
+              <button key={tab.id} onClick={()=>setActiveTab(tab.id)} style={{
+                width:"100%",padding:"12px 14px",textAlign:"left",border:"none",background:"transparent",color:activeTab===tab.id?t.ouro:t.txt2,fontWeight:activeTab===tab.id?700:600,fontSize:11,cursor:"pointer",borderLeft:`3px solid ${activeTab===tab.id?t.ouro:"transparent"}`,transition:"all .15s"
+              }}>
+                <div style={{fontSize:16,marginBottom:4}}>{tab.ico}</div>
+                <div style={{fontSize:10,letterSpacing:0.5}}>{tab.label}</div>
               </button>
             ))}
-          </nav>
+          </div>
         )}
 
-        {/* ═══ MAIN CONTENT ═══ */}
-        <main style={{flex:1,width:"100%",marginLeft:isDesktop?LAYOUT.SIDEBAR_W:0,paddingBottom:!isDesktop?LAYOUT.NAV_H:0}}>
+        {/* MAIN CONTENT */}
+        <div style={{
+          flex: 1,
+          marginLeft: isDesktop ? LAYOUT.SIDEBAR_W : 0,
+          paddingBottom: !isDesktop ? LAYOUT.NAV_H : 0
+        }}>
           <div style={{padding:activeTab==="planilha"?"76px 0 68px":"76px 16px 68px",maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
 
         {/* ═══ BUSCA ═══ */}
@@ -7481,8 +7509,6 @@ function mapearColuna(n){
       })()}
 
       <Toast {...toast} />
-        </main>
-      </div>
     </div>
   );
 }
