@@ -384,6 +384,37 @@ export default function App() {
     return () => clearInterval(timer);
   }, [authed, sincronizar, getConexao]);
 
+  // ── Fechar qualquer modal com Escape (desktop UX) ──────────────────────
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      if (modalOpen)             { setModalOpen(null); setDetalheDT(null); return; }
+      if (aprovarModal)          { setAprovarModal(null); return; }
+      if (wppModal)              { setWppModal(null); return; }
+      if (wppModal2)             { setWppModal2(null); return; }
+      if (wppFatModal)           { setWppFatModal(null); return; }
+      if (wppPagModal)           { setWppPagModal(null); return; }
+      if (motImportOpen)         { setMotImportOpen(false); return; }
+      if (relGeralOpen)          { setRelGeralOpen(false); return; }
+      if (relDiariaOpen)         { setRelDiariaOpen(false); return; }
+      if (relDescargaOpen)       { setRelDescargaOpen(false); return; }
+      if (relOperOpen)           { setRelOperOpen(false); return; }
+      if (relCtrlDccOpen)        { setRelCtrlDccOpen(false); return; }
+      if (planilhaDetalheReg)    { setPlanilhaDetalheReg(null); return; }
+      if (dashDrillModal)        { setDashDrillModal(null); return; }
+      if (nfdAlertOpen)          { setNfdAlertOpen(false); return; }
+      if (ocorrChegadaAlert)     { setOcorrChegadaAlert(false); return; }
+      if (usuarioEmailPreview)   { setUsuarioEmailPreview(null); return; }
+      if (wppTipoOpen)           { setWppTipoOpen(false); return; }
+      if (relMenuOpen)           { setRelMenuOpen(false); return; }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [modalOpen, aprovarModal, wppModal, wppModal2, wppFatModal, wppPagModal,
+      motImportOpen, relGeralOpen, relDiariaOpen, relDescargaOpen, relOperOpen,
+      relCtrlDccOpen, planilhaDetalheReg, dashDrillModal, nfdAlertOpen,
+      ocorrChegadaAlert, usuarioEmailPreview, wppTipoOpen, relMenuOpen]);
+
   // Reset minutas quando detalheDT muda
   useEffect(() => {
     if (!detalheDT) return;
@@ -1315,10 +1346,10 @@ export default function App() {
     secTitle:  { fontSize:9, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
     badge:     (c,bg,bc) => ({ padding:"2px 8px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
-    // Overlay com blur mais pronunciado para foco no modal
-    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
-    // Modal — borda fina define a separação do overlay
-    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"16px 16px 0 0", border:`1px solid ${t.borda}`, borderBottom:"none", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
+    // Overlay — bottom-sheet no mobile, centralizado no desktop
+    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems: isMobile ? "flex-end" : "center", justifyContent:"center", padding: isMobile ? 0 : 24 },
+    // Modal — sem bordas cortadas no desktop
+    modal:     { width:"100%", maxWidth:520, maxHeight: isMobile ? "94vh" : "90vh", background:t.modalBg, borderRadius: isMobile ? "16px 16px 0 0" : 20, border:`1px solid ${t.borda}`, borderBottom: isMobile ? "none" : `1px solid ${t.borda}`, display:"flex", flexDirection:"column", overflow:"hidden", animation: isMobile ? "mslide .26s cubic-bezier(.34,1.1,.64,1)" : "fadeIn .2s ease", transition:"background .25s" },
   };
 
   // ══════════════════════════════════════════════
@@ -4127,7 +4158,7 @@ export default function App() {
 
             {/* ── Modal de Aprovação com seleção de perfil ── */}
             {aprovarModal&&(
-              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000,padding:20}}>
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000,padding:20}} onClick={e=>e.target===e.currentTarget&&setAprovarModal(null)}>
                 <div style={{background:t.card,borderRadius:18,padding:"24px 22px",width:"100%",maxWidth:340,border:`1px solid ${t.borda}`,boxShadow:`0 24px 60px ${t.shadow}`}}>
                   <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4}}>✅ Aprovar Acesso</div>
                   <div style={{fontSize:11,color:t.txt2,marginBottom:16,lineHeight:1.5}}>Definindo tipo de acesso para <b style={{color:t.ouro}}>{aprovarModal.nome||aprovarModal.email}</b></div>
