@@ -187,6 +187,7 @@ export default function App() {
   const [dashChartType, setDashChartType] = useState("bar"); // bar | pie
   const [dashGroupBy, setDashGroupBy] = useState("mes"); // mes | motorista | destino | status
   const [dashDrillModal, setDashDrillModal] = useState(null); // {type, label, regs}
+  const [dashHeroTab, setDashHeroTab] = useState("carr"); // 'carr' | 'cte'
 
   // ── Aba Operacional ──
   const [operSubTab, setOperSubTab] = useState("sgs");
@@ -257,7 +258,9 @@ export default function App() {
   const chartCarregRef = useRef(null);
   const chartCTERef = useRef(null);
   const chartPieRef = useRef(null);
-  const chartInstances = useRef({c:null,f:null,p:null});
+  const chartAreaRef = useRef(null);
+  const chartDonutRef = useRef(null);
+  const chartInstances = useRef({c:null,f:null,p:null,a:null,d:null});
   const dashChartItemsRef = useRef([]); // armazena [{label, fullLabel, regs}] para clique
 
   // Combined data
@@ -1058,6 +1061,8 @@ export default function App() {
     if (chartInstances.current.c) chartInstances.current.c.destroy();
     if (chartInstances.current.f) chartInstances.current.f.destroy();
     if (chartInstances.current.p) chartInstances.current.p.destroy();
+    if (chartInstances.current.a) chartInstances.current.a.destroy();
+    if (chartInstances.current.d) chartInstances.current.d.destroy();
 
     // Dados agrupados dinamicamente
     let labelsC, dataC;
@@ -1120,12 +1125,53 @@ export default function App() {
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:tickC,callback:v=>"R$"+v.toLocaleString("pt-BR")},grid:{color:gridC}},x:{ticks:{color:tickC},grid:{display:false}}}}
       });
     }
+    // ── Area chart (hero card) ──
+    if (chartAreaRef.current) {
+      const areaLabels = meses.map(m=>{const p=m.split("/"); return MESES_LABEL[+p[0]-1]+"/"+p[1].slice(2);});
+      const areaData = dashHeroTab === "cte"
+        ? meses.map(m=>Math.round(grupos[m].cte))
+        : meses.map(m=>grupos[m].regs.length);
+      chartInstances.current.a = new Chart(chartAreaRef.current, {
+        type:"line",
+        data:{labels:areaLabels,datasets:[{data:areaData,borderColor:"#a855f7",borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#a855f7",tension:.4,fill:true,
+          backgroundColor:(ctx)=>{
+            const c=ctx.chart.ctx, h=ctx.chart.height;
+            const g=c.createLinearGradient(0,0,0,h);
+            g.addColorStop(0,"rgba(168,85,247,.30)"); g.addColorStop(1,"rgba(168,85,247,0)");
+            return g;
+          }
+        }]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>dashHeroTab==="cte"?"R$ "+ctx.raw.toLocaleString("pt-BR"):ctx.raw+" viagens"}}},
+          scales:{
+            y:{display:false},
+            x:{ticks:{color:tickC,font:{size:10}},grid:{display:false},border:{display:false}}
+          }
+        }
+      });
+    }
+
+    // ── Donut status ──
+    if (chartDonutRef.current) {
+      const stMap={};
+      dashData.filtrado.forEach(r=>{const s=(r.status||"Sem Status");stMap[s]=(stMap[s]||0)+1;});
+      const sortedSt=Object.entries(stMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
+      const DONUT_C=["#a855f7","#ec4899","#ef4444","#22c55e"];
+      chartInstances.current.d = new Chart(chartDonutRef.current, {
+        type:"doughnut",
+        data:{labels:sortedSt.map(([k])=>k),datasets:[{data:sortedSt.map(([,v])=>v),backgroundColor:DONUT_C,borderColor:isDark?"#111119":"#fff",borderWidth:3}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:"55%",plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}`}}}}
+      });
+    }
+
     return () => {
       if (chartInstances.current.c) chartInstances.current.c.destroy();
       if (chartInstances.current.f) chartInstances.current.f.destroy();
       if (chartInstances.current.p) chartInstances.current.p.destroy();
+      if (chartInstances.current.a) chartInstances.current.a.destroy();
+      if (chartInstances.current.d) chartInstances.current.d.destroy();
     };
-  }, [activeTab, dashData, theme, perms.financeiro, dashChartType, dashGroupBy]);
+  }, [activeTab, dashData, theme, perms.financeiro, dashChartType, dashGroupBy, dashHeroTab]);
 
   // Save motoristas
   const saveMotoristasLS = (m) => { setMotoristas(m); saveJSON("co_motoristas",m); };
@@ -2893,98 +2939,239 @@ export default function App() {
         )}
 
         {/* ═══ DASHBOARD ═══ */}
-        {activeTab === "dashboard" && (
-          <div>
-            {/* Filtros: Mês + Cidade Origem */}
-            <div style={{...css.card,padding:12,marginBottom:14}}>
-              {/* Filtro Mês */}
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
-                {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,12,2)} Filtrar por Mês
-              </div>
-              <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:12}}>
-                <button onClick={()=>setDashMes("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
-                {dashData.meses.map(m => (
-                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
+        {activeTab === "dashboard" && (() => {
+          const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
+          const heroNum = dashHeroTab==="cte" && canFin
+            ? (dashData.cteT>=1000 ? "R$ "+(dashData.cteT/1000).toFixed(1)+"k" : "R$ "+Math.round(dashData.cteT).toLocaleString("pt-BR"))
+            : String(dashData.filtrado.length);
+          const heroLabel = dashHeroTab==="cte" ? "Receita CTE no Período" : "Carregamentos no Período";
+
+          // Status p/ legenda do donut
+          const statusMapDash={};
+          dashData.filtrado.forEach(r=>{const s=(r.status||"Sem Status");statusMapDash[s]=(statusMapDash[s]||0)+1;});
+          const statusArrDash = Object.entries(statusMapDash).sort((a,b)=>b[1]-a[1]).slice(0,4);
+          const DONUT_LEGEND = ["#a855f7","#ec4899","#ef4444","#22c55e"];
+          const totalStatusDash = statusArrDash.reduce((a,[,v])=>a+v,0);
+
+          // Recentes
+          const recentesDash = [...dashData.filtrado]
+            .filter(r=>r.nome)
+            .sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return db&&da?db-da:0;})
+            .slice(0,5);
+
+          // Status badge color
+          const sc = s => {
+            const u=(s||"").toUpperCase();
+            if(u.includes("CARREGAD")) return "#a855f7";
+            if(u.includes("ENTREG")) return "#22c55e";
+            if(u.includes("AGUARD")||u.includes("PEND")) return "#f59e0b";
+            if(u.includes("CANCEL")||u.includes("NO-SHOW")) return "#ef4444";
+            return "#3b82f6";
+          };
+
+          return (
+            <div>
+              {/* ── Filtros compactos ── */}
+              <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
+                <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginRight:2}}>Mês:</span>
+                <button onClick={()=>setDashMes("todos")} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
+                {dashData.meses.slice(-6).map(m=>(
+                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
                 ))}
+                {dashOrigem!=="todos" && (
+                  <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem}</button>
+                )}
+                {dashOrigem==="todos" && dashData.cidades.length>0 && (
+                  <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",marginLeft:4}}>
+                    <option value="todos">Origem: Todas</option>
+                    {dashData.cidades.map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                )}
               </div>
-              {/* Filtro Cidade Origem */}
-              <div style={{borderTop:`1px solid ${t.borda}`,paddingTop:10}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
-                  {hIco(<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,t.txt2,12,2)} Filtrar por Cidade Origem
-                  {dashOrigem !== "todos" && (
-                    <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:"auto",fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"2px 7px",fontFamily:DESIGN.fnt.b}}>✕ limpar</button>
+
+              {/* ── Hero Card ── */}
+              <div style={{...css.card,padding:isMobile?14:20,marginBottom:12,boxShadow:`0 4px 32px ${hexRgb(t.shadow,.5)}`}}>
+                <div style={{display:"flex",flexDirection:isMobile?"column":"row",gap:isMobile?14:20}}>
+
+                  {/* Esquerda */}
+                  <div style={{flex:"1 1 0",minWidth:0}}>
+                    {/* Toggle tabs */}
+                    <div style={{display:"flex",gap:6,marginBottom:14}}>
+                      <button onClick={()=>setDashHeroTab("carr")} style={{padding:"5px 14px",fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .15s",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="carr"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="carr"?t.txt:"transparent",color:dashHeroTab==="carr"?t.bg:t.txt2}}>
+                        Carregamentos
+                      </button>
+                      {canFin && (
+                        <button onClick={()=>setDashHeroTab("cte")} style={{padding:"5px 14px",fontSize:10,fontWeight:700,cursor:"pointer",transition:"all .15s",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="cte"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="cte"?t.txt:"transparent",color:dashHeroTab==="cte"?t.bg:t.txt2}}>
+                          Receita CTE
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Número hero */}
+                    <div style={{display:"flex",alignItems:"flex-end",gap:10,marginBottom:2}}>
+                      <span style={{fontFamily:DESIGN.fnt.h,fontSize:isMobile?38:48,letterSpacing:1,lineHeight:1,color:t.txt}}>
+                        {heroNum}
+                      </span>
+                      <span style={{color:"#22c55e",fontSize:22,marginBottom:2,lineHeight:1}}>↗</span>
+                    </div>
+                    <p style={{fontSize:11,color:t.txt2,margin:"0 0 16px"}}>{heroLabel}</p>
+
+                    {/* KPIs 2x2 */}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,borderRadius:DESIGN.r.card,overflow:"hidden",border:`1px solid ${t.borda}`}}>
+                      {[
+                        {icon:"🚛",label:"Carregamentos",value:String(dashData.filtrado.length),up:true},
+                        {icon:"📋",label:"DTs Únicas",value:String(dashData.dtsU.size),up:true},
+                        {icon:"👤",label:"Motoristas",value:String(motsUniq.size),up:true,click:()=>setActiveTab("motoristas")},
+                        {icon:canFin?"💵":"⚠️",label:canFin?"Total CTE":"Alertas",value:canFin?(dashData.cteT>=1000?"R$"+(dashData.cteT/1000).toFixed(1)+"k":"R$"+Math.round(dashData.cteT)):String(alertas.length),up:canFin?true:alertas.length===0,click:canFin?undefined:()=>setAlertasOpen(!alertasOpen)},
+                      ].map((k,i)=>(
+                        <div key={i} onClick={k.click||undefined} style={{background:t.card,padding:"11px 12px",display:"flex",alignItems:"center",gap:9,cursor:k.click?"pointer":"default",transition:"background .12s"}}
+                          onMouseEnter={e=>k.click&&(e.currentTarget.style.background=t.card2)}
+                          onMouseLeave={e=>k.click&&(e.currentTarget.style.background=t.card)}
+                        >
+                          <div style={{width:32,height:32,borderRadius:DESIGN.r.ico,background:t.card2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{k.icon}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:9,color:t.txt2,marginBottom:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textTransform:"uppercase",letterSpacing:.5}}>{k.label}</div>
+                            <div style={{fontSize:14,fontWeight:700,color:t.txt,fontFamily:DESIGN.fnt.b,lineHeight:1.1}}>{k.value}</div>
+                          </div>
+                          <span style={{color:k.up?"#22c55e":"#ef4444",fontSize:12,flexShrink:0,lineHeight:1}}>{k.up?"↗":"↘"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Direita — Area Chart */}
+                  {!isMobile && (
+                    <div style={{flex:"1 1 0",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+                      <div style={{height:240}}>
+                        <canvas ref={chartAreaRef} />
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                  <button onClick={()=>setDashOrigem("todos")} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashOrigem==="todos"?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem==="todos"?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem==="todos"?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>Todas</button>
-                  {dashData.cidades.map(c => (
-                    <button key={c} onClick={()=>setDashOrigem(c)} style={{padding:"5px 10px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashOrigem===c?t.azulLt:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashOrigem===c?hexRgb(t.azulLt,.08):t.card2,color:dashOrigem===c?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b}}>{c}</button>
+              </div>
+
+              {/* ── Row: Status DTs + Registros Recentes ── */}
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12,marginBottom:12}}>
+
+                {/* Status das DTs */}
+                <div style={{...css.card,padding:14}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                    <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Status das DTs</span>
+                    <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"#a855f7",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Detalhes ›</button>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:16}}>
+                    <div style={{width:116,height:116,flexShrink:0}}>
+                      <canvas ref={chartDonutRef} />
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{marginBottom:10}}>
+                        <div style={{fontSize:9,color:t.txt2,textTransform:"uppercase",letterSpacing:.5}}>Total de DTs</div>
+                        <div style={{fontFamily:DESIGN.fnt.h,fontSize:30,letterSpacing:1,color:t.txt,lineHeight:1.1}}>{totalStatusDash}</div>
+                      </div>
+                      {statusArrDash.map(([s,v],i)=>(
+                        <div key={s} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,minWidth:0}}>
+                            <span style={{width:8,height:8,borderRadius:"50%",flexShrink:0,background:DONUT_LEGEND[i]||"#666"}} />
+                            <span style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:80}}>{s}</span>
+                          </div>
+                          <span style={{fontSize:11,fontWeight:700,color:t.txt,flexShrink:0,marginLeft:6}}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Registros Recentes */}
+                <div style={{...css.card,padding:14}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                    <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Registros Recentes</span>
+                    <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"#a855f7",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Tudo ›</button>
+                  </div>
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:320}}>
+                      <thead>
+                        <tr>
+                          {["DT","Motorista","Origem","Status",canFin?"CTE":""].filter(Boolean).map(h=>(
+                            <th key={h} style={{padding:"0 6px 8px",textAlign:"left",fontSize:8,fontWeight:600,textTransform:"uppercase",letterSpacing:.6,color:t.txt2,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap"}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentesDash.length===0 ? (
+                          <tr><td colSpan={5} style={{textAlign:"center",padding:16,color:t.txt2,fontSize:11}}>Sem dados no período</td></tr>
+                        ) : recentesDash.map((r,i)=>(
+                          <tr key={i}
+                            style={{borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.5)}`,cursor:"pointer",transition:"background .1s"}}
+                            onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
+                            onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.04)}
+                            onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                          >
+                            <td style={{padding:"7px 6px",color:t.txt2,fontFamily:"monospace",fontSize:9,whiteSpace:"nowrap"}}>{r.dt||"–"}</td>
+                            <td style={{padding:"7px 6px",fontWeight:500,color:t.txt,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"–").split(" ")[0]}</td>
+                            <td style={{padding:"7px 6px",color:t.txt2,fontSize:9,whiteSpace:"nowrap"}}>{(r.origem||"–").split(/[-–]/)[0].trim().slice(0,7)}</td>
+                            <td style={{padding:"7px 6px"}}>
+                              <span style={{padding:"2px 6px",borderRadius:DESIGN.r.badge,fontSize:7,fontWeight:700,textTransform:"uppercase",color:"#fff",background:sc(r.status),whiteSpace:"nowrap",letterSpacing:.3}}>
+                                {(r.status||"–").slice(0,9)}
+                              </span>
+                            </td>
+                            {canFin && <td style={{padding:"7px 6px",textAlign:"right",fontWeight:600,color:t.txt,fontSize:10,whiteSpace:"nowrap"}}>
+                              {r.vl_cte&&parseFloat(r.vl_cte)>0?"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k":"–"}
+                            </td>}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Gráfico Principal ── */}
+              <div style={{...css.card,padding:14,marginBottom:12}}>
+                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
+                  Análise de Carregamentos
+                  <span style={{flex:1,height:1,background:t.borda}} />
+                  {[{k:"mes",l:"Mês"},{k:"motorista",l:"Motorista"},{k:"destino",l:"Destino"},{k:"status",l:"Status"}].map(g=>(
+                    <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
+                  ))}
+                  {[
+                    {k:"bar",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
+                    {k:"pie",svg:<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>}
+                  ].map(tp=>(
+                    <button key={tp.k} onClick={()=>setDashChartType(tp.k)} style={{padding:"3px 8px",fontWeight:700,border:`1.5px solid ${dashChartType===tp.k?t.azul:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashChartType===tp.k?hexRgb(t.azul,.09):t.card2,color:dashChartType===tp.k?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center"}}>{hIco(tp.svg,dashChartType===tp.k?t.azulLt:t.txt2,14,DESIGN.sw.md)}</button>
                   ))}
                 </div>
-              </div>
-            </div>
-
-            {(() => {
-              const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
-              return (
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(130px, 1fr))",gap:10,marginBottom:14}}>
-                  <div className="co-kpi" style={css.kpi(t.ouro)}><div style={{marginBottom:6}}>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.ouro}}>{dashData.filtrado.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamentos</div></div>
-                  <div style={css.kpi(t.verde)}><div style={{marginBottom:6}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>,t.verde,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.verde}}>{dashData.dtsU.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>DTs Únicas</div></div>
-                  <div style={{...css.kpi(t.azulLt),cursor:"pointer"}} onClick={()=>setActiveTab("motoristas")}><div style={{marginBottom:6}}>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.azulLt}}>{motsUniq.size}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Motoristas</div></div>
-                  {canFin && <div style={css.kpi(t.azul)}><div style={{marginBottom:6}}>{hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.azulLt,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:20,letterSpacing:1,color:t.azulLt}}>R$ {(dashData.cteT/1000).toFixed(1)}k</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Total CTE</div></div>}
-                  <div style={{...css.kpi(t.danger),cursor:"pointer"}} onClick={()=>setAlertasOpen(!alertasOpen)}><div style={{marginBottom:6}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,22,DESIGN.sw.thin)}</div><div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.danger}}>{alertas.length}</div><div style={{fontSize:8,textTransform:"uppercase",letterSpacing:DESIGN.ls.label,color:t.txt2,fontWeight:600,marginTop:4}}>Alertas</div></div>
+                <div style={{height:dashChartType==="pie"?300:220}}>
+                  {dashChartType==="bar" ? <canvas ref={chartCarregRef} /> : <canvas ref={chartPieRef} />}
                 </div>
-              );
-            })()}
-
-            {/* Gráfico de Carregamentos — toggle bar/pizza */}
-            <div style={{...css.card,padding:14,marginBottom:14}}>
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
-                Carregamentos
-                <span style={{flex:1,height:1,background:t.borda}} />
-                {/* Toggle agrupamento */}
-                {[{k:"mes",l:"Mês"},{k:"motorista",l:"Motorista"},{k:"destino",l:"Destino"},{k:"status",l:"Status"}].map(g=>(
-                  <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
-                ))}
-                {/* Toggle tipo de gráfico */}
-                {[
-                  {k:"bar",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
-                  {k:"pie",svg:<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>}
-                ].map(tp=>(
-                  <button key={tp.k} onClick={()=>setDashChartType(tp.k)} style={{padding:"3px 8px",fontWeight:700,border:`1.5px solid ${dashChartType===tp.k?t.azul:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashChartType===tp.k?hexRgb(t.azul,.09):t.card2,color:dashChartType===tp.k?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center"}}>{hIco(tp.svg,dashChartType===tp.k?t.azulLt:t.txt2,14,DESIGN.sw.md)}</button>
-                ))}
               </div>
-              <div style={{height:dashChartType==="pie"?300:220}}>
-                {dashChartType==="bar" ? <canvas ref={chartCarregRef} /> : <canvas ref={chartPieRef} />}
+
+              {canFin && (
+                <div style={{...css.card,padding:14,marginBottom:12}}>
+                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>Valor CTE por Mês (R$)<span style={{flex:1,height:1,background:t.borda}} /></div>
+                  <div style={{height:200}}><canvas ref={chartCTERef} /></div>
+                </div>
+              )}
+
+              {/* Por UF Destino */}
+              <div style={{...css.card,padding:14,marginBottom:12}}>
+                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:8,color:t.ouro,fontWeight:500}}>· toque para ver motoristas</span></div>
+                {(()=>{
+                  const ufMap={};
+                  dashData.filtrado.forEach(r=>{if(!r.destino)return;const uf=r.destino.split("-").pop().trim().toUpperCase();if(uf.length===2)ufMap[uf]=(ufMap[uf]||0)+1;});
+                  const ufArr=Object.keys(ufMap).sort((a,b)=>ufMap[b]-ufMap[a]).slice(0,8);
+                  const maxUF=ufArr.length?ufMap[ufArr[0]]:1;
+                  return ufArr.length?ufArr.map(uf=>(
+                    <div key={uf} onClick={()=>setDashDrillModal({type:"destino",label:uf,regs:dashData.filtrado.filter(r=>{const u=(r.destino||"").split("-").pop().trim().toUpperCase();return u===uf;})})} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7,cursor:"pointer",borderRadius:6,padding:"3px 4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <span style={{width:28,fontFamily:DESIGN.fnt.h,fontSize:13,color:t.ouro,textAlign:"right",flexShrink:0}}>{uf}</span>
+                      <div style={{flex:1,background:t.borda,borderRadius:4,height:8,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(ufMap[uf]/maxUF*100)}%`,background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,borderRadius:4,transition:"width .4s"}}/></div>
+                      <span style={{fontFamily:DESIGN.fnt.h,fontSize:13,color:t.txt2,width:24,textAlign:"right",flexShrink:0}}>{ufMap[uf]}</span>
+                    </div>
+                  )):<div style={{color:t.txt2,fontSize:11,textAlign:"center",padding:14}}>Sem dados</div>;
+                })()}
               </div>
             </div>
-
-            {canFin && (
-              <div style={{...css.card,padding:14,marginBottom:14}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>Valor CTE por Mês (R$)<span style={{flex:1,height:1,background:t.borda}} /></div>
-                <div style={{height:200}}><canvas ref={chartCTERef} /></div>
-              </div>
-            )}
-
-            {/* Top UF — clicável para ver motoristas da rota */}
-            <div style={{...css.card,padding:14,marginBottom:14}}>
-              <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:8,color:t.ouro,fontWeight:500}}>· toque na UF para ver motoristas</span></div>
-              {(() => {
-                const ufMap = {};
-                dashData.filtrado.forEach(r => { if (!r.destino) return; const uf=r.destino.split("-").pop().trim().toUpperCase(); if (uf.length===2) ufMap[uf]=(ufMap[uf]||0)+1; });
-                const ufArr = Object.keys(ufMap).sort((a,b)=>ufMap[b]-ufMap[a]).slice(0,8);
-                const maxUF = ufArr.length ? ufMap[ufArr[0]] : 1;
-                return ufArr.length ? ufArr.map(uf => (
-                  <div key={uf} onClick={()=>setDashDrillModal({type:"destino",label:uf,regs:dashData.filtrado.filter(r=>{const u=(r.destino||"").split("-").pop().trim().toUpperCase();return u===uf;})})} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7,cursor:"pointer",borderRadius:6,padding:"3px 4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                    <span style={{width:28,fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,textAlign:"right",flexShrink:0}}>{uf}</span>
-                    <div style={{flex:1,background:t.borda,borderRadius:4,height:8,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(ufMap[uf]/maxUF*100)}%`,background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,borderRadius:4,transition:"width .4s"}} /></div>
-                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.txt2,width:24,textAlign:"right",flexShrink:0}}>{ufMap[uf]}</span>
-                  </div>
-                )) : <div style={{color:t.txt2,fontSize:11,textAlign:"center",padding:14}}>Sem dados</div>;
-              })()}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ═══ PLANILHA ═══ */}
         {activeTab === "planilha" && (()=>{
