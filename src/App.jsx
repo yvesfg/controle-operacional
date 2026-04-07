@@ -943,11 +943,19 @@ export default function App() {
       const pa=a.split("/"),pb=b.split("/");
       return (+pa[1]*12+ +pa[0])-(+pb[1]*12+ +pb[0]);
     });
-    // Cidades de origem únicas — extrai a parte antes do "-" (ex: "BELEM - PA" → "BELEM")
-    const normOrigem = (s) => (s||"").split(/\s*[-–]\s*/)[0].trim().toUpperCase();
-    const cidadeSet = new Set();
-    DADOS.forEach(r => { const c = normOrigem(r.origem); if (c) cidadeSet.add(c); });
-    const cidades = [...cidadeSet].sort();
+    // Normaliza origem: remove acentos, split em "-" ou espaço isolado, retorna só cidade
+    const normOrigem = (s) => {
+      const sem = (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
+      return sem.split(/\s*[-–]\s*|\s+(?=[A-Z]{2}$)/)[0].trim();
+    };
+    // Origens fixas: apenas BELEM-PA e IMPERATRIZ-MA (confirmado no Supabase)
+    const ORIGENS_PERMITIDAS = [
+      { norm: "BELEM",      label: "BELEM-PA" },
+      { norm: "IMPERATRIZ", label: "IMPERATRIZ-MA" },
+    ];
+    const cidades = ORIGENS_PERMITIDAS
+      .filter(o => DADOS.some(r => normOrigem(r.origem) === o.norm))
+      .map(o => o.norm);
 
     // Aplica filtros: mês + cidade origem
     let filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
@@ -2979,12 +2987,12 @@ export default function App() {
                   <button key={m} onClick={()=>setDashMes(m)} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
                 ))}
                 {dashOrigem!=="todos" && (
-                  <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem}</button>
+                  <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
                 )}
                 {dashOrigem==="todos" && dashData.cidades.length>0 && (
                   <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",marginLeft:4}}>
                     <option value="todos">Origem: Todas</option>
-                    {dashData.cidades.map(c=><option key={c} value={c}>{c}</option>)}
+                    {dashData.cidades.map(c=><option key={c} value={c}>{c==="BELEM"?"BELEM-PA":c==="IMPERATRIZ"?"IMPERATRIZ-MA":c}</option>)}
                   </select>
                 )}
               </div>
@@ -3125,50 +3133,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* ── Gráfico Principal ── */}
-              <div style={{...css.card,padding:14,marginBottom:12}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
-                  Análise de Carregamentos
-                  <span style={{flex:1,height:1,background:t.borda}} />
-                  {[{k:"mes",l:"Mês"},{k:"motorista",l:"Motorista"},{k:"destino",l:"Destino"},{k:"status",l:"Status"}].map(g=>(
-                    <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
-                  ))}
-                  {[
-                    {k:"bar",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
-                    {k:"pie",svg:<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>}
-                  ].map(tp=>(
-                    <button key={tp.k} onClick={()=>setDashChartType(tp.k)} style={{padding:"3px 8px",fontWeight:700,border:`1.5px solid ${dashChartType===tp.k?t.azul:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashChartType===tp.k?hexRgb(t.azul,.09):t.card2,color:dashChartType===tp.k?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center"}}>{hIco(tp.svg,dashChartType===tp.k?t.azulLt:t.txt2,14,DESIGN.sw.md)}</button>
-                  ))}
-                </div>
-                <div style={{height:dashChartType==="pie"?300:220}}>
-                  {dashChartType==="bar" ? <canvas ref={chartCarregRef} /> : <canvas ref={chartPieRef} />}
-                </div>
-              </div>
-
-              {canFin && (
-                <div style={{...css.card,padding:14,marginBottom:12}}>
-                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>Valor CTE por Mês (R$)<span style={{flex:1,height:1,background:t.borda}} /></div>
-                  <div style={{height:200}}><canvas ref={chartCTERef} /></div>
-                </div>
-              )}
-
-              {/* Por UF Destino */}
-              <div style={{...css.card,padding:14,marginBottom:12}}>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:8,color:t.ouro,fontWeight:500}}>· toque para ver motoristas</span></div>
-                {(()=>{
-                  const ufMap={};
-                  dashData.filtrado.forEach(r=>{if(!r.destino)return;const uf=r.destino.split("-").pop().trim().toUpperCase();if(uf.length===2)ufMap[uf]=(ufMap[uf]||0)+1;});
-                  const ufArr=Object.keys(ufMap).sort((a,b)=>ufMap[b]-ufMap[a]).slice(0,8);
-                  const maxUF=ufArr.length?ufMap[ufArr[0]]:1;
-                  return ufArr.length?ufArr.map(uf=>(
-                    <div key={uf} onClick={()=>setDashDrillModal({type:"destino",label:uf,regs:dashData.filtrado.filter(r=>{const u=(r.destino||"").split("-").pop().trim().toUpperCase();return u===uf;})})} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7,cursor:"pointer",borderRadius:6,padding:"3px 4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                      <span style={{width:28,fontFamily:DESIGN.fnt.h,fontSize:13,color:t.ouro,textAlign:"right",flexShrink:0}}>{uf}</span>
-                      <div style={{flex:1,background:t.borda,borderRadius:4,height:8,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(ufMap[uf]/maxUF*100)}%`,background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,borderRadius:4,transition:"width .4s"}}/></div>
-                      <span style={{fontFamily:DESIGN.fnt.h,fontSize:13,color:t.txt2,width:24,textAlign:"right",flexShrink:0}}>{ufMap[uf]}</span>
-                    </div>
-                  )):<div style={{color:t.txt2,fontSize:11,textAlign:"center",padding:14}}>Sem dados</div>;
-                })()}
-              </div>
             </div>
           );
         })()}
