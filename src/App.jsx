@@ -2990,11 +2990,10 @@ export default function App() {
             <div>
               {/* ── Filtros compactos ── */}
               <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
-                <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginRight:2}}>Mês:</span>
-                <button onClick={()=>setDashMes("todos")} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
-                {dashData.meses.slice(-6).map(m=>(
-                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
-                ))}
+                <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
+                  <option value="todos">Mês: Todos</option>
+                  {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
+                </select>
                 {dashOrigem!=="todos" && (
                   <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
                 )}
