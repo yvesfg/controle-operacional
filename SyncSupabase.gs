@@ -94,7 +94,11 @@ function sincronizarComSupabase() {
             v = Utilities.formatDate(v, 'America/Sao_Paulo', 'dd/MM/yyyy');
           }
           var vs = v ? v.toString().trim() : '';
-          reg[mapa[i]] = vs;
+          // Não sobrescreve valor existente com string vazia
+          // (evita que col "DT Espelho" vazia apague o valor de "DT" preenchida)
+          if (vs || !reg.hasOwnProperty(mapa[i])) {
+            reg[mapa[i]] = vs;
+          }
           if (vs) linhaVazia = false;
           if (mapa[i] === 'dt' && vs) temDT = true;
         });
