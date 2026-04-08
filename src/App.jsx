@@ -953,8 +953,10 @@ export default function App() {
       { norm: "BELEM",      label: "BELEM-PA" },
       { norm: "IMPERATRIZ", label: "IMPERATRIZ-MA" },
     ];
+    // Filtra cidades pelo mês selecionado — mês seletor como origem dos filtros disponíveis
+    const mesRegs = dashMes === "todos" ? DADOS : (grupos[dashMes]?.regs || []);
     const cidades = ORIGENS_PERMITIDAS
-      .filter(o => DADOS.some(r => normOrigem(r.origem) === o.norm))
+      .filter(o => mesRegs.some(r => normOrigem(r.origem) === o.norm))
       .map(o => o.norm);
 
     // Aplica filtros: mês + cidade origem
@@ -965,6 +967,13 @@ export default function App() {
     let cteT = 0; filtrado.forEach(r=>{ const v=parseFloat(r.vl_cte); if(!isNaN(v)) cteT+=v; });
     return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem };
   }, [DADOS, dashMes, dashOrigem]);
+
+  // Reset dashOrigem quando o mês selecionado não contém a cidade atual
+  useEffect(() => {
+    if (dashOrigem !== "todos" && !dashData.cidades.includes(dashOrigem)) {
+      setDashOrigem("todos");
+    }
+  }, [dashMes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Diarias data — lógica simplificada Sessão 16:
   // REGRA 1: chegada <= agenda E descarga > agenda → COM DIÁRIA (dias = descarga - agenda)
@@ -5070,7 +5079,7 @@ function mapearColuna(n){
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {[
                 {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Motorista",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"PLACA 01"},{k:"placa2",l:"PLACA 02"},{k:"placa3",l:"PLACA 03"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo",type:"select_opts",opts:["TERCEIRO","FROTA","AGREGADO"]}]},
-                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias",type:"computed_dias",lock:true}]},
+                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date_or_oc"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias",type:"computed_dias",lock:true}]},
                 {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"},{k:"diaria_prev",l:"Diária Devida (R$)"},{k:"diaria_pg",l:"Diária Paga (R$)"},{k:"vl_cte_comp",l:"Valor CTE Comp."}]},
                 {s:"Documentação",ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"ro_hora",l:"Hora RO"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
                 {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",type:"select_opts",opts:["SKYMARK (FRETEBRAS)","INFINITY","MUNDIAL","OPENTECH"],span:2},{k:"forms",l:"FORMS",type:"select_sim_nao"}]},
@@ -5145,6 +5154,43 @@ function mapearColuna(n){
                               <option value="">— Selecione —</option>
                               {(f.opts||[]).map(o=><option key={o} value={o}>{o}</option>)}
                             </select>
+                          ) : f.type==="date_or_oc" ? (
+                            (() => {
+                              const isOC = (formData[f.k]||"").toUpperCase().trim() === "OC";
+                              return (
+                                <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                                  {/* Toggle OC */}
+                                  <label style={{display:"flex",alignItems:"center",gap:7,cursor:isLocked?"not-allowed":"pointer",padding:"6px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${isOC?t.ouro:t.borda}`,background:isOC?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
+                                    <input
+                                      type="checkbox"
+                                      disabled={isLocked}
+                                      checked={isOC}
+                                      onChange={e=>{
+                                        setFormData(p=>({...p,[f.k]:e.target.checked?"OC":""}));
+                                      }}
+                                      style={{width:13,height:13,accentColor:t.ouro,cursor:isLocked?"not-allowed":"pointer"}}
+                                    />
+                                    <span style={{fontSize:10,color:isOC?t.ouro:t.txt2,fontWeight:isOC?700:400,letterSpacing:.3}}>
+                                      {isOC?"📋 OC – Ordem de Chegada":"OC (sem data fixa)"}
+                                    </span>
+                                    {isLocked && <span style={{color:t.ouro,fontSize:9,marginLeft:"auto"}}>🔒</span>}
+                                  </label>
+                                  {/* Date picker — só exibe quando não é OC */}
+                                  {!isOC && (
+                                    <input
+                                      type="date"
+                                      value={brToInput(formData[f.k])}
+                                      readOnly={isLocked}
+                                      onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
+                                      onChange={isLocked?undefined:e=>{
+                                        setFormData(p=>({...p,[f.k]:inputToBr(e.target.value)}));
+                                      }}
+                                      style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?.5:1,background:t.inputBg}}
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })()
                           ) : f.type==="computed_dias" ? (
                             (() => {
                               const parseFormD = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
