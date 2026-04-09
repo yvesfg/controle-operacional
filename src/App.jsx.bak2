@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
-Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
+import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController } from "chart.js";
+Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController);
 
 import { themes, TABLE, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
@@ -55,9 +55,6 @@ export default function App() {
   const [planilhaSortDir, setPlanilhaSortDir] = useState("asc");  // 'asc'|'desc'
   const [planilhaPagina, setPlanilhaPagina] = useState(1);        // página atual (começa em 1)
   const [planilhaDetalheReg, setPlanilhaDetalheReg] = useState(null); // modal detalhe da planilha
-  const [planilhaFiltroAno, setPlanilhaFiltroAno] = useState("");    // "" = aguardando default automático
-  const [planilhaFiltroMes, setPlanilhaFiltroMes] = useState("");    // "" = aguardando default automático
-  const [planilhaFiltroOrigem, setPlanilhaFiltroOrigem] = useState("todas"); // "todas" = sem filtro
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
   const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
@@ -149,23 +146,6 @@ export default function App() {
     return()=>window.removeEventListener("resize",fn);
   },[]);
 
-  // Auto-default planilha filters: ano/mês mais recente ao carregar dados
-  useEffect(()=>{
-    if(!dadosBase||dadosBase.length===0) return;
-    const parseYM = s => {
-      if(!s) return null;
-      if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1]};}
-      if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1]};}
-      return null;
-    };
-    const dates = dadosBase.map(r=>parseYM(r.data_carr||r.data_desc||"")).filter(Boolean);
-    if(dates.length===0) return;
-    dates.sort((a,b)=>a.ano!==b.ano?b.ano.localeCompare(a.ano):b.mes.localeCompare(a.mes));
-    const latest = dates[0];
-    setPlanilhaFiltroAno(prev=>prev===""?latest.ano:prev);
-    setPlanilhaFiltroMes(prev=>prev===""?latest.mes:prev);
-  },[dadosBase]);
-
   // Item 7 — Email template e envio
   const [emailTemplateOpen, setEmailTemplateOpen] = useState(false);
   const [emailTemplate, setEmailTemplate] = useState(() => loadJSON("co_email_template", {
@@ -252,7 +232,6 @@ export default function App() {
   const [relGeralVinculo, setRelGeralVinculo] = useState("");
   const [relGeralSecoes, setRelGeralSecoes] = useState({kpi:true,sumario:true,registros:true,sgs:true,ocorr_dt:true,diarias:false,descargas:false});
   const [relGeralLoading, setRelGeralLoading] = useState(false);
-  const [relGeralStatusOper, setRelGeralStatusOper] = useState(""); // filtro por r.status
   const [relMenuOpen, setRelMenuOpen] = useState(false);
   const [relOperOpen, setRelOperOpen] = useState(false);
   const [relOperFrom, setRelOperFrom] = useState("");
@@ -964,21 +943,11 @@ export default function App() {
       const pa=a.split("/"),pb=b.split("/");
       return (+pa[1]*12+ +pa[0])-(+pb[1]*12+ +pb[0]);
     });
-    // Normaliza origem: remove acentos, split em "-" ou espaço isolado, retorna só cidade
-    const normOrigem = (s) => {
-      const sem = (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
-      return sem.split(/\s*[-–]\s*|\s+(?=[A-Z]{2}$)/)[0].trim();
-    };
-    // Origens fixas: apenas BELEM-PA e IMPERATRIZ-MA (confirmado no Supabase)
-    const ORIGENS_PERMITIDAS = [
-      { norm: "BELEM",      label: "BELEM-PA" },
-      { norm: "IMPERATRIZ", label: "IMPERATRIZ-MA" },
-    ];
-    // Filtra cidades pelo mês selecionado — mês seletor como origem dos filtros disponíveis
-    const mesRegs = dashMes === "todos" ? DADOS : (grupos[dashMes]?.regs || []);
-    const cidades = ORIGENS_PERMITIDAS
-      .filter(o => mesRegs.some(r => normOrigem(r.origem) === o.norm))
-      .map(o => o.norm);
+    // Cidades de origem únicas — extrai a parte antes do "-" (ex: "BELEM - PA" → "BELEM")
+    const normOrigem = (s) => (s||"").split(/\s*[-–]\s*/)[0].trim().toUpperCase();
+    const cidadeSet = new Set();
+    DADOS.forEach(r => { const c = normOrigem(r.origem); if (c) cidadeSet.add(c); });
+    const cidades = [...cidadeSet].sort();
 
     // Aplica filtros: mês + cidade origem
     let filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
@@ -988,13 +957,6 @@ export default function App() {
     let cteT = 0; filtrado.forEach(r=>{ const v=parseFloat(r.vl_cte); if(!isNaN(v)) cteT+=v; });
     return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem };
   }, [DADOS, dashMes, dashOrigem]);
-
-  // Reset dashOrigem quando o mês selecionado não contém a cidade atual
-  useEffect(() => {
-    if (dashOrigem !== "todos" && !dashData.cidades.includes(dashOrigem)) {
-      setDashOrigem("todos");
-    }
-  }, [dashMes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Diarias data — lógica simplificada Sessão 16:
   // REGRA 1: chegada <= agenda E descarga > agenda → COM DIÁRIA (dias = descarga - agenda)
@@ -1692,12 +1654,12 @@ export default function App() {
   .brand-sub strong{color:#f0b90b;font-weight:700}
   .header-right{text-align:right;color:rgba(255,255,255,.6);font-size:10px;line-height:1.8;flex-shrink:0}
   .header-right strong{color:#f0b90b;font-size:12px;display:block;margin-bottom:2px;font-weight:800;letter-spacing:.5px}
-  .subheader{background:linear-gradient(90deg,#f0b90b 0%,#f5cc3c 100%);padding:10px 32px;display:flex;align-items:center;gap:16px;border-bottom:3px solid #d9a50a}
-  .subheader-title{font-size:15px;font-weight:900;color:#0a1628;letter-spacing:.8px;text-transform:uppercase}
-  .subheader-sub{font-size:10px;color:#5a4200;font-weight:600;margin-top:2px}
-  .content{padding:22px 32px}
-  .section-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:2.5px;color:#fff;margin:20px 0 12px;display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,#1a3a6b,#2d5aa0);padding:7px 14px;border-radius:6px}
-  .section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.2)}
+  .subheader{background:#f0b90b;padding:9px 32px;display:flex;align-items:center;gap:16px}
+  .subheader-title{font-size:15px;font-weight:800;color:#0a1628;letter-spacing:.5px;text-transform:uppercase}
+  .subheader-sub{font-size:10px;color:#5a4200;font-weight:600}
+  .content{padding:24px 32px}
+  .section-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#1a3a6b;margin:24px 0 12px;display:flex;align-items:center;gap:10px}
+  .section-title::after{content:'';flex:1;height:2px;background:linear-gradient(to right,#f0b90b55,transparent)}
   .kpi-row{display:grid;gap:12px;margin-bottom:8px}
   .kpi-row.cols3{grid-template-columns:repeat(3,1fr)}
   .kpi-row.cols4{grid-template-columns:repeat(4,1fr)}
@@ -1709,13 +1671,12 @@ export default function App() {
   .kpi.yellow{border-color:#f7e6a0;background:#fffbec}.kpi.yellow .kpi-val{color:#a07000}
   .kpi.red{border-color:#ffd0d0;background:#fff5f5}.kpi.red .kpi-val{color:#c0392b}
   .kpi.blue{border-color:#bcd4ff;background:#f0f5ff}.kpi.blue .kpi-val{color:#1a3a6b}
-  table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px;border-radius:8px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
-  thead tr{background:linear-gradient(90deg,#0a1628,#1a3a6b);color:#fff}
-  thead th{padding:9px 10px;text-align:left;font-size:8.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.08)}
-  thead th:last-child{border-right:none}
+  table{width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:6px}
+  thead tr{background:#0a1628;color:#fff}
+  thead th{padding:10px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
   tbody tr:nth-child(even){background:#f7f9ff}
-  tbody tr:hover{background:#e8f0ff}
-  tbody td{padding:7px 10px;border-bottom:1px solid #e8edf5;vertical-align:middle;line-height:1.4}
+  tbody tr:hover{background:#eef2ff}
+  tbody td{padding:8px 10px;border-bottom:1px solid #e8edf5;vertical-align:top;line-height:1.4}
   .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
   .badge-ok{background:#d4f5e6;color:#0a7a45}
   .badge-pend{background:#fff3cc;color:#a07000}
@@ -1914,7 +1875,7 @@ export default function App() {
     const fromD = from ? new Date(from) : null;
     const toD   = to   ? new Date(to)   : null;
     if(toD) toD.setHours(23,59,59,999);
-    const {motorista:fMot="",statusDiaria:fStatus="",statusOper:fStatusOper="",origem:fOrigem="",destino:fDest="",vinculo:fVinc="",secoes:fSecoes={kpi:true,sumario:true,registros:true,sgs:true,ocorr_dt:true,diarias:false,descargas:false}} = filtros;
+    const {motorista:fMot="",statusDiaria:fStatus="",origem:fOrigem="",destino:fDest="",vinculo:fVinc="",secoes:fSecoes={kpi:true,sumario:true,registros:true,sgs:true,ocorr_dt:true,diarias:false,descargas:false}} = filtros;
     // Mapa nome→vínculo para filtro de vínculo
     const motVincMap = new Map(motoristas.map(m=>[m.nome?.toUpperCase()?.trim()||"",m.vinculo||""]));
     const inRange = r => {
@@ -1932,7 +1893,6 @@ export default function App() {
       if(fDest && !(r.destino||"").toUpperCase().includes(fDest.toUpperCase())) return false;
       if(fVinc) { const v = motVincMap.get((r.nome||"").toUpperCase().trim()); if(v!==fVinc) return false; }
       if(fStatus) { const tp=diariasMapG.get(r.dt)||""; if(tp!==fStatus) return false; }
-      if(fStatusOper && (r.status||"").toUpperCase().trim()!==fStatusOper.toUpperCase().trim()) return false;
       return true;
     }).sort((a,b)=>{
       const toSort = s => { if(!s)return ""; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return `${p[2]}-${p[1]}-${p[0]}`} return s; };
@@ -1979,20 +1939,11 @@ export default function App() {
     // Filtros ativos para exibição no cabeçalho do relatório
     const filtrosAtivos = [
       fMot?`Motorista: ${fMot}`:"",
-      fStatusOper?`Status: ${fStatusOper}`:"",
-      fStatus?`Diária: ${({diaria:"Com Diária",sem_diaria:"Sem Diária",atraso:"Perdeu Agenda",pendente:"Pendente"}[fStatus]||fStatus)}`:"",
+      fStatus?`Status: ${({diaria:"Com Diária",sem_diaria:"Sem Diária",atraso:"Perdeu Agenda",pendente:"Pendente"}[fStatus]||fStatus)}`:"",
       fOrigem?`Origem: ${fOrigem}`:"",
       fDest?`Destino: ${fDest}`:"",
       fVinc?`Vínculo: ${fVinc}`:"",
     ].filter(Boolean).join(" · ");
-    const statusDistrib = {};
-    regs.forEach(r=>{const s=(r.status||"—").trim();statusDistrib[s]=(statusDistrib[s]||0)+1;});
-    const statusDistribArr = Object.entries(statusDistrib).sort((a,b)=>b[1]-a[1]);
-    const statusOperBadge = s => {
-      const map = {CARREGADO:{bg:"#d4f5e6",c:"#0a7a45"},PENDENTE:{bg:"#fff3cc",c:"#a07000"},"EM ABERTO":{bg:"#e0e8ff",c:"#2c4aab"},CANCELADO:{bg:"#ffe0d0",c:"#c0392b"},"NO-SHOW":{bg:"#ffe0d0",c:"#c0392b"},"NÃO ACEITE":{bg:"#ffd0d0",c:"#c0392b"}};
-      const st = map[(s||"").toUpperCase()]||{bg:"#f0f0f0",c:"#666"};
-      return `<span style="background:${st.bg};color:${st.c};border-radius:4px;padding:2px 7px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.5px">${s||"—"}</span>`;
-    };
     const corpo = `
   <div class="subheader">
     <div>
@@ -2022,16 +1973,6 @@ export default function App() {
       <div class="kpi green"><div class="kpi-val" style="font-size:15px">${fmt(totalDiariaPg)}</div><div class="kpi-lbl">Total Pago (Diárias)</div></div>
       <div class="kpi ${(totalDiariaPrev-totalDiariaPg)>0?"red":"green"}"><div class="kpi-val" style="font-size:15px">${fmt(Math.abs(totalDiariaPrev-totalDiariaPg))}</div><div class="kpi-lbl">${(totalDiariaPrev-totalDiariaPg)>0?"A Pagar":"Quitado"}</div></div>
     </div>`:""}`:""}
-    ${statusDistribArr.length>1?`
-    <div class="section-title">Distribuição por Status Operacional</div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-      ${statusDistribArr.map(([s,n])=>{
-        const pct=Math.round(n/regs.length*100);
-        const mapC={CARREGADO:{bg:"#d4f5e6",bar:"#0a7a45",c:"#0a7a45"},PENDENTE:{bg:"#fff3cc",bar:"#f0b90b",c:"#a07000"},"EM ABERTO":{bg:"#e0e8ff",bar:"#3b82f6",c:"#2c4aab"},CANCELADO:{bg:"#ffe0d0",bar:"#ef4444",c:"#c0392b"},"NO-SHOW":{bg:"#ffe0d0",bar:"#ef4444",c:"#c0392b"},"NÃO ACEITE":{bg:"#ffd0d0",bar:"#c0392b",c:"#c0392b"}};
-        const cl=mapC[(s||"").toUpperCase()]||{bg:"#f0f0f0",bar:"#aaa",c:"#555"};
-        return '<div style="flex:1;min-width:130px;background:'+cl.bg+';border-radius:10px;padding:12px 14px;border:1px solid '+cl.bar+'33"><div style="font-size:18px;font-weight:900;color:'+cl.c+';line-height:1">'+n+'</div><div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:'+cl.c+';opacity:.8;margin:3px 0 6px">'+s+'</div><div style="height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cl.bar+';border-radius:2px"></div></div><div style="font-size:8px;color:'+cl.c+';opacity:.7;margin-top:3px">'+pct+'%</div></div>';
-      }).join("")}
-    </div>`:""}
     ${fSecoes.sumario!==false && Object.keys(porMotorista).length>0?`
     <div class="section-title">Resumo por Motorista</div>
     <table>
@@ -2055,7 +1996,7 @@ export default function App() {
       <thead><tr>
         <th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th>
         <th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th>
-        <th>Status Oper.</th><th>Status Diária</th><th>Vl. CTE</th><th>SGS</th><th>RO</th>
+        <th>Status</th><th>Vl. CTE</th><th>SGS</th><th>RO</th>
       </tr></thead>
       <tbody>
         ${regs.map(r=>{
@@ -2072,7 +2013,6 @@ export default function App() {
             <td>${r.data_agenda||"—"}</td>
             <td>${r.chegada||"—"}</td>
             <td>${r.data_desc||"—"}</td>
-            <td>${statusOperBadge(r.status)}</td>
             <td>${statusBadgeG(tipo)}</td>
             <td>${r.vl_cte?`R$ ${parseFloat(r.vl_cte).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
             <td>${r.sgs?`<span class="badge badge-atraso">${r.sgs}</span>`:"—"}</td>
@@ -3033,17 +2973,18 @@ export default function App() {
             <div>
               {/* ── Filtros compactos ── */}
               <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
-                <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
-                  <option value="todos">Mês: Todos</option>
-                  {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
-                </select>
+                <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginRight:2}}>Mês:</span>
+                <button onClick={()=>setDashMes("todos")} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes==="todos"?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes==="todos"?hexRgb(t.ouro,.07):t.card2,color:dashMes==="todos"?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>Todos</button>
+                {dashData.meses.slice(-6).map(m=>(
+                  <button key={m} onClick={()=>setDashMes(m)} style={{padding:"4px 9px",fontSize:9,fontWeight:700,border:`1.5px solid ${dashMes===m?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashMes===m?hexRgb(t.ouro,.07):t.card2,color:dashMes===m?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{m}</button>
+                ))}
                 {dashOrigem!=="todos" && (
-                  <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
+                  <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem}</button>
                 )}
                 {dashOrigem==="todos" && dashData.cidades.length>0 && (
                   <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",marginLeft:4}}>
                     <option value="todos">Origem: Todas</option>
-                    {dashData.cidades.map(c=><option key={c} value={c}>{c==="BELEM"?"BELEM-PA":c==="IMPERATRIZ"?"IMPERATRIZ-MA":c}</option>)}
+                    {dashData.cidades.map(c=><option key={c} value={c}>{c}</option>)}
                   </select>
                 )}
               </div>
@@ -3184,6 +3125,50 @@ export default function App() {
                 </div>
               </div>
 
+              {/* ── Gráfico Principal ── */}
+              <div style={{...css.card,padding:14,marginBottom:12}}>
+                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:8,display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
+                  Análise de Carregamentos
+                  <span style={{flex:1,height:1,background:t.borda}} />
+                  {[{k:"mes",l:"Mês"},{k:"motorista",l:"Motorista"},{k:"destino",l:"Destino"},{k:"status",l:"Status"}].map(g=>(
+                    <button key={g.k} onClick={()=>setDashGroupBy(g.k)} style={{padding:"3px 8px",fontSize:8,fontWeight:700,border:`1.5px solid ${dashGroupBy===g.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashGroupBy===g.k?hexRgb(t.ouro,.07):t.card2,color:dashGroupBy===g.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{g.l}</button>
+                  ))}
+                  {[
+                    {k:"bar",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
+                    {k:"pie",svg:<><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></>}
+                  ].map(tp=>(
+                    <button key={tp.k} onClick={()=>setDashChartType(tp.k)} style={{padding:"3px 8px",fontWeight:700,border:`1.5px solid ${dashChartType===tp.k?t.azul:t.borda}`,borderRadius:DESIGN.r.tag,cursor:"pointer",background:dashChartType===tp.k?hexRgb(t.azul,.09):t.card2,color:dashChartType===tp.k?t.azulLt:t.txt2,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center"}}>{hIco(tp.svg,dashChartType===tp.k?t.azulLt:t.txt2,14,DESIGN.sw.md)}</button>
+                  ))}
+                </div>
+                <div style={{height:dashChartType==="pie"?300:220}}>
+                  {dashChartType==="bar" ? <canvas ref={chartCarregRef} /> : <canvas ref={chartPieRef} />}
+                </div>
+              </div>
+
+              {canFin && (
+                <div style={{...css.card,padding:14,marginBottom:12}}>
+                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:12,display:"flex",alignItems:"center",gap:7}}>Valor CTE por Mês (R$)<span style={{flex:1,height:1,background:t.borda}} /></div>
+                  <div style={{height:200}}><canvas ref={chartCTERef} /></div>
+                </div>
+              )}
+
+              {/* Por UF Destino */}
+              <div style={{...css.card,padding:14,marginBottom:12}}>
+                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:2,color:t.txt2,fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>Por UF Destino <span style={{fontSize:8,color:t.ouro,fontWeight:500}}>· toque para ver motoristas</span></div>
+                {(()=>{
+                  const ufMap={};
+                  dashData.filtrado.forEach(r=>{if(!r.destino)return;const uf=r.destino.split("-").pop().trim().toUpperCase();if(uf.length===2)ufMap[uf]=(ufMap[uf]||0)+1;});
+                  const ufArr=Object.keys(ufMap).sort((a,b)=>ufMap[b]-ufMap[a]).slice(0,8);
+                  const maxUF=ufArr.length?ufMap[ufArr[0]]:1;
+                  return ufArr.length?ufArr.map(uf=>(
+                    <div key={uf} onClick={()=>setDashDrillModal({type:"destino",label:uf,regs:dashData.filtrado.filter(r=>{const u=(r.destino||"").split("-").pop().trim().toUpperCase();return u===uf;})})} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7,cursor:"pointer",borderRadius:6,padding:"3px 4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <span style={{width:28,fontFamily:DESIGN.fnt.h,fontSize:13,color:t.ouro,textAlign:"right",flexShrink:0}}>{uf}</span>
+                      <div style={{flex:1,background:t.borda,borderRadius:4,height:8,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(ufMap[uf]/maxUF*100)}%`,background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,borderRadius:4,transition:"width .4s"}}/></div>
+                      <span style={{fontFamily:DESIGN.fnt.h,fontSize:13,color:t.txt2,width:24,textAlign:"right",flexShrink:0}}>{ufMap[uf]}</span>
+                    </div>
+                  )):<div style={{color:t.txt2,fontSize:11,textAlign:"center",padding:14}}>Sem dados</div>;
+                })()}
+              </div>
             </div>
           );
         })()}
@@ -3218,25 +3203,7 @@ export default function App() {
               return planilhaSortDir==="asc" ? va.localeCompare(vb,"pt-BR",{numeric:true}) : vb.localeCompare(va,"pt-BR",{numeric:true});
             });
           };
-          // ── Filtros de Ano / Mês / Origem ──
-          const parseYMfilt = s => {
-            if(!s) return null;
-            if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1]};}
-            if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1]};}
-            return null;
-          };
-          const anosDisp   = [...new Set(DADOS.map(r=>{const ym=parseYMfilt(r.data_carr||r.data_desc||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-          const mesesDisp  = [...new Set(DADOS.filter(r=>{if(!planilhaFiltroAno)return true;const ym=parseYMfilt(r.data_carr||r.data_desc||"");return ym?.ano===planilhaFiltroAno;}).map(r=>{const ym=parseYMfilt(r.data_carr||r.data_desc||"");return ym?.mes;}).filter(Boolean))].sort();
-          const origensDisp= [...new Set(DADOS.map(r=>(r.origem||"").trim()).filter(Boolean))].sort();
-          const MESES_PT = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
-          const dadosFiltrados = DADOS.filter(r => {
-            const ym = parseYMfilt(r.data_carr||r.data_desc||"");
-            if(planilhaFiltroAno  && ym?.ano  !== planilhaFiltroAno)  return false;
-            if(planilhaFiltroMes  && ym?.mes  !== planilhaFiltroMes)  return false;
-            if(planilhaFiltroOrigem && planilhaFiltroOrigem!=="todas" && (r.origem||"").trim()!==planilhaFiltroOrigem) return false;
-            return true;
-          });
-          const dadosSortados = sortarDados(dadosFiltrados);
+          const dadosSortados = sortarDados(DADOS);
           const REGISTROS_POR_PAGINA = 200;
           const totalPaginas = Math.ceil(dadosSortados.length / REGISTROS_POR_PAGINA);
           const paginaAtual = Math.max(1, Math.min(planilhaPagina, totalPaginas || 1));
@@ -3253,38 +3220,10 @@ export default function App() {
           };
           return (
           <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
-            {/* ── barra de filtros: Ano / Mês / Origem ── */}
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:t.card,borderBottom:`1px solid ${t.borda}`,flexShrink:0,flexWrap:"wrap"}}>
-              <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-              <select value={planilhaFiltroAno} onChange={e=>{setPlanilhaFiltroAno(e.target.value);setPlanilhaPagina(1);}}
-                style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${planilhaFiltroAno?t.ouro:t.borda}`,background:planilhaFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:planilhaFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
-                <option value="">Todos os Anos</option>
-                {anosDisp.map(a=><option key={a} value={a}>{a}</option>)}
-              </select>
-              <select value={planilhaFiltroMes} onChange={e=>{setPlanilhaFiltroMes(e.target.value);setPlanilhaPagina(1);}}
-                style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${planilhaFiltroMes?t.ouro:t.borda}`,background:planilhaFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:planilhaFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
-                <option value="">Todos os Meses</option>
-                {mesesDisp.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
-              </select>
-              <select value={planilhaFiltroOrigem} onChange={e=>{setPlanilhaFiltroOrigem(e.target.value);setPlanilhaPagina(1);}}
-                style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${planilhaFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:planilhaFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:planilhaFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:200}}>
-                <option value="todas">Todas as Origens</option>
-                {origensDisp.map(o=><option key={o} value={o}>{o}</option>)}
-              </select>
-              {(planilhaFiltroAno||planilhaFiltroMes||planilhaFiltroOrigem!=="todas") && (
-                <button onClick={()=>{setPlanilhaFiltroAno("");setPlanilhaFiltroMes("");setPlanilhaFiltroOrigem("todas");setPlanilhaPagina(1);}}
-                  style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
-                  ✕ Limpar
-                </button>
-              )}
-              <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600}}>
-                {dadosFiltrados.length} de {DADOS.length} registros
-              </span>
-            </div>
             {/* toolbar da planilha */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:t.headerBg,borderBottom:`1px solid ${t.borda}`,flexShrink:0,flexWrap:"wrap",gap:8}}>
               <span style={{fontSize:10,color:t.txt2,fontWeight:600,letterSpacing:.5}}>
-                {dadosFiltrados.length} registros · página {paginaAtual} de {totalPaginas}
+                {DADOS.length} registros · página {paginaAtual} de {totalPaginas}
                 {planilhaSortKey && <span style={{color:t.ouro,marginLeft:8}}>ordenado por {planilhaSortKey} {planilhaSortDir==="asc"?"↑":"↓"} <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}} style={{background:"none",border:"none",color:t.txt2,cursor:"pointer",fontSize:10,padding:"0 2px",verticalAlign:"middle"}}>✕</button></span>}
               </span>
               <div style={{display:"flex",gap:4,alignItems:"center"}}>
@@ -3294,7 +3233,7 @@ export default function App() {
                 <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>⏭</button>
               </div>
               <ExportMenu
-                dados={dadosFiltrados}
+                dados={DADOS}
                 cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"},{k:"status",l:"Status"},{k:"vl_cte",l:"VL CTE"},{k:"vl_contrato",l:"VL Contrato"},{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"}]}
                 filename="planilha-operacional"
                 titulo="Planilha Operacional"
@@ -5167,7 +5106,7 @@ function mapearColuna(n){
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {[
                 {s:"Identificação",ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,fields:[{k:"nome",l:"Motorista",span:2},{k:"cpf",l:"CPF"},{k:"placa",l:"PLACA 01"},{k:"placa2",l:"PLACA 02"},{k:"placa3",l:"PLACA 03"},{k:"dt",l:"DT / Espelho",lock:editIdx>=0},{k:"vinculo",l:"Vínculo",type:"select_opts",opts:["TERCEIRO","FROTA","AGREGADO"]}]},
-                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date_or_oc"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias",type:"computed_dias",lock:true}]},
+                {s:"Rota e Agenda",ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,fields:[{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento",type:"date"},{k:"data_agenda",l:"Agenda (DT PRV. P/ DESCARREGAR)",type:"date"},{k:"status",l:"Status",type:"select_status"},{k:"dias",l:"Dias",type:"computed_dias",lock:true}]},
                 {s:"Financeiro",ico:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,fields:[{k:"vl_cte",l:"Valor CTE"},{k:"vl_contrato",l:"Valor Contrato"},{k:"adiant",l:"Adiantamento"},{k:"saldo",l:"Saldo"},{k:"diaria_prev",l:"Diária Devida (R$)"},{k:"diaria_pg",l:"Diária Paga (R$)"},{k:"vl_cte_comp",l:"Valor CTE Comp."}]},
                 {s:"Documentação",ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,fields:[{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"},{k:"nf",l:"Nota Fiscal"},{k:"mat",l:"MAT"},{k:"ro",l:"RO (Reg. Ocorrência)"},{k:"ro_hora",l:"Hora RO"},{k:"cliente",l:"Cliente"},{k:"sgs",l:"Chamado SGS"}]},
                 {s:"Operacional",ico:<><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></>,fields:[{k:"chegada",l:"Chegada (data real de chegada)",type:"date"},{k:"desc_aguardando",l:"Aguardando Descarga (marcar enquanto aguarda)",type:"checkbox",span:2},{k:"data_desc",l:"Data e Hora da Descarga",type:"datetime"},{k:"informou_analista",l:"Informou analista até 9h?",type:"select_sim_nao"},{k:"data_manifesto",l:"Manifesto",type:"date"},{k:"gerenc",l:"Gerenciadora",type:"select_opts",opts:["SKYMARK (FRETEBRAS)","INFINITY","MUNDIAL","OPENTECH"],span:2},{k:"forms",l:"FORMS",type:"select_sim_nao"}]},
@@ -5242,43 +5181,6 @@ function mapearColuna(n){
                               <option value="">— Selecione —</option>
                               {(f.opts||[]).map(o=><option key={o} value={o}>{o}</option>)}
                             </select>
-                          ) : f.type==="date_or_oc" ? (
-                            (() => {
-                              const isOC = (formData[f.k]||"").toUpperCase().trim() === "OC";
-                              return (
-                                <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                                  {/* Toggle OC */}
-                                  <label style={{display:"flex",alignItems:"center",gap:7,cursor:isLocked?"not-allowed":"pointer",padding:"6px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${isOC?t.ouro:t.borda}`,background:isOC?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
-                                    <input
-                                      type="checkbox"
-                                      disabled={isLocked}
-                                      checked={isOC}
-                                      onChange={e=>{
-                                        setFormData(p=>({...p,[f.k]:e.target.checked?"OC":""}));
-                                      }}
-                                      style={{width:13,height:13,accentColor:t.ouro,cursor:isLocked?"not-allowed":"pointer"}}
-                                    />
-                                    <span style={{fontSize:10,color:isOC?t.ouro:t.txt2,fontWeight:isOC?700:400,letterSpacing:.3}}>
-                                      {isOC?"📋 OC – Ordem de Chegada":"OC (sem data fixa)"}
-                                    </span>
-                                    {isLocked && <span style={{color:t.ouro,fontSize:9,marginLeft:"auto"}}>🔒</span>}
-                                  </label>
-                                  {/* Date picker — só exibe quando não é OC */}
-                                  {!isOC && (
-                                    <input
-                                      type="date"
-                                      value={brToInput(formData[f.k])}
-                                      readOnly={isLocked}
-                                      onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
-                                      onChange={isLocked?undefined:e=>{
-                                        setFormData(p=>({...p,[f.k]:inputToBr(e.target.value)}));
-                                      }}
-                                      style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?.5:1,background:t.inputBg}}
-                                    />
-                                  )}
-                                </div>
-                              );
-                            })()
                           ) : f.type==="computed_dias" ? (
                             (() => {
                               const parseFormD = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
@@ -6908,18 +6810,6 @@ function mapearColuna(n){
                 <input type="text" value={relGeralMotorista} onChange={e=>setRelGeralMotorista(e.target.value)} placeholder="Nome do motorista..." style={{...css.inp,width:"100%"}} />
               </div>
               <div>
-                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Operacional</label>
-                <select value={relGeralStatusOper} onChange={e=>setRelGeralStatusOper(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                  <option value="">Todos</option>
-                  <option value="CARREGADO">CARREGADO</option>
-                  <option value="PENDENTE">PENDENTE</option>
-                  <option value="EM ABERTO">EM ABERTO</option>
-                  <option value="NO-SHOW">NO-SHOW</option>
-                  <option value="NÃO ACEITE">NÃO ACEITE</option>
-                  <option value="CANCELADO">CANCELADO</option>
-                </select>
-              </div>
-              <div>
                 <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
                 <select value={relGeralStatus} onChange={e=>setRelGeralStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
                   <option value="">Todos</option>
@@ -7006,7 +6896,6 @@ function mapearColuna(n){
                   }
                   gerarRelatorioGeral(relGeralFrom,relGeralTo,{
                     motorista:relGeralMotorista,statusDiaria:relGeralStatus,
-                    statusOper:relGeralStatusOper,
                     origem:relGeralOrigem,destino:relGeralDestino,
                     vinculo:relGeralVinculo,secoes:relGeralSecoes
                   });
