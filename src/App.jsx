@@ -1234,6 +1234,8 @@ export default function App() {
     if (!conn) throw new Error("Sem conexão");
     const clean = {...reg}; delete clean._override; delete clean._overrideDT;
     if (!clean.dt) throw new Error("DT obrigatório");
+    // Converte strings vazias para null — evita erro 22P02 em campos numéricos do Postgres
+    for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
     try {
       await supaFetch(conn.url, conn.key, "POST", TABLE, [clean]);
     } catch(e) {
