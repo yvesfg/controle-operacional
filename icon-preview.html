@@ -1,0 +1,132 @@
+<\!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Ícone — Preview</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#09090f;color:#e8e8f2;font-family:'Inter','Segoe UI',system-ui,sans-serif;padding:32px 24px}
+h1{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8888b0;margin-bottom:6px}
+h2{font-size:20px;color:#F3BA2F;margin-bottom:28px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:860px}
+.card{background:#111119;border:1.5px solid #1c1c2a;border-radius:14px;padding:24px 18px 18px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:14px}
+.card:hover{border-color:#F3BA2F55;transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.card.selected{border-color:#F3BA2F;box-shadow:0 0 0 2px rgba(243,186,47,.2)}
+.lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#8888b0;font-weight:700}
+.name{font-size:13px;font-weight:700;color:#e8e8f2}
+.sizes{display:flex;gap:14px;align-items:flex-end;justify-content:center;padding:8px 0}
+.sz{display:flex;flex-direction:column;align-items:center;gap:4px}
+.sz span{font-size:7px;color:#8888b0;letter-spacing:1px;text-transform:uppercase}
+/* header mini */
+.hdr{background:#09090f;border:1px solid #1c1c2a;border-radius:8px;padding:7px 12px;display:flex;align-items:center;gap:8px;width:100%}
+.ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px}
+.ht-a{font-size:9.5px;letter-spacing:2px;color:#e8e8f2;font-weight:700;line-height:1}
+.ht-b{font-size:6.5px;color:#8888b0;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-top:2px}
+.ht-b span{color:#F3BA2F;font-weight:700}
+.badge{font-size:7.5px;padding:2px 8px;border-radius:4px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;border:1px solid rgba(243,186,47,.3);background:rgba(243,186,47,.07);color:#F3BA2F;margin-top:2px}
+#res{margin-top:16px;padding:12px 18px;background:#181825;border:1px solid #262638;border-radius:10px;font-size:12px;color:#8888b0;max-width:860px;display:none}
+</style>
+</head>
+<body>
+<h1>Controle Operacional · YFGroup</h1>
+<h2>Ícone Original Recolorido — Bicolor Ouro</h2>
+
+<div class="grid">
+
+  <\!-- A -->
+  <div class="card" onclick="sel(this,'A')">
+    <div class="lbl">Opção A</div>
+    <div class="name">Gold Sólido</div>
+    <div class="sizes">
+      <div class="sz">
+        <div style="background:#181825;border:1px solid #2a2a3a;border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center;width:80px;height:80px">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADB0lEQVR4nO2cYW6DMAxG6bT77P671g7Q/dgqUUQCJHY+E78nTZvaNUB42IlDefx8fy0ACj7UOwB5QT6QgXxjef7/wIJ8IAT5QAbygQzkAxnIBzKQD2QgH8hAPpCBfCAD+cbx3PydfqXjU70DQlpO/mPgtqYnq3ytMowUdnoypl1FFELAHTLKF420KRn5YpByAoJ8sUglIPLFI42AyBeTFAIiX1ymFxD5YjO1gMgHMrKucNyJveg3RdEa+e7JlXQcVlTS7vyELWAjXx7CCUjavQ/r9PksvL5HOOleEPlyEUpE5JsfJhwAW5AvH2FSL/KBDOTLQchxH/LlJETqRT6QgXz3wTpayaMfKxz3Yk+YmkSPg//Zvj50bIh8c3M1uvVEw8viIh9YcTmKMuYDLw6jKPKBDOQDGcgHMpAPZHjKt/3ugLyoCbHoKbWclWlPwJAL3U48l7/j3Tvm1Bdkj3wlgaRV86CklqwEYz6QcSby9V61Ua56InAwiHwg40zkI2LkYHue3TNWb9o9mnS0zvCOPsfMsY8z/esuo9VdLWfuF3usfreUaSzbzUzpyQdL4XW3/u0Z8x3dqLhlXXSupXKvduGceFvc+rdVvquCrKkdiFe78E6I/m2Rr0eQF7UHHpI6fQjXv+pSi/WgluhXJ1TNtnXCcWUGXBvUrgezRwwvBUyEdf+aTD6s63ylcVxLuaa13dpC/ut9eKelf7uxTLu9O1SSwjqFZk3Jo/r3NKPGfF4HmFWkKRgln1eqa203k7SqC/9wu5bf2+0dC7iPMXa2t4fXhdJS4G1tv/S+df92nRfryHf1cQ7W21qWXFHNE/f+bY18tRnsWdmuHAQzVF8k/asuMm+ZNWpFOa4o+7Esi82NBdaf9Wr3ShuWJ6lUQ/Pehgem2+mdcLRUuu9SdhlxQhWRqHV1wnxfLdJu7wpI6f882oU/QvSvVanl6I6J3qk8M1sfav3r3rfWz+e7S0qFdyT9G222C4lAPpCBfCAD+UAG8oEM5AMZyAcykA9kIB/IQD6QgXwg4xctDIC03Sv8zgAAAABJRU5ErkJggg==" style="width:60px;height:auto"/>
+        </div>
+        <span>60px</span>
+      </div>
+      <div class="sz">
+        <div style="background:#181825;border:1px solid #2a2a3a;border-radius:8px;padding:7px;display:flex;align-items:center;justify-content:center;width:54px;height:54px">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADB0lEQVR4nO2cYW6DMAxG6bT77P671g7Q/dgqUUQCJHY+E78nTZvaNUB42IlDefx8fy0ACj7UOwB5QT6QgXxjef7/wIJ8IAT5QAbygQzkAxnIBzKQD2QgH8hAPpCBfCAD+cbx3PydfqXjU70DQlpO/mPgtqYnq3ytMowUdnoypl1FFELAHTLKF420KRn5YpByAoJ8sUglIPLFI42AyBeTFAIiX1ymFxD5YjO1gMgHMrKucNyJveg3RdEa+e7JlXQcVlTS7vyELWAjXx7CCUjavQ/r9PksvL5HOOleEPlyEUpE5JsfJhwAW5AvH2FSL/KBDOTLQchxH/LlJETqRT6QgXz3wTpayaMfKxz3Yk+YmkSPg//Zvj50bIh8c3M1uvVEw8viIh9YcTmKMuYDLw6jKPKBDOQDGcgHMpAPZHjKt/3ugLyoCbHoKbWclWlPwJAL3U48l7/j3Tvm1Bdkj3wlgaRV86CklqwEYz6QcSby9V61Ua56InAwiHwg40zkI2LkYHue3TNWb9o9mnS0zvCOPsfMsY8z/esuo9VdLWfuF3usfreUaSzbzUzpyQdL4XW3/u0Z8x3dqLhlXXSupXKvduGceFvc+rdVvquCrKkdiFe78E6I/m2Rr0eQF7UHHpI6fQjXv+pSi/WgluhXJ1TNtnXCcWUGXBvUrgezRwwvBUyEdf+aTD6s63ylcVxLuaa13dpC/ut9eKelf7uxTLu9O1SSwjqFZk3Jo/r3NKPGfF4HmFWkKRgln1eqa203k7SqC/9wu5bf2+0dC7iPMXa2t4fXhdJS4G1tv/S+df92nRfryHf1cQ7W21qWXFHNE/f+bY18tRnsWdmuHAQzVF8k/asuMm+ZNWpFOa4o+7Esi82NBdaf9Wr3ShuWJ6lUQ/Pehgem2+mdcLRUuu9SdhlxQhWRqHV1wnxfLdJu7wpI6f882oU/QvSvVanl6I6J3qk8M1sfav3r3rfWz+e7S0qFdyT9G222C4lAPpCBfCAD+UAG8oEM5AMZyAcykA9kIB/IQD6QgXwg4xctDIC03Sv8zgAAAABJRU5ErkJggg==" style="width:32px;height:auto"/>
+        </div>
+        <span>32px</span>
+      </div>
+    </div>
+    <div class="hdr">
+      <div class="ico" style="background:#181825;border:1px solid rgba(243,186,47,.3);box-shadow:0 4px 12px rgba(243,186,47,.14)">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADB0lEQVR4nO2cYW6DMAxG6bT77P671g7Q/dgqUUQCJHY+E78nTZvaNUB42IlDefx8fy0ACj7UOwB5QT6QgXxjef7/wIJ8IAT5QAbygQzkAxnIBzKQD2QgH8hAPpCBfCAD+cbx3PydfqXjU70DQlpO/mPgtqYnq3ytMowUdnoypl1FFELAHTLKF420KRn5YpByAoJ8sUglIPLFI42AyBeTFAIiX1ymFxD5YjO1gMgHMrKucNyJveg3RdEa+e7JlXQcVlTS7vyELWAjXx7CCUjavQ/r9PksvL5HOOleEPlyEUpE5JsfJhwAW5AvH2FSL/KBDOTLQchxH/LlJETqRT6QgXz3wTpayaMfKxz3Yk+YmkSPg//Zvj50bIh8c3M1uvVEw8viIh9YcTmKMuYDLw6jKPKBDOQDGcgHMpAPZHjKt/3ugLyoCbHoKbWclWlPwJAL3U48l7/j3Tvm1Bdkj3wlgaRV86CklqwEYz6QcSby9V61Ua56InAwiHwg40zkI2LkYHue3TNWb9o9mnS0zvCOPsfMsY8z/esuo9VdLWfuF3usfreUaSzbzUzpyQdL4XW3/u0Z8x3dqLhlXXSupXKvduGceFvc+rdVvquCrKkdiFe78E6I/m2Rr0eQF7UHHpI6fQjXv+pSi/WgluhXJ1TNtnXCcWUGXBvUrgezRwwvBUyEdf+aTD6s63ylcVxLuaa13dpC/ut9eKelf7uxTLu9O1SSwjqFZk3Jo/r3NKPGfF4HmFWkKRgln1eqa203k7SqC/9wu5bf2+0dC7iPMXa2t4fXhdJS4G1tv/S+df92nRfryHf1cQ7W21qWXFHNE/f+bY18tRnsWdmuHAQzVF8k/asuMm+ZNWpFOa4o+7Esi82NBdaf9Wr3ShuWJ6lUQ/Pehgem2+mdcLRUuu9SdhlxQhWRqHV1wnxfLdJu7wpI6f882oU/QvSvVanl6I6J3qk8M1sfav3r3rfWz+e7S0qFdyT9G222C4lAPpCBfCAD+UAG8oEM5AMZyAcykA9kIB/IQD6QgXwg4xctDIC03Sv8zgAAAABJRU5ErkJggg==" style="width:28px;height:auto"/>
+      </div>
+      <div><div class="ht-a">CONTROLE OPERACIONAL</div><div class="ht-b">by <span>YFGroup</span></div></div>
+    </div>
+    <div class="badge">#F3BA2F · silhueta completa</div>
+  </div>
+
+  <\!-- B -->
+  <div class="card" onclick="sel(this,'B')">
+    <div class="lbl">Opção B</div>
+    <div class="name">Bicolor — Trailer/Cab</div>
+    <div class="sizes">
+      <div class="sz">
+        <div style="background:#181825;border:1px solid #2a2a3a;border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center;width:80px;height:80px">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADFElEQVR4nO2cQW7jMAxFnWLuM7fvoqu5zqznAJlFG8AxLNmWSH1afA8oWiSNbMvPpEQ5fvz7+r2AD59//qp3ITQf6h2AvCAfyEC+sTx/fmBBPhCCfCAD+UAG8oEM5AMZyAcykA9kIB/IQD6QgXzjeG7+Tr/S8Uu9A0JaTv5j4LamJ6t8rTKMFHZ6MqZdRRRCwB0yyheNtCkZ+WKQcgKCfLFIJSDyxSONgMgXkxQCIl9cphcQ+WIztYDIBzKyrnDcib3oN0XRGvnuyZV0HFZU0u78hC1gI18ewglI2r0P6/T5LLy+RzjpXhD5chFKROSbHyYcAFuQLx9hUi/ygQzky0HIcR/y5SRE6kU+kIF898E6WsmjHysc92JPmJpEj4P/2b4+dGyIfHNzNbr1RMPL4iIfWHE5ijLmAy8OoyjygQzkAxnIBzKQD2R4yrf97oC8qAmx6Cm1nJVpT8CQC91OPJfv49075tQXZI98JYGkVfOgpJasBGM+kHEm8vVetVGueiJwMIh8IONM5CNi5GB7nt0zVm/aPZp0tM7wjj7HzLGPM/3rLqPVXS1n7hd7rH63lGks281M6ckHS+F1t/7tGfMd3ai4ZV10rqVyr3bhnHhb3Pq3Vb6rgqypHYhXu/BOiP5tka9HkBe1Bx6SOn0I17/qUov1oJboVydUzbZ1wnFlBlwb1K4Hs0cMLwVMhHX/mkw+rOt8pXFcS7mmtd3aQv7rfXinpX+7sUy7vTtUksI6hWZNyaP69zSjxnxeB5hVpCkYJZ9XqmttN5O0qgv/cLuW39vtHQu4jzF2treH14XSUuBtbb/0vnX/dp0X68h39XEO1ttallxRzRP3/m2NfLUZ7FnZrhwEM1RfJP2rLjJvmTVqRTmuKPuxLIvNjQXWn/Vq90obliepVEPz3oYHptvpnXC0VLrvUnYZcUIVkah1dcJ8Xy3Sbu8KSOn/PNqFb0L0r1Wp5eiOid6pPDNbH2r969631s/nu0tKhXck/RtttguJQD6QgXwgA/lABvKBDOQDGcgHMpAPZCAfyEA+kIF8IOM/iwSDE7IAkTEAAAAASUVORK5CYII=" style="width:60px;height:auto"/>
+        </div>
+        <span>60px</span>
+      </div>
+      <div class="sz">
+        <div style="background:#181825;border:1px solid #2a2a3a;border-radius:8px;padding:7px;display:flex;align-items:center;justify-content:center;width:54px;height:54px">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADFElEQVR4nO2cQW7jMAxFnWLuM7fvoqu5zqznAJlFG8AxLNmWSH1afA8oWiSNbMvPpEQ5fvz7+r2AD59//qp3ITQf6h2AvCAfyEC+sTx/fmBBPhCCfCAD+UAG8oEM5AMZyAcykA9kIB/IQD6QgXzjeG7+Tr/S8Uu9A0JaTv5j4LamJ6t8rTKMFHZ6MqZdRRRCwB0yyheNtCkZ+WKQcgKCfLFIJSDyxSONgMgXkxQCIl9cphcQ+WIztYDIBzKyrnDcib3oN0XRGvnuyZV0HFZU0u78hC1gI18ewglI2r0P6/T5LLy+RzjpXhD5chFKROSbHyYcAFuQLx9hUi/ygQzky0HIcR/y5SRE6kU+kIF898E6WsmjHysc92JPmJpEj4P/2b4+dGyIfHNzNbr1RMPL4iIfWHE5ijLmAy8OoyjygQzkAxnIBzKQD2R4yrf97oC8qAmx6Cm1nJVpT8CQC91OPJfv49075tQXZI98JYGkVfOgpJasBGM+kHEm8vVetVGueiJwMIh8IONM5CNi5GB7nt0zVm/aPZp0tM7wjj7HzLGPM/3rLqPVXS1n7hd7rH63lGks281M6ckHS+F1t/7tGfMd3ai4ZV10rqVyr3bhnHhb3Pq3Vb6rgqypHYhXu/BOiP5tka9HkBe1Bx6SOn0I17/qUov1oJboVydUzbZ1wnFlBlwb1K4Hs0cMLwVMhHX/mkw+rOt8pXFcS7mmtd3aQv7rfXinpX+7sUy7vTtUksI6hWZNyaP69zSjxnxeB5hVpCkYJZ9XqmttN5O0qgv/cLuW39vtHQu4jzF2treH14XSUuBtbb/0vnX/dp0X68h39XEO1ttallxRzRP3/m2NfLUZ7FnZrhwEM1RfJP2rLjJvmTVqRTmuKPuxLIvNjQXWn/Vq90obliepVEPz3oYHptvpnXC0VLrvUnYZcUIVkah1dcJ8Xy3Sbu8KSOn/PNqFb0L0r1Wp5eiOid6pPDNbH2r969631s/nu0tKhXck/RtttguJQD6QgXwgA/lABvKBDOQDGcgHMpAPZCAfyEA+kIF8IOM/iwSDE7IAkTEAAAAASUVORK5CYII=" style="width:32px;height:auto"/>
+        </div>
+        <span>32px</span>
+      </div>
+    </div>
+    <div class="hdr">
+      <div class="ico" style="background:linear-gradient(145deg,#1a150a,#231c0d);border:1px solid rgba(243,186,47,.4);box-shadow:0 4px 14px rgba(243,186,47,.18)">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADFElEQVR4nO2cQW7jMAxFnWLuM7fvoqu5zqznAJlFG8AxLNmWSH1afA8oWiSNbMvPpEQ5fvz7+r2AD59//qp3ITQf6h2AvCAfyEC+sTx/fmBBPhCCfCAD+UAG8oEM5AMZyAcykA9kIB/IQD6QgXzjeG7+Tr/S8Uu9A0JaTv5j4LamJ6t8rTKMFHZ6MqZdRRRCwB0yyheNtCkZ+WKQcgKCfLFIJSDyxSONgMgXkxQCIl9cphcQ+WIztYDIBzKyrnDcib3oN0XRGvnuyZV0HFZU0u78hC1gI18ewglI2r0P6/T5LLy+RzjpXhD5chFKROSbHyYcAFuQLx9hUi/ygQzky0HIcR/y5SRE6kU+kIF898E6WsmjHysc92JPmJpEj4P/2b4+dGyIfHNzNbr1RMPL4iIfWHE5ijLmAy8OoyjygQzkAxnIBzKQD2R4yrf97oC8qAmx6Cm1nJVpT8CQC91OPJfv49075tQXZI98JYGkVfOgpJasBGM+kHEm8vVetVGueiJwMIh8IONM5CNi5GB7nt0zVm/aPZp0tM7wjj7HzLGPM/3rLqPVXS1n7hd7rH63lGks281M6ckHS+F1t/7tGfMd3ai4ZV10rqVyr3bhnHhb3Pq3Vb6rgqypHYhXu/BOiP5tka9HkBe1Bx6SOn0I17/qUov1oJboVydUzbZ1wnFlBlwb1K4Hs0cMLwVMhHX/mkw+rOt8pXFcS7mmtd3aQv7rfXinpX+7sUy7vTtUksI6hWZNyaP69zSjxnxeB5hVpCkYJZ9XqmttN5O0qgv/cLuW39vtHQu4jzF2treH14XSUuBtbb/0vnX/dp0X68h39XEO1ttallxRzRP3/m2NfLUZ7FnZrhwEM1RfJP2rLjJvmTVqRTmuKPuxLIvNjQXWn/Vq90obliepVEPz3oYHptvpnXC0VLrvUnYZcUIVkah1dcJ8Xy3Sbu8KSOn/PNqFb0L0r1Wp5eiOid6pPDNbH2r969631s/nu0tKhXck/RtttguJQD6QgXwgA/lABvKBDOQDGcgHMpAPZCAfyEA+kIF8IOM/iwSDE7IAkTEAAAAASUVORK5CYII=" style="width:28px;height:auto"/>
+      </div>
+      <div><div class="ht-a">CONTROLE OPERACIONAL</div><div class="ht-b">by <span>YFGroup</span></div></div>
+    </div>
+    <div class="badge">Trailer ouro claro · Cab ouro escuro</div>
+  </div>
+
+  <\!-- C -->
+  <div class="card" onclick="sel(this,'C')">
+    <div class="lbl">Opção C</div>
+    <div class="name">Gradiente Ouro</div>
+    <div class="sizes">
+      <div class="sz">
+        <div style="background:#181825;border:1px solid #2a2a3a;border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center;width:80px;height:80px">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADW0lEQVR4nO2cYZqjIAxA0/32Pnv/vdYegP0x7YylggqJiea9P522gojPBNDp49/fP1JKkVJERGTxWqr3IiLP7YrI862U55uf91XZ7+/K2zarZZf7eJZvlu21r/68Kt/e9vNYttr9c4w7y3ba/VF27VgOtnvk/L21e7GPkfP33b6Ptoj8EgAnkA/cQL5zeSY9EEE+cAT5wA3kAzeQD9xAPnAD+cAN5AM3kA/cQD5wA/nOo1R/p7/T8du7AY6MnPzHifu6PVnlG5XhTGFvT8a06xGFEHCFjPJFI21KRr4YpJyAIF8sUgmIfPFIIyDyxSSFgMgXl9sLiHyxubWAyAduZL3DcSXWot8tFq2R75ocScdhRSXt3p+wC9jIl4dwApJ2r8MyfZbG52uEk+4FkS8XoUREvvvDhAOgBvnyESb1Ih+4gXw5CDnuQ76chEi9yAduIN910I5W7tGPOxzXYk2YnkSPjW3qz08dGyLfvTka3Wai4WFxkQ+0OBxFGfOBFZtRFPnADeQDN5AP3EA+cMNSvvp/B9wXNSEWM0ste2VaEzDkjW4jinwd79oxp74gZ+RrCeS6ah6U1JK1YMwHbuyJfLNXbZSrnggcDCIfuLEn8hExclCfZ/OMNZt2tyYdozO8rXLMHOfY07/mMmo91bLnebHH4nVkmUaz3sy0fvlAGp+b9e/MmG/rQcWa5aJzL5Vb1Qv7xKsx699R+Y4KsqR3IFb1wjsh+ndEvhlBXvR+8JDUaUO4/vVeatEe1BL9+oRasx2dcByZAfcGtcvB7BanLwXcCO3+VZl8aK/ztcZxI8s1o/X2buS/vod3Rvp3Gs20O9uglhTaKTRrSj6rf3dz1pjP6gCzinQLzpLPKtWN1ptJWq8Lf3O/mv+3OzsWMB9jrOxvDasLZWSBd7T+1vfa/Tt1XrQj39Gfc9Del0iuqGaJef+ORr7eDHavbEcOghmqLS79673IXHPXqBXluKK0Q0R0HizQLmtV75E6NE9Saw3Neh8WqO5ndsIxstJ9lWWXM06oRyQavTuh3laNtDt7B6S1nUW98EWI/tVaatl6YmJ2Ks/M1oZe/5r3rfbv810lpcI7Lv0bbbYLiUA+cAP5wA3kAzeQD9xAPnAD+cAN5AM3kA/cQD5wA/nAjf8leEf7KhTtLwAAAABJRU5ErkJggg==" style="width:60px;height:auto"/>
+        </div>
+        <span>60px</span>
+      </div>
+      <div class="sz">
+        <div style="background:#181825;border:1px solid #2a2a3a;border-radius:8px;padding:7px;display:flex;align-items:center;justify-content:center;width:54px;height:54px">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADW0lEQVR4nO2cYZqjIAxA0/32Pnv/vdYegP0x7YylggqJiea9P522gojPBNDp49/fP1JKkVJERGTxWqr3IiLP7YrI862U55uf91XZ7+/K2zarZZf7eJZvlu21r/68Kt/e9vNYttr9c4w7y3ba/VF27VgOtnvk/L21e7GPkfP33b6Ptoj8EgAnkA/cQL5zeSY9EEE+cAT5wA3kAzeQD9xAPnAD+cAN5AM3kA/cQD5wA/nOo1R/p7/T8du7AY6MnPzHifu6PVnlG5XhTGFvT8a06xGFEHCFjPJFI21KRr4YpJyAIF8sUgmIfPFIIyDyxSSFgMgXl9sLiHyxubWAyAduZL3DcSXWot8tFq2R75ocScdhRSXt3p+wC9jIl4dwApJ2r8MyfZbG52uEk+4FkS8XoUREvvvDhAOgBvnyESb1Ih+4gXw5CDnuQ76chEi9yAduIN910I5W7tGPOxzXYk2YnkSPjW3qz08dGyLfvTka3Wai4WFxkQ+0OBxFGfOBFZtRFPnADeQDN5AP3EA+cMNSvvp/B9wXNSEWM0ste2VaEzDkjW4jinwd79oxp74gZ+RrCeS6ah6U1JK1YMwHbuyJfLNXbZSrnggcDCIfuLEn8hExclCfZ/OMNZt2tyYdozO8rXLMHOfY07/mMmo91bLnebHH4nVkmUaz3sy0fvlAGp+b9e/MmG/rQcWa5aJzL5Vb1Qv7xKsx699R+Y4KsqR3IFb1wjsh+ndEvhlBXvR+8JDUaUO4/vVeatEe1BL9+oRasx2dcByZAfcGtcvB7BanLwXcCO3+VZl8aK/ztcZxI8s1o/X2buS/vod3Rvp3Gs20O9uglhTaKTRrSj6rf3dz1pjP6gCzinQLzpLPKtWN1ptJWq8Lf3O/mv+3OzsWMB9jrOxvDasLZWSBd7T+1vfa/Tt1XrQj39Gfc9Del0iuqGaJef+ORr7eDHavbEcOghmqLS79673IXHPXqBXluKK0Q0R0HizQLmtV75E6NE9Saw3Neh8WqO5ndsIxstJ9lWWXM06oRyQavTuh3laNtDt7B6S1nUW98EWI/tVaatl6YmJ2Ks/M1oZe/5r3rfbv810lpcI7Lv0bbbYLiUA+cAP5wA3kAzeQD9xAPnAD+cAN5AM3kA/cQD5wA/nAjf8leEf7KhTtLwAAAABJRU5ErkJggg==" style="width:32px;height:auto"/>
+        </div>
+        <span>32px</span>
+      </div>
+    </div>
+    <div class="hdr">
+      <div class="ico" style="background:linear-gradient(145deg,#111119,#1a1a28);border:1px solid rgba(243,186,47,.45);box-shadow:0 0 10px rgba(243,186,47,.2),0 4px 14px rgba(0,0,0,.4)">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ8AAABVCAYAAABXaDYyAAADW0lEQVR4nO2cYZqjIAxA0/32Pnv/vdYegP0x7YylggqJiea9P522gojPBNDp49/fP1JKkVJERGTxWqr3IiLP7YrI862U55uf91XZ7+/K2zarZZf7eJZvlu21r/68Kt/e9vNYttr9c4w7y3ba/VF27VgOtnvk/L21e7GPkfP33b6Ptoj8EgAnkA/cQL5zeSY9EEE+cAT5wA3kAzeQD9xAPnAD+cAN5AM3kA/cQD5wA/nOo1R/p7/T8du7AY6MnPzHifu6PVnlG5XhTGFvT8a06xGFEHCFjPJFI21KRr4YpJyAIF8sUgmIfPFIIyDyxSSFgMgXl9sLiHyxubWAyAduZL3DcSXWot8tFq2R75ocScdhRSXt3p+wC9jIl4dwApJ2r8MyfZbG52uEk+4FkS8XoUREvvvDhAOgBvnyESb1Ih+4gXw5CDnuQ76chEi9yAduIN910I5W7tGPOxzXYk2YnkSPjW3qz08dGyLfvTka3Wai4WFxkQ+0OBxFGfOBFZtRFPnADeQDN5AP3EA+cMNSvvp/B9wXNSEWM0ste2VaEzDkjW4jinwd79oxp74gZ+RrCeS6ah6U1JK1YMwHbuyJfLNXbZSrnggcDCIfuLEn8hExclCfZ/OMNZt2tyYdozO8rXLMHOfY07/mMmo91bLnebHH4nVkmUaz3sy0fvlAGp+b9e/MmG/rQcWa5aJzL5Vb1Qv7xKsx699R+Y4KsqR3IFb1wjsh+ndEvhlBXvR+8JDUaUO4/vVeatEe1BL9+oRasx2dcByZAfcGtcvB7BanLwXcCO3+VZl8aK/ztcZxI8s1o/X2buS/vod3Rvp3Gs20O9uglhTaKTRrSj6rf3dz1pjP6gCzinQLzpLPKtWN1ptJWq8Lf3O/mv+3OzsWMB9jrOxvDasLZWSBd7T+1vfa/Tt1XrQj39Gfc9Del0iuqGaJef+ORr7eDHavbEcOghmqLS79673IXHPXqBXluKK0Q0R0HizQLmtV75E6NE9Saw3Neh8WqO5ndsIxstJ9lWWXM06oRyQavTuh3laNtDt7B6S1nUW98EWI/tVaatl6YmJ2Ks/M1oZe/5r3rfbv810lpcI7Lv0bbbYLiUA+cAP5wA3kAzeQD9xAPnAD+cAN5AM3kA/cQD5wA/nAjf8leEf7KhTtLwAAAABJRU5ErkJggg==" style="width:28px;height:auto"/>
+      </div>
+      <div><div class="ht-a">CONTROLE OPERACIONAL</div><div class="ht-b">by <span>YFGroup</span></div></div>
+    </div>
+    <div class="badge">Gradiente escuro → claro</div>
+  </div>
+
+</div>
+
+<div id="res">
+  <span style="color:#F3BA2F;font-weight:700" id="rt"></span> — Me diga a letra e aplico no App.jsx.
+</div>
+
+<script>
+function sel(el,n){
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('res').style.display='block';
+  document.getElementById('rt').textContent='Opção '+n+' selecionada ✓';
+}
+</script>
+</body>
+</html>

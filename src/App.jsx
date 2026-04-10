@@ -5,6 +5,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 import { themes, TABLE, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
   DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY } from './constants.js';
+import { DEFAULT_LOGO } from './defaultLogo.js';
 import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
   brToInputDT, inputToBrDT, dtBase, esc, hashSenha, verificarSenha,
   loadJSON, saveJSON, decodeJWT, iniciarOAuth,
@@ -2563,12 +2564,9 @@ export default function App() {
 
       {/* HEADER */}
       <div style={css.header}>
-        {customLogo
-          ? <img src={customLogo} alt="Logo" style={{width:40,height:40,borderRadius:DESIGN.r.card,objectFit:"contain",boxShadow:"0 4px 14px rgba(59,125,216,.35)"}} />
-          : <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#3b7dd8,#5a9ff5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 4px 14px rgba(59,125,216,.35)"}}>
-              <span style={{fontSize:22,lineHeight:1,userSelect:"none"}}>🚛</span>
-            </div>
-        }
+        <div style={{width:40,height:40,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 4px 14px rgba(243,186,47,.18)",padding:5}}>
+          <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+        </div>
         <div>
           <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
           <div style={{fontSize:9,color:t.txt2,letterSpacing:1.5,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro,fontWeight:700}}>YFGroup</span></div>
