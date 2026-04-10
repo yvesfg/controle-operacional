@@ -5845,6 +5845,53 @@ function mapearColuna(n){
                         </div>}
                       </div>
 
+                      {/* ─ Diárias & Descargas desta DT ─ */}
+                      {(()=>{
+                        const diariaItem = diariasData.items.find(it=>it.r.dt===r.dt);
+                        const tipoLabel = {ok:"✅ No Prazo",atraso:"⚠️ Perdeu Agenda",diaria:"🛏️ Com Diária",sem_diaria:"✓ Sem Diária",pendente:"⏳ Aguardando"};
+                        const tipoColor = {ok:t.verde,atraso:t.danger,diaria:t.danger,sem_diaria:t.verde,pendente:t.ouro};
+                        const temDescarga = !!(r.data_agenda||r.data_desc);
+                        const hoje = new Date().toISOString().slice(0,10);
+                        const toISO = s=>{if(!s)return null;const p=s.split("/");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:s;};
+                        const agendaISO = toISO(r.data_agenda);
+                        const descISO = toISO(r.data_desc);
+                        let descStatus = null, descColor = t.txt2;
+                        if(descISO){descStatus="✅ Descarregado";descColor=t.verde;}
+                        else if(agendaISO&&agendaISO<hoje){descStatus="🔴 Em Atraso";descColor=t.danger;}
+                        else if(agendaISO){descStatus="📅 Agendado";descColor=t.ouro;}
+                        else if(r.status==="CARREGADO"){descStatus="⏱️ Aguardando Agenda";descColor=t.ouro;}
+                        if(!diariaItem && !temDescarga) return null;
+                        return (
+                          <div style={{background:`rgba(240,185,11,.04)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:9,padding:"10px 12px",marginBottom:10}}>
+                            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:.5,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                              {hIco(<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></>,t.ouro,12)} Diárias & Descargas
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+                              {diariaItem && (
+                                <div style={{background:t.bg,borderRadius:8,padding:"8px 10px",border:`1px solid ${tipoColor[diariaItem.tipo]||t.borda}33`}}>
+                                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:4}}>Status Diária</div>
+                                  <div style={{fontSize:11,fontWeight:700,color:tipoColor[diariaItem.tipo]||t.txt}}>{tipoLabel[diariaItem.tipo]||diariaItem.tipo}</div>
+                                  {diariaItem.dias!=null&&diariaItem.dias>0&&<div style={{fontSize:9,color:t.danger,marginTop:2}}>{diariaItem.dias} dia(s) de atraso</div>}
+                                  {r.diaria_prev&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Devida: <strong style={{color:t.ouro}}>{fmtMoeda(r.diaria_prev)}</strong></div>}
+                                  {r.diaria_pg&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Paga: <strong style={{color:t.verde}}>{fmtMoeda(r.diaria_pg)}</strong></div>}
+                                  {r.diaria_prev&&r.diaria_pg&&(()=>{const saldo=(parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);return saldo!==0&&<div style={{fontSize:9,color:saldo<0?t.danger:t.verde,marginTop:2,fontWeight:700}}>Saldo: {fmtMoeda(Math.abs(saldo))} {saldo<0?"a pagar":"a favor"}</div>;})()}
+                                </div>
+                              )}
+                              {temDescarga && (
+                                <div style={{background:t.bg,borderRadius:8,padding:"8px 10px",border:`1px solid ${descColor}33`}}>
+                                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:4}}>Status Descarga</div>
+                                  {descStatus&&<div style={{fontSize:11,fontWeight:700,color:descColor}}>{descStatus}</div>}
+                                  {r.data_agenda&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Agenda: <strong style={{color:t.txt}}>{r.data_agenda}</strong></div>}
+                                  {r.data_desc&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></div>}
+                                  {r.chegada&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Chegada: <strong style={{color:t.txt}}>{r.chegada}</strong></div>}
+                                  {r.destino&&<div style={{fontSize:9,color:t.txt2,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Destino: <strong style={{color:t.txt}}>{r.destino}</strong></div>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       {/* ─ Botão Salvar ─ */}
                       <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
                         {salvandoMins?"⏳ Salvando...":"💾 SALVAR DOCUMENTOS"}
