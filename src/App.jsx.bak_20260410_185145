@@ -196,15 +196,6 @@ export default function App() {
   const [motImportData, setMotImportData] = useState(null); // {novos:[], conflitos:[{atual,import,escolha}], vinculos:[]}
   const [motImportConfirm, setMotImportConfirm] = useState("");
   const [motImportStep, setMotImportStep] = useState(1); // 1=revisão, 2=sugestões de vínculo
-  // Sugestão de compatíveis (pós-importação)
-  const [motSugestOpen, setMotSugestOpen] = useState(false);
-  const [motSugestData, setMotSugestData] = useState([]); // [{mot, reg, placa, aceito}]
-  // Seleção em lote
-  const [motSelecionados, setMotSelecionados] = useState(new Set());
-  const [motExcluirLoteTexto, setMotExcluirLoteTexto] = useState("");
-  const [motExcluirLoteOpen, setMotExcluirLoteOpen] = useState(false);
-  // Duplicata no cadastro
-  const [motDupSugest, setMotDupSugest] = useState(null); // motorista existente similar
 
   // Segundo WhatsApp — formato documentário (Item 3 sessão 4)
   const [wppModal2, setWppModal2] = useState(null); // {reg, mot}
@@ -4288,38 +4279,9 @@ export default function App() {
                   style={{...css.inp,flex:1,minWidth:140}}
                 />
                 <button onClick={exportarVCard} title="Exportar todos como vCard (.vcf) para importar no Google Contacts" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11}}>📤 vCard</button>
-                <button onClick={()=>{
-                  // Gerar sugestões de vínculo cruzando motoristas × DADOS
-                  const PLACA_RE=/\b([A-Z]{3}[0-9][A-Z0-9][0-9]{2})\b/g;
-                  const sugs=[];
-                  motoristas.forEach(mot=>{
-                    const impPlacas=[mot.placa1,mot.placa2,mot.placa3,mot.placa4].filter(Boolean).map(p=>p.toUpperCase().replace(/[^A-Z0-9]/g,""));
-                    if(!impPlacas.length)return;
-                    DADOS.forEach(reg=>{
-                      const regPlaca=(reg.placa||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-                      if(!regPlaca||!impPlacas.includes(regPlaca))return;
-                      const nomeReg=(reg.nome||"").toUpperCase().trim();
-                      const nomeM=(mot.nome||"").toUpperCase().trim();
-                      if(nomeReg&&nomeReg===nomeM)return;
-                      sugs.push({mot,reg,placa:regPlaca,aceito:null});
-                    });
-                  });
-                  const uniq=sugs.filter((s,i)=>sugs.findIndex(x=>x.reg.dt===s.reg.dt&&x.mot.nome===s.mot.nome)===i);
-                  if(!uniq.length){showToast("✅ Nenhuma nova sugestão de vínculo encontrada","ok");return;}
-                  setMotSugestData(uniq.map(s=>({...s,aceito:null})));
-                  setMotSugestOpen(true);
-                }} title="Cruzar placas dos motoristas com registros de viagem e sugerir vínculos" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,color:t.verde}}>🔗 Sugerir Compatíveis</button>
                 <button onClick={()=>setRelGeralOpen(true)} title="Gerar relatório geral de operações em PDF" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,color:t.ouro}}>📊 Rel. Geral</button>
-                {canEdit && <button onClick={()=>{setFormData({});setEditIdx(-1);setMotDupSugest(null);setModalOpen("motorista")}} style={{...css.btnGold,whiteSpace:"nowrap"}}>＋ NOVO</button>}
+                {canEdit && <button onClick={()=>{setFormData({});setEditIdx(-1);setModalOpen("motorista")}} style={{...css.btnGold,whiteSpace:"nowrap"}}>＋ NOVO</button>}
               </div>
-              {/* Barra de seleção em lote */}
-              {canEdit && motSelecionados.size > 0 && (
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:9,padding:"8px 12px"}}>
-                  <span style={{fontSize:11,fontWeight:700,color:t.danger,flex:1}}>{motSelecionados.size} selecionado(s)</span>
-                  <button onClick={()=>setMotSelecionados(new Set())} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"4px 10px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>Desmarcar</button>
-                  <button onClick={()=>{setMotExcluirLoteTexto("");setMotExcluirLoteOpen(true);}} style={{background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:6,padding:"4px 12px",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑️ Excluir selecionados</button>
-                </div>
-              )}
               {motBusca && <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>{motFiltrados.length} resultado{motFiltrados.length!==1?"s":""} encontrado{motFiltrados.length!==1?"s":""}</div>}
               {motoristas.length === 0 ? (
                 <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
@@ -4327,19 +4289,11 @@ export default function App() {
                 <div style={css.empty}><div style={{fontSize:30,marginBottom:8}}>🔍</div><p style={{fontSize:12,color:t.txt2}}>Nenhum motorista encontrado para "{motBusca}"</p></div>
               ) : motFiltrados.map((m,i) => {
                 const idxReal = motoristas.indexOf(m);
-                const selecionado = motSelecionados.has(idxReal);
                 const vincBadgeC = m.vinculo==="Frota"?t.azulLt:m.vinculo==="Agregado"?t.ouro:m.vinculo==="Terceiro"?t.verde:t.txt2;
                 const vincBadgeBg = m.vinculo==="Frota"?`rgba(22,119,255,.08)`:m.vinculo==="Agregado"?`rgba(240,185,11,.08)`:m.vinculo==="Terceiro"?`rgba(2,192,118,.08)`:`rgba(128,128,128,.06)`;
                 return (
-                  <div key={i} className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${selecionado?`rgba(246,70,93,.4)`:t.borda}`,borderLeft:`4px solid ${selecionado?t.danger:vincBadgeC}`,padding:12,marginBottom:10,transition:"border .15s"}}>
+                  <div key={i} className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,borderLeft:`4px solid ${vincBadgeC}`,padding:12,marginBottom:10}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                      {canEdit && (
-                        <input type="checkbox" checked={selecionado} onChange={()=>{
-                          const ns=new Set(motSelecionados);
-                          if(ns.has(idxReal))ns.delete(idxReal);else ns.add(idxReal);
-                          setMotSelecionados(ns);
-                        }} style={{width:16,height:16,cursor:"pointer",accentColor:t.danger,flexShrink:0}} />
-                      )}
                       <div style={{width:38,height:38,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#000",flexShrink:0}}>{(m.nome||"M")[0].toUpperCase()}</div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:700,color:t.txt}}>{m.nome||"—"}</div>
@@ -4350,7 +4304,7 @@ export default function App() {
                       </div>
                       <button onClick={()=>gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista" style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>📄</button>
                       {canEdit && <>
-                        <button onClick={()=>{setFormData({...m});setEditIdx(idxReal);setMotDupSugest(null);setModalOpen("motorista")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
+                        <button onClick={()=>{setFormData({...m});setEditIdx(idxReal);setModalOpen("motorista")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
                         <button onClick={()=>{if(window.confirm(`Excluir "${m.nome}"?`)){const nm=[...motoristas];nm.splice(idxReal,1);saveMotoristasLS(nm);showToast("🗑️ Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
                       </>}
                     </div>
@@ -4360,9 +4314,7 @@ export default function App() {
                       ))}
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:10,fontSize:10,color:t.txt2}}>
-                      {m.tel && (m.tel.split(/[,;\n\/\\|]+/).map(s=>s.trim()).filter(Boolean)).map((tel,ti)=>(
-                        <span key={ti}>📞 {tel}</span>
-                      ))}
+                      {m.tel && <span>📞 {m.tel}</span>}
                       {m.banco && <span>🏦 {m.banco}{m.agencia?` · Ag ${m.agencia}`:""}{m.conta?` · CC ${m.conta}`:""}</span>}
                       {m.pix_tipo && <span style={{color:t.azulLt}}>PIX {m.pix_tipo}: {m.pix_chave||"—"}</span>}
                     </div>
@@ -5498,19 +5450,6 @@ function mapearColuna(n){
                 <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>Observações</label>
                 <textarea value={formData.obs||""} onChange={e=>setFormData(p=>({...p,obs:e.target.value}))} rows={2} style={{...css.inp,resize:"vertical",fontSize:12}} />
               </div>
-
-              {/* ── Aviso de duplicata ── */}
-              {motDupSugest && editIdx<0 && (
-                <div style={{background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:9,padding:"10px 12px"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:t.danger,marginBottom:6}}>⚠️ Motorista similar já cadastrado</div>
-                  <div style={{fontSize:10,color:t.txt,marginBottom:4}}><b>{motDupSugest.nome}</b> · CPF: {motDupSugest.cpf||"—"} · Placa: {motDupSugest.placa1||"—"}</div>
-                  <div style={{fontSize:9,color:t.txt2,marginBottom:8}}>Deseja ver o cadastro existente ou continuar salvando mesmo assim?</div>
-                  <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>{setFormData({...motDupSugest});setEditIdx(motoristas.indexOf(motDupSugest));setMotDupSugest(null);}} style={{flex:1,background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.azulLt,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️ Editar existente</button>
-                    <button onClick={()=>setMotDupSugest(null)} style={{flex:1,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>⚠️ Salvar mesmo assim</button>
-                  </div>
-                </div>
-              )}
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
               <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
@@ -5519,111 +5458,13 @@ function mapearColuna(n){
                 if (!m.nome) { showToast("⚠️ Nome obrigatório","warn"); return; }
                 if (!m.cpf) { showToast("⚠️ CPF obrigatório","warn"); return; }
                 if (!m.placa1) { showToast("⚠️ Placa Cavalo obrigatória","warn"); return; }
-                // Verificar duplicatas ao cadastrar NOVO motorista
-                if (editIdx < 0) {
-                  const nomeN = m.nome.toUpperCase().trim();
-                  const placa1N = (m.placa1||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
-                  const cpfN = (m.cpf||"").replace(/\D/g,"");
-                  const dup = motoristas.find((x,xi) => {
-                    if(cpfN && x.cpf && x.cpf.replace(/\D/g,"")===cpfN) return true;
-                    if(placa1N && x.placa1 && x.placa1.toUpperCase().replace(/[^A-Z0-9]/g,"")===placa1N) return true;
-                    return x.nome && x.nome.toUpperCase().trim()===nomeN;
-                  });
-                  if (dup && !motDupSugest) { setMotDupSugest(dup); return; }
-                }
                 const nm = [...motoristas];
                 if (editIdx>=0) nm[editIdx] = m; else nm.push(m);
                 saveMotoristasLS(nm);
-                setMotDupSugest(null);
                 registrarLog(editIdx>=0?"EDITAR_MOTORISTA":"NOVO_MOTORISTA",`${m.nome} · CPF ${m.cpf} · Vínculo: ${m.vinculo||"—"}`);
                 showToast(editIdx>=0?"✅ Atualizado!":"✅ Cadastrado!","ok");
                 setModalOpen(null);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ MODAL SUGERIR COMPATÍVEIS ═══ */}
-      {motSugestOpen && (
-        <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotSugestOpen(false)}>
-          <div style={{...css.modal,maxWidth:480}}>
-            <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.verde}}>🔗 SUGESTÕES DE VÍNCULO</div>
-              <button onClick={()=>setMotSugestOpen(false)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-            </div>
-            <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:8,maxHeight:"calc(96vh - 120px)"}}>
-              <div style={{fontSize:10,color:t.txt2,marginBottom:4}}>Placas dos motoristas cadastrados foram encontradas em registros de viagem com nomes diferentes. Aceite para atualizar o nome no registro.</div>
-              {motSugestData.map((s,i)=>(
-                <div key={i} style={{background:s.aceito===true?`rgba(2,192,118,.07)`:s.aceito===false?`rgba(128,128,128,.04)`:`rgba(240,185,11,.04)`,border:`1px solid ${s.aceito===true?`rgba(2,192,118,.25)`:s.aceito===false?t.borda:`rgba(240,185,11,.2)`}`,borderRadius:9,padding:"10px 12px"}}>
-                  <div style={{fontSize:10,fontWeight:700,color:t.txt,marginBottom:4}}>
-                    <span style={{color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{s.placa}</span>
-                    {" · DT "}<span style={{color:t.azulLt}}>{s.reg.dt}</span>
-                  </div>
-                  <div style={{fontSize:10,color:t.txt2,marginBottom:6}}>
-                    Nome no registro: <b style={{color:t.danger}}>{s.reg.nome||"—"}</b><br/>
-                    Motorista cadastrado: <b style={{color:t.verde}}>{s.mot.nome}</b>
-                  </div>
-                  {s.aceito===null && (
-                    <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:true};setMotSugestData(nd);}} style={{flex:1,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.verde,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✓ Aceitar</button>
-                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:false};setMotSugestData(nd);}} style={{flex:1,background:`rgba(128,128,128,.07)`,border:`1px solid ${t.borda}`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✗ Ignorar</button>
-                    </div>
-                  )}
-                  {s.aceito===true && <div style={{fontSize:10,color:t.verde,fontWeight:700}}>✓ Aceito — será aplicado ao salvar</div>}
-                  {s.aceito===false && <div style={{fontSize:10,color:t.txt2}}>Ignorado</div>}
-                </div>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
-              <button onClick={()=>setMotSugestOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>FECHAR</button>
-              <button onClick={()=>{
-                const aceitos=motSugestData.filter(s=>s.aceito===true);
-                if(!aceitos.length){setMotSugestOpen(false);return;}
-                const nd=[...DADOS];
-                aceitos.forEach(s=>{
-                  const idx=nd.findIndex(r=>r.dt===s.reg.dt);
-                  if(idx>=0)nd[idx]={...nd[idx],nome:s.mot.nome};
-                });
-                setDadosBase(nd);
-                showToast(`✅ ${aceitos.length} registro(s) atualizado(s)!`,"ok");
-                setMotSugestOpen(false);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 APLICAR ACEITOS</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ MODAL EXCLUSÃO EM LOTE ═══ */}
-      {motExcluirLoteOpen && (
-        <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotExcluirLoteOpen(false)}>
-          <div style={{...css.modal,maxWidth:360}}>
-            <div style={{padding:"16px 16px 12px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid rgba(246,70,93,.25)`}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.danger}}>🗑️ EXCLUIR EM LOTE</div>
-              <button onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-            </div>
-            <div style={{padding:16}}>
-              <div style={{fontSize:12,color:t.txt,marginBottom:8}}>Você está prestes a excluir <b style={{color:t.danger}}>{motSelecionados.size} motorista(s)</b>. Esta ação não pode ser desfeita.</div>
-              <div style={{fontSize:10,color:t.txt2,marginBottom:10}}>Digite <b style={{color:t.danger}}>EXCLUIR</b> para confirmar:</div>
-              <input
-                value={motExcluirLoteTexto}
-                onChange={e=>setMotExcluirLoteTexto(e.target.value.toUpperCase())}
-                placeholder="EXCLUIR"
-                style={{...css.inp,textAlign:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:4,color:t.danger,border:`1.5px solid ${motExcluirLoteTexto==="EXCLUIR"?"rgba(246,70,93,.5)":t.borda}`}}
-              />
-            </div>
-            <div style={{display:"flex",gap:8,padding:"0 16px 18px"}}>
-              <button onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
-              <button disabled={motExcluirLoteTexto!=="EXCLUIR"} onClick={()=>{
-                if(motExcluirLoteTexto!=="EXCLUIR")return;
-                const nm=motoristas.filter((_,i)=>!motSelecionados.has(i));
-                saveMotoristasLS(nm);
-                registrarLog("EXCLUIR_MOTORISTAS_LOTE",`${motSelecionados.size} motorista(s) removido(s)`);
-                showToast(`🗑️ ${motSelecionados.size} motorista(s) excluído(s)`);
-                setMotSelecionados(new Set());
-                setMotExcluirLoteOpen(false);
-                setMotExcluirLoteTexto("");
-              }} style={{flex:1,background:motExcluirLoteTexto==="EXCLUIR"?`rgba(246,70,93,.9)`:`rgba(246,70,93,.2)`,border:`1.5px solid rgba(246,70,93,.4)`,borderRadius:9,padding:"10px 0",color:motExcluirLoteTexto==="EXCLUIR"?"#fff":t.danger,fontSize:12,fontWeight:700,cursor:motExcluirLoteTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",transition:"all .2s"}}>🗑️ CONFIRMAR EXCLUSÃO</button>
             </div>
           </div>
         </div>
@@ -7727,6 +7568,7 @@ function mapearColuna(n){
             {/* Numero e Valor */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
               <div>
+                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Nº da Nota</label>
                 <input value={nfdForm.numero} onChange={e=>setNfdForm(p=>({...p,numero:e.target.value}))} placeholder="Ex: 00123456" style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
               </div>
               <div>
