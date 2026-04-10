@@ -5875,7 +5875,6 @@ function mapearColuna(n){
                                   {r.diaria_prev&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Devida: <strong style={{color:t.ouro}}>{fmtMoeda(r.diaria_prev)}</strong></div>}
                                   {r.diaria_pg&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Paga: <strong style={{color:t.verde}}>{fmtMoeda(r.diaria_pg)}</strong></div>}
                                   {r.diaria_prev&&r.diaria_pg&&(()=>{const saldo=(parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);return saldo!==0&&<div style={{fontSize:9,color:saldo<0?t.danger:t.verde,marginTop:2,fontWeight:700}}>Saldo: {fmtMoeda(Math.abs(saldo))} {saldo<0?"a pagar":"a favor"}</div>;})()}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.ouro}44`,background:`rgba(240,185,11,.08)`,color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3}}>📋 Ver Diárias →</button>
                                 </div>
                               )}
                               {temDescarga && (
@@ -5886,7 +5885,6 @@ function mapearColuna(n){
                                   {r.data_desc&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></div>}
                                   {r.chegada&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Chegada: <strong style={{color:t.txt}}>{r.chegada}</strong></div>}
                                   {r.destino&&<div style={{fontSize:9,color:t.txt2,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Destino: <strong style={{color:t.txt}}>{r.destino}</strong></div>}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("descarga");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.azulLt}44`,background:`rgba(22,119,255,.08)`,color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3}}>📦 Ver Descargas →</button>
                                 </div>
                               )}
                             </div>
