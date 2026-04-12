@@ -1,0 +1,147 @@
+/* ═══════════════════════════════════════════════════════════════════
+   tokens.css — Design System · Controle Operacional
+   ► Altere aqui → propaga em TODO o app que consome var(--*)
+   ► Cores NÃO ficam aqui — vão em theme-dark.css / theme-light.css
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── Tipografia ─────────────────────────────────────────────── */
+  --font-heading : 'Bebas Neue', sans-serif;
+  --font-body    : 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono    : 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Tamanhos de texto */
+  --text-2xs : 10px;
+  --text-xs  : 11px;
+  --text-sm  : 12px;
+  --text-base: 13px;
+  --text-md  : 14px;
+  --text-lg  : 16px;
+  --text-xl  : 18px;
+  --text-2xl : 22px;
+  --text-3xl : 28px;
+  --text-4xl : 36px;
+
+  /* Line-height */
+  --leading-tight : 1.25;
+  --leading-snug  : 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Letter-spacing */
+  --ls-tighter: -0.02em;
+  --ls-tight  : -0.01em;
+  --ls-normal :  0;
+  --ls-wide   :  0.02em;
+  --ls-wider  :  0.06em;
+  --ls-widest :  0.12em;
+  --ls-label  :  0.08em;   /* rótulos uppercase */
+  --ls-badge  :  0.04em;
+  --ls-btn    :  0.01em;
+  --ls-mono   :  0.12em;
+
+  /* Font-weight */
+  --fw-normal  : 400;
+  --fw-medium  : 500;
+  --fw-semibold: 600;
+  --fw-bold    : 700;
+  --fw-black   : 900;
+
+  /* ── Espaçamento (escala 4px) ───────────────────────────────── */
+  --space-0 :  0px;
+  --space-1 :  4px;
+  --space-2 :  8px;
+  --space-3 : 12px;
+  --space-4 : 16px;
+  --space-5 : 20px;
+  --space-6 : 24px;
+  --space-7 : 28px;
+  --space-8 : 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ── Border-radius ──────────────────────────────────────────── */
+  --radius-none : 0;
+  --radius-tag  : 4px;
+  --radius-sm   : 6px;
+  --radius-btn  : 8px;
+  --radius-badge: 6px;
+  --radius-sidebar: 8px;
+  --radius-tile : 10px;
+  --radius-ico  : 10px;
+  --radius-inp  : 10px;
+  --radius-card : 12px;
+  --radius-logo : 12px;
+  --radius-modal: 16px;
+  --radius-xl   : 20px;
+  --radius-full : 9999px;
+
+  /* ── Ícones (px) ────────────────────────────────────────────── */
+  --icon-2xs: 10px;
+  --icon-xs :  10px;
+  --icon-sm :  13px;
+  --icon-md :  16px;
+  --icon-lg :  20px;
+  --icon-xl :  24px;
+  --icon-2xl:  32px;
+
+  /* Stroke SVG */
+  --stroke-thin  : 1.5;
+  --stroke-md    : 2;
+  --stroke-thick : 2.5;
+
+  /* ── Layout / Estrutura ─────────────────────────────────────── */
+  --sidebar-w          : 220px;
+  --sidebar-collapsed-w: 64px;
+  --header-h           : 56px;
+  --header-h-mobile    : 48px;
+  --nav-h              : 60px;
+
+  /* ── Breakpoints (referência JS — use BP em constants.js) ───── */
+  /* xs:0  sm:480  md:768  lg:1200  xl:1536                       */
+
+  /* ── Z-index ─────────────────────────────────────────────────── */
+  --z-base   :  1;
+  --z-dropdown: 50;
+  --z-sidebar: 100;
+  --z-header : 200;
+  --z-modal  : 300;
+  --z-toast  : 400;
+
+  /* ── Transições ─────────────────────────────────────────────── */
+  --transition-fast  : 100ms ease;
+  --transition-base  : 180ms ease;
+  --transition-slow  : 320ms ease;
+  --transition-bounce: 280ms cubic-bezier(.34,1.56,.64,1);
+
+  /* ── Dimensões de componente ────────────────────────────────── */
+  /* Button heights */
+  --btn-h-sm : 30px;
+  --btn-h-md : 36px;
+  --btn-h-lg : 44px;
+  --btn-h-xl : 52px;
+
+  /* Input heights */
+  --inp-h-sm : 30px;
+  --inp-h-md : 36px;
+  --inp-h-lg : 44px;
+
+  /* Badge padding */
+  --badge-px-sm: var(--space-2);
+  --badge-py-sm: 2px;
+  --badge-px-md: var(--space-3);
+  --badge-py-md: 4px;
+
+  /* Card padding */
+  --card-p-sm: var(--space-3);
+  --card-p-md: var(--space-4);
+  --card-p-lg: var(--space-6);
+
+  /* ── Opacidades úteis ───────────────────────────────────────── */
+  --opacity-disabled: 0.45;
+  --opacity-hover   : 0.85;
+  --opacity-muted   : 0.6;
+}

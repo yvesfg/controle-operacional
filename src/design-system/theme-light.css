@@ -1,0 +1,82 @@
+/* ═══════════════════════════════════════════════════════════════════
+   theme-light.css — Tema Claro · Controle Operacional
+   Ativação: adicione data-theme="light" no <html> ou <body>
+   ► Altere SOMENTE os valores aqui; nomes de variável ficam em tokens.css
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"],
+.theme-light {
+
+  /* ── Backgrounds ─────────────────────────────────────────────── */
+  --color-bg         : #f6f7fc;
+  --color-bg-alt     : #eef0f8;
+  --color-card       : #ffffff;
+  --color-card-2     : #f0f2fa;
+  --color-header-bg  : #ffffff;
+  --color-modal-bg   : #ffffff;
+  --color-input-bg   : #f0f2fa;
+  --color-table-header: #eef0f8;
+
+  /* ── Bordas ──────────────────────────────────────────────────── */
+  --color-border     : #e0e2f0;
+  --color-border-2   : #cccee0;
+  --color-border-focus: #a07018;
+
+  /* ── Texto ───────────────────────────────────────────────────── */
+  --color-text       : #16162a;
+  --color-text-2     : #5a5a8a;
+  --color-text-disabled: #aaaacc;
+  --color-text-inverse: #ffffff;
+
+  /* ── Acento principal — Ouro ajustado para contraste AA ──────── */
+  --color-primary    : #a07018;
+  --color-primary-dk : #8f5f14;
+  --color-primary-lt : #c49030;
+  --color-primary-bg : rgba(160,112,24,.07);
+  --color-primary-border: rgba(160,112,24,.25);
+
+  /* ── Status ──────────────────────────────────────────────────── */
+  --color-success    : #16a34a;
+  --color-success-dk : #148040;
+  --color-success-bg : rgba(22,163,74,.08);
+  --color-success-border: rgba(22,163,74,.25);
+
+  --color-danger     : #dc2626;
+  --color-danger-dk  : #b91c1c;
+  --color-danger-bg  : rgba(220,38,38,.08);
+  --color-danger-border: rgba(220,38,38,.25);
+
+  --color-warning    : #d97706;
+  --color-warning-dk : #b45309;
+  --color-warning-bg : rgba(217,119,6,.08);
+  --color-warning-border: rgba(217,119,6,.25);
+
+  --color-info       : #2563eb;
+  --color-info-lt    : #3b82f6;
+  --color-info-bg    : rgba(37,99,235,.08);
+  --color-info-border: rgba(37,99,235,.25);
+
+  /* ── Overlays / Sombras ──────────────────────────────────────── */
+  --color-shadow     : rgba(0,0,0,.06);
+  --color-overlay    : rgba(0,0,0,.45);
+  --color-scroll-thumb: #c8cae0;
+
+  --shadow-xs  : 0 1px 2px rgba(0,0,0,.05);
+  --shadow-sm  : 0 1px 4px rgba(0,0,0,.07);
+  --shadow-md  : 0 4px 12px rgba(0,0,0,.09);
+  --shadow-lg  : 0 8px 24px rgba(0,0,0,.11);
+  --shadow-xl  : 0 16px 48px rgba(0,0,0,.13);
+  --shadow-card: 0 2px 8px rgba(0,0,0,.07);
+  --shadow-primary: 0 4px 16px rgba(160,112,24,.15);
+
+  /* ── Sidebar ─────────────────────────────────────────────────── */
+  --color-sidebar-bg  : #ffffff;
+  --color-sidebar-item: transparent;
+  --color-sidebar-item-hover: rgba(160,112,24,.06);
+  --color-sidebar-item-active: rgba(160,112,24,.10);
+  --color-sidebar-text: #5a5a8a;
+  --color-sidebar-text-active: #a07018;
+
+  /* ── Scrollbar ───────────────────────────────────────────────── */
+  color-scheme: light;
+}

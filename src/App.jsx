@@ -436,8 +436,11 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detalheDT?.dt]);
 
-  // Save theme
-  useEffect(() => { saveJSON("co_theme", theme); }, [theme]);
+  // Save theme + sincroniza data-theme no <html> para o design system CSS
+  useEffect(() => {
+    saveJSON("co_theme", theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   // ── Callback OAuth: detecta retorno do Google/Apple e loga automaticamente ──
   useEffect(() => {

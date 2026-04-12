@@ -1,0 +1,82 @@
+/* ═══════════════════════════════════════════════════════════════════
+   theme-dark.css — Tema Escuro · Controle Operacional
+   Ativação: adicione data-theme="dark" no <html> ou <body>
+   ► Altere SOMENTE os valores aqui; nomes de variável ficam em tokens.css
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"],
+.theme-dark {
+
+  /* ── Backgrounds ─────────────────────────────────────────────── */
+  --color-bg         : #09090f;   /* fundo raiz — mais profundo */
+  --color-bg-alt     : #0d0d16;   /* fundo alternativo, tabelas */
+  --color-card       : #111119;   /* superfície card nível 1 */
+  --color-card-2     : #181825;   /* superfície card nível 2 / input */
+  --color-header-bg  : #09090f;
+  --color-modal-bg   : #111119;
+  --color-input-bg   : #181825;
+  --color-table-header: #0d0d16;
+
+  /* ── Bordas ──────────────────────────────────────────────────── */
+  --color-border     : #1c1c2a;   /* borda sutil */
+  --color-border-2   : #262638;   /* borda intermediária */
+  --color-border-focus: #F3BA2F;  /* foco de input */
+
+  /* ── Texto ───────────────────────────────────────────────────── */
+  --color-text       : #e8e8f2;   /* texto primário */
+  --color-text-2     : #8888b0;   /* texto secundário / placeholder */
+  --color-text-disabled: #4a4a6a;
+  --color-text-inverse: #09090f;  /* texto sobre fundo claro (ex: badge gold) */
+
+  /* ── Acento principal — Ouro Binance ─────────────────────────── */
+  --color-primary    : #F3BA2F;
+  --color-primary-dk : #C99923;
+  --color-primary-lt : #F8D474;
+  --color-primary-bg : rgba(243,186,47,.08);   /* bg sutil com acento */
+  --color-primary-border: rgba(243,186,47,.25);
+
+  /* ── Status ──────────────────────────────────────────────────── */
+  --color-success    : #22c55e;
+  --color-success-dk : #16a34a;
+  --color-success-bg : rgba(34,197,94,.10);
+  --color-success-border: rgba(34,197,94,.25);
+
+  --color-danger     : #ef4444;
+  --color-danger-dk  : #dc2626;
+  --color-danger-bg  : rgba(239,68,68,.10);
+  --color-danger-border: rgba(239,68,68,.25);
+
+  --color-warning    : #f59e0b;
+  --color-warning-dk : #d97706;
+  --color-warning-bg : rgba(245,158,11,.10);
+  --color-warning-border: rgba(245,158,11,.25);
+
+  --color-info       : #3b82f6;
+  --color-info-lt    : #60a5fa;
+  --color-info-bg    : rgba(59,130,246,.10);
+  --color-info-border: rgba(59,130,246,.25);
+
+  /* ── Overlays / Sombras ──────────────────────────────────────── */
+  --color-shadow     : rgba(0,0,0,.65);
+  --color-overlay    : rgba(0,0,0,.72);
+  --color-scroll-thumb: #262638;
+
+  --shadow-xs  : 0 1px 2px rgba(0,0,0,.50);
+  --shadow-sm  : 0 1px 4px rgba(0,0,0,.55);
+  --shadow-md  : 0 4px 12px rgba(0,0,0,.60);
+  --shadow-lg  : 0 8px 24px rgba(0,0,0,.70);
+  --shadow-xl  : 0 16px 48px rgba(0,0,0,.75);
+  --shadow-card: 0 2px 8px rgba(0,0,0,.50);
+  --shadow-primary: 0 4px 16px rgba(243,186,47,.18);
+
+  /* ── Sidebar ─────────────────────────────────────────────────── */
+  --color-sidebar-bg  : #0d0d16;
+  --color-sidebar-item: transparent;
+  --color-sidebar-item-hover: rgba(243,186,47,.07);
+  --color-sidebar-item-active: rgba(243,186,47,.12);
+  --color-sidebar-text: #8888b0;
+  --color-sidebar-text-active: #F3BA2F;
+
+  /* ── Scrollbar ───────────────────────────────────────────────── */
+  color-scheme: dark;
+}
