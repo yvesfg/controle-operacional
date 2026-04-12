@@ -144,11 +144,14 @@ export default function App() {
   const [syncStatusLoading, setSyncStatusLoading] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email","yvesfg@gmail.com"));
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
+  const [isWide,   setIsWide]   = useState(()=>window.innerWidth>=768);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(()=>loadJSON("co_sidebar_collapsed",false));
   useEffect(()=>{
-    const fn=()=>setIsMobile(window.innerWidth<=600);
+    const fn=()=>{setIsMobile(window.innerWidth<=600);setIsWide(window.innerWidth>=768);};
     window.addEventListener("resize",fn);
     return()=>window.removeEventListener("resize",fn);
   },[]);
+  useEffect(()=>{ saveJSON("co_sidebar_collapsed", sidebarCollapsed); },[sidebarCollapsed]);
 
   // Auto-default planilha filters: ano/mês mais recente ao carregar dados
   useEffect(()=>{
@@ -1389,8 +1392,8 @@ export default function App() {
   // ── Para alterar globalmente: edite DESIGN no topo do arquivo
   const css = {
     app:       { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:DESIGN.fnt.b, transition:"background .25s, color .25s" },
-    // Header sem borda dourada pesada — linha fina define sem competir
-    header:    { background:t.headerBg, padding:"10px 16px", borderBottom:`1px solid ${t.borda}`, position:"fixed", top:0, left:0, right:0, zIndex:100, display:"flex", alignItems:"center", gap:8, boxShadow:`0 1px 0 ${t.borda}`, transition:"background .25s" },
+    // Topbar — sticky dentro do co-main (desktop) ou fixed no mobile
+    header:    { background:t.headerBg, padding:"0 16px", borderBottom:`1px solid ${t.borda}`, position:"sticky", top:0, left:0, right:0, zIndex:90, display:"flex", alignItems:"center", gap:8, height:56, boxShadow:`0 1px 0 ${t.borda}`, transition:"background .25s", flexShrink:0 },
     // Logo flat — sem gradiente, borda dourada sutil define o acento
     logo:      { width:40, height:40, background:t.card2, borderRadius:DESIGN.r.logo, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, border:`1px solid ${hexRgb(t.ouro,.28)}` },
     // Botão header — transparente, borda mínima
@@ -2507,8 +2510,11 @@ export default function App() {
     setTimeout(()=>URL.revokeObjectURL(_urlOp),120000);
   };
 
+  // Classe do co-main muda conforme largura + collapse state
+  const coMainCls = `co-main${isWide?(sidebarCollapsed?" co-main--collapsed":""):""}`;
+
   return (
-    <div style={css.app}>
+    <div style={css.app} className="co-app-wrap">
       <style>{`
         @keyframes logoPop{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0)}}
         @keyframes mslide{from{transform:translateY(100%)}to{transform:none}}
@@ -2541,6 +2547,135 @@ export default function App() {
         .co-tr:hover td{background:${hexRgb(t.ouro,.03)}!important}
         /* ─── Tooltip chip DT ─── */
         .dt-chip{font-family:'Bebas Neue',monospace;font-size:13px;letter-spacing:1.5px;color:${t.ouro};background:${hexRgb(t.ouro,.1)};border:1px solid ${hexRgb(t.ouro,.22)};border-radius:${DESIGN.r.tag}px;padding:2px 8px;font-weight:700}
+        /* ════════════════════════════════════════
+           LAYOUT SHELL — sidebar + main
+        ════════════════════════════════════════ */
+        .co-app-wrap{display:flex;min-height:100vh;position:relative}
+
+        /* ── Desktop Sidebar ── */
+        .co-sidebar{
+          position:fixed;top:0;left:0;bottom:0;z-index:100;
+          width:220px;display:flex;flex-direction:column;
+          background:${t.headerBg};border-right:1px solid ${t.borda};
+          transition:width 200ms ease;overflow:hidden;flex-shrink:0;
+        }
+        .co-sidebar--collapsed{width:64px}
+
+        .co-sidebar__logo{
+          display:flex;align-items:center;gap:10px;
+          padding:8px 12px;height:56px;border-bottom:1px solid ${t.borda};
+          flex-shrink:0;overflow:hidden;
+        }
+        .co-sidebar--collapsed .co-sidebar__logo{justify-content:center;padding:8px}
+        .co-sidebar__logo-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2.5px;color:${t.txt};line-height:1;white-space:nowrap;overflow:hidden}
+        .co-sidebar__logo-sub{font-size:8px;color:${t.txt2};letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap;margin-top:2px}
+        .co-sidebar__logo-sub span{color:${t.ouro};font-weight:700}
+        .co-sidebar--collapsed .co-sidebar__logo-name,
+        .co-sidebar--collapsed .co-sidebar__logo-sub{display:none}
+
+        .co-sidebar__toggle{
+          margin-left:auto;flex-shrink:0;
+          background:transparent;border:none;cursor:pointer;
+          color:${t.txt2};display:flex;align-items:center;justify-content:center;
+          padding:4px;border-radius:6px;transition:all .15s;
+        }
+        .co-sidebar__toggle:hover{background:${t.card2};color:${t.txt}}
+        .co-sidebar--collapsed .co-sidebar__toggle{margin-left:0;margin-top:0}
+
+        .co-sidebar__nav{
+          flex:1;padding:6px;overflow-y:auto;overflow-x:hidden;
+          display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;
+        }
+        .co-sidebar__item{
+          display:flex;align-items:center;gap:10px;
+          padding:8px 10px;border-radius:${DESIGN.r.sidebar}px;
+          background:transparent;border:none;cursor:pointer;
+          color:${t.txt2};font-family:${DESIGN.fnt.b};font-size:12px;font-weight:500;
+          text-align:left;width:100%;white-space:nowrap;
+          transition:all 180ms ease;min-height:36px;overflow:hidden;
+        }
+        .co-sidebar__item:hover{background:${hexRgb(t.ouro,.05)};color:${t.txt}}
+        .co-sidebar__item--active{background:${hexRgb(t.ouro,.1)};color:${t.ouro}}
+        .co-sidebar__item--active .co-sidebar__ico svg{stroke:${t.ouro}}
+        .co-sidebar--collapsed .co-sidebar__item{justify-content:center;padding:8px}
+        .co-sidebar--collapsed .co-sidebar__item-lbl{display:none}
+        .co-sidebar__ico{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:20px;height:20px}
+        .co-sidebar__item-lbl{flex:1}
+
+        .co-sidebar__footer{
+          padding:8px 6px;border-top:1px solid ${t.borda};
+          display:flex;flex-direction:column;gap:3px;flex-shrink:0;
+        }
+        .co-sidebar--collapsed .co-sidebar__footer{align-items:center}
+        .co-sidebar__footer-item{
+          display:flex;align-items:center;gap:8px;
+          padding:7px 10px;border-radius:${DESIGN.r.sm}px;
+          background:transparent;border:none;cursor:pointer;
+          color:${t.txt2};font-family:${DESIGN.fnt.b};font-size:11px;font-weight:500;
+          text-align:left;width:100%;white-space:nowrap;overflow:hidden;
+          transition:all .15s;
+        }
+        .co-sidebar__footer-item:hover{background:${t.card2};color:${t.txt}}
+        .co-sidebar--collapsed .co-sidebar__footer-item{justify-content:center;padding:7px}
+        .co-sidebar--collapsed .co-sidebar__footer-lbl{display:none}
+        .co-sidebar__user{
+          padding:8px 10px;border-radius:${DESIGN.r.sm}px;background:${t.card2};
+          border:1px solid ${t.borda};margin-bottom:2px;
+          display:flex;align-items:center;gap:8px;overflow:hidden;
+        }
+        .co-sidebar__user-name{font-size:11px;font-weight:700;color:${t.txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .co-sidebar__user-role{font-size:9px;color:${t.txt2};text-transform:uppercase;letter-spacing:.8px}
+        .co-sidebar--collapsed .co-sidebar__user-info{display:none}
+        .co-sidebar--collapsed .co-sidebar__user{justify-content:center;padding:8px}
+
+        /* ── Main content area (desktop) ── */
+        .co-main{display:flex;flex-direction:column;flex:1;min-width:0;min-height:100vh}
+        @media(min-width:768px){
+          .co-main{margin-left:220px;transition:margin-left 200ms ease}
+          .co-main--collapsed{margin-left:64px}
+          .co-mobile-nav{display:none!important}
+        }
+        @media(max-width:767px){
+          .co-sidebar{display:none!important}
+          .co-main{margin-left:0!important}
+        }
+
+        /* ── Mobile Nav (horizontal scroll, Binance-style) ── */
+        .co-mobile-nav{
+          position:fixed;bottom:0;left:0;right:0;z-index:190;
+          display:flex;align-items:stretch;
+          overflow-x:auto;overflow-y:hidden;
+          height:62px;
+          background:${t.headerBg};border-top:1px solid ${t.borda};
+          -webkit-overflow-scrolling:touch;scrollbar-width:none;
+          padding-bottom:env(safe-area-inset-bottom,0);
+          box-shadow:0 -4px 20px ${t.shadow};
+        }
+        .co-mobile-nav::-webkit-scrollbar{display:none}
+        .co-mobile-nav__item{
+          flex:1 1 0;min-width:0;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;
+          gap:3px;padding:6px 4px 4px;background:transparent;border:none;
+          cursor:pointer;position:relative;transition:all .18s;
+          font-family:${DESIGN.fnt.b};color:${t.txt2};
+        }
+        .co-mobile-nav__item--active{color:${t.ouro}}
+        .co-mobile-nav__item--active::before{
+          content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+          width:28px;height:2.5px;border-radius:0 0 3px 3px;
+          background:${t.ouro};box-shadow:0 0 8px ${hexRgb(t.ouro,.5)};
+        }
+        .co-mobile-nav__lbl{
+          font-size:clamp(6px,2.2vw,9px);font-weight:inherit;
+          letter-spacing:.3px;text-transform:uppercase;line-height:1;
+          white-space:nowrap;overflow:hidden;max-width:100%;
+          transition:color .18s;font-weight:500;
+        }
+        .co-mobile-nav__item--active .co-mobile-nav__lbl{font-weight:700}
+
+        /* ─── Ajuste do content dentro do co-main ─── */
+        .co-content{flex:1;width:100%}
+
         /* ─── Modal Detalhe Responsivo ─── */
         .co-dt-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:flex-end;justify-content:center}
         .co-dt-modal{width:100%;max-width:520px;max-height:96vh;background:${t.modalBg};border:1px solid ${t.borda};border-bottom:none;border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:mslide .26s cubic-bezier(.34,1.1,.64,1)}
@@ -2574,134 +2709,330 @@ export default function App() {
         }
       `}</style>
 
-      {/* HEADER */}
+      {/* ════════════════════════════════════════════
+          DESKTOP SIDEBAR — oculta no mobile via CSS
+      ════════════════════════════════════════════ */}
+      {isWide && (
+        <aside className={`co-sidebar${sidebarCollapsed?" co-sidebar--collapsed":""}`}>
+          {/* ── Logo ── */}
+          <div className="co-sidebar__logo">
+            <div style={{width:34,height:34,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:4}}>
+              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+            </div>
+            {!sidebarCollapsed && (
+              <div style={{overflow:"hidden",flex:1,minWidth:0}}>
+                <div className="co-sidebar__logo-name">CONTROLE OPS</div>
+                <div className="co-sidebar__logo-sub">by <span>YFGroup</span></div>
+              </div>
+            )}
+            <button
+              className="co-sidebar__toggle"
+              onClick={()=>setSidebarCollapsed(v=>!v)}
+              title={sidebarCollapsed?"Expandir sidebar":"Recolher sidebar"}
+            >
+              {sidebarCollapsed
+                ? hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt2,14,2)
+                : hIco(<><polyline points="15 18 9 12 15 6"/></>,t.txt2,14,2)
+              }
+            </button>
+          </div>
+
+          {/* ── Nav items ── */}
+          <nav className="co-sidebar__nav">
+            {tabs.map(tb=>{
+              const ativo = activeTab===tb.k;
+              return (
+                <button
+                  key={tb.k}
+                  className={`co-sidebar__item${ativo?" co-sidebar__item--active":""}`}
+                  onClick={()=>setActiveTab(tb.k)}
+                  title={sidebarCollapsed?tb.l:undefined}
+                >
+                  <span className="co-sidebar__ico">
+                    {typeof tb.ico==="function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
+                  </span>
+                  <span className="co-sidebar__item-lbl">{tb.l}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* ── Footer — utilitários + usuário ── */}
+          <div className="co-sidebar__footer">
+            {/* User info */}
+            <div className="co-sidebar__user">
+              <span style={{flexShrink:0}}>
+                {perfil==="admin"
+                  ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,16,1.8)
+                  : hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,16,2)
+                }
+              </span>
+              <div className="co-sidebar__user-info">
+                <div className="co-sidebar__user-name">{usuarioLogado||perfil}</div>
+                <div className="co-sidebar__user-role">{perfil}</div>
+              </div>
+            </div>
+
+            {/* Sync */}
+            <button className="co-sidebar__footer-item co-hbtn" onClick={sincronizar} title={connStatus==="online"?"Sincronizado":connStatus==="syncing"?"Sincronizando…":"Offline"} style={{position:"relative"}}>
+              <span style={{flexShrink:0,position:"relative"}}>
+                {connStatus==="syncing"
+                  ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,14)
+                  : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2,14)
+                }
+                <span style={{position:"absolute",bottom:-1,right:-1,width:5,height:5,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger}}/>
+              </span>
+              <span className="co-sidebar__footer-lbl">Sincronizar</span>
+            </button>
+
+            {/* Alertas */}
+            {alertas.length>0 && (
+              <button className="co-sidebar__footer-item" onClick={()=>setAlertasOpen(!alertasOpen)} style={{position:"relative"}}>
+                {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,14)}
+                <span className="co-sidebar__footer-lbl" style={{color:t.danger,fontWeight:700}}>{alertas.length} {alertas.length===1?"alerta":"alertas"}</span>
+                <span style={{marginLeft:"auto",background:t.danger,color:"#fff",borderRadius:10,padding:"0 5px",fontSize:9,fontWeight:700,flexShrink:0}}>{alertas.length}</span>
+              </button>
+            )}
+
+            {/* Relatórios */}
+            <div style={{position:"relative"}}>
+              <button className="co-sidebar__footer-item" onClick={()=>setRelMenuOpen(v=>!v)} style={{border:`1px solid rgba(240,185,11,.2)`,borderRadius:DESIGN.r.sm}}>
+                {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,14)}
+                <span className="co-sidebar__footer-lbl" style={{color:t.ouro}}>Relatórios</span>
+              </button>
+              {relMenuOpen && (
+                <>
+                  <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setRelMenuOpen(false)}/>
+                  <div style={{position:"absolute",left:"100%",bottom:0,background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:220,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .15s",marginLeft:4}}>
+                    <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>RELATÓRIOS PDF</div>
+                    {[
+                      {ico:hIco(<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></>,t.azulLt,14),l:"Geral de Operações",sub:"KPIs, resumo e tabela completa",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
+                      {ico:hIco(<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>,t.azulLt,14),l:"Operacional",sub:"SGS, Apontamentos e ID Diárias",fn:()=>{setRelMenuOpen(false);setRelOperOpen(true);}},
+                      {ico:hIco(<><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>,t.azulLt,14),l:"Diárias",sub:"Financeiro e status de diárias",fn:()=>{setRelMenuOpen(false);setRelDiariaOpen(true);}},
+                      {ico:hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.azulLt,14),l:"Descargas",sub:"Agenda, status e atrasos",fn:()=>{setRelMenuOpen(false);setRelDescargaOpen(true);}},
+                    ].map((op,i,arr)=>(
+                      <button key={op.l} onClick={op.fn} style={{display:"flex",alignItems:"center",gap:10,width:"100%",padding:"10px 14px",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",cursor:"pointer",textAlign:"left",transition:"background .15s"}}
+                        onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <span style={{flexShrink:0}}>{op.ico}</span>
+                        <div><div style={{fontSize:12,fontWeight:700,color:t.txt}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* WhatsApp */}
+            <div style={{position:"relative"}}>
+              <button className="co-sidebar__footer-item" onClick={()=>setWppTipoOpen(v=>!v)} style={{border:`1px solid rgba(37,211,102,.2)`,borderRadius:DESIGN.r.sm}}>
+                {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </>,"#25D366",14)}
+                <span className="co-sidebar__footer-lbl" style={{color:"#25D366"}}>WhatsApp</span>
+              </button>
+              {wppTipoOpen && (
+                <>
+                  <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)}/>
+                  <div style={{position:"absolute",left:"100%",bottom:0,background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s",marginLeft:4}}>
+                    {buscaResult
+                      ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                      : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>Busque um registro primeiro</div>
+                    }
+                    {[
+                      {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
+                      {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo completo de pagamento"},
+                      {k:"descarga",svg:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
+                      {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento diária"},
+                    ].map((op,i,arr)=>(
+                      <button key={op.k} onClick={()=>{
+                        setWppTipoOpen(false);
+                        if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
+                        const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                        if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                        else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                        else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                        else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
+                      }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
+                        onMouseOver={e=>e.currentTarget.style.background=t.card2}
+                        onMouseOut={e=>e.currentTarget.style.background="transparent"}
+                      >
+                        <div style={{flexShrink:0,width:30,height:30,borderRadius:7,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",14)}</div>
+                        <div><div style={{fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Tema */}
+            <button className="co-sidebar__footer-item" onClick={()=>setTheme(theme==="dark"?"light":"dark")} title={theme==="dark"?"Tema claro":"Tema escuro"}>
+              {theme==="dark"
+                ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,14)
+                : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,14)
+              }
+              <span className="co-sidebar__footer-lbl">{theme==="dark"?"Tema Claro":"Tema Escuro"}</span>
+            </button>
+
+            {/* Sair */}
+            <button className="co-sidebar__footer-item" onClick={handleLogout} title="Sair">
+              {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,14)}
+              <span className="co-sidebar__footer-lbl">Sair</span>
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MAIN COLUMN — topbar + conteúdo
+      ════════════════════════════════════════════ */}
+      <div className={coMainCls}>
+
+      {/* TOPBAR — sticky dentro do co-main */}
       <div style={css.header}>
-        <div style={{width:40,height:40,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 4px 14px rgba(243,186,47,.18)",padding:5}}>
-          <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-        </div>
-        <div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2.5,color:t.txt,lineHeight:1}}>CONTROLE OPERACIONAL</div>
-          <div style={{fontSize:9,color:t.txt2,letterSpacing:1.5,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro,fontWeight:700}}>YFGroup</span></div>
-        </div>
-        <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5}}>
-          {/* Badge de perfil — admin: só coroa; outros: ícone + nome curto */}
-          <div title={usuarioLogado||perfil} style={{
-            ...css.hBtn,
-            borderColor: perfil==="admin"?`rgba(240,185,11,.45)`:perfil==="gerente"?`rgba(22,119,255,.3)`:perfil==="operador"?t.borda:`rgba(22,119,255,.3)`,
-            color: perfil==="admin"?t.ouro:perfil==="gerente"?t.azulLt:perfil==="operador"?t.txt2:t.azulLt,
-            padding: perfil==="admin"?"7px 8px":"6px 8px",
-            background: perfil==="admin"?`rgba(240,185,11,.07)`:"rgba(128,128,128,.08)",
-          }}>
-            {perfil==="admin"
-              ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,16,1.8)
-              : perfil==="gerente"
-              ? <>{hIco(<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,t.azulLt,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"GER").split(" ")[0].substring(0,6).toUpperCase()}</span></>
-              : perfil==="operador"
-              ? <>{hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"OP").split(" ")[0].substring(0,6).toUpperCase()}</span></>
-              : <>{hIco(<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>,t.azulLt,14,2)}<span style={{fontSize:9,fontWeight:700,letterSpacing:.5}}>{(usuarioLogado||"VIEW").split(" ")[0].substring(0,6).toUpperCase()}</span></>
-            }
-          </div>
-
-          <button onClick={sincronizar} className="co-hbtn" title={connStatus==="online"?"Sincronizado":connStatus==="syncing"?"Sincronizando…":"Offline — clique para sincronizar"} style={{...css.hBtn,padding:"7px 9px",position:"relative"}}>
-            {connStatus==="syncing"
-              ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,15)
-              : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2,15)
-            }
-            <span style={{position:"absolute",bottom:5,right:5,width:5,height:5,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger,boxShadow:connStatus==="online"?`0 0 4px rgba(2,192,118,.7)`:connStatus==="syncing"?`0 0 4px rgba(240,185,11,.7)`:`0 0 4px rgba(246,70,93,.7)`,flexShrink:0}} />
-          </button>
-
-          {alertas.length > 0 && (
-            <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px",overflow:"visible"}}>
-              {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,15)}
-              <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`,minWidth:18,minHeight:18}}>{alertas.length}</span>
-            </button>
-          )}
-
-          <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"7px 9px"}} title={theme==="dark"?"Tema claro":"Tema escuro"}>
-            {theme==="dark"
-              ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,15)
-              : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,15)
-            }
-          </button>
-          {/* Relatórios — Dropdown */}
-          <div style={{position:"relative"}}>
-            <button onClick={()=>setRelMenuOpen(v=>!v)} title="Relatórios PDF" style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"7px 9px"}}>
-              {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,15)}
-            </button>
-            {relMenuOpen && (
-              <>
-                <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setRelMenuOpen(false)} />
-                <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:220,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .15s"}}>
-                  <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>📄 RELATÓRIOS PDF</div>
-                  {[
-                    {ico:"📊",l:"Geral de Operações",sub:"KPIs, resumo e tabela completa",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
-                    {ico:"📋",l:"Operacional",sub:"SGS, Apontamentos e ID Diárias",fn:()=>{setRelMenuOpen(false);setRelOperOpen(true);}},
-                    {ico:"🛏️",l:"Diárias",sub:"Financeiro e status de diárias",fn:()=>{setRelMenuOpen(false);setRelDiariaOpen(true);}},
-                    {ico:"📦",l:"Descargas",sub:"Agenda, status e atrasos",fn:()=>{setRelMenuOpen(false);setRelDescargaOpen(true);}},
-                  ].map((op,i,arr)=>(
-                    <button key={op.l} onClick={op.fn} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"11px 16px",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",cursor:"pointer",textAlign:"left",transition:"background .15s"}}
-                      onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`}
-                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                      <span style={{fontSize:18,flexShrink:0}}>{op.ico}</span>
-                      <div>
-                        <div style={{fontSize:12,fontWeight:700,color:t.txt}}>{op.l}</div>
-                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          {/* WhatsApp Dropdown */}
-          <div style={{position:"relative"}}>
-            <button onClick={()=>setWppTipoOpen(v=>!v)} title="WhatsApp" style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"7px 9px"}}>
-              {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </>,"#25D366",15)}
-            </button>
-            {wppTipoOpen && (
-              <>
-                <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)} />
-                <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
-                  {buscaResult
-                    ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700,display:"flex",alignItems:"center",gap:5}}>✅ DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
-                    : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>⚠️ Busque um registro primeiro</div>
-                  }
-                  {[
-                    {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
-                    {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo completo de pagamento"},
-                    {k:"descarga",svg:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
-                    {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento diária"},
-                  ].map((op,i,arr)=>(
-                    <button key={op.k} onClick={()=>{
-                      setWppTipoOpen(false);
-                      if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
-                      const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                      if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
-                      else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                      else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
-                      else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
-                    }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
-                      onMouseOver={e=>e.currentTarget.style.background=t.card2}
-                      onMouseOut={e=>e.currentTarget.style.background="transparent"}
-                    >
-                      <div style={{flexShrink:0,width:32,height:32,borderRadius:8,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",16)}</div>
-                      <div><div style={{color:t.txt,fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          <button onClick={handleLogout} title="Sair" style={{...css.hBtn,padding:isMobile?"4px 5px":"7px 9px",minWidth:isMobile?28:undefined}}>
-            {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,isMobile?13:15)}
-          </button>
-        </div>
+        {isWide ? (
+          /* ── Desktop topbar: título da aba + status + alertas ── */
+          <>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:2,color:t.txt,lineHeight:1}}>
+                {tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}
+              </div>
+              <span style={{fontSize:9,fontWeight:700,letterSpacing:.8,padding:"2px 8px",borderRadius:DESIGN.r.badge,
+                background:connStatus==="online"?`rgba(34,197,94,.12)`:connStatus==="syncing"?`rgba(240,185,11,.12)`:`rgba(239,68,68,.12)`,
+                color:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger,
+                border:`1px solid ${connStatus==="online"?`rgba(34,197,94,.3)`:connStatus==="syncing"?`rgba(240,185,11,.3)`:`rgba(239,68,68,.3)`}`,
+                textTransform:"uppercase",
+              }}>
+                {connStatus==="online"?"Online":connStatus==="syncing"?"Sincronizando":"Offline"}
+              </span>
+            </div>
+            <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5}}>
+              {alertas.length > 0 && (
+                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px",overflow:"visible"}}>
+                  {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,15)}
+                  <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
+                </button>
+              )}
+              {canEdit && (
+                <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{...css.btnGold,padding:"8px 16px",fontSize:12,gap:6}}>
+                  {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",14,2.5)} Nova DT
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          /* ── Mobile topbar: logo + título + ações ── */
+          <>
+            <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:4}}>
+              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+            </div>
+            <div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.txt,lineHeight:1}}>CONTROLE OPS</div>
+              <div style={{fontSize:8,color:t.txt2,letterSpacing:1,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro}}>YFGroup</span></div>
+            </div>
+            <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
+              <div title={usuarioLogado||perfil} style={{...css.hBtn,borderColor:perfil==="admin"?`rgba(240,185,11,.45)`:t.borda,color:perfil==="admin"?t.ouro:t.txt2,padding:"6px 7px",background:perfil==="admin"?`rgba(240,185,11,.07)`:"transparent"}}>
+                {perfil==="admin"
+                  ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,14,1.8)
+                  : hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,13,2)
+                }
+              </div>
+              <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
+                {connStatus==="syncing"
+                  ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,13)
+                  : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2,13)
+                }
+                <span style={{position:"absolute",bottom:4,right:4,width:4,height:4,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger}}/>
+              </button>
+              {alertas.length > 0 && (
+                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"6px 7px"}}>
+                  {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,13)}
+                  <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:15,height:15,fontSize:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
+                </button>
+              )}
+              <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"6px 7px"}}>
+                {theme==="dark"
+                  ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,13)
+                  : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,13)
+                }
+              </button>
+              {/* Relatórios mobile */}
+              <div style={{position:"relative"}}>
+                <button onClick={()=>setRelMenuOpen(v=>!v)} style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"6px 7px"}}>
+                  {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,13)}
+                </button>
+                {relMenuOpen && (
+                  <>
+                    <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setRelMenuOpen(false)}/>
+                    <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:220,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .15s"}}>
+                      <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>RELATÓRIOS PDF</div>
+                      {[
+                        {l:"Geral de Operações",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
+                        {l:"Operacional",fn:()=>{setRelMenuOpen(false);setRelOperOpen(true);}},
+                        {l:"Diárias",fn:()=>{setRelMenuOpen(false);setRelDiariaOpen(true);}},
+                        {l:"Descargas",fn:()=>{setRelMenuOpen(false);setRelDescargaOpen(true);}},
+                      ].map((op,i,arr)=>(
+                        <button key={op.l} onClick={op.fn} style={{display:"flex",alignItems:"center",width:"100%",padding:"10px 14px",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",cursor:"pointer",textAlign:"left",transition:"background .15s",fontSize:12,fontWeight:600,color:t.txt,fontFamily:"inherit"}}
+                          onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`}
+                          onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                          {op.l}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* WhatsApp mobile */}
+              <div style={{position:"relative"}}>
+                <button onClick={()=>setWppTipoOpen(v=>!v)} style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"6px 7px"}}>
+                  {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </>,"#25D366",13)}
+                </button>
+                {wppTipoOpen && (
+                  <>
+                    <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)}/>
+                    <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
+                      {buscaResult
+                        ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                        : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>Busque um registro primeiro</div>
+                      }
+                      {[
+                        {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT"},
+                        {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo de pagamento"},
+                        {k:"descarga",svg:<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento"},
+                        {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento"},
+                      ].map((op,i,arr)=>(
+                        <button key={op.k} onClick={()=>{
+                          setWppTipoOpen(false);
+                          if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
+                          const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                          if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                          else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                          else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                          else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
+                        }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
+                          onMouseOver={e=>e.currentTarget.style.background=t.card2}
+                          onMouseOut={e=>e.currentTarget.style.background="transparent"}
+                        >
+                          <div style={{flexShrink:0,width:30,height:30,borderRadius:7,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",14)}</div>
+                          <div><div style={{fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              <button onClick={handleLogout} style={{...css.hBtn,padding:"6px 7px"}}>
+                {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,13)}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ALERTAS PANEL */}
       {alertasOpen && alertas.length > 0 && (
-        <div style={{background:t.card,borderBottom:`1px solid ${t.borda}`,animation:"fadeIn .2s",position:"fixed",top:70,left:0,right:0,zIndex:150,maxHeight:"50vh",overflowY:"auto",boxShadow:`0 8px 24px ${t.shadow}`}}>
+        <div style={{background:t.card,borderBottom:`1px solid ${t.borda}`,animation:"fadeIn .2s",position:"sticky",top:56,zIndex:89,maxHeight:"50vh",overflowY:"auto",boxShadow:`0 8px 24px ${t.shadow}`}}>
           {alertas.slice(0,10).map((a,i) => (
             <div key={i} onClick={()=>{ if(a.reg){ abrirDetalhe(a.reg); setAlertasOpen(false); } }} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`,cursor:a.reg?"pointer":"default",transition:"background .15s"}} onMouseEnter={e=>{ if(a.reg) e.currentTarget.style.background=t.card2; }} onMouseLeave={e=>{ e.currentTarget.style.background=""; }}>
               <span style={{flexShrink:0}}>{a.tipo==="danger"?hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,16):hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,16)}</span>
@@ -2731,7 +3062,8 @@ export default function App() {
       )}
 
       {/* CONTENT */}
-      <div style={{padding:activeTab==="planilha"?"76px 0 68px":"76px 16px 68px",maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
+      {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
+      <div style={{padding:activeTab==="planilha"?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
 
         {/* ═══ BUSCA ═══ */}
         {activeTab === "busca" && (
@@ -5124,87 +5456,37 @@ function mapearColuna(n){
         )}
       </div>
 
-      {/* ═══ FAB ═══ */}
-      {canEdit && (
+      {/* ═══ FAB — só mobile (desktop tem botão "Nova DT" no topbar) ═══ */}
+      {canEdit && !isWide && (
         <div style={{position:"fixed",bottom:74,right:14,zIndex:200}}>
-          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:50,height:50,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,borderRadius:14,border:"none",boxShadow:"0 5px 20px rgba(240,185,11,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
+          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:50,height:50,background:t.ouro,borderRadius:14,border:"none",boxShadow:"0 5px 20px rgba(240,185,11,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
             <span style={{fontSize:18,color:"#000"}}>＋</span>
             <span style={{fontSize:7,fontWeight:700,color:"#000",letterSpacing:.8,textTransform:"uppercase"}}>NOVO</span>
           </button>
         </div>
       )}
 
-      {/* ═══ BOTTOM NAVIGATION — estilo Binance ═══ */}
-      {/* Admin no mobile: apenas ícones (sem label), altura reduzida */}
-      {(()=>{
-        const adminMobile = perfil==="admin" && isMobile;
-        const navH = adminMobile ? 50 : 62;
-        return (
-          <nav style={{
-            position:"fixed",bottom:0,left:0,right:0,zIndex:190,
-            background:t.headerBg,
-            borderTop:`1px solid ${t.borda}`,
-            display:"flex",alignItems:"stretch",
-            height:navH,
-            boxShadow:`0 -4px 20px ${t.shadow}`,
-            paddingBottom:"env(safe-area-inset-bottom,0)",
-            overflow:"hidden",
-          }}>
-            {tabs.map(tb => {
-              const ativo = activeTab === tb.k;
-              return (
-                <button
-                  key={tb.k}
-                  onClick={()=>setActiveTab(tb.k)}
-                  style={{
-                    flex:"1 1 0",
-                    minWidth:0,
-                    background:"transparent",
-                    border:"none",
-                    cursor:"pointer",
-                    display:"flex",
-                    flexDirection:"column",
-                    alignItems:"center",
-                    justifyContent:"center",
-                    gap: adminMobile ? 0 : 3,
-                    padding: adminMobile ? "4px 2px" : "6px 2px 4px",
-                    position:"relative",
-                    transition:"all .18s",
-                    fontFamily:DESIGN.fnt.b,
-                    overflow:"hidden",
-                  }}
-                >
-                  {ativo && (
-                    <span style={{
-                      position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
-                      width:28,height:2.5,borderRadius:"0 0 3px 3px",
-                      background:`linear-gradient(90deg,${t.ouroDk},${t.ouro})`,
-                      boxShadow:`0 0 8px rgba(240,185,11,.6)`,
-                    }} />
-                  )}
-                  <span style={{lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:20}}>{tb.ico}</span>}
-                  </span>
-                  {!adminMobile && (
-                    <span style={{
-                      fontSize:"clamp(6px,2.2vw,9px)",
-                      fontWeight:ativo?700:500,
-                      letterSpacing:.3,
-                      textTransform:"uppercase",
-                      color:ativo?t.ouro:t.txt2,
-                      lineHeight:1,
-                      whiteSpace:"nowrap",
-                      overflow:"hidden",
-                      maxWidth:"100%",
-                      transition:"color .18s",
-                    }}>{tb.l}</span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        );
-      })()}
+      </div>{/* end .co-main */}
+
+      {/* ═══ MOBILE NAV — horizontal scroll, estilo Binance ═══ */}
+      {/* Oculto automaticamente no desktop via CSS @media(min-width:768px) */}
+      <nav className="co-mobile-nav">
+        {tabs.map(tb => {
+          const ativo = activeTab === tb.k;
+          return (
+            <button
+              key={tb.k}
+              className={`co-mobile-nav__item${ativo?" co-mobile-nav__item--active":""}`}
+              onClick={()=>setActiveTab(tb.k)}
+            >
+              <span style={{lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
+              </span>
+              <span className="co-mobile-nav__lbl">{tb.l}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* ═══ EDIT MODAL ═══ */}
       {modalOpen === "edit" && (

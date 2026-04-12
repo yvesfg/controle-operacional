@@ -1,5 +1,31 @@
 # Design System — Changelog
 
+## 2026-04-12 · Sessão DS-02
+
+**Solicitado:** Refatoração global de layout — sidebar lateral colapsável desktop, nav mobile scrollável estilo Binance, dark mode corporativo dourado, padronização completa de cores/tipografia/espaçamentos/radius/componentes.
+
+**Implementado:**
+
+### App.jsx — Layout Shell
+- Adicionados estados `isWide` (≥768px) e `sidebarCollapsed` (persistido em localStorage)
+- Outer wrapper recebeu classe `co-app-wrap` (flex row)
+- Desktop (≥768px): sidebar fixa esquerda 220px (ou 64px colapsada) com logo, nav items, footer utilitário (sync, alertas, relatórios, WPP, tema, logout)
+- Topbar desktop: sticky, mostra título da aba ativa + pill de status de conexão + botão "Nova DT"
+- Mobile (<768px): topbar com logo + ações compactas; bottom nav scrollável com `overflow-x:auto`
+- FAB removido do desktop (substituído pelo botão "Nova DT" no topbar); mantido no mobile
+
+### CSS injetado no `<style>` do App.jsx
+- `.co-app-wrap`, `.co-sidebar`, `.co-sidebar--collapsed`, `.co-sidebar__logo`, `.co-sidebar__nav`, `.co-sidebar__item`, `.co-sidebar__footer`
+- `.co-main`, `.co-main--collapsed` com `margin-left` dinâmico
+- `.co-mobile-nav`, `.co-mobile-nav__item`, `.co-mobile-nav__lbl` — nav horizontal scrollável
+- Media queries: sidebar oculta ≤767px, mobile nav oculta ≥768px
+
+### Backups
+- `src/App.jsx.bckp_20260412_214525`
+- `src/design-system/components.css.bckp_20260412_214525`
+
+---
+
 ## 2026-04-12 · Sessão DS-01
 
 **Solicitado:** Refatorar o app para usar um design system centralizado com tokens CSS, temas dark/light e componentes reutilizáveis proibindo cores hardcoded.
