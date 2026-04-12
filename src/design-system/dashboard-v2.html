@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Operacional — YFGroup</title>
+<style>
+/* ─────────────────────────────────────────────────────────────────
+   TOKENS
+───────────────────────────────────────────────────────────────── */
+:root {
+  --bg         : #0F172A;
+  --surface    : #1E293B;
+  --surface-2  : #243447;
+  --surface-h  : #273449;
+  --border     : #334155;
+  --border-sub : rgba(51,65,85,.5);
+
+  --primary    : #60A5FA;
+  --primary-h  : #3B82F6;
+  --primary-dim: rgba(96,165,250,.12);
+  --primary-ring: rgba(96,165,250,.22);
+
+  --txt        : #E2E8F0;
+  --txt2       : #94A3B8;
+  --txt3       : #64748B;
+  --txt-inv    : #0F172A;
+
+  --ok         : #34D399;
+  --ok-dim     : rgba(52,211,153,.12);
+  --warn       : #FBBF24;
+  --warn-dim   : rgba(251,191,36,.12);
+  --err        : #F87171;
+  --err-dim    : rgba(248,113,113,.12);
+  --info       : #60A5FA;
+  --info-dim   : rgba(96,165,250,.12);
+
+  --r-sm: 5px;
+  --r   : 8px;
+  --r-lg: 10px;
+  --r-xl: 12px;
+  --r-2xl: 14px;
+  --r-full: 9999px;
+
+  --font  : 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono  : 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  --sh-sm : 0 1px 2px rgba(0,0,0,.4);
+  --sh-md : 0 4px 16px rgba(0,0,0,.5);
+  --sh-lg : 0 8px 32px rgba(0,0,0,.6);
+
+  --ease  : 140ms ease;
+
+  --sidebar : 220px;
+  --header  : 54px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESET
+───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--txt);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  height: 100vh;
+  overflow: hidden;
+}
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+a { text-decoration: none; color: inherit; }
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--r-full); }
+
+/* ─────────────────────────────────────────────────────────────────
+   LAYOUT SHELL
+───────────────────────────────────────────────────────────────── */
+.shell   { display: flex; height: 100vh; overflow: hidden; }
+.col-main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+/* ─────────────────────────────────────────────────────────────────
+   SIDEBAR
+───────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Logo */
+.s-logo {
+  height: var(--header);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.s-logo-mark {
+  width: 26px; height: 26px;
+  border-radius: var(--r);
+  background: var(--primary-dim);
+  border: 1px solid var(--primary-ring);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.s-logo-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--txt);
+  letter-spacing: -.015em;
+}
+.s-logo-ver {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--txt3);
+  letter-spacing: .04em;
+}
+
+/* Nav */
+.s-nav { flex: 1; overflow-y: auto; padding: 10px 8px; display: flex; flex-direction: column; gap: 1px; }
+.s-section {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--txt3);
+  padding: 12px 10px 4px;
+}
+.s-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--r-lg);
+  color: var(--txt2);
+  font-size: 13px;
+  font-weight: 450;
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
+  border: 1px solid transparent;
+  min-height: 34px;
+}
+.s-item:hover { background: var(--surface-h); color: var(--txt); }
+.s-item.active {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary-ring);
+  font-weight: 500;
+}
+.s-item-ico { flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; }
+.s-item-lbl { flex: 1; }
+.s-item-tag {
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--err-dim);
+  color: var(--err);
+}
+.s-item-tag.blue { background: var(--info-dim); color: var(--info); }
+
+/* Footer */
+.s-footer {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.s-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: background var(--ease);
+}
+.s-user:hover { background: var(--surface-h); }
+.s-avatar {
+  width: 28px; height: 28px;
+  border-radius: var(--r-full);
+  background: linear-gradient(135deg, #2563EB, #7C3AED);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.s-user-info { flex: 1; min-width: 0; }
+.s-user-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.s-user-role { font-size: 11px; color: var(--txt3); }
+.s-user-ico { color: var(--txt3); flex-shrink: 0; }
+
+/* ─────────────────────────────────────────────────────────────────
+   HEADER
+───────────────────────────────────────────────────────────────── */
+.header {
+  height: var(--header);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+}
+.h-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--txt2);
+}
+.h-crumb-sep { color: var(--txt3); display: flex; }
+.h-crumb-cur { color: var(--txt); font-weight: 500; }
+.h-search {
+  flex: 1;
+  max-width: 300px;
+  position: relative;
+  margin-left: 8px;
+}
+.h-search input {
+  width: 100%;
+  height: 32px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 0 12px 0 34px;
+  color: var(--txt);
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+.h-search input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+.h-search input::placeholder { color: var(--txt3); }
+.h-search-ico {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--txt3);
+  pointer-events: none;
+  display: flex;
+}
+.h-gap { flex: 1; }
+.h-actions { display: flex; align-items: center; gap: 4px; }
+.h-sep { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+.h-ico {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r);
+  color: var(--txt2);
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
+  position: relative;
+  background: transparent;
+  border: none;
+}
+.h-ico:hover { background: var(--surface-h); color: var(--txt); }
+.h-notif-dot {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 6px; height: 6px;
+  border-radius: var(--r-full);
+  background: var(--err);
+  border: 1.5px solid var(--surface);
+}
+.h-avatar {
+  width: 28px; height: 28px;
+  border-radius: var(--r-full);
+  background: linear-gradient(135deg, #2563EB, #7C3AED);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  cursor: pointer;
+  margin-left: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   CONTEÚDO
+───────────────────────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Page title row ────────────────────────────────────────────── */
+.page-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.page-heading {}
+.page-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--txt);
+  letter-spacing: -.025em;
+  line-height: 1.25;
+}
+.page-sub {
+  font-size: 12.5px;
+  color: var(--txt2);
+  margin-top: 3px;
+}
+.toolbar { display: flex; align-items: center; gap: 6px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   BOTÕES
+───────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--ease), border-color var(--ease),
+              color var(--ease), box-shadow var(--ease);
+  outline: none;
+  line-height: 1;
+}
+.btn:focus-visible { box-shadow: 0 0 0 3px var(--primary-dim); }
+.btn:disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--txt-inv);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: var(--primary-h);
+  border-color: var(--primary-h);
+  box-shadow: 0 4px 14px rgba(96,165,250,.28);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--txt2);
+  border-color: transparent;
+}
+.btn-ghost:hover { background: var(--surface-h); color: var(--txt); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--txt2);
+  border-color: var(--border);
+}
+.btn-outline:hover { background: var(--surface-h); color: var(--txt); border-color: #475569; }
+
+/* ── Icon-only button ──────────────────────────────────────────── */
+.ibtn {
+  width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--txt2);
+  cursor: pointer;
+  transition: background var(--ease), color var(--ease);
+  position: relative;
+}
+.ibtn:hover { background: var(--surface-h); color: var(--txt); }
+/* tooltip */
+.ibtn[title]:hover::after,
+[data-tt]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%; transform: translateX(-50%);
+  background: #0B1526;
+  color: var(--txt);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  pointer-events: none;
+  z-index: 999;
+  font-family: var(--font);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   KPI GRID
+───────────────────────────────────────────────────────────────── */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2xl);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color var(--ease), box-shadow var(--ease);
+}
+.kpi:hover { border-color: #3D5166; box-shadow: var(--sh-sm); }
+
+.kpi-top { display: flex; align-items: center; justify-content: space-between; }
+.kpi-ico { color: var(--txt3); display: flex; }
+
+.kpi-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  line-height: 1.5;
+}
+.kpi-pill.up   { background: var(--ok-dim);   color: var(--ok);   }
+.kpi-pill.down { background: var(--err-dim);  color: var(--err);  }
+.kpi-pill.flat { background: var(--surface-2); color: var(--txt2); }
+
+.kpi-val {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--txt);
+  letter-spacing: -.04em;
+  line-height: 1;
+}
+.kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--txt2);
+  letter-spacing: .01em;
+}
+.kpi-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.kpi-note { font-size: 11px; color: var(--txt3); }
+/* mini progress */
+.mprog {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-end;
+}
+.mprog-bar {
+  width: 56px; height: 4px;
+  background: var(--surface-2);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.mprog-fill { height: 100%; border-radius: var(--r-full); }
+.mprog-pct { font-size: 11px; font-weight: 600; color: var(--txt2); }
+
+/* ─────────────────────────────────────────────────────────────────
+   CARDS BASE
+───────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2xl);
+  overflow: hidden;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.card-head-l {}
+.card-title { font-size: 13.5px; font-weight: 600; color: var(--txt); }
+.card-sub   { font-size: 11.5px; color: var(--txt2); margin-top: 2px; }
+.card-head-r { display: flex; align-items: center; gap: 6px; }
+.card-body { padding: 20px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   GRID MEDIO
+───────────────────────────────────────────────────────────────── */
+.mid-row { display: grid; grid-template-columns: 1fr 296px; gap: 14px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   GRÁFICO DE ÁREA / LINHA (CSS puro)
+───────────────────────────────────────────────────────────────── */
+.chart-wrap { padding: 8px 20px 20px; }
+.chart-labels-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+.chart-y-label { font-size: 10px; color: var(--txt3); }
+.chart-bars-area {
+  position: relative;
+  height: 130px;
+}
+/* grid lines */
+.chart-bars-area::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(33.3% - 1px),
+    var(--border-sub) calc(33.3% - 1px),
+    var(--border-sub) 33.3%
+  );
+  pointer-events: none;
+}
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 100%;
+  padding-bottom: 0;
+}
+.bar-group {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+}
+.bar {
+  flex: 1;
+  max-width: 20px;
+  border-radius: 3px 3px 0 0;
+  min-height: 3px;
+  transition: opacity var(--ease);
+  cursor: pointer;
+}
+.bar:hover { opacity: .75; }
+.bar-a { background: var(--primary); }
+.bar-b { background: var(--border); }
+
+.chart-x {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 8px;
+  padding: 0 0;
+}
+.chart-x-lbl {
+  font-size: 10.5px;
+  color: var(--txt3);
+  flex: 1;
+  text-align: center;
+}
+.chart-x-lbl.active { color: var(--primary); font-weight: 600; }
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0 4px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--txt2);
+}
+.legend-sq { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* ─────────────────────────────────────────────────────────────────
+   PAINEL LATERAL — PENDÊNCIAS
+───────────────────────────────────────────────────────────────── */
+.alert-list { display: flex; flex-direction: column; }
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-sub);
+  cursor: pointer;
+  transition: background var(--ease);
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--surface-h); }
+.alert-bar {
+  width: 3px;
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 32px;
+}
+.alert-body { flex: 1; min-width: 0; }
+.alert-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alert-meta { font-size: 11px; color: var(--txt3); margin-top: 2px; }
+.alert-badge { flex-shrink: 0; margin-top: 1px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   BADGES
+───────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.bdot { width: 5px; height: 5px; border-radius: var(--r-full); background: currentColor; flex-shrink: 0; }
+
+.b-ok   { background: var(--ok-dim);   color: var(--ok);   border-color: rgba(52,211,153,.2); }
+.b-warn { background: var(--warn-dim); color: var(--warn); border-color: rgba(251,191,36,.2); }
+.b-err  { background: var(--err-dim);  color: var(--err);  border-color: rgba(248,113,113,.2); }
+.b-info { background: var(--info-dim); color: var(--info); border-color: rgba(96,165,250,.2); }
+.b-def  { background: var(--surface-2); color: var(--txt2); border-color: var(--border); }
+
+/* ─────────────────────────────────────────────────────────────────
+   TABELA
+───────────────────────────────────────────────────────────────── */
+.tbl-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2xl); overflow: hidden; }
+
+.tbl-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.tbl-top-l {}
+.tbl-top-r { display: flex; align-items: center; gap: 6px; }
+
+/* search inline */
+.tbl-search {
+  position: relative;
+  display: flex;
+}
+.tbl-search input {
+  height: 30px;
+  width: 180px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 0 10px 0 30px;
+  color: var(--txt);
+  font-size: 12px;
+  outline: none;
+  transition: border-color var(--ease), width var(--ease);
+}
+.tbl-search input:focus { border-color: var(--primary); }
+.tbl-search input::placeholder { color: var(--txt3); }
+.tbl-search-ico {
+  position: absolute;
+  left: 9px; top: 50%; transform: translateY(-50%);
+  color: var(--txt3); pointer-events: none; display: flex;
+}
+
+/* filter chips row */
+.chips-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-sub);
+  background: var(--bg);
+  overflow-x: auto;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: 11.5px;
+  color: var(--txt2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--ease);
+  font-family: var(--font);
+}
+.chip:hover { border-color: #475569; color: var(--txt); }
+.chip.on {
+  background: var(--primary-dim);
+  border-color: var(--primary-ring);
+  color: var(--primary);
+  font-weight: 500;
+}
+.chips-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+
+/* select small */
+.sel-sm {
+  height: 26px;
+  padding: 0 24px 0 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: 11.5px;
+  color: var(--txt2);
+  font-family: var(--font);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  transition: border-color var(--ease);
+  flex-shrink: 0;
+}
+.sel-sm:focus { border-color: var(--primary); }
+.chips-row .ml-auto { margin-left: auto; display: flex; gap: 6px; }
+
+/* table */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+
+thead tr { border-bottom: 1px solid var(--border); }
+thead th {
+  padding: 9px 16px;
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--txt3);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg);
+  transition: color var(--ease);
+}
+thead th:hover { color: var(--txt2); }
+thead th.sort { color: var(--primary); }
+thead th:last-child { text-align: right; }
+thead th .sort-ico { display: inline; vertical-align: middle; margin-left: 3px; opacity: .7; }
+
+tbody tr {
+  border-bottom: 1px solid var(--border-sub);
+  transition: background var(--ease);
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface-h); }
+tbody tr.row-warn { border-left: 2px solid var(--err); }
+
+tbody td {
+  padding: 10px 16px;
+  color: var(--txt);
+  vertical-align: middle;
+}
+td.mono { font-family: var(--mono); font-size: 11.5px; color: var(--txt2); letter-spacing: .05em; }
+td.dim  { color: var(--txt2); }
+td.r    { text-align: right; }
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+/* user cell */
+.ucell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.u-av {
+  width: 26px; height: 26px;
+  border-radius: var(--r-full);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9.5px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.u-name { font-size: 12.5px; font-weight: 500; color: var(--txt); }
+.u-plate { font-size: 10.5px; color: var(--txt3); font-family: var(--mono); letter-spacing: .05em; }
+
+/* progress mini */
+.prog {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.prog-track {
+  width: 64px; height: 4px;
+  background: var(--surface-2);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.prog-fill { height: 100%; border-radius: var(--r-full); }
+.prog-pct { font-size: 11px; color: var(--txt3); white-space: nowrap; }
+
+/* ─────────────────────────────────────────────────────────────────
+   TABELA FOOTER / PAGINAÇÃO
+───────────────────────────────────────────────────────────────── */
+.tbl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--txt2);
+}
+.pag { display: flex; align-items: center; gap: 3px; }
+.pag-btn {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  color: var(--txt2);
+  font-size: 12px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--ease);
+}
+.pag-btn:hover { background: var(--surface-h); color: var(--txt); }
+.pag-btn.on { background: var(--primary-dim); color: var(--primary); border-color: var(--primary-ring); font-weight: 600; }
+.pag-btn:disabled { opacity: .3; cursor: not-allowed; }
+.pag-ellipsis { padding: 0 3px; color: var(--txt3); font-size: 12px; }
+
+/* ─────────────────────────────────────────────────────────────────
+   ICON HELPERS (SVG inline via currentColor)
+───────────────────────────────────────────────────────────────── */
+svg { display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════════════════════ -->
+<aside class="sidebar">
+
+  <div class="s-logo">
+    <div class="s-logo-mark">
+      <!-- truck icon -->
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+    </div>
+    <span class="s-logo-name">YFGroup</span>
+    <span class="s-logo-ver">v21</span>
+  </div>
+
+  <nav class="s-nav">
+
+    <div class="s-section">Principal</div>
+
+    <a class="s-item active">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Dashboard</span>
+    </a>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Planilha</span>
+      <span class="s-item-tag blue">1.2k</span>
+    </a>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="3" width="15" height="13"/>
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Diárias</span>
+    </a>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Descarga</span>
+    </a>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Buscar</span>
+    </a>
+
+    <div class="s-section" style="margin-top:6px">Operacional</div>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Ocorrências</span>
+      <span class="s-item-tag">7</span>
+    </a>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Apontamentos</span>
+    </a>
+
+    <div class="s-section" style="margin-top:6px">Sistema</div>
+
+    <a class="s-item">
+      <span class="s-item-ico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+      </span>
+      <span class="s-item-lbl">Administração</span>
+    </a>
+
+  </nav>
+
+  <div class="s-footer">
+    <div class="s-user">
+      <div class="s-avatar">YF</div>
+      <div class="s-user-info">
+        <div class="s-user-name">Yves Fg</div>
+        <div class="s-user-role">Administrador</div>
+      </div>
+      <span class="s-user-ico">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </span>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════════════════════ -->
+<div class="col-main">
+
+  <!-- HEADER -->
+  <header class="header">
+
+    <nav class="h-crumb">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      <span class="h-crumb-sep">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </span>
+      <span class="h-crumb-cur">Dashboard</span>
+    </nav>
+
+    <div class="h-search">
+      <span class="h-search-ico">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input type="text" placeholder="Buscar DT, motorista, placa…">
+    </div>
+
+    <div class="h-gap"></div>
+
+    <div class="h-actions">
+      <button class="h-ico" title="Atualizar dados">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+
+      <button class="h-ico" title="Notificações">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="h-notif-dot"></span>
+      </button>
+
+      <div class="h-sep"></div>
+
+      <button class="h-ico" title="Tema claro">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <div class="h-avatar" title="Perfil">YF</div>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO -->
+  <div class="content">
+
+    <!-- Page title + Toolbar -->
+    <div class="page-row">
+      <div class="page-heading">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub">Visão operacional consolidada · Abril 2026</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Atualizar
+        </button>
+        <button class="btn btn-outline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          Filtrar
+        </button>
+        <button class="btn btn-outline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exportar
+        </button>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nova operação
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="kpi-row">
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--txt3)">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </span>
+          <span class="kpi-pill up">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            +12%
+          </span>
+        </div>
+        <div>
+          <div class="kpi-val">1.284</div>
+          <div class="kpi-label">Total de CTs</div>
+        </div>
+        <div class="kpi-foot">
+          <span class="kpi-note">vs. 1.146 mês anterior</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--txt3)">
+              <rect x="1" y="3" width="15" height="13"/>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+          </span>
+          <span class="kpi-pill flat">19,2%</span>
+        </div>
+        <div>
+          <div class="kpi-val">247</div>
+          <div class="kpi-label">Em Trânsito</div>
+        </div>
+        <div class="kpi-foot">
+          <span class="kpi-note">38 chegam hoje</span>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--txt3)">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </span>
+          <span class="kpi-pill up">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            +5
+          </span>
+        </div>
+        <div>
+          <div class="kpi-val">38</div>
+          <div class="kpi-label">Entregas Hoje</div>
+        </div>
+        <div class="kpi-foot">
+          <span class="kpi-note">Meta: 45</span>
+          <div class="mprog">
+            <div class="mprog-bar">
+              <div class="mprog-fill" style="width:84%;background:var(--warn)"></div>
+            </div>
+            <span class="mprog-pct">84%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="kpi-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--txt3)">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </span>
+          <span class="kpi-pill down">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            3 críticos
+          </span>
+        </div>
+        <div>
+          <div class="kpi-val">7</div>
+          <div class="kpi-label">Alertas Abertos</div>
+        </div>
+        <div class="kpi-foot">
+          <span class="kpi-note">4 atrasos · 3 SGS</span>
+        </div>
+      </div>
+
+    </div><!-- /kpi-row -->
+
+    <!-- Mid Row: Gráfico + Painel -->
+    <div class="mid-row">
+
+      <!-- Gráfico -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-l">
+            <div class="card-title">Carregamentos mensais</div>
+            <div class="card-sub">Comparativo 2025 × 2026</div>
+          </div>
+          <div class="card-head-r">
+            <select class="sel-sm">
+              <option>Últimos 6 meses</option>
+              <option>Últimos 12 meses</option>
+              <option>Este ano</option>
+            </select>
+            <button class="ibtn" title="Exportar gráfico">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-labels-top">
+            <span class="chart-y-label">280</span>
+            <span class="chart-y-label">210</span>
+            <span class="chart-y-label">140</span>
+            <span class="chart-y-label">70</span>
+            <span class="chart-y-label">0</span>
+          </div>
+          <div class="chart-bars-area">
+            <div class="chart-bars">
+              <div class="bar-group"><div class="bar bar-b" style="height:62%"></div><div class="bar bar-a" style="height:72%"></div></div>
+              <div class="bar-group"><div class="bar bar-b" style="height:74%"></div><div class="bar bar-a" style="height:88%"></div></div>
+              <div class="bar-group"><div class="bar bar-b" style="height:57%"></div><div class="bar bar-a" style="height:65%"></div></div>
+              <div class="bar-group"><div class="bar bar-b" style="height:68%"></div><div class="bar bar-a" style="height:80%"></div></div>
+              <div class="bar-group"><div class="bar bar-b" style="height:80%"></div><div class="bar bar-a" style="height:95%"></div></div>
+              <div class="bar-group"><div class="bar bar-b" style="height:71%"></div><div class="bar bar-a" style="height:100%;background:linear-gradient(to top,var(--primary-h),var(--primary)80%)"></div></div>
+            </div>
+          </div>
+          <div class="chart-x">
+            <span class="chart-x-lbl">Nov</span>
+            <span class="chart-x-lbl">Dez</span>
+            <span class="chart-x-lbl">Jan</span>
+            <span class="chart-x-lbl">Fev</span>
+            <span class="chart-x-lbl">Mar</span>
+            <span class="chart-x-lbl active">Abr</span>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-sq" style="background:var(--primary)"></div>2026</div>
+            <div class="legend-item"><div class="legend-sq" style="background:var(--border)"></div>2025</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pendências -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-l">
+            <div class="card-title">Pendências</div>
+            <div class="card-sub">7 abertas · 3 críticas</div>
+          </div>
+          <div class="card-head-r">
+            <button class="ibtn" title="Ver todas">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="alert-list">
+          <div class="alert-item">
+            <div class="alert-bar" style="background:var(--err)"></div>
+            <div class="alert-body">
+              <div class="alert-title">DT-0842 · Atraso crítico</div>
+              <div class="alert-meta">João Silva · +3 dias de atraso</div>
+            </div>
+            <span class="badge b-err alert-badge">Crítico</span>
+          </div>
+          <div class="alert-item">
+            <div class="alert-bar" style="background:var(--err)"></div>
+            <div class="alert-body">
+              <div class="alert-title">SGS-1193 sem retorno</div>
+              <div class="alert-meta">Aberto há 5 dias · sem resposta</div>
+            </div>
+            <span class="badge b-err alert-badge">Crítico</span>
+          </div>
+          <div class="alert-item">
+            <div class="alert-bar" style="background:var(--warn)"></div>
+            <div class="alert-body">
+              <div class="alert-title">DT-0891 · Agenda vencida</div>
+              <div class="alert-meta">Previsto: 09/04 · não descarg.</div>
+            </div>
+            <span class="badge b-warn alert-badge">Atenção</span>
+          </div>
+          <div class="alert-item">
+            <div class="alert-bar" style="background:var(--warn)"></div>
+            <div class="alert-body">
+              <div class="alert-title">DT-0768 · NFD pendente</div>
+              <div class="alert-meta">Aguardando emissão · 2 dias</div>
+            </div>
+            <span class="badge b-warn alert-badge">Atenção</span>
+          </div>
+          <div class="alert-item">
+            <div class="alert-bar" style="background:var(--info)"></div>
+            <div class="alert-body">
+              <div class="alert-title">3 FRS sem emissão</div>
+              <div class="alert-meta">Apontamentos vencidos</div>
+            </div>
+            <span class="badge b-info alert-badge">Info</span>
+          </div>
+          <div class="alert-item">
+            <div class="alert-bar" style="background:var(--info)"></div>
+            <div class="alert-body">
+              <div class="alert-title">DT-0904 · RO ausente</div>
+              <div class="alert-meta">Diária registrada sem RO</div>
+            </div>
+            <span class="badge b-info alert-badge">Info</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /mid-row -->
+
+    <!-- Tabela -->
+    <div class="tbl-card">
+
+      <div class="tbl-top">
+        <div class="tbl-top-l">
+          <div class="card-title">Registros recentes</div>
+          <div class="card-sub">1.284 registros · Abril 2026</div>
+        </div>
+        <div class="tbl-top-r">
+          <div class="tbl-search">
+            <span class="tbl-search-ico">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </span>
+            <input type="text" placeholder="Filtrar tabela…">
+          </div>
+          <button class="ibtn" title="Filtros avançados">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
+          </button>
+          <button class="ibtn" title="Exportar CSV">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <button class="ibtn" title="Atualizar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+          <div style="width:1px;height:18px;background:var(--border);margin:0 2px"></div>
+          <button class="btn btn-primary" style="height:30px;font-size:12px;padding:0 12px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Novo
+          </button>
+        </div>
+      </div>
+
+      <div class="chips-row">
+        <span class="chip on">Todos</span>
+        <span class="chip">Em Trânsito</span>
+        <span class="chip">Entregue</span>
+        <span class="chip">Atrasado</span>
+        <span class="chip">Aguardando</span>
+        <div class="chips-sep"></div>
+        <span class="chip">Com Diária</span>
+        <div class="ml-auto">
+          <select class="sel-sm"><option>Todos motoristas</option><option>João Silva</option><option>Pedro Mendes</option></select>
+          <select class="sel-sm"><option>Abril 2026</option><option>Março 2026</option><option>Fevereiro 2026</option></select>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sort">
+                DT
+                <svg class="sort-ico" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              </th>
+              <th>Motorista</th>
+              <th>Rota</th>
+              <th>Status</th>
+              <th>Agenda</th>
+              <th>Diária</th>
+              <th>Progresso</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr>
+              <td class="mono">DT-1284</td>
+              <td>
+                <div class="ucell">
+                  <div class="u-av" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">JS</div>
+                  <div>
+                    <div class="u-name">João Silva</div>
+                    <div class="u-plate">ABC-1234</div>
+                  </div>
+                </div>
+              </td>
+              <td class="dim">São Paulo → Campinas</td>
+              <td><span class="badge b-info"><span class="bdot"></span>Em Trânsito</span></td>
+              <td class="mono dim">12/04</td>
+              <td><span class="badge b-def">Sem</span></td>
+              <td>
+                <div class="prog">
+                  <div class="prog-track"><div class="prog-fill" style="width:75%;background:var(--info)"></div></div>
+                  <span class="prog-pct">75%</span>
+                </div>
+              </td>
+              <td class="r">
+                <div class="row-actions">
+                  <button class="ibtn" title="Visualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                  <button class="ibtn" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="ibtn" title="Duplicar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <button class="ibtn" title="Excluir" style="color:var(--txt3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mono">DT-1283</td>
+              <td>
+                <div class="ucell">
+                  <div class="u-av" style="background:linear-gradient(135deg,#059669,#10B981)">PM</div>
+                  <div>
+                    <div class="u-name">Pedro Mendes</div>
+                    <div class="u-plate">XYZ-9876</div>
+                  </div>
+                </div>
+              </td>
+              <td class="dim">Guarulhos → Rio de Janeiro</td>
+              <td><span class="badge b-ok"><span class="bdot"></span>Entregue</span></td>
+              <td class="mono dim">10/04</td>
+              <td><span class="badge b-warn" style="font-size:11px">R$ 320</span></td>
+              <td>
+                <div class="prog">
+                  <div class="prog-track"><div class="prog-fill" style="width:100%;background:var(--ok)"></div></div>
+                  <span class="prog-pct" style="color:var(--ok)">100%</span>
+                </div>
+              </td>
+              <td class="r">
+                <div class="row-actions">
+                  <button class="ibtn" title="Visualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                  <button class="ibtn" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="ibtn" title="Duplicar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <button class="ibtn" title="Excluir" style="color:var(--txt3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="row-warn">
+              <td class="mono" style="color:var(--err)">DT-1282</td>
+              <td>
+                <div class="ucell">
+                  <div class="u-av" style="background:linear-gradient(135deg,#D97706,#F59E0B)">MC</div>
+                  <div>
+                    <div class="u-name">Marcos Costa</div>
+                    <div class="u-plate">DEF-5432</div>
+                  </div>
+                </div>
+              </td>
+              <td class="dim">Bauru → Uberlândia</td>
+              <td><span class="badge b-err"><span class="bdot"></span>Atrasado</span></td>
+              <td class="mono" style="color:var(--err)">09/04</td>
+              <td><span class="badge b-warn">R$ 480</span></td>
+              <td>
+                <div class="prog">
+                  <div class="prog-track"><div class="prog-fill" style="width:60%;background:var(--err)"></div></div>
+                  <span class="prog-pct" style="color:var(--err)">60%</span>
+                </div>
+              </td>
+              <td class="r">
+                <div class="row-actions">
+                  <button class="ibtn" title="Visualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                  <button class="ibtn" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="ibtn" title="Duplicar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <button class="ibtn" title="Excluir" style="color:var(--txt3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mono">DT-1281</td>
+              <td>
+                <div class="ucell">
+                  <div class="u-av" style="background:linear-gradient(135deg,#7C3AED,#8B5CF6)">RA</div>
+                  <div>
+                    <div class="u-name">Roberto Alves</div>
+                    <div class="u-plate">GHI-7890</div>
+                  </div>
+                </div>
+              </td>
+              <td class="dim">Sorocaba → Belo Horizonte</td>
+              <td><span class="badge b-def"><span class="bdot"></span>Aguardando</span></td>
+              <td class="mono dim">14/04</td>
+              <td><span class="badge b-def">—</span></td>
+              <td>
+                <div class="prog">
+                  <div class="prog-track"><div class="prog-fill" style="width:20%;background:var(--txt3)"></div></div>
+                  <span class="prog-pct">20%</span>
+                </div>
+              </td>
+              <td class="r">
+                <div class="row-actions">
+                  <button class="ibtn" title="Visualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                  <button class="ibtn" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="ibtn" title="Duplicar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <button class="ibtn" title="Excluir" style="color:var(--txt3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mono">DT-1280</td>
+              <td>
+                <div class="ucell">
+                  <div class="u-av" style="background:linear-gradient(135deg,#BE185D,#EC4899)">LF</div>
+                  <div>
+                    <div class="u-name">Lucas Ferreira</div>
+                    <div class="u-plate">JKL-2345</div>
+                  </div>
+                </div>
+              </td>
+              <td class="dim">Santos → Curitiba</td>
+              <td><span class="badge b-ok"><span class="bdot"></span>Entregue</span></td>
+              <td class="mono dim">11/04</td>
+              <td><span class="badge b-def">Sem</span></td>
+              <td>
+                <div class="prog">
+                  <div class="prog-track"><div class="prog-fill" style="width:100%;background:var(--ok)"></div></div>
+                  <span class="prog-pct" style="color:var(--ok)">100%</span>
+                </div>
+              </td>
+              <td class="r">
+                <div class="row-actions">
+                  <button class="ibtn" title="Visualizar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                  <button class="ibtn" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="ibtn" title="Duplicar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <button class="ibtn" title="Excluir" style="color:var(--txt3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                </div>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tbl-foot">
+        <span>Exibindo <strong style="color:var(--txt)">5</strong> de <strong style="color:var(--txt)">1.284</strong> registros</span>
+        <div class="pag">
+          <button class="pag-btn" disabled>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button class="pag-btn on">1</button>
+          <button class="pag-btn">2</button>
+          <button class="pag-btn">3</button>
+          <span class="pag-ellipsis">…</span>
+          <button class="pag-btn">257</button>
+          <button class="pag-btn">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /tbl-card -->
+
+  </div><!-- /content -->
+</div><!-- /col-main -->
+</div><!-- /shell -->
+
+</body>
+</html>
