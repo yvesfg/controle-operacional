@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Controle Operacional · YFGroup</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.383.0/lucide.min.js"></script>
+<style>
+/* ════════════════════════════════════════════════════════════
+   TOKENS — Design System Corporativo Logística
+   ════════════════════════════════════════════════════════════ */
+:root {
+  /* Cores */
+  --bg          : #0F172A;
+  --surface     : #1E293B;
+  --surface-hover: #273449;
+  --surface-2   : #243044;
+  --border      : #334155;
+  --border-subtle: #1E2D3D;
+
+  --primary     : #60A5FA;
+  --primary-hover: #3B82F6;
+  --primary-bg  : rgba(96,165,250,.10);
+  --primary-border: rgba(96,165,250,.20);
+
+  --text        : #E2E8F0;
+  --text-2      : #94A3B8;
+  --text-3      : #64748B;
+  --text-inverse: #0F172A;
+
+  --success     : #34D399;
+  --success-bg  : rgba(52,211,153,.10);
+  --warning     : #FBBF24;
+  --warning-bg  : rgba(251,191,36,.10);
+  --danger      : #F87171;
+  --danger-bg   : rgba(248,113,113,.10);
+  --info        : #60A5FA;
+  --info-bg     : rgba(96,165,250,.10);
+
+  /* Espaçamento */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px;
+  --s5:20px; --s6:24px; --s8:32px; --s10:40px;
+
+  /* Radius */
+  --r-sm : 6px;
+  --r-md : 8px;
+  --r-lg : 10px;
+  --r-xl : 12px;
+  --r-full: 9999px;
+
+  /* Tipografia */
+  --font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --header-h : 56px;
+
+  /* Sombras */
+  --shadow-sm : 0 1px 3px rgba(0,0,0,.35);
+  --shadow-md : 0 4px 12px rgba(0,0,0,.45);
+  --shadow-lg : 0 8px 24px rgba(0,0,0,.55);
+
+  /* Transições */
+  --t-fast: 120ms ease;
+  --t-base: 180ms ease;
+}
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:var(--r-full)}
+
+/* ════════════════════════════════════════════════════════════
+   LAYOUT
+   ════════════════════════════════════════════════════════════ */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+  position:relative;z-index:100;
+}
+.sidebar-logo{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:0 var(--s5);height:var(--header-h);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.sidebar-logo-icon{
+  width:32px;height:32px;border-radius:var(--r-md);
+  background:var(--primary-bg);border:1px solid var(--primary-border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--primary);flex-shrink:0;
+}
+.sidebar-logo-text{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.sidebar-logo-badge{font-size:10px;font-weight:600;color:var(--primary);background:var(--primary-bg);
+  border:1px solid var(--primary-border);border-radius:var(--r-full);
+  padding:1px 6px;letter-spacing:.02em;margin-left:auto;flex-shrink:0}
+
+.sidebar-nav{flex:1;padding:var(--s3) var(--s3);overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.nav-section-label{
+  font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-3);padding:var(--s3) var(--s3) var(--s2);
+}
+.nav-item{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s2) var(--s3);border-radius:var(--r-lg);
+  color:var(--text-2);font-size:13px;font-weight:500;
+  cursor:pointer;transition:background var(--t-fast),color var(--t-fast);
+  text-decoration:none;border:1px solid transparent;
+  min-height:36px;
+}
+.nav-item:hover{background:var(--surface-hover);color:var(--text)}
+.nav-item.active{
+  background:var(--primary-bg);color:var(--primary);
+  border-color:var(--primary-border);
+}
+.nav-item.active .nav-icon{color:var(--primary)}
+.nav-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:inherit}
+.nav-item-label{flex:1}
+.nav-badge{
+  font-size:10px;font-weight:700;min-width:18px;height:18px;
+  background:var(--danger-bg);color:var(--danger);
+  border-radius:var(--r-full);padding:0 5px;
+  display:flex;align-items:center;justify-content:center;
+}
+.nav-badge.info{background:var(--info-bg);color:var(--info)}
+
+.sidebar-footer{
+  padding:var(--s3);border-top:1px solid var(--border);flex-shrink:0;
+}
+.user-card{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s2) var(--s3);border-radius:var(--r-lg);
+  cursor:pointer;transition:background var(--t-fast);
+}
+.user-card:hover{background:var(--surface-hover)}
+.user-avatar{
+  width:32px;height:32px;border-radius:var(--r-full);
+  background:linear-gradient(135deg,#3B82F6,#8B5CF6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.user-info{flex:1;overflow:hidden}
+.user-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--text-3)}
+.user-chevron{color:var(--text-3);flex-shrink:0}
+
+/* ── Main ───────────────────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.header{
+  height:var(--header-h);flex-shrink:0;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:var(--s4);
+  padding:0 var(--s6);
+}
+.header-breadcrumb{display:flex;align-items:center;gap:var(--s2);color:var(--text-2);font-size:13px}
+.header-breadcrumb span{color:var(--text);font-weight:500}
+.header-breadcrumb svg{color:var(--text-3)}
+.header-search{
+  flex:1;max-width:320px;margin-left:auto;
+  position:relative;
+}
+.header-search input{
+  width:100%;height:34px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:0 var(--s3) 0 var(--s8);
+  color:var(--text);font-size:13px;font-family:var(--font);
+  outline:none;transition:border-color var(--t-fast),box-shadow var(--t-fast);
+}
+.header-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-bg)}
+.header-search input::placeholder{color:var(--text-3)}
+.header-search-icon{
+  position:absolute;left:var(--s3);top:50%;transform:translateY(-50%);
+  color:var(--text-3);pointer-events:none;display:flex;
+}
+.header-actions{display:flex;align-items:center;gap:var(--s2)}
+.btn-icon{
+  width:34px;height:34px;border-radius:var(--r-lg);
+  background:transparent;border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-2);cursor:pointer;
+  transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast);
+  position:relative;
+}
+.btn-icon:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border)}
+.btn-icon .notif-dot{
+  position:absolute;top:5px;right:5px;
+  width:7px;height:7px;border-radius:var(--r-full);
+  background:var(--danger);border:1.5px solid var(--surface);
+}
+.header-divider{width:1px;height:20px;background:var(--border);margin:0 var(--s1)}
+
+/* ── Conteúdo ────────────────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:var(--s6)}
+.page-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--s4);margin-bottom:var(--s6);
+}
+.page-title-group{}
+.page-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.page-subtitle{font-size:13px;color:var(--text-2);margin-top:2px}
+.toolbar{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
+
+/* ════════════════════════════════════════════════════════════
+   BOTÕES
+   ════════════════════════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  height:34px;padding:0 var(--s4);
+  font-family:var(--font);font-size:13px;font-weight:500;
+  border-radius:var(--r-md);border:1px solid transparent;
+  cursor:pointer;white-space:nowrap;
+  transition:background var(--t-fast),border-color var(--t-fast),
+             color var(--t-fast),box-shadow var(--t-fast);
+  outline:none;text-decoration:none;
+}
+.btn:focus-visible{box-shadow:0 0 0 3px var(--primary-bg),0 0 0 1px var(--primary)}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+.btn-primary{background:var(--primary);color:var(--text-inverse);border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);box-shadow:0 4px 12px rgba(96,165,250,.25)}
+
+.btn-secondary{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface-hover);border-color:#475569}
+
+.btn-ghost{background:transparent;color:var(--text-2);border-color:transparent}
+.btn-ghost:hover{background:var(--surface-hover);color:var(--text)}
+
+.btn-danger{background:var(--danger-bg);color:var(--danger);border-color:rgba(248,113,113,.2)}
+.btn-danger:hover{background:rgba(248,113,113,.18);border-color:rgba(248,113,113,.4)}
+
+.btn-sm{height:30px;padding:0 var(--s3);font-size:12px}
+.btn-lg{height:40px;padding:0 var(--s5);font-size:14px;font-weight:600}
+
+.icon-btn{
+  width:30px;height:30px;padding:0;border-radius:var(--r-md);
+  background:transparent;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-2);cursor:pointer;
+  transition:background var(--t-fast),color var(--t-fast);
+  position:relative;
+}
+.icon-btn:hover{background:var(--surface-hover);color:var(--text)}
+.icon-btn[title]:hover::after{
+  content:attr(title);
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#0D1829;color:var(--text);font-size:11px;font-weight:500;
+  padding:4px 8px;border-radius:var(--r-sm);white-space:nowrap;
+  border:1px solid var(--border);pointer-events:none;z-index:200;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FILTROS
+   ════════════════════════════════════════════════════════════ */
+.filter-bar{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s3) var(--s4);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);margin-bottom:var(--s5);
+  flex-wrap:wrap;
+}
+.filter-label{font-size:12px;font-weight:600;color:var(--text-3);letter-spacing:.04em;text-transform:uppercase;margin-right:var(--s1)}
+.filter-chip{
+  display:inline-flex;align-items:center;gap:var(--s1);
+  height:28px;padding:0 var(--s3);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-full);font-size:12px;color:var(--text-2);
+  cursor:pointer;transition:all var(--t-fast);
+}
+.filter-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-bg)}
+.filter-chip.active{background:var(--primary-bg);border-color:var(--primary-border);color:var(--primary);font-weight:500}
+.filter-select{
+  height:28px;padding:0 var(--s8) 0 var(--s3);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-full);font-size:12px;color:var(--text);
+  font-family:var(--font);outline:none;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
+.filter-select:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+.filter-search{
+  margin-left:auto;position:relative;
+}
+.filter-search input{
+  height:28px;width:200px;padding:0 var(--s3) 0 var(--s7);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-full);font-size:12px;color:var(--text);
+  font-family:var(--font);outline:none;
+  transition:border-color var(--t-fast),box-shadow var(--t-fast);
+}
+.filter-search input:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-bg)}
+.filter-search input::placeholder{color:var(--text-3)}
+.filter-search-icon{position:absolute;left:var(--s3);top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
+
+/* ════════════════════════════════════════════════════════════
+   KPI CARDS
+   ════════════════════════════════════════════════════════════ */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s4);margin-bottom:var(--s5)}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);padding:var(--s5);
+  display:flex;flex-direction:column;gap:var(--s3);
+  transition:box-shadow var(--t-base),border-color var(--t-base);
+}
+.kpi-card:hover{box-shadow:var(--shadow-md);border-color:#3D5166}
+.kpi-card-top{display:flex;align-items:flex-start;justify-content:space-between}
+.kpi-icon{
+  width:40px;height:40px;border-radius:var(--r-lg);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.kpi-icon.blue{background:var(--info-bg);color:var(--info)}
+.kpi-icon.green{background:var(--success-bg);color:var(--success)}
+.kpi-icon.yellow{background:var(--warning-bg);color:var(--warning)}
+.kpi-icon.red{background:var(--danger-bg);color:var(--danger)}
+.kpi-trend{
+  display:flex;align-items:center;gap:3px;
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--r-full);
+}
+.kpi-trend.up{color:var(--success);background:var(--success-bg)}
+.kpi-trend.down{color:var(--danger);background:var(--danger-bg)}
+.kpi-trend.neutral{color:var(--text-2);background:var(--bg)}
+.kpi-value{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.03em;line-height:1}
+.kpi-label{font-size:12px;font-weight:600;color:var(--text-2);letter-spacing:.02em}
+.kpi-sub{font-size:11px;color:var(--text-3)}
+
+/* ════════════════════════════════════════════════════════════
+   GRID DE CONTEÚDO
+   ════════════════════════════════════════════════════════════ */
+.content-grid{display:grid;grid-template-columns:1fr 320px;gap:var(--s5);margin-bottom:var(--s5)}
+
+/* ── Card base ───────────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);overflow:hidden;
+}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:var(--s3);padding:var(--s4) var(--s5);
+  border-bottom:1px solid var(--border);
+}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-subtitle{font-size:12px;color:var(--text-2);margin-top:1px}
+.card-body{padding:var(--s5)}
+.card-actions{display:flex;align-items:center;gap:var(--s2)}
+
+/* ── Gráfico de barras (CSS) ─────────────────────────────────── */
+.chart-area{padding:var(--s5) var(--s5) var(--s4)}
+.chart-bars{
+  display:flex;align-items:flex-end;gap:var(--s3);
+  height:140px;padding-bottom:var(--s4);position:relative;
+}
+.chart-bars::before{
+  content:'';position:absolute;left:0;right:0;top:0;bottom:var(--s4);
+  background:repeating-linear-gradient(
+    to bottom,transparent,transparent calc(25% - 1px),
+    var(--border-subtle) calc(25% - 1px),var(--border-subtle) 25%
+  );
+  pointer-events:none;
+}
+.chart-bar-group{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--s2);
+}
+.chart-bar-wrap{
+  width:100%;display:flex;align-items:flex-end;
+  justify-content:center;gap:3px;height:112px;
+}
+.bar{
+  flex:1;border-radius:4px 4px 0 0;max-width:24px;
+  transition:opacity var(--t-fast);cursor:pointer;
+}
+.bar:hover{opacity:.85}
+.bar.primary{background:var(--primary)}
+.bar.secondary{background:var(--border)}
+.chart-label{font-size:10px;color:var(--text-3);font-weight:500}
+.chart-legend{
+  display:flex;align-items:center;gap:var(--s4);
+  padding:0 var(--s5) var(--s4);
+}
+.legend-item{display:flex;align-items:center;gap:var(--s2);font-size:12px;color:var(--text-2)}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+
+/* ── Mini lista de alertas ───────────────────────────────────── */
+.alert-list{display:flex;flex-direction:column;gap:0}
+.alert-item{
+  display:flex;align-items:flex-start;gap:var(--s3);
+  padding:var(--s3) var(--s5);border-bottom:1px solid var(--border);
+  transition:background var(--t-fast);cursor:pointer;
+}
+.alert-item:last-child{border-bottom:none}
+.alert-item:hover{background:var(--surface-hover)}
+.alert-dot{
+  width:8px;height:8px;border-radius:var(--r-full);
+  flex-shrink:0;margin-top:4px;
+}
+.alert-content{flex:1;min-width:0}
+.alert-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-meta{font-size:11px;color:var(--text-3);margin-top:2px}
+.alert-badge{flex-shrink:0}
+
+/* ════════════════════════════════════════════════════════════
+   BADGES / CHIPS DE STATUS
+   ════════════════════════════════════════════════════════════ */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;letter-spacing:.02em;
+  padding:2px 8px;border-radius:var(--r-full);border:1px solid transparent;
+  white-space:nowrap;line-height:1.4;
+}
+.badge-dot{width:6px;height:6px;border-radius:var(--r-full);background:currentColor;flex-shrink:0}
+.badge.success{background:var(--success-bg);color:var(--success);border-color:rgba(52,211,153,.2)}
+.badge.warning{background:var(--warning-bg);color:var(--warning);border-color:rgba(251,191,36,.2)}
+.badge.danger {background:var(--danger-bg); color:var(--danger); border-color:rgba(248,113,113,.2)}
+.badge.info   {background:var(--info-bg);   color:var(--info);   border-color:rgba(96,165,250,.2)}
+.badge.default{background:var(--bg);        color:var(--text-2); border-color:var(--border)}
+.badge.primary{background:var(--primary-bg);color:var(--primary);border-color:var(--primary-border)}
+
+/* ════════════════════════════════════════════════════════════
+   TABELA
+   ════════════════════════════════════════════════════════════ */
+.table-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-xl);overflow:hidden;
+}
+.table-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:var(--s4) var(--s5);border-bottom:1px solid var(--border);
+  gap:var(--s3);flex-wrap:wrap;
+}
+.table-title-group{display:flex;flex-direction:column;gap:2px}
+.table-actions{display:flex;align-items:center;gap:var(--s2)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--bg);border-bottom:1px solid var(--border)}
+thead th{
+  padding:var(--s3) var(--s4);text-align:left;
+  font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text-3);
+  white-space:nowrap;cursor:pointer;user-select:none;
+}
+thead th:hover{color:var(--text-2)}
+thead th.sorted{color:var(--primary)}
+thead th:last-child{text-align:right}
+tbody tr{border-bottom:1px solid var(--border-subtle);transition:background var(--t-fast)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface-hover)}
+tbody td{padding:var(--s3) var(--s4);color:var(--text);vertical-align:middle}
+tbody td.mono{font-family:'JetBrains Mono','Fira Code',monospace;font-size:12px;color:var(--text-2);letter-spacing:.04em}
+tbody td.muted{color:var(--text-2)}
+tbody td.actions{text-align:right}
+.row-actions{display:flex;align-items:center;justify-content:flex-end;gap:var(--s1)}
+.table-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:var(--s3) var(--s5);border-top:1px solid var(--border);
+  font-size:12px;color:var(--text-2);
+}
+.pagination{display:flex;align-items:center;gap:var(--s1)}
+.page-btn{
+  width:28px;height:28px;border-radius:var(--r-md);
+  background:transparent;border:1px solid transparent;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-2);cursor:pointer;font-size:12px;font-family:var(--font);
+  transition:all var(--t-fast);
+}
+.page-btn:hover{background:var(--surface-hover);color:var(--text)}
+.page-btn.active{background:var(--primary-bg);color:var(--primary);border-color:var(--primary-border);font-weight:600}
+.page-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.progress-wrap{display:flex;align-items:center;gap:var(--s2);min-width:120px}
+.progress-bar{flex:1;height:5px;background:var(--bg);border-radius:var(--r-full);overflow:hidden}
+.progress-fill{height:100%;border-radius:var(--r-full);transition:width .3s ease}
+.progress-label{font-size:11px;color:var(--text-3);white-space:nowrap}
+
+/* ── Tooltip utilitário ──────────────────────────────────────── */
+[data-tip]{position:relative}
+[data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#0D1829;color:var(--text);font-size:11px;font-weight:500;
+  padding:4px 8px;border-radius:var(--r-sm);white-space:nowrap;
+  border:1px solid var(--border);pointer-events:none;z-index:200;
+}
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.divider{height:1px;background:var(--border);border:none;margin:0}
+
+/* ── Select pill ─────────────────────────────────────────────── */
+.select-pill{
+  height:30px;padding:0 28px 0 10px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r-full);font-size:12px;color:var(--text-2);
+  font-family:var(--font);outline:none;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+  transition:border-color var(--t-fast);
+}
+.select-pill:focus{border-color:var(--primary)}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <span class="sidebar-logo-text">YFGroup</span>
+      <span class="sidebar-logo-badge">v21</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+
+      <a class="nav-item active">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+        <span class="nav-item-label">Dashboard</span>
+      </a>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+        <span class="nav-item-label">Planilha</span>
+        <span class="nav-badge info">1.2k</span>
+      </a>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+        <span class="nav-item-label">Diárias</span>
+      </a>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <span class="nav-item-label">Descarga</span>
+      </a>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <span class="nav-item-label">Buscar</span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px">Operacional</div>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+        <span class="nav-item-label">Ocorrências</span>
+        <span class="nav-badge">7</span>
+      </a>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></span>
+        <span class="nav-item-label">Operacional</span>
+      </a>
+
+      <div class="nav-section-label" style="margin-top:8px">Sistema</div>
+
+      <a class="nav-item">
+        <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></span>
+        <span class="nav-item-label">Admin</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">YF</div>
+        <div class="user-info">
+          <div class="user-name">Yves Fg</div>
+          <div class="user-role">Administrador</div>
+        </div>
+        <span class="user-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════
+       MAIN
+  ═══════════════════════════════════ -->
+  <div class="main">
+
+    <!-- Header -->
+    <header class="header">
+      <nav class="header-breadcrumb">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </nav>
+
+      <div class="header-search">
+        <span class="header-search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" placeholder="Buscar DT, motorista, placa…" />
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-icon" title="Atualizar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+        <button class="btn-icon" title="Notificações" style="position:relative">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+        </button>
+        <div class="header-divider"></div>
+        <button class="btn-icon" title="Tema">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="btn-icon" title="Sair">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Conteúdo -->
+    <div class="content">
+
+      <!-- Page header + toolbar -->
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Visão geral operacional — Abril 2026</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-ghost btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Atualizar
+          </button>
+          <button class="btn btn-ghost btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filtrar
+          </button>
+          <button class="btn btn-secondary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+          <button class="btn btn-primary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo Registro
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <div class="kpi-icon blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <span class="kpi-trend up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +12%
+            </span>
+          </div>
+          <div class="kpi-value">1.284</div>
+          <div class="kpi-label">Total de CTs</div>
+          <div class="kpi-sub">vs. 1.146 mês anterior</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <div class="kpi-icon green">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <span class="kpi-trend neutral">19,2%</span>
+          </div>
+          <div class="kpi-value">247</div>
+          <div class="kpi-label">Em Trânsito</div>
+          <div class="kpi-sub">38 chegam hoje</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <div class="kpi-icon yellow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span class="kpi-trend up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +5
+            </span>
+          </div>
+          <div class="kpi-value">38</div>
+          <div class="kpi-label">Entregas Hoje</div>
+          <div class="kpi-sub" style="display:flex;align-items:center;gap:6px">
+            <span>Meta: 45</span>
+            <div class="progress-bar" style="flex:1;height:4px;background:var(--bg);border-radius:99px;overflow:hidden;max-width:60px">
+              <div class="progress-fill" style="width:84%;background:var(--warning)"></div>
+            </div>
+            <span>84%</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <div class="kpi-icon red">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <span class="kpi-trend down">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              3 críticos
+            </span>
+          </div>
+          <div class="kpi-value">7</div>
+          <div class="kpi-label">Alertas Abertos</div>
+          <div class="kpi-sub">4 atrasos · 3 SGS pendentes</div>
+        </div>
+      </div>
+
+      <!-- Gráfico + Alertas -->
+      <div class="content-grid">
+
+        <!-- Gráfico -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Carregamentos por Mês</div>
+              <div class="card-subtitle">Comparativo 2025 vs 2026</div>
+            </div>
+            <div class="card-actions">
+              <select class="select-pill">
+                <option>Últimos 6 meses</option>
+                <option>Últimos 12 meses</option>
+                <option>Este ano</option>
+              </select>
+              <button class="icon-btn" title="Exportar gráfico" data-tip="Exportar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="chart-area">
+            <div class="chart-bars">
+              <!-- Nov -->
+              <div class="chart-bar-group">
+                <div class="chart-bar-wrap">
+                  <div class="bar secondary" style="height:62%"></div>
+                  <div class="bar primary" style="height:71%"></div>
+                </div>
+                <span class="chart-label">Nov</span>
+              </div>
+              <!-- Dez -->
+              <div class="chart-bar-group">
+                <div class="chart-bar-wrap">
+                  <div class="bar secondary" style="height:75%"></div>
+                  <div class="bar primary" style="height:88%"></div>
+                </div>
+                <span class="chart-label">Dez</span>
+              </div>
+              <!-- Jan -->
+              <div class="chart-bar-group">
+                <div class="chart-bar-wrap">
+                  <div class="bar secondary" style="height:58%"></div>
+                  <div class="bar primary" style="height:66%"></div>
+                </div>
+                <span class="chart-label">Jan</span>
+              </div>
+              <!-- Fev -->
+              <div class="chart-bar-group">
+                <div class="chart-bar-wrap">
+                  <div class="bar secondary" style="height:68%"></div>
+                  <div class="bar primary" style="height:79%"></div>
+                </div>
+                <span class="chart-label">Fev</span>
+              </div>
+              <!-- Mar -->
+              <div class="chart-bar-group">
+                <div class="chart-bar-wrap">
+                  <div class="bar secondary" style="height:80%"></div>
+                  <div class="bar primary" style="height:95%"></div>
+                </div>
+                <span class="chart-label">Mar</span>
+              </div>
+              <!-- Abr -->
+              <div class="chart-bar-group">
+                <div class="chart-bar-wrap">
+                  <div class="bar secondary" style="height:72%"></div>
+                  <div class="bar primary" style="height:100%;background:linear-gradient(to top,#3B82F6,#60A5FA)"></div>
+                </div>
+                <span class="chart-label" style="color:var(--primary);font-weight:600">Abr</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--primary)"></div>
+              2026
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--border)"></div>
+              2025
+            </div>
+          </div>
+        </div>
+
+        <!-- Alertas -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Alertas Recentes</div>
+              <div class="card-subtitle">7 abertos · 3 críticos</div>
+            </div>
+            <button class="icon-btn" data-tip="Ver todos">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="alert-list">
+            <div class="alert-item">
+              <span class="alert-dot" style="background:var(--danger)"></span>
+              <div class="alert-content">
+                <div class="alert-title">DT-0842 · Atraso crítico</div>
+                <div class="alert-meta">Motorista: João Silva · +3 dias</div>
+              </div>
+              <span class="badge danger alert-badge">Crítico</span>
+            </div>
+            <div class="alert-item">
+              <span class="alert-dot" style="background:var(--danger)"></span>
+              <div class="alert-content">
+                <div class="alert-title">SGS-1193 sem retorno</div>
+                <div class="alert-meta">Aberto há 5 dias · Sem resposta</div>
+              </div>
+              <span class="badge danger alert-badge">Crítico</span>
+            </div>
+            <div class="alert-item">
+              <span class="alert-dot" style="background:var(--warning)"></span>
+              <div class="alert-content">
+                <div class="alert-title">DT-0891 · Agenda vencida</div>
+                <div class="alert-meta">Descarga prevista: 09/04</div>
+              </div>
+              <span class="badge warning alert-badge">Atenção</span>
+            </div>
+            <div class="alert-item">
+              <span class="alert-dot" style="background:var(--warning)"></span>
+              <div class="alert-content">
+                <div class="alert-title">DT-0768 · NFD pendente</div>
+                <div class="alert-meta">Aguardando emissão · 2 dias</div>
+              </div>
+              <span class="badge warning alert-badge">Atenção</span>
+            </div>
+            <div class="alert-item">
+              <span class="alert-dot" style="background:var(--info)"></span>
+              <div class="alert-content">
+                <div class="alert-title">FRS sem emissão — 3 apoints.</div>
+                <div class="alert-meta">Apontamentos vencidos</div>
+              </div>
+              <span class="badge info alert-badge">Info</span>
+            </div>
+            <div class="alert-item">
+              <span class="alert-dot" style="background:var(--info)"></span>
+              <div class="alert-content">
+                <div class="alert-title">DT-0904 · RO não preenchido</div>
+                <div class="alert-meta">Diária registrada sem RO</div>
+              </div>
+              <span class="badge info alert-badge">Info</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela principal -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title-group">
+            <div class="card-title">Registros Recentes</div>
+            <div class="card-subtitle">1.284 registros · filtrado por: Abril 2026</div>
+          </div>
+          <div class="table-actions">
+            <div class="filter-search" style="margin-left:0">
+              <span class="filter-search-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+              <input type="text" placeholder="Filtrar tabela…" />
+            </div>
+            <button class="icon-btn" data-tip="Filtrar" title="Filtrar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            </button>
+            <button class="icon-btn" data-tip="Exportar" title="Exportar CSV">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <button class="icon-btn" data-tip="Atualizar" title="Atualizar">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+            <div style="width:1px;height:20px;background:var(--border)"></div>
+            <button class="btn btn-primary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros rápidos dentro do card -->
+        <div style="padding:var(--s3) var(--s5);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;background:var(--bg)">
+          <span style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-right:4px">Status</span>
+          <span class="filter-chip active">Todos</span>
+          <span class="filter-chip">Em Trânsito</span>
+          <span class="filter-chip">Entregue</span>
+          <span class="filter-chip">Atrasado</span>
+          <span class="filter-chip">Aguardando</span>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+            <select class="filter-select">
+              <option>Todos os motoristas</option>
+              <option>João Silva</option>
+              <option>Pedro Mendes</option>
+            </select>
+            <select class="filter-select">
+              <option>Abril 2026</option>
+              <option>Março 2026</option>
+              <option>Fevereiro 2026</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sorted">
+                  DT
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:middle"><polyline points="18 15 12 9 6 15"/></svg>
+                </th>
+                <th>Motorista</th>
+                <th>Origem → Destino</th>
+                <th>Status</th>
+                <th>Agenda</th>
+                <th>Diária</th>
+                <th>Progresso</th>
+                <th style="text-align:right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">DT-1284</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">JS</div>
+                    <div>
+                      <div style="font-weight:500;color:var(--text)">João Silva</div>
+                      <div style="font-size:11px;color:var(--text-3)">ABC-1234</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="muted">São Paulo → Campinas</td>
+                <td><span class="badge info"><span class="badge-dot"></span>Em Trânsito</span></td>
+                <td class="mono">12/04</td>
+                <td><span class="badge default">Sem</span></td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar"><div class="progress-fill" style="width:75%;background:var(--info)"></div></div>
+                    <span class="progress-label">75%</span>
+                  </div>
+                </td>
+                <td class="actions">
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Visualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="icon-btn" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="icon-btn" title="Duplicar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn" title="Excluir" style="color:var(--text-3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="mono">DT-1283</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
+                    <div>
+                      <div style="font-weight:500;color:var(--text)">Pedro Mendes</div>
+                      <div style="font-size:11px;color:var(--text-3)">XYZ-9876</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="muted">Guarulhos → Rio de Janeiro</td>
+                <td><span class="badge success"><span class="badge-dot"></span>Entregue</span></td>
+                <td class="mono">10/04</td>
+                <td><span class="badge warning" style="font-size:11px">R$ 320</span></td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--success)"></div></div>
+                    <span class="progress-label">100%</span>
+                  </div>
+                </td>
+                <td class="actions">
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Visualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="icon-btn" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="icon-btn" title="Duplicar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="mono" style="color:var(--danger)">DT-1282</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">MC</div>
+                    <div>
+                      <div style="font-weight:500;color:var(--text)">Marcos Costa</div>
+                      <div style="font-size:11px;color:var(--text-3)">DEF-5432</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="muted">Bauru → Uberlândia</td>
+                <td><span class="badge danger"><span class="badge-dot"></span>Atrasado</span></td>
+                <td class="mono" style="color:var(--danger)">09/04 ⚠</td>
+                <td><span class="badge warning">R$ 480</span></td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar"><div class="progress-fill" style="width:60%;background:var(--danger)"></div></div>
+                    <span class="progress-label" style="color:var(--danger)">60%</span>
+                  </div>
+                </td>
+                <td class="actions">
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Visualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="icon-btn" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="icon-btn" title="Duplicar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="mono">DT-1281</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#8B5CF6,#6D28D9);display:flex;align-items:center;justify-content:middle;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;align-items:center;justify-content:center">RA</div>
+                    <div>
+                      <div style="font-weight:500;color:var(--text)">Roberto Alves</div>
+                      <div style="font-size:11px;color:var(--text-3)">GHI-7890</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="muted">Sorocaba → Belo Horizonte</td>
+                <td><span class="badge default"><span class="badge-dot"></span>Aguardando</span></td>
+                <td class="mono">14/04</td>
+                <td><span class="badge default">—</span></td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar"><div class="progress-fill" style="width:20%;background:var(--text-3)"></div></div>
+                    <span class="progress-label">20%</span>
+                  </div>
+                </td>
+                <td class="actions">
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Visualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="icon-btn" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="icon-btn" title="Duplicar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="mono">DT-1280</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#EC4899,#BE185D);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">LF</div>
+                    <div>
+                      <div style="font-weight:500;color:var(--text)">Lucas Ferreira</div>
+                      <div style="font-size:11px;color:var(--text-3)">JKL-2345</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="muted">Santos → Curitiba</td>
+                <td><span class="badge success"><span class="badge-dot"></span>Entregue</span></td>
+                <td class="mono">11/04</td>
+                <td><span class="badge default">Sem</span></td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar"><div class="progress-fill" style="width:100%;background:var(--success)"></div></div>
+                    <span class="progress-label">100%</span>
+                  </div>
+                </td>
+                <td class="actions">
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Visualizar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                    <button class="icon-btn" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                    <button class="icon-btn" title="Duplicar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                    <button class="icon-btn" title="Excluir"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer">
+          <span>Exibindo <strong style="color:var(--text)">5</strong> de <strong style="color:var(--text)">1.284</strong> registros</span>
+          <div class="pagination">
+            <button class="page-btn" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <span style="padding:0 4px;color:var(--text-3)">…</span>
+            <button class="page-btn">257</button>
+            <button class="page-btn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+</body>
+</html>
