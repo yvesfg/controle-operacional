@@ -68,3 +68,13 @@ import './design-system/components.css'
 
 > Altere uma variável em `tokens.css` ou `theme-dark.css` → todo o app muda visualmente.
 > Nenhum componente contém cor, radius ou sombra hardcoded.
+
+## DS-03 — Módulo de Relatórios Dinâmicos (2026-04-12)
+
+**Solicitado:** Criar módulo de relatórios configuráveis com catálogo de campos, seletor visual, filtros, agrupamento, preview e exportação em paisagem A4.
+
+**Implementado:**
+- `src/relatorios/fieldCatalog.js` — catálogo central com 50+ campos (Planilha, Diárias, Apontamentos, SGS, Motoristas). Estrutura: id, label, key, origem, tipo, modulo, visivelPadrao, exportavel, filtravel, agrupavel, largura, alinhamento, formato, ordem. Formatters: data-br, datetime-br, moeda, upper, numero.
+- `src/relatorios/ReportBuilder.jsx` — componente autônomo: sidebar de seleção de campos agrupados por módulo, toolbar com filtros (nome, origem, destino, intervalo de datas, status pills), seletor de módulo/origem, agrupamento dinâmico com collapse, ordenação por clique em coluna, paginação (50/pág), exportação CSV (UTF-8 BOM) e impressão A4 landscape via nova janela (`@page { size: A4 landscape; }`).
+- `src/App.jsx` — import + tab "Relatórios" adicionada ao array `tabs` (ícone documento) + bloco `{activeTab === "relatorios" && <ReportBuilder .../>}` com full-width e altura calculada. Build: ✓ 2.19s.
+- Backup anterior: `App.jsx.bckp_relat_20260412_220502`

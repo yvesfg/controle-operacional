@@ -15,6 +15,7 @@ import { exportCSV, exportODS, exportPDF, ExportMenu,
   gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
 import Toast from './components/Toast.jsx';
 import AlterarSenhaAdmin from './components/AlterarSenhaAdmin.jsx';
+import ReportBuilder from './relatorios/ReportBuilder.jsx';
 
 
 // ══════════════════════════════════════════════
@@ -1683,6 +1684,8 @@ export default function App() {
       ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
     ...(isAdmin ? [{k:"admin", l:"Admin",
       ico:(a)=>svgIco(a,<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>)}] : []),
+    {k:"relatorios", l:"Relatórios",
+      ico:(a)=>svgIco(a,<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>)},
     // Buscar — último ícone à direita
     {k:"busca", l:"Buscar",
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
@@ -3063,7 +3066,21 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div style={{padding:activeTab==="planilha"?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:activeTab==="planilha"?"100%":1100,margin:"0 auto",animation:"fadeIn .2s"}}>
+      <div style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:(activeTab==="planilha"||activeTab==="relatorios")?"100%":1100,margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"?{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
+
+        {/* ═══ RELATÓRIOS ═══ */}
+        {activeTab === "relatorios" && (
+          <ReportBuilder
+            dados={DADOS}
+            motoristas={motoristas}
+            apontItems={apontItems}
+            sgsItems={sgsItems}
+            t={t}
+            DESIGN={DESIGN}
+            isMobile={isMobile}
+            isWide={isWide}
+          />
+        )}
 
         {/* ═══ BUSCA ═══ */}
         {activeTab === "busca" && (
