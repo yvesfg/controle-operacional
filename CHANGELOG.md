@@ -28,3 +28,11 @@
 - Motoristas: ícones 📄✏️🗑️ substituídos por SVG via hIco() (documento ouro, lápis azul, lixeira vermelha), alinhados ao design system.
 - Content wrapper: adicionados "dashboard", "diarias" e "descarga" ao grupo maxWidth:100%, eliminando espaços laterais no desktop.
 - Descarga: removido maxWidth:560 fixo do seletor de abas (Hoje/Atraso/Aguardando) — agora preenche a largura disponível.
+
+## 2026-04-13 (Dashboard Redesign)
+**Solicitado:** Dashboard não ocupa a tela — ideias para mais índices e layout full-screen.
+**Implementado:**
+- KPI Strip horizontal (7 cards): Carregamentos/CTE, Taxa Eficiência, DTs Únicas, Motoristas Ativos, CTE Médio/Viagem, Diárias a Pagar, Alertas Ativos — todos com borda colorida por status e clicáveis.
+- Grid principal 3 colunas: Gráfico de Evolução (maior, com toggle Carregamentos/CTE) | Status DTs (donut + barras de progresso com %) | Top 5 Motoristas (ranking com barra de % e avatares coloridos).
+- Grid inferior 2 colunas: Registros Recentes (agora com coluna Destino) | Painel Operacional com Diárias (No Prazo/Perdeu/Aguardando + saldo) e Descargas (Hoje/Atraso/Aguardando + lista dos atrasados).
+- Arquivo recuperado de truncamento via backup + tail para preservar integridade.
