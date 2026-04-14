@@ -89,6 +89,8 @@ export default function App() {
   const [diariaCols, setDiariaCols] = useState(() => loadJSON("co_diaria_cols", 2));
   const [descargaView, setDescargaView] = useState(() => loadJSON("co_descarga_view","blocos"));
   const [descargaCols, setDescargaCols] = useState(() => loadJSON("co_descarga_cols", 2));
+  const [diariaNavDT, setDiariaNavDT] = useState(null);    // DT destacada ao navegar do modal
+  const [descargaNavDT, setDescargaNavDT] = useState(null); // DT destacada ao navegar do modal
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(null); // 'edit'|'motorista'|'usuario'|'configdb'|'detalhe'
@@ -3830,6 +3832,14 @@ export default function App() {
         {/* ═══ DIÁRIAS ═══ */}
         {activeTab === "diarias" && (
           <div>
+            {diariaNavDT && (
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(240,185,11,.08)`,border:`1px solid rgba(240,185,11,.3)`}}>
+                {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13)}
+                <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>DT {diariaNavDT}</span>
+                <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
+                <button onClick={()=>setDiariaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(240,185,11,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✕ Limpar</button>
+              </div>
+            )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
               <ExportMenu
                 dados={diariasData.items.map(({r,tipo,dias})=>({...r,_tipo:tipo==="ok"?"No prazo":tipo==="atraso"?`Atraso ${dias||0}d`:"Aguardando"}))}
@@ -3930,9 +3940,10 @@ export default function App() {
                 {/* Lista de itens */}
                 {diariaView==="linhas" ? (
                   // ── MODO LINHAS (original) ──
-                  diariasData.items.filter(i => dFiltro==="todos" || i.tipo===dFiltro).slice(0,80).map((item,idx) => {
+                  (()=>{const _dAll=diariasData.items.filter(i=>dFiltro==="todos"||i.tipo===dFiltro);return diariaNavDT?[..._dAll].sort((a,b)=>a.r.dt===diariaNavDT?-1:b.r.dt===diariaNavDT?1:0):_dAll;})().slice(0,80).map((item,idx) => {
                     const {r,tipo,dias,temDiaria} = item;
-                    const borderC = tipo==="diaria"?t.danger:tipo==="atraso"?t.ouro:tipo==="sem_diaria"?t.verde:tipo==="ok"?t.verde:t.txt2;
+                    const _isDHL = diariaNavDT && r.dt === diariaNavDT;
+                    const borderC = _isDHL?t.ouro:tipo==="diaria"?t.danger:tipo==="atraso"?t.ouro:tipo==="sem_diaria"?t.verde:tipo==="ok"?t.verde:t.txt2;
                     const saldoPg = parseFloat(r.diaria_pg), saldoPrev = parseFloat(r.diaria_prev);
                     const pgStatus = !isNaN(saldoPg)&&saldoPg>0 ? "pago" : !isNaN(saldoPrev)&&saldoPrev>0 ? "pendente" : null;
                     const tipoLabel = tipo==="diaria"?`🛏️ DIÁRIA ${dias>0?dias+"d":""}`
@@ -3942,7 +3953,7 @@ export default function App() {
                       :"⏳ Aguardando";
                     const tipoColor = tipo==="diaria"?`rgba(246,70,93,.08)`:tipo==="atraso"?`rgba(240,185,11,.08)`:tipo==="sem_diaria"?`rgba(2,192,118,.08)`:tipo==="ok"?`rgba(2,192,118,.08)`:`rgba(240,185,11,.06)`;
                     return (
-                      <div key={idx} onClick={()=>abrirDetalhe(r)} className="co-card" style={{background:t.card,borderRadius:12,padding:14,border:`1px solid ${t.borda}`,borderLeft:`4px solid ${borderC}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer"}}>
+                      <div key={idx} onClick={()=>abrirDetalhe(r)} className="co-card" style={{background:_isDHL?`rgba(240,185,11,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:t.borda}`,borderLeft:`4px solid ${borderC}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(240,185,11,.22)`:"none"}}>
                         <div style={{fontSize:14,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           {r.nome||"—"}
                           <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:tipoColor,color:borderC,border:`1px solid ${borderC}33`}}>
@@ -4047,6 +4058,14 @@ export default function App() {
         {/* ═══ DESCARGA ═══ */}
         {activeTab === "descarga" && (
           <div>
+            {descargaNavDT && (
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.3)`}}>
+                {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,13)}
+                <span style={{fontSize:11,fontWeight:700,color:t.azulLt}}>DT {descargaNavDT}</span>
+                <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
+                <button onClick={()=>setDescargaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(22,119,255,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.azulLt,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✕ Limpar</button>
+              </div>
+            )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
               <ExportMenu
                 dados={dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados}
@@ -4097,12 +4116,13 @@ export default function App() {
             {descargaView==="linhas" ? (
               // ── MODO LINHAS (original) ──
               <>
-                {(dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados).slice(0,50).map((r,i) => {
+                {(()=>{const _dl=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;return descargaNavDT?[..._dl].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_dl;})().slice(0,50).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
+                  const _isDHL2 = descargaNavDT && r.dt === descargaNavDT;
                   return (
-                    <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer"}}>
+                    <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:_isDHL2?`rgba(22,119,255,.06)`:t.card,borderRadius:11,padding:12,border:`1px solid ${_isDHL2?t.azulLt:t.borda}`,borderLeft:`3px solid ${_isDHL2?t.azulLt:isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL2?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
                       <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                         {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
@@ -4122,12 +4142,13 @@ export default function App() {
             ) : (
               // ── MODO BLOCOS (Opção C com avatar) ──
               <div style={{display:"grid",gridTemplateColumns:`repeat(${descargaCols},minmax(0,1fr))`,gap:10}}>
-                {(dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados).slice(0,80).map((r,i) => {
+                {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;return descargaNavDT?[..._db].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_db;})().slice(0,80).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
                   const isAguardando = dscTab === "aguardando";
-                  const accentC = isAtrasado ? t.danger : isAguardando ? "#f0b90b" : t.azul;
+                  const _isDHL3 = descargaNavDT && r.dt === descargaNavDT;
+                  const accentC = _isDHL3?t.azulLt:isAtrasado ? t.danger : isAguardando ? "#f0b90b" : t.azul;
                   const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : isAguardando ? `rgba(240,185,11,.1)` : `rgba(22,119,255,.1)`;
                   const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
                   const saldoPg = parseFloat(r.saldo), vl = parseFloat(r.vl_contrato);
@@ -4143,7 +4164,7 @@ export default function App() {
                     ...(r.ro?[{l:"RO",v:r.ro,c:"#f57c00"}]:[]),
                   ];
                   return (
-                    <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,borderLeft:`4px solid ${accentC}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
+                    <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:_isDHL3?`rgba(22,119,255,.06)`:t.card,borderRadius:12,border:`1px solid ${_isDHL3?t.azulLt:t.borda}`,borderLeft:`4px solid ${accentC}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL3?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
                       <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                         <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${accentC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:accentC,flexShrink:0}}>{initials}</div>
                         <div style={{flex:1,minWidth:0}}>
@@ -7875,13 +7896,65 @@ function mapearColuna(n){
               {/* ══ CONTEÚDO ══ */}
               <div style={{flex:1, overflowY:"auto", padding:16, display:"flex", flexDirection:"column", gap:14}}>
 
-                {/* Status bar */}
-                <div style={{...css.kpi(statusCor), padding:"10px 14px", display:"flex", alignItems:"center", gap:10, textAlign:"left"}}>
-                  {hIco(statusIco, statusCor, 18, 2)}
-                  <div>
-                    <div style={{fontSize:10, textTransform:"uppercase", letterSpacing:2, color:statusCor, fontWeight:700}}>{statusTxt}</div>
-                    {r.data_desc && <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:16, letterSpacing:2, color:statusCor, marginTop:1}}>{r.data_desc}</div>}
+                {/* Status bar — DESCARGA + DIÁRIAS clicáveis */}
+                <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
+                  {/* Card DESCARGA */}
+                  <div
+                    onClick={()=>{
+                      setDescargaNavDT(r.dt);
+                      if(r.data_agenda){const _d=r.data_agenda.split("/");if(_d.length===3)setDscData(`${_d[2]}-${_d[1].padStart(2,"0")}-${_d[0].padStart(2,"0")}`);}
+                      setPlanilhaDetalheReg(null);
+                      setActiveTab("descarga");
+                    }}
+                    style={{...css.kpi(statusCor), padding:"10px 12px", display:"flex", alignItems:"center", gap:8, textAlign:"left", cursor:"pointer", userSelect:"none"}}
+                    onMouseEnter={e=>e.currentTarget.style.opacity=".8"}
+                    onMouseLeave={e=>e.currentTarget.style.opacity="1"}
+                    title="Ver na aba Descarga"
+                  >
+                    {hIco(statusIco, statusCor, 16, 2)}
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:8, textTransform:"uppercase", letterSpacing:1.8, color:statusCor, fontWeight:700}}>DESCARGA</div>
+                      <div style={{fontSize:9, textTransform:"uppercase", letterSpacing:1, color:statusCor, fontWeight:600, opacity:.8, marginTop:1}}>{statusTxt}</div>
+                      {(r.data_desc||r.data_agenda) && <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:14, letterSpacing:1.5, color:statusCor, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.data_desc||r.data_agenda}</div>}
+                    </div>
+                    <div style={{marginLeft:"auto",fontSize:12,color:statusCor,opacity:.4}}>›</div>
                   </div>
+
+                  {/* Card DIÁRIAS */}
+                  {(()=>{
+                    const _devida = parseFloat(r.diaria_prev)||0;
+                    const _paga   = parseFloat(r.diaria_pg)||0;
+                    const _temD   = _devida > 0;
+                    const _corD   = _temD ? (_paga >= _devida ? t.verde : t.danger) : t.txt2;
+                    const _icoD   = _temD
+                      ? (_paga >= _devida
+                        ? <><polyline points="20 6 9 17 4 12"/></>
+                        : <><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>)
+                      : <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>;
+                    return (
+                      <div
+                        onClick={()=>{setDiariaNavDT(r.dt);setDFiltro("todos");setPlanilhaDetalheReg(null);setActiveTab("diarias");}}
+                        style={{...css.kpi(_corD), padding:"10px 12px", display:"flex", alignItems:"center", gap:8, textAlign:"left", cursor:"pointer", userSelect:"none"}}
+                        onMouseEnter={e=>e.currentTarget.style.opacity=".8"}
+                        onMouseLeave={e=>e.currentTarget.style.opacity="1"}
+                        title="Ver na aba Diárias"
+                      >
+                        {hIco(_icoD, _corD, 16, 2)}
+                        <div style={{minWidth:0}}>
+                          <div style={{fontSize:8, textTransform:"uppercase", letterSpacing:1.8, color:_corD, fontWeight:700}}>DIÁRIAS</div>
+                          {_temD ? (
+                            <>
+                              <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:t.danger, letterSpacing:1, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>Dev: {fmtMoeda(_devida)}</div>
+                              <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:t.verde, letterSpacing:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>Pago: {fmtMoeda(_paga)}</div>
+                            </>
+                          ) : (
+                            <div style={{fontSize:9, color:_corD, opacity:.7, marginTop:2}}>Sem diária</div>
+                          )}
+                        </div>
+                        <div style={{marginLeft:"auto",fontSize:12,color:_corD,opacity:.4}}>›</div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Rota e Agenda */}
