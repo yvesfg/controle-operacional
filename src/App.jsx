@@ -147,6 +147,7 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
   const [isWide,   setIsWide]   = useState(()=>window.innerWidth>=768);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(()=>loadJSON("co_sidebar_collapsed",false));
+  const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
   useEffect(()=>{
     const fn=()=>{setIsMobile(window.innerWidth<=600);setIsWide(window.innerWidth>=768);};
     window.addEventListener("resize",fn);
@@ -2514,7 +2515,7 @@ export default function App() {
   };
 
   // Classe do co-main muda conforme largura + collapse state
-  const coMainCls = `co-main${isWide?(sidebarCollapsed?" co-main--collapsed":""):""}`;
+  const coMainCls = `co-main${isWide?(sidebarCollapsed?" co-main--collapsed":""):""}${!isWide?" co-main--mobile":""}`;
 
   return (
     <div style={css.app} className="co-app-wrap">
@@ -2639,8 +2640,26 @@ export default function App() {
           .co-mobile-nav{display:none!important}
         }
         @media(max-width:767px){
-          .co-sidebar{display:none!important}
+          /* Sidebar sempre visível como mini (icons) no mobile */
+          .co-sidebar{display:flex!important;z-index:200;width:64px!important;transition:width 220ms ease}
+          .co-sidebar--mob-expanded{width:220px!important;box-shadow:4px 0 28px rgba(0,0,0,.55)}
+          /* Icons-only quando não expandido */
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo{justify-content:center!important;padding:8px!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo-name,
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo-sub{display:none!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__toggle{margin-left:0!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__item{justify-content:center!important;padding:8px!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__item-lbl{display:none!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer{align-items:center!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer-item{justify-content:center!important;padding:7px!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer-lbl{display:none!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user{justify-content:center!important;padding:8px!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user-info{display:none!important}
+          /* Main offset para mini-sidebar */
           .co-main{margin-left:0!important}
+          .co-main--mobile{margin-left:64px!important}
+          /* Remove bottom nav */
+          .co-mobile-nav{display:none!important}
         }
 
         /* ── Mobile Nav (horizontal scroll, Binance-style) ── */
@@ -2713,16 +2732,15 @@ export default function App() {
       `}</style>
 
       {/* ════════════════════════════════════════════
-          DESKTOP SIDEBAR — oculta no mobile via CSS
+          SIDEBAR — sempre visível; icons no mobile, expand ao clicar
       ════════════════════════════════════════════ */}
-      {isWide && (
-        <aside className={`co-sidebar${sidebarCollapsed?" co-sidebar--collapsed":""}`}>
+      <aside className={`co-sidebar${isWide&&sidebarCollapsed?" co-sidebar--collapsed":""}${!isWide&&mobileSidebarExpanded?" co-sidebar--mob-expanded":""}`}>
           {/* ── Logo ── */}
           <div className="co-sidebar__logo">
-            <div style={{width:34,height:34,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:4}}>
+            <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:4}}>
               <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
             </div>
-            {!sidebarCollapsed && (
+            {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
               <div style={{overflow:"hidden",flex:1,minWidth:0}}>
                 <div className="co-sidebar__logo-name">CONTROLE OPS</div>
                 <div className="co-sidebar__logo-sub">by <span>YFGroup</span></div>
@@ -2730,10 +2748,10 @@ export default function App() {
             )}
             <button
               className="co-sidebar__toggle"
-              onClick={()=>setSidebarCollapsed(v=>!v)}
-              title={sidebarCollapsed?"Expandir sidebar":"Recolher sidebar"}
+              onClick={()=>isWide?setSidebarCollapsed(v=>!v):setMobileSidebarExpanded(v=>!v)}
+              title={(isWide?sidebarCollapsed:!mobileSidebarExpanded)?"Expandir":"Recolher"}
             >
-              {sidebarCollapsed
+              {(isWide?sidebarCollapsed:!mobileSidebarExpanded)
                 ? hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt2,14,2)
                 : hIco(<><polyline points="15 18 9 12 15 6"/></>,t.txt2,14,2)
               }
@@ -2748,8 +2766,8 @@ export default function App() {
                 <button
                   key={tb.k}
                   className={`co-sidebar__item${ativo?" co-sidebar__item--active":""}`}
-                  onClick={()=>setActiveTab(tb.k)}
-                  title={sidebarCollapsed?tb.l:undefined}
+                  onClick={()=>{setActiveTab(tb.k);if(!isWide)setMobileSidebarExpanded(false);}}
+                  title={(isWide&&sidebarCollapsed)||!isWide?tb.l:undefined}
                 >
                   <span className="co-sidebar__ico">
                     {typeof tb.ico==="function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
@@ -2883,7 +2901,13 @@ export default function App() {
               <span className="co-sidebar__footer-lbl">Sair</span>
             </button>
           </div>
-        </aside>
+      </aside>
+
+      {/* Scrim mobile — fecha sidebar ao clicar fora */}
+      {!isWide && mobileSidebarExpanded && (
+        <div style={{position:"fixed",inset:0,zIndex:199,background:"rgba(0,0,0,.52)",backdropFilter:"blur(1px)"}}
+          onClick={()=>setMobileSidebarExpanded(false)}
+        />
       )}
 
       {/* ════════════════════════════════════════════
@@ -2924,14 +2948,11 @@ export default function App() {
             </div>
           </>
         ) : (
-          /* ── Mobile topbar: logo + título + ações ── */
+          /* ── Mobile topbar: aba ativa + ações ── */
           <>
-            <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:4}}>
-              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-            </div>
             <div>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.txt,lineHeight:1}}>CONTROLE OPS</div>
-              <div style={{fontSize:8,color:t.txt2,letterSpacing:1,textTransform:"uppercase",fontWeight:600}}>by <span style={{color:t.ouro}}>YFGroup</span></div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.txt,lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
+              <div style={{fontSize:8,color:t.txt2,letterSpacing:1,textTransform:"uppercase",fontWeight:600}}>CONTROLE OPS · <span style={{color:t.ouro}}>YFGroup</span></div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
               <div title={usuarioLogado||perfil} style={{...css.hBtn,borderColor:perfil==="admin"?`rgba(240,185,11,.45)`:t.borda,color:perfil==="admin"?t.ouro:t.txt2,padding:"6px 7px",background:perfil==="admin"?`rgba(240,185,11,.07)`:"transparent"}}>
@@ -3428,18 +3449,18 @@ export default function App() {
                   {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",color:alertas.length===0?t.verde:t.danger,border:alertas.length===0?`rgba(2,192,118,.2)`:`rgba(246,70,93,.2)`,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
                 ];
                 return (
-                  <div style={{display:"grid",gridTemplateColumns:`repeat(${kpis.length},1fr)`,gap:8,marginBottom:12}}>
+                  <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:8,marginBottom:12}}>
                     {kpis.map((k,i)=>(
-                      <div key={i} onClick={k.click} style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,borderTop:`3px solid ${k.color}`,padding:"12px 14px",cursor:k.click?"pointer":"default",transition:"all .15s"}}
+                      <div key={i} onClick={k.click} style={{background:t.card,borderRadius:isMobile?8:12,border:`1px solid ${t.borda}`,borderTop:`3px solid ${k.color}`,padding:isMobile?"8px 10px":"12px 14px",cursor:k.click?"pointer":"default",transition:"all .15s"}}
                         onMouseEnter={e=>k.click&&(e.currentTarget.style.background=t.card2)}
                         onMouseLeave={e=>k.click&&(e.currentTarget.style.background=t.card)}
                       >
-                        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:8}}>
-                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,lineHeight:1.4,paddingRight:4}}>{k.label}</div>
-                          <div style={{width:22,height:22,borderRadius:6,background:`${k.color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{hIco(k.icon,k.color,11)}</div>
+                        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:isMobile?3:8}}>
+                          <div style={{fontSize:isMobile?7:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,lineHeight:1.4,paddingRight:4}}>{k.label}</div>
+                          <div style={{width:isMobile?16:22,height:isMobile?16:22,borderRadius:6,background:`${k.color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{hIco(k.icon,k.color,isMobile?9:11)}</div>
                         </div>
-                        <div style={{fontFamily:DESIGN.fnt.h,fontSize:20,letterSpacing:.5,color:k.color,lineHeight:1,marginBottom:3}}>{k.value}</div>
-                        <div style={{fontSize:9,color:t.txt2,lineHeight:1.3}}>{k.sub}</div>
+                        <div style={{fontFamily:DESIGN.fnt.h,fontSize:isMobile?15:20,letterSpacing:.5,color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>
+                        <div style={{fontSize:isMobile?8:9,color:t.txt2,lineHeight:1.3}}>{k.sub}</div>
                       </div>
                     ))}
                   </div>

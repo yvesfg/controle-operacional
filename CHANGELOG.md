@@ -36,3 +36,15 @@
 - Grid principal 3 colunas: Gráfico de Evolução (maior, com toggle Carregamentos/CTE) | Status DTs (donut + barras de progresso com %) | Top 5 Motoristas (ranking com barra de % e avatares coloridos).
 - Grid inferior 2 colunas: Registros Recentes (agora com coluna Destino) | Painel Operacional com Diárias (No Prazo/Perdeu/Aguardando + saldo) e Descargas (Hoje/Atraso/Aguardando + lista dos atrasados).
 - Arquivo recuperado de truncamento via backup + tail para preservar integridade.
+
+## 2026-04-14 — Mobile Layout & Sidebar
+
+**Solicitado:** ajustar layout mobile do dashboard, relatórios, sidebar colapsável, motoristas visíveis no mobile e ícone superior esquerdo igual ao desktop.
+
+**Implementado:**
+- **Sidebar mobile:** sempre visível como mini-barra (icons, 64 px). Ao clicar no toggle expande para 220 px com overlay+scrim. Clique em item navega e colapsa de volta.
+- **Bottom nav removida:** substituída pela sidebar mini.
+- **Dashboard KPIs mobile (Modo B):** grade 2 colunas com cards compactos (padding, fonte e ícone reduzidos).
+- **Motoristas mobile:** aba agora sempre acessível via sidebar mini (ícone visível sem precisar scrollar).
+- **Relatórios mobile:** seletor de campos colapsável (hidden por default), botões Imprimir/CSV no header, tabela com `maxHeight:60vh`.
+- **Ícone superior esquerdo:** sidebar logo unificado em 36×36 px em desktop e mobile; topbar mobile agora exibe nome da aba ativa (sem duplicar logo).

@@ -241,7 +241,8 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
   const S = {
     wrap: {
       display: "flex", flexDirection: isMobile ? "column" : "row",
-      gap: 0, height: "100%", minHeight: 0, overflow: "hidden",
+      gap: 0, height: isMobile ? "auto" : "100%", minHeight: 0,
+      overflow: isMobile ? "visible" : "hidden",
       background: t.bg,
     },
     sidebar: {
@@ -249,8 +250,11 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
       flexShrink: 0,
       background: t.card,
       borderRight: `1px solid ${t.borda}`,
-      display: "flex", flexDirection: "column",
+      borderBottom: isMobile ? `1px solid ${t.borda}` : "none",
+      display: isMobile ? (mobilePanelOpen ? "flex" : "none") : "flex",
+      flexDirection: "column",
       overflow: "hidden",
+      maxHeight: isMobile ? 320 : "none",
     },
     sidebarHeader: {
       padding: "14px 16px 10px",
@@ -284,8 +288,10 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
       color: "#111", transition: "all .12s",
     }),
     main: {
-      flex: 1, display: "flex", flexDirection: "column",
-      overflow: "hidden", minWidth: 0,
+      flex: isMobile ? "none" : 1,
+      display: "flex", flexDirection: "column",
+      overflow: isMobile ? "visible" : "hidden",
+      minWidth: 0,
     },
     toolbar: {
       padding: "10px 16px",
@@ -329,7 +335,9 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
       whiteSpace: "nowrap",
     }),
     tableWrap: {
-      flex: 1, overflow: "auto", padding: "0",
+      flex: isMobile ? "none" : 1,
+      overflow: "auto", padding: "0",
+      maxHeight: isMobile ? "60vh" : "none",
     },
     table: {
       width: "100%", borderCollapse: "collapse", fontSize: 12,
@@ -426,6 +434,7 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
 
   // ── Grupos de campos (sidebar) ────────────────────────────────────────────
   const [sidebarCollapsed, setSidebarCollapsed] = useState({});
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const toggleSidebarGroup = useCallback((mod) => {
     setSidebarCollapsed(p => ({ ...p, [mod]: !p[mod] }));
   }, []);
@@ -435,6 +444,25 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
     <div style={S.wrap}>
+
+      {/* ── Mobile toggle: mostrar/ocultar seletor de campos ── */}
+      {isMobile && (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+          padding:"8px 12px", background: t.card, borderBottom:`1px solid ${t.borda}`,
+          cursor:"pointer" }} onClick={()=>setMobilePanelOpen(p=>!p)}>
+          <span style={{fontSize:12,fontWeight:700,color:t.txt}}>
+            {mobilePanelOpen ? "▲ Ocultar campos" : "▼ Selecionar campos"} · {activeFields.length} campo{activeFields.length!==1?"s":""}
+          </span>
+          <div style={{display:"flex",gap:6}}>
+            <button style={{...S.btn("primary"),padding:"3px 10px",fontSize:11}} onClick={e=>{e.stopPropagation();handlePrint();}} disabled={!activeFields.length}>
+              <IcoPrint/> Imprimir
+            </button>
+            <button style={{...S.btn(),padding:"3px 10px",fontSize:11}} onClick={e=>{e.stopPropagation();handleCSV();}} disabled={!activeFields.length}>
+              <IcoCSV/> CSV
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Sidebar: Seletor de campos ─────────────────────────────────── */}
       <div style={S.sidebar}>
