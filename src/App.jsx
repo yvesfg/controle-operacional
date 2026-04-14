@@ -5355,8 +5355,10 @@ function mapearColuna(n){
                   const rows=motoristas.map(m=>{
                     const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
                     const tel=(m.tel||"").replace(/\D/g,"");
+                    const tel2b=(m.tel2||"").replace(/\D/g,"");
+                    const tel3b=(m.tel3||"").replace(/\D/g,"");
                     const nota=`CPF:${m.cpf||""} | Placa:${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join("/")} | Vínculo:${m.vinculo||""} | Banco:${m.banco||""} AGE:${m.agencia||""} CC:${m.conta||""}`;
-                    return `"${m.nome||""}","${prim}","${sob}","Mobile","${tel?"+55"+tel:""}","${nota}"`;
+                    return `"${m.nome||""}","${prim}","${sob}","Mobile","${tel?"+55"+tel:""}","Mobile","${tel2b?"+55"+tel2b:""}","Mobile","${tel3b?"+55"+tel3b:""}","${nota}"`;
                   });
                   const bom="\uFEFF";const blob=new Blob([bom+[header,...rows].join("\n")],{type:"text/csv;charset=utf-8"});
                   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_google.csv";a.click();
