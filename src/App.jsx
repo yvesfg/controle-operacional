@@ -210,6 +210,16 @@ export default function App() {
   const [motSelecionados, setMotSelecionados] = useState(new Set());
   const [motExcluirLoteTexto, setMotExcluirLoteTexto] = useState("");
   const [motExcluirLoteOpen, setMotExcluirLoteOpen] = useState(false);
+  // Excluir TODOS (admin)
+  const [motExcluirTodosOpen, setMotExcluirTodosOpen] = useState(false);
+  const [motExcluirTodosTexto, setMotExcluirTodosTexto] = useState("");
+  // Paginacao da lista de motoristas
+  const [motPagina, setMotPagina] = useState(1);
+  // Filtro de prefixos na importacao
+  const [motImportPrefOpen, setMotImportPrefOpen] = useState(false);
+  const [motImportRaw, setMotImportRaw] = useState([]);
+  const [motImportPrefSel, setMotImportPrefSel] = useState(new Set());
+  const [motImportPrefBusca, setMotImportPrefBusca] = useState("");
   // Duplicata no cadastro
   const [motDupSugest, setMotDupSugest] = useState(null); // motorista existente similar
 
@@ -4761,7 +4771,7 @@ export default function App() {
               <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
                 <input
                   value={motBusca}
-                  onChange={e=>setMotBusca(e.target.value)}
+                  onChange={e=>{setMotBusca(e.target.value);setMotPagina(1);}}
                   placeholder="Buscar por nome ou placa cavalo..."
                   style={{...css.inp,flex:1,minWidth:140}}
                 />
@@ -4789,6 +4799,11 @@ export default function App() {
                 }} title="Cruzar placas dos motoristas com registros de viagem e sugerir vínculos" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,color:t.verde}}>🔗 Sugerir Compatíveis</button>
                 <button onClick={()=>setRelGeralOpen(true)} title="Gerar relatório geral de operações em PDF" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,color:t.ouro}}>📊 Rel. Geral</button>
                 {canEdit && <button onClick={()=>{setFormData({});setEditIdx(-1);setMotDupSugest(null);setModalOpen("motorista")}} style={{...css.btnGold,whiteSpace:"nowrap"}}>＋ NOVO</button>}
+                {perfil==="admin" && motoristas.length>0 && (
+                  <button onClick={()=>{setMotExcluirTodosTexto("");setMotExcluirTodosOpen(true);}} title="Excluir TODOS os motoristas salvos" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.3)`,color:t.danger}}>
+                    🗑️ Excluir Todos
+                  </button>
+                )}
               </div>
               {/* Barra de seleção em lote */}
               {canEdit && motSelecionados.size > 0 && (
@@ -4801,12 +4816,18 @@ export default function App() {
                   <button onClick={()=>{setMotExcluirLoteTexto("");setMotExcluirLoteOpen(true);}} style={{background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:6,padding:"4px 12px",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,12)} Excluir selecionados</button>
                 </div>
               )}
-              {motBusca && <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>{motFiltrados.length} resultado{motFiltrados.length!==1?"s":""} encontrado{motFiltrados.length!==1?"s":""}</div>}
+              <div style={{fontSize:10,color:t.txt2,marginBottom:8,display:"flex",gap:8,alignItems:"center"}}>
+                {motBusca
+                  ? <span>{motFiltrados.length} resultado{motFiltrados.length!==1?"s":""}</span>
+                  : <span>{motoristas.length} motorista{motoristas.length!==1?"s":""} cadastrado{motoristas.length!==1?"s":""}</span>
+                }
+                {motoristas.length>0 && <span style={{opacity:.6}}>· exibindo {Math.min(motPagina*50,motFiltrados.length)} de {motFiltrados.length}</span>}
+              </div>
               {motoristas.length === 0 ? (
                 <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
               ) : motFiltrados.length === 0 ? (
                 <div style={css.empty}><div style={{fontSize:30,marginBottom:8}}>🔍</div><p style={{fontSize:12,color:t.txt2}}>Nenhum motorista encontrado para "{motBusca}"</p></div>
-              ) : motFiltrados.map((m,i) => {
+              ) : motFiltrados.slice(0, motPagina * 50).map((m,i) => {
                 const idxReal = motoristas.indexOf(m);
                 const selecionado = motSelecionados.has(idxReal);
                 const vincBadgeC = m.vinculo==="Frota"?t.azulLt:m.vinculo==="Agregado"?t.ouro:m.vinculo==="Terceiro"?t.verde:t.txt2;
@@ -4850,6 +4871,11 @@ export default function App() {
                   </div>
                 );
               })}
+              {motFiltrados.length > motPagina * 50 && (
+                <button onClick={()=>setMotPagina(p=>p+1)} style={{width:"100%",padding:12,borderRadius:10,border:`1px solid ${t.borda}`,background:t.card2,color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",marginBottom:8}}>
+                  ▼ Carregar mais ({motFiltrados.length - motPagina*50} restantes)
+                </button>
+              )}
             </div>
           );
         })()}
@@ -5461,10 +5487,15 @@ function mapearColuna(n){
                       });
                       // Deduplicar por DT (pegar só a 1ª sugestão por DT)
                       const vinculosUniq=vinculos.filter((v,i)=>vinculos.findIndex(x=>x.reg.dt===v.reg.dt&&x.contato.nome===v.contato.nome)===i);
-                      setMotImportData({novos,conflitos,vinculos:vinculosUniq});
-                      setMotImportConfirm("");
-                      setMotImportStep(1);
-                      setMotImportOpen(true);
+                      // Guardar raw e abrir modal de filtro de prefixos
+                      setMotImportRaw(importados);
+                      const _pm = new Map();
+                      importados.forEach(c=>{const p=(c.nome||"").trim().split(/\s+/)[0].toUpperCase();if(p)_pm.set(p,(_pm.get(p)||0)+1);});
+                      const _pOrd = [..._pm.keys()].sort((a,b)=>_pm.get(b)-_pm.get(a));
+                      const _PEXCL = new Set(["AGENC","AGENCIA","POSTO","SEGURO","BANCO","FILIAL","COOP","ASSOC","TRANS","TRANSP"]);
+                      setMotImportPrefSel(new Set(_pOrd.filter(p=>!_PEXCL.has(p))));
+                      setMotImportPrefBusca("");
+                      setMotImportPrefOpen(true);
                     };
                     reader.readAsText(f,"utf-8");
                     e.target.value="";
@@ -5833,6 +5864,38 @@ function mapearColuna(n){
                 )}
                 <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL EXCLUIR TODOS (admin) ═══ */}
+      {motExcluirTodosOpen && (
+        <div style={{...css.overlay,alignItems:"center",backdropFilter:"blur(10px)",padding:20}} onClick={()=>setMotExcluirTodosOpen(false)}>
+          <div style={{...css.modal,borderRadius:16,maxWidth:400,padding:24}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+              <div style={{width:40,height:40,borderRadius:10,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,20,2)}
+              </div>
+              <div><div style={{fontSize:15,fontWeight:800,color:t.danger}}>Excluir Todos os Motoristas</div><div style={{fontSize:10,color:t.txt2,marginTop:2}}>Esta ação é irreversível</div></div>
+            </div>
+            <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:10,padding:"10px 12px",fontSize:11,color:t.txt,lineHeight:1.6,marginBottom:16}}>
+              Você está prestes a <strong style={{color:t.danger}}>excluir permanentemente {motoristas.length} motorista{motoristas.length!==1?"s":""}</strong> salvos localmente.
+            </div>
+            <div style={{fontSize:11,color:t.txt2,marginBottom:8}}>Para confirmar, digite <strong style={{color:t.danger,letterSpacing:2}}>EXCLUIR</strong>:</div>
+            <input value={motExcluirTodosTexto} onChange={e=>setMotExcluirTodosTexto(e.target.value.toUpperCase())} placeholder="EXCLUIR" autoFocus
+              style={{...css.inp,marginBottom:14,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:motExcluirTodosTexto==="EXCLUIR"?t.danger:t.txt}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setMotExcluirTodosOpen(false)} style={{...css.btnOutline,flex:1,justifyContent:"center",padding:11}}>Cancelar</button>
+              <button disabled={motExcluirTodosTexto!="EXCLUIR"} onClick={()=>{
+                if(motExcluirTodosTexto!=="EXCLUIR")return;
+                saveMotoristasLS([]);setMotSelecionados(new Set());
+                setMotExcluirTodosOpen(false);
+                registrarLog("EXCLUIR_TODOS_MOTORISTAS",`${motoristas.length} motoristas removidos`);
+                showToast(`🗑️ ${motoristas.length} motorista(s) excluído(s)`,"ok");
+              }} style={{...css.btnGold,flex:1,justifyContent:"center",padding:11,background:motExcluirTodosTexto==="EXCLUIR"?t.danger:"rgba(246,70,93,.3)",color:motExcluirTodosTexto==="EXCLUIR"?"#fff":"rgba(255,255,255,.4)",cursor:motExcluirTodosTexto==="EXCLUIR"?"pointer":"not-allowed",border:"none"}}>
+                Excluir Todos
+              </button>
             </div>
           </div>
         </div>
@@ -6652,6 +6715,85 @@ function mapearColuna(n){
           </div>
         </div>
       )}
+
+      {/* ═══ MODAL FILTRO DE PREFIXOS ═══ */}
+      {motImportPrefOpen && (()=>{
+        const _pm2 = new Map();
+        motImportRaw.forEach(c=>{const p=(c.nome||"").trim().split(/\s+/)[0].toUpperCase();if(p)_pm2.set(p,(_pm2.get(p)||0)+1);});
+        const _allP = [..._pm2.keys()].sort((a,b)=>_pm2.get(b)-_pm2.get(a));
+        const _filtP = motImportPrefBusca.trim() ? _allP.filter(p=>p.includes(motImportPrefBusca.trim().toUpperCase())) : _allP;
+        const _PAVISO = new Set(["AGENC","AGENCIA","POSTO","SEGURO","BANCO","FILIAL","COOP","ASSOC","TRANS","TRANSP"]);
+        const _totalSel = motImportRaw.filter(c=>motImportPrefSel.has((c.nome||"").trim().split(/\s+/)[0].toUpperCase())).length;
+        const _prosseguir = () => {
+          const _importados = motImportRaw.filter(c=>motImportPrefSel.has((c.nome||"").trim().split(/\s+/)[0].toUpperCase()));
+          if(!_importados.length){showToast("⚠️ Nenhum contato selecionado","warn");return;}
+          const _novos=[],_conflitos=[];
+          _importados.forEach(imp=>{
+            const nN=imp.nome.toUpperCase(),cN=(imp.cpf||"").replace(/\D/g,""),p1N=(imp.placa1||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+            const ex=motoristas.find(m=>{
+              if(cN&&m.cpf&&m.cpf.replace(/\D/g,"")=== cN)return true;
+              if(p1N&&m.placa1&&m.placa1.toUpperCase().replace(/[^A-Z0-9]/g,"")=== p1N)return true;
+              return m.nome&&m.nome.toUpperCase()===nN;
+            });
+            if(ex){_conflitos.push({atual:ex,imp,escolha:"manter"});}else{_novos.push(imp);}
+          });
+          const _vinc=[];
+          [..._novos,..._conflitos.map(c=>c.imp)].forEach(imp=>{
+            const iP=[imp.placa1,imp.placa2,imp.placa3,imp.placa4].filter(Boolean).map(p=>p.toUpperCase().replace(/[^A-Z0-9]/g,""));
+            if(!iP.length)return;
+            DADOS.forEach(reg=>{
+              const rP=(reg.placa||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+              if(!rP||!iP.includes(rP))return;
+              const nR=(reg.nome||"").toUpperCase().trim(),nI=imp.nome.toUpperCase().trim();
+              if(!nR||nR!==nI)_vinc.push({contato:imp,reg,placa:rP,aceito:null});
+            });
+          });
+          const _vU=_vinc.filter((v,i)=>_vinc.findIndex(x=>x.reg.dt===v.reg.dt&&x.contato.nome===v.contato.nome)===i);
+          setMotImportData({novos:_novos,conflitos:_conflitos,vinculos:_vU});
+          setMotImportConfirm(""); setMotImportStep(1);
+          setMotImportPrefOpen(false); setMotImportOpen(true);
+        };
+        return (
+          <div style={{...css.overlay,alignItems:"center",backdropFilter:"blur(10px)",padding:16}} onClick={()=>setMotImportPrefOpen(false)}>
+            <div style={{...css.modal,borderRadius:18,maxWidth:540,maxHeight:"90vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+              <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+                <div style={{width:36,height:36,borderRadius:9,background:`rgba(22,119,255,.15)`,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></>,t.azulLt,18,2)}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:800,color:t.txt}}>Filtrar por Prefixo</div>
+                  <div style={{fontSize:10,color:t.txt2,marginTop:1}}>{motImportRaw.length} contatos · {_allP.length} prefixos únicos</div>
+                </div>
+                <button onClick={()=>setMotImportPrefOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+              </div>
+              <div style={{padding:"10px 14px",borderBottom:`1px solid ${t.borda}`,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",flexShrink:0}}>
+                <input value={motImportPrefBusca} onChange={e=>setMotImportPrefBusca(e.target.value)} placeholder="Buscar prefixo..." style={{...css.inp,flex:1,minWidth:120,fontSize:11}}/>
+                <button onClick={()=>setMotImportPrefSel(new Set(_allP))} style={{...css.hBtn,fontSize:10,padding:"5px 10px"}}>✅ Todos</button>
+                <button onClick={()=>setMotImportPrefSel(new Set())} style={{...css.hBtn,fontSize:10,padding:"5px 10px"}}>☐ Nenhum</button>
+              </div>
+              <div style={{padding:"8px 14px",background:`rgba(240,185,11,.05)`,borderBottom:`1px solid ${t.borda}`,fontSize:10,color:t.ouro,flexShrink:0}}>
+                ⚠️ Prefixos em <span style={{color:t.danger}}>vermelho</span> são comumente não-motoristas e foram pré-desmarcados. Ajuste conforme necessário.
+              </div>
+              <div style={{flex:1,overflowY:"auto",padding:"10px 14px"}}>
+                {_filtP.map(pref=>{
+                  const sel=motImportPrefSel.has(pref),isAv=_PAVISO.has(pref),qt=_pm2.get(pref)||0;
+                  return (
+                    <div key={pref} onClick={()=>{const ns=new Set(motImportPrefSel);if(ns.has(pref))ns.delete(pref);else ns.add(pref);setMotImportPrefSel(ns);}} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 10px",borderRadius:8,marginBottom:4,cursor:"pointer",background:sel?`rgba(2,192,118,.05)`:`rgba(246,70,93,.03)`,border:`1px solid ${sel?`rgba(2,192,118,.2)`:`rgba(246,70,93,.15)`}`}}>
+                      <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${sel?t.verde:t.danger}`,background:sel?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#000",fontWeight:700}}>{sel?"✓":""}</div>
+                      <span style={{flex:1,fontSize:12,fontWeight:700,color:isAv&&!sel?t.danger:t.txt}}>{pref}</span>
+                      {isAv && <span style={{fontSize:9,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 5px"}}>⚠️ não-motorista</span>}
+                      <span style={{fontSize:10,color:t.txt2}}>{qt} contato{qt!==1?"s":""}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{padding:"12px 14px",borderTop:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+                <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:t.verde}}>{_totalSel} selecionados</div><div style={{fontSize:9,color:t.txt2}}>{motImportRaw.length-_totalSel} ignorados</div></div>
+                <button onClick={()=>setMotImportPrefOpen(false)} style={{...css.btnOutline,padding:"9px 16px",fontSize:12}}>Cancelar</button>
+                <button onClick={_prosseguir} disabled={_totalSel===0} style={{...css.btnGold,padding:"9px 18px",fontSize:12,opacity:_totalSel===0?.5:1}}>Prosseguir ({_totalSel}) →</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ IMPORT CONTACTS MODAL (Item 1 Sessão 4) ═══ */}
       {motImportOpen && motImportData && (()=>{
