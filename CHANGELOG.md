@@ -64,3 +64,16 @@
 **Implementado:**
 - `defaultLogo.js`: nova logo YFGroup (azul #60a5fa wireframe + ouro #F3BA2F texto/badge), crop apertado, exportada 256×256px quadrada com fundo preto.
 - `App.jsx` sidebar icon: `padding:4→0`, `background: gradiente→#000`, `overflow:hidden`, `objectFit:contain→cover` — logo preenche 100% do ícone sem borda visível.
+
+## 2026-04-15 — 3 melhorias (login logo + buscar topo + filtro CARREGADO)
+**Solicitado:**
+1. Aplicar nova logo YFGroup na tela de login
+2. Mover Buscar para topo no desktop (e mobile onde couber)
+3. Diárias e Descargas: não contabilizar quando status ≠ CARREGADO
+
+**Implementado:**
+- **Login**: ícone 🚛 + caixa azul → `<img src={DEFAULT_LOGO}>` 96×96px, fundo preto, borda dourada
+- **Buscar topo**: item `{k:"busca"}` movido para 1ª posição em `const tabs` — aparece no topo da sidebar desktop e mobile
+- **Filtro CARREGADO Descarga**: `STATUS_EXCLUIR` (blacklist) substituído por `SOMENTE_CARREGADO` (whitelist). `hoje`, `atrasados` e `aguardando` agora filtram somente status=CARREGADO
+- **Diárias**: já filtrava somente CARREGADO (linha 1045) — sem alteração necessária
+- **Backup**: `src/backups/App_backup_20260415_3fixes.jsx`

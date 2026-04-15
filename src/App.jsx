@@ -1085,24 +1085,23 @@ export default function App() {
   }, [DADOS]);
 
   // Descarga data
-  // Regra: mostrar todos os registros EXCETO os explicitamente encerrados/cancelados
+  // Regra: somente registros com status CARREGADO
   // (Diárias usam filtro mais restrito: somente CARREGADO)
   const descargaData = useMemo(() => {
     const dataBusca = new Date(dscData+"T00:00:00");
-    const STATUS_EXCLUIR = ["CANCELADO","NO-SHOW","NÃO ACEITE","NAO ACEITE"];
-    const naoEncerrado = r => !STATUS_EXCLUIR.includes((r.status||"").toUpperCase().trim());
+    const SOMENTE_CARREGADO = (r) => (r.status||"").toUpperCase().trim() === "CARREGADO"
     // Descarga real = data_desc tem valor que parseData consegue interpretar como data
     // Valores como "AG" (Aguardando) sao ignorados — tratados como vazio
     const temDescReal = r => !!parseData(r.data_desc);
     // Hoje: data_agenda = dscData E sem data descarga real
     const hoje = DADOS.filter(r => {
-      if (!naoEncerrado(r)) return false;
+      if (!SOMENTE_CARREGADO(r)) return false;
       if (temDescReal(r)) return false;
       const da = parseData(r.data_agenda);
       return da && da.toISOString().slice(0,10) === dscData;
     });
     const atrasados = DADOS.filter(r => {
-      if (!naoEncerrado(r)) return false;
+      if (!SOMENTE_CARREGADO(r)) return false;
       const da = parseData(r.data_agenda);
       if (!da || da >= dataBusca) return false;
       return !temDescReal(r);
@@ -1112,7 +1111,7 @@ export default function App() {
     });
     // Aguardando: chegada preenchida, chegada <= data_agenda, sem data descarga real
     const aguardando = DADOS.filter(r => {
-      if (!naoEncerrado(r)) return false;
+      if (!SOMENTE_CARREGADO(r)) return false;
       if (temDescReal(r)) return false;
       const ch = parseData(r.chegada);
       if (!ch) return false;
@@ -1597,8 +1596,8 @@ export default function App() {
         <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,padding:"40px 32px 32px",boxShadow:`0 32px 80px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .4s ease-out",position:"relative",zIndex:1}}>
 
           {/* Ícone caminhão — tile colorido clean */}
-          <div style={{width:80,height:80,borderRadius:18,background:"linear-gradient(135deg,#3b7dd8,#5a9ff5)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22,boxShadow:"0 8px 28px rgba(59,125,216,.38)",animation:"logoPop .4s ease-out",flexShrink:0}}>
-            <span style={{fontSize:40,lineHeight:1,userSelect:"none"}}>🚛</span>
+          <div style={{width:96,height:96,borderRadius:18,background:"#000",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22,boxShadow:"0 8px 28px rgba(0,0,0,.6)",animation:"logoPop .4s ease-out",flexShrink:0,overflow:"hidden"}}>
+            <img src={DEFAULT_LOGO} alt="YFGroup" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
           </div>
 
           {/* Title */}
@@ -1692,6 +1691,8 @@ export default function App() {
     </svg>
   );
   const tabs = [
+    {k:"busca", l:"Buscar",
+      ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
     {k:"planilha", l:"Planilha", perm:"planilha",
@@ -1708,9 +1709,6 @@ export default function App() {
       ico:(a)=>svgIco(a,<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>)}] : []),
     {k:"relatorios", l:"Relatórios",
       ico:(a)=>svgIco(a,<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>)},
-    // Buscar — último ícone à direita
-    {k:"busca", l:"Buscar",
-      ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
   ].filter(tb => !tb.perm || perms[tb.perm] !== false);
 
   // ══════════════════════════════════════════════════════
