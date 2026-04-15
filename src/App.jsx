@@ -38,7 +38,7 @@ export default function App() {
   const [customLogo, setCustomLogo] = useState(() => {
     // Logo migration v1 (Apr 2026): limpa logo pre-YFGroup armazenada no localStorage
     const MK = "co_logo_migrated_v1";
-    if (\!loadJSON(MK, false)) {
+    if (!loadJSON(MK, false)) {
       saveJSON("co_custom_logo", null);
       saveJSON(MK, true);
       return null;
