@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
 
+import * as XLSX from "xlsx";
 import { themes, TABLE, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
   DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY } from './constants.js';
@@ -88,6 +89,9 @@ export default function App() {
   // Diarias state
   const [dFiltro, setDFiltro] = useState("todos");
   const [dSubTab, setDSubTab] = useState("resumo");
+  const [extratoRows, setExtratoRows] = useState([]);
+  const [extratoFileName, setExtratoFileName] = useState(null);
+  const [extratoFiltro, setExtratoFiltro] = useState("todos");
 
   // Descarga state
   const [dscTab, setDscTab] = useState("hoje");
@@ -1084,6 +1088,49 @@ export default function App() {
     return { items, ok, atraso, pend };
   }, [DADOS]);
 
+  // Conferencia Extrato de Diarias
+  const extratoResultado = useMemo(() => {
+    if (!extratoRows.length) return null;
+    const dadosMap = new Map(DADOS.map(r => [String(r.dt||'').trim(), r]));
+    const extratoDTs = new Set(extratoRows.map(e => String(e.dt||'').trim()));
+    const linhas = extratoRows.map(e => {
+      const dtKey = String(e.dt||'').trim();
+      const appReg = dadosMap.get(dtKey);
+      const valorExtrato = Number(e.valorTotal) || 0;
+      const semCusto = e.statusFinal === 'Sem custo contabilizado/aprovado';
+      if (!appReg) return {...e, conf:'NAO_ENCONTRADA'};
+      const valorApp = Number(appReg.diaria_prev) || 0;
+      if (semCusto) {
+        return valorApp > 0
+          ? {...e, conf:'SEM_CUSTO_DIVERGE', appReg, valorApp}
+          : {...e, conf:'SEM_CUSTO_OK', appReg, valorApp};
+      }
+      const diff = valorExtrato - valorApp;
+      return Math.abs(diff) < 1
+        ? {...e, conf:'BATE', appReg, diff:0, valorApp}
+        : {...e, conf:'DIVERGE', appReg, diff, valorApp};
+    });
+    const foraExtrato = DADOS
+      .filter(r => (Number(r.diaria_prev)||0) > 0 && !extratoDTs.has(String(r.dt||'').trim()))
+      .map(r => ({dt:r.dt, nome:r.nome, placa:r.placa, ro:r.ro||'', qtd:0,
+        valorUnitario:0, valorTotal:0, statusFinal:'fora', cliente:'', conf:'FORA_EXTRATO',
+        appReg:r, valorApp:Number(r.diaria_prev)||0, diff:Number(r.diaria_prev)||0}));
+    const todos = [...linhas, ...foraExtrato];
+    const tot = c => todos.filter(x => x.conf === c).length;
+    return {
+      linhas: todos,
+      totais: {
+        bate: tot('BATE'), diverge: tot('DIVERGE'),
+        semCustoOk: tot('SEM_CUSTO_OK'), semCustoDiverge: tot('SEM_CUSTO_DIVERGE'),
+        naoEncontrada: tot('NAO_ENCONTRADA'), foraExtrato: tot('FORA_EXTRATO'),
+        valorEmRisco: todos.filter(x => ['DIVERGE','SEM_CUSTO_DIVERGE'].includes(x.conf))
+          .reduce((s, x) => s + Math.abs(x.diff || 0), 0),
+        totalPreAprovado: extratoRows.filter(e => e.statusFinal === 'Pré-aprovado')
+          .reduce((s, e) => s + (Number(e.valorTotal)||0), 0),
+      },
+    };
+  }, [extratoRows, DADOS]);
+
   // Descarga data
   // Regra: somente registros com status CARREGADO
   // (Diárias usam filtro mais restrito: somente CARREGADO)
@@ -1690,7 +1737,40 @@ export default function App() {
       {paths}
     </svg>
   );
-  const tabs = [
+  function parseExtratoXLSX(file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target.result, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, {header:0, defval:''});
+        const rows = json.map(r => ({
+          ro: String(r['Numero RO']||'').trim(),
+          dt: String(r['Numero DT']||'').trim(),
+          nf: String(r['Nota Fiscal']||'').trim(),
+          cliente: String(r['Cliente']||'').trim(),
+          cidade: String(r['Cidade']||'').trim(),
+          estado: String(r['Estado']||'').trim(),
+          qtd: Number(r['Quantidade de diária'])||0,
+          tipoVeiculo: String(r['Tp Veiculo']||'').trim(),
+          valorUnitario: Number(r['Valor da diaria'])||0,
+          valorTotal: Number(r['Valor total Pré-aprovado'])||0,
+          statusFinal: String(r['Status Final']||'').trim(),
+          tipo: String(r['Tipo']||'').trim(),
+          obs: String(r['Observações']||'').trim(),
+        })).filter(r => r.dt && r.dt !== 'undefined' && r.dt !== 'NaN' && r.dt !== '');
+        setExtratoRows(rows);
+        setExtratoFileName(file.name);
+        setExtratoFiltro('todos');
+        showToast(rows.length + ' registros carregados', 'ok');
+      } catch(err) {
+        showToast('Erro ao ler arquivo: ' + err.message, 'err');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+    const tabs = [
     {k:"busca", l:"Buscar",
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
@@ -3899,7 +3979,8 @@ export default function App() {
             <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center",flexWrap:"wrap"}}>
               {[
                 {k:"resumo",l:"Resumo",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
-                {k:"planilha",l:"Planilha",svg:<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>}
+                {k:"planilha",l:"Planilha",svg:<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>},
+                {k:"extrato",l:"Conferência",svg:<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></>}
               ].map(s => (
                 <button key={s.k} onClick={()=>setDSubTab(s.k)} style={{padding:"10px 20px",fontSize:12,fontWeight:700,border:`1.5px solid ${dSubTab===s.k?t.ouro:t.borda}`,borderRadius:8,cursor:"pointer",background:dSubTab===s.k?`rgba(240,185,11,.08)`:t.card2,color:dSubTab===s.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>
                   {hIco(s.svg,dSubTab===s.k?t.ouro:t.txt2,18)} {s.l}
@@ -4067,6 +4148,166 @@ export default function App() {
                     </tr>
                   ))}</tbody>
                 </table>
+              </div>
+            )}
+
+            {dSubTab === "extrato" && (
+              <div>
+                {!extratoFileName ? (
+                  <label style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                    gap:10,border:`2px dashed ${t.borda}`,borderRadius:14,padding:"36px 20px",cursor:"pointer",
+                    background:t.card2,marginBottom:16}}
+                    onDragOver={e=>{e.preventDefault();e.currentTarget.style.borderColor=t.ouro;}}
+                    onDragLeave={e=>{e.currentTarget.style.borderColor=t.borda;}}
+                    onDrop={e=>{e.preventDefault();e.currentTarget.style.borderColor=t.borda;
+                      const f=e.dataTransfer.files[0];if(f)parseExtratoXLSX(f);}}>
+                    <input type="file" accept=".xlsx,.xls" style={{display:"none"}}
+                      onChange={e=>{const f=e.target.files[0];if(f)parseExtratoXLSX(f);e.target.value='';}}/>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                      stroke={t.ouro} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="12" y1="11" x2="12" y2="17"/>
+                      <polyline points="9 14 12 11 15 14"/>
+                    </svg>
+                    <div style={{fontSize:13,fontWeight:700,color:t.txt}}>Arraste ou clique para carregar o Extrato</div>
+                    <div style={{fontSize:10,color:t.txt2}}>Arquivo .xlsx recebido mensalmente (Extrato de Di&#225;rias)</div>
+                  </label>
+                ) : (
+                  <div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"8px 12px",
+                      borderRadius:10,background:`rgba(240,185,11,.06)`,border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      <span style={{fontSize:11,fontWeight:700,color:t.ouro,flex:1}}>{extratoFileName}</span>
+                      <span style={{fontSize:10,color:t.txt2}}>{extratoRows.length} registros</span>
+                      <button onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");}}
+                        style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,
+                          padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
+                        &#215; Trocar
+                      </button>
+                    </div>
+                    {extratoResultado && (() => {
+                      const {totais, linhas} = extratoResultado;
+                      const confCfg = {
+                        BATE:              {l:"Bate",          c:t.verde,  bg:"rgba(34,197,94,.1)"},
+                        DIVERGE:           {l:"Diverge",       c:t.ouro,   bg:"rgba(243,186,47,.1)"},
+                        SEM_CUSTO_OK:      {l:"Sem Custo OK",  c:t.txt2,   bg:"rgba(136,136,176,.08)"},
+                        SEM_CUSTO_DIVERGE: {l:"Sem Custo/Div", c:t.danger, bg:"rgba(239,68,68,.1)"},
+                        NAO_ENCONTRADA:    {l:"N&#227;o no App",c:t.azulLt,bg:"rgba(96,165,250,.1)"},
+                        FORA_EXTRATO:      {l:"Fora Extrato",  c:"#a855f7",bg:"rgba(168,85,247,.1)"},
+                      };
+                      const kpis = [
+                        {k:"BATE",              v:totais.bate,           l:"Batendo",      c:t.verde},
+                        {k:"DIVERGE",           v:totais.diverge,        l:"Divergente",   c:t.ouro},
+                        {k:"SEM_CUSTO_DIVERGE", v:totais.semCustoDiverge,l:"Sem Custo/Div",c:t.danger},
+                        {k:"NAO_ENCONTRADA",    v:totais.naoEncontrada,  l:"N&#227;o no App",c:t.azulLt},
+                        {k:"FORA_EXTRATO",      v:totais.foraExtrato,    l:"Fora Extrato", c:"#a855f7"},
+                      ];
+                      const filtrado = extratoFiltro === "todos" ? linhas : linhas.filter(x=>x.conf===extratoFiltro);
+                      return (
+                        <div>
+                          {(totais.diverge > 0 || totais.semCustoDiverge > 0) && (
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"8px 14px",
+                              borderRadius:10,background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.3)"}}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                stroke={t.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                              </svg>
+                              <span style={{fontSize:11,color:t.danger,fontWeight:700}}>
+                                Valor em risco: {fmtMoeda(totais.valorEmRisco)}
+                              </span>
+                              <span style={{fontSize:10,color:t.txt2,marginLeft:"auto"}}>
+                                Total pr&#233;-aprovado extrato: {fmtMoeda(totais.totalPreAprovado)}
+                              </span>
+                            </div>
+                          )}
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:12}}>
+                            {kpis.map(k => (
+                              <div key={k.k}
+                                onClick={()=>setExtratoFiltro(extratoFiltro===k.k?"todos":k.k)}
+                                style={{background:t.card2,
+                                  border:`1.5px solid ${extratoFiltro===k.k?k.c:t.borda}`,
+                                  borderRadius:10,padding:"10px 8px",cursor:"pointer",textAlign:"center",transition:"all .15s"}}>
+                                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:k.c,lineHeight:1}}>{k.v}</div>
+                                <div style={{fontSize:8,color:t.txt2,marginTop:2,textTransform:"uppercase",letterSpacing:1}}>{k.l}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+                            <span style={{fontSize:9,color:t.txt2,marginRight:2}}>Filtrar:</span>
+                            {[{k:"todos",l:"Todos"},...Object.entries(confCfg).map(([k,v])=>({k,l:v.l}))].map(f=>(
+                              <button key={f.k} onClick={()=>setExtratoFiltro(f.k)}
+                                style={{padding:"4px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
+                                  border:`1.5px solid ${extratoFiltro===f.k?t.ouro:t.borda}`,borderRadius:6,
+                                  background:extratoFiltro===f.k?`rgba(240,185,11,.08)`:t.card2,
+                                  color:extratoFiltro===f.k?t.ouro:t.txt2}}>{f.l}</button>
+                            ))}
+                            <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{filtrado.length} reg.</span>
+                          </div>
+                          <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"60vh",overflowY:"auto"}}>
+                            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:720}}>
+                              <thead><tr>
+                                {["Status","DT","Motorista","Cliente","Qtd","Vlr Ext","Vlr App","Dif","RO"].map(h=>(
+                                  <th key={h} style={{background:t.tableHeader,padding:"8px 10px",textAlign:"left",
+                                    fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,
+                                    borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap",position:"sticky",top:0,zIndex:1}}>{h}</th>
+                                ))}
+                              </tr></thead>
+                              <tbody>
+                                {filtrado.map((row,i) => {
+                                  const cfg = confCfg[row.conf]||{l:row.conf,c:t.txt2,bg:"transparent"};
+                                  const diff = row.diff||0;
+                                  return (
+                                    <tr key={i} style={{background:i%2===0?t.bg:t.bgAlt,cursor:row.appReg?"pointer":"default"}}
+                                      className="co-tr"
+                                      onClick={()=>{if(row.appReg){setBuscaInput(row.dt);setBuscaTipo("dt");setActiveTab("busca");}}}>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`}}>
+                                        <span style={{background:cfg.bg,color:cfg.c,border:`1px solid ${cfg.c}44`,
+                                          borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
+                                          {cfg.l}
+                                        </span>
+                                      </td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,fontWeight:700,
+                                        fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1.5}}>{row.dt||"\u2014"}</td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,
+                                        maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                                        {row.appReg?.nome||"\u2014"}
+                                      </td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,
+                                        maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                                        fontSize:10,color:t.txt2}}>{row.cliente||"\u2014"}</td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,textAlign:"center"}}>{row.qtd??"\u2014"}</td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,textAlign:"right"}}>{fmtMoeda(row.valorTotal)}</td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,textAlign:"right"}}>{fmtMoeda(row.valorApp)}</td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,textAlign:"right",fontWeight:700,
+                                        color:diff>0?t.danger:diff<0?t.verde:t.txt2}}>
+                                        {diff===0?"\u2014":diff>0?"+"+fmtMoeda(diff):fmtMoeda(diff)}
+                                      </td>
+                                      <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,fontSize:10,color:t.txt2}}>{row.ro||"\u2014"}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:10}}>
+                            {Object.entries(confCfg).map(([k,v])=>(
+                              <span key={k} style={{fontSize:9,display:"flex",alignItems:"center",gap:4,color:t.txt2}}>
+                                <span style={{width:8,height:8,borderRadius:2,background:v.c,flexShrink:0,display:"inline-block"}}/>
+                                {v.l}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
           </div>

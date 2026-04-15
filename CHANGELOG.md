@@ -77,3 +77,15 @@
 - **Filtro CARREGADO Descarga**: `STATUS_EXCLUIR` (blacklist) substituído por `SOMENTE_CARREGADO` (whitelist). `hoje`, `atrasados` e `aguardando` agora filtram somente status=CARREGADO
 - **Diárias**: já filtrava somente CARREGADO (linha 1045) — sem alteração necessária
 - **Backup**: `src/backups/App_backup_20260415_3fixes.jsx`
+
+## 2026-04-15 — Conferência de Extrato de Diárias
+**Solicitado:** Upload do extrato .xlsx mensal e conferência automática contra dados do app.
+**Implementado:**
+- Instalado `xlsx` (SheetJS) como dependência
+- Nova sub-aba **"Conferência"** em Diárias
+- Upload via drag-and-drop ou clique (.xlsx/.xls)
+- Cruzamento automático por Numero DT com status: BATE / DIVERGE / SEM CUSTO OK / SEM CUSTO DIV / NAO ENCONTRADA / FORA EXTRATO
+- KPIs clicáveis + filtro por status + tabela completa
+- Alerta visual de "Valor em risco" quando há divergências
+- Clique na linha abre o registro no Buscar
+- Backup: `src/backups/App_backup_20260415_extrato.jsx`
