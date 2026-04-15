@@ -2590,7 +2590,7 @@ export default function App() {
           flex-shrink:0;overflow:hidden;
         }
         .co-sidebar--collapsed .co-sidebar__logo{justify-content:center;padding:8px;gap:0}
-        .co-sidebar__logo-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2.5px;color:${t.txt};line-height:1;white-space:nowrap;overflow:hidden}
+        .co-sidebar__logo-name{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;color:${t.txt};line-height:1;white-space:nowrap;overflow:hidden}
         .co-sidebar__logo-sub{font-size:8px;color:${t.txt2};letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap;margin-top:2px}
         .co-sidebar__logo-sub span{color:${t.ouro};font-weight:700}
         .co-sidebar--collapsed .co-sidebar__logo-name,
@@ -2761,7 +2761,7 @@ export default function App() {
             </div>
             {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
               <div style={{overflow:"hidden",flex:1,minWidth:0}}>
-                <div className="co-sidebar__logo-name">CONTROLE OPS</div>
+                <div className="co-sidebar__logo-name">OPERACIONAL</div>
                 <div className="co-sidebar__logo-sub">by <span>YFGroup</span></div>
               </div>
             )}
