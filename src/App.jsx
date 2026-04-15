@@ -92,6 +92,8 @@ export default function App() {
   const [extratoRows, setExtratoRows] = useState([]);
   const [extratoFileName, setExtratoFileName] = useState(null);
   const [extratoFiltro, setExtratoFiltro] = useState("todos");
+  const [extratoDataIni, setExtratoDataIni] = useState("");
+  const [extratoDataFim, setExtratoDataFim] = useState("");
 
   // Descarga state
   const [dscTab, setDscTab] = useState("hoje");
@@ -1091,7 +1093,18 @@ export default function App() {
   // Conferencia Extrato de Diarias
   const extratoResultado = useMemo(() => {
     if (!extratoRows.length) return null;
-    const dadosMap = new Map(DADOS.map(r => [String(r.dt||'').trim(), r]));
+    // Filtrar registros do app pelo periodo do extrato
+    const ini = extratoDataIni ? new Date(extratoDataIni + 'T00:00:00') : null;
+    const fim = extratoDataFim ? new Date(extratoDataFim + 'T23:59:59') : null;
+    const inRange = r => {
+      if (!ini && !fim) return true;
+      const d = parseData(r.data_agenda) || parseData(r.data_carr) || parseData(r.data_desc);
+      if (!d) return false;
+      if (ini && d < ini) return false;
+      if (fim && d > fim) return false;
+      return true;
+    };
+    const dadosMap = new Map(DADOS.filter(inRange).map(r => [String(r.dt||'').trim(), r]));
     const extratoDTs = new Set(extratoRows.map(e => String(e.dt||'').trim()));
     const linhas = extratoRows.map(e => {
       const dtKey = String(e.dt||'').trim();
@@ -1111,7 +1124,7 @@ export default function App() {
         : {...e, conf:'DIVERGE', appReg, diff, valorApp};
     });
     const foraExtrato = DADOS
-      .filter(r => (Number(r.diaria_prev)||0) > 0 && !extratoDTs.has(String(r.dt||'').trim()))
+      .filter(r => inRange(r) && (Number(r.diaria_prev)||0) > 0 && !extratoDTs.has(String(r.dt||'').trim()))
       .map(r => ({dt:r.dt, nome:r.nome, placa:r.placa, ro:r.ro||'', qtd:0,
         valorUnitario:0, valorTotal:0, statusFinal:'fora', cliente:'', conf:'FORA_EXTRATO',
         appReg:r, valorApp:Number(r.diaria_prev)||0, diff:Number(r.diaria_prev)||0}));
@@ -1129,7 +1142,7 @@ export default function App() {
           .reduce((s, e) => s + (Number(e.valorTotal)||0), 0),
       },
     };
-  }, [extratoRows, DADOS]);
+  }, [extratoRows, DADOS, extratoDataIni, extratoDataFim]);
 
   // Descarga data
   // Regra: somente registros com status CARREGADO
@@ -1759,6 +1772,18 @@ export default function App() {
           tipo: String(r['Tipo']||'').trim(),
           obs: String(r['Observações']||'').trim(),
         })).filter(r => r.dt && r.dt !== 'undefined' && r.dt !== 'NaN' && r.dt !== '');
+        // Auto-detectar periodo do extrato
+        const datas = rows
+          .map(r => r.dataEntrega)
+          .filter(d => d && !isNaN(new Date(d)))
+          .map(d => new Date(d));
+        if (datas.length) {
+          const minD = new Date(Math.min(...datas));
+          const maxD = new Date(Math.max(...datas));
+          const fmt = d => d.toISOString().slice(0,10);
+          setExtratoDataIni(fmt(minD));
+          setExtratoDataFim(fmt(maxD));
+        }
         setExtratoRows(rows);
         setExtratoFileName(file.name);
         setExtratoFiltro('todos');
@@ -4189,6 +4214,37 @@ export default function App() {
                           padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
                         &#215; Trocar
                       </button>
+                    </div>
+                    {/* Filtro de periodo */}
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,
+                      padding:"10px 14px",borderRadius:10,background:t.card2,border:`1px solid ${t.borda}`}}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke={t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="17" rx="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                      <span style={{fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>Período do app:</span>
+                      <input type="date" value={extratoDataIni}
+                        onChange={e=>setExtratoDataIni(e.target.value)}
+                        style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:130}}/>
+                      <span style={{fontSize:10,color:t.txt2}}>até</span>
+                      <input type="date" value={extratoDataFim}
+                        onChange={e=>setExtratoDataFim(e.target.value)}
+                        style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:130}}/>
+                      {(extratoDataIni||extratoDataFim) && (
+                        <button onClick={()=>{setExtratoDataIni("");setExtratoDataFim("");}}
+                          style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,
+                            padding:"2px 8px",fontSize:9,color:t.txt2,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                          &#215; Limpar
+                        </button>
+                      )}
+                      <span style={{marginLeft:"auto",fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>
+                        {extratoDataIni||extratoDataFim
+                          ? `${extratoDataIni||"?"} → ${extratoDataFim||"?"}` 
+                          : "Sem filtro de período"}
+                      </span>
                     </div>
                     {extratoResultado && (() => {
                       const {totais, linhas} = extratoResultado;
