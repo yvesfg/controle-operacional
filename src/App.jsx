@@ -89,6 +89,11 @@ export default function App() {
   // Diarias state
   const [dFiltro, setDFiltro] = useState("todos");
   const [dSubTab, setDSubTab] = useState("resumo");
+  const [dPlanFiltroAno, setDPlanFiltroAno] = useState("");
+  const [dPlanFiltroMes, setDPlanFiltroMes] = useState("");
+  const [dPlanFiltroOrigem, setDPlanFiltroOrigem] = useState("todas");
+  const [dPlanFiltroIni, setDPlanFiltroIni] = useState("");
+  const [dPlanFiltroFim, setDPlanFiltroFim] = useState("");
   const [extratoRows, setExtratoRows] = useState([]);
   const [extratoFileName, setExtratoFileName] = useState(null);
   const [extratoFiltro, setExtratoFiltro] = useState("todos");
@@ -4154,27 +4159,97 @@ export default function App() {
               </div>
             )}
 
-            {dSubTab === "planilha" && (
-              <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"70vh",overflowY:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:600}}>
-                  <thead><tr>{["DT","Motorista","Placa","Agenda","Descarga","Atraso","Prev.","Pago"].map(h => (
-                    <th key={h} style={{background:t.tableHeader,padding:"9px 10px",textAlign:"left",fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap",position:"sticky",top:0}}>{h}</th>
-                  ))}</tr></thead>
-                  <tbody>{diariasData.items.slice(0,100).map(({r,tipo,dias},i) => (
-                    <tr key={i}>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,fontWeight:700}}>{r.dt}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{r.nome||"—"}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,color:t.verde}}>{r.placa||"—"}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{r.data_agenda||"—"}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:r.data_desc?t.verde:t.ouro}}>{r.data_desc||"Pendente"}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:tipo==="atraso"?t.danger:t.verde,fontWeight:600}}>{dias===null?"—":dias>0?`+${dias}d`:"✅"}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{fmtMoeda(r.diaria_prev)}</td>
-                      <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{fmtMoeda(r.diaria_pg)}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
-            )}
+             {dSubTab === "planilha" && (() => {
+              const parseYMd = s => {
+                if (!s) return null;
+                if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) { const p=s.split("/"); return {ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")}; }
+                if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const p=s.split("-"); return {ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")}; }
+                return null;
+              };
+              const dItems = diariasData.items;
+              const anosD    = [...new Set(dItems.map(({r})=>{const ym=parseYMd(r.data_carr||r.data_agenda||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+              const mesesD   = [...new Set(dItems.filter(({r})=>{if(!dPlanFiltroAno)return true;const ym=parseYMd(r.data_carr||r.data_agenda||"");return ym?.ano===dPlanFiltroAno;}).map(({r})=>{const ym=parseYMd(r.data_carr||r.data_agenda||"");return ym?.mes;}).filter(Boolean))].sort();
+              const origensD = [...new Set(dItems.map(({r})=>(r.origem||"").trim()).filter(Boolean))].sort();
+              const MESES_PT = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
+              const iniD = dPlanFiltroIni ? new Date(dPlanFiltroIni+"T00:00:00") : null;
+              const fimD = dPlanFiltroFim ? new Date(dPlanFiltroFim+"T23:59:59") : null;
+              const filtrados = dItems.filter(({r}) => {
+                const ym = parseYMd(r.data_carr||r.data_agenda||"");
+                if (dPlanFiltroAno && ym?.ano !== dPlanFiltroAno) return false;
+                if (dPlanFiltroMes && ym?.mes !== dPlanFiltroMes) return false;
+                if (dPlanFiltroOrigem !== "todas" && (r.origem||"").trim() !== dPlanFiltroOrigem) return false;
+                if (iniD || fimD) {
+                  const d = ym?.full || null;
+                  if (!d) return false;
+                  if (iniD && d < iniD) return false;
+                  if (fimD && d > fimD) return false;
+                }
+                return true;
+              });
+              const temFiltro = dPlanFiltroAno || dPlanFiltroMes || dPlanFiltroOrigem!=="todas" || dPlanFiltroIni || dPlanFiltroFim;
+              return (
+                <div>
+                  {/* Barra de filtros */}
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card,
+                    border:`1px solid ${t.borda}`,borderRadius:"10px 10px 0 0",flexWrap:"wrap"}}>
+                    <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
+                    <select value={dPlanFiltroAno} onChange={e=>setDPlanFiltroAno(e.target.value)}
+                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      <option value="">Todos os Anos</option>
+                      {anosD.map(a=><option key={a} value={a}>{a}</option>)}
+                    </select>
+                    <select value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)}
+                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      <option value="">Todos os Meses</option>
+                      {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
+                    </select>
+                    <select value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)}
+                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                      <option value="todas">Todas as Origens</option>
+                      {origensD.map(o=><option key={o} value={o}>{o}</option>)}
+                    </select>
+                    <input type="date" value={dPlanFiltroIni} onChange={e=>setDPlanFiltroIni(e.target.value)}
+                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
+                    <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>at&#233;</span>
+                    <input type="date" value={dPlanFiltroFim} onChange={e=>setDPlanFiltroFim(e.target.value)}
+                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
+                    {temFiltro && (
+                      <button onClick={()=>{setDPlanFiltroAno("");setDPlanFiltroMes("");setDPlanFiltroOrigem("todas");setDPlanFiltroIni("");setDPlanFiltroFim("");}}
+                        style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
+                        &#10005; Limpar
+                      </button>
+                    )}
+                    <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>
+                      {filtrados.length} de {dItems.length} registros
+                    </span>
+                  </div>
+                  {/* Tabela */}
+                  <div style={{overflowX:"auto",borderRadius:"0 0 11px 11px",border:`1px solid ${t.borda}`,borderTop:"none",maxHeight:"65vh",overflowY:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:600}}>
+                      <thead><tr>{["DT","Motorista","Placa","Origem","Agenda","Descarga","Atraso","Prev.","Pago"].map(h=>(
+                        <th key={h} style={{background:t.tableHeader,padding:"9px 10px",textAlign:"left",fontSize:8,
+                          textTransform:"uppercase",letterSpacing:1,color:t.txt2,
+                          borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap",position:"sticky",top:0}}>{h}</th>
+                      ))}</tr></thead>
+                      <tbody>{filtrados.map(({r,tipo,dias},i)=>(
+                        <tr key={i} className="co-tr" style={{background:i%2===0?t.bg:t.bgAlt,cursor:"pointer"}}
+                          onClick={()=>{setBuscaInput(r.dt);setBuscaTipo("dt");setActiveTab("busca");}}>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1.5}}>{r.dt}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{r.nome||"\u2014"}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2,color:t.verde}}>{r.placa||"\u2014"}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,fontSize:10,color:t.txt2,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.origem||"\u2014"}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{r.data_agenda||"\u2014"}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:r.data_desc?t.verde:t.ouro}}>{r.data_desc||"Pendente"}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`,color:tipo==="atraso"?t.danger:t.verde,fontWeight:600}}>{dias===null?"\u2014":dias>0?`+${dias}d`:"\u2705"}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{fmtMoeda(r.diaria_prev)}</td>
+                          <td style={{padding:"7px 10px",borderBottom:`1px solid ${t.borda}22`}}>{fmtMoeda(r.diaria_pg)}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
 
             {dSubTab === "extrato" && (
               <div>
