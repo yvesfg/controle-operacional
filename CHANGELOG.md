@@ -48,3 +48,19 @@
 - **Motoristas mobile:** aba agora sempre acessível via sidebar mini (ícone visível sem precisar scrollar).
 - **Relatórios mobile:** seletor de campos colapsável (hidden por default), botões Imprimir/CSV no header, tabela com `maxHeight:60vh`.
 - **Ícone superior esquerdo:** sidebar logo unificado em 36×36 px em desktop e mobile; topbar mobile agora exibe nome da aba ativa (sem duplicar logo).
+
+## 2026-04-15 — Logo YFGroup (fix definitivo)
+**Solicitado:** Substituir logo Rodorrica pela nova logo YFGroup; corrigir logo antiga persistindo no desktop (localStorage); corrigir logo irregular no mobile ao colapsar sidebar. Gerar 3 opções de cor.
+
+**Implementado:**
+- **FIX 1 (desktop):** `App.jsx` linha 38 — migração one-shot via `co_logo_migrated_v1`: na primeira carga limpa `co_custom_logo` do localStorage, eliminando definitivamente a logo antiga Rodorrica cacheada.
+- **FIX 2 (mobile):** CSS `.co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo` → adicionado `gap:0\!important` (elimina espaço irregular). Botão toggle hidden (`display:none\!important`) na sidebar colapsada mobile.
+- **FIX 3 (desktop collapsed):** CSS `.co-sidebar--collapsed .co-sidebar__logo` → adicionado `gap:0` para centralização limpa.
+- **Preview:** `logo_preview_opcoes.html` gerado com 3 variantes de cor para escolha (Ouro Total / Azul+Ouro / Verde+Ouro). `defaultLogo.js` será atualizado após confirmação da cor.
+- **Backup:** `src/backups/App_backup_20260415_logo_fix.jsx`
+
+## 2026-04-15 — Logo YFGroup Azul+Ouro (definitivo)
+**Solicitado:** Usar nova_logo.png com variante Azul+Ouro; fundo preto ocupar todo o ícone; maximizar tamanho da logo no ícone.
+**Implementado:**
+- `defaultLogo.js`: nova logo YFGroup (azul #60a5fa wireframe + ouro #F3BA2F texto/badge), crop apertado, exportada 256×256px quadrada com fundo preto.
+- `App.jsx` sidebar icon: `padding:4→0`, `background: gradiente→#000`, `overflow:hidden`, `objectFit:contain→cover` — logo preenche 100% do ícone sem borda visível.

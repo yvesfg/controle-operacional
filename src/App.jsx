@@ -35,7 +35,16 @@ export default function App() {
   const [primeiroLogin, setPrimeiroLogin] = useState(false);
   const [primLoginSenha, setPrimLoginSenha] = useState("");
   const [primLoginSenha2, setPrimLoginSenha2] = useState("");
-  const [customLogo, setCustomLogo] = useState(() => loadJSON("co_custom_logo", null));
+  const [customLogo, setCustomLogo] = useState(() => {
+    // Logo migration v1 (Apr 2026): limpa logo pre-YFGroup armazenada no localStorage
+    const MK = "co_logo_migrated_v1";
+    if (\!loadJSON(MK, false)) {
+      saveJSON("co_custom_logo", null);
+      saveJSON(MK, true);
+      return null;
+    }
+    return loadJSON("co_custom_logo", null);
+  });
   const [usuarioLogado, setUsuarioLogado] = useState(null); // nome do usuário logado
   const [usuarios, setUsuarios] = useState(() => loadJSON("co_usuarios_local",[]));
   // Aprovação de acesso Google
@@ -2582,7 +2591,7 @@ export default function App() {
           padding:8px 12px;height:56px;border-bottom:1px solid ${t.borda};
           flex-shrink:0;overflow:hidden;
         }
-        .co-sidebar--collapsed .co-sidebar__logo{justify-content:center;padding:8px}
+        .co-sidebar--collapsed .co-sidebar__logo{justify-content:center;padding:8px;gap:0}
         .co-sidebar__logo-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2.5px;color:${t.txt};line-height:1;white-space:nowrap;overflow:hidden}
         .co-sidebar__logo-sub{font-size:8px;color:${t.txt2};letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap;margin-top:2px}
         .co-sidebar__logo-sub span{color:${t.ouro};font-weight:700}
@@ -2656,10 +2665,10 @@ export default function App() {
           .co-sidebar{display:flex!important;z-index:200;width:64px!important;transition:width 220ms ease}
           .co-sidebar--mob-expanded{width:220px!important;box-shadow:4px 0 28px rgba(0,0,0,.55)}
           /* Icons-only quando não expandido */
-          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo{justify-content:center!important;padding:8px!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo{justify-content:center!important;padding:8px!important;gap:0!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo-name,
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo-sub{display:none!important}
-          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__toggle{margin-left:0!important}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__toggle{margin-left:0!important;display:none!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__item{justify-content:center!important;padding:8px!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__item-lbl{display:none!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer{align-items:center!important}
@@ -2749,8 +2758,8 @@ export default function App() {
       <aside className={`co-sidebar${isWide&&sidebarCollapsed?" co-sidebar--collapsed":""}${!isWide&&mobileSidebarExpanded?" co-sidebar--mob-expanded":""}`}>
           {/* ── Logo ── */}
           <div className="co-sidebar__logo">
-            <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"linear-gradient(145deg,#1a150a,#231c0d)",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:4}}>
-              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+            <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"#000",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0,overflow:"hidden"}}>
+              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             </div>
             {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
               <div style={{overflow:"hidden",flex:1,minWidth:0}}>
