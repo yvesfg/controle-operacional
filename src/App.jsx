@@ -4118,21 +4118,27 @@ export default function App() {
             </div>
 
             {/* KPI clicáveis — filtram a lista abaixo */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-              <div style={{...css.kpi(t.verde),cursor:"pointer",outline:dFiltro==="ok"?`2px solid ${t.verde}`:"none"}} onClick={()=>{setDFiltro(dFiltro==="ok"?"todos":"ok");setDSubTab("resumo");}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:t.verde}}>{diariasData.ok}</div>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,10)} No Prazo</div>
-                <div style={{fontSize:8,color:t.verde,marginTop:2,opacity:.7}}>{dFiltro==="ok"?"● filtrado":"toque p/ filtrar"}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isMobile?6:10,marginBottom:14}}>
+              <div style={{...css.kpi(t.verde),cursor:"pointer",outline:dFiltro==="ok"?`2px solid ${t.verde}`:"none",padding:isMobile?"10px 8px":"20px 16px"}} onClick={()=>{setDFiltro(dFiltro==="ok"?"todos":"ok");setDSubTab("resumo");}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:56,lineHeight:1,color:t.verde}}>{diariasData.ok}</div>
+                <div style={{fontSize:isMobile?7:10,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,marginTop:isMobile?2:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                  {!isMobile&&hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,11)} No Prazo
+                </div>
+                {!isMobile&&<div style={{fontSize:8,color:t.verde,marginTop:2,opacity:.7}}>{dFiltro==="ok"?"● filtrado":"toque p/ filtrar"}</div>}
               </div>
-              <div style={{...css.kpi(t.danger),cursor:"pointer",outline:dFiltro==="atraso"?`2px solid ${t.danger}`:"none"}} onClick={()=>{setDFiltro(dFiltro==="atraso"?"todos":"atraso");setDSubTab("resumo");}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:t.danger}}>{diariasData.atraso}</div>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,10)} Perdeu Agenda</div>
-                <div style={{fontSize:8,color:t.danger,marginTop:2,opacity:.7}}>{dFiltro==="atraso"?"● filtrado":"toque p/ filtrar"}</div>
+              <div style={{...css.kpi(t.danger),cursor:"pointer",outline:dFiltro==="atraso"?`2px solid ${t.danger}`:"none",padding:isMobile?"10px 8px":"20px 16px"}} onClick={()=>{setDFiltro(dFiltro==="atraso"?"todos":"atraso");setDSubTab("resumo");}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:56,lineHeight:1,color:t.danger}}>{diariasData.atraso}</div>
+                <div style={{fontSize:isMobile?7:10,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,marginTop:isMobile?2:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                  {!isMobile&&hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,11)} Perdeu Agenda
+                </div>
+                {!isMobile&&<div style={{fontSize:8,color:t.danger,marginTop:2,opacity:.7}}>{dFiltro==="atraso"?"● filtrado":"toque p/ filtrar"}</div>}
               </div>
-              <div style={{...css.kpi(t.ouro),cursor:"pointer",outline:dFiltro==="pendente"?`2px solid ${t.ouro}`:"none"}} onClick={()=>{setDFiltro(dFiltro==="pendente"?"todos":"pendente");setDSubTab("resumo");}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:26,color:t.ouro}}>{diariasData.pend}</div>
-                <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:3}}>{hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,10)} Sem Descarga</div>
-                <div style={{fontSize:8,color:t.ouro,marginTop:2,opacity:.7}}>{dFiltro==="pendente"?"● filtrado":"toque p/ filtrar"}</div>
+              <div style={{...css.kpi(t.ouro),cursor:"pointer",outline:dFiltro==="pendente"?`2px solid ${t.ouro}`:"none",padding:isMobile?"10px 8px":"20px 16px"}} onClick={()=>{setDFiltro(dFiltro==="pendente"?"todos":"pendente");setDSubTab("resumo");}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:56,lineHeight:1,color:t.ouro}}>{diariasData.pend}</div>
+                <div style={{fontSize:isMobile?7:10,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,marginTop:isMobile?2:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                  {!isMobile&&hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,11)} Sem Descarga
+                </div>
+                {!isMobile&&<div style={{fontSize:8,color:t.ouro,marginTop:2,opacity:.7}}>{dFiltro==="pendente"?"● filtrado":"toque p/ filtrar"}</div>}
               </div>
             </div>
 

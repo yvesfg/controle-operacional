@@ -101,3 +101,7 @@
 ## 2026-04-16 — Descarga: tabs compactos em linha única
 **Solicitado:** 4 blocos de tab (Hoje/Atraso/Aguardando/Conferência) em uma só linha, menores, responsivos.
 **Implementado:** grid repeat(4,1fr), padding reduzido, ícone oculto no mobile, label abreviada no mobile (primeira palavra), fonte menor — corrigido também o grid do resumo de Diárias que havia sido alterado por engano.
+
+## 2026-04-16 — Diárias KPIs: fonte máxima desktop + compacto mobile
+**Solicitado:** Aumentar fonte dos números (No Prazo/Perdeu Agenda/Sem Descarga) ao máximo no desktop; mobile em linha única com ícones e fontes ajustados.
+**Implementado:** Desktop fontSize 26→56 (Bebas Neue), label 8→10px, ícone 10→11px; Mobile fontSize 32, padding reduzido, ícones e hint ocultos — blocos ficam em linha única.
