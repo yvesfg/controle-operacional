@@ -102,6 +102,11 @@ export default function App() {
 
   // Descarga state
   const [dscTab, setDscTab] = useState("hoje");
+  const [dscFiltroAno, setDscFiltroAno] = useState("");
+  const [dscFiltroMes, setDscFiltroMes] = useState("");
+  const [dscFiltroOrigem, setDscFiltroOrigem] = useState("todas");
+  const [dscFiltroIni, setDscFiltroIni] = useState("");
+  const [dscFiltroFim, setDscFiltroFim] = useState("");
   const [dscData, setDscData] = useState(new Date().toISOString().slice(0,10));
 
   // View mode state (linhas | blocos) + colunas para Diarias e Descarga
@@ -4446,7 +4451,7 @@ export default function App() {
 
         {/* ═══ DESCARGA ═══ */}
         {activeTab === "descarga" && (
-          <div>
+          <div style={{minHeight:"calc(100vh - 140px)"}}>
             {descargaNavDT && (
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.3)`}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,13)}
@@ -4477,6 +4482,55 @@ export default function App() {
               ))}
             </div>
 
+            {/* Filtros Descarga */}
+            {(()=>{
+              const _tabAll=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;
+              const _pym=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1]};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1]};}return null;};
+              const anosD=[...new Set(_tabAll.map(r=>{const ym=_pym(r.data_carr||r.data_agenda||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+              const mesesD=[...new Set(_tabAll.filter(r=>{if(!dscFiltroAno)return true;const ym=_pym(r.data_carr||r.data_agenda||"");return ym?.ano===dscFiltroAno;}).map(r=>{const ym=_pym(r.data_carr||r.data_agenda||"");return ym?.mes;}).filter(Boolean))].sort();
+              const origensD=[...new Set(_tabAll.map(r=>(r.origem||"").trim()).filter(Boolean))].sort();
+              const MESES_PT={"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
+              const temFiltro=dscFiltroAno||dscFiltroMes||dscFiltroOrigem!=="todas"||dscFiltroIni||dscFiltroFim;
+              const _iniC=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;
+              const _fimC=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;
+              const _pymF=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};
+              const _cnt=_tabAll.filter(r=>{const ym=_pymF(r.data_carr||r.data_agenda||"");if(dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniC||_fimC){const d=ym?.full||null;if(!d)return false;if(_iniC&&d<_iniC)return false;if(_fimC&&d>_fimC)return false;}return true;}).length;
+              return (
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 10px",background:t.card,
+                  border:`1px solid ${t.borda}`,borderRadius:10,flexWrap:"wrap"}}>
+                  <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
+                  <select value={dscFiltroAno} onChange={e=>{setDscFiltroAno(e.target.value);setDscFiltroMes("");}}
+                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroAno?t.ouro:t.borda}`,background:dscFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                    <option value="">Todos os Anos</option>
+                    {anosD.map(a=><option key={a} value={a}>{a}</option>)}
+                  </select>
+                  <select value={dscFiltroMes} onChange={e=>setDscFiltroMes(e.target.value)}
+                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroMes?t.ouro:t.borda}`,background:dscFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                    <option value="">Todos os Meses</option>
+                    {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
+                  </select>
+                  <select value={dscFiltroOrigem} onChange={e=>setDscFiltroOrigem(e.target.value)}
+                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dscFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                    <option value="todas">Todas as Origens</option>
+                    {origensD.map(o=><option key={o} value={o}>{o}</option>)}
+                  </select>
+                  <input type="date" value={dscFiltroIni} onChange={e=>setDscFiltroIni(e.target.value)}
+                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
+                  <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>até</span>
+                  <input type="date" value={dscFiltroFim} onChange={e=>setDscFiltroFim(e.target.value)}
+                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
+                  {temFiltro && (
+                    <button onClick={()=>{setDscFiltroAno("");setDscFiltroMes("");setDscFiltroOrigem("todas");setDscFiltroIni("");setDscFiltroFim("");}}
+                      style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
+                      &#10005; Limpar
+                    </button>
+                  )}
+                  <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>
+                    {_cnt} de {_tabAll.length}
+                  </span>
+                </div>
+              );
+            })()}
             <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
               <input type="date" value={dscData} onChange={e=>setDscData(e.target.value)} style={{...css.inp,flex:1}} />
               <button onClick={()=>{}} style={{...css.btnGold,padding:"10px 14px",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.card,16)}</button>
@@ -4505,7 +4559,7 @@ export default function App() {
             {descargaView==="linhas" ? (
               // ── MODO LINHAS (original) ──
               <>
-                {(()=>{const _dl=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;return descargaNavDT?[..._dl].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_dl;})().slice(0,50).map((r,i) => {
+                {(()=>{const _dl=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;const _iniL=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimL=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymL=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _fl=_dl.filter(r=>{const ym=_pymL(r.data_carr||r.data_agenda||"");if(dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniL||_fimL){const d=ym?.full||null;if(!d)return false;if(_iniL&&d<_iniL)return false;if(_fimL&&d>_fimL)return false;}return true;});return descargaNavDT?[..._fl].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_fl;})().slice(0,50).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
@@ -4531,7 +4585,7 @@ export default function App() {
             ) : (
               // ── MODO BLOCOS (Opção C com avatar) ──
               <div style={{display:"grid",gridTemplateColumns:`repeat(${descargaCols},minmax(0,1fr))`,gap:10}}>
-                {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;return descargaNavDT?[..._db].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_db;})().slice(0,80).map((r,i) => {
+                {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;const _iniB=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimB=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _fb=_db.filter(r=>{const ym=_pymB(r.data_carr||r.data_agenda||"");if(dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniB||_fimB){const d=ym?.full||null;if(!d)return false;if(_iniB&&d<_iniB)return false;if(_fimB&&d>_fimB)return false;}return true;});return descargaNavDT?[..._fb].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_fb;})().slice(0,80).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
                   const isAtrasado = dscTab === "atrasado";
@@ -4588,7 +4642,7 @@ export default function App() {
                 })}
               </div>
             )}
-            {(dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados).length === 0 && (
+            {(()=>{const _de=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;const _iniE=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimE=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymE=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};return _de.filter(r=>{const ym=_pymE(r.data_carr||r.data_agenda||"");if(dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniE||_fimE){const d=ym?.full||null;if(!d)return false;if(_iniE&&d<_iniE)return false;if(_fimE&&d>_fimE)return false;}return true;}).length;})() === 0 && (
               <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":dscTab==="aguardando"?"⏳":"✅"}</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":dscTab==="aguardando"?"NENHUM AGUARDANDO AGENDA":"SEM ATRASOS"}</h3></div>
             )}
           </div>
