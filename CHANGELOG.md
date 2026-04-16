@@ -97,3 +97,7 @@
 - `useMemo rodorricaResultado`: agrupa planilha por DT (coluna ID), compara com `apontItems` (tipo descarga/stretch) — retorna BATE, DIVERGE, SEM_APONT, FORA_PLANILHA + valor em risco e totais
 - `parseRodorricaXLSX(file)`: parser da aba BASE — lê ID, TIPO DO CUSTO, VALOR APROVADO, VALOR FINAL, NF, CENTRO
 - Nova sub-aba "Conferência" no tab Descarga: upload drag-drop, KPIs clicáveis (4 status), tabela com colunas Desc/Stretch plan vs app por DT, colorização por divergência
+
+## 2026-04-16 — Descarga: tabs compactos em linha única
+**Solicitado:** 4 blocos de tab (Hoje/Atraso/Aguardando/Conferência) em uma só linha, menores, responsivos.
+**Implementado:** grid repeat(4,1fr), padding reduzido, ícone oculto no mobile, label abreviada no mobile (primeira palavra), fonte menor — corrigido também o grid do resumo de Diárias que havia sido alterado por engano.

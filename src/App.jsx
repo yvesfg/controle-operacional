@@ -4082,7 +4082,7 @@ export default function App() {
               const saldoD = totalDevido - totalPago;
               if(comD.length===0) return null;
               return (
-                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:14}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
                   <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(246,70,93,.25)`,padding:"12px 10px",textAlign:"center"}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.danger,lineHeight:1}}>{fmtMoeda(totalDevido)}</div>
                     <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
@@ -4626,17 +4626,17 @@ export default function App() {
                 titulo={`Descarga ${dscTab==="hoje"?"do Dia":dscTab==="aguardando"?"- Aguardando":"- Atrasos"} · ${dscData}`}
               />
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:isMobile?4:6,marginBottom:12}}>
               {[
                 {k:"hoje",svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,l:"Descarrega Hoje",ct:descargaData.hoje.length,cor:t.azul,corLt:t.azulLt,bg:"rgba(22,119,255,.07)"},
                 {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length,cor:t.danger,corLt:"#f6465d",bg:"rgba(246,70,93,.07)"},
                 {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"#f0b90b",corLt:"#ffe57a",bg:"rgba(240,185,11,.07)"},
                 {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"#9c27b0",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
               ].map(tb => (
-                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:10,padding:12,cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s"}}>
-                  {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,24)}
-                  <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:dscTab===tb.k?tb.corLt:t.txt2}}>{tb.l}</span>
-                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,color:dscTab===tb.k?tb.corLt:t.txt2}}>{tb.ct}</span>
+                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"5px 4px":"7px 6px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all .2s",minWidth:0}}>
+                  {!isMobile&&hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,16)}
+                  <span style={{fontSize:isMobile?7:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.3,color:dscTab===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{isMobile?tb.l.split(" ")[0]:tb.l}</span>
+                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?13:15,color:dscTab===tb.k?tb.corLt:t.txt2,lineHeight:1}}>{tb.ct}</span>
                 </div>
               ))}
             </div>
