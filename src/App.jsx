@@ -1735,8 +1735,8 @@ export default function App() {
         <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,padding:"40px 32px 32px",boxShadow:`0 32px 80px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",gap:0,animation:"fadeUp .4s ease-out",position:"relative",zIndex:1}}>
 
           {/* Ícone caminhão — tile colorido clean */}
-          <div style={{width:96,height:96,borderRadius:18,background:"#000",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22,boxShadow:"0 8px 28px rgba(0,0,0,.6)",animation:"logoPop .4s ease-out",flexShrink:0,overflow:"hidden"}}>
-            <img src={DEFAULT_LOGO} alt="YFGroup" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          <div style={{width:128,height:128,borderRadius:22,background:"#000",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22,boxShadow:"0 8px 32px rgba(0,0,0,.65)",animation:"logoPop .4s ease-out",flexShrink:0,overflow:"hidden"}}>
+            <img src={DEFAULT_LOGO} alt="YFGroup" style={{width:"100%",height:"100%",objectFit:"cover",transform:"scale(1.45)",transformOrigin:"center"}}/>
           </div>
 
           {/* Title */}
@@ -2969,7 +2969,7 @@ export default function App() {
           {/* ── Logo ── */}
           <div className="co-sidebar__logo">
             <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"#000",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0,overflow:"hidden"}}>
-              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"cover",transform:"scale(1.45)",transformOrigin:"center"}}/>
             </div>
             {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
               <div style={{overflow:"hidden",flex:1,minWidth:0}}>
@@ -4261,7 +4261,7 @@ export default function App() {
                   })
                 ) : (
                   // ── MODO BLOCOS (Opção C com avatar) ──
-                  <div style={{display:"grid",gridTemplateColumns:`repeat(${diariaCols},minmax(0,1fr))`,gap:10}}>
+                  <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(diariaCols,2):diariaCols},minmax(0,1fr))`,gap:isMobile?8:10,width:"100%"}}>
                     {(()=>{
                       const _pRB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};
                       const _iRB=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;
@@ -4753,7 +4753,7 @@ export default function App() {
               </>
             ) : (
               // ── MODO BLOCOS (Opção C com avatar) ──
-              <div style={{display:"grid",gridTemplateColumns:`repeat(${descargaCols},minmax(0,1fr))`,gap:10}}>
+              <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(descargaCols,2):descargaCols},minmax(0,1fr))`,gap:isMobile?8:10,width:"100%"}}>
                 {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;const _iniB=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimB=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _fb=_db.filter(r=>{const ym=_pymB(r.data_carr||r.data_agenda||"");if(dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniB||_fimB){const d=ym?.full||null;if(!d)return false;if(_iniB&&d<_iniB)return false;if(_fimB&&d>_fimB)return false;}return true;});return descargaNavDT?[..._fb].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_fb;})().slice(0,80).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
