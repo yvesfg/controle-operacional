@@ -60,8 +60,10 @@ export function ExportMenu({ dados, cols, filename, titulo }) {
   const t = themes.dark;
   return (
     <div style={{position:"relative",display:"inline-block"}}>
-      <button onClick={()=>setOpen(!open)} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:9,padding:"8px 12px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:5,fontFamily:"inherit"}}>
-        📥 Exportar ▾
+      <button onClick={()=>setOpen(!open)} style={{background:`linear-gradient(135deg,rgba(6,182,212,.2),rgba(6,182,212,.07))`,border:`1.5px solid rgba(6,182,212,.55)`,borderRadius:10,padding:"9px 15px",color:"#22d3ee",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:7,fontFamily:"inherit",boxShadow:`0 2px 12px rgba(6,182,212,.2)`,letterSpacing:.3}}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Exportar
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       {open && (
         <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,overflow:"hidden",zIndex:50,minWidth:150,boxShadow:`0 8px 24px rgba(0,0,0,.4)`}}>

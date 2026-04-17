@@ -4241,7 +4241,7 @@ export default function App() {
                     const tipoColor = tipo==="diaria"?`rgba(246,70,93,.08)`:tipo==="atraso"?`rgba(240,185,11,.08)`:tipo==="sem_diaria"?`rgba(2,192,118,.08)`:tipo==="ok"?`rgba(2,192,118,.08)`:`rgba(240,185,11,.06)`;
                     return (
                       <div key={idx} onClick={()=>abrirDetalhe(r)} className="co-card" style={{background:_isDHL?`rgba(240,185,11,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:t.borda}`,borderLeft:`4px solid ${borderC}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(240,185,11,.22)`:"none"}}>
-                        <div style={{fontSize:14,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                        <div style={{fontSize:16,fontWeight:700,color:t.txt,marginBottom:5,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           {r.nome||"—"}
                           <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:tipoColor,color:borderC,border:`1px solid ${borderC}33`}}>
                             {tipoLabel}
@@ -4250,7 +4250,7 @@ export default function App() {
                           {r.ro && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`rgba(255,152,0,.08)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
                           <span style={{marginLeft:"auto",fontSize:11,color:t.txt2}}>ver detalhes ›</span>
                         </div>
-                        <div style={{fontSize:12,color:t.txt2,lineHeight:1.7}}>
+                        <div style={{fontSize:13,color:t.txt2,lineHeight:1.8}}>
                           🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
                           📅 Agenda: <strong style={{color:t.ouro}}>{r.data_agenda||"—"}</strong> · 🛬 Chegada: <strong style={{color:r.chegada?t.azulLt:t.txt2}}>{r.chegada||"Não informada"}</strong><br/>
                           🏁 Descarga: <strong style={{color:r.data_desc?t.verde:t.txt2}}>{r.data_desc||"Não informada"}</strong>
@@ -4296,7 +4296,7 @@ export default function App() {
                           <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                             <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${borderC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:borderC,flexShrink:0}}>{initials}</div>
                             <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                              <div style={{fontSize:14,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
                               {/* Diária + RO abaixo do nome */}
                               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:2}}>
                                 {(r.diaria_prev||r.diaria_pg) && <span style={{fontSize:9,color:t.txt2}}>Diária: <strong style={{color:r.diaria_pg?t.verde:t.ouro}}>{r.diaria_pg ? `R$${r.diaria_pg}` : `R$${r.diaria_prev}`}</strong></span>}
@@ -4317,8 +4317,8 @@ export default function App() {
                           </div>
                           <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                             {chips.map((ch,ci) => (
-                              <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 7px",fontSize:10}}>
-                                <span style={{color:t.txt2,fontSize:8}}>{ch.l} </span>
+                              <div key={ci} style={{background:t.card2,borderRadius:6,padding:"5px 9px",fontSize:11}}>
+                                <span style={{color:t.txt2,fontSize:9}}>{ch.l} </span>
                                 <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
                               </div>
                             ))}
@@ -4642,10 +4642,10 @@ export default function App() {
                 {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"#f0b90b",corLt:"#ffe57a",bg:"rgba(240,185,11,.07)"},
                 {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"#9c27b0",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
               ].map(tb => (
-                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"5px 4px":"7px 6px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all .2s",minWidth:0}}>
-                  {!isMobile&&hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,16)}
-                  <span style={{fontSize:isMobile?7:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.3,color:dscTab===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{isMobile?tb.l.split(" ")[0]:tb.l}</span>
-                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?13:15,color:dscTab===tb.k?tb.corLt:t.txt2,lineHeight:1}}>{tb.ct}</span>
+                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
+                  {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,22)}
+                  <span style={{fontSize:isMobile?9:12,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:dscTab===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
+                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?24:34,color:dscTab===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
                 </div>
               ))}
             </div>
@@ -4735,13 +4735,13 @@ export default function App() {
                   const _isDHL2 = descargaNavDT && r.dt === descargaNavDT;
                   return (
                     <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:_isDHL2?`rgba(22,119,255,.06)`:t.card,borderRadius:11,padding:12,border:`1px solid ${_isDHL2?t.azulLt:t.borda}`,borderLeft:`3px solid ${_isDHL2?t.azulLt:isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL2?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
-                      <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                         {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
                         {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.08)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
                         <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
-                      <div style={{fontSize:11,color:t.txt2,lineHeight:1.7}}>
+                      <div style={{fontSize:12,color:t.txt2,lineHeight:1.8}}>
                         🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
                         📍 {r.destino||"—"}<br/>
                         📅 Agenda: <strong style={{color:isAtrasado?t.danger:t.ouro}}>{r.data_agenda||"—"}</strong>
@@ -4780,7 +4780,7 @@ export default function App() {
                       <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                         <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${accentC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:accentC,flexShrink:0}}>{initials}</div>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:12,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
+                          <div style={{fontSize:14,fontWeight:700,color:t.txt,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{r.nome||"—"}</div>
                           {/* Diária + RO abaixo do nome */}
                           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:2}}>
                             {r.diaria_prev && <span style={{fontSize:9,color:t.txt2}}>Diária: <strong style={{color:t.ouro}}>R${r.diaria_prev}</strong></span>}
@@ -4800,8 +4800,8 @@ export default function App() {
                       </div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                         {chips.map((ch,ci) => (
-                          <div key={ci} style={{background:t.card2,borderRadius:6,padding:"3px 7px",fontSize:10}}>
-                            <span style={{color:t.txt2,fontSize:8}}>{ch.l} </span>
+                          <div key={ci} style={{background:t.card2,borderRadius:6,padding:"5px 9px",fontSize:11}}>
+                            <span style={{color:t.txt2,fontSize:9}}>{ch.l} </span>
                             <span style={{color:ch.c,fontWeight:600}}>{ch.v}</span>
                           </div>
                         ))}
