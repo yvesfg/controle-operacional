@@ -4085,25 +4085,30 @@ export default function App() {
               const saldoD = totalDevido - totalPago;
               if(comD.length===0) return null;
               return (
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-                  <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(246,70,93,.25)`,padding:"12px 10px",textAlign:"center"}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.danger,lineHeight:1}}>{fmtMoeda(totalDevido)}</div>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                      {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.danger,9)} Total Devido
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isMobile?6:10,marginBottom:14}}>
+                  {/* Total Devido */}
+                  <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(246,70,93,.25)`,padding:isMobile?"10px 8px":"18px 14px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:isMobile?3:6}}>
+                    <div style={{width:isMobile?30:42,height:isMobile?30:42,borderRadius:"50%",background:"rgba(246,70,93,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.danger,isMobile?14:20)}
                     </div>
+                    <div style={{fontSize:isMobile?8:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.txt2}}>Total Devido</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?14:22,color:t.danger,lineHeight:1}}>{fmtMoeda(totalDevido)}</div>
                   </div>
-                  <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(2,192,118,.25)`,padding:"12px 10px",textAlign:"center"}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:t.verde,lineHeight:1}}>{fmtMoeda(totalPago)}</div>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                      {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,9)} Total Pago
+                  {/* Total Pago */}
+                  <div style={{background:t.card,borderRadius:12,border:`1px solid rgba(2,192,118,.25)`,padding:isMobile?"10px 8px":"18px 14px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:isMobile?3:6}}>
+                    <div style={{width:isMobile?30:42,height:isMobile?30:42,borderRadius:"50%",background:"rgba(2,192,118,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,isMobile?14:20)}
                     </div>
+                    <div style={{fontSize:isMobile?8:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.txt2}}>Total Pago</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?14:22,color:t.verde,lineHeight:1}}>{fmtMoeda(totalPago)}</div>
                   </div>
-                  <div style={{background:t.card,borderRadius:12,border:`1px solid ${saldoD>0?`rgba(246,70,93,.25)`:`rgba(2,192,118,.25)`}`,padding:"12px 10px",textAlign:"center"}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:saldoD>0?t.danger:t.verde,lineHeight:1}}>{fmtMoeda(Math.abs(saldoD))}</div>
-                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                      {hIco(saldoD>0?<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>:<><polyline points="22 11 12 22 2 11"/><line x1="12" y1="2" x2="12" y2="22"/></>,saldoD>0?t.danger:t.verde,9)}
-                      {saldoD>0 ? "A Pagar" : "Quitado"}
+                  {/* Saldo */}
+                  <div style={{background:t.card,borderRadius:12,border:`1px solid ${saldoD>0?`rgba(246,70,93,.25)`:`rgba(2,192,118,.25)`}`,padding:isMobile?"10px 8px":"18px 14px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:isMobile?3:6}}>
+                    <div style={{width:isMobile?30:42,height:isMobile?30:42,borderRadius:"50%",background:saldoD>0?"rgba(246,70,93,.1)":"rgba(2,192,118,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      {hIco(saldoD>0?<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>:<><polyline points="22 11 12 22 2 11"/><line x1="12" y1="2" x2="12" y2="22"/></>,saldoD>0?t.danger:t.verde,isMobile?14:20)}
                     </div>
+                    <div style={{fontSize:isMobile?8:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.txt2}}>{saldoD>0?"A Pagar":"Quitado"}</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?14:22,color:saldoD>0?t.danger:t.verde,lineHeight:1}}>{fmtMoeda(Math.abs(saldoD))}</div>
                   </div>
                 </div>
               );
@@ -4122,26 +4127,32 @@ export default function App() {
 
             {/* KPI clicáveis — filtram a lista abaixo */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isMobile?6:10,marginBottom:14}}>
-              <div style={{...css.kpi(t.verde),cursor:"pointer",outline:dFiltro==="ok"?`2px solid ${t.verde}`:"none",padding:isMobile?"10px 8px":"20px 16px"}} onClick={()=>{setDFiltro(dFiltro==="ok"?"todos":"ok");setDSubTab("resumo");}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:56,lineHeight:1,color:t.verde}}>{diariasData.ok}</div>
-                <div style={{fontSize:isMobile?7:10,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,marginTop:isMobile?2:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                  {!isMobile&&hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,11)} No Prazo
+              {/* No Prazo */}
+              <div style={{...css.kpi(t.verde),cursor:"pointer",outline:dFiltro==="ok"?`2px solid ${t.verde}`:"none",padding:isMobile?"10px 8px":"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:isMobile?3:7}} onClick={()=>{setDFiltro(dFiltro==="ok"?"todos":"ok");setDSubTab("resumo");}}>
+                <div style={{width:isMobile?30:46,height:isMobile?30:46,borderRadius:"50%",background:"rgba(2,192,118,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,isMobile?15:24)}
                 </div>
-                {!isMobile&&<div style={{fontSize:8,color:t.verde,marginTop:2,opacity:.7}}>{dFiltro==="ok"?"● filtrado":"toque p/ filtrar"}</div>}
+                <div style={{fontSize:isMobile?9:13,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.verde,textAlign:"center",lineHeight:1.2}}>No Prazo</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:52,lineHeight:1,color:t.verde}}>{diariasData.ok}</div>
+                {!isMobile&&<div style={{fontSize:8,color:t.verde,opacity:.6}}>{dFiltro==="ok"?"● filtrado":"toque p/ filtrar"}</div>}
               </div>
-              <div style={{...css.kpi(t.danger),cursor:"pointer",outline:dFiltro==="atraso"?`2px solid ${t.danger}`:"none",padding:isMobile?"10px 8px":"20px 16px"}} onClick={()=>{setDFiltro(dFiltro==="atraso"?"todos":"atraso");setDSubTab("resumo");}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:56,lineHeight:1,color:t.danger}}>{diariasData.atraso}</div>
-                <div style={{fontSize:isMobile?7:10,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,marginTop:isMobile?2:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                  {!isMobile&&hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,11)} Perdeu Agenda
+              {/* Perdeu Agenda */}
+              <div style={{...css.kpi(t.danger),cursor:"pointer",outline:dFiltro==="atraso"?`2px solid ${t.danger}`:"none",padding:isMobile?"10px 8px":"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:isMobile?3:7}} onClick={()=>{setDFiltro(dFiltro==="atraso"?"todos":"atraso");setDSubTab("resumo");}}>
+                <div style={{width:isMobile?30:46,height:isMobile?30:46,borderRadius:"50%",background:"rgba(246,70,93,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,isMobile?15:24)}
                 </div>
-                {!isMobile&&<div style={{fontSize:8,color:t.danger,marginTop:2,opacity:.7}}>{dFiltro==="atraso"?"● filtrado":"toque p/ filtrar"}</div>}
+                <div style={{fontSize:isMobile?9:13,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.danger,textAlign:"center",lineHeight:1.2}}>Perdeu Agenda</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:52,lineHeight:1,color:t.danger}}>{diariasData.atraso}</div>
+                {!isMobile&&<div style={{fontSize:8,color:t.danger,opacity:.6}}>{dFiltro==="atraso"?"● filtrado":"toque p/ filtrar"}</div>}
               </div>
-              <div style={{...css.kpi(t.ouro),cursor:"pointer",outline:dFiltro==="pendente"?`2px solid ${t.ouro}`:"none",padding:isMobile?"10px 8px":"20px 16px"}} onClick={()=>{setDFiltro(dFiltro==="pendente"?"todos":"pendente");setDSubTab("resumo");}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:56,lineHeight:1,color:t.ouro}}>{diariasData.pend}</div>
-                <div style={{fontSize:isMobile?7:10,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,marginTop:isMobile?2:4,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                  {!isMobile&&hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,11)} Sem Descarga
+              {/* Sem Descarga */}
+              <div style={{...css.kpi(t.ouro),cursor:"pointer",outline:dFiltro==="pendente"?`2px solid ${t.ouro}`:"none",padding:isMobile?"10px 8px":"20px 16px",display:"flex",flexDirection:"column",alignItems:"center",gap:isMobile?3:7}} onClick={()=>{setDFiltro(dFiltro==="pendente"?"todos":"pendente");setDSubTab("resumo");}}>
+                <div style={{width:isMobile?30:46,height:isMobile?30:46,borderRadius:"50%",background:"rgba(240,185,11,.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,isMobile?15:24)}
                 </div>
-                {!isMobile&&<div style={{fontSize:8,color:t.ouro,marginTop:2,opacity:.7}}>{dFiltro==="pendente"?"● filtrado":"toque p/ filtrar"}</div>}
+                <div style={{fontSize:isMobile?9:13,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.ouro,textAlign:"center",lineHeight:1.2}}>Sem Descarga</div>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?32:52,lineHeight:1,color:t.ouro}}>{diariasData.pend}</div>
+                {!isMobile&&<div style={{fontSize:8,color:t.ouro,opacity:.6}}>{dFiltro==="pendente"?"● filtrado":"toque p/ filtrar"}</div>}
               </div>
             </div>
 

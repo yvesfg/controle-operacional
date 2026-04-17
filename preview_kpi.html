@@ -1,0 +1,108 @@
+<\!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview KPI — Diárias</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d0f13;font-family:'Inter',sans-serif;padding:32px;color:#e0e0e0;min-height:100vh}
+  h2{font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:18px;color:#888;margin-bottom:6px;margin-top:28px;text-transform:uppercase}
+  h3{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;max-width:860px}
+  .badge{font-size:9px;color:#888;margin-top:4px;opacity:.7}
+
+  /* ── ATUAL ── */
+  .kpi-atual{background:#161a22;border-radius:12px;border:1px solid #2a2e38;border-left:3px solid var(--c);padding:20px 16px;text-align:center;cursor:pointer}
+  .kpi-atual .num{font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:var(--c)}
+  .kpi-atual .label-row{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#888;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:4px}
+  .kpi-atual .hint{font-size:8px;color:var(--c);margin-top:3px;opacity:.7}
+
+  /* ── PROPOSTA ── */
+  .kpi-novo{background:#161a22;border-radius:12px;border:1px solid #2a2e38;border-left:3px solid var(--c);padding:18px 16px 14px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .kpi-novo .ico-wrap{width:44px;height:44px;border-radius:50%;background:var(--cbg);display:flex;align-items:center;justify-content:center}
+  .kpi-novo .label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--c)}
+  .kpi-novo .num{font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:var(--c);margin-top:2px}
+  .kpi-novo .hint{font-size:8px;color:var(--c);opacity:.6}
+
+  svg{display:block}
+  .sep{width:100%;max-width:860px;border-top:1px solid #222;margin:20px 0}
+</style>
+</head>
+<body>
+
+<h2>ATUAL — Layout Existente</h2>
+<h3>Número em cima · ícone + label embaixo (pequenos)</h3>
+
+<div class="grid">
+  <\!-- NO PRAZO -->
+  <div class="kpi-atual" style="--c:#02c076">
+    <div class="num">331</div>
+    <div class="label-row">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#02c076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      No Prazo
+    </div>
+    <div class="hint">toque p/ filtrar</div>
+  </div>
+
+  <\!-- PERDEU AGENDA -->
+  <div class="kpi-atual" style="--c:#f6465d">
+    <div class="num">192</div>
+    <div class="label-row">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f6465d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Perdeu Agenda
+    </div>
+    <div class="hint">toque p/ filtrar</div>
+  </div>
+
+  <\!-- SEM DESCARGA -->
+  <div class="kpi-atual" style="--c:#f0b90b">
+    <div class="num">14</div>
+    <div class="label-row">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f0b90b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Sem Descarga
+    </div>
+    <div class="hint">toque p/ filtrar</div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<h2>PROPOSTA — Novo Layout</h2>
+<h3>Ícone maior + Label em cima · Número em baixo</h3>
+
+<div class="grid">
+  <\!-- NO PRAZO -->
+  <div class="kpi-novo" style="--c:#02c076;--cbg:rgba(2,192,118,.12)">
+    <div class="ico-wrap">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#02c076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="label">No Prazo</div>
+    <div class="num">331</div>
+    <div class="hint">toque p/ filtrar</div>
+  </div>
+
+  <\!-- PERDEU AGENDA -->
+  <div class="kpi-novo" style="--c:#f6465d;--cbg:rgba(246,70,93,.1)">
+    <div class="ico-wrap">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f6465d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="label">Perdeu Agenda</div>
+    <div class="num">192</div>
+    <div class="hint">toque p/ filtrar</div>
+  </div>
+
+  <\!-- SEM DESCARGA -->
+  <div class="kpi-novo" style="--c:#f0b90b;--cbg:rgba(240,185,11,.1)">
+    <div class="ico-wrap">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f0b90b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div class="label">Sem Descarga</div>
+    <div class="num">14</div>
+    <div class="hint">toque p/ filtrar</div>
+  </div>
+</div>
+
+</body>
+</html>
