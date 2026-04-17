@@ -105,3 +105,9 @@
 ## 2026-04-16 — Diárias KPIs: fonte máxima desktop + compacto mobile
 **Solicitado:** Aumentar fonte dos números (No Prazo/Perdeu Agenda/Sem Descarga) ao máximo no desktop; mobile em linha única com ícones e fontes ajustados.
 **Implementado:** Desktop fontSize 26→56 (Bebas Neue), label 8→10px, ícone 10→11px; Mobile fontSize 32, padding reduzido, ícones e hint ocultos — blocos ficam em linha única.
+
+## 2026-04-17 — Fix: DT com data_agenda inválida aparecia como "SEM DESCARGA"
+**Solicitado:** DT 23003322 aparecia como "sem descarga" mesmo com data_desc preenchida.
+**Causa:** data_agenda = "OC" → parseData retornava null → nenhum `if/else if` em `diariasData` capturava o caso, tipo ficava "pendente".
+**Implementado:** Adicionado `else if (\!da && dd)` em `diariasData` (App.jsx ~linha 1093) → registros sem data_agenda válida mas com data_desc preenchida classificados como "ok".
+**Backup:** src/backups/App_backup_20260417_fix_diarias_sem_agenda.jsx

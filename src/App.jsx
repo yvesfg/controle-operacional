@@ -1090,6 +1090,9 @@ export default function App() {
         // Sem chegada → lógica legado (agenda vs descarga)
         dias = diffDias(da, dd);
         tipo = dias > 0 ? "atraso" : "ok";
+      } else if (!da && dd) {
+        // Sem data_agenda válida (ex: "OC") mas com data_desc preenchida → finalizado
+        tipo = "ok";
       } else if (da && !dd) {
         const dp = diffDias(da, hoje);
         tipo = dp > 0 ? "atraso" : "pendente";
