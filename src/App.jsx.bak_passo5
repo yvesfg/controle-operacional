@@ -4681,8 +4681,8 @@ export default function App() {
               ].map(tb => (
                 <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,22)}
-                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:isMobile?9:11,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:dscTab===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
-                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:isMobile?22:34,fontWeight:700,letterSpacing:"-0.04em",color:dscTab===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
+                  <span style={{fontSize:isMobile?9:12,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:dscTab===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
+                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:isMobile?24:34,color:dscTab===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
                 </div>
               ))}
             </div>
@@ -4748,7 +4748,7 @@ export default function App() {
                 {v:"linhas",l:"Linhas",svg:<><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>},
                 {v:"blocos",l:"Blocos",svg:<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>}
               ].map(m => (
-                <button key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${descargaView===m.v?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:descargaView===m.v?"var(--accent2)":"var(--card2)",color:descargaView===m.v?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif",display:"flex",alignItems:"center",gap:4}}>
+                <button key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${descargaView===m.v?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:descargaView===m.v?`rgba(22,119,255,.09)`:t.card2,color:descargaView===m.v?t.azulLt:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>
                   {hIco(m.svg,descargaView===m.v?t.azulLt:t.txt2,14)} {m.l}
                 </button>
               ))}
@@ -4756,7 +4756,7 @@ export default function App() {
                 <>
                   <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
                   {[1,2,3,4].map(n => (
-                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?"var(--accent2)":"var(--card2)",color:descargaCols===n?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif"}}>{n}</button>
+                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?`rgba(22,119,255,.09)`:t.card2,color:descargaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
                   ))}
                 </>
               )}
@@ -4849,7 +4849,7 @@ export default function App() {
               </div>
             )}
             {(()=>{const _de=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:descargaData.atrasados;const _iniE=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimE=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymE=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};return _de.filter(r=>{const ym=_pymE(r.data_carr||r.data_agenda||"");if(dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniE||_fimE){const d=ym?.full||null;if(!d)return false;if(_iniE&&d<_iniE)return false;if(_fimE&&d>_fimE)return false;}return true;}).length;})() === 0 && (
-              <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":dscTab==="aguardando"?"⏳":"✅"}</div><h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:600,letterSpacing:"-0.02em",color:"var(--text2)"}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":dscTab==="aguardando"?"NENHUM AGUARDANDO AGENDA":"SEM ATRASOS"}</h3></div>
+              <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":dscTab==="aguardando"?"⏳":"✅"}</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":dscTab==="aguardando"?"NENHUM AGUARDANDO AGENDA":"SEM ATRASOS"}</h3></div>
             )}
             </>)}
 
@@ -5557,7 +5557,7 @@ export default function App() {
                 {motoristas.length>0 && <span style={{opacity:.6}}>· exibindo {Math.min(motPagina*50,motFiltrados.length)} de {motFiltrados.length}</span>}
               </div>
               {motoristas.length === 0 ? (
-                <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:600,letterSpacing:"-0.02em",color:"var(--text2)"}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
+                <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt2}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
               ) : motFiltrados.length === 0 ? (
                 <div style={css.empty}><div style={{fontSize:30,marginBottom:8}}>🔍</div><p style={{fontSize:12,color:t.txt2}}>Nenhum motorista encontrado para "{motBusca}"</p></div>
               ) : motFiltrados.slice(0, motPagina * 50).map((m,i) => {

@@ -167,3 +167,12 @@
 **Causa:** data_agenda = "OC" → parseData retornava null → nenhum `if/else if` em `diariasData` capturava o caso, tipo ficava "pendente".
 **Implementado:** Adicionado `else if (\!da && dd)` em `diariasData` (App.jsx ~linha 1093) → registros sem data_agenda válida mas com data_desc preenchida classificados como "ok".
 **Backup:** src/backups/App_backup_20260417_fix_diarias_sem_agenda.jsx
+
+## Passo 5 — Carga/Descarga (2026-04-20)
+**Solicitado:** redesign tipográfico da view Descarga seguindo spec YFGroup
+**Implementado:**
+- KPI tabs big number: Bebas Neue → Space Grotesk 700 34px tracking -0.04em
+- KPI tabs label: → DM Mono 11px uppercase tracking 0.06em
+- Toggle view (lista/kanban): azul t.azul → var(--accent) / var(--accent2)
+- Toggle cols (1/2/3): azul t.azul → var(--accent) / var(--accent2)
+- Empty state h3 (2x): Bebas Neue 17px → Space Grotesk 600 15px tracking -0.02em
