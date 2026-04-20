@@ -3713,11 +3713,11 @@ export default function App() {
                         onMouseLeave={e=>k.click&&(e.currentTarget.style.background=t.card)}
                       >
                         <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:isMobile?3:8}}>
-                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:isMobile?9:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400,lineHeight:1.4,paddingRight:4}}>{k.label}</div>
+                          <div style={{fontSize:isMobile?7:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,lineHeight:1.4,paddingRight:4}}>{k.label}</div>
                           <div style={{width:isMobile?16:22,height:isMobile?16:22,borderRadius:6,background:`${k.color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{hIco(k.icon,k.color,isMobile?9:11)}</div>
                         </div>
-                        <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:isMobile?18:28,fontWeight:700,letterSpacing:"-0.04em",color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>
-                        <div style={{fontFamily:"'DM Sans',sans-serif",fontSize:isMobile?9:12,color:"var(--text2)",lineHeight:1.3}}>{k.sub}</div>
+                        <div style={{fontFamily:DESIGN.fnt.h,fontSize:isMobile?15:20,letterSpacing:.5,color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>
+                        <div style={{fontSize:isMobile?8:9,color:t.txt2,lineHeight:1.3}}>{k.sub}</div>
                       </div>
                     ))}
                   </div>
@@ -3737,14 +3737,14 @@ export default function App() {
                     <div style={{...css.card,padding:16}}>
                       <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
                         <div>
-                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Evolução do Período</div>
+                          <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Evolução do Período</div>
                           <div style={{display:"flex",gap:6,marginTop:6}}>
                             <button onClick={()=>setDashHeroTab("carr")} style={{padding:"3px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="carr"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="carr"?t.txt:"transparent",color:dashHeroTab==="carr"?t.bg:t.txt2}}>Carregamentos</button>
                             {canFin&&<button onClick={()=>setDashHeroTab("cte")} style={{padding:"3px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="cte"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="cte"?t.txt:"transparent",color:dashHeroTab==="cte"?t.bg:t.txt2}}>Receita CTE</button>}
                           </div>
                         </div>
                         <div style={{textAlign:"right"}}>
-                          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:28,fontWeight:700,letterSpacing:"-0.04em",color:"var(--text)",lineHeight:1}}>{heroNum}</div>
+                          <div style={{fontFamily:DESIGN.fnt.h,fontSize:28,letterSpacing:1,color:t.txt,lineHeight:1}}>{heroNum}</div>
                           <div style={{fontSize:9,color:"#22c55e"}}>↗ {heroLabel}</div>
                         </div>
                       </div>
@@ -3795,11 +3795,11 @@ export default function App() {
                         return (
                           <div key={nome} style={{marginBottom:10}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                              <div style={{width:28,height:28,borderRadius:"50%",background:`${cores[i]}22`,border:`1px solid ${cores[i]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cores[i],flexShrink:0}}>{initials}</div>
+                              <div style={{width:26,height:26,borderRadius:7,background:`${cores[i]}22`,border:`1px solid ${cores[i]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cores[i],flexShrink:0}}>{initials}</div>
                               <div style={{flex:1,minWidth:0}}>
                                 <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome.split(" ")[0]}</div>
                               </div>
-                              <span style={{fontFamily:"'DM Mono',monospace",fontSize:13,fontWeight:600,color:cores[i],flexShrink:0}}>{ct}</span>
+                              <span style={{fontSize:11,fontWeight:700,color:t.txt,flexShrink:0}}>{ct}</span>
                             </div>
                             <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
                               <div style={{height:"100%",width:`${pct}%`,background:cores[i],borderRadius:2}}/>
@@ -3825,7 +3825,7 @@ export default function App() {
                       <thead>
                         <tr>
                           {["DT","Motorista","Origem","Destino","Status",canFin?"CTE":""].filter(Boolean).map(h=>(
-                            <th key={h} style={{padding:"0 6px 8px",textAlign:"left",fontFamily:"'DM Mono',monospace",fontSize:10,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap"}}>{h}</th>
+                            <th key={h} style={{padding:"0 6px 8px",textAlign:"left",fontSize:8,fontWeight:600,textTransform:"uppercase",letterSpacing:.6,color:t.txt2,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap"}}>{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -3835,7 +3835,7 @@ export default function App() {
                         ):recentesDash.map((r,i)=>(
                           <tr key={i} style={{borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.5)}`,cursor:"pointer",transition:"background .1s"}}
                             onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
-                            onMouseEnter={e=>e.currentTarget.style.background="var(--surface)"}
+                            onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.04)}
                             onMouseLeave={e=>e.currentTarget.style.background="transparent"}
                           >
                             <td style={{padding:"7px 6px",color:t.txt2,fontFamily:"monospace",fontSize:9,whiteSpace:"nowrap"}}>{r.dt||"–"}</td>
@@ -3843,7 +3843,7 @@ export default function App() {
                             <td style={{padding:"7px 6px",color:t.txt2,fontSize:9,whiteSpace:"nowrap"}}>{(r.origem||"–").split(/[-–]/)[0].trim().slice(0,9)}</td>
                             <td style={{padding:"7px 6px",color:t.txt2,fontSize:9,whiteSpace:"nowrap",maxWidth:90,overflow:"hidden",textOverflow:"ellipsis"}}>{(r.destino||"–").split(/[-–]/)[0].trim().slice(0,9)}</td>
                             <td style={{padding:"7px 6px"}}>
-                              <span style={{padding:"2px 7px",borderRadius:4,fontFamily:"'DM Mono',monospace",fontSize:10,fontWeight:500,textTransform:"uppercase",color:sc(r.status),background:`${sc(r.status)}26`,whiteSpace:"nowrap",letterSpacing:"0.06em"}}>{(r.status||"–").slice(0,9)}</span>
+                              <span style={{padding:"2px 6px",borderRadius:DESIGN.r.badge,fontSize:7,fontWeight:700,textTransform:"uppercase",color:"#fff",background:sc(r.status),whiteSpace:"nowrap",letterSpacing:.3}}>{(r.status||"–").slice(0,9)}</span>
                             </td>
                             {canFin&&<td style={{padding:"7px 6px",textAlign:"right",fontWeight:600,color:t.txt,fontSize:10,whiteSpace:"nowrap"}}>{r.vl_cte&&parseFloat(r.vl_cte)>0?"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k":"–"}</td>}
                           </tr>

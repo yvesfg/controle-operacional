@@ -1,3 +1,23 @@
+## 2026-04-20 — Passo 3: Dashboard + Fix CSS Warning
+
+**Solicitado:** Redesign do Dashboard e eliminar warning CSS do build.
+
+**Implementado:**
+- `theme-dark.css`: oklch convertidos para hex (--accent #7c3aed, --cyan #06b6d4, --green #22c55e, --orange #f97316, --red #ef4444, --yellow #eab308); elimina warning do esbuild
+- `tokens.css`: restaurado `}` de fechamento do :root que estava truncado — raiz do warning
+- `App.jsx` — Dashboard:
+  - KPI label: DM Mono 11px uppercase tracking 0.06em `var(--text3)`
+  - KPI value: Space Grotesk 700 28px tracking -0.04em
+  - KPI sub: DM Sans 12px `var(--text2)`
+  - Section labels (charts): DM Mono uppercase tracking 0.06em
+  - Top Motoristas avatar: 28px circular (border-radius 50%)
+  - Top Motoristas count: DM Mono 600 13px na cor do motorista
+  - Tabela header: DM Mono 10px uppercase tracking 0.06em
+  - Status badge: DM Mono 10px 500, fundo `cor/0.15` (bg leve)
+  - Row hover: `var(--surface)` em vez de gold
+  - Hero number: Space Grotesk 700 28px tracking -0.04em
+- Build: ✓ 0 erros, 0 warnings
+
 ## 2026-04-20 — Passo 2: Redesign Sidebar e Topbar
 
 **Solicitado:** Implementar Passo 2 do redesign — Sidebar e Topbar seguindo documentação.

@@ -97,11 +97,11 @@
   --text3   : #5a5a7a;          /* texto terciário / labels */
 
   /* Acentos (oklch) */
-  --accent  : #7c3aed;          /* violeta YFGroup brand */
-  --accent2 : rgba(124, 58, 237, 0.15);      /* violeta bg leve — equiv oklch(0.62 0.22 280 / 0.15) */
-  --cyan    : #06b6d4;          /* info / em rota */
-  --green   : #22c55e;          /* sucesso / no prazo */
-  --orange  : #f97316;          /* atenção / atraso */
-  --red     : #ef4444;          /* alerta / crítico */
-  --yellow  : #eab308;          /* aviso */
+  --accent  : oklch(0.62 0.22 280);          /* violeta YFGroup brand */
+  --accent2 : oklch(0.62 0.22 280 / 0.15);  /* violeta bg leve */
+  --cyan    : oklch(0.68 0.18 200);          /* info / em rota */
+  --green   : oklch(0.68 0.18 145);          /* sucesso / no prazo */
+  --orange  : oklch(0.72 0.20  55);          /* atenção / atraso */
+  --red     : oklch(0.65 0.22  20);          /* alerta / crítico */
+  --yellow  : oklch(0.78 0.18  90);          /* aviso */
 }
