@@ -176,3 +176,14 @@
 - Toggle view (lista/kanban): azul t.azul → var(--accent) / var(--accent2)
 - Toggle cols (1/2/3): azul t.azul → var(--accent) / var(--accent2)
 - Empty state h3 (2x): Bebas Neue 17px → Space Grotesk 600 15px tracking -0.02em
+
+## 2026-04-20 — Passo 9: Extração de Views (Planilha / Operacional / Ocorrências)
+**Solicitado:** Atualizar App.jsx com imports, nova tab Ocorrências e renderização via componentes externos.
+**Implementado:**
+- `App.jsx`: imports de `OcorrenciasView`, `OperacionalView`, `PlanilhaView`
+- Sidebar `posCarga` set expandido: inclui `"ocorrencias"` (aparece na seção Pós-Carga)
+- Tab `ocorrencias` adicionada antes de `operacional` com ícone triângulo-alerta
+- Bloco `activeTab==="planilha"` (173 linhas) → `<PlanilhaView ctx={{...}} />`
+- Bloco `activeTab==="operacional"` (522 linhas) → `<OperacionalView ctx={{...}} />`
+- `activeTab==="ocorrencias"` adicionado → `<OcorrenciasView dados filtroOcorr abrirDetalhe />`
+- Build: ✓ 0 erros, 0 warnings
