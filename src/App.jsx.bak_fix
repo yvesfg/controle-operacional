@@ -118,7 +118,7 @@ export default function App() {
   const [diariaCols, setDiariaCols] = useState(() => {
     // Migration: padroniza diariaCols para 3 (Abr 2026)
     const MK = "co_diaria_cols_migv3";
-    if (!loadJSON(MK, false)) {
+    if (\!loadJSON(MK, false)) {
       saveJSON("co_diaria_cols", 3);
       saveJSON(MK, true);
       return 3;
