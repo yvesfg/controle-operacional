@@ -1,3 +1,15 @@
+## 2026-04-20 — Passo 4: Redesign Diárias
+
+**Solicitado:** Redesign da view Diárias seguindo documentação.
+
+**Implementado (App.jsx):**
+- KPI financeiros (Total Devido/Pago/A Pagar): labels DM Mono uppercase tracking 0.06em `var(--text3)`; valores Space Grotesk 700 tracking -0.03em
+- Status cards clicáveis (No Prazo/Perdeu Agenda/Sem Descarga): contador Space Grotesk 700 48px tracking -0.04em
+- Tabs Resumo/Planilha/Conferência: active `var(--surface)` + border `var(--border2)` + cor `var(--accent)`
+- Toggle Linhas/Blocos: active `var(--accent2)` + cor `var(--accent)`, font Space Grotesk
+- Dashboard mini panels Diárias/Descargas: valor Space Grotesk 700 tracking -0.03em
+- Build: ✓ 0 erros, 0 warnings
+
 ## 2026-04-20 — Passo 3: Dashboard + Fix CSS Warning
 
 **Solicitado:** Redesign do Dashboard e eliminar warning CSS do build.
