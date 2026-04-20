@@ -1,3 +1,17 @@
+## 2026-04-20 — Passo 2: Redesign Sidebar e Topbar
+
+**Solicitado:** Implementar Passo 2 do redesign — Sidebar e Topbar seguindo documentação.
+
+**Implementado (App.jsx):**
+- Sidebar: bg `var(--surface)`, border `var(--border)`, transition `cubic-bezier(0.4,0,0.2,1)`
+- Logo: truck SVG em caixa `var(--accent)` 36×36px + "YFGroup" Space Grotesk 700 + "CONTROLE OPERACIONAL" DM Mono
+- Nav: separador PÓS-CARGA entre tabs principais e Descarga/Diárias; tab "busca" oculta no sidebar
+- Items: hover `rgba(255,255,255,0.04)`, active `var(--accent2)` / `var(--accent)`, font Space Grotesk 13px
+- CSS adicionado: `.co-sidebar__section-lbl`, `.co-sidebar__section-line`, `.co-sidebar__badge-pill`, `.co-sidebar__badge-dot`
+- Footer: avatar gradiente `accent → cyan` com 2 iniciais do usuário
+- Topbar desktop/mobile: título Space Grotesk 700 20px `letter-spacing:-0.03em`, subtítulo DM Mono
+- index.html: corrigido byte `<\\!DOCTYPE` → `<\!DOCTYPE`
+
 
 ## 2026-04-20 — Passo 1: Design Tokens e Fontes (Redesign YFGroup)
 

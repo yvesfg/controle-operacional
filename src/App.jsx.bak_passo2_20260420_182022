@@ -2800,8 +2800,8 @@ export default function App() {
         .co-sidebar{
           position:fixed;top:0;left:0;bottom:0;z-index:100;
           width:220px;display:flex;flex-direction:column;
-          background:var(--surface);border-right:1px solid var(--border);
-          transition:width 0.25s cubic-bezier(0.4,0,0.2,1);overflow:hidden;flex-shrink:0;
+          background:${t.headerBg};border-right:1px solid ${t.borda};
+          transition:width 200ms ease;overflow:hidden;flex-shrink:0;
         }
         .co-sidebar--collapsed{width:64px}
 
@@ -2811,8 +2811,9 @@ export default function App() {
           flex-shrink:0;overflow:hidden;
         }
         .co-sidebar--collapsed .co-sidebar__logo{justify-content:center;padding:8px;gap:0}
-        .co-sidebar__logo-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;letter-spacing:-0.01em;color:var(--text);line-height:1;white-space:nowrap;overflow:hidden}
-        .co-sidebar__logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;font-weight:400;white-space:nowrap;margin-top:2px}
+        .co-sidebar__logo-name{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;color:${t.txt};line-height:1;white-space:nowrap;overflow:hidden}
+        .co-sidebar__logo-sub{font-size:8px;color:${t.txt2};letter-spacing:1.5px;text-transform:uppercase;font-weight:600;white-space:nowrap;margin-top:2px}
+        .co-sidebar__logo-sub span{color:${t.ouro};font-weight:700}
         .co-sidebar--collapsed .co-sidebar__logo-name,
         .co-sidebar--collapsed .co-sidebar__logo-sub{display:none}
 
@@ -2833,22 +2834,14 @@ export default function App() {
           display:flex;align-items:center;gap:10px;
           padding:8px 10px;border-radius:${DESIGN.r.sidebar}px;
           background:transparent;border:none;cursor:pointer;
-          color:var(--text2);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;
+          color:${t.txt2};font-family:${DESIGN.fnt.b};font-size:12px;font-weight:500;
           text-align:left;width:100%;white-space:nowrap;
           transition:all 180ms ease;min-height:36px;overflow:hidden;
         }
-        .co-sidebar__item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
-        .co-sidebar__item--active{background:var(--accent2);color:var(--accent)}
-        .co-sidebar__item--active .co-sidebar__ico svg{stroke:var(--accent)}
+        .co-sidebar__item:hover{background:${hexRgb(t.ouro,.05)};color:${t.txt}}
+        .co-sidebar__item--active{background:${hexRgb(t.ouro,.1)};color:${t.ouro}}
+        .co-sidebar__item--active .co-sidebar__ico svg{stroke:${t.ouro}}
         .co-sidebar--collapsed .co-sidebar__item{justify-content:center;padding:8px}
-        .co-sidebar__section-lbl{font-family:'DM Mono',monospace;font-size:9px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:14px 10px 6px;white-space:nowrap;overflow:hidden}
-        .co-sidebar__section-line{width:24px;height:1px;background:var(--border);margin:8px auto;display:none}
-        .co-sidebar--collapsed .co-sidebar__section-lbl{display:none}
-        .co-sidebar--collapsed .co-sidebar__section-line{display:block}
-        .co-sidebar__badge-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--red);display:none}
-        .co-sidebar--collapsed .co-sidebar__badge-dot{display:block}
-        .co-sidebar__badge-pill{background:var(--red);color:#fff;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:auto;flex-shrink:0}
-        .co-sidebar--collapsed .co-sidebar__badge-pill{display:none}
         .co-sidebar--collapsed .co-sidebar__item-lbl{display:none}
         .co-sidebar__ico{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:20px;height:20px}
         .co-sidebar__item-lbl{flex:1}
@@ -2984,13 +2977,13 @@ export default function App() {
       <aside className={`co-sidebar${isWide&&sidebarCollapsed?" co-sidebar--collapsed":""}${!isWide&&mobileSidebarExpanded?" co-sidebar--mob-expanded":""}`}>
           {/* ── Logo ── */}
           <div className="co-sidebar__logo">
-            <div style={{width:36,height:36,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <div style={{width:36,height:36,borderRadius:DESIGN.r.logo,background:"#000",border:"1px solid rgba(243,186,47,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0,overflow:"hidden"}}>
+              <img src={customLogo||DEFAULT_LOGO} alt="Logo" style={{width:"100%",height:"100%",objectFit:"cover",transform:"scale(1.45)",transformOrigin:"center"}}/>
             </div>
             {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
               <div style={{overflow:"hidden",flex:1,minWidth:0}}>
-                <div className="co-sidebar__logo-name">YFGroup</div>
-                <div className="co-sidebar__logo-sub">CONTROLE OPERACIONAL</div>
+                <div className="co-sidebar__logo-name">OPERACIONAL</div>
+                <div className="co-sidebar__logo-sub">by <span>YFGroup</span></div>
               </div>
             )}
             <button
@@ -3007,44 +3000,34 @@ export default function App() {
 
           {/* ── Nav items ── */}
           <nav className="co-sidebar__nav">
-            {(()=>{
-              const posCarga = new Set(["diarias","descarga"]);
-              const hidden   = new Set(["busca"]);
-              const mainTabs = tabs.filter(tb=>!posCarga.has(tb.k)&&!hidden.has(tb.k));
-              const pcTabs   = tabs.filter(tb=>posCarga.has(tb.k));
-              const renderItem = (tb) => {
-                const ativo = activeTab===tb.k;
-                return (
-                  <button
-                    key={tb.k}
-                    className={`co-sidebar__item${ativo?" co-sidebar__item--active":""}`}
-                    onClick={()=>{setActiveTab(tb.k);if(!isWide)setMobileSidebarExpanded(false);}}
-                    title={(isWide&&sidebarCollapsed)||!isWide?tb.l:undefined}
-                    style={{position:"relative"}}
-                  >
-                    <span className="co-sidebar__ico">
-                      {typeof tb.ico==="function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
-                    </span>
-                    <span className="co-sidebar__item-lbl">{tb.l}</span>
-                  </button>
-                );
-              };
-              return (<>
-                {mainTabs.map(renderItem)}
-                <div className="co-sidebar__section-lbl">Pós-Carga</div>
-                <div className="co-sidebar__section-line"/>
-                {pcTabs.map(renderItem)}
-              </>);
-            })()}
+            {tabs.map(tb=>{
+              const ativo = activeTab===tb.k;
+              return (
+                <button
+                  key={tb.k}
+                  className={`co-sidebar__item${ativo?" co-sidebar__item--active":""}`}
+                  onClick={()=>{setActiveTab(tb.k);if(!isWide)setMobileSidebarExpanded(false);}}
+                  title={(isWide&&sidebarCollapsed)||!isWide?tb.l:undefined}
+                >
+                  <span className="co-sidebar__ico">
+                    {typeof tb.ico==="function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
+                  </span>
+                  <span className="co-sidebar__item-lbl">{tb.l}</span>
+                </button>
+              );
+            })}
           </nav>
 
           {/* ── Footer — utilitários + usuário ── */}
           <div className="co-sidebar__footer">
             {/* User info */}
             <div className="co-sidebar__user">
-              <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:12,fontWeight:700,color:"#fff",fontFamily:"'Space Grotesk',sans-serif",letterSpacing:"-0.01em"}}>
-                {(usuarioLogado||"YF").slice(0,2).toUpperCase()}
-              </div>
+              <span style={{flexShrink:0}}>
+                {perfil==="admin"
+                  ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,16,1.8)
+                  : hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,16,2)
+                }
+              </span>
               <div className="co-sidebar__user-info">
                 <div className="co-sidebar__user-name">{usuarioLogado||perfil}</div>
                 <div className="co-sidebar__user-role">{perfil}</div>
@@ -3178,7 +3161,7 @@ export default function App() {
           /* ── Desktop topbar: título da aba + status + alertas ── */
           <>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,letterSpacing:2,color:t.txt,lineHeight:1}}>
                 {tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}
               </div>
               <span style={{fontSize:9,fontWeight:700,letterSpacing:.8,padding:"2px 8px",borderRadius:DESIGN.r.badge,
@@ -3208,8 +3191,8 @@ export default function App() {
           /* ── Mobile topbar: aba ativa + ações ── */
           <>
             <div>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CONTROLE OPERACIONAL</div>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.txt,lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
+              <div style={{fontSize:8,color:t.txt2,letterSpacing:1,textTransform:"uppercase",fontWeight:600}}>CONTROLE OPS · <span style={{color:t.ouro}}>YFGroup</span></div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
               <div title={usuarioLogado||perfil} style={{...css.hBtn,borderColor:perfil==="admin"?`rgba(240,185,11,.45)`:t.borda,color:perfil==="admin"?t.ouro:t.txt2,padding:"6px 7px",background:perfil==="admin"?`rgba(240,185,11,.07)`:"transparent"}}>
