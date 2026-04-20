@@ -17,6 +17,9 @@ import { exportCSV, exportODS, exportPDF, ExportMenu,
 import Toast from './components/Toast.jsx';
 import AlterarSenhaAdmin from './components/AlterarSenhaAdmin.jsx';
 import ReportBuilder from './relatorios/ReportBuilder.jsx';
+import OcorrenciasView from './views/OcorrenciasView.jsx';
+import OperacionalView from './views/OperacionalView.jsx';
+import PlanilhaView    from './views/PlanilhaView.jsx';
 
 
 // ══════════════════════════════════════════════
@@ -1926,6 +1929,8 @@ export default function App() {
       ico:(a)=>svgIco(a,<><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>)},
     {k:"descarga", l:"Carga/Descarga", perm:"descarga",
       ico:(a)=>svgIco(a,<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.04 8.73-5.04M12 22V12"/></>)},
+    {k:"ocorrencias", l:"Ocorrências",
+      ico:(a)=>svgIco(a,<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>)},
     {k:"operacional", l:"Operac.",
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>)},
     {k:"motoristas", l:"Motori.",
@@ -3012,7 +3017,7 @@ export default function App() {
           {/* ── Nav items ── */}
           <nav className="co-sidebar__nav">
             {(()=>{
-              const posCarga = new Set(["diarias","descarga"]);
+              const posCarga = new Set(["diarias","descarga","ocorrencias"]);
               const hidden   = new Set(["busca"]);
               const mainTabs = tabs.filter(tb=>!posCarga.has(tb.k)&&!hidden.has(tb.k));
               const pcTabs   = tabs.filter(tb=>posCarga.has(tb.k));
@@ -3916,177 +3921,19 @@ export default function App() {
         })()}
 
         {/* ═══ PLANILHA ═══ */}
-        {activeTab === "planilha" && (()=>{
-          // colunas com chave de campo para ordenação
-          const COLS = [
-            {h:"DT",        k:"dt",         w:"11%"},
-            {h:"Motorista", k:"nome",        w:"18%"},
-            {h:"Placa",     k:"placa",       w:"11%"},
-            {h:"Origem",    k:"origem",      w:"13%"},
-            {h:"Destino",   k:"destino",     w:"13%"},
-            {h:"Carreg.",   k:"data_carr",   w:"11%"},
-            {h:"Agenda",    k:"data_agenda", w:"11%"},
-            {h:"Desc.",     k:"data_desc",   w:"11%"},
-            {h:"Status",    k:"status",      w:"11%"},
-          ];
-          // --- função de ordenação ---
-          const sortarDados = (dados) => {
-            if (!planilhaSortKey) return dados;
-            return [...dados].sort((a, b) => {
-              const va = (a[planilhaSortKey] || "").toString().toLowerCase();
-              const vb = (b[planilhaSortKey] || "").toString().toLowerCase();
-              // datas no formato DD/MM/YYYY → converte para comparação correta
-              const isDate = /^\d{2}\/\d{2}\/\d{4}/.test(va) || /^\d{2}\/\d{2}\/\d{4}/.test(vb);
-              if (isDate) {
-                const toYMD = s => { if(!s) return ""; const p=s.split("/"); return p.length===3?`${p[2]}${p[1]}${p[0]}`:s; };
-                const da = toYMD(va), db = toYMD(vb);
-                return planilhaSortDir==="asc" ? da.localeCompare(db) : db.localeCompare(da);
-              }
-              return planilhaSortDir==="asc" ? va.localeCompare(vb,"pt-BR",{numeric:true}) : vb.localeCompare(va,"pt-BR",{numeric:true});
-            });
-          };
-          // ── Filtros de Ano / Mês / Origem ──
-          const parseYMfilt = s => {
-            if(!s) return null;
-            if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1]};}
-            if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1]};}
-            return null;
-          };
-          const anosDisp   = [...new Set(DADOS.map(r=>{const ym=parseYMfilt(r.data_carr||r.data_desc||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-          const mesesDisp  = [...new Set(DADOS.filter(r=>{if(!planilhaFiltroAno)return true;const ym=parseYMfilt(r.data_carr||r.data_desc||"");return ym?.ano===planilhaFiltroAno;}).map(r=>{const ym=parseYMfilt(r.data_carr||r.data_desc||"");return ym?.mes;}).filter(Boolean))].sort();
-          const origensDisp= [...new Set(DADOS.map(r=>(r.origem||"").trim()).filter(Boolean))].sort();
-          const MESES_PT = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
-          const dadosFiltrados = DADOS.filter(r => {
-            const ym = parseYMfilt(r.data_carr||r.data_desc||"");
-            if(planilhaFiltroAno  && ym?.ano  !== planilhaFiltroAno)  return false;
-            if(planilhaFiltroMes  && ym?.mes  !== planilhaFiltroMes)  return false;
-            if(planilhaFiltroOrigem && planilhaFiltroOrigem!=="todas" && (r.origem||"").trim()!==planilhaFiltroOrigem) return false;
-            return true;
-          });
-          const dadosSortados = sortarDados(dadosFiltrados);
-          const REGISTROS_POR_PAGINA = 200;
-          const totalPaginas = Math.ceil(dadosSortados.length / REGISTROS_POR_PAGINA);
-          const paginaAtual = Math.max(1, Math.min(planilhaPagina, totalPaginas || 1));
-          const inicio = (paginaAtual - 1) * REGISTROS_POR_PAGINA;
-          const fim = inicio + REGISTROS_POR_PAGINA;
-          const dadosExibir = dadosSortados.slice(inicio, fim);
-          const toggleSort = (k) => {
-            if (planilhaSortKey === k) {
-              setPlanilhaSortDir(d => d==="asc"?"desc":"asc");
-            } else {
-              setPlanilhaSortKey(k);
-              setPlanilhaSortDir("asc");
-            }
-          };
-          return (
-          <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
-            {/* ── barra de filtros: Ano / Mês / Origem ── */}
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",background:t.card,borderBottom:`1px solid ${t.borda}`,flexShrink:0,flexWrap:"wrap"}}>
-              <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-              <select value={planilhaFiltroAno} onChange={e=>{setPlanilhaFiltroAno(e.target.value);setPlanilhaPagina(1);}}
-                style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${planilhaFiltroAno?t.ouro:t.borda}`,background:planilhaFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:planilhaFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
-                <option value="">Todos os Anos</option>
-                {anosDisp.map(a=><option key={a} value={a}>{a}</option>)}
-              </select>
-              <select value={planilhaFiltroMes} onChange={e=>{setPlanilhaFiltroMes(e.target.value);setPlanilhaPagina(1);}}
-                style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${planilhaFiltroMes?t.ouro:t.borda}`,background:planilhaFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:planilhaFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
-                <option value="">Todos os Meses</option>
-                {mesesDisp.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
-              </select>
-              <select value={planilhaFiltroOrigem} onChange={e=>{setPlanilhaFiltroOrigem(e.target.value);setPlanilhaPagina(1);}}
-                style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${planilhaFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:planilhaFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:planilhaFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:200}}>
-                <option value="todas">Todas as Origens</option>
-                {origensDisp.map(o=><option key={o} value={o}>{o}</option>)}
-              </select>
-              {(planilhaFiltroAno||planilhaFiltroMes||planilhaFiltroOrigem!=="todas") && (
-                <button onClick={()=>{setPlanilhaFiltroAno("");setPlanilhaFiltroMes("");setPlanilhaFiltroOrigem("todas");setPlanilhaPagina(1);}}
-                  style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
-                  ✕ Limpar
-                </button>
-              )}
-              <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600}}>
-                {dadosFiltrados.length} de {DADOS.length} registros
-              </span>
-            </div>
-            {/* toolbar da planilha */}
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:t.headerBg,borderBottom:`1px solid ${t.borda}`,flexShrink:0,flexWrap:"wrap",gap:8}}>
-              <span style={{fontSize:10,color:t.txt2,fontWeight:600,letterSpacing:.5}}>
-                {dadosFiltrados.length} registros · página {paginaAtual} de {totalPaginas}
-                {planilhaSortKey && <span style={{color:t.ouro,marginLeft:8}}>ordenado por {planilhaSortKey} {planilhaSortDir==="asc"?"↑":"↓"} <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}} style={{background:"none",border:"none",color:t.txt2,cursor:"pointer",fontSize:10,padding:"0 2px",verticalAlign:"middle"}}>✕</button></span>}
-              </span>
-              <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>⏮</button>
-                <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===1?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===1?"not-allowed":"pointer",background:"transparent",color:paginaAtual===1?t.txt2:t.ouro,fontWeight:600}}>◀</button>
-                <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>▶</button>
-                <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={{padding:"4px 8px",fontSize:9,border:`1px solid ${paginaAtual===totalPaginas?t.borda:t.ouro}`,borderRadius:4,cursor:paginaAtual===totalPaginas?"not-allowed":"pointer",background:"transparent",color:paginaAtual===totalPaginas?t.txt2:t.ouro,fontWeight:600}}>⏭</button>
-              </div>
-              <ExportMenu
-                dados={dadosFiltrados}
-                cols={[{k:"dt",l:"DT"},{k:"nome",l:"Motorista"},{k:"cpf",l:"CPF"},{k:"placa",l:"Placa"},{k:"origem",l:"Origem"},{k:"destino",l:"Destino"},{k:"data_carr",l:"Carregamento"},{k:"data_agenda",l:"Agenda"},{k:"data_desc",l:"Descarga"},{k:"status",l:"Status"},{k:"vl_cte",l:"VL CTE"},{k:"vl_contrato",l:"VL Contrato"},{k:"cte",l:"CTE"},{k:"mdf",l:"MDF"}]}
-                filename="planilha-operacional"
-                titulo="Planilha Operacional"
-              />
-            </div>
-            {/* tabela full-width */}
-            <div style={{flex:1,overflowX:"auto",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,tableLayout:"fixed",minWidth:480}}>
-                <colgroup>
-                  {COLS.map(c => <col key={c.k} style={{width:c.w}} />)}
-                </colgroup>
-                <thead>
-                  <tr style={{background:t.tableHeader}}>
-                    {COLS.map(c => {
-                      const ativo = planilhaSortKey === c.k;
-                      return (
-                        <th key={c.k}
-                          onClick={()=>toggleSort(c.k)}
-                          title={`Ordenar por ${c.h}`}
-                          style={{
-                            padding:"9px 6px",textAlign:"left",fontSize:8,textTransform:"uppercase",
-                            letterSpacing:.8,color:ativo?t.ouro:t.txt2,
-                            borderBottom:`2px solid ${ativo?t.ouro:t.borda}`,
-                            whiteSpace:"nowrap",position:"sticky",top:0,zIndex:1,
-                            background:t.tableHeader,overflow:"hidden",textOverflow:"ellipsis",
-                            cursor:"pointer",userSelect:"none",
-                            transition:"color .15s, border-color .15s",
-                          }}
-                        >
-                          <span style={{display:"flex",alignItems:"center",gap:3}}>
-                            {c.h}
-                            <span style={{fontSize:9,lineHeight:1,opacity:ativo?1:.35,color:ativo?t.ouro:t.txt2}}>
-                              {ativo ? (planilhaSortDir==="asc"?"▲":"▼") : "⇅"}
-                            </span>
-                          </span>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {dadosExibir.map((r,i) => (
-                    <tr key={i} style={{cursor:"pointer",background:i%2===0?t.bg:t.bgAlt}} onClick={()=>{
-                      setPlanilhaDetalheReg(r);
-                    }}
-                    onMouseOver={e=>{e.currentTarget.style.background=`rgba(240,185,11,.05)`;}}
-                    onMouseOut={e=>{e.currentTarget.style.background=i%2===0?t.bg:t.bgAlt;}}
-                    >
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.ouro,fontWeight:700,fontSize:11,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.dt}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt,fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.nome||"—"}>{r.nome||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:1.5,color:t.verde,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.placa||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.origem||"—"}>{r.origem||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.destino||"—"}>{r.destino||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.ouro,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.data_carr||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.data_agenda||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:r.data_desc?t.verde:t.danger,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.data_desc||"—"}</td>
-                      <td style={{padding:"6px 6px",borderBottom:`1px solid ${t.borda}22`,color:t.txt2,fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.status||"—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          );
-        })()}
+        {activeTab === "planilha" && (
+          <PlanilhaView ctx={{
+            DADOS,
+            planilhaSortKey, setPlanilhaSortKey,
+            planilhaSortDir, setPlanilhaSortDir,
+            planilhaPagina, setPlanilhaPagina,
+            planilhaDetalheReg, setPlanilhaDetalheReg,
+            planilhaFiltroAno, setPlanilhaFiltroAno,
+            planilhaFiltroMes, setPlanilhaFiltroMes,
+            planilhaFiltroOrigem, setPlanilhaFiltroOrigem,
+            t, isMobile, ExportMenu,
+          }} />
+        )}
 
         {/* ═══ DIÁRIAS ═══ */}
         {activeTab === "diarias" && (
@@ -4919,525 +4766,38 @@ export default function App() {
         )}
 
         {/* ═══ OPERACIONAL ═══ */}
-        {activeTab === "operacional" && (()=>{
-          const inpO = {...css.inp, fontSize:12, padding:"8px 10px"};
-          const lblO = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
-          const saveSGS = (arr) => { setSgsItems(arr); saveJSON("co_sgs", arr); };
-          const saveAponts = async (arr, novoItem = null) => {
-            setApontItems(arr);
-            saveJSON("co_aponts", arr);
-            if (novoItem) {
-              const conn = getConexao();
-              if (conn) {
-                try {
-                  await supaFetch(conn.url, conn.key, "POST",
-                    `${TABLE_APOINTS}?on_conflict=apontamento`,
-                    [apontToSupabase(novoItem)]);
-                } catch(e) { console.warn("Apontamento salvo apenas local:", e.message); }
-              }
-            }
-          };
-          const deleteApontSupabase = async (apontamento) => {
-            const conn = getConexao();
-            if (conn && apontamento) {
-              try {
-                await supaFetch(conn.url, conn.key, "DELETE",
-                  `${TABLE_APOINTS}?apontamento=eq.${encodeURIComponent(apontamento)}`);
-              } catch(e) { console.warn("Erro ao excluir no Supabase:", e.message); }
-            }
-          };
+        {activeTab === "operacional" && (
+          <OperacionalView ctx={{
+            operSubTab, setOperSubTab,
+            sgsItems, setSgsItems,
+            sgsForm, setSgsForm, sgsFormOpen, setSgsFormOpen,
+            expandedSgsId, setExpandedSgsId,
+            sgsRetornoForm, setSgsRetornoForm,
+            apontItems, setApontItems,
+            apontForm, setApontForm, apontFormOpen, setApontFormOpen,
+            apontLoading,
+            relCtrlDccOpen, setRelCtrlDccOpen,
+            diariasData,
+            abrirDetalhe, showToast, getConexao,
+            fmtMoeda, parseData, inputToBr, diffDias,
+            saveJSON, supaFetch, apontToSupabase, TABLE_APOINTS,
+            t, isMobile, theme, usuarioLogado, perfil,
+            css, hIco,
+          }} />
+        )}
 
-          const subBtns = [
-            {k:"sgs",svg:<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,l:"SGS · Chamados",sub:"Chamados SGS"},
-            {k:"diarias_id",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"ID Diárias",sub:"IDs vinculados"},
-            {k:"ocorrencias",svg:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,l:"Ocorrências",sub:"Histórico geral"},
-            {k:"apontamentos",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,l:"Apontamentos",sub:"Descargas/Stretch"},
-          ];
-
-          return (
-            <div>
-              {/* Sub-botões */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:16}}>
-                {subBtns.map(sb=>(
-                  <button key={sb.k} onClick={()=>setOperSubTab(sb.k)} style={{border:`1.5px solid ${operSubTab===sb.k?t.azul:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:operSubTab===sb.k?`rgba(22,119,255,.08)`:t.card,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",fontFamily:"inherit"}}>
-                    {hIco(sb.svg,operSubTab===sb.k?t.azulLt:t.txt2,24)}
-                    <span style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:operSubTab===sb.k?t.azulLt:t.txt}}>{sb.l}</span>
-                    <span style={{fontSize:8,color:t.txt2}}>{sb.sub}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* ──── SGS CHAMADOS ──── */}
-              {operSubTab==="sgs" && (
-                <div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                    <div style={{...css.secTitle,margin:0}}>{hIco(<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,t.ouro,12)} Chamados SGS <span style={{flex:1,height:1,background:t.borda}} /></div>
-                    <button onClick={()=>{setSgsForm({numero:"",data_chamado:"",ultimo_retorno:"",descricao:"",dt_rel:"",status:"aberto"});setSgsFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
-                  </div>
-
-                  {sgsFormOpen && (
-                    <div style={{background:t.card,borderRadius:12,border:`1px solid ${t.azul}44`,padding:14,marginBottom:14}}>
-                      <div style={{fontWeight:700,color:t.azulLt,fontSize:12,marginBottom:10}}>📞 Registrar Chamado SGS</div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                        <div><label style={lblO}>Nº do Chamado</label><input value={sgsForm.numero} onChange={e=>setSgsForm(p=>({...p,numero:e.target.value}))} placeholder="SGS-000000" style={inpO} /></div>
-                        <div><label style={lblO}>DT Relacionado</label><input value={sgsForm.dt_rel} onChange={e=>setSgsForm(p=>({...p,dt_rel:e.target.value}))} placeholder="Ex: 12345678" style={inpO} /></div>
-                        <div><label style={lblO}>Data do Chamado</label><input type="date" value={sgsForm.data_chamado} onChange={e=>setSgsForm(p=>({...p,data_chamado:e.target.value}))} style={inpO} /></div>
-                        <div><label style={lblO}>Último Retorno</label><input type="date" value={sgsForm.ultimo_retorno} onChange={e=>setSgsForm(p=>({...p,ultimo_retorno:e.target.value}))} style={inpO} /></div>
-                        <div style={{gridColumn:"1/-1"}}><label style={lblO}>Descrição</label><textarea value={sgsForm.descricao} onChange={e=>setSgsForm(p=>({...p,descricao:e.target.value}))} rows={2} style={{...inpO,resize:"vertical"}} /></div>
-                        <div>
-                          <label style={lblO}>Status</label>
-                          <select value={sgsForm.status} onChange={e=>setSgsForm(p=>({...p,status:e.target.value}))} style={{...inpO,appearance:"none"}}>
-                            <option value="aberto">🔴 Aberto</option>
-                            <option value="andamento">🟡 Em Andamento</option>
-                            <option value="encerrado">🟢 Encerrado</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>setSgsFormOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:8,padding:"8px 12px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
-                        <button onClick={()=>{
-                          if(!sgsForm.numero){showToast("⚠️ Informe o nº do chamado","warn");return;}
-                          const id = Date.now();
-                          const nova=[{...sgsForm,id,criado_em:new Date().toISOString(),usuario:usuarioLogado||perfil},...sgsItems];
-                          saveSGS(nova); setSgsFormOpen(false);
-                          showToast("✅ Chamado registrado!","ok");
-                        }} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>💾 Salvar Chamado</button>
-                      </div>
-                    </div>
-                  )}
-
-                  {sgsItems.length===0?(
-                    <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📞</div><div style={{fontSize:13,color:t.txt2}}>Nenhum chamado SGS registrado</div></div>
-                  ):(
-                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                      {sgsItems.map((s,i)=>{
-                        const statusC = s.status==="encerrado"?t.verde:s.status==="andamento"?t.ouro:t.danger;
-                        const statusIco = s.status==="encerrado"?"🟢":s.status==="andamento"?"🟡":"🔴";
-                        const retornos = Array.isArray(s.retornos) ? s.retornos : [];
-                        const ultimoRet = retornos.length>0 ? retornos[retornos.length-1] : null;
-                        const dataUltimoRet = ultimoRet?.data || s.ultimo_retorno;
-                        const diasSemRetorno = dataUltimoRet ? diffDias(parseData(inputToBr(dataUltimoRet)), new Date()) : null;
-                        const alertaRetorno = diasSemRetorno !== null && diasSemRetorno > 5;
-                        const isExpanded = expandedSgsId === (s.id||i);
-                        const toggleExpand = () => {
-                          setExpandedSgsId(isExpanded ? null : (s.id||i));
-                          setSgsRetornoForm({data:"",descricao:""});
-                        };
-                        return (
-                          <div key={s.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${isExpanded?statusC:t.borda}`,borderLeft:`3px solid ${statusC}`,overflow:"hidden",transition:"border .2s"}}>
-                            {/* Cabeçalho do card — clicável para expandir */}
-                            <div onClick={toggleExpand} style={{padding:12,cursor:"pointer"}}>
-                              <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-                                <div style={{flex:1}}>
-                                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:1,color:t.ouro}}>{s.numero||"—"}</span>
-                                    <span style={{fontSize:9,fontWeight:700,color:statusC,background:`${statusC}18`,border:`1px solid ${statusC}33`,borderRadius:4,padding:"2px 7px"}}>{statusIco} {s.status?.toUpperCase()||"ABERTO"}</span>
-                                    {s.dt_rel && <span style={{fontSize:9,color:t.txt2}}>DT: {s.dt_rel}</span>}
-                                    {alertaRetorno && <span style={{fontSize:9,color:t.danger,fontWeight:700,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ {diasSemRetorno}d sem retorno</span>}
-                                    <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,flexShrink:0}}>{isExpanded?"▲":"▼"}</span>
-                                  </div>
-                                  <div style={{fontSize:11,color:t.txt2,marginTop:3,lineHeight:1.5}}>
-                                    📅 Chamado: <strong style={{color:t.txt}}>{s.data_chamado?new Date(s.data_chamado+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</strong>
-                                    {dataUltimoRet && <> · 🔄 Último retorno: <strong style={{color:t.txt}}>{new Date(dataUltimoRet+"T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
-                                    {retornos.length>0 && <span style={{marginLeft:6,fontSize:9,background:`rgba(240,185,11,.1)`,color:t.ouro,borderRadius:4,padding:"1px 5px"}}>{retornos.length} retorno{retornos.length>1?"s":""}</span>}
-                                  </div>
-                                  {s.descricao && <div style={{fontSize:11,color:t.txt,marginTop:4,lineHeight:1.4}}>{s.descricao}</div>}
-                                </div>
-                                <div style={{display:"flex",gap:5,flexShrink:0}} onClick={e=>e.stopPropagation()}>
-                                  <button onClick={()=>{const a=[...sgsItems];a[i]={...a[i],status:a[i].status==="encerrado"?"aberto":"encerrado"};saveSGS(a);}} style={{background:s.status==="encerrado"?`rgba(246,70,93,.08)`:`rgba(2,192,118,.08)`,border:`1px solid ${s.status==="encerrado"?t.danger:t.verde}33`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{s.status==="encerrado"?"🔴":"🟢"}</button>
-                                  <button onClick={()=>{if(confirm("Excluir este chamado?")){const n=[...sgsItems];n.splice(i,1);saveSGS(n);}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>🗑️</button>
-                                </div>
-                              </div>
-                            </div>
-                            {/* Seção expandida: retornos + form */}
-                            {isExpanded && (
-                              <div style={{borderTop:`1px solid ${t.borda}`,padding:"10px 12px",background:`rgba(240,185,11,.02)`}}>
-                                <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.ouro,marginBottom:8}}>🔄 Histórico de Retornos</div>
-                                {retornos.length===0 ? (
-                                  <div style={{fontSize:10,color:t.txt2,marginBottom:10}}>Nenhum retorno registrado ainda.</div>
-                                ) : (
-                                  <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10}}>
-                                    {retornos.map((r,ri)=>(
-                                      <div key={ri} style={{display:"flex",alignItems:"flex-start",gap:8,background:t.card2,borderRadius:7,padding:"7px 10px",border:`1px solid ${t.borda}`}}>
-                                        <span style={{fontSize:9,fontWeight:700,color:t.azulLt,whiteSpace:"nowrap"}}>{r.data?new Date(r.data+"T12:00:00").toLocaleDateString("pt-BR"):"-"}</span>
-                                        <span style={{fontSize:10,color:t.txt,flex:1}}>{r.descricao||"-"}</span>
-                                        <button onClick={()=>{const a=[...sgsItems];a[i]={...a[i],retornos:retornos.filter((_,j)=>j!==ri),ultimo_retorno:retornos.filter((_,j)=>j!==ri).at(-1)?.data||s.data_chamado||""};saveSGS(a);}} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:11,flexShrink:0,padding:2}}>✕</button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                                {/* Form inline para novo retorno */}
-                                <div style={{background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid rgba(240,185,11,.2)`}}>
-                                  <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:6}}>＋ NOVO RETORNO</div>
-                                  <div style={{display:"grid",gridTemplateColumns:"130px 1fr auto",gap:6,alignItems:"end"}}>
-                                    <div>
-                                      <div style={{fontSize:8,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Data</div>
-                                      <input type="date" value={sgsRetornoForm.data} onChange={e=>setSgsRetornoForm(p=>({...p,data:e.target.value}))} style={{...css.inp,fontSize:11,padding:"6px 8px",width:"100%"}} />
-                                    </div>
-                                    <div>
-                                      <div style={{fontSize:8,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Descrição</div>
-                                      <input value={sgsRetornoForm.descricao} onChange={e=>setSgsRetornoForm(p=>({...p,descricao:e.target.value}))} placeholder="Resumo do retorno..." style={{...css.inp,fontSize:11,padding:"6px 8px",width:"100%"}} onKeyDown={e=>{
-                                        if(e.key==="Enter"&&sgsRetornoForm.data){
-                                          const novoRet={data:sgsRetornoForm.data,descricao:sgsRetornoForm.descricao};
-                                          const novosRets=[...retornos,novoRet];
-                                          const a=[...sgsItems];a[i]={...a[i],retornos:novosRets,ultimo_retorno:sgsRetornoForm.data};saveSGS(a);setSgsRetornoForm({data:"",descricao:""});
-                                        }
-                                      }} />
-                                    </div>
-                                    <button onClick={()=>{
-                                      if(!sgsRetornoForm.data){showToast("⚠️ Informe a data do retorno","warn");return;}
-                                      const novoRet={data:sgsRetornoForm.data,descricao:sgsRetornoForm.descricao};
-                                      const novosRets=[...retornos,novoRet];
-                                      const a=[...sgsItems];a[i]={...a[i],retornos:novosRets,ultimo_retorno:sgsRetornoForm.data};saveSGS(a);setSgsRetornoForm({data:"",descricao:""});
-                                    }} style={{...css.btnGold,padding:"6px 12px",fontSize:11,flexShrink:0}}>Salvar</button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ──── ID DIÁRIAS ──── */}
-              {operSubTab==="diarias_id" && (
-                <div>
-                  <div style={{...css.secTitle,marginBottom:12}}>{hIco(<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,t.ouro,12)} ID Diárias <span style={{flex:1,height:1,background:t.borda}} /></div>
-                  {diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").length===0?(
-                    <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>🛏️</div><div style={{fontSize:13,color:t.txt2}}>Nenhum registro com diária identificado</div><div style={{fontSize:10,color:t.txt2,marginTop:4}}>Preencha o campo "Chegada" para calcular diárias.</div></div>
-                  ):(
-                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                      {/* Alerta de verificação: RO pendente */}
-                      {(()=>{
-                        const semRo = diariasData.items.filter(i=>(i.tipo==="diaria"||i.tipo==="atraso")&&!i.r.ro);
-                        if(semRo.length===0) return null;
-                        return (
-                          <div style={{background:`rgba(255,152,0,.07)`,border:`1px solid rgba(255,152,0,.28)`,borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
-                            <span style={{fontSize:16,flexShrink:0}}>⚠️</span>
-                            <div>
-                              <div style={{fontSize:11,color:"#f57c00",fontWeight:700}}>{semRo.length} DT{semRo.length>1?"s":""} com diária sem RO preenchido</div>
-                              <div style={{fontSize:9,color:t.txt2,marginTop:2}}>Preencha o campo RO em Documentação para cada DT. DTs: {semRo.map(i=>i.r.dt).join(", ")}</div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      {diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").map(({r,tipo,dias},i)=>{
-                        const semRo = !r.ro;
-                        const tipoLabel = tipo==="diaria" ? `🛏️ ${dias||0}d de diária` : `⚠️ Perdeu Agenda`;
-                        const tipoColor = tipo==="diaria" ? t.danger : t.ouro;
-                        return (
-                        <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${tipoColor}`,padding:12,cursor:"pointer"}}>
-                          <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                            {r.nome||"—"}
-                            <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(246,70,93,.08)`,color:tipoColor,border:`1px solid ${tipoColor}33`}}>{tipoLabel}</span>
-                            {semRo && <span style={{padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.07)`,color:"#f57c00",border:`1px solid rgba(255,152,0,.3)`}}>⚠️ RO vazio</span>}
-                            <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>›</span>
-                          </div>
-                          <div style={{fontSize:11,color:t.txt2}}>
-                            🔢 {r.dt} · 📅 Agenda: {r.data_agenda||"—"} · 🏁 Descarga: {r.data_desc||"—"}
-                          </div>
-                          {(r.diaria_prev||r.diaria_pg) && (
-                            <div style={{display:"flex",gap:8,marginTop:8,flexWrap:"wrap"}}>
-                              <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.danger}}>
-                                Devido: <strong>{fmtMoeda(r.diaria_prev)}</strong>
-                              </span>
-                              <span style={{background:`rgba(2,192,118,.08)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.verde}}>
-                                Pago: <strong>{fmtMoeda(r.diaria_pg)}</strong>
-                              </span>
-                              {r.diaria_prev && r.diaria_pg && (()=>{
-                                const saldo = (parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);
-                                return saldo < 0 ? (
-                                  <span style={{background:`rgba(240,185,11,.08)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.ouro}}>
-                                    A pagar: <strong>{fmtMoeda(Math.abs(saldo))}</strong>
-                                  </span>
-                                ) : (
-                                  <span style={{background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.15)`,borderRadius:6,padding:"3px 8px",fontSize:10,color:t.verde}}>
-                                    ✓ Quitado
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                          )}
-                        </div>
-                      );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ──── OCORRÊNCIAS ──── */}
-              {operSubTab==="ocorrencias" && (()=>{
-                // Monta lista de DTs com qualquer tipo de ocorrência
-                const pjOcorr = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
-                const diariasSet = new Set(diariasData.items.filter(it=>it.tipo==="diaria"||it.tipo==="atraso").map(it=>it.r.dt));
-                const dccSet = new Set(DADOS.filter(r=>{
-                  if((r.status||"").toUpperCase()==="CANCELADA") return false;
-                  const dccs = pjOcorr(r.minutas_dcc,[]);
-                  return dccs.some(m=>m.cte||m.mdf||m.num||m.valor)||!!(r.cte_comp||r.mdf_comp);
-                }).map(r=>r.dt));
-                // Build entries (excluir DTs Canceladas)
-                const ocorrEntries = DADOS.filter(r=>(r.status||"").toUpperCase()!=="CANCELADA").map(r=>{
-                  const badges = [];
-                  const hasOcorrLocal = (()=>{try{const v=localStorage.getItem(`co_ocorr_${r.dt}`);if(!v)return false;const arr=JSON.parse(v);return Array.isArray(arr)&&arr.length>0;}catch{return false;}})();
-                  if(r.sgs)               badges.push({cor:t.ouro,   label:`SGS: ${r.sgs}`});
-                  if(hasOcorrLocal)       badges.push({cor:"#E8820C", label:"Ocorrência"});
-                  if(diariasSet.has(r.dt)) badges.push({cor:t.danger, label:"Diária"});
-                  if(dccSet.has(r.dt))    badges.push({cor:t.azulLt,  label:"DCC"});
-                  if(r.data_agenda&&!r.data_desc){
-                    const da=parseData(r.data_agenda),hoje2=new Date();hoje2.setHours(0,0,0,0);
-                    const dif=da?Math.floor((hoje2-da)/(1000*60*60*24)):0;
-                    if(dif>=1) badges.push({cor:t.danger,label:`Atraso ${dif}d`});
-                  }
-                  return badges.length>0 ? {r, badges} : null;
-                }).filter(Boolean);
-                // Sort: atraso/diaria first, then sgs, then dcc, then ocorr
-                const prioScore = b => {
-                  if(b.label.startsWith("Atraso")||b.label==="Diária") return 0;
-                  if(b.label.startsWith("SGS"))    return 1;
-                  if(b.label==="DCC")              return 2;
-                  return 3;
-                };
-                ocorrEntries.sort((a,b)=>Math.min(...a.badges.map(prioScore))-Math.min(...b.badges.map(prioScore)));
-                return (
-                  <div>
-                    <div style={{...css.secTitle,marginBottom:8}}>
-                      {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,12)} Ocorrências por DT
-                      <span style={{fontSize:9,background:"rgba(240,185,11,.12)",border:"1px solid rgba(240,185,11,.25)",borderRadius:10,padding:"1px 7px",color:t.ouro,fontWeight:700,marginLeft:4}}>{ocorrEntries.length}</span>
-                      <span style={{flex:1,height:1,background:t.borda}} />
-                    </div>
-                    <div style={{fontSize:9,color:t.txt2,marginBottom:10,lineHeight:1.6}}>
-                      DTs com ocorrências registradas (SGS · Ocorrência · Diária · DCC · Atraso). Clique para abrir o detalhe.
-                    </div>
-                    {/* Legenda */}
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-                      {[{cor:t.ouro,l:"SGS"},{cor:"#E8820C",l:"Ocorrência"},{cor:t.danger,l:"Diária/Atraso"},{cor:t.azulLt,l:"DCC"}].map(({cor,l})=>{
-                        const ativo = filtroOcorr===l;
-                        return (
-                          <span key={l} onClick={()=>setFiltroOcorr(ativo?null:l)} style={{fontSize:8,background:ativo?`${cor}35`:`${cor}18`,border:`1.5px solid ${ativo?cor:cor+"44"}`,borderRadius:10,padding:"2px 7px",color:cor,fontWeight:700,cursor:"pointer",userSelect:"none",transition:"all .15s",boxShadow:ativo?`0 0 6px ${cor}55`:"none"}}>
-                            {l}{ativo?" ✕":""}
-                          </span>
-                        );
-                      })}
-                      {filtroOcorr && <span onClick={()=>setFiltroOcorr(null)} style={{fontSize:8,background:"rgba(128,128,128,.1)",border:"1px solid rgba(128,128,128,.3)",borderRadius:10,padding:"2px 7px",color:t.txt2,fontWeight:700,cursor:"pointer"}}>Limpar filtro</span>}
-                    </div>
-                    {(()=>{
-                      const labelMap = {"SGS":(b)=>b.label.startsWith("SGS"),"Ocorrência":(b)=>b.label==="Ocorrência","Diária/Atraso":(b)=>b.label==="Diária"||b.label.startsWith("Atraso"),"DCC":(b)=>b.label==="DCC"};
-                      const entradaFiltrada = filtroOcorr
-                        ? ocorrEntries.filter(({badges})=>badges.some(labelMap[filtroOcorr]||(_=>false)))
-                        : ocorrEntries;
-                    return entradaFiltrada.length===0 ? (
-                      <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📭</div><div style={{fontSize:12,color:t.txt2}}>{filtroOcorr?`Nenhum DT com ocorrência do tipo "${filtroOcorr}"`:"Nenhum DT com ocorrências registradas"}</div></div>
-                    ) : (
-                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                        {entradaFiltrada.map(({r,badges},i)=>{
-                          const topBadge = badges.sort((a,b)=>prioScore(a)-prioScore(b))[0];
-                          return (
-                            <div key={i} onClick={()=>abrirDetalhe(r)} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${topBadge.cor}`,padding:"9px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"all .15s"}}>
-                              <div style={{flex:1,minWidth:0}}>
-                                <div style={{fontSize:12,fontWeight:700,color:t.txt,marginBottom:3}}>
-                                  {r.nome||"—"} <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>· DT {r.dt}</span>
-                                  {r.placa&&<span style={{fontSize:9,color:t.txt2,fontWeight:400}}> · {r.placa}</span>}
-                                </div>
-                                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                                  {badges.map((b,bi)=>(
-                                    <span key={bi} style={{fontSize:8,background:`${b.cor}18`,border:`1px solid ${b.cor}44`,borderRadius:8,padding:"1px 6px",color:b.cor,fontWeight:700}}>{b.label}</span>
-                                  ))}
-                                </div>
-                              </div>
-                              {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt2,14,2)}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )
-                    ;})()}
-                  </div>
-                );
-              })()}
-
-              {/* ──── APONTAMENTOS ──── */}
-              {operSubTab==="apontamentos" && (
-                <div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                    <div style={{...css.secTitle,margin:0}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Apontamentos <span style={{fontSize:8,color:t.txt2,fontWeight:400,marginLeft:4}}>Descargas/Stretch</span> <span style={{flex:1,height:1,background:t.borda}} /></div>
-                    <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>setRelCtrlDccOpen(true)} style={{background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.28)`,borderRadius:8,padding:"8px 12px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>📊 Planilha Financeiro</button>
-                      <button onClick={()=>{setApontForm({numero:"",item:"",linha:"",descricao_apontamento:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:"",cidade:"",nf_numero:"",data_emissao:"",data_apontamento:new Date().toISOString().split("T")[0]});setApontFormOpen(true);}} style={{...css.btnGold,padding:"8px 12px",fontSize:11}}>＋ Novo</button>
-                    </div>
-                  </div>
-
-                  {/* ── RESUMO MENSAL DE VALORES ── */}
-                  {apontItems.length > 0 && (()=>{
-                    // Agrupa por mes_ref e tipo, soma valores
-                    const meses = [...new Set(apontItems.map(a=>a.mes_ref).filter(Boolean))].sort().reverse();
-                    const mesSel = meses[0] || "";
-                    const itensMes = apontItems.filter(a=>!mesSel || a.mes_ref===mesSel);
-                    const tipos = ["descarga","stretch","deslocamento","outros"];
-                    const tipoLabel = {descarga:"📦 Descarga",stretch:"📏 Stretch",deslocamento:"🚗 Deslocamento",outros:"📋 Outros"};
-                    const tipoColor = {descarga:t.azulLt,stretch:t.verde,deslocamento:t.ouro,outros:t.txt2};
-                    const totais = tipos.map(tp=>({tp,total:itensMes.filter(a=>a.tipo===tp).reduce((s,a)=>s+(parseFloat(a.valor)||0),0),qtd:itensMes.filter(a=>a.tipo===tp).length})).filter(x=>x.qtd>0);
-                    const grandTotal = totais.reduce((s,x)=>s+x.total,0);
-                    if(totais.length===0) return null;
-                    return (
-                      <div style={{background:`rgba(240,185,11,.04)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:12,padding:"12px 14px",marginBottom:14}}>
-                        <div style={{fontSize:9,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.5,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
-                          {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,10)} Resumo Mensal {mesSel?`— ${mesSel}`:""}
-                        </div>
-                        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:8,marginBottom:10}}>
-                          {totais.map(({tp,total,qtd})=>(
-                            <div key={tp} style={{background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
-                              <div style={{fontSize:10,color:tipoColor[tp],fontWeight:700,marginBottom:2}}>{tipoLabel[tp]}</div>
-                              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:t.txt,lineHeight:1}}>{fmtMoeda(total)}</div>
-                              <div style={{fontSize:8,color:t.txt2,marginTop:2}}>{qtd} apontamento{qtd!==1?"s":""}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{borderTop:`1px solid ${t.borda}`,paddingTop:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                          <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>TOTAL DO MÊS</span>
-                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.verde,letterSpacing:1}}>{fmtMoeda(grandTotal)}</span>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {(()=>{
-                    const semFrs = apontItems.filter(a=>!a.frs_folha);
-                    if(semFrs.length===0) return null;
-                    const agora = Date.now();
-                    const urgentes = semFrs.filter(a=>{
-                      if(!a.criado_em) return false;
-                      const dias = (agora - new Date(a.criado_em).getTime()) / 86400000;
-                      return dias >= 2;
-                    });
-                    return (
-                      <div style={{marginBottom:12}}>
-                        {/* Banner geral */}
-                        <div style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:10,padding:"10px 14px",marginBottom:urgentes.length>0?8:0,display:"flex",alignItems:"center",gap:10}}>
-                          <span style={{fontSize:18,flexShrink:0}}>🚨</span>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:11,color:t.danger,fontWeight:700}}>{semFrs.length} apontamento(s) sem FRS · Folha</div>
-                            {urgentes.length>0 && <div style={{fontSize:10,color:t.danger,opacity:.8,marginTop:2}}>{urgentes.length} deles já passaram de <strong>2 dias</strong> sem FRS!</div>}
-                          </div>
-                        </div>
-                        {/* Lista de urgentes (> 2 dias sem FRS) */}
-                        {urgentes.map((a,i)=>{
-                          const dias = Math.floor((agora - new Date(a.criado_em).getTime()) / 86400000);
-                          return (
-                            <div key={a.id||i} style={{background:`rgba(246,70,93,.05)`,border:`1.5px solid rgba(246,70,93,.35)`,borderRadius:8,padding:"8px 12px",marginBottom:4,display:"flex",alignItems:"center",gap:10}}>
-                              <span style={{fontSize:16,flexShrink:0}}>⏰</span>
-                              <div style={{flex:1,minWidth:0}}>
-                                <div style={{fontSize:11,fontWeight:700,color:t.txt}}>Apontamento {a.numero||"s/nº"}{a.dt_rel?` · DT ${a.dt_rel}`:""}</div>
-                                <div style={{fontSize:10,color:t.danger,marginTop:2}}>Sem FRS há <strong>{dias} dia{dias!==1?"s":""}</strong> — emitir urgente!</div>
-                              </div>
-                              <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:t.danger,lineHeight:1}}>{dias}d</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-
-                  {apontFormOpen && (
-                    <div style={{background:t.card,borderRadius:12,border:`1px solid ${t.ouro}44`,padding:14,marginBottom:14}}>
-                      <div style={{fontWeight:700,color:t.ouro,fontSize:12,marginBottom:10}}>📑 Novo Apontamento</div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                        {/* Linha 1 */}
-                        <div><label style={lblO}>Nº Apontamento</label><input value={apontForm.numero} onChange={e=>setApontForm(p=>({...p,numero:e.target.value}))} placeholder="Ex: 1000000002580650" style={inpO} /></div>
-                        <div><label style={lblO}>Pedido</label><input value={apontForm.pedido} onChange={e=>setApontForm(p=>({...p,pedido:e.target.value}))} placeholder="Ex: 4502384474" style={inpO} /></div>
-                        {/* Linha 2 */}
-                        <div><label style={lblO}>Item</label><input type="number" value={apontForm.item} onChange={e=>setApontForm(p=>({...p,item:e.target.value}))} placeholder="Ex: 1" style={inpO} /></div>
-                        <div><label style={lblO}>Linha</label><input type="number" value={apontForm.linha} onChange={e=>setApontForm(p=>({...p,linha:e.target.value}))} placeholder="Ex: 10" style={inpO} /></div>
-                        {/* Linha 3 — Descrição full width */}
-                        <div style={{gridColumn:"1/-1"}}><label style={lblO}>Descrição do Apontamento</label><input value={apontForm.descricao_apontamento} onChange={e=>setApontForm(p=>({...p,descricao_apontamento:e.target.value}))} placeholder="Ex: ARMAZENAGEM OU CARGA E DESCARGA S/ M.O." style={inpO} /></div>
-                        {/* Linha 4 */}
-                        <div><label style={lblO}>Mês Referência</label><input value={apontForm.mes_ref} onChange={e=>setApontForm(p=>({...p,mes_ref:e.target.value}))} placeholder="MM/AAAA" style={inpO} /></div>
-                        <div><label style={lblO}>Filial</label><input value={apontForm.filial} onChange={e=>setApontForm(p=>({...p,filial:e.target.value}))} style={inpO} /></div>
-                        {/* Linha 5 */}
-                        <div><label style={lblO}>Valor (R$)</label><input type="number" value={apontForm.valor} onChange={e=>setApontForm(p=>({...p,valor:e.target.value}))} placeholder="0,00" style={inpO} /></div>
-                        <div>
-                          <label style={{...lblO,color:apontForm.frs_folha?"":t.danger}}>FRS · Folha {!apontForm.frs_folha&&<span style={{color:t.danger}}>⚠️ obrigatório</span>}</label>
-                          <input value={apontForm.frs_folha} onChange={e=>setApontForm(p=>({...p,frs_folha:e.target.value}))} style={{...inpO,border:`1.5px solid ${apontForm.frs_folha?t.borda2:t.danger}`}} />
-                        </div>
-                        {/* Linha 6 */}
-                        <div><label style={lblO}>Tipo</label>
-                          <select value={apontForm.tipo} onChange={e=>setApontForm(p=>({...p,tipo:e.target.value}))} style={{...inpO,appearance:"none"}}>
-                            <option value="descarga">📦 Descarga</option>
-                            <option value="stretch">📏 Stretch</option>
-                            <option value="deslocamento">🚗 Deslocamento</option>
-                            <option value="outros">📋 Outros</option>
-                          </select>
-                        </div>
-                        <div><label style={lblO}>DT Relacionado</label><input value={apontForm.dt_rel} onChange={e=>setApontForm(p=>({...p,dt_rel:e.target.value}))} style={inpO} /></div>
-                        {/* Linha 7 */}
-                        <div><label style={lblO}>Cidade</label><input value={apontForm.cidade} onChange={e=>setApontForm(p=>({...p,cidade:e.target.value}))} style={inpO} /></div>
-                        <div><label style={lblO}>Data Apontamento</label><input type="date" value={apontForm.data_apontamento} onChange={e=>setApontForm(p=>({...p,data_apontamento:e.target.value}))} style={inpO} /></div>
-                        {/* Linha 8 — NF (preencher depois) */}
-                        <div><label style={{...lblO,color:t.txt2}}>NF-e / NFS-e <span style={{fontSize:8,opacity:.7}}>(depois)</span></label><input value={apontForm.nf_numero} onChange={e=>setApontForm(p=>({...p,nf_numero:e.target.value}))} placeholder="Preencher depois" style={inpO} /></div>
-                        <div><label style={{...lblO,color:t.txt2}}>Data Emissão NF <span style={{fontSize:8,opacity:.7}}>(depois)</span></label><input type="date" value={apontForm.data_emissao} onChange={e=>setApontForm(p=>({...p,data_emissao:e.target.value}))} style={inpO} /></div>
-                      </div>
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={()=>setApontFormOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:8,padding:"8px 12px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
-                        <button onClick={async ()=>{
-                          if(!apontForm.numero){showToast("⚠️ Informe o nº do apontamento","warn");return;}
-                          const novoItem={...apontForm,id:Date.now(),criado_em:new Date().toISOString()};
-                          const nova=[novoItem,...apontItems];
-                          await saveAponts(nova, novoItem);
-                          setApontFormOpen(false);
-                          setApontForm({numero:"",item:"",linha:"",descricao_apontamento:"",pedido:"",mes_ref:"",filial:"",valor:"",frs_folha:"",tipo:"descarga",dt_rel:"",cidade:"",nf_numero:"",data_emissao:"",data_apontamento:new Date().toISOString().split("T")[0]});
-                          showToast("✅ Apontamento salvo!","ok");
-                        }} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>💾 Salvar Apontamento</button>
-                      </div>
-                    </div>
-                  )}
-
-                  {apontLoading?(
-                    <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:12}}>Carregando apontamentos...</div>
-                  ):apontItems.length===0?(
-                    <div style={css.empty}><div style={{fontSize:36,marginBottom:8}}>📑</div><div style={{fontSize:13,color:t.txt2}}>Nenhum apontamento registrado</div></div>
-                  ):(
-                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                      {apontItems.map((a,i)=>{
-                        const semNF = !a.nf_numero;
-                        const semFRS = !a.frs_folha;
-                        const bordaC = semFRS ? t.danger : semNF ? t.warn : t.verde;
-                        return (
-                        <div key={a.id||i} style={{background:t.card,borderRadius:11,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${bordaC}`,padding:12}}>
-                          <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:6,flexWrap:"wrap"}}>
-                            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:t.ouro}}>{a.numero||a.apontamento||"—"}</span>
-                            {(a.item||a.linha)&&<span style={{fontSize:9,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 6px"}}>It.{a.item||"?"} / Ln.{a.linha||"?"}</span>}
-                            <span style={{fontSize:9,fontWeight:700,color:t.txt2,background:t.card2,border:`1px solid ${t.borda}`,borderRadius:4,padding:"2px 7px"}}>{a.tipo==="stretch"?"📏 Stretch":a.tipo==="deslocamento"?"🚗 Deslocamento":a.tipo==="outros"?"📋 Outros":"📦 Descarga"}</span>
-                            {semFRS && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>⚠️ FRS vazio!</span>}
-                            {semNF && !semFRS && <span style={{fontSize:9,fontWeight:700,color:t.warn,background:`rgba(245,158,11,.08)`,border:`1px solid rgba(245,158,11,.2)`,borderRadius:4,padding:"2px 7px"}}>📄 NF pendente</span>}
-                            {a.status_alerta && <span style={{fontSize:9,fontWeight:700,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"2px 7px"}}>🚨 ALERTA</span>}
-                          </div>
-                          {a.descricao_apontamento&&<div style={{fontSize:10,color:t.txt2,marginBottom:6,fontStyle:"italic"}}>{a.descricao_apontamento}</div>}
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,fontSize:10,color:t.txt2}}>
-                            <div>Pedido: <strong style={{color:t.txt}}>{a.pedido||"—"}</strong></div>
-                            <div>Mês ref: <strong style={{color:t.txt}}>{a.mes_ref||a.periodo_referente||"—"}</strong></div>
-                            <div>Filial: <strong style={{color:t.txt}}>{a.filial||"—"}</strong></div>
-                            <div>Valor: <strong style={{color:t.verde}}>{a.valor?fmtMoeda(a.valor):"—"}</strong></div>
-                            {a.cidade&&<div>Cidade: <strong style={{color:t.txt}}>{a.cidade}</strong></div>}
-                            {(a.dt_rel||a.dt_relacionado)&&<div>DT: <strong style={{color:t.ouro}}>{a.dt_rel||a.dt_relacionado}</strong></div>}
-                            <div style={{gridColumn:"1/-1"}}>FRS · Folha: <strong style={{color:semFRS?t.danger:t.verde}}>{a.frs_folha||a.folha_registro||"⚠️ NÃO PREENCHIDO"}</strong></div>
-                            {(a.nf_numero)&&<div>NF-e/NFS-e: <strong style={{color:t.azulLt}}>{a.nf_numero}</strong></div>}
-                            {(a.data_emissao)&&<div>Emissão NF: <strong style={{color:t.txt}}>{a.data_emissao}</strong></div>}
-                            {a.data_apontamento&&<div style={{gridColumn:"1/-1",fontSize:9,color:t.txt2,marginTop:2}}>📅 {a.data_apontamento}{a.updated_at?` · Atualizado: ${new Date(a.updated_at).toLocaleDateString("pt-BR")}`:""}</div>}
-                          </div>
-                          <button onClick={async()=>{if(confirm("Excluir apontamento?")){const n=[...apontItems];n.splice(i,1);await deleteApontSupabase(a.numero||a.apontamento);await saveAponts(n);}}} style={{marginTop:8,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,padding:"4px 9px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:"inherit"}}>🗑️ Excluir</button>
-                        </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        {/* ═══ OCORRÊNCIAS ═══ */}
+        {activeTab === "ocorrencias" && (
+          <OcorrenciasView
+            dados={DADOS}
+            diariasData={diariasData}
+            filtroOcorr={filtroOcorr}
+            setFiltroOcorr={setFiltroOcorr}
+            abrirDetalhe={abrirDetalhe}
+            t={t}
+            isMobile={isMobile}
+          />
+        )}
 
         {/* ═══ MOTORISTAS ═══ */}
         {activeTab === "motoristas" && (()=>{
