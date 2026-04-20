@@ -115,7 +115,16 @@ export default function App() {
 
   // View mode state (linhas | blocos) + colunas para Diarias e Descarga
   const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","blocos"));
-  const [diariaCols, setDiariaCols] = useState(() => loadJSON("co_diaria_cols", 3));
+  const [diariaCols, setDiariaCols] = useState(() => {
+    // Migration: padroniza diariaCols para 3 (Abr 2026)
+    const MK = "co_diaria_cols_migv3";
+    if (\!loadJSON(MK, false)) {
+      saveJSON("co_diaria_cols", 3);
+      saveJSON(MK, true);
+      return 3;
+    }
+    return loadJSON("co_diaria_cols", 3);
+  });
   const [descargaView, setDescargaView] = useState(() => loadJSON("co_descarga_view","blocos"));
   const [descargaCols, setDescargaCols] = useState(() => loadJSON("co_descarga_cols", 2));
   const [diariaNavDT, setDiariaNavDT] = useState(null);    // DT destacada ao navegar do modal
