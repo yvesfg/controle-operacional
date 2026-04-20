@@ -7,10 +7,9 @@
 :root {
 
   /* ── Tipografia ─────────────────────────────────────────────── */
-  --font-heading : 'Space Grotesk', sans-serif;
-  --font-display : 'Space Grotesk', sans-serif;
-  --font-body    : 'DM Sans', 'Segoe UI', system-ui, sans-serif;
-  --font-mono    : 'DM Mono', 'JetBrains Mono', monospace;
+  --font-heading : 'Bebas Neue', sans-serif;
+  --font-body    : 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono    : 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Tamanhos de texto */
   --text-2xs : 10px;
@@ -31,20 +30,16 @@
   --leading-relaxed: 1.625;
 
   /* Letter-spacing */
-  --ls-tighter    : -0.02em;
-  --ls-tight      : -0.01em;
-  --ls-normal     :  0;
-  --ls-wide       :  0.02em;
-  --ls-wider      :  0.06em;
-  --ls-widest     :  0.12em;
-  --ls-label      :  0.08em;   /* rótulos uppercase */
-  --ls-badge      :  0.04em;
-  --ls-btn        :  0.01em;
-  --ls-mono       :  0.12em;
-  /* Redesign YFGroup */
-  --ls-page-title : -0.03em;  /* Page title Space Grotesk 700 20px */
-  --ls-card-value : -0.04em;  /* Card value Space Grotesk 700 26–40px */
-  --ls-section-lbl:  0.06em;  /* Section label DM Mono 11px UPPERCASE */
+  --ls-tighter: -0.02em;
+  --ls-tight  : -0.01em;
+  --ls-normal :  0;
+  --ls-wide   :  0.02em;
+  --ls-wider  :  0.06em;
+  --ls-widest :  0.12em;
+  --ls-label  :  0.08em;   /* rótulos uppercase */
+  --ls-badge  :  0.04em;
+  --ls-btn    :  0.01em;
+  --ls-mono   :  0.12em;
 
   /* Font-weight */
   --fw-normal  : 400;

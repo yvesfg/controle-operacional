@@ -1,4 +1,14 @@
 
+## 2026-04-20 — Passo 1: Design Tokens e Fontes (Redesign YFGroup)
+
+**Solicitado:** Implementar Passo 1 do redesign — tokens de cor/tipografia seguindo documentação Claude Design.
+
+**Implementado:**
+- `tokens.css`: fontes atualizadas para Space Grotesk / DM Sans / DM Mono; adicionados `--ls-page-title`, `--ls-card-value`, `--ls-section-lbl`
+- `theme-dark.css`: adicionados semantic tokens `--bg`, `--surface`, `--card`, `--card2`, `--border`, `--border2`, `--text`, `--text2`, `--text3`, `--accent`, `--accent2`, `--cyan`, `--green`, `--orange`, `--red`, `--yellow` (oklch)
+- `index.html`: Google Fonts para Space Grotesk (400–700), DM Sans (400–600), DM Mono (400–500); `theme-color` atualizado para `#080810`
+
+
 ## [2026-04-09] — Filtros Planilha + Relatório Geral
 
 **Solicitado:** Dropdowns Ano/Mês/Origem na Planilha (default: data mais recente + todas origens); Relatório Geral com filtro Status, orientação paisagem garantida e design inovador.
