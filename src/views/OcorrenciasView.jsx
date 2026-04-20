@@ -111,7 +111,7 @@ function OcorrCard({ entry, onOpen }) {
                 Obs Chegada
               </div>
               <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.4 }}>
-                {r.obs_chegada}
+                {(r.obs_chegada||'').length > 100 ? r.obs_chegada.slice(0,100) + '…' : r.obs_chegada}
               </div>
             </div>
           )}
@@ -127,7 +127,7 @@ function OcorrCard({ entry, onOpen }) {
                 Obs Descarga
               </div>
               <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.4 }}>
-                {r.obs_descarga}
+                {(r.obs_descarga||'').length > 100 ? r.obs_descarga.slice(0,100) + '…' : r.obs_descarga}
               </div>
             </div>
           )}
@@ -194,7 +194,7 @@ export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, 
     };
 
     const raw = dados
-      .filter(r => (r.status || "").toUpperCase() !== "CANCELADA")
+      .filter(r => (r.status || "").toUpperCase() !== "CANCELADA" && (r.obs_chegada || r.obs_descarga))
       .map(r => {
         const badges = [];
         const hasOcorrLocal = (() => {

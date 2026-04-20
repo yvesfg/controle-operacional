@@ -187,3 +187,15 @@
 - Bloco `activeTab==="operacional"` (522 linhas) → `<OperacionalView ctx={{...}} />`
 - `activeTab==="ocorrencias"` adicionado → `<OcorrenciasView dados filtroOcorr abrirDetalhe />`
 - Build: ✓ 0 erros, 0 warnings
+
+## 2026-04-20 — 6 melhorias UI/UX
+
+**Solicitado:** Diárias blocos iguais Descarga / Ocorrências só obs / Admin footer / Sidebar limpa / Tema ícone / Relatórios view.
+
+**Implementado:**
+- **Diárias KPI**: blocos No Prazo/Perdeu Agenda/Sem Descarga convertidos para estilo flat idêntico ao Descarga (ícone 22px → label DM Mono → número Space Grotesk 34px, sem círculo)
+- **Ocorrências**: filtro `dados.filter(r => obs_chegada || obs_descarga)` — só exibe DTs com obs preenchida; texto truncado a 100 chars
+- **Sidebar footer**: removidos Sincronizar, Alertas e Relatórios; Admin movido para footer (ícone + label "Admin", acende em `var(--accent)` quando ativo, visível só para admin)
+- **Tema**: botão icon-only (sem label de texto), permanece no footer
+- **Relatórios**: substituído `<ReportBuilder>` por `<RelatoriosView>` (dashboard com KPIs + botão Exportar abre modais de filtro)
+- Build: ✓ 0 erros
