@@ -249,3 +249,15 @@
 - `App.jsx`: CSS global para `select` — `color-scheme: dark/light` por tema; `option` herda background e color da paleta do app (fim do fundo branco no dropdown escuro)
 - `OcorrenciasView.jsx`: botão `+` inline em cada OcorrCard, ao lado de Obs Chegada e Obs Descarga, abre `NovaOcorrModal` com o DT pré-selecionado (sem etapa de busca)
 - `NovaOcorrModal`: aceita `initialEntry` prop — quando chamado do card pula direto ao formulário; quando chamado do botão do header mantém a busca manual
+
+## Session 6 — 2026-04-21 (Layout Global Sistêmico)
+
+**Solicitado:** Padronização global de layout — desktop/tablet/mobile sem espaços vazios, sidebar colapsável, mobile sem ícones extras no topo.
+
+**Implementado:**
+- **CSS global**: `co-content` com `flex:1; overflow-y:auto; min-height:0`; conteúdo sempre `maxWidth:100%`; `co-content>*` herda `box-sizing:border-box`
+- **Tablet (768-1199px)**: sidebar CSS icon-only por padrão (width:64px); `co-main{margin-left:64px\!important}`; classe `co-sidebar--expanded` para expansão manual; `sidebarCollapsed` inicializa `true` em tablets automaticamente
+- **Mobile topbar**: removidos user badge, sync, theme toggle, reports, WhatsApp, logout do topo direito; mantidos apenas alerta + Nova DT; navegação concentrada no sidebar esquerdo
+- **select/dropdown**: `color-scheme:dark/light` global — fim do fundo branco em dropdowns
+- **Removed**: `co-mobile-nav` render (era CSS-hidden); `minHeight:calc(100vh-140px)` hacks inline substituídos pelo flex global; padding `68px` bottom obsoleto removido
+- **Adicionado**: `.co-auto-grid` utilitário para grids responsivos automáticos

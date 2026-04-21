@@ -190,7 +190,7 @@ export default function App() {
   const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email","yvesfg@gmail.com"));
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
   const [isWide,   setIsWide]   = useState(()=>window.innerWidth>=768);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(()=>loadJSON("co_sidebar_collapsed", window.innerWidth>=768&&window.innerWidth<1200));
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(()=>loadJSON("co_sidebar_collapsed",false));
   const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
   useEffect(()=>{
     const fn=()=>{setIsMobile(window.innerWidth<=600);setIsWide(window.innerWidth>=768);};
@@ -3032,38 +3032,6 @@ export default function App() {
         @media(min-width:768px) and (max-width:1199px){
           .co-main{min-height:100vh}
         }
-        /* ── Tablet (768-1199px): sidebar colapsada por padrão ── */
-        @media(min-width:768px) and (max-width:1199px){
-          .co-sidebar{width:64px}
-          .co-sidebar .co-sidebar__logo{justify-content:center!important;padding:8px!important;gap:0!important}
-          .co-sidebar .co-sidebar__logo-name,.co-sidebar .co-sidebar__logo-sub{display:none!important}
-          .co-sidebar .co-sidebar__toggle{margin-left:0!important}
-          .co-sidebar .co-sidebar__item{justify-content:center!important;padding:8px!important}
-          .co-sidebar .co-sidebar__item-lbl,.co-sidebar .co-sidebar__section-lbl,.co-sidebar .co-sidebar__badge-pill{display:none!important}
-          .co-sidebar .co-sidebar__section-line{display:block!important}
-          .co-sidebar .co-sidebar__footer-item{justify-content:center!important;padding:7px!important}
-          .co-sidebar .co-sidebar__footer-lbl{display:none!important}
-          .co-sidebar .co-sidebar__user{justify-content:center!important;padding:8px!important}
-          .co-sidebar .co-sidebar__user-info{display:none!important}
-          .co-sidebar--expanded{width:220px!important}
-          .co-sidebar--expanded .co-sidebar__logo{justify-content:flex-start!important;padding:8px 12px!important;gap:10px!important}
-          .co-sidebar--expanded .co-sidebar__logo-name,.co-sidebar--expanded .co-sidebar__logo-sub{display:block!important}
-          .co-sidebar--expanded .co-sidebar__toggle{margin-left:auto!important}
-          .co-sidebar--expanded .co-sidebar__item{justify-content:flex-start!important;padding:8px 10px!important}
-          .co-sidebar--expanded .co-sidebar__item-lbl,.co-sidebar--expanded .co-sidebar__badge-pill{display:block!important}
-          .co-sidebar--expanded .co-sidebar__section-lbl{display:block!important}
-          .co-sidebar--expanded .co-sidebar__section-line{display:none!important}
-          .co-sidebar--expanded .co-sidebar__footer-item{justify-content:flex-start!important;padding:7px 10px!important}
-          .co-sidebar--expanded .co-sidebar__footer-lbl{display:block!important}
-          .co-sidebar--expanded .co-sidebar__user{justify-content:flex-start!important;padding:8px 10px!important}
-          .co-sidebar--expanded .co-sidebar__user-info{display:flex!important}
-          .co-main{margin-left:64px!important}
-          .co-main--expanded-sidebar{margin-left:220px!important}
-        }
-        /* ── Responsive card grids ── */
-        .co-auto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-        /* ── Ensure all page roots fill width ── */
-        .co-content>*{max-width:100%;box-sizing:border-box}
         /* ── Cards com borda visível no tema claro ── */
         [data-theme="light"] .co-card,[data-theme="light"] [class*="co-card"]{border:1px solid var(--border)!important}
       `}</style>
@@ -3264,6 +3232,12 @@ export default function App() {
               <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CONTROLE OPERACIONAL</div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
+              <div title={usuarioLogado||perfil} style={{...css.hBtn,borderColor:perfil==="admin"?`rgba(240,185,11,.45)`:t.borda,color:perfil==="admin"?t.ouro:t.txt2,padding:"6px 7px",background:perfil==="admin"?`rgba(240,185,11,.07)`:"transparent"}}>
+                {perfil==="admin"
+                  ? hIco(<><path d="M2 22l2-10 5 5 3-10 3 10 5-5 2 10z"/><circle cx="4" cy="12" r="1.2" fill={t.ouro} stroke="none"/><circle cx="12" cy="7" r="1.5" fill={t.ouro} stroke="none"/><circle cx="20" cy="12" r="1.2" fill={t.ouro} stroke="none"/></>,t.ouro,14,1.8)
+                  : hIco(<><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></>,t.txt2,13,2)
+                }
+              </div>
               <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
                 {connStatus==="syncing"
                   ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,13)
@@ -3277,11 +3251,81 @@ export default function App() {
                   <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length}</span>
                 </button>
               )}
-              {canEdit && (
-                <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{...css.btnGold,padding:"7px 12px",fontSize:11,gap:5}}>
-                  {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",13,2.5)} Nova DT
+              <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"6px 7px"}}>
+                {theme==="dark"
+                  ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,13)
+                  : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,13)
+                }
+              </button>
+              {/* Relatórios mobile */}
+              <div style={{position:"relative"}}>
+                <button onClick={()=>setRelMenuOpen(v=>!v)} style={{...css.hBtn,border:`1.5px solid rgba(240,185,11,.3)`,padding:"6px 7px"}}>
+                  {hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,13)}
                 </button>
-              )}
+                {relMenuOpen && (
+                  <>
+                    <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setRelMenuOpen(false)}/>
+                    <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:220,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .15s"}}>
+                      <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700,letterSpacing:.8}}>RELATÓRIOS PDF</div>
+                      {[
+                        {l:"Geral de Operações",fn:()=>{setRelMenuOpen(false);setRelGeralOpen(true);}},
+                        {l:"Operacional",fn:()=>{setRelMenuOpen(false);setRelOperOpen(true);}},
+                        {l:"Diárias",fn:()=>{setRelMenuOpen(false);setRelDiariaOpen(true);}},
+                        {l:"Descargas",fn:()=>{setRelMenuOpen(false);setRelDescargaOpen(true);}},
+                      ].map((op,i,arr)=>(
+                        <button key={op.l} onClick={op.fn} style={{display:"flex",alignItems:"center",width:"100%",padding:"10px 14px",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",cursor:"pointer",textAlign:"left",transition:"background .15s",fontSize:12,fontWeight:600,color:t.txt,fontFamily:"inherit"}}
+                          onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`}
+                          onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                          {op.l}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* WhatsApp mobile */}
+              <div style={{position:"relative"}}>
+                <button onClick={()=>setWppTipoOpen(v=>!v)} style={{...css.hBtn,border:`1.5px solid rgba(37,211,102,.3)`,padding:"6px 7px"}}>
+                  {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </>,"#25D366",13)}
+                </button>
+                {wppTipoOpen && (
+                  <>
+                    <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)}/>
+                    <div style={{position:"absolute",right:0,top:"110%",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
+                      {buscaResult
+                        ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                        : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>Busque um registro primeiro</div>
+                      }
+                      {[
+                        {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT"},
+                        {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo de pagamento"},
+                        {k:"descarga",svg:<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento"},
+                        {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento"},
+                      ].map((op,i,arr)=>(
+                        <button key={op.k} onClick={()=>{
+                          setWppTipoOpen(false);
+                          if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
+                          const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                          if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                          else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                          else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                          else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
+                        }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
+                          onMouseOver={e=>e.currentTarget.style.background=t.card2}
+                          onMouseOut={e=>e.currentTarget.style.background="transparent"}
+                        >
+                          <div style={{flexShrink:0,width:30,height:30,borderRadius:7,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",14)}</div>
+                          <div><div style={{fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              <button onClick={handleLogout} style={{...css.hBtn,padding:"6px 7px"}}>
+                {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,13)}
+              </button>
             </div>
           </>
         )}
@@ -3320,7 +3364,7 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?"0":"16px 16px 24px",maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
+      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
 
         {/* ═══ RELATÓRIOS ═══ */}
         {activeTab === "relatorios" && (
@@ -3906,7 +3950,7 @@ export default function App() {
 
         {/* ═══ DIÁRIAS ═══ */}
         {activeTab === "diarias" && (
-          <div>
+          <div style={{minHeight:"calc(100vh - 140px)"}}>
             {diariaNavDT && (
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(240,185,11,.08)`,border:`1px solid rgba(240,185,11,.3)`}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13)}
@@ -4424,7 +4468,7 @@ export default function App() {
 
         {/* ═══ DESCARGA ═══ */}
         {activeTab === "descarga" && (
-          <div>
+          <div style={{minHeight:"calc(100vh - 140px)"}}>
             {descargaNavDT && (
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.3)`}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,13)}
@@ -5664,6 +5708,25 @@ function mapearColuna(n){
 
       </div>{/* end .co-main */}
 
+      {/* ═══ MOBILE NAV — horizontal scroll, estilo Binance ═══ */}
+      {/* Oculto automaticamente no desktop via CSS @media(min-width:768px) */}
+      <nav className="co-mobile-nav">
+        {tabs.map(tb => {
+          const ativo = activeTab === tb.k;
+          return (
+            <button
+              key={tb.k}
+              className={`co-mobile-nav__item${ativo?" co-mobile-nav__item--active":""}`}
+              onClick={()=>setActiveTab(tb.k)}
+            >
+              <span style={{lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {typeof tb.ico === "function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
+              </span>
+              <span className="co-mobile-nav__lbl">{tb.l}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* ═══ EDIT MODAL ═══ */}
       {modalOpen === "edit" && (
