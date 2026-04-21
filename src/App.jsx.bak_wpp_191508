@@ -5666,61 +5666,23 @@ function mapearColuna(n){
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18)}
               </button>
             </div>
-            {/* Search / DT Context */}
-            <div style={{padding:"12px 16px",borderBottom:`1px solid ${t.borda}`}}>
-              {(()=>{
-                const _sel=wppSearchReg||buscaResult;
-                if(_sel) return (
-                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(37,211,102,.09)",border:"1px solid rgba(37,211,102,.22)",borderRadius:10}}>
-                    {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,"#25D366",14)}
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {_sel.dt} · {_sel.nome||"—"}</div>
-                      {_sel.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{_sel.placa}{_sel.origem&&" · "+_sel.origem}</div>}
-                    </div>
-                    <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
-                      {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
-                    </button>
-                  </div>
-                );
-                return (
-                  <>
-                    <div style={{position:"relative"}}>
-                      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",display:"flex",alignItems:"center"}}>
-                        {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,14)}
-                      </span>
-                      <input
-                        autoFocus
-                        value={wppSearchTxt}
-                        onChange={e=>setWppSearchTxt(e.target.value)}
-                        placeholder="DT, motorista ou placa…"
-                        style={{width:"100%",padding:"9px 10px 9px 34px",border:`1px solid ${t.borda}`,borderRadius:9,background:t.card2,color:t.txt,fontSize:13,fontFamily:"inherit",outline:"none",transition:"border-color .15s"}}
-                        onFocus={e=>e.target.style.borderColor=t.azulLt}
-                        onBlur={e=>e.target.style.borderColor=t.borda}
-                      />
-                    </div>
-                    {wppSearchTxt.length>=2&&(()=>{
-                      const q=wppSearchTxt.toLowerCase();
-                      const res=DADOS.filter(r=>(r.dt&&String(r.dt).toLowerCase().includes(q))||(r.nome&&r.nome.toLowerCase().includes(q))||(r.placa&&r.placa.toLowerCase().includes(q))).slice(0,5);
-                      return res.length>0?(
-                        <div style={{marginTop:6,display:"flex",flexDirection:"column",gap:3,maxHeight:180,overflowY:"auto"}}>
-                          {res.map((r,i)=>(
-                            <button key={i} onClick={()=>{setWppSearchReg(r);setWppSearchTxt("");}}
-                              style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:8,cursor:"pointer",textAlign:"left",width:"100%",transition:"background .1s"}}
-                              onMouseEnter={e=>{e.currentTarget.style.background=t.surface}}
-                              onMouseLeave={e=>{e.currentTarget.style.background=t.card2}}
-                            >
-                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
-                              <div style={{fontSize:12,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                              {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{r.placa}</div>}
-                            </button>
-                          ))}
-                        </div>
-                      ):(<div style={{fontSize:11,color:t.txt2,marginTop:6,textAlign:"center",padding:"8px 0"}}>Nenhum resultado para "{wppSearchTxt}"</div>);
-                    })()}
-                  </>
-                );
-              })()}
-            </div>
+            {/* DT Context */}
+            {buscaResult ? (
+              <div style={{padding:"10px 20px",background:"rgba(37,211,102,.07)",borderBottom:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:8}}>
+                {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                </>,"#25D366",14)}
+                <div>
+                  <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                  {buscaResult.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{buscaResult.placa}{buscaResult.origem&&" · "+buscaResult.origem}</div>}
+                </div>
+              </div>
+            ) : (
+              <div style={{padding:"10px 20px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:8}}>
+                {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </>,t.ouro,14)}
+                <div style={{fontSize:12,color:t.ouro,fontWeight:600}}>Busque um registro na Planilha primeiro</div>
+              </div>
+            )}
             {/* Options */}
             <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
               {[
@@ -5730,14 +5692,13 @@ function mapearColuna(n){
                 {k:"diarias",   ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>, color:t.ouro, l:"Diárias", sub:"Solicitar pagamento diária"},
               ].map((op)=>(
                 <button key={op.k} onClick={()=>{
-                  const _reg=wppSearchReg||buscaResult;
-                  if(!_reg){showToast("Busque um registro primeiro","warn");return;}
-                  const mot=motoristas.find(m=>(_reg.cpf&&m.cpf?.replace(/\D/g,"")===_reg.cpf?.replace(/\D/g,""))||(_reg.nome&&m.nome===_reg.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===_reg.placa));
-                  setWppTipoOpen(false);setWppSearchTxt("");setWppSearchReg(null);
-                  if(op.k==="faturamento"){setWppFatModal({reg:_reg,mot:mot||null});}
-                  else if(op.k==="contratacao"){setWppModal({reg:_reg,mot:mot||null});setWppTel((mot?.tel||_reg.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                  else if(op.k==="descarga"){abrirWppPagModal(_reg,mot,"descarga");}
-                  else if(op.k==="diarias"){abrirWppPagModal(_reg,mot,"diarias");}
+                  setWppTipoOpen(false);
+                  if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
+                  const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                  if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                  else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                  else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                  else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
                 }}
                 style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:12,cursor:"pointer",textAlign:"left",width:"100%",transition:"all .15s"}}
                 onMouseEnter={e=>{e.currentTarget.style.background=`rgba(${op.color.includes("#7c")?'124,58,237':op.color===t.azulLt?'22,119,255':op.color===t.verde?'34,197,94':'240,185,11'},.1)`;e.currentTarget.style.borderColor=op.color}}

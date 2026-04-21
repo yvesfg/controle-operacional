@@ -276,3 +276,13 @@
 - RelatoriosView: removido `maxWidth:1100` → `width:100%`; padding, fontes, gaps e números KPI responsivos via `isMobile`; tabela motoristas com `overflow-x:auto`; tabs com scroll horizontal; KpiCard usa `clamp()` para fontes
 - App.jsx CSS: adicionadas regras globais `@media(max-width:767px)` e `@media(768-1199px)` — sem void lateral em todas as views, `co-content padding:0` mobile, tabelas com scroll, `co-auto-grid` 2 colunas mobile/tablet
 - Build verificado: ✓ 2.87s
+
+## Session 9 — 2026-04-21
+**Solicitado:** WPP modal — busca de DT/motorista/placa direto no modal, sem depender de marcação prévia na planilha.
+**Implementado:**
+- Adicionados estados `wppSearchTxt` e `wppSearchReg`
+- Modal substituiu bloco "Busque na Planilha primeiro" por campo de busca inline: digita 2+ chars → lista até 5 resultados (DT + nome + placa); clica → seleciona e exibe contexto verde com botão de limpar
+- Se já havia seleção prévia (`buscaResult`), exibe direto — pode limpar para buscar outra
+- Botões de opção usam `wppSearchReg || buscaResult` como registro efetivo
+- Ao fechar/usar modal: reset automático da busca
+- Build: ✓ 3.58s
