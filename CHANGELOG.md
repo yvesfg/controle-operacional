@@ -239,3 +239,13 @@
 - `App.jsx`: prop `onSalvarOcorrencia={salvarOcorrenciaExterna}` passada para `OcorrenciasView`
 - `OcorrenciasView.jsx`: botão "Nova Ocorrência" (roxo, top-right dos stats) abre modal `NovaOcorrModal`
 - `NovaOcorrModal`: passo 1 = busca por DT ou nome (filtra `dados`, lista até 8 resultados); passo 2 = seleção + tipo (Info/Alerta/Status) + textarea com Ctrl+Enter para salvar
+
+## Session 5 — 2026-04-21
+
+**Solicitado:** Layout global sistêmico, dropdown dark theme, Nova Ocorrência inline nos cards
+
+**Implementado:**
+- `App.jsx`: removido `maxWidth:1100` do wrapper de conteúdo — todas as telas usam `maxWidth:"100%"`, eliminando vazio lateral em monitores largos
+- `App.jsx`: CSS global para `select` — `color-scheme: dark/light` por tema; `option` herda background e color da paleta do app (fim do fundo branco no dropdown escuro)
+- `OcorrenciasView.jsx`: botão `+` inline em cada OcorrCard, ao lado de Obs Chegada e Obs Descarga, abre `NovaOcorrModal` com o DT pré-selecionado (sem etapa de busca)
+- `NovaOcorrModal`: aceita `initialEntry` prop — quando chamado do card pula direto ao formulário; quando chamado do botão do header mantém a busca manual

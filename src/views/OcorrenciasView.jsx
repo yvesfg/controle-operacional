@@ -1,168 +1,142 @@
 /**
- * OcorrenciasView.jsx — PÓS-CARGA: Ocorrências por DT
- * Layout blocos com obs_chegada e obs_descarga integrados
- *
- * Props:
- *   dados          : array de registros (DADOS)
- *   diariasData    : { items } com dados de diárias
- *   filtroOcorr    : string | null
- *   setFiltroOcorr : fn
- *   abrirDetalhe   : fn(r) — abre modal detalhe
- *   t              : objeto de tema (legacy, para compatibilidade)
- *   isMobile       : boolean
- *   motoristas     : array de motoristas
- *   onSalvarOcorrencia : fn(dt, texto, tipo) — callback para salvar nova ocorrência
+ * OcorrenciasView.jsx
  */
 import React, { useMemo, useState, useRef, useEffect } from "react";
 
-// ── Ícone SVG inline ─────────────────────────────────────────────────────────
-const Ico = ({ size = 16, color = "currentColor", sw = 1.8, children, style }) => (
+const Ico = ({ size=16, color="currentColor", sw=1.8, children, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"
-    style={{ display: "block", flexShrink: 0, ...style }}>
+    style={{display:"block",flexShrink:0,...style}}>
     {children}
   </svg>
 );
 
-// ── Badge de ocorrência ───────────────────────────────────────────────────────
 function OcorrBadge({ label, color }) {
   return (
     <span style={{
-      fontSize: 9, fontFamily: "'DM Mono', monospace", fontWeight: 500,
-      letterSpacing: "0.06em", textTransform: "uppercase",
-      background: color + "22", border: `1px solid ${color}44`,
-      borderRadius: 4, padding: "2px 7px", color,
-    }}>
-      {label}
-    </span>
+      fontSize:9, fontFamily:"'DM Mono',monospace", fontWeight:500,
+      letterSpacing:"0.06em", textTransform:"uppercase",
+      background:color+"22", border:`1px solid ${color}44`,
+      borderRadius:4, padding:"2px 7px", color,
+    }}>{label}</span>
   );
 }
 
-// ── Card de ocorrência (bloco) ────────────────────────────────────────────────
-function OcorrCard({ entry, onOpen, motInfo }) {
+function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
   const { r, badges } = entry;
-
-  // Badge de maior prioridade define a cor da borda
   const topBadge = badges[0];
-
-  const hasObsChegada  = !!r.obs_chegada;
-  const hasObsDescarga = !!r.obs_descarga;
+  const hasChegada  = !!r.obs_chegada;
+  const hasDescarga = !!r.obs_descarga;
+  const showObs = hasChegada || hasDescarga;
 
   return (
     <div
       onClick={() => onOpen(r)}
       style={{
-        background: "var(--card)",
-        border: `1px solid var(--border)`,
-        borderLeft: `3px solid ${topBadge.color}`,
-        borderRadius: "var(--radius-card, 12px)",
-        padding: "14px 16px",
-        cursor: "pointer",
-        transition: "border-color 0.15s, background 0.15s",
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
+        background:"var(--card)", border:"1px solid var(--border)",
+        borderLeft:`3px solid ${topBadge.color}`,
+        borderRadius:"var(--radius-card,12px)", padding:"14px 16px",
+        cursor:"pointer", transition:"border-color 0.15s,background 0.15s",
+        display:"flex", flexDirection:"column", gap:10,
       }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = topBadge.color}
-      onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+      onMouseEnter={e => e.currentTarget.style.borderColor=topBadge.color}
+      onMouseLeave={e => e.currentTarget.style.borderColor="var(--border)"}
     >
-      {/* ── Linha 1: nome + DT + placa + badges ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{
-            fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700,
-            fontSize: 14, color: "var(--text)", letterSpacing: "-0.01em",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          }}>
+      {/* Row 1: nome + DT + badges */}
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,color:"var(--text)",letterSpacing:"-0.01em",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
             {r.nome || "—"}
           </div>
-          <div style={{
-            fontSize: 11, color: "var(--text3)", fontFamily: "'DM Mono', monospace",
-            letterSpacing: "0.04em", marginTop: 2,
-          }}>
+          <div style={{fontSize:11,color:"var(--text3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",marginTop:2}}>
             DT {r.dt}
-            {r.placa && <span style={{ marginLeft: 8 }}>{r.placa}</span>}
-            {r.origem && <span style={{ marginLeft: 8, color: "var(--text3)" }}>{r.origem}</span>}
+            {r.placa  && <span style={{marginLeft:8}}>{r.placa}</span>}
+            {r.origem && <span style={{marginLeft:8,color:"var(--text3)"}}>{r.origem}</span>}
           </div>
           {motInfo?.tel && (
-            <div style={{ fontSize: 10, color: "var(--cyan, #06b6d4)", fontFamily: "'DM Mono', monospace", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{fontSize:10,color:"var(--cyan,#06b6d4)",fontFamily:"'DM Mono',monospace",marginTop:2,display:"flex",alignItems:"center",gap:4}}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.83a16 16 0 0 0 6.29 6.29l1.19-1.19a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               {motInfo.tel}
             </div>
           )}
         </div>
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", flexShrink: 0 }}>
-          {badges.map((b, i) => (
-            <OcorrBadge key={i} label={b.label} color={b.color} />
-          ))}
+        <div style={{display:"flex",gap:4,flexWrap:"wrap",flexShrink:0}}>
+          {badges.map((b,i) => <OcorrBadge key={i} label={b.label} color={b.color}/>)}
         </div>
       </div>
 
-      {/* ── Linha 2: obs_chegada + obs_descarga ── */}
-      {(hasObsChegada || hasObsDescarga) && (
+      {/* Row 2: obs_chegada + obs_descarga + add button */}
+      {(showObs || onAddOcorrencia) && (
         <div style={{
-          display: "grid",
-          gridTemplateColumns: hasObsChegada && hasObsDescarga ? "1fr 1fr" : "1fr",
-          gap: 8,
-          borderTop: "1px solid var(--border)",
-          paddingTop: 10,
+          display:"grid",
+          gridTemplateColumns:
+            showObs && onAddOcorrencia
+              ? (hasChegada && hasDescarga ? "1fr 1fr auto" : "1fr auto")
+              : (hasChegada && hasDescarga ? "1fr 1fr" : "1fr"),
+          gap:8,
+          borderTop:"1px solid var(--border)",
+          paddingTop:10,
+          alignItems:"stretch",
         }}>
-          {hasObsChegada && (
-            <div style={{
-              background: "var(--card2)", borderRadius: 8,
-              border: "1px solid var(--border)", padding: "8px 10px",
-            }}>
-              <div style={{
-                fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em",
-                textTransform: "uppercase", color: "var(--cyan, #06b6d4)", marginBottom: 4, fontWeight: 500,
-              }}>
-                Obs Chegada
-              </div>
-              <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.4 }}>
-                {(r.obs_chegada||'').length > 100 ? r.obs_chegada.slice(0,100) + '…' : r.obs_chegada}
+          {hasChegada && (
+            <div style={{background:"var(--card2)",borderRadius:8,border:"1px solid var(--border)",padding:"8px 10px"}}>
+              <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--cyan,#06b6d4)",marginBottom:4,fontWeight:500}}>Obs Chegada</div>
+              <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>
+                {(r.obs_chegada||"").length>100 ? r.obs_chegada.slice(0,100)+"…" : r.obs_chegada}
               </div>
             </div>
           )}
-          {hasObsDescarga && (
-            <div style={{
-              background: "var(--card2)", borderRadius: 8,
-              border: "1px solid var(--border)", padding: "8px 10px",
-            }}>
-              <div style={{
-                fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em",
-                textTransform: "uppercase", color: "var(--green, #22c55e)", marginBottom: 4, fontWeight: 500,
-              }}>
-                Obs Descarga
-              </div>
-              <div style={{ fontSize: 11, color: "var(--text2)", lineHeight: 1.4 }}>
-                {(r.obs_descarga||'').length > 100 ? r.obs_descarga.slice(0,100) + '…' : r.obs_descarga}
+          {hasDescarga && (
+            <div style={{background:"var(--card2)",borderRadius:8,border:"1px solid var(--border)",padding:"8px 10px"}}>
+              <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--green,#22c55e)",marginBottom:4,fontWeight:500}}>Obs Descarga</div>
+              <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>
+                {(r.obs_descarga||"").length>100 ? r.obs_descarga.slice(0,100)+"…" : r.obs_descarga}
               </div>
             </div>
+          )}
+          {onAddOcorrencia && (
+            <button
+              onClick={e => { e.stopPropagation(); onAddOcorrencia(r); }}
+              title="Nova Ocorrência"
+              style={{
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,
+                background:"var(--accent2,rgba(124,58,237,0.08))",
+                border:"1.5px dashed var(--accent,#7c3aed)",
+                borderRadius:8, padding:"8px 12px", cursor:"pointer",
+                color:"var(--accent,#7c3aed)", minWidth:44,
+                transition:"all 0.12s",
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.background="rgba(124,58,237,0.16)"}}
+              onMouseLeave={e=>{e.currentTarget.style.background="var(--accent2,rgba(124,58,237,0.08))"}}
+            >
+              <Ico size={16} color="var(--accent,#7c3aed)" sw={2.5}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
+              <span style={{fontSize:8,fontFamily:"'DM Mono',monospace",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Ocorr.</span>
+            </button>
           )}
         </div>
       )}
 
-      {/* ── Linha 3: datas ── */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+      {/* Row 3: datas */}
+      <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
         {r.data_carr && (
-          <span style={{ fontSize: 10, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
-            <span style={{ color: "var(--text3)", marginRight: 4 }}>CARR.</span>
-            <span style={{ color: "var(--text2)" }}>{r.data_carr}</span>
+          <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}>
+            <span style={{color:"var(--text3)",marginRight:4}}>CARR.</span>
+            <span style={{color:"var(--text2)"}}>{r.data_carr}</span>
           </span>
         )}
         {r.data_agenda && (
-          <span style={{ fontSize: 10, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
-            <span style={{ color: "var(--text3)", marginRight: 4 }}>AGENDA</span>
-            <span style={{ color: "var(--text2)" }}>{r.data_agenda}</span>
+          <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}>
+            <span style={{color:"var(--text3)",marginRight:4}}>AGENDA</span>
+            <span style={{color:"var(--text2)"}}>{r.data_agenda}</span>
           </span>
         )}
         {r.data_desc && (
-          <span style={{ fontSize: 10, color: "var(--text3)", fontFamily: "'DM Mono', monospace" }}>
-            <span style={{ color: "var(--text3)", marginRight: 4 }}>DESC.</span>
-            <span style={{ color: "var(--green, #22c55e)" }}>{r.data_desc}</span>
+          <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}>
+            <span style={{color:"var(--text3)",marginRight:4}}>DESC.</span>
+            <span style={{color:"var(--green,#22c55e)"}}>{r.data_desc}</span>
           </span>
         )}
-        <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--text3)" }}>
+        <span style={{marginLeft:"auto",fontSize:10,color:"var(--text3)"}}>
           <Ico size={12} color="var(--text3)"><polyline points="9 18 15 12 9 6"/></Ico>
         </span>
       </div>
@@ -170,13 +144,13 @@ function OcorrCard({ entry, onOpen, motInfo }) {
   );
 }
 
-// ── Modal Nova Ocorrência ────────────────────────────────────────────────────
-function NovaOcorrModal({ dados, onClose, onSalvar }) {
-  const [busca, setBusca]       = useState("");
-  const [selecionado, setSel]   = useState(null);
-  const [texto, setTexto]       = useState("");
-  const [tipo, setTipo]         = useState("info");
-  const [saving, setSaving]     = useState(false);
+// Modal Nova Ocorrencia
+function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
+  const [busca, setBusca]     = useState("");
+  const [selecionado, setSel] = useState(initialEntry);
+  const [texto, setTexto]     = useState("");
+  const [tipo, setTipo]       = useState("info");
+  const [saving, setSaving]   = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 80); }, []);
@@ -185,212 +159,119 @@ function NovaOcorrModal({ dados, onClose, onSalvar }) {
     if (!busca.trim()) return [];
     const q = busca.trim().toUpperCase();
     return dados.filter(r =>
-      String(r.dt || "").toUpperCase().includes(q) ||
-      (r.nome || "").toUpperCase().includes(q)
-    ).slice(0, 8);
+      String(r.dt||"").toUpperCase().includes(q) ||
+      (r.nome||"").toUpperCase().includes(q)
+    ).slice(0,8);
   }, [busca, dados]);
 
   const TIPOS = [
-    { k: "info",   label: "Info",   color: "var(--cyan, #06b6d4)" },
-    { k: "alerta", label: "Alerta", color: "var(--orange, #f97316)" },
-    { k: "status", label: "Status", color: "var(--green, #22c55e)" },
+    { k:"info",   label:"Info",   color:"var(--cyan,#06b6d4)"   },
+    { k:"alerta", label:"Alerta", color:"var(--orange,#f97316)" },
+    { k:"status", label:"Status", color:"var(--green,#22c55e)"  },
   ];
 
   const handleSalvar = async () => {
     if (!selecionado || !texto.trim() || saving) return;
     setSaving(true);
-    try {
-      await onSalvar(selecionado.dt, texto.trim(), tipo);
-      onClose();
-    } finally {
-      setSaving(false);
-    }
+    try { await onSalvar(selecionado.dt, texto.trim(), tipo); onClose(); }
+    finally { setSaving(false); }
   };
 
   return (
     <div
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{
-        position: "fixed", inset: 0, zIndex: 1200,
-        background: "rgba(0,0,0,0.55)", backdropFilter: "blur(3px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 16,
-      }}
+      onClick={e => { if (e.target===e.currentTarget) onClose(); }}
+      style={{position:"fixed",inset:0,zIndex:1200,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
     >
-      <div style={{
-        background: "var(--surface, var(--card))",
-        border: "1px solid var(--border)",
-        borderRadius: 16, padding: 24,
-        width: "100%", maxWidth: 480,
-        boxShadow: "0 24px 48px rgba(0,0,0,0.35)",
-        display: "flex", flexDirection: "column", gap: 16,
-      }}>
+      <div style={{background:"var(--surface,var(--card))",border:"1px solid var(--border)",borderRadius:16,padding:24,width:"100%",maxWidth:480,boxShadow:"0 24px 48px rgba(0,0,0,0.35)",display:"flex",flexDirection:"column",gap:16}}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 15, color: "var(--text)" }}>
-            Nova Ocorrência
-          </div>
-          <button onClick={onClose} style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: "var(--text3)", padding: 4, borderRadius: 6,
-          }}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:"var(--text)"}}>Nova Ocorrência</div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text3)",padding:4,borderRadius:6}}>
             <Ico size={18} color="var(--text3)"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Ico>
           </button>
         </div>
 
-        {/* Busca DT / motorista */}
+        {/* Step 1: busca */}
         {!selecionado ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <label style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text3)" }}>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>
               Buscar entrada (DT ou nome)
             </label>
-            <input
-              ref={inputRef}
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
+            <input ref={inputRef} value={busca} onChange={e=>setBusca(e.target.value)}
               placeholder="Ex: 12345 ou João Silva..."
-              style={{
-                width: "100%", boxSizing: "border-box",
-                fontSize: 13, padding: "10px 12px",
-                borderRadius: 8, border: "1.5px solid var(--border)",
-                background: "var(--card)", color: "var(--text)",
-                outline: "none",
-              }}
+              style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"10px 12px",borderRadius:8,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",outline:"none"}}
             />
-            {resultados.length > 0 && (
-              <div style={{
-                border: "1px solid var(--border)", borderRadius: 10,
-                overflow: "hidden", maxHeight: 260, overflowY: "auto",
-              }}>
-                {resultados.map((r, i) => (
-                  <div
-                    key={i}
-                    onClick={() => { setSel(r); setBusca(""); }}
-                    style={{
-                      padding: "10px 14px", cursor: "pointer",
-                      borderBottom: i < resultados.length - 1 ? "1px solid var(--border)" : "none",
-                      background: "var(--card)",
-                      transition: "background 0.1s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = "var(--card2)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "var(--card)"}
+            {resultados.length>0 && (
+              <div style={{border:"1px solid var(--border)",borderRadius:10,overflow:"hidden",maxHeight:260,overflowY:"auto"}}>
+                {resultados.map((r,i) => (
+                  <div key={i} onClick={()=>{setSel(r);setBusca("");}}
+                    style={{padding:"10px 14px",cursor:"pointer",borderBottom:i<resultados.length-1?"1px solid var(--border)":"none",background:"var(--card)",transition:"background 0.1s"}}
+                    onMouseEnter={e=>e.currentTarget.style.background="var(--card2)"}
+                    onMouseLeave={e=>e.currentTarget.style.background="var(--card)"}
                   >
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>{r.nome || "—"}</div>
-                    <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "var(--text3)", marginTop: 2 }}>
-                      DT {r.dt}
-                      {r.placa && <span style={{ marginLeft: 8 }}>{r.placa}</span>}
-                      {r.origem && <span style={{ marginLeft: 8 }}>{r.origem}</span>}
+                    <div style={{fontWeight:700,fontSize:13,color:"var(--text)"}}>{r.nome||"—"}</div>
+                    <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:2}}>
+                      DT {r.dt}{r.placa&&<span style={{marginLeft:8}}>{r.placa}</span>}{r.origem&&<span style={{marginLeft:8}}>{r.origem}</span>}
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            {busca.trim().length > 0 && resultados.length === 0 && (
-              <div style={{ fontSize: 12, color: "var(--text3)", textAlign: "center", padding: "12px 0" }}>
-                Nenhuma entrada encontrada
-              </div>
+            {busca.trim().length>0 && resultados.length===0 && (
+              <div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"12px 0"}}>Nenhuma entrada encontrada</div>
             )}
           </div>
         ) : (
           <>
             {/* Entrada selecionada */}
-            <div style={{
-              background: "var(--card2)", border: "1px solid var(--border)",
-              borderRadius: 10, padding: "12px 14px",
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-            }}>
+            <div style={{background:"var(--card2)",border:"1px solid var(--border)",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>{selecionado.nome || "—"}</div>
-                <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "var(--text3)", marginTop: 2 }}>
-                  DT {selecionado.dt}
-                  {selecionado.placa && <span style={{ marginLeft: 8 }}>{selecionado.placa}</span>}
+                <div style={{fontWeight:700,fontSize:13,color:"var(--text)"}}>{selecionado.nome||"—"}</div>
+                <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:2}}>
+                  DT {selecionado.dt}{selecionado.placa&&<span style={{marginLeft:8}}>{selecionado.placa}</span>}
                 </div>
               </div>
-              <button
-                onClick={() => setSel(null)}
-                style={{
-                  fontSize: 10, padding: "4px 10px", borderRadius: 6,
-                  border: "1px solid var(--border)", background: "transparent",
-                  color: "var(--text2)", cursor: "pointer", flexShrink: 0,
-                }}
-              >
-                Trocar
-              </button>
+              {!initialEntry && (
+                <button onClick={()=>setSel(null)}
+                  style={{fontSize:10,padding:"4px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",flexShrink:0}}>
+                  Trocar
+                </button>
+              )}
             </div>
-
             {/* Tipo */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text3)" }}>
-                Tipo
-              </label>
-              <div style={{ display: "flex", gap: 6 }}>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Tipo</label>
+              <div style={{display:"flex",gap:6}}>
                 {TIPOS.map(tp => (
-                  <button
-                    key={tp.k}
-                    onClick={() => setTipo(tp.k)}
-                    style={{
-                      flex: 1, padding: "7px 0", fontSize: 11, fontWeight: 600,
-                      fontFamily: "'DM Mono', monospace", letterSpacing: "0.04em",
-                      textTransform: "uppercase", borderRadius: 8, cursor: "pointer",
-                      border: `1.5px solid ${tipo === tp.k ? tp.color : "var(--border)"}`,
-                      background: tipo === tp.k ? tp.color + "18" : "var(--card)",
-                      color: tipo === tp.k ? tp.color : "var(--text2)",
-                      transition: "all 0.12s",
-                    }}
-                  >
-                    {tp.label}
-                  </button>
+                  <button key={tp.k} onClick={()=>setTipo(tp.k)} style={{
+                    flex:1,padding:"7px 0",fontSize:11,fontWeight:600,
+                    fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",textTransform:"uppercase",
+                    borderRadius:8,cursor:"pointer",
+                    border:`1.5px solid ${tipo===tp.k?tp.color:"var(--border)"}`,
+                    background:tipo===tp.k?tp.color+"18":"var(--card)",
+                    color:tipo===tp.k?tp.color:"var(--text2)",transition:"all 0.12s",
+                  }}>{tp.label}</button>
                 ))}
               </div>
             </div>
-
             {/* Texto */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text3)" }}>
-                Descrição
-              </label>
-              <textarea
-                autoFocus
-                value={texto}
-                onChange={e => setTexto(e.target.value)}
-                rows={4}
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Descrição</label>
+              <textarea autoFocus value={texto} onChange={e=>setTexto(e.target.value)} rows={4}
                 placeholder="Descreva a ocorrência..."
-                style={{
-                  width: "100%", boxSizing: "border-box",
-                  fontSize: 13, padding: "10px 12px",
-                  borderRadius: 8, border: "1.5px solid var(--border)",
-                  background: "var(--card)", color: "var(--text)",
-                  resize: "vertical", outline: "none", lineHeight: 1.5,
-                  fontFamily: "inherit",
-                }}
-                onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleSalvar(); }}
+                style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"10px 12px",borderRadius:8,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",resize:"vertical",outline:"none",lineHeight:1.5,fontFamily:"inherit"}}
+                onKeyDown={e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))handleSalvar();}}
               />
-              <div style={{ fontSize: 10, color: "var(--text3)", textAlign: "right" }}>
-                Ctrl+Enter para salvar
-              </div>
+              <div style={{fontSize:10,color:"var(--text3)",textAlign:"right"}}>Ctrl+Enter para salvar</div>
             </div>
-
-            {/* Botões */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={onClose} style={{
-                flex: 1, padding: "10px 0", borderRadius: 9, cursor: "pointer",
-                border: "1px solid var(--border)", background: "transparent",
-                color: "var(--text2)", fontSize: 13, fontWeight: 600,
-              }}>
+            {/* Botoes */}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={onClose} style={{flex:1,padding:"10px 0",borderRadius:9,cursor:"pointer",border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",fontSize:13,fontWeight:600}}>
                 Cancelar
               </button>
-              <button
-                onClick={handleSalvar}
-                disabled={!texto.trim() || saving}
-                style={{
-                  flex: 2, padding: "10px 0", borderRadius: 9, cursor: texto.trim() && !saving ? "pointer" : "default",
-                  border: "none", background: texto.trim() && !saving ? "var(--accent, #7c3aed)" : "var(--border)",
-                  color: texto.trim() && !saving ? "#fff" : "var(--text3)",
-                  fontSize: 13, fontWeight: 700,
-                  transition: "all 0.12s",
-                }}
-              >
-                {saving ? "Salvando…" : "Registrar Ocorrência"}
+              <button onClick={handleSalvar} disabled={!texto.trim()||saving}
+                style={{flex:2,padding:"10px 0",borderRadius:9,cursor:texto.trim()&&!saving?"pointer":"default",border:"none",background:texto.trim()&&!saving?"var(--accent,#7c3aed)":"var(--border)",color:texto.trim()&&!saving?"#fff":"var(--text3)",fontSize:13,fontWeight:700,transition:"all 0.12s"}}>
+                {saving?"Salvando…":"Registrar Ocorrência"}
               </button>
             </div>
           </>
@@ -400,333 +281,190 @@ function NovaOcorrModal({ dados, onClose, onSalvar }) {
   );
 }
 
-// ── Componente principal ──────────────────────────────────────────────────────
-export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, setFiltroOcorr, abrirDetalhe, t, isMobile, motoristas = [], onSalvarOcorrencia }) {
+export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, setFiltroOcorr, abrirDetalhe, t, isMobile, motoristas=[], onSalvarOcorrencia }) {
   const [filtroIni, setFiltroIni] = useState("");
   const [filtroFim, setFiltroFim] = useState("");
   const [ocorrCols, setOcorrCols] = useState(2);
-  const [novaOcorrOpen, setNovaOcorrOpen] = useState(false);
+  const [novaOcorrOpen, setNovaOcorrOpen]     = useState(false);
+  const [novaOcorrPreset, setNovaOcorrPreset] = useState(null);
 
-  // Cores por tipo de badge
+  const openModal = (entry=null) => { setNovaOcorrPreset(entry); setNovaOcorrOpen(true); };
+  const closeModal = () => { setNovaOcorrOpen(false); setNovaOcorrPreset(null); };
+
   const BADGE_COLORS = {
-    SGS:            "var(--yellow, #eab308)",
-    "Ocorrência":   "var(--orange, #f97316)",
-    "Diária":       "var(--red, #ef4444)",
-    DCC:            "var(--cyan, #06b6d4)",
-    Atraso:         "var(--red, #ef4444)",
+    SGS:           "var(--yellow,#eab308)",
+    "Ocorrência": "var(--orange,#f97316)",
+    "Diária": "var(--red,#ef4444)",
+    DCC:           "var(--cyan,#06b6d4)",
+    Atraso:        "var(--red,#ef4444)",
   };
 
-  // ── Build entries ──────────────────────────────────────────────────────────
   const { entries, stats } = useMemo(() => {
-    const pjOcorr = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
-    const diariasSet = new Set((diariasData?.items || [])
-      .filter(it => it.tipo === "diaria" || it.tipo === "atraso")
-      .map(it => it.r.dt));
-    const dccSet = new Set(dados.filter(r => {
-      if ((r.status || "").toUpperCase() === "CANCELADA") return false;
-      const dccs = pjOcorr(r.minutas_dcc, []);
-      return dccs.some(m => m.cte || m.mdf || m.num || m.valor) || !!(r.cte_comp || r.mdf_comp);
-    }).map(r => r.dt));
+    const pj=(v,def)=>{ try{ return Array.isArray(v)?v:(v?JSON.parse(v):def); }catch{ return def; } };
+    const diariasSet=new Set((diariasData?.items||[]).filter(it=>it.tipo==="diaria"||it.tipo==="atraso").map(it=>it.r.dt));
+    const dccSet=new Set(dados.filter(r=>{
+      if((r.status||"").toUpperCase()==="CANCELADA") return false;
+      const dccs=pj(r.minutas_dcc,[]);
+      return dccs.some(m=>m.cte||m.mdf||m.num||m.valor)||(r.cte_comp||r.mdf_comp);
+    }).map(r=>r.dt));
 
-    const prioScore = b => {
-      if (b.label.startsWith("Atraso") || b.label === "Diária") return 0;
-      if (b.label.startsWith("SGS")) return 1;
-      if (b.label === "DCC") return 2;
+    const prioScore=b=>{
+      if(b.label.startsWith("Atraso")||b.label==="Diária") return 0;
+      if(b.label.startsWith("SGS")) return 1;
+      if(b.label==="DCC") return 2;
       return 3;
     };
 
-    const raw = dados
-      .filter(r => (r.status || "").toUpperCase() !== "CANCELADA" && (r.obs_chegada || r.obs_descarga))
-      .map(r => {
-        const badges = [];
-        const hasOcorrLocal = (() => {
-          try {
-            const v = localStorage.getItem(`co_ocorr_${r.dt}`);
-            if (!v) return false;
-            const arr = JSON.parse(v);
-            return Array.isArray(arr) && arr.length > 0;
-          } catch { return false; }
+    const raw=dados
+      .filter(r=>(r.status||"").toUpperCase()!=="CANCELADA"&&(r.obs_chegada||r.obs_descarga))
+      .map(r=>{
+        const badges=[];
+        const hasOcorrLocal=(()=>{
+          try{ const v=localStorage.getItem(`co_ocorr_${r.dt}`); if(!v) return false; const a=JSON.parse(v); return Array.isArray(a)&&a.length>0; }
+          catch{ return false; }
         })();
-
-        if (r.sgs)                 badges.push({ label: `SGS: ${r.sgs}`,  color: BADGE_COLORS.SGS });
-        if (hasOcorrLocal)         badges.push({ label: "Ocorrência",      color: BADGE_COLORS["Ocorrência"] });
-        if (diariasSet.has(r.dt))  badges.push({ label: "Diária",          color: BADGE_COLORS["Diária"] });
-        if (dccSet.has(r.dt))      badges.push({ label: "DCC",             color: BADGE_COLORS.DCC });
-        if (r.data_agenda && !r.data_desc) {
-          const da = (() => {
-            const s = r.data_agenda;
-            if (!s) return null;
-            if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) { const [d, m, y] = s.split("/"); return new Date(`${y}-${m}-${d}`); }
-            if (/^\d{4}-\d{2}-\d{2}/.test(s))   return new Date(s);
-            return null;
-          })();
-          if (da) {
-            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-            const dif = Math.floor((hoje - da) / (1000 * 60 * 60 * 24));
-            if (dif >= 1) badges.push({ label: `Atraso ${dif}d`, color: BADGE_COLORS.Atraso });
-          }
+        if(r.sgs)                  badges.push({label:`SGS: ${r.sgs}`,  color:BADGE_COLORS.SGS});
+        if(hasOcorrLocal)          badges.push({label:"Ocorrência", color:BADGE_COLORS["Ocorrência"]});
+        if(diariasSet.has(r.dt))   badges.push({label:"Diária",     color:BADGE_COLORS["Diária"]});
+        if(dccSet.has(r.dt))       badges.push({label:"DCC",             color:BADGE_COLORS.DCC});
+        if(r.data_agenda&&!r.data_desc){
+          const da=(()=>{const s=r.data_agenda;if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const[d,m,y]=s.split("/");return new Date(`${y}-${m}-${d}`);}if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s);return null;})();
+          if(da){const hoje=new Date();hoje.setHours(0,0,0,0);const dif=Math.floor((hoje-da)/(1000*60*60*24));if(dif>=1)badges.push({label:`Atraso ${dif}d`,color:BADGE_COLORS.Atraso});}
         }
-        if (badges.length === 0) return null;
-        badges.sort((a, b) => prioScore(a) - prioScore(b));
-        return { r, badges };
-      })
-      .filter(Boolean);
+        if(badges.length===0) return null;
+        badges.sort((a,b)=>prioScore(a)-prioScore(b));
+        return {r,badges};
+      }).filter(Boolean);
 
-    raw.sort((a, b) => prioScore(a.badges[0]) - prioScore(b.badges[0]));
+    raw.sort((a,b)=>prioScore(a.badges[0])-prioScore(b.badges[0]));
 
-    const stats = {
-      total:     raw.length,
-      sgs:       raw.filter(e => e.badges.some(b => b.label.startsWith("SGS"))).length,
-      diaria:    raw.filter(e => e.badges.some(b => b.label === "Diária" || b.label.startsWith("Atraso"))).length,
-      dcc:       raw.filter(e => e.badges.some(b => b.label === "DCC")).length,
-      ocorr:     raw.filter(e => e.badges.some(b => b.label === "Ocorrência")).length,
-      obsChegada:  raw.filter(e => !!e.r.obs_chegada).length,
-      obsDescarga: raw.filter(e => !!e.r.obs_descarga).length,
+    const stats={
+      total:raw.length,
+      sgs:raw.filter(e=>e.badges.some(b=>b.label.startsWith("SGS"))).length,
+      diaria:raw.filter(e=>e.badges.some(b=>b.label==="Diária"||b.label.startsWith("Atraso"))).length,
+      dcc:raw.filter(e=>e.badges.some(b=>b.label==="DCC")).length,
+      ocorr:raw.filter(e=>e.badges.some(b=>b.label==="Ocorrência")).length,
+      obsChegada:raw.filter(e=>!!e.r.obs_chegada).length,
+      obsDescarga:raw.filter(e=>!!e.r.obs_descarga).length,
     };
+    return {entries:raw,stats};
+  },[dados,diariasData]);
 
-    return { entries: raw, stats };
-  }, [dados, diariasData]);
-
-  // ── Filtro ─────────────────────────────────────────────────────────────────
-  const FILTROS = [
-    { k: null,            l: "Todos",          color: "var(--text2)" },
-    { k: "SGS",           l: "SGS",            color: "var(--yellow, #eab308)" },
-    { k: "Ocorrência",    l: "Ocorrência",     color: "var(--orange, #f97316)" },
-    { k: "Diária/Atraso", l: "Diária/Atraso",  color: "var(--red, #ef4444)" },
-    { k: "DCC",           l: "DCC",            color: "var(--cyan, #06b6d4)" },
+  const FILTROS=[
+    {k:null,            l:"Todos",         color:"var(--text2)"},
+    {k:"SGS",           l:"SGS",           color:"var(--yellow,#eab308)"},
+    {k:"Ocorrência", l:"Ocorrência", color:"var(--orange,#f97316)"},
+    {k:"Diária/Atraso",l:"Diária/Atraso",color:"var(--red,#ef4444)"},
+    {k:"DCC",           l:"DCC",           color:"var(--cyan,#06b6d4)"},
   ];
-
-  const labelMap = {
-    "SGS":          b => b.label.startsWith("SGS"),
-    "Ocorrência":   b => b.label === "Ocorrência",
-    "Diária/Atraso":b => b.label === "Diária" || b.label.startsWith("Atraso"),
-    "DCC":          b => b.label === "DCC",
+  const labelMap={
+    "SGS":b=>b.label.startsWith("SGS"),
+    "Ocorrência":b=>b.label==="Ocorrência",
+    "Diária/Atraso":b=>b.label==="Diária"||b.label.startsWith("Atraso"),
+    "DCC":b=>b.label==="DCC",
   };
 
-  const _iniD = filtroIni ? new Date(filtroIni + "T00:00:00") : null;
-  const _fimD = filtroFim ? new Date(filtroFim + "T23:59:59") : null;
-
-  const filtered = (filtroOcorr
-    ? entries.filter(e => e.badges.some(labelMap[filtroOcorr] || (() => false)))
-    : entries
-  ).filter(e => {
-    if (!_iniD && !_fimD) return true;
-    const r = e.r;
-    const s = r.data_carr || r.data_agenda || r.data_desc || "";
-    let d = null;
-    if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) { const p = s.split("/"); d = new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00"); }
-    else if (/^\d{4}-\d{2}-\d{2}/.test(s)) { d = new Date(s+"T00:00:00"); }
-    if (!d) return true;
-    if (_iniD && d < _iniD) return false;
-    if (_fimD && d > _fimD) return false;
+  const _iniD=filtroIni?new Date(filtroIni+"T00:00:00"):null;
+  const _fimD=filtroFim?new Date(filtroFim+"T23:59:59"):null;
+  const filtered=(filtroOcorr?entries.filter(e=>e.badges.some(labelMap[filtroOcorr]||(()=>false))):entries).filter(e=>{
+    if(!_iniD&&!_fimD) return true;
+    const r=e.r; const s=r.data_carr||r.data_agenda||r.data_desc||""; let d=null;
+    if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");d=new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00");}
+    else if(/^\d{4}-\d{2}-\d{2}/.test(s)){d=new Date(s+"T00:00:00");}
+    if(!d) return true;
+    if(_iniD&&d<_iniD) return false;
+    if(_fimD&&d>_fimD) return false;
     return true;
   });
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: isMobile ? "16px" : "16px 24px" }}>
+    <div style={{padding:isMobile?"16px":"16px 24px",width:"100%",boxSizing:"border-box"}}>
 
-      {/* ── Nova Ocorrência modal ── */}
-      {novaOcorrOpen && onSalvarOcorrencia && (
-        <NovaOcorrModal
-          dados={dados}
-          onClose={() => setNovaOcorrOpen(false)}
-          onSalvar={onSalvarOcorrencia}
-        />
+      {novaOcorrOpen&&onSalvarOcorrencia&&(
+        <NovaOcorrModal dados={dados} onClose={closeModal} onSalvar={onSalvarOcorrencia} initialEntry={novaOcorrPreset}/>
       )}
 
-      {/* ── Header row: stats + botão ── */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-          gap: 10, flex: 1, minWidth: 0,
-        }}>
+      {/* Header row */}
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:10,flex:1,minWidth:0}}>
           {[
-            { label: "Total Alertas",  value: stats.total,   color: "var(--text2)" },
-            { label: "Com SGS",        value: stats.sgs,     color: "var(--yellow, #eab308)" },
-            { label: "Com Diária",     value: stats.diaria,  color: "var(--red, #ef4444)" },
-            { label: "Com DCC",        value: stats.dcc,     color: "var(--cyan, #06b6d4)" },
-          ].map(s => (
-            <div key={s.label} style={{
-              background: "var(--card)", border: "1px solid var(--border)",
-              borderRadius: "var(--radius-card, 12px)", padding: "14px 16px",
-            }}>
-              <div style={{
-                fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em",
-                color: "var(--text3)", textTransform: "uppercase", marginBottom: 6,
-              }}>
-                {s.label}
-              </div>
-              <div style={{
-                fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700,
-                fontSize: 26, color: s.color, letterSpacing: "-0.04em", lineHeight: 1,
-              }}>
-                {s.value}
-              </div>
+            {label:"Total Alertas", value:stats.total,  color:"var(--text2)"},
+            {label:"Com SGS",       value:stats.sgs,    color:"var(--yellow,#eab308)"},
+            {label:"Com Diária",value:stats.diaria,color:"var(--red,#ef4444)"},
+            {label:"Com DCC",       value:stats.dcc,    color:"var(--cyan,#06b6d4)"},
+          ].map(s=>(
+            <div key={s.label} style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:"var(--radius-card,12px)",padding:"14px 16px"}}>
+              <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",color:"var(--text3)",textTransform:"uppercase",marginBottom:6}}>{s.label}</div>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:26,color:s.color,letterSpacing:"-0.04em",lineHeight:1}}>{s.value}</div>
             </div>
           ))}
         </div>
-
-        {/* Botão Nova Ocorrência */}
-        {onSalvarOcorrencia && (
-          <button
-            onClick={() => setNovaOcorrOpen(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "10px 16px", borderRadius: 10, cursor: "pointer",
-              border: "1.5px solid var(--accent, #7c3aed)",
-              background: "var(--accent2, rgba(124,58,237,0.08))",
-              color: "var(--accent, #7c3aed)",
-              fontSize: 12, fontWeight: 700,
-              fontFamily: "'DM Sans', sans-serif",
-              whiteSpace: "nowrap",
-              alignSelf: "flex-start",
-              marginTop: isMobile ? 0 : 0,
-            }}
-          >
-            <Ico size={14} color="var(--accent, #7c3aed)" sw={2.2}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
+        {onSalvarOcorrencia&&(
+          <button onClick={()=>openModal(null)}
+            style={{display:"flex",alignItems:"center",gap:7,padding:"10px 16px",borderRadius:10,cursor:"pointer",border:"1.5px solid var(--accent,#7c3aed)",background:"var(--accent2,rgba(124,58,237,0.08))",color:"var(--accent,#7c3aed)",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",alignSelf:"flex-start"}}>
+            <Ico size={14} color="var(--accent,#7c3aed)" sw={2.2}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
             Nova Ocorrência
           </button>
         )}
       </div>
 
-      {/* ── Obs summary row ── */}
-      {(stats.obsChegada > 0 || stats.obsDescarga > 0) && (
-        <div style={{
-          display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap",
-        }}>
-          {stats.obsChegada > 0 && (
-            <div style={{
-              background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.25)",
-              borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "var(--cyan, #06b6d4)",
-              fontFamily: "'DM Sans', sans-serif",
-            }}>
-              <span style={{ fontWeight: 700 }}>{stats.obsChegada}</span>
-              <span style={{ color: "var(--text2)", marginLeft: 6 }}>com Obs Chegada</span>
-            </div>
-          )}
-          {stats.obsDescarga > 0 && (
-            <div style={{
-              background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)",
-              borderRadius: 8, padding: "8px 14px", fontSize: 12, color: "var(--green, #22c55e)",
-              fontFamily: "'DM Sans', sans-serif",
-            }}>
-              <span style={{ fontWeight: 700 }}>{stats.obsDescarga}</span>
-              <span style={{ color: "var(--text2)", marginLeft: 6 }}>com Obs Descarga</span>
-            </div>
-          )}
+      {/* Obs summary */}
+      {(stats.obsChegada>0||stats.obsDescarga>0)&&(
+        <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+          {stats.obsChegada>0&&(<div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.25)",borderRadius:8,padding:"8px 14px",fontSize:12,color:"var(--cyan,#06b6d4)",fontFamily:"'DM Sans',sans-serif"}}><span style={{fontWeight:700}}>{stats.obsChegada}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Chegada</span></div>)}
+          {stats.obsDescarga>0&&(<div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:8,padding:"8px 14px",fontSize:12,color:"var(--green,#22c55e)",fontFamily:"'DM Sans',sans-serif"}}><span style={{fontWeight:700}}>{stats.obsDescarga}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Descarga</span></div>)}
         </div>
       )}
 
-      {/* ── Date range filter ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "7px 12px", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text3)", marginRight: 2 }}>Filtrar:</span>
-        <input
-          type="date"
-          value={filtroIni}
-          onChange={e => setFiltroIni(e.target.value)}
-          style={{ fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 6, border: "1.5px solid var(--border)", background: "var(--card)", color: "var(--text)", height: 28, width: 130, cursor: "pointer" }}
-        />
-        <span style={{ fontSize: 10, color: "var(--text3)", flexShrink: 0 }}>até</span>
-        <input
-          type="date"
-          value={filtroFim}
-          onChange={e => setFiltroFim(e.target.value)}
-          style={{ fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 6, border: "1.5px solid var(--border)", background: "var(--card)", color: "var(--text)", height: 28, width: 130, cursor: "pointer" }}
-        />
-        {(filtroIni || filtroFim) && (
-          <button onClick={() => { setFiltroIni(""); setFiltroFim(""); }} style={{ fontSize: 9, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", color: "var(--text2)", cursor: "pointer" }}>
-            ✕ Limpar
-          </button>
-        )}
-        <span style={{ marginLeft: "auto", fontSize: 9, fontFamily: "'DM Mono', monospace", color: "var(--text2)", fontWeight: 600 }}>{filtered.length} registros</span>
+      {/* Date range filter */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 12px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,flexWrap:"wrap"}}>
+        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginRight:2}}>Filtrar:</span>
+        <input type="date" value={filtroIni} onChange={e=>setFiltroIni(e.target.value)}
+          style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
+        <span style={{fontSize:10,color:"var(--text3)",flexShrink:0}}>até</span>
+        <input type="date" value={filtroFim} onChange={e=>setFiltroFim(e.target.value)}
+          style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
+        {(filtroIni||filtroFim)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>✕ Limpar</button>)}
+        <span style={{marginLeft:"auto",fontSize:9,fontFamily:"'DM Mono',monospace",color:"var(--text2)",fontWeight:600}}>{filtered.length} registros</span>
       </div>
 
-      {/* ── Filter pills ── */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8, alignItems: "center" }}>
-        <span style={{
-          fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em",
-          textTransform: "uppercase", color: "var(--text3)", marginRight: 4,
-        }}>
-          Filtrar:
-        </span>
-        {FILTROS.map(f => {
-          const ativo = filtroOcorr === f.k;
+      {/* Filter pills */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
+        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginRight:4}}>Filtrar:</span>
+        {FILTROS.map(f=>{
+          const ativo=filtroOcorr===f.k;
           return (
-            <button
-              key={String(f.k)}
-              onClick={() => setFiltroOcorr(ativo ? null : f.k)}
-              style={{
-                fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500,
-                letterSpacing: "0.04em", textTransform: "uppercase",
-                background: ativo ? f.color + "22" : "var(--card)",
-                border: `1.5px solid ${ativo ? f.color : "var(--border)"}`,
-                borderRadius: 6, padding: "4px 10px", color: ativo ? f.color : "var(--text2)",
-                cursor: "pointer", transition: "all 0.15s",
-              }}
-            >
+            <button key={String(f.k)} onClick={()=>setFiltroOcorr(ativo?null:f.k)}
+              style={{fontSize:10,fontFamily:"'DM Mono',monospace",fontWeight:500,letterSpacing:"0.04em",textTransform:"uppercase",background:ativo?f.color+"22":"var(--card)",border:`1.5px solid ${ativo?f.color:"var(--border)"}`,borderRadius:6,padding:"4px 10px",color:ativo?f.color:"var(--text2)",cursor:"pointer",transition:"all 0.15s"}}>
               {f.l}
-              {f.k && (
-                <span style={{ marginLeft: 4, opacity: 0.65 }}>
-                  {f.k === null ? entries.length
-                    : f.k === "SGS" ? stats.sgs
-                    : f.k === "Ocorrência" ? stats.ocorr
-                    : f.k === "Diária/Atraso" ? stats.diaria
-                    : stats.dcc}
-                </span>
-              )}
+              {f.k&&(<span style={{marginLeft:4,opacity:0.65}}>{f.k==="SGS"?stats.sgs:f.k==="Ocorrência"?stats.ocorr:f.k==="Diária/Atraso"?stats.diaria:stats.dcc}</span>)}
             </button>
           );
         })}
       </div>
 
-      {/* ── Column count selector ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <span style={{ fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text3)" }}>Colunas:</span>
-        {[1, 2, 3, 4].map(n => (
-          <button key={n} onClick={() => setOcorrCols(n)} style={{
-            width: 28, height: 28, fontSize: 11, fontWeight: 700,
-            border: `1.5px solid ${ocorrCols === n ? "var(--accent)" : "var(--border)"}`,
-            borderRadius: 7, cursor: "pointer",
-            background: ocorrCols === n ? "var(--accent2, rgba(124,58,237,0.1))" : "var(--card2)",
-            color: ocorrCols === n ? "var(--accent)" : "var(--text2)",
-          }}>{n}</button>
+      {/* Column selector */}
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
+        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--text3)"}}>Colunas:</span>
+        {[1,2,3,4].map(n=>(
+          <button key={n} onClick={()=>setOcorrCols(n)} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${ocorrCols===n?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:ocorrCols===n?"var(--accent2,rgba(124,58,237,0.1))":"var(--card2)",color:ocorrCols===n?"var(--accent)":"var(--text2)"}}>{n}</button>
         ))}
       </div>
 
-      {/* ── Block grid ── */}
-      {filtered.length === 0 ? (
-        <div style={{
-          textAlign: "center", padding: "56px 20px",
-          color: "var(--text3)",
-        }}>
-          <Ico size={36} color="var(--green, #22c55e)" style={{ margin: "0 auto 16px" }}>
-            <polyline points="20 6 9 17 4 12"/>
-          </Ico>
-          <div style={{
-            fontFamily: "'Space Grotesk', sans-serif", fontSize: 15,
-            fontWeight: 600, color: "var(--text2)", marginBottom: 4,
-          }}>
-            {filtroOcorr ? `Nenhum DT com "${filtroOcorr}"` : "Nenhuma ocorrência registrada"}
+      {/* Grid */}
+      {filtered.length===0?(
+        <div style={{textAlign:"center",padding:"56px 20px",color:"var(--text3)"}}>
+          <Ico size={36} color="var(--green,#22c55e)" style={{margin:"0 auto 16px"}}><polyline points="20 6 9 17 4 12"/></Ico>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:600,color:"var(--text2)",marginBottom:4}}>
+            {filtroOcorr?`Nenhum DT com "${filtroOcorr}"`:"Nenhuma ocorrência registrada"}
           </div>
-          <div style={{ fontSize: 12, color: "var(--text3)" }}>
-            Todos os DTs estão sem pendências nesta categoria.
-          </div>
+          <div style={{fontSize:12,color:"var(--text3)"}}>Todos os DTs estão sem pendências nesta categoria.</div>
         </div>
-      ) : (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : `repeat(${ocorrCols}, minmax(0, 1fr))`,
-          gap: 10,
-        }}>
-          {filtered.map((entry, i) => {
-            const motInfo = motoristas.find(m =>
-              (entry.r.cpf && m.cpf?.replace(/\D/g,"") === entry.r.cpf?.replace(/\D/g,"")) ||
-              (entry.r.nome && m.nome === entry.r.nome) ||
-              [m.placa1, m.placa2, m.placa3, m.placa4].some(p => p && p === entry.r.placa)
-            );
-            return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} />;
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":`repeat(${ocorrCols},minmax(0,1fr))`,gap:10}}>
+          {filtered.map((entry,i)=>{
+            const motInfo=motoristas.find(m=>(entry.r.cpf&&m.cpf?.replace(/\D/g,"")===entry.r.cpf?.replace(/\D/g,""))||(entry.r.nome&&m.nome===entry.r.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===entry.r.placa));
+            return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} onAddOcorrencia={onSalvarOcorrencia?r=>openModal(r):null}/>;
           })}
         </div>
       )}

@@ -2972,6 +2972,12 @@ export default function App() {
 
         /* ─── Ajuste do content dentro do co-main ─── */
         .co-content{flex:1;width:100%;overflow-y:auto;min-height:0}
+        /* -- Select dropdown theming -- */
+        select{color-scheme:inherit;transition:border-color .15s,background .15s}
+        [data-theme="dark"] select{color-scheme:dark;background:var(--card);color:var(--text);border-color:var(--border)}
+        [data-theme="dark"] select option{background:var(--card);color:var(--text)}
+        [data-theme="light"] select{color-scheme:light;background:var(--surface,#fff);color:var(--text);border-color:var(--border)}
+        [data-theme="light"] select option{background:var(--surface,#fff);color:var(--text)}
 
         /* ─── Modal Detalhe Responsivo ─── */
         .co-dt-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:flex-end;justify-content:center}
@@ -3358,7 +3364,7 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:(activeTab==="planilha"||activeTab==="relatorios"||activeTab==="dashboard"||activeTab==="diarias"||activeTab==="descarga")?"100%":1100,margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
+      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
 
         {/* ═══ RELATÓRIOS ═══ */}
         {activeTab === "relatorios" && (
