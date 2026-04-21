@@ -233,7 +233,7 @@ export default function RelatoriosView({
   t, isMobile,
   setRelGeralOpen, setRelOperOpen, setRelDiariaOpen, setRelDescargaOpen,
 }) {
-  const [tab, setTab] = useState("kpis");
+  const [tab, setTab] = useState("all");
   const [exportModal, setExportModal] = useState(false);
 
   // ── KPIs computados dos dados reais ──────────────────────────────────────
@@ -297,7 +297,7 @@ export default function RelatoriosView({
           border: "1px solid var(--border)", borderRadius: 8,
           padding: 4, gap: 2,
         }}>
-          {[["kpis", "Visão Geral"], ["eficiencia", "Eficiência"], ["financeiro", "Financeiro"], ["motoristas", "Motoristas"]].map(([v, l]) => (
+          {[["all", "Tudo"], ["kpis", "KPIs"], ["eficiencia", "Eficiência"], ["financeiro", "Financeiro"], ["motoristas", "Motoristas"]].map(([v, l]) => (
             <TabBtn key={v} label={l} active={tab === v} onClick={() => setTab(v)} />
           ))}
         </div>
@@ -325,7 +325,7 @@ export default function RelatoriosView({
       </div>
 
       {/* ══════════ TAB: KPIs Gerais ══════════ */}
-      {tab === "kpis" && (
+      {(tab === "kpis" || tab === "all") && (
         <>
           <div style={{
             display: "grid",
@@ -413,7 +413,7 @@ export default function RelatoriosView({
       )}
 
       {/* ══════════ TAB: Eficiência ══════════ */}
-      {tab === "eficiencia" && (
+      {(tab === "eficiencia" || tab === "all") && (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
           <KpiCard
             label="Taxa de Descarga"
@@ -445,7 +445,7 @@ export default function RelatoriosView({
       )}
 
       {/* ══════════ TAB: Financeiro ══════════ */}
-      {tab === "financeiro" && (
+      {(tab === "financeiro" || tab === "all") && (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2,1fr)", gap: 12, marginBottom: 20 }}>
           <KpiCard
             label="Total CTE"
@@ -474,7 +474,7 @@ export default function RelatoriosView({
       )}
 
       {/* ══════════ TAB: Motoristas ══════════ */}
-      {tab === "motoristas" && (
+      {(tab === "motoristas" || tab === "all") && (
         <div style={{
           background: "var(--card)", border: "1px solid var(--border)",
           borderRadius: "var(--radius-card, 12px)", overflow: "hidden",

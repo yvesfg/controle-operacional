@@ -2984,30 +2984,6 @@ export default function App() {
           .co-dt-modal{max-width:1060px!important;width:86vw!important}
           .co-dt-panel{flex:0 0 54%}
         }
-        /* ── Light-mode sidebar overrides ── */
-        [data-theme="light"] .co-sidebar__item:hover{background:var(--card2)!important;color:var(--text)!important}
-        [data-theme="light"] .co-sidebar__item--active{background:var(--accent2)!important;color:var(--accent)!important}
-        [data-theme="light"] .co-sidebar__item--active .co-sidebar__ico svg{stroke:var(--accent)!important}
-        [data-theme="light"] .co-sidebar__footer-item:hover{background:var(--card2)!important}
-        [data-theme="light"] .co-sidebar__user{background:var(--card2)!important;border-color:var(--border)!important}
-        /* ── Logo icon sempre visível ── */
-        .co-sidebar__logo-ico{background:var(--accent)!important}
-        /* ── Full-height layout fix ── */
-        html,body{height:100%}
-        .co-app-wrap{min-height:100vh;height:100%}
-        .co-main{min-height:100vh}
-        /* ── Carga/Descarga full-viewport ── */
-        .co-descarga-wrap{display:flex;flex-direction:column;min-height:calc(100vh - 56px);overflow:hidden}
-        /* ── Tablet/mobile: content ocupa toda a área útil ── */
-        @media(max-width:767px){
-          .co-main{min-height:100dvh}
-          .co-app-wrap{align-items:stretch}
-        }
-        @media(min-width:768px) and (max-width:1199px){
-          .co-main{min-height:100vh}
-        }
-        /* ── Cards com borda visível no tema claro ── */
-        [data-theme="light"] .co-card,[data-theme="light"] [class*="co-card"]{border:1px solid var(--border)!important}
       `}</style>
 
       {/* ════════════════════════════════════════════
@@ -3063,52 +3039,6 @@ export default function App() {
               };
               return (<>
                 {mainTabs.map(renderItem)}
-                {/* WhatsApp — acesso rápido, acima de Pós-Carga */}
-                <div style={{position:"relative",marginBottom:2}}>
-                  <button
-                    className="co-sidebar__item"
-                    onClick={()=>setWppTipoOpen(v=>!v)}
-                    style={{border:`1px solid rgba(37,211,102,.18)`,borderRadius:DESIGN.r.sidebar,color:"#25D366",gap:10}}
-                  >
-                    <span className="co-sidebar__ico">
-                      {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,"#25D366",16)}
-                    </span>
-                    <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
-                  </button>
-                  {wppTipoOpen && (
-                    <>
-                      <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)}/>
-                      <div style={{position:"absolute",left:"100%",top:0,background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s",marginLeft:4}}>
-                        {buscaResult
-                          ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
-                          : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>Busque um registro primeiro</div>
-                        }
-                        {[
-                          {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
-                          {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo completo de pagamento"},
-                          {k:"descarga",svg:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
-                          {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento diária"},
-                        ].map((op,i,arr)=>(
-                          <button key={op.k} onClick={()=>{
-                            setWppTipoOpen(false);
-                            if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
-                            const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                            if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
-                            else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                            else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
-                            else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
-                          }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
-                            onMouseOver={e=>e.currentTarget.style.background=t.card2}
-                            onMouseOut={e=>e.currentTarget.style.background="transparent"}
-                          >
-                            <div style={{flexShrink:0,width:30,height:30,borderRadius:7,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",14)}</div>
-                            <div><div style={{fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
                 <div className="co-sidebar__section-lbl">Pós-Carga</div>
                 <div className="co-sidebar__section-line"/>
                 {pcTabs.map(renderItem)}
@@ -3117,30 +3047,58 @@ export default function App() {
           </nav>
 
           {/* ── Footer — utilitários + usuário ── */}
-          {/* ── Footer — usuário + utilitários ── */}
           <div className="co-sidebar__footer">
-            {/* User info — clicável → abre perfil/admin */}
-            <div className="co-sidebar__user" style={{cursor:"pointer"}} onClick={()=>{
-              if(isAdmin){setActiveTab("admin");if(!isWide)setMobileSidebarExpanded(false);}
-              else{setModalOpen("usuario");}
-            }}>
+            {/* User info */}
+            <div className="co-sidebar__user">
               <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:12,fontWeight:700,color:"#fff",fontFamily:"'Space Grotesk',sans-serif",letterSpacing:"-0.01em"}}>
                 {(usuarioLogado||"YF").slice(0,2).toUpperCase()}
               </div>
-              <div className="co-sidebar__user-info" style={{flex:1,minWidth:0}}>
+              <div className="co-sidebar__user-info">
                 <div className="co-sidebar__user-name">{usuarioLogado||perfil}</div>
                 <div className="co-sidebar__user-role">{perfil}</div>
               </div>
-              <button
-                className="co-sidebar__user-info"
-                onClick={e=>{e.stopPropagation();handleLogout();}}
-                title="Sair"
-                style={{background:"transparent",border:"none",cursor:"pointer",padding:4,borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",opacity:.6}}
-                onMouseEnter={e=>e.currentTarget.style.opacity="1"}
-                onMouseLeave={e=>e.currentTarget.style.opacity=".6"}
-              >
-                {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,14)}
+            </div>
+
+            {/* WhatsApp */}
+            <div style={{position:"relative"}}>
+              <button className="co-sidebar__footer-item" onClick={()=>setWppTipoOpen(v=>!v)} style={{border:`1px solid rgba(37,211,102,.2)`,borderRadius:DESIGN.r.sm}}>
+                {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </>,"#25D366",14)}
+                <span className="co-sidebar__footer-lbl" style={{color:"#25D366"}}>WhatsApp</span>
               </button>
+              {wppTipoOpen && (
+                <>
+                  <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)}/>
+                  <div style={{position:"absolute",left:"100%",bottom:0,background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:200,minWidth:230,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s",marginLeft:4}}>
+                    {buscaResult
+                      ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                      : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>Busque um registro primeiro</div>
+                    }
+                    {[
+                      {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
+                      {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo completo de pagamento"},
+                      {k:"descarga",svg:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
+                      {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento diária"},
+                    ].map((op,i,arr)=>(
+                      <button key={op.k} onClick={()=>{
+                        setWppTipoOpen(false);
+                        if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
+                        const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                        if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                        else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                        else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                        else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
+                      }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
+                        onMouseOver={e=>e.currentTarget.style.background=t.card2}
+                        onMouseOut={e=>e.currentTarget.style.background="transparent"}
+                      >
+                        <div style={{flexShrink:0,width:30,height:30,borderRadius:7,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",14)}</div>
+                        <div><div style={{fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Tema — ícone only */}
@@ -3158,6 +3116,12 @@ export default function App() {
                 <span className="co-sidebar__footer-lbl" style={activeTab==="admin"?{color:"var(--accent)"}:{}}>Admin</span>
               </button>
             )}
+
+            {/* Sair */}
+            <button className="co-sidebar__footer-item" onClick={handleLogout} title="Sair">
+              {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,14)}
+              <span className="co-sidebar__footer-lbl">Sair</span>
+            </button>
           </div>
       </aside>
 
@@ -3193,9 +3157,9 @@ export default function App() {
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5}}>
               {alertas.length > 0 && (
-                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
-                  {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,14)}
-                  <span style={{fontSize:11,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length} alerta{alertas.length>1?"s":""}</span>
+                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"7px 9px",overflow:"visible"}}>
+                  {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,15)}
+                  <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:18,height:18,fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
                 </button>
               )}
               {canEdit && (
@@ -3227,9 +3191,9 @@ export default function App() {
                 <span style={{position:"absolute",bottom:4,right:4,width:4,height:4,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger}}/>
               </button>
               {alertas.length > 0 && (
-                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"5px 9px",display:"flex",alignItems:"center",gap:4}}>
-                  {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,12)}
-                  <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length}</span>
+                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,borderColor:"rgba(246,70,93,.4)",position:"relative",padding:"6px 7px"}}>
+                  {hIco(<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></>,t.danger,13)}
+                  <span style={{position:"absolute",top:-2,right:-2,background:t.danger,color:"#fff",borderRadius:"50%",width:15,height:15,fontSize:7,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:`2px solid ${t.bg}`}}>{alertas.length}</span>
                 </button>
               )}
               <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{...css.hBtn,padding:"6px 7px"}}>
@@ -3345,7 +3309,7 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:(activeTab==="planilha"||activeTab==="relatorios"||activeTab==="dashboard"||activeTab==="diarias"||activeTab==="descarga")?"100%":1100,margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
+      <div style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:(activeTab==="planilha"||activeTab==="relatorios"||activeTab==="dashboard"||activeTab==="diarias"||activeTab==="descarga")?"100%":1100,margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"?{display:"flex",flexDirection:"column",height:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
 
         {/* ═══ RELATÓRIOS ═══ */}
         {activeTab === "relatorios" && (
@@ -4774,9 +4738,9 @@ export default function App() {
             abrirDetalhe={abrirDetalhe}
             t={t}
             isMobile={isMobile}
-            motoristas={motoristas}
           />
         )}
+
         {/* ═══ MOTORISTAS ═══ */}
         {activeTab === "motoristas" && (()=>{
           // filtro de busca por nome ou placa (Item 3)
@@ -7727,61 +7691,49 @@ function mapearColuna(n){
             {/* Filtros */}
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-              {(()=>{
-                const _uniq=(arr)=>[...new Set(arr.filter(Boolean))].sort();
-                const _nomes=_uniq(DADOS.map(r=>(r.nome||"").trim()));
-                const _origens=_uniq(DADOS.map(r=>(r.origem||"").trim()));
-                const _destinos=_uniq(DADOS.map(r=>(r.destino||r.cidade||"").trim()));
-                const _statuses=_uniq(DADOS.map(r=>(r.status||"").trim().toUpperCase()));
-                const _vinculos=_uniq(motoristas.map(m=>(m.vinculo||"").trim()));
-                return (<>
-                  <div>
-                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
-                    <select value={relGeralMotorista} onChange={e=>setRelGeralMotorista(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                      <option value="">Todos</option>
-                      {_nomes.map(n=><option key={n} value={n}>{n}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Operacional</label>
-                    <select value={relGeralStatusOper} onChange={e=>setRelGeralStatusOper(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                      <option value="">Todos</option>
-                      {_statuses.map(s=><option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
-                    <select value={relGeralStatus} onChange={e=>setRelGeralStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                      <option value="">Todos</option>
-                      <option value="diaria">Com Diária</option>
-                      <option value="sem_diaria">Sem Diária</option>
-                      <option value="atraso">Perdeu Agenda</option>
-                      <option value="pendente">Pendente</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Origem</label>
-                    <select value={relGeralOrigem} onChange={e=>setRelGeralOrigem(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                      <option value="">Todas</option>
-                      {_origens.map(o=><option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Destino</label>
-                    <select value={relGeralDestino} onChange={e=>setRelGeralDestino(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                      <option value="">Todos</option>
-                      {_destinos.map(o=><option key={o} value={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
-                    <select value={relGeralVinculo} onChange={e=>setRelGeralVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
-                      <option value="">Todos</option>
-                      {_vinculos.filter(v=>v).map(v=><option key={v} value={v}>{v}</option>)}
-                    </select>
-                  </div>
-                </>);
-              })()}
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <input type="text" value={relGeralMotorista} onChange={e=>setRelGeralMotorista(e.target.value)} placeholder="Nome do motorista..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Operacional</label>
+                <select value={relGeralStatusOper} onChange={e=>setRelGeralStatusOper(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="CARREGADO">CARREGADO</option>
+                  <option value="PENDENTE">PENDENTE</option>
+                  <option value="EM ABERTO">EM ABERTO</option>
+                  <option value="NO-SHOW">NO-SHOW</option>
+                  <option value="NÃO ACEITE">NÃO ACEITE</option>
+                  <option value="CANCELADO">CANCELADO</option>
+                </select>
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
+                <select value={relGeralStatus} onChange={e=>setRelGeralStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="diaria">Com Diária</option>
+                  <option value="sem_diaria">Sem Diária</option>
+                  <option value="atraso">Perdeu Agenda</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Origem contém</label>
+                <input type="text" value={relGeralOrigem} onChange={e=>setRelGeralOrigem(e.target.value)} placeholder="Cidade / UF..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Destino contém</label>
+                <input type="text" value={relGeralDestino} onChange={e=>setRelGeralDestino(e.target.value)} placeholder="Cidade / UF..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                <select value={relGeralVinculo} onChange={e=>setRelGeralVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="Agregado">Agregado</option>
+                  <option value="Terceiro">Terceiro</option>
+                  <option value="Frota">Frota</option>
+                </select>
+              </div>
             </div>
 
             {/* Seções */}

@@ -79,25 +79,4 @@
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: light;
-
-  /* ── Redesign YFGroup — Semantic Tokens (light) ─────────────── */
-  --bg      : #f2f3fa;
-  --surface : #ffffff;
-  --card    : #ffffff;
-  --card2   : #f0f2fa;
-
-  --border  : #e0e2f0;
-  --border2 : #cccee0;
-
-  --text    : #16162a;
-  --text2   : #5a5a8a;
-  --text3   : #9090b8;
-
-  --accent  : #7c3aed;
-  --accent2 : rgba(124,58,237,0.10);
-  --cyan    : #0891b2;
-  --green   : #16a34a;
-  --orange  : #ea6c00;
-  --red     : #dc2626;
-  --yellow  : #ca8a04;
 }

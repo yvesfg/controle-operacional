@@ -212,3 +212,17 @@
 5. **App.jsx — Diárias > Conferência** — tabela de extrato com `margin: 0 -16px` para preencher lado a lado
 
 **Arquivos alterados:** PlanilhaView.jsx · OcorrenciasView.jsx · RelatoriosView.jsx · App.jsx
+
+## 2026-04-21 — Responsividade, Consistência Visual e UX
+
+**Solicitado:** Ajustes de consistência visual, responsividade, usabilidade — mobile/tablet seguindo padrão desktop. Correções em Ocorrências, Carga/Descarga, Modo Claro, WhatsApp, Sidebar, Alertas e Relatórios.
+
+**Implementado:**
+- **Alertas:** Ícone de sino removido; substituído por badge pill "N alertas" (triângulo de alerta + contagem) no topbar desktop e mobile
+- **WhatsApp:** Movido do rodapé da sidebar para acima da seção "Pós-Carga" como item de navegação (com dropdown de tipos ao clicar)
+- **Sidebar — Usuário:** Bloco de usuário agora clicável (admin → abre aba Admin; outros → abre modal de usuário); ícone "Sair" inline ao lado do nome
+- **Sidebar — Sair:** Botão separado removido; consolidado inline no bloco do usuário
+- **Modo claro:** Adicionados tokens semânticos faltantes (--bg, --surface, --card, --accent, --accent2, --cyan, --green, --red, --yellow, --orange) ao theme-light.css; sidebar com hover/active visíveis no tema claro; bordas de cards restauradas
+- **Responsividade:** CSS extras para full-viewport (min-height:100dvh mobile, co-main preenchendo viewport); Carga/Descarga e Relatórios usam minHeight:calc(100vh-56px)
+- **Ocorrências:** Card exibe telefone do motorista (lookup por CPF/nome/placa) abaixo do DT/placa
+- **Relatórios:** Tela inicia no modo "Tudo" (todos os blocos visíveis); filtros do modal de PDF convertidos para selects dinâmicos derivados dos dados reais do Supabase (motoristas, origens, destinos, status operacional, vínculo)
