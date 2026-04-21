@@ -4158,7 +4158,7 @@ export default function App() {
                 <div>
                   {/* Barra de filtros */}
                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card,
-                    border:`1px solid ${t.borda}`,borderRadius:"10px 10px 0 0",flexWrap:"wrap",margin:"0 -16px"}}>
+                    border:`1px solid ${t.borda}`,borderRadius:"10px 10px 0 0",flexWrap:"wrap"}}>
                     <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
                     <select value={dPlanFiltroAno} onChange={e=>setDPlanFiltroAno(e.target.value)}
                       style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
@@ -4191,7 +4191,7 @@ export default function App() {
                     </span>
                   </div>
                   {/* Tabela */}
-                  <div style={{overflowX:"auto",borderRadius:"0 0 11px 11px",border:`1px solid ${t.borda}`,borderTop:"none",maxHeight:"calc(100vh - 240px)",overflowY:"auto",margin:"0 -16px"}}>
+                  <div style={{overflowX:"auto",borderRadius:"0 0 11px 11px",border:`1px solid ${t.borda}`,borderTop:"none",maxHeight:"calc(100vh - 260px)",overflowY:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:600}}>
                       <thead><tr>{["DT","Motorista","Placa","Origem","Agenda","Descarga","Atraso","Prev.","Pago"].map(h=>(
                         <th key={h} style={{background:t.tableHeader,padding:"9px 10px",textAlign:"left",fontSize:8,
@@ -4347,7 +4347,7 @@ export default function App() {
                             ))}
                             <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{filtrado.length} reg.</span>
                           </div>
-                          <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"60vh",overflowY:"auto",margin:"0 -16px"}}>
+                          <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"60vh",overflowY:"auto"}}>
                             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:720}}>
                               <thead><tr>
                                 {["Status","DT","Motorista","Cliente","Qtd","Vlr Ext","Vlr App","Dif","RO"].map(h=>(

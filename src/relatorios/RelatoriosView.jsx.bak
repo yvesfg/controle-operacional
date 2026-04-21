@@ -16,7 +16,6 @@
  *   relDescargaOpen, setRelDescargaOpen
  */
 import React, { useState, useMemo } from "react";
-import { FIELD_CATALOG, FIELD_GROUPS } from "./fieldCatalog.js";
 
 // ── Ícone SVG ─────────────────────────────────────────────────────────────────
 const Ico = ({ size = 16, color = "currentColor", sw = 1.8, children, style }) => (
@@ -297,7 +296,7 @@ export default function RelatoriosView({
           border: "1px solid var(--border)", borderRadius: 8,
           padding: 4, gap: 2,
         }}>
-          {[["kpis", "Visão Geral"], ["eficiencia", "Eficiência"], ["financeiro", "Financeiro"], ["motoristas", "Motoristas"]].map(([v, l]) => (
+          {[["kpis", "KPIs Gerais"], ["eficiencia", "Eficiência"], ["financeiro", "Financeiro"], ["motoristas", "Motoristas"]].map(([v, l]) => (
             <TabBtn key={v} label={l} active={tab === v} onClick={() => setTab(v)} />
           ))}
         </div>
@@ -330,30 +329,12 @@ export default function RelatoriosView({
           <div style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
-            gap: 14, marginBottom: 24,
+            gap: 12, marginBottom: 20,
           }}>
-            {[
-              { label: "Total Registros", value: kpis.total,   color: "var(--accent)",   border: "var(--accent)",   sub: "DTs no período" },
-              { label: "Descarregados",   value: kpis.comDesc, color: "var(--green)",    border: "var(--green)",    sub: kpis.pctDesc },
-              { label: "Pendentes",       value: kpis.semDesc, color: "var(--orange)",   border: "var(--orange)",   sub: "Aguardando descarga" },
-              { label: "Com SGS",         value: kpis.comSGS,  color: "var(--yellow)",   border: "var(--yellow)",   sub: "Chamados ativos" },
-            ].map(c => (
-              <div key={c.label} style={{
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderLeft: `4px solid ${c.border}`,
-                borderRadius: "var(--radius-card, 12px)",
-                padding: "20px 18px",
-              }}>
-                <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em", color: "var(--text3)", textTransform: "uppercase", marginBottom: 10 }}>
-                  {c.label}
-                </div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 36, color: c.color, letterSpacing: "-0.04em", lineHeight: 1, marginBottom: 8 }}>
-                  {c.value}
-                </div>
-                {c.sub && <div style={{ fontSize: 11, color: "var(--text3)" }}>{c.sub}</div>}
-              </div>
-            ))}
+            <KpiCard label="Total Registros" value={kpis.total}        color="var(--text)"    />
+            <KpiCard label="Descarregados"   value={kpis.comDesc}       color="var(--green)"  sub={kpis.pctDesc} />
+            <KpiCard label="Pendentes desc." value={kpis.semDesc}       color="var(--orange)" />
+            <KpiCard label="Com SGS"         value={kpis.comSGS}        color="var(--yellow)" />
           </div>
 
           {kpis.barData.length > 0 && (
@@ -567,7 +548,6 @@ export default function RelatoriosView({
         <ExportModal
           onClose={() => setExportModal(false)}
           onConfirm={handleExport}
-          dados={dados}
         />
       )}
     </div>

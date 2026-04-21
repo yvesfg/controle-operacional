@@ -11,7 +11,7 @@
  *   t              : objeto de tema (legacy, para compatibilidade)
  *   isMobile       : boolean
  */
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 // ── Ícone SVG inline ─────────────────────────────────────────────────────────
 const Ico = ({ size = 16, color = "currentColor", sw = 1.8, children, style }) => (
@@ -164,9 +164,6 @@ function OcorrCard({ entry, onOpen }) {
 
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, setFiltroOcorr, abrirDetalhe, t, isMobile }) {
-  const [filtroIni, setFiltroIni] = useState("");
-  const [filtroFim, setFiltroFim] = useState("");
-  const [ocorrCols, setOcorrCols] = useState(2);
 
   // Cores por tipo de badge
   const BADGE_COLORS = {
@@ -264,28 +261,13 @@ export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, 
     "DCC":          b => b.label === "DCC",
   };
 
-  const _iniD = filtroIni ? new Date(filtroIni + "T00:00:00") : null;
-  const _fimD = filtroFim ? new Date(filtroFim + "T23:59:59") : null;
-
-  const filtered = (filtroOcorr
+  const filtered = filtroOcorr
     ? entries.filter(e => e.badges.some(labelMap[filtroOcorr] || (() => false)))
-    : entries
-  ).filter(e => {
-    if (!_iniD && !_fimD) return true;
-    const r = e.r;
-    const s = r.data_carr || r.data_agenda || r.data_desc || "";
-    let d = null;
-    if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) { const p = s.split("/"); d = new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00"); }
-    else if (/^\d{4}-\d{2}-\d{2}/.test(s)) { d = new Date(s+"T00:00:00"); }
-    if (!d) return true;
-    if (_iniD && d < _iniD) return false;
-    if (_fimD && d > _fimD) return false;
-    return true;
-  });
+    : entries;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: isMobile ? "16px" : "16px 24px" }}>
+    <div style={{ padding: isMobile ? "16px" : "24px", maxWidth: 900, margin: "0 auto" }}>
 
       {/* ── Stats row ── */}
       <div style={{
@@ -347,32 +329,8 @@ export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, 
         </div>
       )}
 
-      {/* ── Date range filter ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "7px 12px", background: "var(--card)", border: "1px solid var(--border)", borderRadius: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text3)", marginRight: 2 }}>Filtrar:</span>
-        <input
-          type="date"
-          value={filtroIni}
-          onChange={e => setFiltroIni(e.target.value)}
-          style={{ fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 6, border: "1.5px solid var(--border)", background: "var(--card)", color: "var(--text)", height: 28, width: 130, cursor: "pointer" }}
-        />
-        <span style={{ fontSize: 10, color: "var(--text3)", flexShrink: 0 }}>até</span>
-        <input
-          type="date"
-          value={filtroFim}
-          onChange={e => setFiltroFim(e.target.value)}
-          style={{ fontSize: 11, fontWeight: 600, padding: "4px 8px", borderRadius: 6, border: "1.5px solid var(--border)", background: "var(--card)", color: "var(--text)", height: 28, width: 130, cursor: "pointer" }}
-        />
-        {(filtroIni || filtroFim) && (
-          <button onClick={() => { setFiltroIni(""); setFiltroFim(""); }} style={{ fontSize: 9, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", color: "var(--text2)", cursor: "pointer" }}>
-            ✕ Limpar
-          </button>
-        )}
-        <span style={{ marginLeft: "auto", fontSize: 9, fontFamily: "'DM Mono', monospace", color: "var(--text2)", fontWeight: 600 }}>{filtered.length} registros</span>
-      </div>
-
       {/* ── Filter pills ── */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16, alignItems: "center" }}>
         <span style={{
           fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em",
           textTransform: "uppercase", color: "var(--text3)", marginRight: 4,
@@ -409,20 +367,6 @@ export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, 
         })}
       </div>
 
-      {/* ── Column count selector ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-        <span style={{ fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text3)" }}>Colunas:</span>
-        {[1, 2, 3, 4].map(n => (
-          <button key={n} onClick={() => setOcorrCols(n)} style={{
-            width: 28, height: 28, fontSize: 11, fontWeight: 700,
-            border: `1.5px solid ${ocorrCols === n ? "var(--accent)" : "var(--border)"}`,
-            borderRadius: 7, cursor: "pointer",
-            background: ocorrCols === n ? "var(--accent2, rgba(124,58,237,0.1))" : "var(--card2)",
-            color: ocorrCols === n ? "var(--accent)" : "var(--text2)",
-          }}>{n}</button>
-        ))}
-      </div>
-
       {/* ── Block grid ── */}
       {filtered.length === 0 ? (
         <div style={{
@@ -445,7 +389,7 @@ export default function OcorrenciasView({ dados = [], diariasData, filtroOcorr, 
       ) : (
         <div style={{
           display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : `repeat(${ocorrCols}, minmax(0, 1fr))`,
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(380px, 1fr))",
           gap: 10,
         }}>
           {filtered.map((entry, i) => (

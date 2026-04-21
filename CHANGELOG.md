@@ -199,3 +199,16 @@
 - **Tema**: botão icon-only (sem label de texto), permanece no footer
 - **Relatórios**: substituído `<ReportBuilder>` por `<RelatoriosView>` (dashboard com KPIs + botão Exportar abre modais de filtro)
 - Build: ✓ 0 erros
+
+## [2026-04-20] — Layout & UX
+
+**Solicitado:** 6 melhorias visuais e de layout
+
+**Implementado:**
+1. **PlanilhaView** — todas as colunas com `textAlign: center` (DT, Placa, datas, status, origem, destino)
+2. **RelatoriosView** — tab "Visão Geral" com cards estilo Dashboard (borda-left colorida, número grande); modal Exportar agora lista todas as **colunas** do `fieldCatalog` por grupo com export CSV direto
+3. **OcorrenciasView** — filtro de data inicial/final adicionado; seletor de colunas 1/2/3/4; `maxWidth:900` removido (preenche tela completa); grid usa coluna selecionada
+4. **App.jsx — Diárias > Planilha** — tabela e filtros com `margin: 0 -16px` para preencher lado a lado
+5. **App.jsx — Diárias > Conferência** — tabela de extrato com `margin: 0 -16px` para preencher lado a lado
+
+**Arquivos alterados:** PlanilhaView.jsx · OcorrenciasView.jsx · RelatoriosView.jsx · App.jsx
