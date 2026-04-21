@@ -286,3 +286,13 @@
 - Botões de opção usam `wppSearchReg || buscaResult` como registro efetivo
 - Ao fechar/usar modal: reset automático da busca
 - Build: ✓ 3.58s
+
+## Session 10 — 2026-04-21
+**Solicitado:** Exportar PDF abria dois modais (ExportModal + relGeralOpen/relOperOpen). Unificar em um modal. Relatório deve permitir selecionar quais colunas do Supabase incluir.
+**Implementado:**
+- RelatoriosView: removido ExportModal; botão "Exportar PDF" abre diretamente o modal relGeralOpen via prop onExportClick
+- relGeralOpen: adicionada seção "Apontamentos (Descarga/Stretch)" na lista de seções
+- relGeralOpen: adicionado seletor colapsável "Colunas da Tabela de Registros" — 25 colunas do Supabase com toggle individual + botões Todas/Nenhuma
+- gerarRelatorioGeral: tabela de registros agora dinâmica usando colunas selecionadas
+- Quando seção "Apontamentos" ativada: também dispara gerarRelatorioOperacional
+- Build: ✓ 3.07s

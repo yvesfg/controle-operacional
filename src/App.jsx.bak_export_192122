@@ -2338,41 +2338,39 @@ export default function App() {
         </tr>`).join("")}
       </tbody>
     </table>`:""}
-    ${fSecoes.registros!==false?(()=>{
-      const cols=filtros.colunas||{dt:true,nome:true,placa:true,origem:true,destino:true,data_carr:true,data_agenda:true,chegada:true,data_desc:true,dias:true,status:true,vl_cte:true,vl_contrato:true,diaria_prev:true,diaria_pg:true,ro:true,sgs:true};
-      const colDefs=[
-        {k:'dt',      h:'Espelho',      fn:r=>'<span class="dt-chip">'+(r.dt||'\u2014')+'</span>'},
-        {k:'nome',    h:'Motorista',    fn:r=>'<strong>'+(r.nome||'\u2014')+'</strong>'},
-        {k:'placa',   h:'Placa',        fn:r=>r.placa||'\u2014'},
-        {k:'origem',  h:'Origem',       fn:r=>r.origem||'\u2014'},
-        {k:'destino', h:'Destino',      fn:r=>r.destino||'\u2014'},
-        {k:'cliente', h:'Cliente',      fn:r=>r.cliente||'\u2014'},
-        {k:'data_carr',h:'Carregamento',fn:r=>r.data_carr||'\u2014'},
-        {k:'data_agenda',h:'Agenda',    fn:r=>r.data_agenda||'\u2014'},
-        {k:'chegada', h:'Chegada',      fn:r=>r.chegada||'\u2014'},
-        {k:'data_desc',h:'Descarga',    fn:r=>r.data_desc||'\u2014'},
-        {k:'dias',    h:'Dias',         fn:r=>r.dias||'\u2014'},
-        {k:'status',  h:'Status Oper.', fn:r=>statusOperBadge(r.status)},
-        {k:'vl_cte',  h:'Vl. CTE',      fn:r=>r.vl_cte?'R$ '+parseFloat(r.vl_cte).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'vl_contrato',h:'Vl. Contrato',fn:r=>r.vl_contrato?'R$ '+parseFloat(r.vl_contrato).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'adiant',  h:'Adiantamento', fn:r=>r.adiant?'R$ '+parseFloat(r.adiant).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'saldo',   h:'Saldo',        fn:r=>r.saldo?'R$ '+parseFloat(r.saldo).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'diaria_prev',h:'Di\u00e1ria Prev.',fn:r=>r.diaria_prev?'R$ '+parseFloat(r.diaria_prev).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'diaria_pg',h:'Di\u00e1ria Paga',fn:r=>r.diaria_pg?'R$ '+parseFloat(r.diaria_pg).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'cte',     h:'CTE',          fn:r=>r.cte||'\u2014'},
-        {k:'mdf',     h:'MDF-e',        fn:r=>r.mdf||'\u2014'},
-        {k:'nf',      h:'NF',           fn:r=>r.nf||'\u2014'},
-        {k:'mat',     h:'MAT',          fn:r=>r.mat||'\u2014'},
-        {k:'ro',      h:'RO',           fn:r=>r.ro||'\u2014'},
-        {k:'sgs',     h:'SGS',          fn:r=>r.sgs?'<span class="badge badge-atraso">'+r.sgs+'</span>':'\u2014'},
-        {k:'obs',     h:'Observa\u00e7\u00e3o',fn:r=>r.obs||'\u2014'},
-      ].filter(c=>cols[c.k]);
-      const rowCls=tp=>tp==='diaria'?'trip-row-diaria':tp==='atraso'?'trip-row-atraso':tp==='sem_diaria'?'trip-row-ok':'trip-row-pend';
-      return '<div class="section-title">Todos os Registros no Per\u00edodo</div>'
-        +(regs.length===0?'<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>'
-          :'<table><thead><tr>'+colDefs.map(c=>'<th>'+c.h+'</th>').join('')+'</tr></thead><tbody>'
-          +regs.map(r=>{const tp=diariasMapG.get(r.dt)||'';return '<tr class="'+rowCls(tp)+'">'+colDefs.map(c=>'<td>'+c.fn(r)+'</td>').join('')+'</tr>';}).join('')
-          +'</tbody></table>');})():""} 
+    ${fSecoes.registros!==false?`
+    <div class="section-title">Todos os Registros no Período</div>
+    ${regs.length===0?`<div class="info-box">Nenhum registro encontrado para os filtros selecionados.</div>`:`
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Espelho</th><th>Motorista</th><th>Placa</th><th>Origem</th><th>Destino</th>
+        <th>Carregamento</th><th>Agenda</th><th>Chegada</th><th>Descarga</th>
+        <th>Status Oper.</th><th>Status Diária</th><th>Vl. CTE</th><th>SGS</th><th>RO</th>
+      </tr></thead>
+      <tbody>
+        ${regs.map(r=>{
+          const tipo=diariasMapG.get(r.dt)||"";
+          const rowClass=tipo==="diaria"?"trip-row-diaria":tipo==="atraso"?"trip-row-atraso":tipo==="sem_diaria"?"trip-row-ok":"trip-row-pend";
+          return `<tr class="${rowClass}">
+            <td style="font-family:monospace;font-size:9px;color:#6b7a99">${r.id_doc||"—"}</td>
+            <td><span class="dt-chip">${r.dt||"—"}</span></td>
+            <td><strong>${r.nome||"—"}</strong></td>
+            <td style="font-family:monospace;font-size:9px">${r.placa||"—"}</td>
+            <td>${r.origem||"—"}</td>
+            <td>${r.destino||"—"}</td>
+            <td>${r.data_carr||"—"}</td>
+            <td>${r.data_agenda||"—"}</td>
+            <td>${r.chegada||"—"}</td>
+            <td>${r.data_desc||"—"}</td>
+            <td>${statusOperBadge(r.status)}</td>
+            <td>${statusBadgeG(tipo)}</td>
+            <td>${r.vl_cte?`R$ ${parseFloat(r.vl_cte).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+            <td>${r.sgs?`<span class="badge badge-atraso">${r.sgs}</span>`:"—"}</td>
+            <td>${r.ro||"—"}</td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>`}`:""}
     ${fSecoes.sgs!==false && sgsRange.length>0?`
     <div class="section-title">Ocorrências SGS no Período</div>
     ${sgsRange.map(s=>`<div class="sgs-item">
@@ -7858,54 +7856,6 @@ function mapearColuna(n){
               ))}
             </div>
 
-            {/* Colunas da Tabela de Registros */}
-            {relGeralSecoes.registros&&(
-              <details style={{marginBottom:16}}>
-                <summary style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,cursor:"pointer",userSelect:"none",listStyle:"none",display:"flex",alignItems:"center",gap:6}}>
-                  {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></>,t.ouro,13,1.8)}
-                  Colunas da Tabela de Registros
-                  <span style={{marginLeft:"auto",fontSize:9,color:t.txt2,fontWeight:400}}>({Object.values(relGeralColunas).filter(Boolean).length} selecionadas)</span>
-                </summary>
-                <div style={{marginTop:8,display:"flex",gap:6,flexWrap:"wrap",paddingLeft:4}}>
-                  <button onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,true])))} style={{fontSize:9,padding:"2px 7px",borderRadius:5,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer"}}>Todas</button>
-                  <button onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,false])))} style={{fontSize:9,padding:"2px 7px",borderRadius:5,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer"}}>Nenhuma</button>
-                </div>
-                <div style={{marginTop:8,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:4}}>
-                  {[
-                    {k:"dt",l:"Espelho"},
-                    {k:"nome",l:"Motorista"},
-                    {k:"placa",l:"Placa"},
-                    {k:"origem",l:"Origem"},
-                    {k:"destino",l:"Destino"},
-                    {k:"cliente",l:"Cliente"},
-                    {k:"data_carr",l:"Carregamento"},
-                    {k:"data_agenda",l:"Agenda"},
-                    {k:"chegada",l:"Chegada"},
-                    {k:"data_desc",l:"Descarga"},
-                    {k:"dias",l:"Dias"},
-                    {k:"status",l:"Status Oper."},
-                    {k:"vl_cte",l:"Vl. CTE"},
-                    {k:"vl_contrato",l:"Vl. Contrato"},
-                    {k:"adiant",l:"Adiantamento"},
-                    {k:"saldo",l:"Saldo"},
-                    {k:"diaria_prev",l:"Diária Prev."},
-                    {k:"diaria_pg",l:"Diária Paga"},
-                    {k:"cte",l:"CTE"},
-                    {k:"mdf",l:"MDF-e"},
-                    {k:"nf",l:"NF"},
-                    {k:"mat",l:"MAT"},
-                    {k:"ro",l:"RO"},
-                    {k:"sgs",l:"SGS"},
-                    {k:"obs",l:"Observação"},
-                  ].map(({k,l})=>(
-                    <label key={k} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 6px",borderRadius:6,border:`1px solid ${relGeralColunas[k]?t.ouro+"44":t.borda}`,cursor:"pointer",fontSize:10,background:relGeralColunas[k]?"rgba(240,185,11,.05)":"transparent",transition:"all .12s"}}>
-                      <input type="checkbox" checked={!!relGeralColunas[k]} onChange={e=>setRelGeralColunas(p=>({...p,[k]:e.target.checked}))} style={{accentColor:t.ouro,width:11,height:11,cursor:"pointer"}} />
-                      <span style={{color:relGeralColunas[k]?t.txt:t.txt2}}>{l}</span>
-                    </label>
-                  ))}
-                </div>
-              </details>
-            )}
             {/* Aviso */}
             <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18}}>
               {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
@@ -7946,9 +7896,8 @@ function mapearColuna(n){
                     motorista:relGeralMotorista,statusDiaria:relGeralStatus,
                     statusOper:relGeralStatusOper,
                     origem:relGeralOrigem,destino:relGeralDestino,
-                    vinculo:relGeralVinculo,secoes:relGeralSecoes,colunas:relGeralColunas
+                    vinculo:relGeralVinculo,secoes:relGeralSecoes
                   });
-                  if(relGeralSecoes.apontamentos) setTimeout(()=>gerarRelatorioOperacional(relGeralFrom,relGeralTo,{sgs:false,apontamentos:true}),800);
                 }}
                 style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:relGeralLoading?`rgba(240,185,11,.06)`:`rgba(240,185,11,.13)`,color:t.ouro,cursor:relGeralLoading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s",opacity:relGeralLoading?.6:1}}>
                 {relGeralLoading
