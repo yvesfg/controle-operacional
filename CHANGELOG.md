@@ -226,3 +226,16 @@
 - **Responsividade:** CSS extras para full-viewport (min-height:100dvh mobile, co-main preenchendo viewport); Carga/Descarga e Relatórios usam minHeight:calc(100vh-56px)
 - **Ocorrências:** Card exibe telefone do motorista (lookup por CPF/nome/placa) abaixo do DT/placa
 - **Relatórios:** Tela inicia no modo "Tudo" (todos os blocos visíveis); filtros do modal de PDF convertidos para selects dinâmicos derivados dos dados reais do Supabase (motoristas, origens, destinos, status operacional, vínculo)
+
+## Session 4 — 2026-04-21
+
+**Solicitado:**
+1. Regra geral de preenchimento de viewport (`className="co-content"`)
+2. Botão "Nova Ocorrência" em Ocorrências com modal de busca + formulário
+
+**Implementado:**
+- `App.jsx`: adicionado `className="co-content"` no wrapper de conteúdo principal — aplica `flex:1; overflow-y:auto; min-height:0` em todas as telas sem necessidade de ajuste individual
+- `App.jsx`: novo callback `salvarOcorrenciaExterna(dt, texto, tipo)` — segue o mesmo padrão de `adicionarOcorrencia` (localStorage + Supabase) 
+- `App.jsx`: prop `onSalvarOcorrencia={salvarOcorrenciaExterna}` passada para `OcorrenciasView`
+- `OcorrenciasView.jsx`: botão "Nova Ocorrência" (roxo, top-right dos stats) abre modal `NovaOcorrModal`
+- `NovaOcorrModal`: passo 1 = busca por DT ou nome (filtra `dados`, lista até 8 resultados); passo 2 = seleção + tipo (Info/Alerta/Status) + textarea com Ctrl+Enter para salvar

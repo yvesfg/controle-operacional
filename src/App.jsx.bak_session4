@@ -801,26 +801,6 @@ export default function App() {
     }
     showToast("✅ Ocorrência registrada","ok");
   }, [novaOcorr, novaOcorrTipo, detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
-  // Salvar ocorrencia a partir de modal externo (OcorrenciasView)
-  const salvarOcorrenciaExterna = useCallback(async (dt, texto, tipo) => {
-    if (!dt || !texto.trim()) return;
-    const nova = {
-      dt,
-      data_hora: new Date().toISOString(),
-      texto: texto.trim(),
-      tipo,
-      usuario: usuarioLogado || perfil || "sistema",
-    };
-    const existing = loadJSON(`co_ocorr_${dt}`, []);
-    const updated = [...existing, nova];
-    saveJSON(`co_ocorr_${dt}`, updated);
-    const conn = getConexao();
-    if (conn) {
-      try { await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]); }
-      catch { /* silencioso */ }
-    }
-    showToast("\u2705 Ocorr\u00eancia registrada", "ok");
-  }, [getConexao, usuarioLogado, perfil, showToast]);
 
   // Abre mini-modal de ocorrências a partir da tela de busca (planilha)
   const abrirOcorrModal = useCallback(async (reg) => {
@@ -3358,7 +3338,7 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:(activeTab==="planilha"||activeTab==="relatorios"||activeTab==="dashboard"||activeTab==="diarias"||activeTab==="descarga")?"100%":1100,margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
+      <div style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?(isMobile?"0 0 68px":"0"):(isMobile?"16px 16px 68px":"16px 16px 24px"),maxWidth:(activeTab==="planilha"||activeTab==="relatorios"||activeTab==="dashboard"||activeTab==="diarias"||activeTab==="descarga")?"100%":1100,margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
 
         {/* ═══ RELATÓRIOS ═══ */}
         {activeTab === "relatorios" && (
@@ -4788,7 +4768,6 @@ export default function App() {
             t={t}
             isMobile={isMobile}
             motoristas={motoristas}
-            onSalvarOcorrencia={salvarOcorrenciaExterna}
           />
         )}
         {/* ═══ MOTORISTAS ═══ */}
