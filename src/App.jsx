@@ -3066,6 +3066,19 @@ export default function App() {
         .co-content>*{max-width:100%;box-sizing:border-box}
         /* ── Cards com borda visível no tema claro ── */
         [data-theme="light"] .co-card,[data-theme="light"] [class*="co-card"]{border:1px solid var(--border)!important}
+
+        /* \u2550\u2550 GLOBAL RESPONSIVE \u2550\u2550 */
+        @media(max-width:767px){
+          .co-content{padding:0!important}
+          table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+          th{font-size:9px!important;padding:6px 8px!important}
+          td{font-size:11px!important;padding:7px 8px!important}
+          .co-auto-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+          .dt-chip{font-size:11px!important;padding:1px 6px!important}
+        }
+        @media(min-width:768px) and (max-width:1199px){
+          .co-auto-grid{grid-template-columns:repeat(2,1fr)!important}
+        }
       `}</style>
 
       {/* ════════════════════════════════════════════

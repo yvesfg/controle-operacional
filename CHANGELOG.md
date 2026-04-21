@@ -269,3 +269,10 @@
 - OcorrenciasView: modal reformulado com painel de contexto da DT (status badge, rota, datas, obs_chegada/obs_descarga), histórico de ocorrências anteriores, seletor de tipo visual (Info/Alerta/Status), textarea com borda colorida por tipo, navegação em 2 passos (busca → registrar)
 - Build verificado: ✓ 2.94s
 - Artifact interativo criado: preview com toggle desktop/mobile e tema claro/escuro
+
+## Session 8 — 2026-04-21
+**Solicitado:** Relatórios ainda com void lateral. Todas as telas: ajustar mobile/tablet, reduzir blocos/fontes para caber na tela.
+**Implementado:**
+- RelatoriosView: removido `maxWidth:1100` → `width:100%`; padding, fontes, gaps e números KPI responsivos via `isMobile`; tabela motoristas com `overflow-x:auto`; tabs com scroll horizontal; KpiCard usa `clamp()` para fontes
+- App.jsx CSS: adicionadas regras globais `@media(max-width:767px)` e `@media(768-1199px)` — sem void lateral em todas as views, `co-content padding:0` mobile, tabelas com scroll, `co-auto-grid` 2 colunas mobile/tablet
+- Build verificado: ✓ 2.87s
