@@ -3122,19 +3122,51 @@ export default function App() {
               return (<>
                 {mainTabs.map(renderItem)}
                 {/* WhatsApp — acesso rápido, acima de Pós-Carga */}
-                {/* WhatsApp — abre modal global */}
-                <button
-                  className="co-sidebar__item"
-                  onClick={()=>{ setWppTipoOpen(true); if(!isWide) setMobileSidebarExpanded(false); }}
-                  style={{border:`1px solid rgba(37,211,102,.18)`,borderRadius:DESIGN.r.sidebar,color:"#25D366",gap:10}}
-                  title={!isWide||sidebarCollapsed?"WhatsApp":undefined}
-                >
-                  <span className="co-sidebar__ico">
-                    {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </>,"#25D366",16)}
-                  </span>
-                  <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
-                </button>
+                <div style={{position:"relative",marginBottom:2}}>
+                  <button
+                    className="co-sidebar__item"
+                    onClick={()=>setWppTipoOpen(v=>!v)}
+                    style={{border:`1px solid rgba(37,211,102,.18)`,borderRadius:DESIGN.r.sidebar,color:"#25D366",gap:10}}
+                  >
+                    <span className="co-sidebar__ico">
+                      {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,"#25D366",16)}
+                    </span>
+                    <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
+                  </button>
+                  {wppTipoOpen && (
+                    <>
+                      <div style={{position:"fixed",inset:0,zIndex:199}} onClick={()=>setWppTipoOpen(false)}/>
+                      <div style={{position:"fixed",left:220,top:"auto",background:t.card,border:`1px solid ${t.borda}`,borderRadius:12,overflow:"hidden",zIndex:500,minWidth:240,boxShadow:`0 8px 28px ${t.shadow}`,animation:"slideUp .2s"}}>
+                        {buscaResult
+                          ? <div style={{padding:"7px 14px",background:`rgba(37,211,102,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:"#25D366",fontWeight:700}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
+                          : <div style={{padding:"7px 14px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,fontSize:9,color:t.ouro,fontWeight:700}}>Busque um registro primeiro</div>
+                        }
+                        {[
+                          {k:"faturamento",svg:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,l:"Faturamento",sub:"CTE · MDF · MAT · DT · NF · ID"},
+                          {k:"contratacao",svg:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,l:"Contratação",sub:"Modelo completo de pagamento"},
+                          {k:"descarga",svg:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,l:"Descarga / Stretch",sub:"Solicitar pagamento descarga"},
+                          {k:"diarias",svg:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,l:"Diárias",sub:"Solicitar pagamento diária"},
+                        ].map((op,i,arr)=>(
+                          <button key={op.k} onClick={()=>{
+                            setWppTipoOpen(false);
+                            if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
+                            const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                            if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
+                            else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                            else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
+                            else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
+                          }} style={{width:"100%",background:"transparent",border:"none",borderBottom:i<arr.length-1?`1px solid ${t.borda}`:"none",padding:"10px 14px",color:t.txt,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}}
+                            onMouseOver={e=>e.currentTarget.style.background=t.card2}
+                            onMouseOut={e=>e.currentTarget.style.background="transparent"}
+                          >
+                            <div style={{flexShrink:0,width:30,height:30,borderRadius:7,background:"rgba(37,211,102,.08)",border:"1px solid rgba(37,211,102,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(op.svg,"#25D366",14)}</div>
+                            <div><div style={{fontWeight:700}}>{op.l}</div><div style={{fontSize:9,color:t.txt2,marginTop:1}}>{op.sub}</div></div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
                 <div className="co-sidebar__section-lbl">Pós-Carga</div>
                 <div className="co-sidebar__section-line"/>
                 {pcTabs.map(renderItem)}
@@ -5631,81 +5663,6 @@ function mapearColuna(n){
       )}
 
       </div>{/* end .co-main */}
-
-      {/* ═══ WPP SELECT MODAL ═══ */}
-      {wppTipoOpen && (
-        <div
-          onClick={e=>{if(e.target===e.currentTarget)setWppTipoOpen(false);}}
-          style={{position:"fixed",inset:0,zIndex:1100,background:"rgba(0,0,0,.62)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}}
-        >
-          <div style={{background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,width:"100%",maxWidth:460,boxShadow:`0 32px 64px rgba(0,0,0,.4)`,overflow:"hidden",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
-            {/* Header */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:`1px solid ${t.borda}`,background:"rgba(37,211,102,.05)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </>,"#25D366",20)}
-                <div>
-                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
-                  <div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
-                </div>
-              </div>
-              <button onClick={()=>setWppTipoOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:6,borderRadius:8}}>
-                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18)}
-              </button>
-            </div>
-            {/* DT Context */}
-            {buscaResult ? (
-              <div style={{padding:"10px 20px",background:"rgba(37,211,102,.07)",borderBottom:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:8}}>
-                {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
-                </>,"#25D366",14)}
-                <div>
-                  <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {buscaResult.dt} · {buscaResult.nome||"—"}</div>
-                  {buscaResult.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{buscaResult.placa}{buscaResult.origem&&" · "+buscaResult.origem}</div>}
-                </div>
-              </div>
-            ) : (
-              <div style={{padding:"10px 20px",background:`rgba(240,185,11,.07)`,borderBottom:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:8}}>
-                {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                </>,t.ouro,14)}
-                <div style={{fontSize:12,color:t.ouro,fontWeight:600}}>Busque um registro na Planilha primeiro</div>
-              </div>
-            )}
-            {/* Options */}
-            <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
-              {[
-                {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:"#7c3aed", l:"Faturamento", sub:"CTE · MDF · MAT · DT · NF · ID"},
-                {k:"contratacao",ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, color:t.azulLt, l:"Contratação", sub:"Modelo completo de pagamento"},
-                {k:"descarga",   ico:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>, color:t.verde, l:"Descarga / Stretch", sub:"Solicitar pagamento descarga"},
-                {k:"diarias",   ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>, color:t.ouro, l:"Diárias", sub:"Solicitar pagamento diária"},
-              ].map((op)=>(
-                <button key={op.k} onClick={()=>{
-                  setWppTipoOpen(false);
-                  if(!buscaResult){setActiveTab("busca");showToast("Busque um registro primeiro","warn");return;}
-                  const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
-                  if(op.k==="faturamento"){setWppFatModal({reg:buscaResult,mot:mot||null});}
-                  else if(op.k==="contratacao"){setWppModal({reg:buscaResult,mot:mot||null});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                  else if(op.k==="descarga"){abrirWppPagModal(buscaResult,mot,"descarga");}
-                  else if(op.k==="diarias"){abrirWppPagModal(buscaResult,mot,"diarias");}
-                }}
-                style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:12,cursor:"pointer",textAlign:"left",width:"100%",transition:"all .15s"}}
-                onMouseEnter={e=>{e.currentTarget.style.background=`rgba(${op.color.includes("#7c")?'124,58,237':op.color===t.azulLt?'22,119,255':op.color===t.verde?'34,197,94':'240,185,11'},.1)`;e.currentTarget.style.borderColor=op.color}}
-                onMouseLeave={e=>{e.currentTarget.style.background=t.card2;e.currentTarget.style.borderColor=t.borda}}
-                >
-                  <div style={{width:42,height:42,borderRadius:11,background:op.color+"18",border:`1px solid ${op.color}33`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    {hIco(op.ico,op.color,18)}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"'Space Grotesk',sans-serif"}}>{op.l}</div>
-                    <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{op.sub}</div>
-                  </div>
-                  {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt3||t.txt2,14)}
-                </button>
-              ))}
-            </div>
-            <div style={{height:8}}/>
-          </div>
-        </div>
-      )}
 
 
       {/* ═══ EDIT MODAL ═══ */}

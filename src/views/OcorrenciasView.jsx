@@ -42,7 +42,7 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
       onMouseEnter={e => e.currentTarget.style.borderColor=topBadge.color}
       onMouseLeave={e => e.currentTarget.style.borderColor="var(--border)"}
     >
-      {/* Row 1: nome + DT + badges */}
+      {/* Row 1 */}
       <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
         <div style={{minWidth:0,flex:1}}>
           <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,color:"var(--text)",letterSpacing:"-0.01em",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
@@ -65,7 +65,7 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
         </div>
       </div>
 
-      {/* Row 2: obs_chegada + obs_descarga + add button */}
+      {/* Row 2: obs + add button */}
       {(showObs || onAddOcorrencia) && (
         <div style={{
           display:"grid",
@@ -73,10 +73,7 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
             showObs && onAddOcorrencia
               ? (hasChegada && hasDescarga ? "1fr 1fr auto" : "1fr auto")
               : (hasChegada && hasDescarga ? "1fr 1fr" : "1fr"),
-          gap:8,
-          borderTop:"1px solid var(--border)",
-          paddingTop:10,
-          alignItems:"stretch",
+          gap:8, borderTop:"1px solid var(--border)", paddingTop:10, alignItems:"stretch",
         }}>
           {hasChegada && (
             <div style={{background:"var(--card2)",borderRadius:8,border:"1px solid var(--border)",padding:"8px 10px"}}>
@@ -98,14 +95,7 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
             <button
               onClick={e => { e.stopPropagation(); onAddOcorrencia(r); }}
               title="Nova Ocorrência"
-              style={{
-                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,
-                background:"var(--accent2,rgba(124,58,237,0.08))",
-                border:"1.5px dashed var(--accent,#7c3aed)",
-                borderRadius:8, padding:"8px 12px", cursor:"pointer",
-                color:"var(--accent,#7c3aed)", minWidth:44,
-                transition:"all 0.12s",
-              }}
+              style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,background:"var(--accent2,rgba(124,58,237,0.08))",border:"1.5px dashed var(--accent,#7c3aed)",borderRadius:8,padding:"8px 12px",cursor:"pointer",color:"var(--accent,#7c3aed)",minWidth:44,transition:"all 0.12s"}}
               onMouseEnter={e=>{e.currentTarget.style.background="rgba(124,58,237,0.16)"}}
               onMouseLeave={e=>{e.currentTarget.style.background="var(--accent2,rgba(124,58,237,0.08))"}}
             >
@@ -118,24 +108,9 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
 
       {/* Row 3: datas */}
       <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-        {r.data_carr && (
-          <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}>
-            <span style={{color:"var(--text3)",marginRight:4}}>CARR.</span>
-            <span style={{color:"var(--text2)"}}>{r.data_carr}</span>
-          </span>
-        )}
-        {r.data_agenda && (
-          <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}>
-            <span style={{color:"var(--text3)",marginRight:4}}>AGENDA</span>
-            <span style={{color:"var(--text2)"}}>{r.data_agenda}</span>
-          </span>
-        )}
-        {r.data_desc && (
-          <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}>
-            <span style={{color:"var(--text3)",marginRight:4}}>DESC.</span>
-            <span style={{color:"var(--green,#22c55e)"}}>{r.data_desc}</span>
-          </span>
-        )}
+        {r.data_carr && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}><span style={{color:"var(--text3)",marginRight:4}}>CARR.</span><span style={{color:"var(--text2)"}}>{r.data_carr}</span></span>}
+        {r.data_agenda && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}><span style={{color:"var(--text3)",marginRight:4}}>AGENDA</span><span style={{color:"var(--text2)"}}>{r.data_agenda}</span></span>}
+        {r.data_desc && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}><span style={{color:"var(--text3)",marginRight:4}}>DESC.</span><span style={{color:"var(--green,#22c55e)"}}>{r.data_desc}</span></span>}
         <span style={{marginLeft:"auto",fontSize:10,color:"var(--text3)"}}>
           <Ico size={12} color="var(--text3)"><polyline points="9 18 15 12 9 6"/></Ico>
         </span>
@@ -144,7 +119,25 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
   );
 }
 
-// Modal Nova Ocorrencia
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function StatusBadge({ status }) {
+  const s = (status||"").toUpperCase();
+  const map = {
+    "ENTREGUE":   { color:"var(--green,#22c55e)",   bg:"rgba(34,197,94,.12)"   },
+    "CANCELADA":  { color:"var(--red,#ef4444)",      bg:"rgba(239,68,68,.12)"   },
+    "AGUARDANDO": { color:"var(--yellow,#eab308)",   bg:"rgba(234,179,8,.12)"   },
+    "CARREGADO":  { color:"var(--cyan,#06b6d4)",     bg:"rgba(6,182,212,.12)"   },
+    "VIAGEM":     { color:"var(--cyan,#06b6d4)",     bg:"rgba(6,182,212,.12)"   },
+  };
+  const c = map[s] || { color:"var(--text3)", bg:"var(--card2)" };
+  return (
+    <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",padding:"3px 9px",borderRadius:99,background:c.bg,color:c.color,border:`1px solid ${c.color}44`}}>
+      {s || "—"}
+    </span>
+  );
+}
+
+// ── Modal Nova Ocorrência (melhorado) ────────────────────────────────────────
 function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
   const [busca, setBusca]     = useState("");
   const [selecionado, setSel] = useState(initialEntry);
@@ -155,19 +148,31 @@ function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
 
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 80); }, []);
 
+  // Load existing occurrences from localStorage when entry selected
+  const ocorrExistentes = useMemo(() => {
+    if (!selecionado) return [];
+    try {
+      const v = localStorage.getItem(`co_ocorr_${selecionado.dt}`);
+      if (!v) return [];
+      const arr = JSON.parse(v);
+      return Array.isArray(arr) ? arr.slice().reverse() : [];
+    } catch { return []; }
+  }, [selecionado]);
+
   const resultados = useMemo(() => {
     if (!busca.trim()) return [];
     const q = busca.trim().toUpperCase();
     return dados.filter(r =>
       String(r.dt||"").toUpperCase().includes(q) ||
-      (r.nome||"").toUpperCase().includes(q)
+      (r.nome||"").toUpperCase().includes(q) ||
+      (r.placa||"").toUpperCase().includes(q)
     ).slice(0,8);
   }, [busca, dados]);
 
   const TIPOS = [
-    { k:"info",   label:"Info",   color:"var(--cyan,#06b6d4)"   },
-    { k:"alerta", label:"Alerta", color:"var(--orange,#f97316)" },
-    { k:"status", label:"Status", color:"var(--green,#22c55e)"  },
+    { k:"info",   label:"Info",   color:"var(--cyan,#06b6d4)",   icon:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></> },
+    { k:"alerta", label:"Alerta", color:"var(--orange,#f97316)", icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></> },
+    { k:"status", label:"Status", color:"var(--green,#22c55e)",  icon:<><polyline points="20 6 9 17 4 12"/></> },
   ];
 
   const handleSalvar = async () => {
@@ -177,104 +182,185 @@ function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
     finally { setSaving(false); }
   };
 
+  const tipoColor = TIPOS.find(tp=>tp.k===tipo)?.color || "var(--accent)";
+
   return (
     <div
       onClick={e => { if (e.target===e.currentTarget) onClose(); }}
-      style={{position:"fixed",inset:0,zIndex:1200,background:"rgba(0,0,0,0.55)",backdropFilter:"blur(3px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+      style={{position:"fixed",inset:0,zIndex:1200,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}
     >
-      <div style={{background:"var(--surface,var(--card))",border:"1px solid var(--border)",borderRadius:16,padding:24,width:"100%",maxWidth:480,boxShadow:"0 24px 48px rgba(0,0,0,0.35)",display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{background:"var(--surface,var(--card))",border:"1px solid var(--border)",borderRadius:18,width:"100%",maxWidth:540,maxHeight:"90vh",boxShadow:"0 32px 64px rgba(0,0,0,0.4)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+
         {/* Header */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:"var(--text)"}}>Nova Ocorrência</div>
-          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text3)",padding:4,borderRadius:6}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:16,color:"var(--text)"}}>
+            Nova Ocorrência
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text3)",padding:6,borderRadius:8}}>
             <Ico size={18} color="var(--text3)"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Ico>
           </button>
         </div>
 
-        {/* Step 1: busca */}
-        {!selecionado ? (
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>
-              Buscar entrada (DT ou nome)
-            </label>
-            <input ref={inputRef} value={busca} onChange={e=>setBusca(e.target.value)}
-              placeholder="Ex: 12345 ou João Silva..."
-              style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"10px 12px",borderRadius:8,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",outline:"none"}}
-            />
-            {resultados.length>0 && (
-              <div style={{border:"1px solid var(--border)",borderRadius:10,overflow:"hidden",maxHeight:260,overflowY:"auto"}}>
-                {resultados.map((r,i) => (
-                  <div key={i} onClick={()=>{setSel(r);setBusca("");}}
-                    style={{padding:"10px 14px",cursor:"pointer",borderBottom:i<resultados.length-1?"1px solid var(--border)":"none",background:"var(--card)",transition:"background 0.1s"}}
-                    onMouseEnter={e=>e.currentTarget.style.background="var(--card2)"}
-                    onMouseLeave={e=>e.currentTarget.style.background="var(--card)"}
-                  >
-                    <div style={{fontWeight:700,fontSize:13,color:"var(--text)"}}>{r.nome||"—"}</div>
-                    <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:2}}>
-                      DT {r.dt}{r.placa&&<span style={{marginLeft:8}}>{r.placa}</span>}{r.origem&&<span style={{marginLeft:8}}>{r.origem}</span>}
+        <div style={{flex:1,overflowY:"auto",padding:"16px 20px",display:"flex",flexDirection:"column",gap:14}}>
+
+          {/* Step 1: busca */}
+          {!selecionado ? (
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>
+                Buscar entrada (DT, nome ou placa)
+              </label>
+              <input ref={inputRef} value={busca} onChange={e=>setBusca(e.target.value)}
+                placeholder="Ex: 12345, João Silva ou ABC1234..."
+                style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"11px 14px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",outline:"none"}}
+              />
+              {resultados.length>0 && (
+                <div style={{border:"1px solid var(--border)",borderRadius:12,overflow:"hidden",maxHeight:280,overflowY:"auto"}}>
+                  {resultados.map((r,i) => (
+                    <div key={i} onClick={()=>{setSel(r);setBusca("");}}
+                      style={{padding:"11px 14px",cursor:"pointer",borderBottom:i<resultados.length-1?"1px solid var(--border)":"none",background:"var(--card)",transition:"background 0.1s",display:"flex",alignItems:"center",gap:12}}
+                      onMouseEnter={e=>e.currentTarget.style.background="var(--card2)"}
+                      onMouseLeave={e=>e.currentTarget.style.background="var(--card)"}
+                    >
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:13,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
+                        <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:2}}>
+                          DT {r.dt}{r.placa&&<span style={{marginLeft:8}}>{r.placa}</span>}{r.origem&&<span style={{marginLeft:8}}>{r.origem}</span>}
+                        </div>
+                      </div>
+                      <StatusBadge status={r.status}/>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {busca.trim().length>0 && resultados.length===0 && (
-              <div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"12px 0"}}>Nenhuma entrada encontrada</div>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Entrada selecionada */}
-            <div style={{background:"var(--card2)",border:"1px solid var(--border)",borderRadius:10,padding:"12px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-              <div>
-                <div style={{fontWeight:700,fontSize:13,color:"var(--text)"}}>{selecionado.nome||"—"}</div>
-                <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:2}}>
-                  DT {selecionado.dt}{selecionado.placa&&<span style={{marginLeft:8}}>{selecionado.placa}</span>}
+                  ))}
                 </div>
-              </div>
-              {!initialEntry && (
-                <button onClick={()=>setSel(null)}
-                  style={{fontSize:10,padding:"4px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",flexShrink:0}}>
-                  Trocar
-                </button>
+              )}
+              {busca.trim().length>0 && resultados.length===0 && (
+                <div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"16px 0"}}>Nenhuma entrada encontrada</div>
               )}
             </div>
-            {/* Tipo */}
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Tipo</label>
-              <div style={{display:"flex",gap:6}}>
-                {TIPOS.map(tp => (
-                  <button key={tp.k} onClick={()=>setTipo(tp.k)} style={{
-                    flex:1,padding:"7px 0",fontSize:11,fontWeight:600,
-                    fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",textTransform:"uppercase",
-                    borderRadius:8,cursor:"pointer",
-                    border:`1.5px solid ${tipo===tp.k?tp.color:"var(--border)"}`,
-                    background:tipo===tp.k?tp.color+"18":"var(--card)",
-                    color:tipo===tp.k?tp.color:"var(--text2)",transition:"all 0.12s",
-                  }}>{tp.label}</button>
-                ))}
+          ) : (
+            <>
+              {/* Entrada selecionada — painel de contexto */}
+              <div style={{background:"var(--card2)",border:"1px solid var(--border)",borderRadius:12,overflow:"hidden"}}>
+                {/* Header da entrada */}
+                <div style={{padding:"12px 14px",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"var(--text)",fontFamily:"'Space Grotesk',sans-serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selecionado.nome||"—"}</div>
+                    <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:3}}>
+                      DT {selecionado.dt}
+                      {selecionado.placa && <span style={{marginLeft:8}}>{selecionado.placa}</span>}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                    <StatusBadge status={selecionado.status}/>
+                    {!initialEntry && (
+                      <button onClick={()=>setSel(null)}
+                        style={{fontSize:10,padding:"3px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>
+                        Trocar
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* Dados da viagem */}
+                <div style={{padding:"8px 14px 12px",borderTop:"1px solid var(--border)",display:"flex",flexDirection:"column",gap:6}}>
+                  {(selecionado.origem||selecionado.destino||selecionado.cidade) && (
+                    <div style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"var(--text2)"}}>
+                      <Ico size={12} color="var(--text3)"><circle cx="12" cy="12" r="10"/></Ico>
+                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"var(--text3)"}}>ROTA</span>
+                      <span>{selecionado.origem||"—"}</span>
+                      <Ico size={10} color="var(--text3)"><polyline points="9 18 15 12 9 6"/></Ico>
+                      <span>{selecionado.destino||selecionado.cidade||"—"}</span>
+                    </div>
+                  )}
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                    {selecionado.data_carr && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)"}}><span style={{marginRight:3}}>CARR.</span><span style={{color:"var(--text2)"}}>{selecionado.data_carr}</span></span>}
+                    {selecionado.data_agenda && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)"}}><span style={{marginRight:3}}>AGENDA</span><span style={{color:"var(--text2)"}}>{selecionado.data_agenda}</span></span>}
+                    {selecionado.data_desc && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)"}}><span style={{marginRight:3}}>DESC.</span><span style={{color:"var(--green,#22c55e)"}}>{selecionado.data_desc}</span></span>}
+                  </div>
+                  {selecionado.obs_chegada && (
+                    <div style={{background:"rgba(6,182,212,.07)",borderRadius:7,padding:"6px 10px",borderLeft:"2px solid var(--cyan,#06b6d4)"}}>
+                      <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--cyan,#06b6d4)",marginBottom:3,fontWeight:700}}>Obs Chegada</div>
+                      <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>{selecionado.obs_chegada.length>150?selecionado.obs_chegada.slice(0,150)+"…":selecionado.obs_chegada}</div>
+                    </div>
+                  )}
+                  {selecionado.obs_descarga && (
+                    <div style={{background:"rgba(34,197,94,.07)",borderRadius:7,padding:"6px 10px",borderLeft:"2px solid var(--green,#22c55e)"}}>
+                      <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--green,#22c55e)",marginBottom:3,fontWeight:700}}>Obs Descarga</div>
+                      <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>{selecionado.obs_descarga.length>150?selecionado.obs_descarga.slice(0,150)+"…":selecionado.obs_descarga}</div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            {/* Texto */}
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Descrição</label>
-              <textarea autoFocus value={texto} onChange={e=>setTexto(e.target.value)} rows={4}
-                placeholder="Descreva a ocorrência..."
-                style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"10px 12px",borderRadius:8,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",resize:"vertical",outline:"none",lineHeight:1.5,fontFamily:"inherit"}}
-                onKeyDown={e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))handleSalvar();}}
-              />
-              <div style={{fontSize:10,color:"var(--text3)",textAlign:"right"}}>Ctrl+Enter para salvar</div>
-            </div>
-            {/* Botoes */}
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={onClose} style={{flex:1,padding:"10px 0",borderRadius:9,cursor:"pointer",border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",fontSize:13,fontWeight:600}}>
-                Cancelar
-              </button>
-              <button onClick={handleSalvar} disabled={!texto.trim()||saving}
-                style={{flex:2,padding:"10px 0",borderRadius:9,cursor:texto.trim()&&!saving?"pointer":"default",border:"none",background:texto.trim()&&!saving?"var(--accent,#7c3aed)":"var(--border)",color:texto.trim()&&!saving?"#fff":"var(--text3)",fontSize:13,fontWeight:700,transition:"all 0.12s"}}>
-                {saving?"Salvando…":"Registrar Ocorrência"}
-              </button>
-            </div>
-          </>
+
+              {/* Ocorrencias existentes */}
+              {ocorrExistentes.length > 0 && (
+                <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                  <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginBottom:2}}>
+                    Ocorrências anteriores ({ocorrExistentes.length})
+                  </div>
+                  <div style={{maxHeight:130,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>
+                    {ocorrExistentes.map((oc,i) => {
+                      const tpColor = oc.tipo==="alerta"?"var(--orange,#f97316)":oc.tipo==="status"?"var(--green,#22c55e)":"var(--cyan,#06b6d4)";
+                      const dt = new Date(oc.data_hora);
+                      const dtFmt = isNaN(dt)?oc.data_hora:dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
+                      return (
+                        <div key={i} style={{padding:"7px 10px",borderRadius:8,background:"var(--card)",border:`1px solid var(--border)`,borderLeft:`2px solid ${tpColor}`,display:"flex",alignItems:"flex-start",gap:8}}>
+                          <span style={{fontSize:8,fontFamily:"'DM Mono',monospace",fontWeight:700,textTransform:"uppercase",color:tpColor,whiteSpace:"nowrap",marginTop:2,letterSpacing:"0.06em"}}>{oc.tipo}</span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>{oc.texto}</div>
+                            <div style={{fontSize:9,color:"var(--text3)",marginTop:3,fontFamily:"'DM Mono',monospace"}}>{dtFmt}{oc.usuario&&<span style={{marginLeft:6}}>· {oc.usuario}</span>}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tipo */}
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Tipo da Ocorrência</label>
+                <div style={{display:"flex",gap:6}}>
+                  {TIPOS.map(tp => (
+                    <button key={tp.k} onClick={()=>setTipo(tp.k)} style={{
+                      flex:1,padding:"8px 4px",fontSize:10,fontWeight:700,
+                      fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",textTransform:"uppercase",
+                      borderRadius:9,cursor:"pointer",
+                      border:`1.5px solid ${tipo===tp.k?tp.color:"var(--border)"}`,
+                      background:tipo===tp.k?tp.color+"18":"var(--card)",
+                      color:tipo===tp.k?tp.color:"var(--text2)",transition:"all 0.12s",
+                      display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                    }}>
+                      <Ico size={14} color={tipo===tp.k?tp.color:"var(--text2)"} sw={2}>{tp.icon}</Ico>
+                      {tp.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Texto */}
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Descrição</label>
+                <textarea autoFocus value={texto} onChange={e=>setTexto(e.target.value)} rows={3}
+                  placeholder="Descreva a ocorrência..."
+                  style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"11px 14px",borderRadius:10,border:`1.5px solid ${texto.trim()?tipoColor:"var(--border)"}`,background:"var(--card)",color:"var(--text)",resize:"vertical",outline:"none",lineHeight:1.5,fontFamily:"inherit",transition:"border-color .2s"}}
+                  onKeyDown={e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))handleSalvar();}}
+                />
+                <div style={{fontSize:10,color:"var(--text3)",textAlign:"right"}}>Ctrl+Enter para salvar</div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        {selecionado && (
+          <div style={{padding:"12px 20px",borderTop:"1px solid var(--border)",display:"flex",gap:8,flexShrink:0}}>
+            <button onClick={onClose} style={{flex:1,padding:"10px 0",borderRadius:10,cursor:"pointer",border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",fontSize:13,fontWeight:600}}>
+              Cancelar
+            </button>
+            <button onClick={handleSalvar} disabled={!texto.trim()||saving}
+              style={{flex:2,padding:"10px 0",borderRadius:10,cursor:texto.trim()&&!saving?"pointer":"default",border:"none",background:texto.trim()&&!saving?tipoColor:"var(--border)",color:texto.trim()&&!saving?"#fff":"var(--text3)",fontSize:13,fontWeight:700,transition:"all 0.12s"}}>
+              {saving?"Salvando…":"Registrar Ocorrência"}
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -292,11 +378,11 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
   const closeModal = () => { setNovaOcorrOpen(false); setNovaOcorrPreset(null); };
 
   const BADGE_COLORS = {
-    SGS:           "var(--yellow,#eab308)",
-    "Ocorrência": "var(--orange,#f97316)",
-    "Diária": "var(--red,#ef4444)",
-    DCC:           "var(--cyan,#06b6d4)",
-    Atraso:        "var(--red,#ef4444)",
+    SGS:              "var(--yellow,#eab308)",
+    "Ocorrência":"var(--orange,#f97316)",
+    "Diária":    "var(--red,#ef4444)",
+    DCC:              "var(--cyan,#06b6d4)",
+    Atraso:           "var(--red,#ef4444)",
   };
 
   const { entries, stats } = useMemo(() => {
@@ -323,13 +409,13 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           try{ const v=localStorage.getItem(`co_ocorr_${r.dt}`); if(!v) return false; const a=JSON.parse(v); return Array.isArray(a)&&a.length>0; }
           catch{ return false; }
         })();
-        if(r.sgs)                  badges.push({label:`SGS: ${r.sgs}`,  color:BADGE_COLORS.SGS});
-        if(hasOcorrLocal)          badges.push({label:"Ocorrência", color:BADGE_COLORS["Ocorrência"]});
-        if(diariasSet.has(r.dt))   badges.push({label:"Diária",     color:BADGE_COLORS["Diária"]});
-        if(dccSet.has(r.dt))       badges.push({label:"DCC",             color:BADGE_COLORS.DCC});
+        if(r.sgs)                  badges.push({label:`SGS: ${r.sgs}`,   color:BADGE_COLORS.SGS});
+        if(hasOcorrLocal)          badges.push({label:"Ocorrência",  color:BADGE_COLORS["Ocorrência"]});
+        if(diariasSet.has(r.dt))   badges.push({label:"Diária",      color:BADGE_COLORS["Diária"]});
+        if(dccSet.has(r.dt))       badges.push({label:"DCC",              color:BADGE_COLORS.DCC});
         if(r.data_agenda&&!r.data_desc){
           const da=(()=>{const s=r.data_agenda;if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const[d,m,y]=s.split("/");return new Date(`${y}-${m}-${d}`);}if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s);return null;})();
-          if(da){const hoje=new Date();hoje.setHours(0,0,0,0);const dif=Math.floor((hoje-da)/(1000*60*60*24));if(dif>=1)badges.push({label:`Atraso ${dif}d`,color:BADGE_COLORS.Atraso});}
+          if(da){const hoje=new Date();hoje.setHours(0,0,0,0);const dif=Math.floor((hoje-da)/(86400000));if(dif>=1)badges.push({label:`Atraso ${dif}d`,color:BADGE_COLORS.Atraso});}
         }
         if(badges.length===0) return null;
         badges.sort((a,b)=>prioScore(a)-prioScore(b));
@@ -351,11 +437,11 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
   },[dados,diariasData]);
 
   const FILTROS=[
-    {k:null,            l:"Todos",         color:"var(--text2)"},
-    {k:"SGS",           l:"SGS",           color:"var(--yellow,#eab308)"},
-    {k:"Ocorrência", l:"Ocorrência", color:"var(--orange,#f97316)"},
+    {k:null,               l:"Todos",          color:"var(--text2)"},
+    {k:"SGS",              l:"SGS",            color:"var(--yellow,#eab308)"},
+    {k:"Ocorrência",  l:"Ocorrência",color:"var(--orange,#f97316)"},
     {k:"Diária/Atraso",l:"Diária/Atraso",color:"var(--red,#ef4444)"},
-    {k:"DCC",           l:"DCC",           color:"var(--cyan,#06b6d4)"},
+    {k:"DCC",              l:"DCC",            color:"var(--cyan,#06b6d4)"},
   ];
   const labelMap={
     "SGS":b=>b.label.startsWith("SGS"),
@@ -378,30 +464,30 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
   });
 
   return (
-    <div style={{padding:isMobile?"16px":"16px 24px",width:"100%",boxSizing:"border-box"}}>
+    <div style={{padding:isMobile?"12px":"16px 24px",width:"100%",boxSizing:"border-box"}}>
 
       {novaOcorrOpen&&onSalvarOcorrencia&&(
         <NovaOcorrModal dados={dados} onClose={closeModal} onSalvar={onSalvarOcorrencia} initialEntry={novaOcorrPreset}/>
       )}
 
-      {/* Header row */}
-      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-        <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:10,flex:1,minWidth:0}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:8,flex:1,minWidth:0}}>
           {[
             {label:"Total Alertas", value:stats.total,  color:"var(--text2)"},
             {label:"Com SGS",       value:stats.sgs,    color:"var(--yellow,#eab308)"},
             {label:"Com Diária",value:stats.diaria,color:"var(--red,#ef4444)"},
             {label:"Com DCC",       value:stats.dcc,    color:"var(--cyan,#06b6d4)"},
           ].map(s=>(
-            <div key={s.label} style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:"var(--radius-card,12px)",padding:"14px 16px"}}>
-              <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",color:"var(--text3)",textTransform:"uppercase",marginBottom:6}}>{s.label}</div>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:26,color:s.color,letterSpacing:"-0.04em",lineHeight:1}}>{s.value}</div>
+            <div key={s.label} style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:"var(--radius-card,12px)",padding:"12px 14px"}}>
+              <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",color:"var(--text3)",textTransform:"uppercase",marginBottom:4}}>{s.label}</div>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:24,color:s.color,letterSpacing:"-0.04em",lineHeight:1}}>{s.value}</div>
             </div>
           ))}
         </div>
         {onSalvarOcorrencia&&(
           <button onClick={()=>openModal(null)}
-            style={{display:"flex",alignItems:"center",gap:7,padding:"10px 16px",borderRadius:10,cursor:"pointer",border:"1.5px solid var(--accent,#7c3aed)",background:"var(--accent2,rgba(124,58,237,0.08))",color:"var(--accent,#7c3aed)",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",alignSelf:"flex-start"}}>
+            style={{display:"flex",alignItems:"center",gap:7,padding:"10px 16px",borderRadius:10,cursor:"pointer",border:"1.5px solid var(--accent,#7c3aed)",background:"var(--accent2,rgba(124,58,237,0.08))",color:"var(--accent,#7c3aed)",fontSize:12,fontWeight:700,whiteSpace:"nowrap",alignSelf:"flex-start"}}>
             <Ico size={14} color="var(--accent,#7c3aed)" sw={2.2}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
             Nova Ocorrência
           </button>
@@ -410,27 +496,26 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
 
       {/* Obs summary */}
       {(stats.obsChegada>0||stats.obsDescarga>0)&&(
-        <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
-          {stats.obsChegada>0&&(<div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.25)",borderRadius:8,padding:"8px 14px",fontSize:12,color:"var(--cyan,#06b6d4)",fontFamily:"'DM Sans',sans-serif"}}><span style={{fontWeight:700}}>{stats.obsChegada}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Chegada</span></div>)}
-          {stats.obsDescarga>0&&(<div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:8,padding:"8px 14px",fontSize:12,color:"var(--green,#22c55e)",fontFamily:"'DM Sans',sans-serif"}}><span style={{fontWeight:700}}>{stats.obsDescarga}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Descarga</span></div>)}
+        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+          {stats.obsChegada>0&&(<div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.25)",borderRadius:8,padding:"6px 12px",fontSize:12,color:"var(--cyan,#06b6d4)"}}><span style={{fontWeight:700}}>{stats.obsChegada}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Chegada</span></div>)}
+          {stats.obsDescarga>0&&(<div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:8,padding:"6px 12px",fontSize:12,color:"var(--green,#22c55e)"}}><span style={{fontWeight:700}}>{stats.obsDescarga}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Descarga</span></div>)}
         </div>
       )}
 
-      {/* Date range filter */}
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 12px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,flexWrap:"wrap"}}>
-        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginRight:2}}>Filtrar:</span>
+      {/* Filters row */}
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,padding:"7px 12px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,flexWrap:"wrap"}}>
+        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Data:</span>
         <input type="date" value={filtroIni} onChange={e=>setFiltroIni(e.target.value)}
           style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
-        <span style={{fontSize:10,color:"var(--text3)",flexShrink:0}}>até</span>
+        <span style={{fontSize:10,color:"var(--text3)"}}>até</span>
         <input type="date" value={filtroFim} onChange={e=>setFiltroFim(e.target.value)}
           style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
-        {(filtroIni||filtroFim)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>✕ Limpar</button>)}
-        <span style={{marginLeft:"auto",fontSize:9,fontFamily:"'DM Mono',monospace",color:"var(--text2)",fontWeight:600}}>{filtered.length} registros</span>
+        {(filtroIni||filtroFim)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>✕</button>)}
+        <span style={{marginLeft:"auto",fontSize:9,fontFamily:"'DM Mono',monospace",color:"var(--text2)",fontWeight:600}}>{filtered.length} reg</span>
       </div>
 
       {/* Filter pills */}
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
-        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginRight:4}}>Filtrar:</span>
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8,alignItems:"center"}}>
         {FILTROS.map(f=>{
           const ativo=filtroOcorr===f.k;
           return (
@@ -441,24 +526,21 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
             </button>
           );
         })}
-      </div>
-
-      {/* Column selector */}
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12}}>
-        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--text3)"}}>Colunas:</span>
-        {[1,2,3,4].map(n=>(
-          <button key={n} onClick={()=>setOcorrCols(n)} style={{width:28,height:28,fontSize:11,fontWeight:700,border:`1.5px solid ${ocorrCols===n?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:ocorrCols===n?"var(--accent2,rgba(124,58,237,0.1))":"var(--card2)",color:ocorrCols===n?"var(--accent)":"var(--text2)"}}>{n}</button>
-        ))}
+        <div style={{marginLeft:"auto",display:"flex",gap:4}}>
+          {[1,2,3,4].map(n=>(
+            <button key={n} onClick={()=>setOcorrCols(n)} style={{width:26,height:26,fontSize:10,fontWeight:700,border:`1.5px solid ${ocorrCols===n?"var(--accent)":"var(--border)"}`,borderRadius:6,cursor:"pointer",background:ocorrCols===n?"var(--accent2,rgba(124,58,237,0.1))":"var(--card2)",color:ocorrCols===n?"var(--accent)":"var(--text2)"}}>{n}</button>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}
       {filtered.length===0?(
-        <div style={{textAlign:"center",padding:"56px 20px",color:"var(--text3)"}}>
-          <Ico size={36} color="var(--green,#22c55e)" style={{margin:"0 auto 16px"}}><polyline points="20 6 9 17 4 12"/></Ico>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:600,color:"var(--text2)",marginBottom:4}}>
+        <div style={{textAlign:"center",padding:"48px 20px",color:"var(--text3)"}}>
+          <Ico size={32} color="var(--green,#22c55e)" style={{margin:"0 auto 12px"}}><polyline points="20 6 9 17 4 12"/></Ico>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:14,fontWeight:600,color:"var(--text2)",marginBottom:4}}>
             {filtroOcorr?`Nenhum DT com "${filtroOcorr}"`:"Nenhuma ocorrência registrada"}
           </div>
-          <div style={{fontSize:12,color:"var(--text3)"}}>Todos os DTs estão sem pendências nesta categoria.</div>
+          <div style={{fontSize:12,color:"var(--text3)"}}>Todos os DTs estão sem pendências.</div>
         </div>
       ):(
         <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":`repeat(${ocorrCols},minmax(0,1fr))`,gap:10}}>

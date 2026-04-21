@@ -261,3 +261,11 @@
 - **select/dropdown**: `color-scheme:dark/light` global — fim do fundo branco em dropdowns
 - **Removed**: `co-mobile-nav` render (era CSS-hidden); `minHeight:calc(100vh-140px)` hacks inline substituídos pelo flex global; padding `68px` bottom obsoleto removido
 - **Adicionado**: `.co-auto-grid` utilitário para grids responsivos automáticos
+
+## Session 7 — 2026-04-21
+**Solicitado:** (1) Corrigir WPP mobile que abria duas telas. (2) Melhorar modal Nova Ocorrência com mais contexto. (3) Apresentar resultado interativo desktop/mobile.
+**Implementado:**
+- WPP: substituído dropdown dentro da sidebar por modal root-level (`position:fixed, zIndex:1100`) — elimina conflito de z-index/scrim no mobile
+- OcorrenciasView: modal reformulado com painel de contexto da DT (status badge, rota, datas, obs_chegada/obs_descarga), histórico de ocorrências anteriores, seletor de tipo visual (Info/Alerta/Status), textarea com borda colorida por tipo, navegação em 2 passos (busca → registrar)
+- Build verificado: ✓ 2.94s
+- Artifact interativo criado: preview com toggle desktop/mobile e tema claro/escuro
