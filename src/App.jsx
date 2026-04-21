@@ -3119,7 +3119,16 @@ export default function App() {
           {/* ── Footer — utilitários + usuário ── */}
           {/* ── Footer — usuário + utilitários ── */}
           <div className="co-sidebar__footer">
-            {/* User info — clicável → abre perfil/admin */}
+            {/* Tema — acima do usuário */}
+            <button className="co-sidebar__footer-item" onClick={()=>setTheme(theme==="dark"?"light":"dark")} title={theme==="dark"?"Tema Claro":"Tema Escuro"} style={{justifyContent:"center"}}>
+              {theme==="dark"
+                ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,16)
+                : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,16)
+              }
+              <span className="co-sidebar__footer-lbl">{theme==="dark"?"Tema Claro":"Tema Escuro"}</span>
+            </button>
+
+            {/* User info — clicável → abre admin se admin, perfil caso contrário */}
             <div className="co-sidebar__user" style={{cursor:"pointer"}} onClick={()=>{
               if(isAdmin){setActiveTab("admin");if(!isWide)setMobileSidebarExpanded(false);}
               else{setModalOpen("usuario");}
@@ -3142,22 +3151,6 @@ export default function App() {
                 {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,14)}
               </button>
             </div>
-
-            {/* Tema — ícone only */}
-            <button className="co-sidebar__footer-item" onClick={()=>setTheme(theme==="dark"?"light":"dark")} title={theme==="dark"?"Tema Claro":"Tema Escuro"} style={{justifyContent:"center"}}>
-              {theme==="dark"
-                ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,16)
-                : hIco(<><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></>,t.txt2,16)
-              }
-            </button>
-
-            {/* Admin (somente admin) */}
-            {isAdmin && (
-              <button className="co-sidebar__footer-item" onClick={()=>setActiveTab("admin")} title="Admin" style={{...(activeTab==="admin"?{color:"var(--accent)"}:{})}}>
-                {hIco(<><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,activeTab==="admin"?"var(--accent)":t.txt2,14)}
-                <span className="co-sidebar__footer-lbl" style={activeTab==="admin"?{color:"var(--accent)"}:{}}>Admin</span>
-              </button>
-            )}
           </div>
       </aside>
 
