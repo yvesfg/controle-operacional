@@ -297,6 +297,8 @@ export default function App() {
 
   // ── WhatsApp tipos ──
   const [wppTipoOpen, setWppTipoOpen] = useState(false);
+  const [wppSearchTxt, setWppSearchTxt] = useState("");   // busca no modal WPP
+  const [wppSearchReg, setWppSearchReg] = useState(null); // registro selecionado no modal WPP
   const [wppFatModal, setWppFatModal] = useState(null); // {reg, mot}
   const [wppPagModal, setWppPagModal] = useState(null); // {reg, mot, tipo:'descarga'|'diarias'}
   const [wppFortes, setWppFortes] = useState(false);
