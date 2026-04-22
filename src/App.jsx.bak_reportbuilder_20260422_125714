@@ -314,7 +314,6 @@ export default function App() {
   const [sgsRetornoForm, setSgsRetornoForm] = useState({data:"",descricao:""});
   // ── Relatórios PDF ──
   const [relGeralOpen, setRelGeralOpen] = useState(false);
-  const [reportBuilderOpen, setReportBuilderOpen] = useState(false);
   const [relGeralFrom, setRelGeralFrom] = useState("");
   const [relGeralTo, setRelGeralTo] = useState("");
   const [relGeralMotorista, setRelGeralMotorista] = useState("");
@@ -3317,7 +3316,6 @@ export default function App() {
             sgsItems={sgsItems}
             t={t}
             isMobile={isMobile}
-            onExportClick={()=>setReportBuilderOpen(true)}
             relGeralOpen={relGeralOpen}     setRelGeralOpen={setRelGeralOpen}
             relOperOpen={relOperOpen}       setRelOperOpen={setRelOperOpen}
             relDiariaOpen={relDiariaOpen}   setRelDiariaOpen={setRelDiariaOpen}
@@ -5650,22 +5648,6 @@ function mapearColuna(n){
       )}
 
       </div>{/* end .co-main */}
-
-      {/* ═══ REPORT BUILDER OVERLAY ═══ */}
-      {reportBuilderOpen && (
-        <div style={{position:"fixed",inset:0,zIndex:1200,background:t.bg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`,background:t.headerBg,flexShrink:0}}>
-            <button onClick={()=>setReportBuilderOpen(false)} style={{background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda}`,borderRadius:8,padding:"6px 12px",color:t.txt2,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"inherit",fontWeight:600}}>
-              {hIco(<><polyline points="15 18 9 12 15 6"/></>,t.txt2,14)} Voltar
-            </button>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.ouro}}>RELATÓRIO PERSONALIZADO</div>
-            <div style={{fontSize:10,color:t.txt2,marginLeft:2}}>Selecione campos, filtre e exporte</div>
-          </div>
-          <div style={{flex:1,overflow:"hidden"}}>
-            <ReportBuilder dados={DADOS} motoristas={motoristas} apontItems={apontItems} sgsItems={sgsItems} t={t} DESIGN={DESIGN} isMobile={isMobile} />
-          </div>
-        </div>
-      )}
 
       {/* ═══ WPP SELECT MODAL ═══ */}
       {wppTipoOpen && (
