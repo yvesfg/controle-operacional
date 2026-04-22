@@ -3303,7 +3303,7 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?"0":"16px 16px 24px",maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="relatorios"||activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
+      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?"0":"16px 16px 24px",maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
 
         {/* ═══ RELATÓRIOS ═══ */}
         {activeTab === "relatorios" && (
@@ -5670,58 +5670,52 @@ function mapearColuna(n){
             </div>
             {/* Search / DT Context */}
             <div style={{padding:"12px 16px",borderBottom:`1px solid ${t.borda}`}}>
-              {(()=>{
-                const _sel=wppSearchReg||buscaResult;
-                if(_sel) return (
-                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(37,211,102,.09)",border:"1px solid rgba(37,211,102,.22)",borderRadius:10}}>
-                    {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,"#25D366",14)}
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {_sel.dt} · {_sel.nome||"—"}</div>
-                      {_sel.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{_sel.placa}{_sel.origem&&" · "+_sel.origem}</div>}
-                    </div>
-                    <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
-                      {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
-                    </button>
+              {(wppSearchReg||buscaResult) ? (
+                <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(37,211,102,.09)",border:"1px solid rgba(37,211,102,.22)",borderRadius:10}}>
+                  {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,"#25D366",14)}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {(wppSearchReg||buscaResult).dt} · {(wppSearchReg||buscaResult).nome||"—"}</div>
+                    {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{(wppSearchReg||buscaResult).placa}</div>}
                   </div>
-                );
-                return (
-                  <>
-                    <div style={{position:"relative"}}>
-                      <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",display:"flex",alignItems:"center"}}>
-                        {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,14)}
-                      </span>
-                      <input
-                        autoFocus
-                        value={wppSearchTxt}
-                        onChange={e=>setWppSearchTxt(e.target.value)}
-                        placeholder="DT, motorista ou placa…"
-                        style={{width:"100%",padding:"9px 10px 9px 34px",border:`1px solid ${t.borda}`,borderRadius:9,background:t.card2,color:t.txt,fontSize:13,fontFamily:"inherit",outline:"none",transition:"border-color .15s"}}
-                        onFocus={e=>e.target.style.borderColor=t.azulLt}
-                        onBlur={e=>e.target.style.borderColor=t.borda}
-                      />
-                    </div>
-                    {wppSearchTxt.length>=2&&(()=>{
-                      const q=wppSearchTxt.toLowerCase();
-                      const res=DADOS.filter(r=>(r.dt&&String(r.dt).toLowerCase().includes(q))||(r.nome&&r.nome.toLowerCase().includes(q))||(r.placa&&r.placa.toLowerCase().includes(q))).slice(0,5);
-                      return res.length>0?(
-                        <div style={{marginTop:6,display:"flex",flexDirection:"column",gap:3,maxHeight:180,overflowY:"auto"}}>
-                          {res.map((r,i)=>(
-                            <button key={i} onClick={()=>{setWppSearchReg(r);setWppSearchTxt("");}}
-                              style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:8,cursor:"pointer",textAlign:"left",width:"100%",transition:"background .1s"}}
-                              onMouseEnter={e=>{e.currentTarget.style.background=t.surface}}
-                              onMouseLeave={e=>{e.currentTarget.style.background=t.card2}}
-                            >
-                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
-                              <div style={{fontSize:12,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                              {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{r.placa}</div>}
-                            </button>
-                          ))}
-                        </div>
-                      ):(<div style={{fontSize:11,color:t.txt2,marginTop:6,textAlign:"center",padding:"8px 0"}}>Nenhum resultado para "{wppSearchTxt}"</div>);
-                    })()}
-                  </>
-                );
-              })()}
+                  <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
+                    {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{position:"relative"}}>
+                    <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",display:"flex",alignItems:"center"}}>
+                      {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,14)}
+                    </span>
+                    <input
+                      value={wppSearchTxt}
+                      onChange={e=>setWppSearchTxt(e.target.value)}
+                      placeholder="DT, motorista ou placa…"
+                      style={{width:"100%",padding:"9px 10px 9px 34px",border:`1px solid ${t.borda}`,borderRadius:9,background:t.card2,color:t.txt,fontSize:13,fontFamily:"inherit",outline:"none"}}
+                      onFocus={e=>{e.target.style.borderColor=t.azulLt;}}
+                      onBlur={e=>{e.target.style.borderColor=t.borda;}}
+                    />
+                  </div>
+                  {wppSearchTxt.length>=2 && (() => {
+                    const _q=wppSearchTxt.toLowerCase();
+                    const _res=DADOS.filter(r=>(r.dt&&String(r.dt).toLowerCase().includes(_q))||(r.nome&&r.nome.toLowerCase().includes(_q))||(r.placa&&r.placa.toLowerCase().includes(_q))).slice(0,5);
+                    if(!_res.length) return <div style={{fontSize:11,color:t.txt2,marginTop:6,textAlign:"center",padding:"6px 0"}}>Nenhum resultado</div>;
+                    return (<div style={{marginTop:6,display:"flex",flexDirection:"column",gap:3,maxHeight:180,overflowY:"auto"}}>
+                      {_res.map((r,i)=>(
+                        <button key={i} onClick={()=>{setWppSearchReg(r);setWppSearchTxt("");}}
+                          style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:8,cursor:"pointer",textAlign:"left",width:"100%"}}
+                          onMouseEnter={e=>{e.currentTarget.style.background=t.surface;}}
+                          onMouseLeave={e=>{e.currentTarget.style.background=t.card2;}}
+                        >
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
+                          <div style={{fontSize:12,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
+                          {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{r.placa}</div>}
+                        </button>
+                      ))}
+                    </div>);
+                  })()}
+                </div>
+              )}
             </div>
             {/* Options */}
             <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>

@@ -296,3 +296,10 @@
 - gerarRelatorioGeral: tabela de registros agora dinâmica usando colunas selecionadas
 - Quando seção "Apontamentos" ativada: também dispara gerarRelatorioOperacional
 - Build: ✓ 3.07s
+
+## Session 11 — 2026-04-22
+**Solicitado:** WPP trava em tela preta ao clicar. Relatórios não rola.
+**Implementado:**
+- WPP: substituído padrão IIFE aninhado por JSX condicional simples — eliminado risco de erro em render; removido autoFocus do input de busca
+- Relatórios: removido overflow:"hidden" que bloqueava o scroll do co-content; agora a view rola normalmente
+- Build: ✓ 17s
