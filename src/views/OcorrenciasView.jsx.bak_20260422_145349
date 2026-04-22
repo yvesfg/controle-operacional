@@ -370,7 +370,6 @@ function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
 export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, setFiltroOcorr, abrirDetalhe, t, isMobile, motoristas=[], onSalvarOcorrencia }) {
   const [filtroIni, setFiltroIni] = useState("");
   const [filtroFim, setFiltroFim] = useState("");
-  const [busca, setBusca] = useState(""); // busca por DT, motorista, placa
   const [ocorrCols, setOcorrCols] = useState(2);
   const [novaOcorrOpen, setNovaOcorrOpen]     = useState(false);
   const [novaOcorrPreset, setNovaOcorrPreset] = useState(null);
@@ -453,21 +452,15 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
 
   const _iniD=filtroIni?new Date(filtroIni+"T00:00:00"):null;
   const _fimD=filtroFim?new Date(filtroFim+"T23:59:59"):null;
-  // Converte dd/MM/yyyy ou yyyy-MM-dd → Date
-  const _toD=s=>{if(!s)return null;const m=String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})/);if(m)return new Date(`${m[3]}-${m[2]}-${m[1]}T00:00:00`);if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s.slice(0,10)+"T00:00:00");return null;};
   const filtered=(filtroOcorr?entries.filter(e=>e.badges.some(labelMap[filtroOcorr]||(()=>false))):entries).filter(e=>{
-    // Filtro de busca (DT, motorista, placa)
-    if(busca.trim()){
-      const q=busca.trim().toLowerCase();
-      const r=e.r;
-      if(!( String(r.dt||"").toLowerCase().includes(q)||String(r.nome||"").toLowerCase().includes(q)||String(r.placa||"").toLowerCase().includes(q) )) return false;
-    }
     if(!_iniD&&!_fimD) return true;
-    // Filtro de data: aceita se QUALQUER data relevante do registro cai no intervalo
-    const r=e.r;
-    const datas=[r.data_obs_chegada,r.data_obs_descarga,r.data_carr,r.data_agenda,r.data_desc,r.updated_at].map(_toD).filter(Boolean);
-    if(!datas.length) return true;
-    return datas.some(d=>(!_iniD||d>=_iniD)&&(!_fimD||d<=_fimD));
+    const r=e.r; const s=r.data_carr||r.data_agenda||r.data_desc||""; let d=null;
+    if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");d=new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00");}
+    else if(/^\d{4}-\d{2}-\d{2}/.test(s)){d=new Date(s+"T00:00:00");}
+    if(!d) return true;
+    if(_iniD&&d<_iniD) return false;
+    if(_fimD&&d>_fimD) return false;
+    return true;
   });
 
   return (
@@ -508,26 +501,15 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
         )}
       </div>
 
-      {/* Busca + Filters row */}
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"7px 12px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,flexWrap:"wrap"}}>
-        <div style={{position:"relative",flexShrink:0}}>
-          <span style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",opacity:.5}}>
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </span>
-          <input
-            value={busca}
-            onChange={e=>setBusca(e.target.value)}
-            placeholder="DT, motorista, placa..."
-            style={{fontSize:11,padding:"5px 9px 5px 26px",borderRadius:7,border:`1.5px solid ${busca?"var(--accent)":"var(--border)"}`,background:busca?"var(--accent2,rgba(124,58,237,0.07))":"var(--card)",color:"var(--text)",width:180,outline:"none"}}
-          />
-        </div>
-        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginLeft:4}}>Data:</span>
+      {/* Filters row */}
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,padding:"7px 12px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,flexWrap:"wrap"}}>
+        <span style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Data:</span>
         <input type="date" value={filtroIni} onChange={e=>setFiltroIni(e.target.value)}
-          style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${filtroIni?"var(--accent)":"var(--border)"}`,background:filtroIni?"var(--accent2,rgba(124,58,237,0.07))":"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
+          style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
         <span style={{fontSize:10,color:"var(--text3)"}}>até</span>
         <input type="date" value={filtroFim} onChange={e=>setFiltroFim(e.target.value)}
-          style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${filtroFim?"var(--accent)":"var(--border)"}`,background:filtroFim?"var(--accent2,rgba(124,58,237,0.07))":"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
-        {(filtroIni||filtroFim||busca)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");setBusca("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>✕ Limpar</button>)}
+          style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
+        {(filtroIni||filtroFim)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>✕</button>)}
         <span style={{marginLeft:"auto",fontSize:9,fontFamily:"'DM Mono',monospace",color:"var(--text2)",fontWeight:600}}>{filtered.length} reg</span>
       </div>
 
