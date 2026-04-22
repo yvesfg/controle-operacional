@@ -1439,7 +1439,7 @@ export default function App() {
     "data_carr","data_agenda","status","dias",
     "vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg","vl_cte_comp",
     "cte","mdf","nf","mat","ro","ro_hora","cliente","sgs",
-    "chegada","obs_chegada","data_obs_chegada","desc_aguardando","data_desc","obs_descarga","data_obs_descarga","informou_analista","data_manifesto","gerenc","forms","updated_at",
+    "chegada","obs_chegada","desc_aguardando","data_desc","obs_descarga","informou_analista","data_manifesto","gerenc","forms","updated_at",
     "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
     "obs","sinistro","ocorrencias"
   ];
@@ -6229,8 +6229,8 @@ function mapearColuna(n){
         const tipoColors = {info:t.azulLt, alerta:t.danger, status:t.verde};
         const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
         const ocorrSinteticas = [
-          ...(r.obs_chegada ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.data_obs_chegada||r.chegada||""}] : []),
-          ...(r.obs_descarga? [{tipo:"status", texto:r.obs_descarga, _origem:"descarga", usuario:"—", data_hora:r.data_obs_descarga||r.data_desc||""}] : []),
+          ...(r.obs_chegada ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.chegada||""}] : []),
+          ...(r.obs_descarga? [{tipo:"status", texto:r.obs_descarga, _origem:"descarga", usuario:"—", data_hora:r.data_desc||""}] : []),
         ];
         const ocorrAll = [...ocorrSinteticas, ...ocorrencias];
         return (
