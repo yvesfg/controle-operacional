@@ -74,8 +74,6 @@ export default function App() {
   const [planilhaFiltroAno, setPlanilhaFiltroAno] = useState("");    // "" = aguardando default automático
   const [planilhaFiltroMes, setPlanilhaFiltroMes] = useState("");    // "" = aguardando default automático
   const [planilhaFiltroOrigem, setPlanilhaFiltroOrigem] = useState("todas"); // "todas" = sem filtro
-  const [planilhaFiltroDataDe, setPlanilhaFiltroDataDe] = useState(""); // data inicio (yyyy-MM-dd)
-  const [planilhaFiltroDataAte, setPlanilhaFiltroDataAte] = useState(""); // data fim (yyyy-MM-dd)
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
   const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
@@ -3889,8 +3887,6 @@ export default function App() {
             planilhaFiltroAno, setPlanilhaFiltroAno,
             planilhaFiltroMes, setPlanilhaFiltroMes,
             planilhaFiltroOrigem, setPlanilhaFiltroOrigem,
-            planilhaFiltroDataDe, setPlanilhaFiltroDataDe,
-            planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
             t, isMobile, ExportMenu,
           }} />
         )}
