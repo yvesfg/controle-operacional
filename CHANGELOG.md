@@ -312,3 +312,12 @@
 - **Fix 1 — Banner de truncamento:** adicionado aviso amarelo "Mostrando 80 de N — refine os filtros para ver todos" nos 3 locais com `.slice(0,80)` (diárias modo linhas, diárias modo blocos, descarga).
 - **Fix 2 — Touch targets mínimos:** chips de filtro de diárias passaram de `padding:5px 10px` + `fontSize:9` para `padding:10px 14px` + `fontSize:11` + `minHeight:44px`; botões de colunas (diárias e descarga) passaram de `28×28px` para `36×36px` com `minWidth/minHeight:36`.
 - **Fix 3 — KPI labels acessíveis:** labels dos cards KPI do dashboard ("No Prazo", "Perdeu Agenda", "Aguardando", "Hoje", "Em Atraso") passaram de `fontSize:7` para `fontSize:11` (2 ocorrências).
+
+## 2026-04-24 — Touch targets completos
+
+**Solicitado:** Corrigir todos os touch targets abaixo de 44px restantes no App.jsx.
+
+**Implementado:**
+- **16 botões ✕ de fechar modais:** `width:28,height:28` → `width:44,height:44` e `fontSize:14` → `fontSize:16` (todos os modais: editar, motorista, usuário, configdb, importação, WhatsApp, FAT, PAG, drill dashboard, planilha detalhe).
+- **3 botões de ação de motoristas** (PDF, editar, excluir): `width:28,height:28` → `width:36,height:36,minWidth:36,minHeight:36` (tamanho 36 mantém o layout de linha sem quebrar).
+- Resultado: 0 botões interativos com cursor:pointer abaixo de 36px.
