@@ -303,3 +303,12 @@
 - WPP: substituído padrão IIFE aninhado por JSX condicional simples — eliminado risco de erro em render; removido autoFocus do input de busca
 - Relatórios: removido overflow:"hidden" que bloqueava o scroll do co-content; agora a view rola normalmente
 - Build: ✓ 17s
+
+## 2026-04-24 — Design fixes (3 críticos)
+
+**Solicitado:** Executar os 3 ajustes de maior impacto identificados na critique de design do App.jsx.
+
+**Implementado:**
+- **Fix 1 — Banner de truncamento:** adicionado aviso amarelo "Mostrando 80 de N — refine os filtros para ver todos" nos 3 locais com `.slice(0,80)` (diárias modo linhas, diárias modo blocos, descarga).
+- **Fix 2 — Touch targets mínimos:** chips de filtro de diárias passaram de `padding:5px 10px` + `fontSize:9` para `padding:10px 14px` + `fontSize:11` + `minHeight:44px`; botões de colunas (diárias e descarga) passaram de `28×28px` para `36×36px` com `minWidth/minHeight:36`.
+- **Fix 3 — KPI labels acessíveis:** labels dos cards KPI do dashboard ("No Prazo", "Perdeu Agenda", "Aguardando", "Hoje", "Em Atraso") passaram de `fontSize:7` para `fontSize:11` (2 ocorrências).
