@@ -4023,7 +4023,13 @@ export default function App() {
                       if(_iRL||_fRL){const d=ym?.full||null;if(!d)return false;if(_iRL&&d<_iRL)return false;if(_fRL&&d>_fRL)return false;}
                       return true;
                     });
-                    const _sorted=diariaNavDT ? [..._dAll].sort((a,b)=>a.r.dt===diariaNavDT?-1:b.r.dt===diariaNavDT?1:0) : _dAll;const _banner=_sorted.length>80?<div key="__banner_rl" style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(240,185,11,.08)",border:"1px solid rgba(240,185,11,.25)",fontSize:11,color:t.ouro}}>Mostrando 80 de {_sorted.length} — refine os filtros para ver todos</div>:null;const _items=_sorted.slice(0,80).map((item,idx) => {
+                    const _listRL = diariaNavDT?[..._dAll].sort((a,b)=>a.r.dt===diariaNavDT?-1:b.r.dt===diariaNavDT?1:0):_dAll;
+                  return _listRL;
+                  })()}
+                  {/* Banner truncamento diárias linhas */}
+                  {(()=>{const _dAll2=(()=>{const _pRL=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _iRL=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;const _fRL=dPlanFiltroFim?new Date(dPlanFiltroFim+"T23:59:59"):null;return diariasData.items.filter(i=>{if(dFiltro!=="todos"&&i.tipo!==dFiltro)return false;const{r}=i;const ym=_pRL(r.data_carr||r.data_agenda||"");if(dPlanFiltroAno&&ym?.ano!==dPlanFiltroAno)return false;if(dPlanFiltroMes&&ym?.mes!==dPlanFiltroMes)return false;if(dPlanFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dPlanFiltroOrigem)return false;if(_iRL||_fRL){const d=ym?.full||null;if(!d)return false;if(_iRL&&d<_iRL)return false;if(_fRL&&d>_fRL)return false;}return true;});})();return _dAll2.length>80?(<div style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(240,185,11,.08)",border:"1px solid rgba(240,185,11,.25)",fontSize:11,color:t.ouro}}>Mostrando 80 de {_dAll2.length} — refine os filtros para ver todos</div>):null;})()}
+                  {(()=>{const _pRL=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _iRL=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;const _fRL=dPlanFiltroFim?new Date(dPlanFiltroFim+"T23:59:59"):null;const _dAll=diariasData.items.filter(i=>{if(dFiltro!=="todos"&&i.tipo!==dFiltro)return false;const{r}=i;const ym=_pRL(r.data_carr||r.data_agenda||"");if(dPlanFiltroAno&&ym?.ano!==dPlanFiltroAno)return false;if(dPlanFiltroMes&&ym?.mes!==dPlanFiltroMes)return false;if(dPlanFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dPlanFiltroOrigem)return false;if(_iRL||_fRL){const d=ym?.full||null;if(!d)return false;if(_iRL&&d<_iRL)return false;if(_fRL&&d>_fRL)return false;}return true;});return diariaNavDT?[..._dAll].sort((a,b)=>a.r.dt===diariaNavDT?-1:b.r.dt===diariaNavDT?1:0):_dAll;
+                  })().slice(0,80).map((item,idx) => {
                     const {r,tipo,dias,temDiaria} = item;
                     const _isDHL = diariaNavDT && r.dt === diariaNavDT;
                     const borderC = _isDHL?t.ouro:tipo==="diaria"?t.danger:tipo==="atraso"?t.ouro:tipo==="sem_diaria"?t.verde:tipo==="ok"?t.verde:t.txt2;
@@ -4054,7 +4060,7 @@ export default function App() {
                         </div>
                       </div>
                     );
-                  });return[_banner,..._items];})()
+                  })
                 ) : (
                   // ── MODO BLOCOS (Opção C com avatar) ──
                   <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(diariaCols,2):diariaCols},minmax(0,1fr))`,gap:isMobile?8:10,width:"100%"}}>
