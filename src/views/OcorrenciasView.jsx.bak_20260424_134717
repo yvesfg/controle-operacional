@@ -465,7 +465,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
     if(!_iniD&&!_fimD) return true;
     // Filtro de data: aceita se QUALQUER data relevante do registro cai no intervalo
     const r=e.r;
-    const datas=[r.data_obs_chegada,r.data_obs_descarga,r.data_carr,r.data_agenda,r.data_desc].map(_toD).filter(Boolean);
+    const datas=[r.data_obs_chegada,r.data_obs_descarga,r.data_carr,r.data_agenda,r.data_desc,r.updated_at].map(_toD).filter(Boolean);
     if(!datas.length) return true;
     return datas.some(d=>(!_iniD||d>=_iniD)&&(!_fimD||d<=_fimD));
   });
