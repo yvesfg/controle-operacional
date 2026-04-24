@@ -1600,7 +1600,7 @@ export default function App() {
     // Logo flat — sem gradiente, borda dourada sutil define o acento
     logo:      { width:40, height:40, background:t.card2, borderRadius:DESIGN.r.logo, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, border:`1px solid ${hexRgb(t.ouro,.28)}` },
     // Botão header — transparente, borda mínima
-    hBtn:      { background:"transparent", border:`1.5px solid ${t.borda2}`, borderRadius:DESIGN.r.sm, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:500, transition:"all .15s" },
+    hBtn:      { background:"transparent", border:`1px solid ${t.borda2}`, borderRadius:DESIGN.r.sm, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:500, transition:"all .15s" },
     tabBar:    { display:"flex", background:t.headerBg, borderBottom:`1px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .25s", justifyContent:"space-between" },
     tab:       (a) => ({ flex:"0 0 auto", padding:"13px 16px", fontSize:10, fontWeight:a?700:500, letterSpacing:.5, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .15s", borderBottom:a?`2px solid ${t.ouro}`:"2px solid transparent", marginBottom:"-1px", display:"flex", alignItems:"center", gap:5 }),
     card:      { background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .25s, border-color .25s" },
@@ -3971,11 +3971,11 @@ export default function App() {
                         <option value="todas">Todas as Origens</option>
                         {origensR.map(o=><option key={o} value={o}>{o}</option>)}
                       </select>
-                      <span style={{fontSize:9,color:t.txt2,flexShrink:0,paddingLeft:8,borderLeft:`1px solid ${t.borda}`,marginLeft:4}}>ou período:</span><input type="date" value={dPlanFiltroIni} onChange={e=>{setDPlanFiltroIni(e.target.value);setDPlanFiltroAno("");setDPlanFiltroMes("");}} style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
+                      <span style={{fontSize:9,color:t.txt2,flexShrink:0,paddingLeft:8,borderLeft:`1px solid ${t.borda}`,marginLeft:4}}>ou período:</span><input type="date" value={dPlanFiltroIni} onChange={e=>{setDPlanFiltroIni(e.target.value);setDPlanFiltroAno("");setDPlanFiltroMes("");}} style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
                       <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>até</span>
-                      <input type="date" value={dPlanFiltroFim} onChange={e=>setDPlanFiltroFim(e.target.value)} style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
+                      <input type="date" value={dPlanFiltroFim} onChange={e=>setDPlanFiltroFim(e.target.value)} style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
                       {temFiltroR && (
-                        <button onClick={()=>{setDPlanFiltroAno("");setDPlanFiltroMes("");setDPlanFiltroOrigem("todas");setDPlanFiltroIni("");setDPlanFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
+                        <button onClick={()=>{setDPlanFiltroAno("");setDPlanFiltroMes("");setDPlanFiltroOrigem("todas");setDPlanFiltroIni("");setDPlanFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
                       )}
                       <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>{_cntR} de {diariasData.items.length}</span>
                     </div>
@@ -4000,7 +4000,7 @@ export default function App() {
                   {diariaView==="blocos" && (
                     <>
                       <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
-                      {(isMobile?[1,2]:[1,2,3,4]).map(n => (
+                      {[1,2,3,4].map(n => (
                         <button key={n} onClick={()=>{setDiariaCols(n);saveJSON("co_diaria_cols",n);}} style={{width:36,height:36,minWidth:36,minHeight:36,fontSize:11,fontWeight:700,border:`1.5px solid ${diariaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:diariaCols===n?`rgba(22,119,255,.09)`:t.card2,color:diariaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
                       ))}
                     </>
@@ -4186,10 +4186,10 @@ export default function App() {
                       {origensD.map(o=><option key={o} value={o}>{o}</option>)}
                     </select>
                     <input type="date" value={dPlanFiltroIni} onChange={e=>setDPlanFiltroIni(e.target.value)}
-                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
+                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
                     <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>at&#233;</span>
                     <input type="date" value={dPlanFiltroFim} onChange={e=>setDPlanFiltroFim(e.target.value)}
-                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
+                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
                     {temFiltro && (
                       <button onClick={()=>{setDPlanFiltroAno("");setDPlanFiltroMes("");setDPlanFiltroOrigem("todas");setDPlanFiltroIni("");setDPlanFiltroFim("");}}
                         style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
@@ -4491,10 +4491,10 @@ export default function App() {
                   </select>
                   <span style={{fontSize:9,color:t.txt2,flexShrink:0,paddingLeft:8,borderLeft:`1px solid ${t.borda}`,marginLeft:4}}>ou período:</span>
                   <input type="date" value={dscFiltroIni} onChange={e=>{setDscFiltroIni(e.target.value);setDscFiltroAno("");setDscFiltroMes("");}}
-                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
+                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
                   <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>até</span>
                   <input type="date" value={dscFiltroFim} onChange={e=>setDscFiltroFim(e.target.value)}
-                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
+                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:128,flexShrink:0}}/>
                   {temFiltro && (
                     <button onClick={()=>{setDscFiltroAno("");setDscFiltroMes("");setDscFiltroOrigem("todas");setDscFiltroIni("");setDscFiltroFim("");}}
                       style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
@@ -4525,7 +4525,7 @@ export default function App() {
               {descargaView==="blocos" && (
                 <>
                   <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
-                  {(isMobile?[1,2]:[1,2,3,4]).map(n => (
+                  {[1,2,3,4].map(n => (
                     <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:36,height:36,minWidth:36,minHeight:36,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?"var(--accent2)":"var(--card2)",color:descargaCols===n?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif"}}>{n}</button>
                   ))}
                 </>
@@ -4675,7 +4675,7 @@ export default function App() {
                             <span style={{fontSize:13,fontWeight:700,color:"#f6465d"}}>{fmtR(totais.valorEmRisco)}</span>
                             <span style={{fontSize:10,color:t.txt2,marginLeft:8}}>Planilha: <b style={{color:t.txt}}>{fmtR(totais.totalPlanilha)}</b></span>
                             <span style={{fontSize:10,color:t.txt2}}>App: <b style={{color:t.txt}}>{fmtR(totais.totalApontamentos)}</b></span>
-                            {rodorricaFiltro!=="todos"&&<button onClick={()=>setRodorricaFiltro("todos")} style={{fontSize:9,padding:"3px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>}
+                            {rodorricaFiltro!=="todos"&&<button onClick={()=>setRodorricaFiltro("todos")} style={{fontSize:9,padding:"3px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>}
                             <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600}}>{filtrado.length} DTs</span>
                           </div>
                           <div style={{overflowX:"auto"}}>

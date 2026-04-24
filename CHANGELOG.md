@@ -321,3 +321,23 @@
 - **16 botões ✕ de fechar modais:** `width:28,height:28` → `width:44,height:44` e `fontSize:14` → `fontSize:16` (todos os modais: editar, motorista, usuário, configdb, importação, WhatsApp, FAT, PAG, drill dashboard, planilha detalhe).
 - **3 botões de ação de motoristas** (PDF, editar, excluir): `width:28,height:28` → `width:36,height:36,minWidth:36,minHeight:36` (tamanho 36 mantém o layout de linha sem quebrar).
 - Resultado: 0 botões interativos com cursor:pointer abaixo de 36px.
+
+## 2026-04-24 — Batch críticos + moderados + sidebar mobile
+
+**Solicitado:** Executar todos os pendentes críticos e moderados. Aceitar proposta de sidebar 48px no mobile.
+
+**Implementado:**
+
+**Críticos:**
+- C1: 4 cards clicáveis (diárias linhas/blocos, descarga linhas/blocos) receberam `tabIndex="0"`, `role="button"` e `onKeyDown` (Enter/Espaço) — acessíveis por teclado e leitor de tela.
+- C2: 9 ocorrências restantes de `fontSize:7` → `fontSize:11` (badge ATRASADO, badge NOVO, label HOJE, labels modais WhatsApp ×5, "(opcional)"). Zero `fontSize:7` no arquivo.
+
+**Moderados:**
+- M1: Tokens `laranja` e `roxo` adicionados ao `constants.js` (dark: #f57c00/#a855f7; light: #c45500/#6d28d9). Substituídos 6 × `t.laranja` e 3 × `t.roxo` no App.jsx — saíram do inline hardcode.
+- M2: Badge de status nos cards de blocos: `fontSize:8` → `fontSize:11` (texto agora legível).
+- M3: Separador visual "ou período:" com `border-left` inserido antes dos date inputs nas barras de filtro de Diárias e Descarga. Os date inputs agora também limpam Ano/Mês ao serem usados.
+- M4: KPIs de Diárias não forçam mais `setDSubTab("resumo")` ao clicar — filtro e navegação de sub-aba agora são independentes.
+- M5: Emojis de campo nos cards de modo linhas (🔢 🚛 📅 🛬 🏁) receberam `role="img"` e `aria-label` semântico.
+
+**Sidebar mobile:**
+- A: Mini-sidebar reduzida de 64px → 48px abaixo de 600px, e `margin-left` do main ajustado de 64 → 48px — 16px a mais de área de conteúdo sem mudar o paradigma de navegação.

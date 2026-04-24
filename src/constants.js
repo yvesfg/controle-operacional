@@ -13,7 +13,7 @@ export const themes = {
     // Status
     verde: "#22c55e", verdeDk: "#16a34a",
     danger: "#ef4444", warn: "#f59e0b",
-    azul: "#3b82f6", azulLt: "#60a5fa",
+    azul: "#3b82f6", azulLt: "#60a5fa", laranja: "#f57c00", roxo: "#a855f7",
     // Estrutura
     headerBg: "#09090f", modalBg: "#111119", inputBg: "#181825",
     shadow: "rgba(0,0,0,.65)", gradientAuth: "#09090f",
@@ -31,7 +31,7 @@ export const themes = {
     // Status
     verde: "#16a34a", verdeDk: "#148040",
     danger: "#dc2626", warn: "#d97706",
-    azul: "#2563eb", azulLt: "#3b82f6",
+    azul: "#2563eb", azulLt: "#3b82f6", laranja: "#c45500", roxo: "#6d28d9",
     // Estrutura
     headerBg: "#ffffff", modalBg: "#ffffff", inputBg: "#f0f2fa",
     shadow: "rgba(0,0,0,.05)", gradientAuth: "#f6f7fc",
