@@ -341,3 +341,11 @@
 
 **Sidebar mobile:**
 - A: Mini-sidebar reduzida de 64px → 48px abaixo de 600px, e `margin-left` do main ajustado de 64 → 48px — 16px a mais de área de conteúdo sem mudar o paradigma de navegação.
+
+## 2026-04-26 — NFD: Upload de fotos no Supabase Storage
+**Solicitado:** melhor forma de anexar fotos ao registrar uma NFD (avaria, falta, devolução ou sobra sem documento).
+**Implementado:**
+- `supabase.js`: nova função `supaStorageUpload` — upload direto via REST API do Supabase Storage (sem client oficial), retorna URL pública. Bucket alvo: `nfd-fotos`, path: `{DT}/{timestamp}_{filename}`.
+- `App.jsx`: novos states `nfdFotos` (array de arquivos+preview) e `nfdUploadando` (flag de loading).
+- Modal NFD reescrito: 4 tipos em grid 2×2 (avaria🔴, falta🟡, devolução🔵, **sobra🟢**); para "sobra" o Nº NFD é opcional e fotos são recomendadas; seletor de fotos com preview inline (máx. 5); botão "Registrar NFD" faz upload sequencial → salva URLs em `nfd.fotos`; estado visual "Enviando fotos…" durante upload.
+- Pré-requisito: criar bucket `nfd-fotos` no Supabase (Storage > New bucket, public).

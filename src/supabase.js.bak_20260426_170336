@@ -9,19 +9,3 @@ export async function supaFetch(url, key, method, path, body) {
   const ct = r.headers.get("content-type");
   return ct?.includes("json") ? r.json() : null;
 }
-
-export async function supaStorageUpload(supaUrl, key, bucket, filePath, file) {
-  const base = supaUrl.replace(/\/$/, "");
-  const endpoint = `${base}/storage/v1/object/${bucket}/${filePath}`;
-  const r = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + key,
-      "Content-Type": file.type || "application/octet-stream",
-      "x-upsert": "true"
-    },
-    body: file
-  });
-  if (!r.ok) { const t = await r.text(); throw new Error(`Storage ${r.status}: ${t.slice(0, 200)}`); }
-  return `${base}/storage/v1/object/public/${bucket}/${filePath}`;
-}
