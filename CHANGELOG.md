@@ -349,3 +349,12 @@
 - `App.jsx`: novos states `nfdFotos` (array de arquivos+preview) e `nfdUploadando` (flag de loading).
 - Modal NFD reescrito: 4 tipos em grid 2×2 (avaria🔴, falta🟡, devolução🔵, **sobra🟢**); para "sobra" o Nº NFD é opcional e fotos são recomendadas; seletor de fotos com preview inline (máx. 5); botão "Registrar NFD" faz upload sequencial → salva URLs em `nfd.fotos`; estado visual "Enviando fotos…" durante upload.
 - Pré-requisito: criar bucket `nfd-fotos` no Supabase (Storage > New bucket, public).
+
+## 2026-04-26 — Conferência Rodorrica: análise descarga/stretch + modal de período
+
+**Solicitado:** upload da planilha Rodorrica não retornava análise (0 registros); análise de compatibilidade descarga/stretch; modal de período pós-upload.
+
+**Implementado:**
+- `parseRodorricaXLSX`: lê aba `Aprovados` (antes tentava `BASE` → caía em `Detalhado` com formato pivot = 0 rows válidas); chave alterada de `ID` → `NF CARREGAMENTO`; captura `dtCarregamento`, `cliente`, `mesAno`, `rsFardo`, `rsStrech`; abre modal de período automaticamente após upload
+- `rodorricaResultado`: agrupa por NF (antes por DT numérico que não batia com `apontItems`); cruza com `apontItems.nf_numero`; classifica cada tipo separadamente: BATE / MAIOR (planilha > app) / MENOR (planilha < app) / SEM_APONT / FORA_PLANILHA; detecta NFs sem Stretch e NFs sem Descarga
+- UI: 5 KPI cards (Bate, Planilha Maior, Planilha Menor, Sem Apont., Fora Plan.); alertas de NFs incompletos; tabela com colunas Desc.Plan/Desc.App/Dif + Str.Plan/Str.App/Dif + status por tipo; modal de período re-abrível pelo botão 📅
