@@ -50,7 +50,6 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
           </div>
           <div style={{fontSize:11,color:"var(--text3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",marginTop:2}}>
             DT {r.dt}
-            {r.nf && <span style={{marginLeft:6,color:"var(--text3)"}}>· NF {r.nf}</span>}
             {r.placa  && <span style={{marginLeft:8}}>{r.placa}</span>}
             {r.origem && <span style={{marginLeft:8,color:"var(--text3)"}}>{r.origem}</span>}
           </div>
@@ -107,14 +106,7 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
         </div>
       )}
 
-      {/* Row 3: RO / NFD */}
-      {(r.ro||r.nfd?.numero)&&(
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",borderTop:"1px solid var(--border)",paddingTop:8}}>
-          {r.ro&&(<span style={{fontSize:10,fontFamily:"'DM Mono',monospace",background:"rgba(249,115,22,.1)",border:"1px solid rgba(249,115,22,.3)",borderRadius:5,padding:"2px 8px",color:"#f97316",fontWeight:700}}>RO {r.ro}</span>)}
-          {r.nfd?.numero&&(<span style={{fontSize:10,fontFamily:"'DM Mono',monospace",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,padding:"2px 8px",color:"#ef4444",fontWeight:700}}>NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</span>)}
-        </div>
-      )}
-      {/* Row 4: datas */}
+      {/* Row 3: datas */}
       <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
         {r.data_carr && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}><span style={{color:"var(--text3)",marginRight:4}}>CARR.</span><span style={{color:"var(--text2)"}}>{r.data_carr}</span></span>}
         {r.data_agenda && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace"}}><span style={{color:"var(--text3)",marginRight:4}}>AGENDA</span><span style={{color:"var(--text2)"}}>{r.data_agenda}</span></span>}
@@ -181,7 +173,6 @@ function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
     { k:"info",   label:"Info",   color:"var(--cyan,#06b6d4)",   icon:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></> },
     { k:"alerta", label:"Alerta", color:"var(--orange,#f97316)", icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></> },
     { k:"status", label:"Status", color:"var(--green,#22c55e)",  icon:<><polyline points="20 6 9 17 4 12"/></> },
-    { k:"sobra",  label:"Sobra",  color:"#a855f7",               icon:<><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="2"/></> },
   ];
 
   const handleSalvar = async () => {
@@ -393,9 +384,6 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
     "Diária":    "var(--red,#ef4444)",
     DCC:              "var(--cyan,#06b6d4)",
     Atraso:           "var(--red,#ef4444)",
-    RO:               "#f97316",
-    NFD:              "#ef4444",
-    Sobra:            "#a855f7",
   };
 
   const { entries, stats } = useMemo(() => {
@@ -409,29 +397,21 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
 
     const prioScore=b=>{
       if(b.label.startsWith("Atraso")||b.label==="Diária") return 0;
-      if(b.label.startsWith("NFD:")) return 1;
-      if(b.label.startsWith("RO:"))  return 2;
-      if(b.label.startsWith("SGS")) return 3;
-      if(b.label==="DCC") return 4;
-      return 5;
+      if(b.label.startsWith("SGS")) return 1;
+      if(b.label==="DCC") return 2;
+      return 3;
     };
 
     const raw=dados
-      .filter(r=>(r.status||"").toUpperCase()!=="CANCELADA"&&(r.obs_chegada||r.obs_descarga||r.ro||(r.nfd&&r.nfd.numero)))
+      .filter(r=>(r.status||"").toUpperCase()!=="CANCELADA"&&(r.obs_chegada||r.obs_descarga))
       .map(r=>{
         const badges=[];
         const hasOcorrLocal=(()=>{
           try{ const v=localStorage.getItem(`co_ocorr_${r.dt}`); if(!v) return false; const a=JSON.parse(v); return Array.isArray(a)&&a.length>0; }
           catch{ return false; }
         })();
-        if(r.ro)                   badges.push({label:`RO: ${r.ro}`,     color:BADGE_COLORS.RO});
-        if(r.nfd?.numero)          badges.push({label:`NFD: ${(r.nfd.tipo||"NFD").toUpperCase()}`, color:BADGE_COLORS.NFD});
         if(r.sgs)                  badges.push({label:`SGS: ${r.sgs}`,   color:BADGE_COLORS.SGS});
-        if(hasOcorrLocal){
-          const hasSobra=(()=>{try{const v=localStorage.getItem(`co_ocorr_${r.dt}`);if(!v)return false;const a=JSON.parse(v);return Array.isArray(a)&&a.some(o=>o.tipo==="sobra");}catch{return false;}})();
-          if(hasSobra) badges.push({label:"Sobra", color:BADGE_COLORS.Sobra});
-          badges.push({label:"Ocorrência",  color:BADGE_COLORS["Ocorrência"]});
-        }
+        if(hasOcorrLocal)          badges.push({label:"Ocorrência",  color:BADGE_COLORS["Ocorrência"]});
         if(diariasSet.has(r.dt))   badges.push({label:"Diária",      color:BADGE_COLORS["Diária"]});
         if(dccSet.has(r.dt))       badges.push({label:"DCC",              color:BADGE_COLORS.DCC});
         if(r.data_agenda&&!r.data_desc){
@@ -451,9 +431,6 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
       diaria:raw.filter(e=>e.badges.some(b=>b.label==="Diária"||b.label.startsWith("Atraso"))).length,
       dcc:raw.filter(e=>e.badges.some(b=>b.label==="DCC")).length,
       ocorr:raw.filter(e=>e.badges.some(b=>b.label==="Ocorrência")).length,
-      ro:raw.filter(e=>e.badges.some(b=>b.label.startsWith("RO:"))).length,
-      nfd:raw.filter(e=>e.badges.some(b=>b.label.startsWith("NFD:"))).length,
-      sobra:raw.filter(e=>e.badges.some(b=>b.label==="Sobra")).length,
       obsChegada:raw.filter(e=>!!e.r.obs_chegada).length,
       obsDescarga:raw.filter(e=>!!e.r.obs_descarga).length,
     };
@@ -462,18 +439,12 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
 
   const FILTROS=[
     {k:null,               l:"Todos",          color:"var(--text2)"},
-    {k:"RO",               l:"RO",             color:"#f97316"},
-    {k:"NFD",              l:"NFD",            color:"#ef4444"},
-    {k:"Sobra",            l:"Sobra",          color:"#a855f7"},
     {k:"SGS",              l:"SGS",            color:"var(--yellow,#eab308)"},
     {k:"Ocorrência",  l:"Ocorrência",color:"var(--orange,#f97316)"},
     {k:"Diária/Atraso",l:"Diária/Atraso",color:"var(--red,#ef4444)"},
     {k:"DCC",              l:"DCC",            color:"var(--cyan,#06b6d4)"},
   ];
   const labelMap={
-    "RO":b=>b.label.startsWith("RO:"),
-    "NFD":b=>b.label.startsWith("NFD:"),
-    "Sobra":b=>b.label==="Sobra",
     "SGS":b=>b.label.startsWith("SGS"),
     "Ocorrência":b=>b.label==="Ocorrência",
     "Diária/Atraso":b=>b.label==="Diária"||b.label.startsWith("Atraso"),
@@ -568,7 +539,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
             <button key={String(f.k)} onClick={()=>setFiltroOcorr(ativo?null:f.k)}
               style={{fontSize:10,fontFamily:"'DM Mono',monospace",fontWeight:500,letterSpacing:"0.04em",textTransform:"uppercase",background:ativo?f.color+"22":"var(--card)",border:`1.5px solid ${ativo?f.color:"var(--border)"}`,borderRadius:6,padding:"4px 10px",color:ativo?f.color:"var(--text2)",cursor:"pointer",transition:"all 0.15s"}}>
               {f.l}
-              {f.k&&(<span style={{marginLeft:4,opacity:0.65}}>{f.k==="RO"?stats.ro:f.k==="NFD"?stats.nfd:f.k==="Sobra"?stats.sobra:f.k==="SGS"?stats.sgs:f.k==="Ocorrência"?stats.ocorr:f.k==="Diária/Atraso"?stats.diaria:stats.dcc}</span>)}
+              {f.k&&(<span style={{marginLeft:4,opacity:0.65}}>{f.k==="SGS"?stats.sgs:f.k==="Ocorrência"?stats.ocorr:f.k==="Diária/Atraso"?stats.diaria:stats.dcc}</span>)}
             </button>
           );
         })}

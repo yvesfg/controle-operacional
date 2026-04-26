@@ -118,8 +118,6 @@ export default function App() {
   const [rodorricaRows, setRodorricaRows] = useState([]);
   const [rodorricaFileName, setRodorricaFileName] = useState(null);
   const [rodorricaFiltro, setRodorricaFiltro] = useState("todos");
-  const [rodorricaPeriodoIni, setRodorricaPeriodoIni] = useState("");
-  const [rodorricaPeriodoFim, setRodorricaPeriodoFim] = useState("");
 
   // View mode state (linhas | blocos) + colunas para Diarias e Descarga
   const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","blocos"));
@@ -4641,18 +4639,7 @@ export default function App() {
                       {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.verde,16)}
                       <span style={{fontSize:11,fontWeight:700,color:t.ouro,flex:1}}>{rodorricaFileName}</span>
                       <span style={{fontSize:10,color:t.txt2}}>{rodorricaRows.length} registros</span>
-                      <button onClick={()=>{setRodorricaRows([]);setRodorricaFileName(null);setRodorricaFiltro("todos");setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
-                    </div>
-                    {/* Filtro de período */}
-                    <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",padding:"7px 12px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:10,marginBottom:8,fontSize:11}}>
-                      <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.txt2}}>Período:</span>
-                      <input type="date" value={rodorricaPeriodoIni} onChange={e=>setRodorricaPeriodoIni(e.target.value)}
-                        style={{fontSize:11,padding:"3px 7px",borderRadius:6,border:`1.5px solid ${rodorricaPeriodoIni?t.ouro:t.borda}`,background:t.card,color:t.txt,height:26,width:130,cursor:"pointer"}}/>
-                      <span style={{fontSize:10,color:t.txt2}}>até</span>
-                      <input type="date" value={rodorricaPeriodoFim} onChange={e=>setRodorricaPeriodoFim(e.target.value)}
-                        style={{fontSize:11,padding:"3px 7px",borderRadius:6,border:`1.5px solid ${rodorricaPeriodoFim?t.ouro:t.borda}`,background:t.card,color:t.txt,height:26,width:130,cursor:"pointer"}}/>
-                      {(rodorricaPeriodoIni||rodorricaPeriodoFim)&&(<button onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}} style={{fontSize:9,padding:"3px 7px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>✕</button>)}
-                      <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{(rodorricaPeriodoIni||rodorricaPeriodoFim)?"Filtrando por data de carregamento":"Todas as datas"}</span>
+                      <button onClick={()=>{setRodorricaRows([]);setRodorricaFileName(null);setRodorricaFiltro("todos");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
                     </div>
                     {rodorricaResultado && (()=>{
                       const {totais,linhas} = rodorricaResultado;
@@ -4665,17 +4652,7 @@ export default function App() {
                         {k:"SEM_APONT",l:"Sem Apontamento",c:t.txt2,bg:t.card2,v:totais.semApont},
                         {k:"FORA_PLANILHA",l:"Fora Planilha",c:"#f0b90b",bg:"rgba(240,185,11,.08)",v:totais.foraPlanilha},
                       ];
-                      const _pIni = rodorricaPeriodoIni ? new Date(rodorricaPeriodoIni+"T00:00:00") : null;
-                      const _pFim = rodorricaPeriodoFim ? new Date(rodorricaPeriodoFim+"T23:59:59") : null;
-                      const _parseDt = s => { if(!s) return null; const m=String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})/); if(m) return new Date(`${m[3]}-${m[2]}-${m[1]}T00:00:00`); if(/^\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s.slice(0,10)+"T00:00:00"); return null; };
-                      const linhasPeriodo = (_pIni||_pFim) ? linhas.filter(x=>{
-                        const dc=_parseDt(x.appReg?.data_carr);
-                        const dd=_parseDt(x.appReg?.data_desc);
-                        const ref=dc||dd;
-                        if(!ref) return true;
-                        return (!_pIni||ref>=_pIni)&&(!_pFim||ref<=_pFim);
-                      }) : linhas;
-                      const filtrado = rodorricaFiltro === "todos" ? linhasPeriodo : linhasPeriodo.filter(x=>x.conf===rodorricaFiltro);
+                      const filtrado = rodorricaFiltro === "todos" ? linhas : linhas.filter(x=>x.conf===rodorricaFiltro);
                       return (
                         <div>
                           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
