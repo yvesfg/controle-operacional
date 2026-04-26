@@ -358,3 +358,11 @@
 - `parseRodorricaXLSX`: lê aba `Aprovados` (antes tentava `BASE` → caía em `Detalhado` com formato pivot = 0 rows válidas); chave alterada de `ID` → `NF CARREGAMENTO`; captura `dtCarregamento`, `cliente`, `mesAno`, `rsFardo`, `rsStrech`; abre modal de período automaticamente após upload
 - `rodorricaResultado`: agrupa por NF (antes por DT numérico que não batia com `apontItems`); cruza com `apontItems.nf_numero`; classifica cada tipo separadamente: BATE / MAIOR (planilha > app) / MENOR (planilha < app) / SEM_APONT / FORA_PLANILHA; detecta NFs sem Stretch e NFs sem Descarga
 - UI: 5 KPI cards (Bate, Planilha Maior, Planilha Menor, Sem Apont., Fora Plan.); alertas de NFs incompletos; tabela com colunas Desc.Plan/Desc.App/Dif + Str.Plan/Str.App/Dif + status por tipo; modal de período re-abrível pelo botão 📅
+
+## 2026-04-26 — Rodorrica: Comparação por DT vs DADOS (pag_descarga / pag_stretch)
+**Solicitado:** Comparação Rodorrica por DT (col. "DT CARREGAMENTO"), contra colunas AP/AQ do Google Sheets (PAG. DESCARGA / PAG. STRETCH)
+**Implementado:**
+- `parseRodorricaXLSX`: corrigido — `DT CARREGAMENTO` agora mapeado como campo `dt` (número DT real, ex: 22593705); `DATA DE FATURAMENTO` usado como data de período
+- `rodorricaResultado`: reescrito — agrupa por DT, faz lookup no DADOS, compara `pag_descarga`/`pag_stretch`; detecta `SEM_DADOS` (DT não encontrada no app) e `SEM_SYNC` (campos ainda não sincronizados)
+- `mapearColuna` (Apps Script): adicionado `pag. descarga → pag_descarga` e `pag. stretch → pag_stretch` para próxima sync
+- UI: tabela mostra DT como chave primária, NF como campo secundário, aviso de sync pendente quando campos não existem ainda

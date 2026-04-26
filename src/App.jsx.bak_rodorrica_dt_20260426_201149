@@ -1249,101 +1249,87 @@ export default function App() {
     return { hoje, atrasados, aguardando, carregaHoje };
   }, [DADOS, dscData]);
 
-  // Conferência Planilha RODORRICA — comparação por DT vs DADOS (col AP=pag_descarga, AQ=pag_stretch)
+  // Conferência Planilha RODORRICA (Descarga + Stretch) — agrupado por NF
   const rodorricaResultado = useMemo(() => {
     if (!rodorricaRows.length) return null;
-    // Agrupar planilha por DT (DT CARREGAMENTO = número da DT, ex: 22593705)
+    // Agrupar planilha por NF
     const planMap = {};
     rodorricaRows.forEach(row => {
-      const dt = String(row.dt || '').trim();
-      if (!dt) return;
-      if (!planMap[dt]) planMap[dt] = { dt, nf:row.nf||'', descarga:0, stretch:0, linhas:[], dtCarregamento:row.dtCarregamento||'', cliente:row.cliente||'', mesAno:row.mesAno||'' };
+      const nf = String(row.nf || '').trim();
+      if (!nf) return;
+      if (!planMap[nf]) planMap[nf] = { nf, descarga:0, stretch:0, linhas:[], dtCarregamento:row.dtCarregamento||'', cliente:row.cliente||'', mesAno:row.mesAno||'', rsFardo:row.rsFardo||0, rsStrech:row.rsStrech||0, qtFardos:row.qtFardos||0 };
       const tipo = String(row.tipo || '').toUpperCase();
       const val = Number(row.valorAprovado) || 0;
-      if (tipo === 'DESCARGA') planMap[dt].descarga += val;
-      else if (tipo === 'STRECH' || tipo === 'STRETCH') planMap[dt].stretch += val;
-      planMap[dt].linhas.push(row);
+      if (tipo === 'DESCARGA') planMap[nf].descarga += val;
+      else if (tipo === 'STRECH') planMap[nf].stretch += val;
+      planMap[nf].linhas.push(row);
     });
-    // Mapa DADOS por DT → para lookup rápido de pag_descarga e pag_stretch (colunas AP e AQ do Google Sheets)
-    const dadosMap = {};
-    DADOS.forEach(r => {
-      const dt = String(r.dt || '').trim();
-      if (dt) dadosMap[dt] = r;
+    // Agrupar apontamentos por nf_numero
+    const apontMap = {};
+    apontItems.forEach(a => {
+      const nf = String(a.nf_numero || '').trim();
+      if (!nf) return;
+      if (!apontMap[nf]) apontMap[nf] = { descarga:0, stretch:0 };
+      const val = Number(String(a.valor || '').replace(',', '.')) || 0;
+      const tipo = (a.tipo || '').toLowerCase();
+      if (tipo === 'descarga') apontMap[nf].descarga += val;
+      else if (tipo === 'stretch' || tipo === 'strech') apontMap[nf].stretch += val;
     });
-    // Quantos DTs do DADOS têm pag_descarga preenchido (indica se sync já foi feito com novos campos)
-    const syncOk = DADOS.some(r => r.pag_descarga && String(r.pag_descarga).trim() !== '');
-    const _numVal = v => {
-      if (!v && v !== 0) return 0;
-      return parseFloat(String(v).replace(',', '.')) || 0;
-    };
-    // Classificação por tipo
-    const _conf = (plan, app, temDados) => {
-      if (!temDados) return 'SEM_DADOS';
-      if (!syncOk) return 'SEM_SYNC';
+    const planNFs = new Set(Object.keys(planMap));
+    // Classificação por NF
+    const _confDesc = (plan, app) => {
       if (plan === 0 && app === 0) return 'INEXISTENTE';
-      if (app === 0 && plan > 0) return 'SEM_APP';
-      if (Math.abs(plan - app) < 0.5) return 'BATE';
+      if (app === 0 && plan > 0) return 'SEM_APONT';
+      if (Math.abs(plan - app) < 1) return 'BATE';
       return plan > app ? 'MAIOR' : 'MENOR';
     };
-    const planDTs = new Set(Object.keys(planMap));
     const linhas = Object.values(planMap).map(p => {
-      const dadosRow = dadosMap[p.dt];
-      const temDados = !!dadosRow;
-      const appDesc = temDados ? _numVal(dadosRow.pag_descarga) : 0;
-      const appStr  = temDados ? _numVal(dadosRow.pag_stretch)  : 0;
+      const ap = apontMap[p.nf];
+      const appDesc = ap ? ap.descarga : 0;
+      const appStr  = ap ? ap.stretch  : 0;
       const totalPlan  = p.descarga + p.stretch;
-      const totalApp   = appDesc + appStr;
+      const totalApont = appDesc + appStr;
+      const diff = totalPlan - totalApont;
       const diffDesc = p.descarga - appDesc;
       const diffStr  = p.stretch  - appStr;
-      const confDesc = _conf(p.descarga, appDesc, temDados);
-      const confStr  = _conf(p.stretch,  appStr,  temDados);
+      const confDesc = _confDesc(p.descarga, appDesc);
+      const confStr  = _confDesc(p.stretch, appStr);
+      // Status geral: melhor dos dois
       let conf;
-      if (!temDados) conf = 'SEM_DADOS';
-      else if (!syncOk) conf = 'SEM_SYNC';
-      else if (confDesc === 'BATE' && confStr === 'BATE') conf = 'BATE';
+      if (confDesc === 'BATE' && confStr === 'BATE') conf = 'BATE';
+      else if (!ap) conf = 'SEM_APONT';
+      else if (confDesc === 'SEM_APONT' || confStr === 'SEM_APONT') conf = 'SEM_APONT';
       else if (confDesc === 'MAIOR' || confStr === 'MAIOR') conf = 'MAIOR';
       else if (confDesc === 'MENOR' || confStr === 'MENOR') conf = 'MENOR';
-      else if (confDesc === 'SEM_APP' || confStr === 'SEM_APP') conf = 'SEM_APP';
-      else conf = 'INEXISTENTE';
-      const semStrech  = p.descarga > 0 && p.stretch === 0;
+      else conf = 'SEM_APONT';
+      const semStrech = p.descarga > 0 && p.stretch === 0;
       const semDescarga = p.stretch > 0 && p.descarga === 0;
-      const clienteApp = dadosRow?.cliente || dadosRow?.nome || p.cliente || '';
-      return { ...p, cliente: clienteApp || p.cliente, conf, confDesc, confStr, totalPlan, totalApp, diffDesc, diffStr, appDesc, appStr, semStrech, semDescarga, temDados };
+      return { ...p, conf, confDesc, confStr, totalPlan, totalApont, diff, diffDesc, diffStr, appDesc, appStr, semStrech, semDescarga };
     });
-    // DTs no DADOS com pagamento descarga/stretch mas ausentes na planilha Rodorrica
-    const foraPlanilha = syncOk ? DADOS
-      .filter(r => {
-        const dt = String(r.dt||'').trim();
-        if (!dt || planDTs.has(dt)) return false;
-        const pd = _numVal(r.pag_descarga); const ps = _numVal(r.pag_stretch);
-        return pd > 0 || ps > 0;
-      })
-      .map(r => {
-        const dt = String(r.dt).trim();
-        const appDesc = _numVal(r.pag_descarga); const appStr = _numVal(r.pag_stretch);
-        const totalApp = appDesc + appStr;
-        return { dt, nf:r.nf||'', descarga:0, stretch:0, linhas:[], dtCarregamento:'', cliente:r.cliente||r.nome||'', mesAno:'',
-          conf:'FORA_PLAN', confDesc:'FORA_PLAN', confStr:'FORA_PLAN',
-          totalPlan:0, totalApp, diffDesc:-appDesc, diffStr:-appStr,
-          appDesc, appStr, semStrech:false, semDescarga:false, temDados:true };
-      }) : [];
+    const foraPlanilha = Object.entries(apontMap)
+      .filter(([nf]) => !planNFs.has(nf))
+      .map(([nf, ap]) => {
+        const totalApont = ap.descarga + ap.stretch;
+        return { nf, descarga:0, stretch:0, linhas:[], dtCarregamento:'', cliente:'', mesAno:'',
+          conf:'FORA_PLANILHA', confDesc:'FORA_PLANILHA', confStr:'FORA_PLANILHA',
+          totalPlan:0, totalApont, diff:-totalApont, diffDesc:-ap.descarga, diffStr:-ap.stretch,
+          appDesc:ap.descarga, appStr:ap.stretch, semStrech:false, semDescarga:false };
+      });
     const todos = [...linhas, ...foraPlanilha];
     const tot = c => todos.filter(x => x.conf === c).length;
     return {
-      syncOk,
       linhas: todos,
       totais: {
         bate: tot('BATE'), maior: tot('MAIOR'), menor: tot('MENOR'),
-        semApp: tot('SEM_APP'), foraPlan: tot('FORA_PLAN'),
-        semDados: tot('SEM_DADOS'), semSync: tot('SEM_SYNC'),
+        semApont: tot('SEM_APONT'), foraPlanilha: tot('FORA_PLANILHA'),
         semStrech: todos.filter(x=>x.semStrech).length,
         semDescarga: todos.filter(x=>x.semDescarga).length,
-        valorEmRisco: todos.filter(x=>['MAIOR','MENOR'].includes(x.conf)).reduce((s,x)=>s+Math.abs((x.diffDesc||0)+(x.diffStr||0)),0),
+        valorEmRisco: todos.filter(x=>['MAIOR','MENOR','DIVERGE'].includes(x.conf)).reduce((s,x)=>s+Math.abs(x.diff||0),0),
         totalPlanilha: todos.reduce((s,x)=>s+(x.totalPlan||0),0),
-        totalApp: todos.reduce((s,x)=>s+(x.totalApp||0),0),
+        totalApontamentos: todos.reduce((s,x)=>s+(x.totalApont||0),0),
       },
     };
-  }, [rodorricaRows, DADOS]);
+  }, [rodorricaRows, apontItems, DADOS]);
 
   // Charts
   useEffect(() => {
@@ -1969,13 +1955,13 @@ export default function App() {
           return String(v);
         };
         const rows = json.map(r => ({
-          dt:            String(r['DT CARREGAMENTO']||'').replace(/\u00a0/g,'').trim(),
           nf:            String(r['NF CARREGAMENTO']||'').replace(/\u00a0/g,'').trim(),
+          dt:            String(r['NF CARREGAMENTO']||'').replace(/\u00a0/g,'').trim(),
           transportadora:String(r['TRANSPORTADORA']||'').trim(),
           tipo:          String(r['TIPO DO CUSTO']||'').trim().toUpperCase(),
           valorAprovado: parseFloat(String(r['VALOR APROVADO']||'').replace(',','.')) || 0,
           valorFinal:    parseFloat(String(r['VALOR FINAL']||'').replace(',','.')) || 0,
-          dtCarregamento:_xlsxDate(r['DATA DE FATURAMENTO']||r['DT CARREGAMENTO']||''),
+          dtCarregamento:_xlsxDate(r['DT CARREGAMENTO']),
           mesAno:        String(r['MÊS/ANO']||r['MES/ANO']||'').trim(),
           cliente:       String(r['NOME CLIENTE']||'').trim(),
           centro:        String(r['Centro']||r['CENTRO']||'').trim(),
@@ -1985,7 +1971,7 @@ export default function App() {
           af:            String(r['AF']||'').trim(),
           status:        String(r['Status']||'').trim(),
           pagoOTM:       parseFloat(r['Pago OTM'])||0,
-        })).filter(r => r.dt && r.dt.length > 0 && r.dt !== 'undefined' && /^\d{6,}$/.test(r.dt));
+        })).filter(r => r.nf && r.nf.length > 0 && r.nf !== 'undefined');
         setRodorricaRows(rows);
         setRodorricaFileName(file.name);
         setRodorricaFiltro('todos');
@@ -4730,16 +4716,16 @@ export default function App() {
                       </div>
                     </div>)}
                     {rodorricaResultado && (()=>{
-                      const {totais,linhas,syncOk} = rodorricaResultado;
+                      const {totais,linhas} = rodorricaResultado;
                       const fmtR = v => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-                      const STATUS_COR = {BATE:"#02c076",MAIOR:"#f6465d",MENOR:"#f0b90b",SEM_APP:"#ff9800",FORA_PLAN:"#9c27b0",SEM_DADOS:"#848e9c",SEM_SYNC:"#3b82f6",INEXISTENTE:"#848e9c"};
-                      const STATUS_LABEL = {BATE:"✓ BATE",MAIOR:"↑ MAIOR",MENOR:"↓ MENOR",SEM_APP:"— SEM PAG.",FORA_PLAN:"◊ FORA PLAN.",SEM_DADOS:"? SEM DT",SEM_SYNC:"↻ SEM SYNC",INEXISTENTE:"∅"};
+                      const STATUS_COR = {BATE:"#02c076",MAIOR:"#f6465d",MENOR:"#f0b90b",SEM_APONT:t.txt2,FORA_PLANILHA:"#9c27b0"};
+                      const STATUS_LABEL = {BATE:"✓ BATE",MAIOR:"↑ MAIOR",MENOR:"↓ MENOR",SEM_APONT:"— SEM APONT.",FORA_PLANILHA:"◊ FORA PLAN."};
                       const KPIS = [
                         {k:"BATE",l:"Bate",c:"#02c076",bg:"rgba(2,192,118,.08)",v:totais.bate},
                         {k:"MAIOR",l:"Planilha Maior",c:"#f6465d",bg:"rgba(246,70,93,.08)",v:totais.maior},
                         {k:"MENOR",l:"Planilha Menor",c:"#f0b90b",bg:"rgba(240,185,11,.08)",v:totais.menor},
-                        {k:"SEM_APP",l:"Sem Pag.App",c:"#ff9800",bg:"rgba(255,152,0,.08)",v:totais.semApp},
-                        {k:"SEM_DADOS",l:"Sem DT",c:"#848e9c",bg:t.card2,v:totais.semDados},
+                        {k:"SEM_APONT",l:"Sem Apont.",c:t.txt2,bg:t.card2,v:totais.semApont},
+                        {k:"FORA_PLANILHA",l:"Fora Plan.",c:"#9c27b0",bg:"rgba(156,39,176,.08)",v:totais.foraPlanilha},
                       ];
                       const _pIni = rodorricaPeriodoIni ? new Date(rodorricaPeriodoIni+"T00:00:00") : null;
                       const _pFim = rodorricaPeriodoFim ? new Date(rodorricaPeriodoFim+"T23:59:59") : null;
@@ -4749,8 +4735,8 @@ export default function App() {
                         return (!_pIni||dc>=_pIni)&&(!_pFim||dc<=_pFim);
                       }) : linhas;
                       const filtrado = rodorricaFiltro === "todos" ? linhasPeriodo : linhasPeriodo.filter(x=>x.conf===rodorricaFiltro);
-                      const _confCor = c => ({BATE:"#02c076",MAIOR:"#f6465d",MENOR:"#f0b90b",SEM_APP:"#ff9800",FORA_PLAN:"#9c27b0",SEM_DADOS:"#848e9c",SEM_SYNC:"#3b82f6",INEXISTENTE:"#848e9c"}[c]||t.txt2);
-                      const _confLbl = c => ({BATE:"✓",MAIOR:"↑",MENOR:"↓",SEM_APP:"—",FORA_PLAN:"◊",SEM_DADOS:"?",SEM_SYNC:"↻",INEXISTENTE:"∅"}[c]||c);
+                      const _confCor = c => ({BATE:"#02c076",MAIOR:"#f6465d",MENOR:"#f0b90b",SEM_APONT:t.txt2,FORA_PLANILHA:"#9c27b0",INEXISTENTE:t.txt2}[c]||t.txt2);
+                      const _confLbl = c => ({BATE:"✓",MAIOR:"↑",MENOR:"↓",SEM_APONT:"—",FORA_PLANILHA:"◊",INEXISTENTE:"∅"}[c]||c);
                       return (
                         <div>
                           {/* KPI cards */}
@@ -4773,20 +4759,16 @@ export default function App() {
                             <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Risco:</span>
                             <span style={{fontSize:13,fontWeight:700,color:"#f6465d"}}>{fmtR(totais.valorEmRisco)}</span>
                             <span style={{fontSize:10,color:t.txt2,marginLeft:8}}>Planilha: <b style={{color:t.txt}}>{fmtR(totais.totalPlanilha)}</b></span>
-                            <span style={{fontSize:10,color:t.txt2}}>App: <b style={{color:t.txt}}>{fmtR(totais.totalApp)}</b></span>
+                            <span style={{fontSize:10,color:t.txt2}}>App: <b style={{color:t.txt}}>{fmtR(totais.totalApontamentos)}</b></span>
                             <button onClick={()=>setRodorricaPeriodoModal(true)} style={{marginLeft:"auto",fontSize:9,padding:"3px 10px",borderRadius:6,border:`1.5px solid ${t.ouro}`,background:"transparent",color:t.ouro,cursor:"pointer",fontFamily:"inherit"}}>📅 Período</button>
                             {rodorricaFiltro!=="todos"&&<button onClick={()=>setRodorricaFiltro("todos")} style={{fontSize:9,padding:"3px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>✕ Limpar</button>}
                             <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{filtrado.length} NFs</span>
                           </div>
                           {/* Tabela */}
                           <div style={{overflowX:"auto"}}>
-                            {!syncOk&&<div style={{background:"rgba(59,130,246,.1)",border:"1.5px solid rgba(59,130,246,.3)",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:10,color:"#3b82f6",lineHeight:1.6}}>
-                              ⚠️ <strong>Colunas PAG. DESCARGA / PAG. STRETCH ainda não sincronizadas.</strong><br/>
-                              Atualize o Apps Script (adicione os campos ao <code>mapearColuna</code>) e rode uma sincronização para liberar a comparação completa.
-                            </div>}
                             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
                               <thead><tr style={{background:t.card2}}>
-                                {["DT","NF","Dt Faturamento","Cliente","Desc.Plan","Desc.GSheets","Dif.Desc","Str.Plan","Str.GSheets","Dif.Str","Total Plan","Total GSheets","Status"].map(h=>(
+                                {["NF","DT Carga","Cliente","Desc.Plan","Desc.App","Dif.Desc","Str.Plan","Str.App","Dif.Str","Total Plan","Total App","Status"].map(h=>(
                                   <th key={h} style={{padding:"7px 8px",textAlign:"left",fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.4,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap"}}>{h}</th>
                                 ))}
                               </tr></thead>
@@ -4794,22 +4776,21 @@ export default function App() {
                                 {filtrado.map((row,i)=>{
                                   const cor = STATUS_COR[row.conf]||t.txt2;
                                   const fV = v => v!==0?"R$ "+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";
-                                  const fD = v => Math.abs(v||0)<0.5?"—":(v>0?"+":"")+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+                                  const fD = v => Math.abs(v||0)<1?"—":(v>0?"+":"")+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
                                   const cDesc = _confCor(row.confDesc); const cStr = _confCor(row.confStr);
                                   return (
                                     <tr key={i} style={{borderBottom:`1px solid ${t.borda}`,background:i%2===0?t.bg:t.card}}>
-                                      <td style={{padding:"5px 8px",fontWeight:700,color:t.ouro,whiteSpace:"nowrap"}}>{row.dt}{row.semStrech&&<span title="Sem Stretch" style={{marginLeft:4,fontSize:8,color:"#f6465d"}}>▲</span>}{row.semDescarga&&<span title="Sem Descarga" style={{marginLeft:4,fontSize:8,color:"#f0b90b"}}>▲</span>}</td>
-                                      <td style={{padding:"5px 8px",color:t.azulLt,whiteSpace:"nowrap",fontSize:10}}>{row.nf||"—"}</td>
+                                      <td style={{padding:"5px 8px",fontWeight:700,color:t.azulLt,whiteSpace:"nowrap"}}>{row.nf}{row.semStrech&&<span title="Sem Stretch" style={{marginLeft:4,fontSize:8,color:"#f6465d"}}>▲</span>}{row.semDescarga&&<span title="Sem Descarga" style={{marginLeft:4,fontSize:8,color:"#f0b90b"}}>▲</span>}</td>
                                       <td style={{padding:"5px 8px",color:t.txt2,whiteSpace:"nowrap",fontSize:10}}>{row.dtCarregamento||"—"}</td>
                                       <td style={{padding:"5px 8px",color:t.txt,maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:10}}>{row.cliente||"—"}</td>
                                       <td style={{padding:"5px 8px",textAlign:"right",color:t.txt}}>{fV(row.descarga)}</td>
-                                      <td style={{padding:"5px 8px",textAlign:"right",color:cDesc}}>{row.temDados?fV(row.appDesc):"—"}</td>
-                                      <td style={{padding:"5px 8px",textAlign:"right",fontWeight:600,color:cDesc}}>{row.temDados&&syncOk?fD(row.diffDesc):"—"}{" "}<span style={{fontSize:8}}>{_confLbl(row.confDesc)}</span></td>
+                                      <td style={{padding:"5px 8px",textAlign:"right",color:cDesc}}>{fV(row.appDesc)}</td>
+                                      <td style={{padding:"5px 8px",textAlign:"right",fontWeight:600,color:cDesc}}>{fD(row.diffDesc)}{" "}<span style={{fontSize:8}}>{_confLbl(row.confDesc)}</span></td>
                                       <td style={{padding:"5px 8px",textAlign:"right",color:t.txt}}>{fV(row.stretch)}</td>
-                                      <td style={{padding:"5px 8px",textAlign:"right",color:cStr}}>{row.temDados?fV(row.appStr):"—"}</td>
-                                      <td style={{padding:"5px 8px",textAlign:"right",fontWeight:600,color:cStr}}>{row.temDados&&syncOk?fD(row.diffStr):"—"}{" "}<span style={{fontSize:8}}>{_confLbl(row.confStr)}</span></td>
+                                      <td style={{padding:"5px 8px",textAlign:"right",color:cStr}}>{fV(row.appStr)}</td>
+                                      <td style={{padding:"5px 8px",textAlign:"right",fontWeight:600,color:cStr}}>{fD(row.diffStr)}{" "}<span style={{fontSize:8}}>{_confLbl(row.confStr)}</span></td>
                                       <td style={{padding:"5px 8px",textAlign:"right",fontWeight:700,color:t.txt}}>{fV(row.totalPlan)}</td>
-                                      <td style={{padding:"5px 8px",textAlign:"right",fontWeight:700,color:row.temDados?t.txt:t.txt2}}>{row.temDados?fV(row.totalApp):"—"}</td>
+                                      <td style={{padding:"5px 8px",textAlign:"right",fontWeight:700,color:t.txt}}>{fV(row.totalApont)}</td>
                                       <td style={{padding:"5px 8px"}}><span style={{fontSize:9,fontWeight:700,color:cor,background:`${cor}18`,border:`1px solid ${cor}44`,borderRadius:5,padding:"2px 6px",whiteSpace:"nowrap"}}>{STATUS_LABEL[row.conf]||row.conf}</span></td>
                                     </tr>
                                   );
@@ -5382,8 +5363,6 @@ function mapearColuna(n){
     'dias':'dias','quant. dias':'dias','quant dias':'dias','quantidade dias':'dias','qtd dias':'dias',
     'saldo':'saldo',
     'cte':'cte','mdf':'mdf','nf':'nf','nota fiscal':'nf','cliente':'cliente',
-    'pag. descarga':'pag_descarga','pag descarga':'pag_descarga','pag.descarga':'pag_descarga','pagamento descarga':'pag_descarga',
-    'pag. stretch':'pag_stretch','pag stretch':'pag_stretch','pag.stretch':'pag_stretch','pag. strech':'pag_stretch','pag strech':'pag_stretch',
     'shipmente id':'id_doc','shipment id':'id_doc','id_doc':'id_doc','id doc':'id_doc',
     'ro':'ro','r.o.':'ro','reg. ocorrencia':'ro','reg ocorrencia':'ro',
     'mat':'mat','contrato':'mat','contrato [mat ou mar]':'mat',
