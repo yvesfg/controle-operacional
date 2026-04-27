@@ -366,3 +366,8 @@
 - `rodorricaResultado`: reescrito — agrupa por DT, faz lookup no DADOS, compara `pag_descarga`/`pag_stretch`; detecta `SEM_DADOS` (DT não encontrada no app) e `SEM_SYNC` (campos ainda não sincronizados)
 - `mapearColuna` (Apps Script): adicionado `pag. descarga → pag_descarga` e `pag. stretch → pag_stretch` para próxima sync
 - UI: tabela mostra DT como chave primária, NF como campo secundário, aviso de sync pendente quando campos não existem ainda
+
+## 2026-04-27 — TELA PRETA DIÁRIAS / DESCARGA FIX
+**Solicitado:** Diárias e Carga/Descarga exibindo tela preta.
+**Causa:** React error #31 ("Objects are not valid as a React child") — duas IIFEs órfãs no modo "blocos" de cada aba retornavam arrays de objetos JS diretamente como filhos JSX.
+**Implementado:** Removidas as IIFEs redundantes em `src/App.jsx` (linha 4115–4128 no bloco blocos-Diárias e linha 4612 no bloco blocos-Descarga). Build verificado ✓
