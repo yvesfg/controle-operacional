@@ -3749,9 +3749,9 @@ export default function App() {
               {/* ── Main Grid: Chart | Status DTs | Top Motoristas ── */}
               {(()=>{
                 const motCount={};
-                dashData.filtrado.forEach(r=>{if(r.nome){if(!motCount[r.nome])motCount[r.nome]={ct:0,placa:r.placa||""};motCount[r.nome].ct++;if(!motCount[r.nome].placa&&r.placa)motCount[r.nome].placa=r.placa;}});
-                const topMot=Object.entries(motCount).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
-                const maxMot=topMot[0]?.[1]?.ct||1;
+                dashData.filtrado.forEach(r=>{if(r.nome){motCount[r.nome]=(motCount[r.nome]||0)+1;}});
+                const topMot=Object.entries(motCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+                const maxMot=topMot[0]?.[1]||1;
                 const cores=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];
                 return (
                   <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:12,marginBottom:12}}>
@@ -3811,18 +3811,15 @@ export default function App() {
                       </div>
                       {topMot.length===0?(
                         <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
-                      ):topMot.map(([nome,{ct,placa}],i)=>{
+                      ):topMot.map(([nome,ct],i)=>{
                         const initials=(nome||"?").split(" ").filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
                         const pct=Math.round(ct/maxMot*100);
-                        const partes=(nome||"").split(" ").filter(Boolean);
-                        const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
                         return (
                           <div key={nome} style={{marginBottom:10}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                               <div style={{width:28,height:28,borderRadius:"50%",background:`${cores[i]}22`,border:`1px solid ${cores[i]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cores[i],flexShrink:0}}>{initials}</div>
                               <div style={{flex:1,minWidth:0}}>
-                                <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExib}</div>
-                                {placa&&<div style={{fontSize:8,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:.5,marginTop:1}}>{placa}</div>}
+                                <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome.split(" ")[0]}</div>
                               </div>
                               <span style={{fontFamily:"'DM Mono',monospace",fontSize:13,fontWeight:600,color:cores[i],flexShrink:0}}>{ct}</span>
                             </div>
