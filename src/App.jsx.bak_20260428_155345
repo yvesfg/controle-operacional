@@ -3362,7 +3362,7 @@ export default function App() {
 
       {/* CONTENT */}
       {/* CONTENT — topbar é sticky; padding-bottom só necessário no mobile (nav bottom) */}
-      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?"0":"16px 16px 24px",maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)"}:{})}}>
+      <div className="co-content" style={{padding:(activeTab==="planilha"||activeTab==="relatorios")?"0":"16px 16px 24px",maxWidth:"100%",margin:"0 auto",animation:"fadeIn .2s",...(activeTab==="descarga"?{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 56px)",overflow:"hidden"}:{})}}>
 
         {/* ═══ RELATÓRIOS ═══ */}
         {activeTab === "relatorios" && (
