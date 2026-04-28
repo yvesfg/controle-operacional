@@ -308,7 +308,6 @@ export default function App() {
   const [wppSearchReg, setWppSearchReg] = useState(null); // registro selecionado no modal WPP
   const [wppFatModal, setWppFatModal] = useState(null); // {reg, mot}
   const [wppPagModal, setWppPagModal] = useState(null); // {reg, mot, tipo:'descarga'|'diarias'}
-  const [wppConfirmModal, setWppConfirmModal] = useState(null); // {url, displayText}
   const [wppFortes, setWppFortes] = useState(false);
   // DCC Minutas (Diárias) — suporta múltiplas minutas
   const _initDcc = () => [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}];
@@ -7269,11 +7268,11 @@ function mapearColuna(n){
         const enviar = () => {
           if (somaExcede) { showToast("⚠️ Soma Cheque + Conta excede o ADT!","warn"); return; }
           const tel = wppTel.replace(/\D/g,"");
-          const rawMsg = gerarMsg();
-          const url = tel ? `https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}` : `https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
-          const displayText = rawMsg.replace(/%0A/g,"\n");
+          const msg = encodeURIComponent(gerarMsg());
+          const url = tel ? `https://wa.me/55${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+          window.open(url, "_blank");
+          if (!tel) showToast("⚠️ Sem telefone — WhatsApp aberto sem número","warn");
           setWppModal(null);
-          setWppConfirmModal({url, displayText});
         };
 
         const inpStyle = {...css.inp, fontSize:12, padding:"7px 10px"};
@@ -7454,11 +7453,11 @@ function mapearColuna(n){
           // Memoriza OBS se preenchido e incluído
           if (wpp2IncluirObs && wpp2Obs.trim()) saveJSON("co_wpp2_obs_last", wpp2Obs.trim());
           const tel = telMot.replace(/\D/g,"");
-          const rawMsg = gerarMsgDoc();
-          const url = tel ? `https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}` : `https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
-          const displayText = rawMsg.replace(/%0A/g,"\n");
+          const msg = gerarMsgDoc();
+          const url = tel ? `https://wa.me/55${tel}?text=${msg}` : `https://wa.me/?text=${msg}`;
+          window.open(url, "_blank");
+          if (!tel) showToast("⚠️ Sem telefone — WhatsApp aberto sem número","warn");
           setWppModal2(null);
-          setWppConfirmModal({url, displayText});
         };
 
         return (
@@ -7609,12 +7608,11 @@ function mapearColuna(n){
                   if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.nf)faltando.push("NF");
                   if(faltando.length>0){if(!window.confirm(`⚠️ Campos vazios: ${faltando.join(", ")}.\nEnviar mesmo assim?`))return;}
                   const tel=(mot?.tel||"").replace(/\D/g,"");
-                  const rawMsg=gerarFat();
-                  const url=tel?`https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}`:`https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
+                  const msg=encodeURIComponent(gerarFat());
+                  window.open(tel?`https://wa.me/55${tel}?text=${msg}`:`https://wa.me/?text=${msg}`,"_blank");
                   setWppFatModal(null);
-                  setWppConfirmModal({url, displayText:rawMsg});
                 }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                  📲 PREPARAR MENSAGEM
+                  📲 ENVIAR NO WHATSAPP
                 </button>
               </div>
             </div>
@@ -7805,45 +7803,17 @@ function mapearColuna(n){
                 <button onClick={()=>setWppPagModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
                 <button onClick={()=>{
                   const tel=(mot?.tel||"").replace(/\D/g,"");
-                  const rawMsg=gerarPag();
-                  const url=tel?`https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}`:`https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
+                  const msg=encodeURIComponent(gerarPag());
+                  window.open(tel?`https://wa.me/55${tel}?text=${msg}`:`https://wa.me/?text=${msg}`,"_blank");
                   setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
-                  setWppConfirmModal({url, displayText:rawMsg});
                 }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                  📲 PREPARAR MENSAGEM
+                  📲 ENVIAR NO WHATSAPP
                 </button>
               </div>
             </div>
           </div>
         );
       })()}
-
-      {/* ═══ WHATSAPP CONFIRM MODAL ═══ */}
-      {wppConfirmModal && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.72)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}} onClick={e=>{if(e.target===e.currentTarget)setWppConfirmModal(null);}}>
-          <div style={{background:"var(--card)",border:"1px solid var(--borda)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 32px 64px rgba(0,0,0,.5)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"96vh"}}>
-            {/* Header */}
-            <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--borda)",background:"rgba(37,211,102,.06)",flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>MENSAGEM WHATSAPP</div>
-                <div style={{fontSize:9,color:"var(--text2)"}}>Copie o texto ou clique em Abrir no WhatsApp</div>
-              </div>
-              <button onClick={()=>setWppConfirmModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:"var(--text2)",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-            </div>
-            {/* Texto */}
-            <div style={{flex:1,overflowY:"auto",padding:14}}>
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:"var(--text2)",fontWeight:700,marginBottom:6}}>Texto da mensagem</div>
-              <pre style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"var(--text)",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word",background:"var(--bg)",border:"1px solid var(--borda)",borderRadius:10,padding:"12px 14px",margin:0}}>{wppConfirmModal.displayText}</pre>
-            </div>
-            {/* Botões */}
-            <div style={{padding:"10px 14px 18px",borderTop:"1px solid var(--borda)",display:"flex",gap:8,flexShrink:0}}>
-              <button onClick={()=>{navigator.clipboard.writeText(wppConfirmModal.displayText);showToast("✅ Texto copiado!","ok");}} style={{flex:"0 0 auto",background:"transparent",border:"1.5px solid var(--borda)",borderRadius:9,padding:"10px 14px",color:"var(--text2)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>📋 COPIAR</button>
-              <button onClick={()=>{window.open(wppConfirmModal.url,"_blank");setWppConfirmModal(null);}} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:"rgba(37,211,102,.15)",border:"1.5px solid rgba(37,211,102,.4)",color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>📲 ABRIR NO WHATSAPP</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
       {dashDrillModal && (
