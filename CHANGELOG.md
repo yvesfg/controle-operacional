@@ -371,3 +371,8 @@
 **Solicitado:** Diárias e Carga/Descarga exibindo tela preta.
 **Causa:** React error #31 ("Objects are not valid as a React child") — duas IIFEs órfãs no modo "blocos" de cada aba retornavam arrays de objetos JS diretamente como filhos JSX.
 **Implementado:** Removidas as IIFEs redundantes em `src/App.jsx` (linha 4115–4128 no bloco blocos-Diárias e linha 4612 no bloco blocos-Descarga). Build verificado ✓
+
+## 2026-04-29 — Dashboard tela preta FIX
+**Solicitado:** Dashboard exibindo tela preta.
+**Causa:** `cores` definida dentro da IIFE do "Main Grid" mas usada fora do seu escopo no bloco "Registros Recentes" — ReferenceError em runtime crashava o render.
+**Implementado:** Substituído `cores[i%cores.length]` por `CORES_DASH` definida localmente no próprio `.map()`. Build ✓

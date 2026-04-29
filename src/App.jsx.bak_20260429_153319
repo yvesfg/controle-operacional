@@ -3860,7 +3860,7 @@ export default function App() {
                       const partes=(r.nome||"").split(" ").filter(Boolean);
                       const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
                       const initials=partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
-                      const CORES_DASH=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];const cor=CORES_DASH[i%CORES_DASH.length];
+                      const cor=cores[i%cores.length];
                       return (
                         <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
                           style={{display:"flex",alignItems:"center",gap:8,padding:"6px 4px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s"}}
