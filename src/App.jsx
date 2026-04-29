@@ -3878,8 +3878,8 @@ export default function App() {
                       const initials=partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
                       const CORES_DASH=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];
                       const cor=CORES_DASH[i%CORES_DASH.length];
-                      const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim().slice(0,9);
-                      const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim().slice(0,9);
+                      const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim();
+                      const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim();
                       const rota=origemCurta&&destinoCurto?`${origemCurta} → ${destinoCurto}`:origemCurta||destinoCurto||"";
                       return (
                         <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
@@ -3965,7 +3965,7 @@ export default function App() {
                           <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.4)}`:"none"}}>
                             <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:t.danger,whiteSpace:"nowrap",flexShrink:0}}>ATR</span>
                             <span style={{fontSize:9,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"—").split(" ").slice(0,2).join(" ")}</span>
-                            <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap",flexShrink:0}}>{(r.destino||"—").split(/[-–]/)[0].trim().slice(0,8)}</span>
+                            <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap",flexShrink:0}}>{(r.destino||"—").split(/[-–]/)[0].trim()}</span>
                           </div>
                         ))}
                       </div>
