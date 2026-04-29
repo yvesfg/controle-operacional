@@ -376,3 +376,14 @@
 **Solicitado:** Dashboard exibindo tela preta.
 **Causa:** `cores` definida dentro da IIFE do "Main Grid" mas usada fora do seu escopo no bloco "Registros Recentes" — ReferenceError em runtime crashava o render.
 **Implementado:** Substituído `cores[i%cores.length]` por `CORES_DASH` definida localmente no próprio `.map()`. Build ✓
+
+## 2026-04-29 — Dashboard Opção C: layout bottom + preenchimento sem corte
+**Solicitado:** Opção C — Registros Recentes preenche altura sem cortar linha nem deixar espaço vazio; rota no meio; barra de progresso diárias; 3 atrasados; novo bloco Top Diárias Pendentes.
+**Implementado:**
+- `dashRecentesN` state + `dashRecCardRef` + ResizeObserver: calcula quantas linhas de 40px cabem exatamente e limita com `slice(0,dashRecentesN)` — sem corte, sem espaço vazio
+- Cada linha fixada em `height:40px` — previsível para o cálculo
+- Rota `origem → destino` adicionada no centro de cada linha
+- Diárias: barra de progresso pago/total com cor dinâmica (verde≥80% / ouro≥40% / vermelho<40%)
+- Descargas: lista de atrasados expandida de 2 → 3
+- Novo bloco "Top Diárias Pendentes": agrupa saldo pendente por motorista, top 4 com barra horizontal
+- Build ✓ 51 módulos

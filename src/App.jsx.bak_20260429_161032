@@ -284,8 +284,6 @@ export default function App() {
   const [dashGroupBy, setDashGroupBy] = useState("mes"); // mes | motorista | destino | status
   const [dashDrillModal, setDashDrillModal] = useState(null); // {type, label, regs}
   const [dashHeroTab, setDashHeroTab] = useState("carr"); // 'carr' | 'cte'
-  const [dashRecentesN, setDashRecentesN] = useState(8);
-  const dashRecCardRef = useRef(null);
 
   // ── Aba Operacional ──
   const [operSubTab, setOperSubTab] = useState("sgs");
@@ -513,21 +511,6 @@ export default function App() {
     saveJSON("co_theme", theme);
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
-
-  // ResizeObserver: calcula quantas linhas cabem em Registros Recentes sem cortar
-  useEffect(() => {
-    if (!dashRecCardRef.current) return;
-    const ROW_H = 40;
-    const OVERHEAD = 46 + 28; // header (label+margin) + padding card
-    const obs = new ResizeObserver(() => {
-      const h = dashRecCardRef.current?.clientHeight || 0;
-      if (!h) return;
-      const n = Math.max(3, Math.floor((h - OVERHEAD) / ROW_H));
-      setDashRecentesN(n);
-    });
-    obs.observe(dashRecCardRef.current);
-    return () => obs.disconnect();
-  }, [authed]);
 
   // ── Callback OAuth: detecta retorno do Google/Apple e loga automaticamente ──
   useEffect(() => {
@@ -3863,42 +3846,38 @@ export default function App() {
               })()}
 
               {/* ── Bottom: Registros Recentes + Painel Operacional ── */}
-              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12,alignItems:"start"}}>
-                {/* Registros Recentes — altura calculada para não cortar linhas */}
-                <div ref={dashRecCardRef} style={{...css.card,padding:14,display:"flex",flexDirection:"column"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexShrink:0}}>
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12}}>
+                {/* Registros Recentes */}
+                <div style={{...css.card,padding:14}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                     <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Registros Recentes</span>
                     <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"#a855f7",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Tudo ›</button>
                   </div>
-                  <div style={{display:"flex",flexDirection:"column",overflow:"hidden"}}>
+                  <div style={{display:"flex",flexDirection:"column",gap:2}}>
                     {recentesDash.length===0?(
                       <div style={{textAlign:"center",padding:16,color:t.txt2,fontSize:11}}>Sem dados no período</div>
-                    ):recentesDash.slice(0,dashRecentesN).map((r,i)=>{
+                    ):recentesDash.map((r,i)=>{
                       const partes=(r.nome||"").split(" ").filter(Boolean);
                       const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
                       const initials=partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
-                      const CORES_DASH=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];
-                      const cor=CORES_DASH[i%CORES_DASH.length];
-                      const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim().slice(0,9);
-                      const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim().slice(0,9);
-                      const rota=origemCurta&&destinoCurto?`${origemCurta} → ${destinoCurto}`:origemCurta||destinoCurto||"";
+                      const CORES_DASH=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];const cor=CORES_DASH[i%CORES_DASH.length];
                       return (
                         <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
-                          style={{height:40,display:"flex",alignItems:"center",gap:8,padding:"0 4px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s",flexShrink:0}}
-                          onMouseEnter={e=>e.currentTarget.style.background=t.card2}
+                          style={{display:"flex",alignItems:"center",gap:8,padding:"6px 4px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s"}}
+                          onMouseEnter={e=>e.currentTarget.style.background="var(--surface)"}
                           onMouseLeave={e=>e.currentTarget.style.background="transparent"}
                         >
-                          <div style={{width:26,height:26,borderRadius:"50%",background:`${cor}22`,border:`1px solid ${cor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cor,flexShrink:0}}>{initials}</div>
-                          <div style={{minWidth:0,flex:"0 0 110px"}}>
+                          <div style={{width:28,height:28,borderRadius:"50%",background:`${cor}22`,border:`1px solid ${cor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cor,flexShrink:0}}>{initials}</div>
+                          <div style={{flex:1,minWidth:0}}>
                             <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExib}</div>
-                            <div style={{fontSize:8,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:.4,marginTop:1,display:"flex",gap:5,overflow:"hidden"}}>
-                              {r.placa&&<span style={{flexShrink:0}}>{r.placa}</span>}
-                              <span style={{color:t.txt2,flexShrink:0}}>{r.dt}</span>
+                            <div style={{fontSize:8,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:.5,marginTop:1,display:"flex",gap:6}}>
+                              {r.placa&&<span>{r.placa}</span>}
+                              <span style={{color:t.txt3}}>{r.dt}</span>
+                              {r.origem&&<span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:80}}>{r.origem.split(/[-–]/)[0].trim().slice(0,10)}</span>}
                             </div>
                           </div>
-                          {rota&&<div style={{flex:1,fontSize:9,color:t.txt2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 4px"}}>{rota}</div>}
-                          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}}>
-                            <span style={{padding:"1px 5px",borderRadius:4,fontFamily:"'DM Mono',monospace",fontSize:9,fontWeight:500,textTransform:"uppercase",color:sc(r.status),background:`${sc(r.status)}1a`,whiteSpace:"nowrap",letterSpacing:"0.04em"}}>{(r.status||"–").slice(0,10)}</span>
+                          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3,flexShrink:0}}>
+                            <span style={{padding:"1px 6px",borderRadius:4,fontFamily:"'DM Mono',monospace",fontSize:9,fontWeight:500,textTransform:"uppercase",color:sc(r.status),background:`${sc(r.status)}22`,whiteSpace:"nowrap",letterSpacing:"0.04em"}}>{(r.status||"–").slice(0,10)}</span>
                             {canFin&&r.vl_cte&&parseFloat(r.vl_cte)>0&&<span style={{fontSize:9,fontWeight:600,color:t.txt,fontFamily:"'DM Mono',monospace"}}>{"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k"}</span>}
                           </div>
                         </div>
@@ -3907,15 +3886,15 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Painel Operacional: Diárias + Descargas + Top Pendentes */}
+                {/* Painel Operacional: Diárias + Descargas */}
                 <div style={{display:"flex",flexDirection:"column",gap:12}}>
                   {/* Diárias */}
-                  <div style={{...css.card,padding:14}}>
+                  <div style={{...css.card,padding:14,flex:1}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                       <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Diárias</span>
                       <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:t.ouro,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}}>
                       {[{l:"No Prazo",v:diariasData.ok,c:t.verde,bg:`rgba(2,192,118,.08)`},{l:"Perdeu Agenda",v:diariasData.atraso,c:t.danger,bg:`rgba(246,70,93,.08)`},{l:"Aguardando",v:diariasData.pend,c:t.ouro,bg:`rgba(240,185,11,.08)`}].map(d=>(
                         <div key={d.l} onClick={()=>setActiveTab("diarias")} style={{background:d.bg,borderRadius:8,padding:"8px 6px",textAlign:"center",cursor:"pointer"}}>
                           <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:d.c,lineHeight:1}}>{d.v}</div>
@@ -3929,30 +3908,16 @@ export default function App() {
                       const pg2=comD2.reduce((s,{r})=>s+(parseFloat(r.diaria_pg)||0),0);
                       const sld2=dev2-pg2;
                       if(!dev2)return null;
-                      const pct=dev2>0?Math.min(100,Math.round(pg2/dev2*100)):0;
-                      return (
-                        <div>
-                          <div style={{padding:"7px 10px",borderRadius:8,background:t.card2,border:`1px solid ${t.borda}`,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                            <div style={{fontSize:9,color:t.txt2}}>Saldo a pagar</div>
-                            <div style={{fontSize:13,fontWeight:700,color:sld2>0?t.danger:t.verde,fontFamily:DESIGN.fnt.b}}>{fmtMoeda(Math.abs(sld2))}</div>
-                          </div>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:t.txt2,marginBottom:3}}>
-                            <span>Pago: {fmtMoeda(pg2)}</span><span style={{color:pct>=80?t.verde:pct>=40?t.ouro:t.danger}}>{pct}%</span>
-                          </div>
-                          <div style={{height:4,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${pct}%`,background:pct>=80?t.verde:pct>=40?t.ouro:t.danger,borderRadius:2,transition:"width .4s"}}/>
-                          </div>
-                        </div>
-                      );
+                      return <div style={{padding:"8px 10px",borderRadius:8,background:t.card2,border:`1px solid ${t.borda}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div style={{fontSize:9,color:t.txt2}}>Saldo a pagar</div><div style={{fontSize:13,fontWeight:700,color:sld2>0?t.danger:t.verde,fontFamily:DESIGN.fnt.b}}>{fmtMoeda(Math.abs(sld2))}</div></div>;
                     })()}
                   </div>
                   {/* Descargas */}
-                  <div style={{...css.card,padding:14}}>
+                  <div style={{...css.card,padding:14,flex:1}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                       <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Descargas</span>
                       <button onClick={()=>setActiveTab("descarga")} style={{fontSize:9,color:t.azulLt,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}}>
                       {[{l:"Hoje",v:descargaData.hoje.length,c:t.azulLt,bg:`rgba(22,119,255,.08)`},{l:"Em Atraso",v:descargaData.atrasados.length,c:t.danger,bg:`rgba(246,70,93,.08)`},{l:"Aguardando",v:descargaData.aguardando.length,c:t.ouro,bg:`rgba(240,185,11,.08)`}].map(d=>(
                         <div key={d.l} onClick={()=>setActiveTab("descarga")} style={{background:d.bg,borderRadius:8,padding:"8px 6px",textAlign:"center",cursor:"pointer"}}>
                           <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:d.c,lineHeight:1}}>{d.v}</div>
@@ -3962,9 +3927,9 @@ export default function App() {
                     </div>
                     {descargaData.atrasados.length>0&&(
                       <div>
-                        {descargaData.atrasados.slice(0,3).map((r,i)=>(
-                          <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.4)}`:"none"}}>
-                            <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:t.danger,whiteSpace:"nowrap",flexShrink:0}}>ATR</span>
+                        {descargaData.atrasados.slice(0,2).map((r,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.5)}`:"none"}}>
+                            <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:t.danger,whiteSpace:"nowrap",flexShrink:0}}>ATRASADO</span>
                             <span style={{fontSize:9,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"—").split(" ").slice(0,2).join(" ")}</span>
                             <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap",flexShrink:0}}>{(r.destino||"—").split(/[-–]/)[0].trim().slice(0,8)}</span>
                           </div>
@@ -3972,46 +3937,6 @@ export default function App() {
                       </div>
                     )}
                   </div>
-                  {/* Top Diárias Pendentes */}
-                  {canFin&&(()=>{
-                    const pendMap={};
-                    diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").forEach(({r})=>{
-                      if(!r.nome)return;
-                      const prev=parseFloat(r.diaria_prev)||0;
-                      const pg=parseFloat(r.diaria_pg)||0;
-                      const sld=prev-pg;
-                      if(sld<=0)return;
-                      if(!pendMap[r.nome])pendMap[r.nome]=0;
-                      pendMap[r.nome]+=sld;
-                    });
-                    const topPend=Object.entries(pendMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
-                    if(!topPend.length)return null;
-                    const maxPend=topPend[0][1]||1;
-                    return (
-                      <div style={{...css.card,padding:14}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                          <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Top Diárias Pendentes</span>
-                          <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:t.ouro,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
-                        </div>
-                        {topPend.map(([nome,sld],i)=>{
-                          const partes=nome.split(" ").filter(Boolean);
-                          const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0];
-                          const pct=Math.round(sld/maxPend*100);
-                          return (
-                            <div key={nome} style={{marginBottom:i<topPend.length-1?8:0}}>
-                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                                <span style={{fontSize:9,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,paddingRight:6}}>{nomeExib}</span>
-                                <span style={{fontSize:9,fontWeight:700,color:t.ouro,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{fmtMoeda(sld)}</span>
-                              </div>
-                              <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                                <div style={{height:"100%",width:`${pct}%`,background:t.ouro,borderRadius:2}}/>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
                 </div>
               </div>
 
