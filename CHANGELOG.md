@@ -387,3 +387,13 @@
 - Descargas: lista de atrasados expandida de 2 → 3
 - Novo bloco "Top Diárias Pendentes": agrupa saldo pendente por motorista, top 4 com barra horizontal
 - Build ✓ 51 módulos
+
+## 2026-04-29 — Login: Opção 3 (Gold + Fusion icon)
+**Solicitado:** Redesign da tela de login no estilo Opção 3.
+**Implementado:**
+- Logotipo: ícone SVG "Fusion" (retângulo ouro opaco + retângulo violeta com circle ouro) + "YFGroup" Space Grotesk 700 + barra ouro 32px + "CONTROLE OPERACIONAL" espaçado
+- Dois acentos de fundo radial (violeta topo + ouro base) para profundidade sem poluir
+- Card: título "Entrar na plataforma" + subtítulo limpo + botão Google com hover violeta
+- Separador "OU" + status "● Sistema Online — MÊS/ANO" dinâmico
+- Fonte Bebas Neue removida (agora Space Grotesk em todo o login)
+- Build ✓ 51 módulos
