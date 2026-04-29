@@ -397,3 +397,7 @@
 - Separador "OU" + status "● Sistema Online — MÊS/ANO" dinâmico
 - Fonte Bebas Neue removida (agora Space Grotesk em todo o login)
 - Build ✓ 51 módulos
+
+## 2026-04-29 — Planilha: default mês atual
+**Solicitado:** Planilha sempre abre no mês corrente.
+**Implementado:** `planilhaFiltroAno`/`planilhaFiltroMes` inicializados direto com `new Date()` (antes aguardavam o dado mais recente via useEffect). useEffect de auto-default removido. Build ✓
