@@ -2112,7 +2112,7 @@ export default function App() {
     <div class="header-brand">
       ${logoBlock}
       <div>
-        <div class="brand-name">CTRL OPERACIONAL</div>
+        <div class="brand-name">CONTROLE OPERACIONAL</div>
         <div class="brand-sub">by <strong>YFGroup</strong> · Imperatriz Logística</div>
       </div>
     </div>
@@ -2998,8 +2998,6 @@ export default function App() {
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer-lbl{display:none!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user{justify-content:center!important;padding:8px!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user-info{display:none!important}
-          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-lbl{display:block!important;text-align:center;font-size:6.5px;white-space:normal;word-break:break-all;padding:5px 2px 2px;line-height:1.25;letter-spacing:0.04em;overflow:visible}
-          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-line{display:none!important}
           /* Main offset para mini-sidebar */
           .co-main{margin-left:0!important}
           .co-main--mobile{margin-left:48px!important}
@@ -3163,7 +3161,7 @@ export default function App() {
             {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
               <div style={{overflow:"hidden",flex:1,minWidth:0}}>
                 <div className="co-sidebar__logo-name">YFGroup</div>
-                <div className="co-sidebar__logo-sub">CTRL OPERACIONAL</div>
+                <div className="co-sidebar__logo-sub">CONTROLE OPERACIONAL</div>
               </div>
             )}
             <button
@@ -3312,7 +3310,7 @@ export default function App() {
           <>
             <div>
               <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CONTROLE OPERACIONAL</div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
               <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
@@ -5249,7 +5247,7 @@ export default function App() {
                   </div>
                   <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`,overflowX:"auto",maxHeight:260,overflowY:"auto"}}>
                     <pre style={{fontSize:8.5,color:t.verde,margin:0,whiteSpace:"pre",lineHeight:1.55}}>{`// ═══════════════════════════════════════════════════════
-// CTRL OPERACIONAL — Apps Script v2
+// CONTROLE OPERACIONAL — Apps Script v2
 // 1) Cole aqui  2) Preencha SUPA_URL e SUPA_KEY
 // 3) Rode configurarGatilho() UMA VEZ → sync automático
 // ═══════════════════════════════════════════════════════
