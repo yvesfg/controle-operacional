@@ -573,7 +573,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           );
         })}
         <div style={{marginLeft:"auto",display:"flex",gap:4}}>
-          {(isMobile?[1,2]:[1,2,3,4]).map(n=>(
+          {[1,2,3,4].map(n=>(
             <button key={n} onClick={()=>setOcorrCols(n)} style={{width:26,height:26,fontSize:10,fontWeight:700,border:`1.5px solid ${ocorrCols===n?"var(--accent)":"var(--border)"}`,borderRadius:6,cursor:"pointer",background:ocorrCols===n?"var(--accent2,rgba(124,58,237,0.1))":"var(--card2)",color:ocorrCols===n?"var(--accent)":"var(--text2)"}}>{n}</button>
           ))}
         </div>
@@ -589,7 +589,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           <div style={{fontSize:12,color:"var(--text3)"}}>Todos os DTs estão sem pendências.</div>
         </div>
       ):(
-        <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(ocorrCols,2):ocorrCols},minmax(0,1fr))`,gap:isMobile?8:10}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":`repeat(${ocorrCols},minmax(0,1fr))`,gap:10}}>
           {filtered.map((entry,i)=>{
             const motInfo=motoristas.find(m=>(entry.r.cpf&&m.cpf?.replace(/\D/g,"")===entry.r.cpf?.replace(/\D/g,""))||(entry.r.nome&&m.nome===entry.r.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===entry.r.placa));
             return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} onAddOcorrencia={onSalvarOcorrencia?r=>openModal(r):null}/>;
