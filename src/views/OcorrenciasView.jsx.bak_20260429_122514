@@ -489,7 +489,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
     if(busca.trim()){
       const q=busca.trim().toLowerCase();
       const r=e.r;
-      if(!( String(r.dt||"").toLowerCase().includes(q)||String(r.nome||"").toLowerCase().includes(q)||String(r.placa||"").toLowerCase().includes(q)||String(r.ro||"").toLowerCase().includes(q)||String(r.nfd?.numero||"").toLowerCase().includes(q)||String(r.sgs||"").toLowerCase().includes(q) )) return false;
+      if(!( String(r.dt||"").toLowerCase().includes(q)||String(r.nome||"").toLowerCase().includes(q)||String(r.placa||"").toLowerCase().includes(q) )) return false;
     }
     if(!_iniD&&!_fimD) return true;
     // Filtro de data: aceita se QUALQUER data relevante do registro cai no intervalo
@@ -546,7 +546,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           <input
             value={busca}
             onChange={e=>setBusca(e.target.value)}
-            placeholder="DT, motorista, placa, RO, NFD..."
+            placeholder="DT, motorista, placa..."
             style={{fontSize:11,padding:"5px 9px 5px 26px",borderRadius:7,border:`1.5px solid ${busca?"var(--accent)":"var(--border)"}`,background:busca?"var(--accent2,rgba(124,58,237,0.07))":"var(--card)",color:"var(--text)",width:180,outline:"none"}}
           />
         </div>
@@ -593,9 +593,4 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           {filtered.map((entry,i)=>{
             const motInfo=motoristas.find(m=>(entry.r.cpf&&m.cpf?.replace(/\D/g,"")===entry.r.cpf?.replace(/\D/g,""))||(entry.r.nome&&m.nome===entry.r.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===entry.r.placa));
             return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} onAddOcorrencia={onSalvarOcorrencia?r=>openModal(r):null}/>;
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+          })

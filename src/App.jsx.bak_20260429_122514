@@ -3686,7 +3686,7 @@ export default function App() {
           const recentesDash = [...dashData.filtrado]
             .filter(r=>r.nome)
             .sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return db&&da?db-da:0;})
-            .slice(0,10);
+            .slice(0,5);
 
           // Status badge color
           const sc = s => {
@@ -3853,36 +3853,36 @@ export default function App() {
                     <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Registros Recentes</span>
                     <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"#a855f7",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Tudo ›</button>
                   </div>
-                  <div style={{display:"flex",flexDirection:"column",gap:2}}>
-                    {recentesDash.length===0?(
-                      <div style={{textAlign:"center",padding:16,color:t.txt2,fontSize:11}}>Sem dados no período</div>
-                    ):recentesDash.map((r,i)=>{
-                      const partes=(r.nome||"").split(" ").filter(Boolean);
-                      const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
-                      const initials=partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
-                      const cor=cores[i%cores.length];
-                      return (
-                        <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
-                          style={{display:"flex",alignItems:"center",gap:8,padding:"6px 4px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s"}}
-                          onMouseEnter={e=>e.currentTarget.style.background="var(--surface)"}
-                          onMouseLeave={e=>e.currentTarget.style.background="transparent"}
-                        >
-                          <div style={{width:28,height:28,borderRadius:"50%",background:`${cor}22`,border:`1px solid ${cor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cor,flexShrink:0}}>{initials}</div>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExib}</div>
-                            <div style={{fontSize:8,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:.5,marginTop:1,display:"flex",gap:6}}>
-                              {r.placa&&<span>{r.placa}</span>}
-                              <span style={{color:t.txt3}}>{r.dt}</span>
-                              {r.origem&&<span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:80}}>{r.origem.split(/[-–]/)[0].trim().slice(0,10)}</span>}
-                            </div>
-                          </div>
-                          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3,flexShrink:0}}>
-                            <span style={{padding:"1px 6px",borderRadius:4,fontFamily:"'DM Mono',monospace",fontSize:9,fontWeight:500,textTransform:"uppercase",color:sc(r.status),background:`${sc(r.status)}22`,whiteSpace:"nowrap",letterSpacing:"0.04em"}}>{(r.status||"–").slice(0,10)}</span>
-                            {canFin&&r.vl_cte&&parseFloat(r.vl_cte)>0&&<span style={{fontSize:9,fontWeight:600,color:t.txt,fontFamily:"'DM Mono',monospace"}}>{"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k"}</span>}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:320}}>
+                      <thead>
+                        <tr>
+                          {["DT","Motorista","Origem","Destino","Status",canFin?"CTE":""].filter(Boolean).map(h=>(
+                            <th key={h} style={{padding:"0 6px 8px",textAlign:"left",fontFamily:"'DM Mono',monospace",fontSize:10,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap"}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentesDash.length===0?(
+                          <tr><td colSpan={6} style={{textAlign:"center",padding:16,color:t.txt2,fontSize:11}}>Sem dados no período</td></tr>
+                        ):recentesDash.map((r,i)=>(
+                          <tr key={i} style={{borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.5)}`,cursor:"pointer",transition:"background .1s"}}
+                            onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
+                            onMouseEnter={e=>e.currentTarget.style.background="var(--surface)"}
+                            onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                          >
+                            <td style={{padding:"7px 6px",color:t.txt2,fontFamily:"monospace",fontSize:9,whiteSpace:"nowrap"}}>{r.dt||"–"}</td>
+                            <td style={{padding:"7px 6px",fontWeight:500,color:t.txt,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"–").split(" ")[0]}</td>
+                            <td style={{padding:"7px 6px",color:t.txt2,fontSize:9,whiteSpace:"nowrap"}}>{(r.origem||"–").split(/[-–]/)[0].trim().slice(0,9)}</td>
+                            <td style={{padding:"7px 6px",color:t.txt2,fontSize:9,whiteSpace:"nowrap",maxWidth:90,overflow:"hidden",textOverflow:"ellipsis"}}>{(r.destino||"–").split(/[-–]/)[0].trim().slice(0,9)}</td>
+                            <td style={{padding:"7px 6px"}}>
+                              <span style={{padding:"2px 7px",borderRadius:4,fontFamily:"'DM Mono',monospace",fontSize:10,fontWeight:500,textTransform:"uppercase",color:sc(r.status),background:`${sc(r.status)}26`,whiteSpace:"nowrap",letterSpacing:"0.06em"}}>{(r.status||"–").slice(0,9)}</span>
+                            </td>
+                            {canFin&&<td style={{padding:"7px 6px",textAlign:"right",fontWeight:600,color:t.txt,fontSize:10,whiteSpace:"nowrap"}}>{r.vl_cte&&parseFloat(r.vl_cte)>0?"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k":"–"}</td>}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
@@ -3927,11 +3927,11 @@ export default function App() {
                     </div>
                     {descargaData.atrasados.length>0&&(
                       <div>
-                        {descargaData.atrasados.slice(0,2).map((r,i)=>(
-                          <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.5)}`:"none"}}>
-                            <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:t.danger,whiteSpace:"nowrap",flexShrink:0}}>ATRASADO</span>
-                            <span style={{fontSize:9,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"—").split(" ").slice(0,2).join(" ")}</span>
-                            <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap",flexShrink:0}}>{(r.destino||"—").split(/[-–]/)[0].trim().slice(0,8)}</span>
+                        {descargaData.atrasados.slice(0,3).map((r,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.5)}`:"none"}}>
+                            <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 5px",fontSize:11,fontWeight:700,color:t.danger,whiteSpace:"nowrap"}}>ATRASADO</span>
+                            <span style={{fontSize:9,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"—").split(" ")[0]}</span>
+                            <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>{r.destino?.slice(0,8)||"—"}</span>
                           </div>
                         ))}
                       </div>
