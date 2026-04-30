@@ -27,7 +27,7 @@ export const themes = {
     // Texto
     txt: "#16162a", txt2: "#5a5a8a",
     // Acento principal — ajustado para novo #F3BA2F em dark (WCAG AA ✓)
-    ouro: "#a07018", ouroDk: "#8f5f14",
+    ouro: "#d97706", ouroDk: "#b45309",
     // Status
     verde: "#16a34a", verdeDk: "#148040",
     danger: "#dc2626", warn: "#d97706",
@@ -99,7 +99,7 @@ export const DESIGN = {
   // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
   sw:  { thin:1.5, md:2, thick:2.5 },
   // Famílias tipográficas — Inter para body (mais limpo e legível)
-  fnt: { h:"'Bebas Neue',sans-serif", b:"'Inter','Segoe UI',system-ui,sans-serif" },
+  fnt: { h:"'Space Grotesk',sans-serif", display:"'Bebas Neue',sans-serif", b:"'Inter','Segoe UI',system-ui,sans-serif" },
   // Letter-spacing — levemente reduzido para look mais refinado
   ls:  { label:2, badge:1, mono:2.5, btn:.2 },
 };

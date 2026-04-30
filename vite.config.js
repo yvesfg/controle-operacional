@@ -9,4 +9,5 @@ const base = process.env.VITE_BASE_URL ?? '/'
 export default defineConfig({
   plugins: [react()],
   base,
+  server: { port: parseInt(process.env.PORT) || 5174, strictPort: false },
 })
