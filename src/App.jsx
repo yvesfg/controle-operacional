@@ -5750,9 +5750,21 @@ function mapearColuna(n){
         detalheSecCteComp, setDetalheSecCteComp,
         detalheSecDcc, setDetalheSecDcc,
         detalheSecMinDsc, setDetalheSecMinDsc,
-        detalheTemDcc,
+        detalheTemDcc, setDetalheTemDcc,
         salvandoMins, setSalvandoMins,
         isAdmin,
+        theme,
+        perms,
+        setEditStep,
+        diariasData,
+        deletarRegistro,
+        salvarMinutasDetalhe,
+        acompDias, setAcompDias,
+        usuarioLogado,
+        getConexao, supaFetch,
+        ocorrLoading,
+        novaOcorrTipo, setNovaOcorrTipo,
+        adicionarOcorrencia,
       }} />
       )}
       {/* ═══ USUARIO MODAL ═══ */}

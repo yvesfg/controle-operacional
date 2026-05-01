@@ -24,12 +24,42 @@ export default function ModalDetalhe({ ctx }) {
     detalheSecCteComp, setDetalheSecCteComp,
     detalheSecDcc, setDetalheSecDcc,
     detalheSecMinDsc, setDetalheSecMinDsc,
-    detalheTemDcc,
+    detalheTemDcc, setDetalheTemDcc,
     salvandoMins, setSalvandoMins,
     isAdmin,
+    theme,
+    perms,
+    setEditStep,
+    diariasData,
+    deletarRegistro,
+    salvarMinutasDetalhe,
+    acompDias, setAcompDias,
+    usuarioLogado,
+    getConexao, supaFetch,
+    ocorrLoading,
+    novaOcorrTipo, setNovaOcorrTipo,
+    adicionarOcorrencia,
   } = ctx;
 
   if (!detalheDT) return null;
+
+  // ── Variáveis locais computadas a partir do contexto ──
+  const r = detalheDT;
+  const canEditDetalhe = isAdmin || perms.editar;
+  const canOcorr = isAdmin || perms.ocorrencias;
+  const steps = [
+    {ico:"📦",lbl:"Carregamento",val:r.data_carr,  c:t.ouro,  done:!!r.data_carr},
+    {ico:"📍",lbl:"Em Trânsito",  val:r.origem&&r.destino?`${r.origem}→${r.destino}`:r.origem||r.destino||null, c:t.azulLt,done:!!r.data_carr},
+    {ico:"📅",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
+    {ico:"🏁",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
+  ];
+  const tipoColors = {info:t.azulLt, alerta:t.danger, status:t.verde};
+  const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
+  const ocorrSinteticas = [
+    ...(r.obs_chegada  ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.data_obs_chegada||r.chegada||""}]  : []),
+    ...(r.obs_descarga ? [{tipo:"status", texto:r.obs_descarga, _origem:"descarga", usuario:"—", data_hora:r.data_obs_descarga||r.data_desc||""}] : []),
+  ];
+  const ocorrAll = [...ocorrSinteticas, ...ocorrencias];
   return (
 
           <div className="co-dt-overlay" onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
