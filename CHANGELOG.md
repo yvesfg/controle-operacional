@@ -1,3 +1,23 @@
+## 2026-05-01 — Modularização de App.jsx (Plano 2026-04-30)
+
+**Solicitado:** Quebrar App.jsx (9.053 linhas) em módulos focados sem mover lógica de negócio.
+
+**Implementado — 11 arquivos criados:**
+- `src/views/MotoristasView.jsx` — lista e cards de motoristas
+- `src/views/DashboardView.jsx` — painel principal com gráficos
+- `src/views/DiariasView.jsx` — controle de diárias e extrato
+- `src/views/DescargaView.jsx` — controle de descargas e Rodorrica
+- `src/views/AdminView.jsx` — painel administrativo completo
+- `src/modals/ModalEdit.jsx` — modal de edição de registros
+- `src/modals/ModalMotorista.jsx` — modal de cadastro de motorista
+- `src/modals/ModalDetalhe.jsx` — modal de detalhe + ocorrências
+- `src/modals/ModalUsuario.jsx` — modal de usuários e e-mail boas-vindas
+- `src/modals/ModalConfigDB.jsx` — modal de config do banco + prefixos
+
+**Resultado:** App.jsx reduzido de 9.053 → 6.182 linhas (−32%). Build: ✓ 0 erros.
+
+---
+
 ## 2026-04-20 — Passo 4: Redesign Diárias
 
 **Solicitado:** Redesign da view Diárias seguindo documentação.
