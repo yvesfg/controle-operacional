@@ -3795,6 +3795,7 @@ export default function App() {
           extratoFileName, setExtratoFileName,
           extratoFiltro, setExtratoFiltro,
           extratoRows, setExtratoRows,
+          extratoResultado,
         }} />
 
         {/* ═══ DESCARGA ═══ */}

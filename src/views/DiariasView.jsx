@@ -28,6 +28,7 @@ export default function DiariasView({ ctx }) {
     extratoFileName, setExtratoFileName,
     extratoFiltro, setExtratoFiltro,
     extratoRows, setExtratoRows,
+    extratoResultado,
   } = ctx;
 
   if (activeTab !== "diarias") return null;
