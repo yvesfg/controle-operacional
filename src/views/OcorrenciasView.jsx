@@ -2,6 +2,7 @@
  * OcorrenciasView.jsx
  */
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import OcorrModal from "../components/OcorrModal.jsx";
 
 const Ico = ({ size=16, color="currentColor", sw=1.8, children, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -146,246 +147,15 @@ function StatusBadge({ status }) {
 }
 
 // ── Modal Nova Ocorrência (melhorado) ────────────────────────────────────────
-function NovaOcorrModal({ dados, onClose, onSalvar, initialEntry=null }) {
-  const [busca, setBusca]     = useState("");
-  const [selecionado, setSel] = useState(initialEntry);
-  const [texto, setTexto]     = useState("");
-  const [tipo, setTipo]       = useState("info");
-  const [saving, setSaving]   = useState(false);
-  const inputRef = useRef(null);
-
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 80); }, []);
-
-  // Load existing occurrences from localStorage when entry selected
-  const ocorrExistentes = useMemo(() => {
-    if (!selecionado) return [];
-    try {
-      const v = localStorage.getItem(`co_ocorr_${selecionado.dt}`);
-      if (!v) return [];
-      const arr = JSON.parse(v);
-      return Array.isArray(arr) ? arr.slice().reverse() : [];
-    } catch { return []; }
-  }, [selecionado]);
-
-  const resultados = useMemo(() => {
-    if (!busca.trim()) return [];
-    const q = busca.trim().toUpperCase();
-    return dados.filter(r =>
-      String(r.dt||"").toUpperCase().includes(q) ||
-      (r.nome||"").toUpperCase().includes(q) ||
-      (r.placa||"").toUpperCase().includes(q)
-    ).slice(0,8);
-  }, [busca, dados]);
-
-  const TIPOS = [
-    { k:"info",   label:"Info",   color:"var(--cyan,#06b6d4)",   icon:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></> },
-    { k:"alerta", label:"Alerta", color:"var(--orange,#f97316)", icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></> },
-    { k:"status", label:"Status", color:"var(--green,#22c55e)",  icon:<><polyline points="20 6 9 17 4 12"/></> },
-    { k:"sobra",  label:"Sobra",  color:"#a855f7",               icon:<><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="2"/></> },
-  ];
-
-  const handleSalvar = async () => {
-    if (!selecionado || !texto.trim() || saving) return;
-    setSaving(true);
-    try { await onSalvar(selecionado.dt, texto.trim(), tipo); onClose(); }
-    finally { setSaving(false); }
-  };
-
-  const tipoColor = TIPOS.find(tp=>tp.k===tipo)?.color || "var(--accent)";
-
-  return (
-    <div
-      onClick={e => { if (e.target===e.currentTarget) onClose(); }}
-      style={{position:"fixed",inset:0,zIndex:1200,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}}
-    >
-      <div style={{background:"var(--surface,var(--card))",border:"1px solid var(--border)",borderRadius:18,width:"100%",maxWidth:540,maxHeight:"90vh",boxShadow:"0 32px 64px rgba(0,0,0,0.4)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-
-        {/* Header */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:"1px solid var(--border)",flexShrink:0}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:16,color:"var(--text)"}}>
-            Nova Ocorrência
-          </div>
-          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text3)",padding:6,borderRadius:8}}>
-            <Ico size={18} color="var(--text3)"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Ico>
-          </button>
-        </div>
-
-        <div style={{flex:1,overflowY:"auto",padding:"16px 20px",display:"flex",flexDirection:"column",gap:14}}>
-
-          {/* Step 1: busca */}
-          {!selecionado ? (
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>
-                Buscar entrada (DT, nome ou placa)
-              </label>
-              <input ref={inputRef} value={busca} onChange={e=>setBusca(e.target.value)}
-                placeholder="Ex: 12345, João Silva ou ABC1234..."
-                style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"11px 14px",borderRadius:10,border:"1.5px solid var(--border)",background:"var(--card)",color:"var(--text)",outline:"none"}}
-              />
-              {resultados.length>0 && (
-                <div style={{border:"1px solid var(--border)",borderRadius:12,overflow:"hidden",maxHeight:280,overflowY:"auto"}}>
-                  {resultados.map((r,i) => (
-                    <div key={i} onClick={()=>{setSel(r);setBusca("");}}
-                      style={{padding:"11px 14px",cursor:"pointer",borderBottom:i<resultados.length-1?"1px solid var(--border)":"none",background:"var(--card)",transition:"background 0.1s",display:"flex",alignItems:"center",gap:12}}
-                      onMouseEnter={e=>e.currentTarget.style.background="var(--card2)"}
-                      onMouseLeave={e=>e.currentTarget.style.background="var(--card)"}
-                    >
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontWeight:700,fontSize:13,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                        <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:2}}>
-                          DT {r.dt}{r.placa&&<span style={{marginLeft:8}}>{r.placa}</span>}{r.origem&&<span style={{marginLeft:8}}>{r.origem}</span>}
-                        </div>
-                      </div>
-                      <StatusBadge status={r.status}/>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {busca.trim().length>0 && resultados.length===0 && (
-                <div style={{fontSize:12,color:"var(--text3)",textAlign:"center",padding:"16px 0"}}>Nenhuma entrada encontrada</div>
-              )}
-            </div>
-          ) : (
-            <>
-              {/* Entrada selecionada — painel de contexto */}
-              <div style={{background:"var(--card2)",border:"1px solid var(--border)",borderRadius:12,overflow:"hidden"}}>
-                {/* Header da entrada */}
-                <div style={{padding:"12px 14px",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8}}>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:"var(--text)",fontFamily:"'Space Grotesk',sans-serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selecionado.nome||"—"}</div>
-                    <div style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:"var(--text3)",marginTop:3}}>
-                      DT {selecionado.dt}
-                      {selecionado.placa && <span style={{marginLeft:8}}>{selecionado.placa}</span>}
-                    </div>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                    <StatusBadge status={selecionado.status}/>
-                    {!initialEntry && (
-                      <button onClick={()=>setSel(null)}
-                        style={{fontSize:10,padding:"3px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>
-                        Trocar
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {/* Dados da viagem */}
-                <div style={{padding:"8px 14px 12px",borderTop:"1px solid var(--border)",display:"flex",flexDirection:"column",gap:6}}>
-                  {(selecionado.origem||selecionado.destino||selecionado.cidade) && (
-                    <div style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"var(--text2)"}}>
-                      <Ico size={12} color="var(--text3)"><circle cx="12" cy="12" r="10"/></Ico>
-                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"var(--text3)"}}>ROTA</span>
-                      <span>{selecionado.origem||"—"}</span>
-                      <Ico size={10} color="var(--text3)"><polyline points="9 18 15 12 9 6"/></Ico>
-                      <span>{selecionado.destino||selecionado.cidade||"—"}</span>
-                    </div>
-                  )}
-                  <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                    {selecionado.data_carr && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)"}}><span style={{marginRight:3}}>CARR.</span><span style={{color:"var(--text2)"}}>{selecionado.data_carr}</span></span>}
-                    {selecionado.data_agenda && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)"}}><span style={{marginRight:3}}>AGENDA</span><span style={{color:"var(--text2)"}}>{selecionado.data_agenda}</span></span>}
-                    {selecionado.data_desc && <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--text3)"}}><span style={{marginRight:3}}>DESC.</span><span style={{color:"var(--green,#22c55e)"}}>{selecionado.data_desc}</span></span>}
-                  </div>
-                  {selecionado.obs_chegada && (
-                    <div style={{background:"rgba(6,182,212,.07)",borderRadius:7,padding:"6px 10px",borderLeft:"2px solid var(--cyan,#06b6d4)"}}>
-                      <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--cyan,#06b6d4)",marginBottom:3,fontWeight:700}}>Obs Chegada</div>
-                      <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>{selecionado.obs_chegada.length>150?selecionado.obs_chegada.slice(0,150)+"…":selecionado.obs_chegada}</div>
-                    </div>
-                  )}
-                  {selecionado.obs_descarga && (
-                    <div style={{background:"rgba(34,197,94,.07)",borderRadius:7,padding:"6px 10px",borderLeft:"2px solid var(--green,#22c55e)"}}>
-                      <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--green,#22c55e)",marginBottom:3,fontWeight:700}}>Obs Descarga</div>
-                      <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>{selecionado.obs_descarga.length>150?selecionado.obs_descarga.slice(0,150)+"…":selecionado.obs_descarga}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Ocorrencias existentes */}
-              {ocorrExistentes.length > 0 && (
-                <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                  <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)",marginBottom:2}}>
-                    Ocorrências anteriores ({ocorrExistentes.length})
-                  </div>
-                  <div style={{maxHeight:130,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>
-                    {ocorrExistentes.map((oc,i) => {
-                      const tpColor = oc.tipo==="alerta"?"var(--orange,#f97316)":oc.tipo==="status"?"var(--green,#22c55e)":"var(--cyan,#06b6d4)";
-                      const dt = new Date(oc.data_hora);
-                      const dtFmt = isNaN(dt)?oc.data_hora:dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
-                      return (
-                        <div key={i} style={{padding:"7px 10px",borderRadius:8,background:"var(--card)",border:`1px solid var(--border)`,borderLeft:`2px solid ${tpColor}`,display:"flex",alignItems:"flex-start",gap:8}}>
-                          <span style={{fontSize:8,fontFamily:"'DM Mono',monospace",fontWeight:700,textTransform:"uppercase",color:tpColor,whiteSpace:"nowrap",marginTop:2,letterSpacing:"0.06em"}}>{oc.tipo}</span>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>{oc.texto}</div>
-                            <div style={{fontSize:9,color:"var(--text3)",marginTop:3,fontFamily:"'DM Mono',monospace"}}>{dtFmt}{oc.usuario&&<span style={{marginLeft:6}}>· {oc.usuario}</span>}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Tipo */}
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Tipo da Ocorrência</label>
-                <div style={{display:"flex",gap:6}}>
-                  {TIPOS.map(tp => (
-                    <button key={tp.k} onClick={()=>setTipo(tp.k)} style={{
-                      flex:1,padding:"8px 4px",fontSize:10,fontWeight:700,
-                      fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",textTransform:"uppercase",
-                      borderRadius:9,cursor:"pointer",
-                      border:`1.5px solid ${tipo===tp.k?tp.color:"var(--border)"}`,
-                      background:tipo===tp.k?tp.color+"18":"var(--card)",
-                      color:tipo===tp.k?tp.color:"var(--text2)",transition:"all 0.12s",
-                      display:"flex",flexDirection:"column",alignItems:"center",gap:4,
-                    }}>
-                      <Ico size={14} color={tipo===tp.k?tp.color:"var(--text2)"} sw={2}>{tp.icon}</Ico>
-                      {tp.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Texto */}
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                <label style={{fontSize:10,fontFamily:"'DM Mono',monospace",letterSpacing:"0.08em",textTransform:"uppercase",color:"var(--text3)"}}>Descrição</label>
-                <textarea autoFocus value={texto} onChange={e=>setTexto(e.target.value)} rows={3}
-                  placeholder="Descreva a ocorrência..."
-                  style={{width:"100%",boxSizing:"border-box",fontSize:13,padding:"11px 14px",borderRadius:10,border:`1.5px solid ${texto.trim()?tipoColor:"var(--border)"}`,background:"var(--card)",color:"var(--text)",resize:"vertical",outline:"none",lineHeight:1.5,fontFamily:"inherit",transition:"border-color .2s"}}
-                  onKeyDown={e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))handleSalvar();}}
-                />
-                <div style={{fontSize:10,color:"var(--text3)",textAlign:"right"}}>Ctrl+Enter para salvar</div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Footer */}
-        {selecionado && (
-          <div style={{padding:"12px 20px",borderTop:"1px solid var(--border)",display:"flex",gap:8,flexShrink:0}}>
-            <button onClick={onClose} style={{flex:1,padding:"10px 0",borderRadius:10,cursor:"pointer",border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",fontSize:13,fontWeight:600}}>
-              Cancelar
-            </button>
-            <button onClick={handleSalvar} disabled={!texto.trim()||saving}
-              style={{flex:2,padding:"10px 0",borderRadius:10,cursor:texto.trim()&&!saving?"pointer":"default",border:"none",background:texto.trim()&&!saving?tipoColor:"var(--border)",color:texto.trim()&&!saving?"#fff":"var(--text3)",fontSize:13,fontWeight:700,transition:"all 0.12s"}}>
-              {saving?"Salvando…":"Registrar Ocorrência"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, setFiltroOcorr, abrirDetalhe, t, isMobile, motoristas=[], onSalvarOcorrencia }) {
+export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, setFiltroOcorr, abrirDetalhe, t, isMobile, motoristas=[], onSalvarOcorrencia, css={} }) {
   const [filtroIni, setFiltroIni] = useState("");
   const [filtroFim, setFiltroFim] = useState("");
   const [busca, setBusca] = useState(""); // busca por DT, motorista, placa
   const [ocorrCols, setOcorrCols] = useState(2);
-  const [novaOcorrOpen, setNovaOcorrOpen]     = useState(false);
-  const [novaOcorrPreset, setNovaOcorrPreset] = useState(null);
+  const [ocorrModalState, setOcorrModalState] = useState({open:false, dt:null, record:null});
 
-  const openModal = (entry=null) => { setNovaOcorrPreset(entry); setNovaOcorrOpen(true); };
-  const closeModal = () => { setNovaOcorrOpen(false); setNovaOcorrPreset(null); };
+  const openModal = (entry=null) => { setOcorrModalState({open:true, dt:entry?.dt||null, record:entry}); };
+  const closeModal = () => { setOcorrModalState({open:false, dt:null, record:null}); };
 
   const BADGE_COLORS = {
     SGS:              "var(--yellow,#eab308)",
@@ -502,8 +272,17 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
   return (
     <div style={{padding:isMobile?"12px":"16px 24px",width:"100%",boxSizing:"border-box"}}>
 
-      {novaOcorrOpen&&onSalvarOcorrencia&&(
-        <NovaOcorrModal dados={dados} onClose={closeModal} onSalvar={onSalvarOcorrencia} initialEntry={novaOcorrPreset}/>
+      {ocorrModalState.open&&onSalvarOcorrencia&&(
+        <OcorrModal
+          open={ocorrModalState.open}
+          onClose={closeModal}
+          onSave={({tipo,texto,nfs,localizacao})=>{
+            onSalvarOcorrencia(ocorrModalState.dt, tipo, texto, nfs, localizacao);
+            closeModal();
+          }}
+          dtRecord={ocorrModalState.record}
+          t={t} hIco={null} css={css}
+        />
       )}
 
       {/* Header */}

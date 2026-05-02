@@ -836,7 +836,7 @@ export default function App() {
     showToast("✅ Ocorrência registrada","ok");
   }, [detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
   // Salvar ocorrencia a partir de modal externo (OcorrenciasView)
-  const salvarOcorrenciaExterna = useCallback(async (dt, texto, tipo) => {
+  const salvarOcorrenciaExterna = useCallback(async (dt, tipo, texto, nfs, localizacao) => {
     if (!dt || !texto.trim()) return;
     const nova = {
       dt,
@@ -3861,6 +3861,7 @@ export default function App() {
             isMobile={isMobile}
             motoristas={motoristas}
             onSalvarOcorrencia={salvarOcorrenciaExterna}
+            css={css}
           />
         )}
         {/* ═══ MOTORISTAS ═══ */}
