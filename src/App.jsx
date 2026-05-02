@@ -31,6 +31,7 @@ import ModalDetalhe    from './modals/ModalDetalhe.jsx';
 import ModalUsuario    from './modals/ModalUsuario.jsx';
 import ModalConfigDB   from './modals/ModalConfigDB.jsx';
 import RelatoriosView  from './relatorios/RelatoriosView.jsx';
+import OcorrModal from './components/OcorrModal.jsx';
 
 
 // ══════════════════════════════════════════════
@@ -164,8 +165,11 @@ export default function App() {
   const [novaOcorrTipo, setNovaOcorrTipo] = useState("info"); // info | alerta | status
   const [ocorrLoading, setOcorrLoading] = useState(false);
   const [ocorrListExpanded, setOcorrListExpanded] = useState(false); // expande lista no modal detalhe
-  // Mini-modal de ocorrências na tela de busca (planilha)
+  // Modal de nova ocorrência (OcorrModal unificado)
+  const [ocorrModalOpen, setOcorrModalOpen] = useState(false);
   const [ocorrModalDT, setOcorrModalDT] = useState(null);
+  const [ocorrModalRecord, setOcorrModalRecord] = useState(null);
+  // (legacy mini-modal states mantidos para compatibilidade)
   const [ocorrModalList, setOcorrModalList] = useState([]);
   const [ocorrModalLoading, setOcorrModalLoading] = useState(false);
   const [ocorrModalExpanded, setOcorrModalExpanded] = useState(false);
@@ -802,19 +806,26 @@ export default function App() {
     }
   }, [getConexao]);
 
-  const adicionarOcorrencia = useCallback(async () => {
-    if (!novaOcorr.trim() || !detalheDT) return;
+  const adicionarOcorrencia = useCallback(async ({dt, tipo, texto, nfs, localizacao}) => {
+    if (!texto || !texto.trim() || !dt) return;
     const nova = {
-      dt: detalheDT.dt,
+      dt,
       data_hora: new Date().toISOString(),
-      texto: novaOcorr.trim(),
-      tipo: novaOcorrTipo,
+      texto: texto.trim(),
+      tipo: tipo || "info",
       usuario: usuarioLogado || perfil || "sistema",
+      ...(nfs ? { nfs } : {}),
+      ...(localizacao ? { localizacao } : {}),
     };
-    const updated = [...ocorrencias, nova];
-    setOcorrencias(updated);
-    saveJSON(`co_ocorr_${detalheDT.dt}`, updated);
-    setNovaOcorr("");
+    // Se for o DT aberto no modal de detalhe, atualiza a lista local
+    if (detalheDT && detalheDT.dt === dt) {
+      const updated = [...ocorrencias, nova];
+      setOcorrencias(updated);
+      saveJSON(`co_ocorr_${dt}`, updated);
+    } else {
+      const existing = loadJSON(`co_ocorr_${dt}`, []);
+      saveJSON(`co_ocorr_${dt}`, [...existing, nova]);
+    }
     // Salvar no Supabase
     const conn = getConexao();
     if (conn) {
@@ -823,7 +834,7 @@ export default function App() {
       } catch { /* silencioso */ }
     }
     showToast("✅ Ocorrência registrada","ok");
-  }, [novaOcorr, novaOcorrTipo, detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
+  }, [detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
   // Salvar ocorrencia a partir de modal externo (OcorrenciasView)
   const salvarOcorrenciaExterna = useCallback(async (dt, texto, tipo) => {
     if (!dt || !texto.trim()) return;
@@ -845,29 +856,12 @@ export default function App() {
     showToast("\u2705 Ocorr\u00eancia registrada", "ok");
   }, [getConexao, usuarioLogado, perfil, showToast]);
 
-  // Abre mini-modal de ocorrências a partir da tela de busca (planilha)
-  const abrirOcorrModal = useCallback(async (reg) => {
-    setOcorrModalDT(reg);
-    setOcorrModalList([]);
-    setOcorrModalNova("");
-    setOcorrModalTipo("info");
-    setOcorrModalExpanded(false);
-    const local = loadJSON(`co_ocorr_${reg.dt}`, []);
-    setOcorrModalList(local);
-    const conn = getConexao();
-    if (conn) {
-      setOcorrModalLoading(true);
-      try {
-        const data = await supaFetch(conn.url, conn.key, "GET",
-          `${TABLE_OCORR}?dt=eq.${encodeURIComponent(reg.dt)}&order=data_hora.asc&select=*`);
-        if (Array.isArray(data)) {
-          setOcorrModalList(data);
-          saveJSON(`co_ocorr_${reg.dt}`, data);
-        }
-      } catch { /* usa local */ }
-      finally { setOcorrModalLoading(false); }
-    }
-  }, [getConexao]);
+  // Abre OcorrModal para nova ocorrência
+  const abrirOcorrModal = (dt, record=null) => {
+    setOcorrModalDT(dt);
+    setOcorrModalRecord(record || DADOS.find(d=>d.dt===dt) || null);
+    setOcorrModalOpen(true);
+  };
 
   const adicionarOcorrenciaModal = useCallback(async () => {
     if (!ocorrModalNova.trim() || !ocorrModalDT) return;
@@ -3628,7 +3622,7 @@ export default function App() {
                   )}
                   {/* ── Botão Ocorrências (visível para todos) ── */}
                   <button
-                    onClick={()=>abrirOcorrModal(buscaResult)}
+                    onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
                     onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(232,130,12,.3)";}}
                     onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
                     style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"#E8820C",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
@@ -5743,7 +5737,7 @@ export default function App() {
                     }} style={{...css.btnOutline,justifyContent:"center",padding:12,fontSize:12}}>
                       {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,16,2)} VER COMPLETO
                     </button>
-                    <button onClick={()=>{abrirOcorrModal(r);setPlanilhaDetalheReg(null);}}
+                    <button onClick={()=>{abrirOcorrModal(r.dt, r);setPlanilhaDetalheReg(null);}}
                       style={{...css.btnDanger,justifyContent:"center",padding:12,fontSize:12}}>
                       {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,t.danger,16,2)} OCORRÊNCIAS
                     </button>
@@ -6089,92 +6083,17 @@ export default function App() {
         </div>
       )}
 
-      {/* ═══ MINI-MODAL OCORRÊNCIAS (Busca / Planilha) ═══ */}
-      {ocorrModalDT && (()=>{
-        const tc = {info:t.azulLt, alerta:t.danger, status:t.verde};
-        const tic = {info:"💬", alerta:"🚨", status:"✅"};
-        const visibles = ocorrModalExpanded ? ocorrModalList : ocorrModalList.slice(0,3);
-        return (
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setOcorrModalDT(null)}>
-            <div style={{background:t.card,borderRadius:16,padding:20,width:"100%",maxWidth:480,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}} onClick={e=>e.stopPropagation()}>
-
-              {/* Header */}
-              <div style={{display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>📌</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>Ocorrências</div>
-                  <div style={{fontSize:10,color:"#E8820C",fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{ocorrModalDT.dt} · {ocorrModalDT.nome||"—"}</div>
-                </div>
-                {ocorrModalLoading && <span style={{fontSize:10,color:t.txt2}}>carregando…</span>}
-                <button onClick={()=>setOcorrModalDT(null)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:18,lineHeight:1,padding:4}}>✕</button>
-              </div>
-
-              {/* Lista */}
-              <div>
-                <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#E8820C",fontWeight:700,marginBottom:8}}>Histórico</div>
-                {ocorrModalList.length === 0 ? (
-                  <div style={{fontSize:11,color:t.txt2,textAlign:"center",padding:"14px 0",borderRadius:8,border:`1px dashed ${t.borda}`}}>Nenhuma ocorrência registrada.</div>
-                ) : (
-                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                    {visibles.map((o,oi)=>(
-                      <div key={oi} style={{display:"flex",gap:9,alignItems:"flex-start"}}>
-                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
-                          <div style={{width:24,height:24,borderRadius:"50%",background:`${tc[o.tipo]||t.azulLt}18`,border:`1.5px solid ${tc[o.tipo]||t.azulLt}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>{tic[o.tipo]||"💬"}</div>
-                          {oi < visibles.length-1 && <div style={{width:1,flex:1,minHeight:10,background:t.borda,margin:"2px 0"}} />}
-                        </div>
-                        <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:3}}>
-                            <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:tc[o.tipo]||t.azulLt}}>{o.tipo||"info"}</span>
-                            <span style={{fontSize:8,color:t.txt2,whiteSpace:"nowrap"}}>{o.usuario||"—"} · {new Date(o.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
-                          </div>
-                          <div style={{fontSize:12,color:t.txt,lineHeight:1.5}}>{o.texto}</div>
-                        </div>
-                      </div>
-                    ))}
-                    {ocorrModalList.length > 3 && (
-                      <button onClick={()=>setOcorrModalExpanded(v=>!v)} style={{fontSize:11,color:"#E8820C",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
-                        {ocorrModalExpanded ? "▲ Ver menos" : `▼ Ver mais (${ocorrModalList.length - 3} ocultas)`}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Adicionar nova ocorrência */}
-              {(isAdmin || perms.ocorrencias) && (
-                <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`}}>
-                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:9}}>＋ Nova Ocorrência</div>
-                  <div style={{display:"flex",gap:6,marginBottom:9}}>
-                    {[{k:"info",l:"Chegada",svg:<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4M12 16h.01"/></>,c:tc.info},{k:"status",l:"Descarga",svg:<><polyline points="20 6 9 17 4 12"/></>,c:tc.status},{k:"alerta",l:"Alerta",svg:<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></>,c:tc.alerta}].map(tp=>{
-                      const ativo=ocorrModalTipo===tp.k;
-                      return (
-                        <button key={tp.k} onClick={()=>setOcorrModalTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
-                          {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
-                          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
-                          <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <textarea
-                    value={ocorrModalNova}
-                    onChange={e=>setOcorrModalNova(e.target.value)}
-                    placeholder="Descreva a ocorrência, atualização ou observação…"
-                    rows={3}
-                    style={{width:"100%",borderRadius:8,border:`1px solid ${t.borda}`,background:t.bg,color:t.txt,fontSize:12,lineHeight:1.5,padding:"8px 10px",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}
-                  />
-                  <button onClick={adicionarOcorrenciaModal} disabled={!ocorrModalNova.trim()}
-                    onMouseEnter={e=>{if(ocorrModalNova.trim()){e.currentTarget.style.background="rgba(232,130,12,.25)";e.currentTarget.style.transform="translateY(-1px)";}}}
-                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.12)";e.currentTarget.style.transform="none";}}
-                    style={{width:"100%",marginTop:8,borderRadius:10,padding:"11px",cursor:ocorrModalNova.trim()?"pointer":"not-allowed",background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.4)",color:"#E8820C",fontWeight:800,fontSize:13,fontFamily:"inherit",textAlign:"center",transition:"all .15s",opacity:ocorrModalNova.trim()?1:.5}}>
-                    💾 Registrar Ocorrência
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      {/* OcorrModal unificado (nova ocorrencia) */}
+      <OcorrModal
+        open={ocorrModalOpen}
+        onClose={()=>setOcorrModalOpen(false)}
+        onSave={({tipo,texto,nfs,localizacao})=>{
+          adicionarOcorrencia({dt:ocorrModalDT, tipo, texto, nfs, localizacao});
+          setOcorrModalOpen(false);
+        }}
+        dtRecord={ocorrModalRecord}
+        t={t} hIco={hIco} css={css}
+      />
 
       <Toast {...toast} />
     </div>

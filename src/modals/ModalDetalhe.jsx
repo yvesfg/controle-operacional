@@ -441,7 +441,7 @@ export default function ModalDetalhe({ ctx }) {
                         rows={3}
                         style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,padding:"8px 10px"}}
                       />
-                      <button onClick={adicionarOcorrencia} disabled={!novaOcorr.trim()} style={{...css.btnGreen,width:"100%",justifyContent:"center",marginTop:7,opacity:novaOcorr.trim()?1:.5}}>
+                      <button onClick={()=>{adicionarOcorrencia({dt:r.dt, tipo:novaOcorrTipo, texto:novaOcorr});setNovaOcorr("");}} disabled={!novaOcorr.trim()} style={{...css.btnGreen,width:"100%",justifyContent:"center",marginTop:7,opacity:novaOcorr.trim()?1:.5}}>
                         💾 Registrar Ocorrência
                       </button>
                     </div>
