@@ -1,4 +1,5 @@
 import React from "react";
+import OcorrModal from "../components/OcorrModal.jsx";
 
 export default function ModalDetalhe({ ctx }) {
   const {
@@ -10,7 +11,6 @@ export default function ModalDetalhe({ ctx }) {
     showToast,
     setFormData, setEditIdx,
     ocorrencias,
-    novaOcorr, setNovaOcorr,
     acompImagens, setAcompImagens,
     acompTexto, setAcompTexto,
     excluirConfirm, setExcluirConfirm,
@@ -37,11 +37,13 @@ export default function ModalDetalhe({ ctx }) {
     usuarioLogado,
     getConexao, supaFetch,
     ocorrLoading,
-    novaOcorrTipo, setNovaOcorrTipo,
     adicionarOcorrencia,
+    abrirOcorrModal,
   } = ctx;
 
   if (!detalheDT) return null;
+
+  const [ocorrModalLocalOpen, setOcorrModalLocalOpen] = React.useState(false);
 
   // ── Variáveis locais computadas a partir do contexto ──
   const r = detalheDT;
@@ -53,7 +55,7 @@ export default function ModalDetalhe({ ctx }) {
     {ico:"📅",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
     {ico:"🏁",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
   ];
-  const tipoColors = {info:t.azulLt, alerta:t.danger, status:t.verde};
+  const tipoColors = {info:"#1677ff", alerta:t.danger, status:t.verde, falta:"#f6465d", avaria:"#ff9800", dev_total:"#9c27b0", dev_parcial:"#e91e63", desacordo:"#f0b90b", rod:"#ef5350", sobra:"#00e096"};
   const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
   const ocorrSinteticas = [
     ...(r.obs_chegada  ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.data_obs_chegada||r.chegada||""}]  : []),
@@ -419,32 +421,24 @@ export default function ModalDetalhe({ ctx }) {
 
                   {/* Adicionar nova ocorrência */}
                   {canOcorr && (
-                    <div style={{marginTop:10,background:t.card2,borderRadius:10,padding:10,border:`1px solid ${t.borda}`}}>
-                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:9}}>＋ Nova Ocorrência</div>
-                      {/* Tipo */}
-                      <div style={{display:"flex",gap:6,marginBottom:9}}>
-                        {[{k:"info",l:"Chegada",svg:<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4M12 16h.01"/></>,c:tipoColors.info},{k:"status",l:"Descarga",svg:<><polyline points="20 6 9 17 4 12"/></>,c:tipoColors.status},{k:"alerta",l:"Alerta",svg:<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></>,c:tipoColors.alerta}].map(tp=>{
-                          const ativo=novaOcorrTipo===tp.k;
-                          return (
-                            <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
-                              {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
-                              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
-                              <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <textarea
-                        value={novaOcorr}
-                        onChange={e=>setNovaOcorr(e.target.value)}
-                        placeholder="Descreva a ocorrência, atualização ou observação…"
-                        rows={3}
-                        style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,padding:"8px 10px"}}
-                      />
-                      <button onClick={()=>{adicionarOcorrencia({dt:r.dt, tipo:novaOcorrTipo, texto:novaOcorr});setNovaOcorr("");}} disabled={!novaOcorr.trim()} style={{...css.btnGreen,width:"100%",justifyContent:"center",marginTop:7,opacity:novaOcorr.trim()?1:.5}}>
-                        💾 Registrar Ocorrência
+                    <>
+                      <button
+                        onClick={()=>setOcorrModalLocalOpen(true)}
+                        style={{width:"100%",padding:"9px 14px",borderRadius:9,border:`1.5px dashed ${t.borda}`,background:"transparent",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"inherit",marginTop:8}}
+                      >
+                        + Nova Ocorrência
                       </button>
-                    </div>
+                      <OcorrModal
+                        open={ocorrModalLocalOpen}
+                        onClose={()=>setOcorrModalLocalOpen(false)}
+                        onSave={({tipo,texto,nfs,localizacao})=>{
+                          adicionarOcorrencia({dt:r?.dt, tipo, texto, nfs, localizacao});
+                          setOcorrModalLocalOpen(false);
+                        }}
+                        dtRecord={r}
+                        t={t} hIco={hIco} css={css}
+                      />
+                    </>
                   )}
                 </div>
               </div>{/* fim co-dt-right */}

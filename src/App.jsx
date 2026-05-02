@@ -4208,7 +4208,6 @@ export default function App() {
         showToast,
         setFormData, setEditIdx,
         ocorrencias,
-        novaOcorr, setNovaOcorr,
         acompImagens, setAcompImagens,
         acompTexto, setAcompTexto,
         excluirConfirm, setExcluirConfirm,
@@ -4235,8 +4234,8 @@ export default function App() {
         usuarioLogado,
         getConexao, supaFetch,
         ocorrLoading,
-        novaOcorrTipo, setNovaOcorrTipo,
         adicionarOcorrencia,
+        abrirOcorrModal,
       }} />
       )}
       <ModalUsuario ctx={{
