@@ -1495,7 +1495,7 @@ export default function App() {
     "dt","nome","cpf","placa","placa2","placa3","vinculo","origem","destino",
     "data_carr","data_agenda","status","dias",
     "vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg","vl_cte_comp",
-    "cte","mdf","nf","mat","ro","ro_hora","cliente","sgs",
+    "cte","mdf","nf","mat","ro","ro_hora","ro_status","cliente","sgs",
     "chegada","obs_chegada","data_obs_chegada","desc_aguardando","data_desc","obs_descarga","data_obs_descarga","informou_analista","data_manifesto","gerenc","forms","updated_at",
     "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
     "obs","sinistro","ocorrencias"

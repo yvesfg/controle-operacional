@@ -142,7 +142,7 @@ export default function ModalDetalhe({ ctx }) {
                       {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
                       ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
                       {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"MAT",v:r.mat},
-                      {l:"RO",v:r.ro},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
+                      {l:"RO",v:r.ro},{l:"Status RO",v:r.ro_status},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
                       {l:"ID (Shipmente)",v:r.id_doc},
                     ].filter(f=>f.v).map((f,fi)=>(
                       <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
