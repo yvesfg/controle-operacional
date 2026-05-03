@@ -5563,11 +5563,14 @@ export default function App() {
         const statusCor = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.danger;
         const statusTxt = r.data_desc ? "DESCARREGADO" : r.data_agenda ? "AGUARDANDO DESCARGA" : "SEM AGENDA";
         const statusIco = r.data_desc ? <><polyline points="20 6 9 17 4 12"/></> : r.data_agenda ? <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></> : <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>;
+        // Grid responsivo: desktop 3 colunas, resto 2
         const vw = window.innerWidth;
         const isDesk = vw >= 900;
+        const gridCols = isDesk ? "1fr 1fr 1fr" : "1fr 1fr";
 
+        // Seção divisória — mesmo padrão que css.secTitle
         const Secao = ({ico, label}) => (
-          <div style={{...css.secTitle, margin:"0 0 6px"}}>
+          <div style={{...css.secTitle, margin:"4px 0 6px"}}>
             {hIco(ico, t.ouro, 11)} {label}
             <span style={{flex:1, height:1, background:t.borda, marginLeft:4}} />
           </div>
@@ -5576,177 +5579,173 @@ export default function App() {
         return (
           <div style={{...css.overlay, alignItems:"center", backdropFilter:"blur(12px)", padding: isDesk?"24px":"12px"}}
                onClick={()=>setPlanilhaDetalheReg(null)}>
-            <div style={{...css.modal, borderRadius:20, maxWidth: isDesk?880:520, maxHeight:"calc(100vh - 48px)", animation:"fadeIn .2s ease"}}
+            <div style={{...css.modal, borderRadius:20, maxWidth: isDesk?620:520, maxHeight:"calc(100vh - 48px)", animation:"fadeIn .2s ease"}}
                  onClick={e=>e.stopPropagation()}>
 
-              {/* HEADER */}
-              <div style={{padding:"11px 16px 9px", display:"flex", alignItems:"center", gap:10, borderBottom:`1px solid ${t.borda}`, flexShrink:0}}>
-                <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 4px 14px rgba(240,185,11,.3)`}}>
-                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,17,2)}
+              {/* ══ CABEÇALHO — padrão do Edit Modal ══ */}
+              <div style={{padding:"14px 16px 10px", display:"flex", alignItems:"center", gap:10, borderBottom:`1px solid ${t.borda}`, flexShrink:0}}>
+                <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 4px 14px rgba(240,185,11,.3)`}}>
+                  {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,18,2)}
                 </div>
                 <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:17, letterSpacing:2, color:t.txt, lineHeight:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                  <div style={{fontSize:9, color:t.txt2, fontWeight:600, letterSpacing:1.2, marginTop:3, display:"flex", alignItems:"center", gap:5, flexWrap:"wrap"}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:18, letterSpacing:2, color:t.txt, lineHeight:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
+                  <div style={{fontSize:9, color:t.txt2, fontWeight:600, letterSpacing:1.5, marginTop:2, display:"flex", alignItems:"center", gap:6}}>
                     <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>DT {r.dt}</span>
                     <span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:4,padding:"1px 6px",color:t.verde,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{r.placa||"—"}</span>
                     <span style={{...css.badge(statusCor,`rgba(0,0,0,0)`,`${statusCor}44`)}}>{statusTxt}</span>
                   </div>
                 </div>
-                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:34,height:34,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                <button onClick={()=>setPlanilhaDetalheReg(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
               </div>
 
-              {/* BODY — 2 colunas no desktop */}
-              <div style={{flex:1, overflowY:"auto", padding:"14px 16px", display:"grid", gridTemplateColumns: isDesk?"2fr 1fr":"1fr", gap:16, alignItems:"start"}}>
+              {/* ══ CONTEÚDO ══ */}
+              <div style={{flex:1, overflowY:"auto", padding:16, display:"flex", flexDirection:"column", gap:14}}>
 
-                {/* COL ESQUERDA: Status cards + Financeiro */}
-                <div style={{display:"flex", flexDirection:"column", gap:12}}>
-
-                  {/* Cards Descarga + Diárias */}
-                  <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
-                    <div
-                      onClick={()=>{
-                        setDescargaNavDT(r.dt);
-                        if(r.data_agenda){const _d=r.data_agenda.split("/");if(_d.length===3)setDscData(`${_d[2]}-${_d[1].padStart(2,"0")}-${_d[0].padStart(2,"0")}`);}
-                        setPlanilhaDetalheReg(null);
-                        setActiveTab("descarga");
-                      }}
-                      style={{...css.kpi(statusCor), padding:"10px 12px", display:"flex", alignItems:"center", gap:8, textAlign:"left", cursor:"pointer", userSelect:"none"}}
-                      onMouseEnter={e=>e.currentTarget.style.opacity=".8"}
-                      onMouseLeave={e=>e.currentTarget.style.opacity="1"}
-                      title="Ver na aba Descarga"
-                    >
-                      {hIco(statusIco, statusCor, 16, 2)}
-                      <div style={{minWidth:0}}>
-                        <div style={{fontSize:8, textTransform:"uppercase", letterSpacing:1.8, color:statusCor, fontWeight:700}}>DESCARGA</div>
-                        <div style={{fontSize:9, textTransform:"uppercase", letterSpacing:1, color:statusCor, fontWeight:600, opacity:.8, marginTop:1}}>{statusTxt}</div>
-                        {(r.data_desc||r.data_agenda) && <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:14, letterSpacing:1.5, color:statusCor, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.data_desc||r.data_agenda}</div>}
-                      </div>
-                      <div style={{marginLeft:"auto",fontSize:12,color:statusCor,opacity:.4}}>›</div>
+                {/* Status bar — DESCARGA + DIÁRIAS clicáveis */}
+                <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
+                  {/* Card DESCARGA */}
+                  <div
+                    onClick={()=>{
+                      setDescargaNavDT(r.dt);
+                      if(r.data_agenda){const _d=r.data_agenda.split("/");if(_d.length===3)setDscData(`${_d[2]}-${_d[1].padStart(2,"0")}-${_d[0].padStart(2,"0")}`);}
+                      setPlanilhaDetalheReg(null);
+                      setActiveTab("descarga");
+                    }}
+                    style={{...css.kpi(statusCor), padding:"10px 12px", display:"flex", alignItems:"center", gap:8, textAlign:"left", cursor:"pointer", userSelect:"none"}}
+                    onMouseEnter={e=>e.currentTarget.style.opacity=".8"}
+                    onMouseLeave={e=>e.currentTarget.style.opacity="1"}
+                    title="Ver na aba Descarga"
+                  >
+                    {hIco(statusIco, statusCor, 16, 2)}
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:8, textTransform:"uppercase", letterSpacing:1.8, color:statusCor, fontWeight:700}}>DESCARGA</div>
+                      <div style={{fontSize:9, textTransform:"uppercase", letterSpacing:1, color:statusCor, fontWeight:600, opacity:.8, marginTop:1}}>{statusTxt}</div>
+                      {(r.data_desc||r.data_agenda) && <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:14, letterSpacing:1.5, color:statusCor, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.data_desc||r.data_agenda}</div>}
                     </div>
-
-                    {(()=>{
-                      const _devida = parseFloat(r.diaria_prev)||0;
-                      const _paga   = parseFloat(r.diaria_pg)||0;
-                      const _temD   = _devida > 0;
-                      const _corD   = _temD ? (_paga >= _devida ? t.verde : t.danger) : t.txt2;
-                      const _icoD   = _temD
-                        ? (_paga >= _devida
-                          ? <><polyline points="20 6 9 17 4 12"/></>
-                          : <><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>)
-                        : <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>;
-                      return (
-                        <div
-                          onClick={()=>{setDiariaNavDT(r.dt);setDFiltro("todos");setPlanilhaDetalheReg(null);setActiveTab("diarias");}}
-                          style={{...css.kpi(_corD), padding:"10px 12px", display:"flex", alignItems:"center", gap:8, textAlign:"left", cursor:"pointer", userSelect:"none"}}
-                          onMouseEnter={e=>e.currentTarget.style.opacity=".8"}
-                          onMouseLeave={e=>e.currentTarget.style.opacity="1"}
-                          title="Ver na aba Diárias"
-                        >
-                          {hIco(_icoD, _corD, 16, 2)}
-                          <div style={{minWidth:0}}>
-                            <div style={{fontSize:8, textTransform:"uppercase", letterSpacing:1.8, color:_corD, fontWeight:700}}>DIÁRIAS</div>
-                            {_temD ? (
-                              <>
-                                <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:t.danger, letterSpacing:1, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>Dev: {fmtMoeda(_devida)}</div>
-                                <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:t.verde, letterSpacing:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>Pago: {fmtMoeda(_paga)}</div>
-                              </>
-                            ) : (
-                              <div style={{fontSize:9, color:_corD, opacity:.7, marginTop:2}}>Sem diária</div>
-                            )}
-                          </div>
-                          <div style={{marginLeft:"auto",fontSize:12,color:_corD,opacity:.4}}>›</div>
-                        </div>
-                      );
-                    })()}
+                    <div style={{marginLeft:"auto",fontSize:12,color:statusCor,opacity:.4}}>›</div>
                   </div>
 
-                  {/* Financeiro */}
-                  {canFin && (
-                    <div>
-                      <Secao ico={<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>} label="Financeiro" />
-                      <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:7}}>
-                        {[
-                          {lbl:"CTE Empresa",val:fmtMoeda(r.vl_cte),cor:t.verde},
-                          {lbl:"Contrato Mot.",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
-                          {lbl:"Adiantamento",val:fmtMoeda(r.adiant),cor:t.ouro},
-                          {lbl:"Diária Devida",val:fmtMoeda(r.diaria_prev),cor:t.danger},
-                          {lbl:"Diária Paga",val:fmtMoeda(r.diaria_pg),cor:t.verde},
-                          {lbl:"Saldo",val:fmtMoeda(r.saldo),cor:t.txt2},
-                        ].map((f,i)=>(
-                          <div key={i} style={{...css.kpi(f.cor), padding:"9px 8px"}}>
-                            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
-                            <div style={{fontSize:7.5,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,fontWeight:600,marginTop:3}}>{f.lbl}</div>
-                          </div>
-                        ))}
+                  {/* Card DIÁRIAS */}
+                  {(()=>{
+                    const _devida = parseFloat(r.diaria_prev)||0;
+                    const _paga   = parseFloat(r.diaria_pg)||0;
+                    const _temD   = _devida > 0;
+                    const _corD   = _temD ? (_paga >= _devida ? t.verde : t.danger) : t.txt2;
+                    const _icoD   = _temD
+                      ? (_paga >= _devida
+                        ? <><polyline points="20 6 9 17 4 12"/></>
+                        : <><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>)
+                      : <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>;
+                    return (
+                      <div
+                        onClick={()=>{setDiariaNavDT(r.dt);setDFiltro("todos");setPlanilhaDetalheReg(null);setActiveTab("diarias");}}
+                        style={{...css.kpi(_corD), padding:"10px 12px", display:"flex", alignItems:"center", gap:8, textAlign:"left", cursor:"pointer", userSelect:"none"}}
+                        onMouseEnter={e=>e.currentTarget.style.opacity=".8"}
+                        onMouseLeave={e=>e.currentTarget.style.opacity="1"}
+                        title="Ver na aba Diárias"
+                      >
+                        {hIco(_icoD, _corD, 16, 2)}
+                        <div style={{minWidth:0}}>
+                          <div style={{fontSize:8, textTransform:"uppercase", letterSpacing:1.8, color:_corD, fontWeight:700}}>DIÁRIAS</div>
+                          {_temD ? (
+                            <>
+                              <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:t.danger, letterSpacing:1, marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>Dev: {fmtMoeda(_devida)}</div>
+                              <div style={{fontFamily:"'Bebas Neue',sans-serif", fontSize:12, color:t.verde, letterSpacing:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>Pago: {fmtMoeda(_paga)}</div>
+                            </>
+                          ) : (
+                            <div style={{fontSize:9, color:_corD, opacity:.7, marginTop:2}}>Sem diária</div>
+                          )}
+                        </div>
+                        <div style={{marginLeft:"auto",fontSize:12,color:_corD,opacity:.4}}>›</div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
-                {/* COL DIREITA: Rota + Banner + Ações */}
-                <div style={{display:"flex", flexDirection:"column", gap:12}}>
+                {/* Rota e Agenda */}
+                <div>
+                  <Secao ico={<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>} label="Rota e Agenda" />
+                  <div style={{display:"grid", gridTemplateColumns:gridCols, gap:8}}>
+                    {[
+                      {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Origem",val:r.origem},
+                      {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Destino",val:r.destino},
+                      {ico:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Carregamento",val:r.data_carr},
+                      {ico:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,lbl:"Agenda Descarga",val:r.data_agenda},
+                      {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"Vínculo",val:r.vinculo},
+                      {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:r.status},
+                    ].map((it,i)=>(
+                      <div key={i} style={{...css.card, padding:"9px 11px"}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.8,color:t.txt2,fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:4}}>
+                          {hIco(it.ico,t.txt2,10,1.8)} {it.lbl}
+                        </div>
+                        <div style={{fontWeight:600,color:t.txt,fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={it.val||"—"}>{it.val||"—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-                  {/* Rota e Agenda */}
+                {/* Financeiro */}
+                {canFin && (
                   <div>
-                    <Secao ico={<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>} label="Rota e Agenda" />
-                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6}}>
+                    <Secao ico={<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>} label="Financeiro" />
+                    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8}}>
                       {[
-                        {lbl:"Origem",val:r.origem},
-                        {lbl:"Destino",val:r.destino},
-                        {lbl:"Carregamento",val:r.data_carr},
-                        {lbl:"Agenda Desc.",val:r.data_agenda},
-                        {lbl:"Vínculo",val:r.vinculo},
-                        {lbl:"Status",val:r.status},
-                      ].map((it,i)=>(
-                        <div key={i} style={{...css.card, padding:"7px 9px"}}>
-                          <div style={{fontSize:7.5,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:700,marginBottom:2}}>{it.lbl}</div>
-                          <div style={{fontWeight:600,color:t.txt,fontSize:11,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={it.val||"—"}>{it.val||"—"}</div>
+                        {lbl:"CTE Empresa",val:fmtMoeda(r.vl_cte),cor:t.verde},
+                        {lbl:"Contrato Mot.",val:fmtMoeda(r.vl_contrato),cor:t.azulLt},
+                        {lbl:"Adiantamento",val:fmtMoeda(r.adiant),cor:t.ouro},
+                        {lbl:"Diária Devida",val:fmtMoeda(r.diaria_prev),cor:t.danger},
+                        {lbl:"Diária Paga",val:fmtMoeda(r.diaria_pg),cor:t.verde},
+                        {lbl:"Saldo",val:fmtMoeda(r.saldo),cor:t.txt2},
+                      ].map((f,i)=>(
+                        <div key={i} style={{...css.kpi(f.cor), padding:"10px 8px"}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
+                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
                         </div>
                       ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Banner motorista não cadastrado */}
-                  {!motCad && canEdit && (
-                    <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"9px 11px",display:"flex",alignItems:"center",gap:8}}>
-                      {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,14,2)}
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:10,fontWeight:700,color:t.ouro}}>Motorista não cadastrado</div>
-                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>Deseja cadastrar?</div>
-                      </div>
-                      <button onClick={()=>{setFormData({nome:r.nome||"",cpf:r.cpf||"",placa1:r.placa||"",vinculo:r.vinculo||""});setEditIdx(-1);setModalOpen("motorista");setPlanilhaDetalheReg(null);}} style={{...css.btnOutline,padding:"5px 10px",fontSize:10,minHeight:30}}>＋ Cadastrar</button>
+                {/* Aviso motorista não cadastrado */}
+                {!motCad && canEdit && (
+                  <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:12,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
+                    {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,16,2)}
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:11,fontWeight:700,color:t.ouro}}>Motorista não cadastrado</div>
+                      <div style={{fontSize:10,color:t.txt2,marginTop:1}}>Deseja cadastrar no sistema?</div>
                     </div>
-                  )}
-
-                  {/* Ações */}
-                  <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                    {canEdit && (
-                      <button onClick={()=>{const idx=DADOS.findIndex(x=>x.dt===r.dt);setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");setPlanilhaDetalheReg(null);}}
-                        style={{...css.btnGold,justifyContent:"center",width:"100%",padding:12,fontSize:13}}>
-                        {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,15,2)}
-                        EDITAR REGISTRO
-                      </button>
-                    )}
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
-                      <button onClick={()=>{
-                        setPlanilhaDetalheReg(null);
-                        const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
-                        setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
-                        const c=dt.replace(/\D/g,"");
-                        const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
-                        if(found){setBuscaResult(found);const cpfN2=found.cpf?.replace(/\D/g,""),placaN2=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN2&&x.cpf?.replace(/\D/g,"")===cpfN2)||(placaN2&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN2))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}
-                      }} style={{...css.btnOutline,justifyContent:"center",padding:11,fontSize:11}}>
-                        {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,15,2)} VER COMPLETO
-                      </button>
-                      <button onClick={()=>{abrirOcorrModal(r.dt, r);setPlanilhaDetalheReg(null);}}
-                        style={{...css.btnDanger,justifyContent:"center",padding:11,fontSize:11}}>
-                        {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,t.danger,15,2)} OCORRÊNCIAS
-                      </button>
-                    </div>
+                    <button onClick={()=>{setFormData({nome:r.nome||"",cpf:r.cpf||"",placa1:r.placa||"",vinculo:r.vinculo||""});setEditIdx(-1);setModalOpen("motorista");setPlanilhaDetalheReg(null);}} style={{...css.btnOutline,padding:"7px 12px",fontSize:11,minHeight:36}}>＋ Cadastrar</button>
                   </div>
+                )}
 
-                </div>{/* fim col direita */}
-              </div>{/* fim body */}
+                {/* Ações */}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {canEdit && (
+                    <button onClick={()=>{const idx=DADOS.findIndex(x=>x.dt===r.dt);setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");setPlanilhaDetalheReg(null);}}
+                      style={{...css.btnGold,justifyContent:"center",width:"100%",padding:13,fontSize:14}}>
+                      {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)}
+                      EDITAR REGISTRO
+                    </button>
+                  )}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <button onClick={()=>{
+                      setPlanilhaDetalheReg(null);
+                      const dt=r.dt; setBuscaInput(dt); setBuscaTipo("dt"); setActiveTab("busca");
+                      setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
+                      const c=dt.replace(/\D/g,"");
+                      const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
+                      if(found){setBuscaResult(found);const cpfN2=found.cpf?.replace(/\D/g,""),placaN2=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN2&&x.cpf?.replace(/\D/g,"")===cpfN2)||(placaN2&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN2))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);const newH=[{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);setHistorico(newH);saveJSON("hist",newH);}
+                    }} style={{...css.btnOutline,justifyContent:"center",padding:12,fontSize:12}}>
+                      {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,16,2)} VER COMPLETO
+                    </button>
+                    <button onClick={()=>{abrirOcorrModal(r.dt, r);setPlanilhaDetalheReg(null);}}
+                      style={{...css.btnDanger,justifyContent:"center",padding:12,fontSize:12}}>
+                      {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,t.danger,16,2)} OCORRÊNCIAS
+                    </button>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         );
