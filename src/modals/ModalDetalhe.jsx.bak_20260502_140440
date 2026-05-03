@@ -1,5 +1,4 @@
 import React from "react";
-import OcorrModal from "../components/OcorrModal.jsx";
 
 export default function ModalDetalhe({ ctx }) {
   const {
@@ -11,6 +10,7 @@ export default function ModalDetalhe({ ctx }) {
     showToast,
     setFormData, setEditIdx,
     ocorrencias,
+    novaOcorr, setNovaOcorr,
     acompImagens, setAcompImagens,
     acompTexto, setAcompTexto,
     excluirConfirm, setExcluirConfirm,
@@ -37,13 +37,11 @@ export default function ModalDetalhe({ ctx }) {
     usuarioLogado,
     getConexao, supaFetch,
     ocorrLoading,
+    novaOcorrTipo, setNovaOcorrTipo,
     adicionarOcorrencia,
-    abrirOcorrModal,
   } = ctx;
 
   if (!detalheDT) return null;
-
-  const [ocorrModalLocalOpen, setOcorrModalLocalOpen] = React.useState(false);
 
   // ── Variáveis locais computadas a partir do contexto ──
   const r = detalheDT;
@@ -55,7 +53,7 @@ export default function ModalDetalhe({ ctx }) {
     {ico:"📅",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
     {ico:"🏁",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
   ];
-  const tipoColors = {info:"#1677ff", alerta:t.danger, status:t.verde, falta:"#f6465d", avaria:"#ff9800", dev_total:"#9c27b0", dev_parcial:"#e91e63", desacordo:"#f0b90b", rod:"#ef5350", sobra:"#00e096"};
+  const tipoColors = {info:t.azulLt, alerta:t.danger, status:t.verde};
   const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
   const ocorrSinteticas = [
     ...(r.obs_chegada  ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.data_obs_chegada||r.chegada||""}]  : []),
@@ -68,23 +66,24 @@ export default function ModalDetalhe({ ctx }) {
             <div className="co-dt-modal">
               {/* Header */}
               <div style={{flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
-                <div style={{padding:"10px 14px 8px",display:"flex",alignItems:"center",gap:9,borderBottom:excluirConfirm==="detalhe"?`1px solid rgba(220,38,38,.25)`:`1px solid ${t.borda}`}}>
-                  <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🚛</div>
+                <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:excluirConfirm==="detalhe"?`1px solid rgba(220,38,38,.25)`:`1px solid ${t.borda}`}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🚛</div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
-                    <div style={{fontSize:9,color:t.txt2,letterSpacing:.5}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}{r.data_criacao&&<span style={{opacity:.6}}> · {new Date(r.data_criacao).toLocaleDateString("pt-BR")}</span>}</div>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
+                    <div style={{fontSize:9,color:t.txt2,letterSpacing:1}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}</div>
+                    {r.data_criacao && <div style={{fontSize:8,color:t.txt2,opacity:.7,marginTop:1}}>📥 Registrado em {new Date(r.data_criacao).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>}
                   </div>
-                  <div style={{display:"flex",gap:5,flexShrink:0}}>
+                  <div style={{display:"flex",gap:6,flexShrink:0}}>
                     {canEditDetalhe && (
                       <button onClick={()=>{
                         const idx=DADOS.findIndex(x=>x.dt===r.dt);
                         setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
-                      }} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:7,padding:"7px 12px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,13)} Editar</button>
+                      }} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"9px 16px",color:t.ouro,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,14)} Editar</button>
                     )}
                     {canEditDetalhe && excluirConfirm!=="detalhe" && (
-                      <button onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}} style={{background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.3)`,borderRadius:7,padding:"7px 10px",color:"#ef4444",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>🗑️</button>
+                      <button onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}} style={{background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.3)`,borderRadius:8,padding:"9px 16px",color:"#ef4444",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>🗑️ Excluir</button>
                     )}
-                    <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:34,height:34,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                    <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                   </div>
                 </div>
                 {excluirConfirm==="detalhe" && (
@@ -141,12 +140,12 @@ export default function ModalDetalhe({ ctx }) {
                       {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
                       ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
                       {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"MAT",v:r.mat},
-                      {l:"RO",v:r.ro},{l:"Status RO",v:r.ro_status},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
+                      {l:"RO",v:r.ro},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
                       {l:"ID (Shipmente)",v:r.id_doc},
                     ].filter(f=>f.v).map((f,fi)=>(
-                      <div key={fi} style={{background:t.bg,borderRadius:6,padding:"4px 8px",border:`1px solid ${t.borda}`}}>
-                        <div style={{fontSize:7.5,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,fontWeight:600}}>{f.l}</div>
-                        <div style={{fontSize:11,fontWeight:600,color:t.txt,marginTop:1,wordBreak:"break-word"}}>{f.v}</div>
+                      <div key={fi} style={{background:t.bg,borderRadius:7,padding:"6px 9px",border:`1px solid ${t.borda}`}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600}}>{f.l}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:t.txt,marginTop:1}}>{f.v}</div>
                       </div>
                     ))}
                   </div>
@@ -420,24 +419,32 @@ export default function ModalDetalhe({ ctx }) {
 
                   {/* Adicionar nova ocorrência */}
                   {canOcorr && (
-                    <>
-                      <button
-                        onClick={()=>setOcorrModalLocalOpen(true)}
-                        style={{width:"100%",padding:"9px 14px",borderRadius:9,border:`1.5px dashed ${t.borda}`,background:"transparent",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"inherit",marginTop:8}}
-                      >
-                        + Nova Ocorrência
-                      </button>
-                      <OcorrModal
-                        open={ocorrModalLocalOpen}
-                        onClose={()=>setOcorrModalLocalOpen(false)}
-                        onSave={({tipo,texto,nfs,localizacao})=>{
-                          adicionarOcorrencia({dt:r?.dt, tipo, texto, nfs, localizacao});
-                          setOcorrModalLocalOpen(false);
-                        }}
-                        dtRecord={r}
-                        t={t} hIco={hIco} css={css}
+                    <div style={{marginTop:10,background:t.card2,borderRadius:10,padding:10,border:`1px solid ${t.borda}`}}>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:9}}>＋ Nova Ocorrência</div>
+                      {/* Tipo */}
+                      <div style={{display:"flex",gap:6,marginBottom:9}}>
+                        {[{k:"info",l:"Chegada",svg:<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4M12 16h.01"/></>,c:tipoColors.info},{k:"status",l:"Descarga",svg:<><polyline points="20 6 9 17 4 12"/></>,c:tipoColors.status},{k:"alerta",l:"Alerta",svg:<><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/></>,c:tipoColors.alerta}].map(tp=>{
+                          const ativo=novaOcorrTipo===tp.k;
+                          return (
+                            <button key={tp.k} onClick={()=>setNovaOcorrTipo(tp.k)} style={{flex:1,background:ativo?`${tp.c}14`:"transparent",border:`1.5px solid ${ativo?tp.c:t.borda}`,borderRadius:10,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 4px 8px",position:"relative",transition:"all .18s",fontFamily:"inherit",overflow:"hidden"}}>
+                              {ativo&&<span style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:22,height:2.5,borderRadius:"0 0 3px 3px",background:tp.c,boxShadow:`0 0 6px ${tp.c}88`}} />}
+                              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={ativo?tp.c:t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{tp.svg}</svg>
+                              <span style={{fontSize:9,fontWeight:700,letterSpacing:.5,textTransform:"uppercase",color:ativo?tp.c:t.txt2,lineHeight:1}}>{tp.l}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <textarea
+                        value={novaOcorr}
+                        onChange={e=>setNovaOcorr(e.target.value)}
+                        placeholder="Descreva a ocorrência, atualização ou observação…"
+                        rows={3}
+                        style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,padding:"8px 10px"}}
                       />
-                    </>
+                      <button onClick={()=>{adicionarOcorrencia({dt:r.dt, tipo:novaOcorrTipo, texto:novaOcorr});setNovaOcorr("");}} disabled={!novaOcorr.trim()} style={{...css.btnGreen,width:"100%",justifyContent:"center",marginTop:7,opacity:novaOcorr.trim()?1:.5}}>
+                        💾 Registrar Ocorrência
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>{/* fim co-dt-right */}

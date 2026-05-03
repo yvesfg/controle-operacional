@@ -191,7 +191,6 @@ export default function App() {
   const [nfdForm, setNfdForm]           = useState({numero:"",valor:"",tipo:"avaria",nfs:"",localizacao:""});
   const [nfdFotos, setNfdFotos]         = useState([]);
   const [nfdUploadando, setNfdUploadando] = useState(false);
-  const [nfdRegistrarOutra, setNfdRegistrarOutra] = useState(false);
   // Alerta de Ocorrência/RO na chegada do motorista
   const [ocorrChegadaAlert, setOcorrChegadaAlert] = useState(false);
 
@@ -6034,14 +6033,9 @@ export default function App() {
                 </div>
               )}
             </div>
-            {/* Checkbox registrar outra */}
-            <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(240,185,11,.04)`,cursor:"pointer",userSelect:"none"}}>
-              <input type="checkbox" checked={nfdRegistrarOutra} onChange={e=>setNfdRegistrarOutra(e.target.checked)} style={{width:14,height:14,accentColor:"#F3BA2F",cursor:"pointer",flexShrink:0}} />
-              <span style={{fontSize:11,color:nfdRegistrarOutra?"#F3BA2F":t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
-            </label>
             {/* Ações */}
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);setNfdRegistrarOutra(false);}} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);}} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
                 Não houve NFD
               </button>
               <button disabled={nfdUploadando} onClick={async()=>{
@@ -6070,14 +6064,8 @@ export default function App() {
                 setFormData(p=>({...p,nfd:nfdData}));
                 const label=nfdForm.tipo.toUpperCase()+(nfdForm.numero?" · Nº "+nfdForm.numero:"")+(fotos.length>0?" · "+fotos.length+"📷":"");
                 showToast(`✅ NFD registrada — ${label}`,"ok");
-                if(nfdRegistrarOutra){
-                  setNfdForm({numero:"",valor:"",tipo:"avaria"});
-                  setNfdFotos([]);
-                }else{
-                  setNfdAlertOpen(false);
-                  setNfdFotos([]);
-                  setNfdRegistrarOutra(false);
-                }
+                setNfdAlertOpen(false);
+                setNfdFotos([]);
               }} style={{flex:1,background:nfdUploadando?`rgba(246,70,93,.04)`:`linear-gradient(135deg,rgba(246,70,93,.2),rgba(246,70,93,.1))`,border:`1.5px solid rgba(246,70,93,.5)`,borderRadius:9,padding:"10px",color:t.danger,fontWeight:700,fontSize:12,cursor:nfdUploadando?"wait":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:5,opacity:nfdUploadando?.6:1}}>
                 {nfdUploadando
                   ? <>{hIco(<><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>,t.danger,14,2)} Enviando fotos…</>

@@ -188,10 +188,9 @@ export default function App() {
   const [detalheSecMinDsc, setDetalheSecMinDsc] = useState(true);
   // NFD — Nota de Devolução
   const [nfdAlertOpen, setNfdAlertOpen] = useState(false);
-  const [nfdForm, setNfdForm]           = useState({numero:"",valor:"",tipo:"avaria",nfs:"",localizacao:""});
+  const [nfdForm, setNfdForm]           = useState({numero:"",valor:"",tipo:"avaria"});
   const [nfdFotos, setNfdFotos]         = useState([]);
   const [nfdUploadando, setNfdUploadando] = useState(false);
-  const [nfdRegistrarOutra, setNfdRegistrarOutra] = useState(false);
   // Alerta de Ocorrência/RO na chegada do motorista
   const [ocorrChegadaAlert, setOcorrChegadaAlert] = useState(false);
 
@@ -1496,7 +1495,7 @@ export default function App() {
     "dt","nome","cpf","placa","placa2","placa3","vinculo","origem","destino",
     "data_carr","data_agenda","status","dias",
     "vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg","vl_cte_comp",
-    "cte","mdf","nf","mat","ro","ro_hora","ro_status","cliente","sgs",
+    "cte","mdf","nf","mat","ro","ro_hora","cliente","sgs",
     "chegada","obs_chegada","data_obs_chegada","desc_aguardando","data_desc","obs_descarga","data_obs_descarga","informou_analista","data_manifesto","gerenc","forms","updated_at",
     "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
     "obs","sinistro","ocorrencias"
@@ -5948,56 +5947,16 @@ export default function App() {
               </button>
             </div>
             {/* Tipo */}
-            <div style={{marginBottom:8}}>
-              <div style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:'uppercase',letterSpacing:1,marginBottom:6}}>Tipo</div>
-              {(()=>{
-                const TIPOS_NFD=[
-                  {k:'avaria',l:'Avaria',cor:'#ff9800'},
-                  {k:'falta',l:'Falta',cor:'#f6465d'},
-                  {k:'dev_total',l:'Dev. Total',cor:'#9c27b0'},
-                  {k:'dev_parcial',l:'Dev. Parcial',cor:'#e91e63'},
-                  {k:'desacordo',l:'Desacordo',cor:'#f0b90b'},
-                  {k:'rod',l:'ROD',cor:'#ef5350'},
-                  {k:'sobra',l:'Sobra',cor:'#00e096'},
-                ];
-                const TIPOS_COM_NF_NFD=new Set(['falta','avaria','dev_total','dev_parcial','desacordo']);
-                const nfListNFD=(formData?.nf||'').split(',').map(s=>s.trim()).filter(Boolean);
-                return (<>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
-                    {TIPOS_NFD.map(tp=>{const ativo=nfdForm.tipo===tp.k;return(
-                      <button key={tp.k} onClick={()=>setNfdForm(p=>({...p,tipo:tp.k}))}
-                        style={{padding:'6px 4px',borderRadius:7,border:`1.5px solid ${ativo?tp.cor:t.borda}`,
-                          background:ativo?`${tp.cor}22`:'transparent',color:ativo?tp.cor:t.txt2,
-                          fontSize:10,fontWeight:ativo?700:400,cursor:'pointer',fontFamily:'inherit'}}>
-                        {tp.l}
-                      </button>
-                    );})}
-                  </div>
-                  {TIPOS_COM_NF_NFD.has(nfdForm.tipo)&&nfListNFD.length>0&&(
-                    <div style={{marginTop:8}}>
-                      <div style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:'uppercase',letterSpacing:1,marginBottom:6}}>NFs Afetadas</div>
-                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                        {nfListNFD.map(nf=>{
-                          const cur=(nfdForm.nfs||'').split(',').map(s=>s.trim()).filter(Boolean);
-                          const sel=cur.includes(nf);
-                          return(<button key={nf} onClick={()=>{const next=sel?cur.filter(x=>x!==nf):[...cur,nf];setNfdForm(p=>({...p,nfs:next.join(', ')}));}}
-                            style={{padding:'4px 10px',borderRadius:6,border:`1.5px solid ${sel?'#f0b90b':t.borda}`,
-                              background:sel?'rgba(240,185,11,.1)':t.bg,color:sel?'#f0b90b':t.txt2,
-                              fontSize:10,fontWeight:sel?700:400,cursor:'pointer'}}>
-                            {nf}
-                          </button>);
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  {nfdForm.tipo==='rod'&&(
-                    <div style={{marginTop:8}}>
-                      <label style={{fontSize:9,textTransform:'uppercase',letterSpacing:1.2,color:t.txt2,fontWeight:600,display:'block',marginBottom:4}}>Localização da Carga</label>
-                      <input value={nfdForm.localizacao||''} onChange={e=>setNfdForm(p=>({...p,localizacao:e.target.value}))} placeholder='Ex: Em trânsito, SP – RJ km 210' style={css.inp}/>
-                    </div>
-                  )}
-                </>);
-              })()}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,marginBottom:6}}>Motivo</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                {[["avaria","🔴"],["falta","🟡"],["devolução","🔵"],["sobra","🟢"]].map(([op,em])=>(
+                  <button key={op} onClick={()=>setNfdForm(p=>({...p,tipo:op}))} style={{padding:"9px 4px",borderRadius:9,border:`1.5px solid ${nfdForm.tipo===op?t.danger:t.borda}`,background:nfdForm.tipo===op?`rgba(246,70,93,.1)`:`transparent`,color:nfdForm.tipo===op?t.danger:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:10,textTransform:"uppercase",letterSpacing:.5,transition:"all .15s"}}>
+                    {em} {op}
+                  </button>
+                ))}
+              </div>
+              {nfdForm.tipo==="sobra"&&<div style={{fontSize:9,color:t.txt2,marginTop:6,background:t.bg,borderRadius:6,padding:"5px 9px",border:`1px solid ${t.borda}`,lineHeight:1.6}}>⚠️ Sobra: material recebido <strong style={{color:t.txt}}>sem documento</strong>. Nº é opcional — use fotos como comprovante.</div>}
             </div>
             {/* Numero e Valor */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
@@ -6034,14 +5993,9 @@ export default function App() {
                 </div>
               )}
             </div>
-            {/* Checkbox registrar outra */}
-            <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(240,185,11,.04)`,cursor:"pointer",userSelect:"none"}}>
-              <input type="checkbox" checked={nfdRegistrarOutra} onChange={e=>setNfdRegistrarOutra(e.target.checked)} style={{width:14,height:14,accentColor:"#F3BA2F",cursor:"pointer",flexShrink:0}} />
-              <span style={{fontSize:11,color:nfdRegistrarOutra?"#F3BA2F":t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
-            </label>
             {/* Ações */}
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);setNfdRegistrarOutra(false);}} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);}} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
                 Não houve NFD
               </button>
               <button disabled={nfdUploadando} onClick={async()=>{
@@ -6070,14 +6024,8 @@ export default function App() {
                 setFormData(p=>({...p,nfd:nfdData}));
                 const label=nfdForm.tipo.toUpperCase()+(nfdForm.numero?" · Nº "+nfdForm.numero:"")+(fotos.length>0?" · "+fotos.length+"📷":"");
                 showToast(`✅ NFD registrada — ${label}`,"ok");
-                if(nfdRegistrarOutra){
-                  setNfdForm({numero:"",valor:"",tipo:"avaria"});
-                  setNfdFotos([]);
-                }else{
-                  setNfdAlertOpen(false);
-                  setNfdFotos([]);
-                  setNfdRegistrarOutra(false);
-                }
+                setNfdAlertOpen(false);
+                setNfdFotos([]);
               }} style={{flex:1,background:nfdUploadando?`rgba(246,70,93,.04)`:`linear-gradient(135deg,rgba(246,70,93,.2),rgba(246,70,93,.1))`,border:`1.5px solid rgba(246,70,93,.5)`,borderRadius:9,padding:"10px",color:t.danger,fontWeight:700,fontSize:12,cursor:nfdUploadando?"wait":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:5,opacity:nfdUploadando?.6:1}}>
                 {nfdUploadando
                   ? <>{hIco(<><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>,t.danger,14,2)} Enviando fotos…</>
