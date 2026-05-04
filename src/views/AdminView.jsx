@@ -1,4 +1,7 @@
 import React from "react";
+import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
+import { TABLE_USUARIOS, PERMS_PADRAO } from '../constants.js';
+import { saveJSON, loadJSON } from '../utils.js';
 
 export default function AdminView({ ctx }) {
   const {
@@ -30,6 +33,7 @@ export default function AdminView({ ctx }) {
     saveMotoristasLS,
     setMotImportPrefOpen, setMotImportPrefBusca, setMotImportPrefSel, setMotImportRaw,
     enviarEmailBoasVindas,
+    connStatus,
   } = ctx;
 
   if (activeTab !== "admin" || !isAdmin) return null;

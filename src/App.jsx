@@ -3913,6 +3913,7 @@ export default function App() {
           auditReport, auditarDesign,
           setModalOpen,
           getConexao, supaFetch,
+          connStatus,
           saveMotoristasLS,
           setMotImportPrefOpen, setMotImportPrefBusca, setMotImportPrefSel, setMotImportRaw,
           enviarEmailBoasVindas,
