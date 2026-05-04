@@ -3128,17 +3128,17 @@ export default function App() {
           .co-dt-close-bar{display:none!important}
         }
         @media(min-width:1024px){
-          .co-dt-modal{max-width:900px!important;width:88vw!important;max-height:88vh!important}
+          .co-dt-modal{max-width:960px!important;width:90vw!important;max-height:88vh!important}
           .co-dt-body{flex-direction:row!important;align-items:stretch!important}
-          .co-dt-panel{flex:0 0 52%;border-right:1px solid ${t.borda};overflow-y:auto;max-height:calc(88vh - 65px)}
+          .co-dt-panel{flex:0 0 44%;border-right:1px solid ${t.borda};overflow-y:auto;max-height:calc(88vh - 65px)}
           .co-dt-right{flex:1;overflow-y:auto;max-height:calc(88vh - 65px);border-left:none}
           .co-dados-grid{grid-template-columns:repeat(4,1fr)!important}
           .co-min-g4{grid-template-columns:repeat(4,1fr)!important}
           .co-min-g3{grid-template-columns:repeat(3,1fr)!important}
         }
         @media(min-width:1280px){
-          .co-dt-modal{max-width:1060px!important;width:86vw!important}
-          .co-dt-panel{flex:0 0 54%}
+          .co-dt-modal{max-width:1120px!important;width:86vw!important}
+          .co-dt-panel{flex:0 0 42%}
         }
         /* ── Light-mode sidebar overrides ── */
         [data-theme="light"] .co-sidebar__item:hover{background:var(--card2)!important;color:var(--text)!important}
