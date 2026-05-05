@@ -36,9 +36,9 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
       style={{
         background:"var(--card)", border:"1px solid var(--border)",
         borderLeft:`3px solid ${topBadge.color}`,
-        borderRadius:"var(--radius-card,12px)", padding:"10px 12px",
+        borderRadius:"var(--radius-card,12px)", padding:"14px 16px",
         cursor:"pointer", transition:"border-color 0.15s,background 0.15s",
-        display:"flex", flexDirection:"column", gap:7,
+        display:"flex", flexDirection:"column", gap:10,
       }}
       onMouseEnter={e => e.currentTarget.style.borderColor=topBadge.color}
       onMouseLeave={e => e.currentTarget.style.borderColor="var(--border)"}
@@ -46,14 +46,14 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
       {/* Row 1 */}
       <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
         <div style={{minWidth:0,flex:1}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:13,color:"var(--text)",letterSpacing:"-0.01em",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:14,color:"var(--text)",letterSpacing:"-0.01em",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
             {r.nome || "—"}
           </div>
-          <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+          <div style={{fontSize:11,color:"var(--text3)",fontFamily:"'DM Mono',monospace",letterSpacing:"0.04em",marginTop:2}}>
             DT {r.dt}
-            {r.nf && <span style={{marginLeft:5,color:"var(--text3)"}}>· NF {r.nf}</span>}
-            {r.placa  && <span style={{marginLeft:6}}>{r.placa}</span>}
-            {r.origem && <span style={{marginLeft:6,color:"var(--text3)"}}>{r.origem}</span>}
+            {r.nf && <span style={{marginLeft:6,color:"var(--text3)"}}>· NF {r.nf}</span>}
+            {r.placa  && <span style={{marginLeft:8}}>{r.placa}</span>}
+            {r.origem && <span style={{marginLeft:8,color:"var(--text3)"}}>{r.origem}</span>}
           </div>
           {motInfo?.tel && (
             <div style={{fontSize:10,color:"var(--cyan,#06b6d4)",fontFamily:"'DM Mono',monospace",marginTop:2,display:"flex",alignItems:"center",gap:4}}>
@@ -78,18 +78,18 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
           gap:8, borderTop:"1px solid var(--border)", paddingTop:10, alignItems:"stretch",
         }}>
           {hasChegada && (
-            <div style={{background:"var(--card2)",borderRadius:7,border:"1px solid var(--border)",padding:"6px 8px"}}>
-              <div style={{fontSize:8,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--cyan,#06b6d4)",marginBottom:3,fontWeight:500}}>Obs Chegada</div>
-              <div style={{fontSize:10,color:"var(--text2)",lineHeight:1.35}}>
-                {(r.obs_chegada||"").length>70 ? r.obs_chegada.slice(0,70)+"…" : r.obs_chegada}
+            <div style={{background:"var(--card2)",borderRadius:8,border:"1px solid var(--border)",padding:"8px 10px"}}>
+              <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--cyan,#06b6d4)",marginBottom:4,fontWeight:500}}>Obs Chegada</div>
+              <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>
+                {(r.obs_chegada||"").length>100 ? r.obs_chegada.slice(0,100)+"…" : r.obs_chegada}
               </div>
             </div>
           )}
           {hasDescarga && (
-            <div style={{background:"var(--card2)",borderRadius:7,border:"1px solid var(--border)",padding:"6px 8px"}}>
-              <div style={{fontSize:8,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--green,#22c55e)",marginBottom:3,fontWeight:500}}>Obs Descarga</div>
-              <div style={{fontSize:10,color:"var(--text2)",lineHeight:1.35}}>
-                {(r.obs_descarga||"").length>70 ? r.obs_descarga.slice(0,70)+"…" : r.obs_descarga}
+            <div style={{background:"var(--card2)",borderRadius:8,border:"1px solid var(--border)",padding:"8px 10px"}}>
+              <div style={{fontSize:9,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--green,#22c55e)",marginBottom:4,fontWeight:500}}>Obs Descarga</div>
+              <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.4}}>
+                {(r.obs_descarga||"").length>100 ? r.obs_descarga.slice(0,100)+"…" : r.obs_descarga}
               </div>
             </div>
           )}
@@ -374,7 +374,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           <div style={{fontSize:12,color:"var(--text3)"}}>Todos os DTs estão sem pendências.</div>
         </div>
       ):(
-        <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(ocorrCols,2):ocorrCols},minmax(0,1fr))`,gap:isMobile?6:8}}>
+        <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(ocorrCols,2):ocorrCols},minmax(0,1fr))`,gap:isMobile?8:10}}>
           {filtered.map((entry,i)=>{
             const motInfo=motoristas.find(m=>(entry.r.cpf&&m.cpf?.replace(/\D/g,"")===entry.r.cpf?.replace(/\D/g,""))||(entry.r.nome&&m.nome===entry.r.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===entry.r.placa));
             return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} onAddOcorrencia={onSalvarOcorrencia?r=>openModal(r):null}/>;

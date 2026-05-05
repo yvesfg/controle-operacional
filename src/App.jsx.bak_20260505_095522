@@ -3058,7 +3058,7 @@ export default function App() {
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer-lbl{display:none!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user{justify-content:center!important;padding:8px!important}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user-info{display:none!important}
-          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-lbl{display:block!important;text-align:center;font-size:6px;white-space:normal;word-break:keep-all;padding:4px 1px 2px;line-height:1.2;letter-spacing:0.02em;overflow:visible}
+          .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-lbl{display:block!important;text-align:center;font-size:6.5px;white-space:normal;word-break:break-all;padding:5px 2px 2px;line-height:1.25;letter-spacing:0.04em;overflow:visible}
           .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-line{display:none!important}
           /* Main offset para mini-sidebar */
           .co-main{margin-left:0!important}
@@ -3278,7 +3278,7 @@ export default function App() {
                   </span>
                   <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
                 </button>
-                <div className="co-sidebar__section-lbl"><span style={{lineHeight:1.2}}>PÓS<br/>CARGA</span></div>
+                <div className="co-sidebar__section-lbl">Pós-Carga</div>
                 <div className="co-sidebar__section-line"/>
                 {pcTabs.map(renderItem)}
               </>);
