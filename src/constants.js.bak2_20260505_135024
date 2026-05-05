@@ -1,38 +1,43 @@
-// ── constants.js ──
-// ► Fonte única de verdade: theme-dark.css / theme-light.css / tokens.css
-// ► Para mudar cores, radii ou fontes: edite APENAS os arquivos CSS.
-//   O JS lê as CSS vars automaticamente via proxy — zero duplicação.
+// ── constants.js — gerado automaticamente ──
 
-// Proxy de CSS vars — dark e light compartilham o mesmo objeto.
-// A troca de tema é feita via data-theme no <html>; o CSS cuida do resto.
-const _t = {
-  bg:          "var(--bg)",
-  bgAlt:       "var(--color-bg-alt)",
-  card:        "var(--card)",
-  card2:       "var(--card2)",
-  borda:       "var(--border)",
-  borda2:      "var(--border2)",
-  txt:         "var(--text)",
-  txt2:        "var(--text2)",
-  ouro:        "var(--accent)",
-  ouroDk:      "var(--color-primary-dk)",
-  verde:       "var(--green)",
-  verdeDk:     "var(--color-success-dk)",
-  danger:      "var(--red)",
-  warn:        "var(--yellow)",
-  azul:        "var(--color-info)",
-  azulLt:      "var(--color-info-lt)",
-  laranja:     "var(--orange)",
-  roxo:        "var(--roxo)",
-  headerBg:    "var(--color-header-bg)",
-  modalBg:     "var(--color-modal-bg)",
-  inputBg:     "var(--color-input-bg)",
-  shadow:      "var(--color-shadow)",
-  gradientAuth:"var(--bg)",
-  scrollThumb: "var(--color-scroll-thumb)",
-  tableHeader: "var(--color-table-header)",
+export const themes = {
+  dark: {
+    // Backgrounds — Mercury: Deep Space / Midnight Slate / Graphite
+    bg: "#171721", bgAlt: "#1e1e2a", card: "#1e1e2a", card2: "#272735",
+    // Bordas — Lead (#70707d)
+    borda: "rgba(112,112,125,.25)", borda2: "#70707d",
+    // Texto — Starlight / Silver
+    txt: "#ededf3", txt2: "#c3c3cc",
+    // Acento principal — Mercury Blue (substitui ouro)
+    ouro: "#5266eb", ouroDk: "#3d4fc8",
+    // Status
+    verde: "#22c55e", verdeDk: "#16a34a",
+    danger: "#ef4444", warn: "#f59e0b",
+    azul: "#3b82f6", azulLt: "#60a5fa", laranja: "#f97316", roxo: "#a855f7",
+    // Estrutura
+    headerBg: "#171721", modalBg: "#1e1e2a", inputBg: "#272735",
+    shadow: "rgba(0,0,0,.45)", gradientAuth: "#171721",
+    scrollThumb: "#272735", tableHeader: "#171721",
+  },
+  light: {
+    // Backgrounds
+    bg: "#f6f7fc", bgAlt: "#eef0f8", card: "#ffffff", card2: "#f0f2fa",
+    // Bordas
+    borda: "#e0e2f0", borda2: "#cccee0",
+    // Texto
+    txt: "#16162a", txt2: "#5a5a8a",
+    // Acento principal — ajustado para novo #F3BA2F em dark (WCAG AA ✓)
+    ouro: "#d97706", ouroDk: "#b45309",
+    // Status
+    verde: "#16a34a", verdeDk: "#148040",
+    danger: "#dc2626", warn: "#d97706",
+    azul: "#2563eb", azulLt: "#3b82f6", laranja: "#c45500", roxo: "#6d28d9",
+    // Estrutura
+    headerBg: "#ffffff", modalBg: "#ffffff", inputBg: "#f0f2fa",
+    shadow: "rgba(0,0,0,.05)", gradientAuth: "#f6f7fc",
+    scrollThumb: "#c8cae0", tableHeader: "#eef0f8",
+  },
 };
-export const themes = { dark: _t, light: _t };
 
 // ══════════════════════════════════════════════
 //  CONSTANTS
@@ -87,37 +92,20 @@ export const LAYOUT = {
 //      (ou via console do navegador: auditarDesign())
 // ════════════════════════════════════════════════════════════
 export const DESIGN = {
-  // Raios — lidos de tokens.css; edite lá para propagar em todo o app
-  r: {
-    btn:     "var(--radius-btn)",
-    card:    "var(--radius-card)",
-    modal:   "var(--radius-modal)",
-    tile:    "var(--radius-tile)",
-    badge:   "var(--radius-badge)",
-    inp:     "var(--radius-inp)",
-    tag:     "var(--radius-tag)",
-    ico:     "var(--radius-ico)",
-    logo:    "var(--radius-logo)",
-    sm:      "var(--radius-sm)",
-    sidebar: "var(--radius-sidebar)",
-  },
-  // Tamanhos de ícone SVG (px) — mantidos como números para uso em atributos SVG
+  // Raios de borda — Mercury: cards=0, containers=4, buttons/inputs=32 (pill)
+  r:   { btn:32, card:0, modal:4, tile:0, badge:4, inp:32, tag:4, ico:4, logo:4, sm:4, sidebar:4 },
+  // Tamanhos de ícone SVG (px)
   ico: { xs:10, sm:13, md:16, lg:20, xl:24 },
-  // Stroke SVG
+  // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
   sw:  { thin:1.5, md:2, thick:2.5 },
-  // Fontes — lidas de tokens.css
-  fnt: { h:"var(--font-heading)", display:"var(--font-display)", b:"var(--font-body)" },
+  // Famílias tipográficas — Mercury: Manrope (display) / Inter (body)
+  fnt: { h:"'Manrope','Inter',system-ui,sans-serif", display:"'Manrope','Inter',system-ui,sans-serif", b:"'Inter','Manrope',system-ui,sans-serif" },
   // Letter-spacing
   ls:  { label:2, badge:1, mono:2.5, btn:.2 },
 };
-// Utilitário: aplica alpha a uma cor.
-// - Se receber uma CSS var ("var(--xxx)"), usa color-mix() — CSS moderno, sem duplicação de hex.
-// - Se receber hex "#rrggbb" (retrocompatibilidade), converte para rgba.
-export const hexRgb = (colorOrVar, a) => {
-  if (typeof colorOrVar === "string" && colorOrVar.startsWith("var(")) {
-    return `color-mix(in srgb, ${colorOrVar} ${Math.round(a * 100)}%, transparent)`;
-  }
-  const h = (colorOrVar || "#000000").replace("#", "");
+// Utilitário: converte cor hex + alpha em rgba (use com cores do tema t.*)
+export const hexRgb = (hex, a) => {
+  const h = (hex||"#000000").replace("#","");
   const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
   return `rgba(${r},${g},${b},${a})`;
 };

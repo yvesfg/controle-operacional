@@ -20,7 +20,7 @@
   /* ── Bordas ──────────────────────────────────────────────────── */
   --color-border     : #e0e2f0;
   --color-border-2   : #cccee0;
-  --color-border-focus: #4253d4;
+  --color-border-focus: #a07018;
 
   /* ── Texto ───────────────────────────────────────────────────── */
   --color-text       : #16162a;
@@ -28,12 +28,12 @@
   --color-text-disabled: #aaaacc;
   --color-text-inverse: #ffffff;
 
-  /* ── Acento principal — Mercury Blue (claro, contraste AA) ───── */
-  --color-primary    : #4253d4;
-  --color-primary-dk : #3444c0;
-  --color-primary-lt : #5a6ee8;
-  --color-primary-bg : rgba(66,83,212,.08);
-  --color-primary-border: rgba(66,83,212,.22);
+  /* ── Acento principal — Ouro ajustado para contraste AA ──────── */
+  --color-primary    : #a07018;
+  --color-primary-dk : #8f5f14;
+  --color-primary-lt : #c49030;
+  --color-primary-bg : rgba(160,112,24,.07);
+  --color-primary-border: rgba(160,112,24,.25);
 
   /* ── Status ──────────────────────────────────────────────────── */
   --color-success    : #16a34a;
@@ -67,15 +67,15 @@
   --shadow-lg  : 0 8px 24px rgba(0,0,0,.11);
   --shadow-xl  : 0 16px 48px rgba(0,0,0,.13);
   --shadow-card: 0 2px 8px rgba(0,0,0,.07);
-  --shadow-primary: 0 4px 16px rgba(66,83,212,.15);
+  --shadow-primary: 0 4px 16px rgba(160,112,24,.15);
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
   --color-sidebar-bg  : #ffffff;
   --color-sidebar-item: transparent;
-  --color-sidebar-item-hover: rgba(66,83,212,.06);
-  --color-sidebar-item-active: rgba(66,83,212,.10);
+  --color-sidebar-item-hover: rgba(160,112,24,.06);
+  --color-sidebar-item-active: rgba(160,112,24,.10);
   --color-sidebar-text: #5a5a8a;
-  --color-sidebar-text-active: #4253d4;
+  --color-sidebar-text-active: #a07018;
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: light;
@@ -93,12 +93,11 @@
   --text2   : #5a5a8a;
   --text3   : #9090b8;
 
-  --accent  : #4253d4;
-  --accent2 : rgba(66,83,212,.10);
+  --accent  : #7c3aed;
+  --accent2 : rgba(124,58,237,0.10);
   --cyan    : #0891b2;
   --green   : #16a34a;
   --orange  : #ea6c00;
   --red     : #dc2626;
   --yellow  : #ca8a04;
-  --roxo    : #6d28d9;
 }

@@ -105,5 +105,4 @@
   --orange  : #f97316;          /* atenção / atraso */
   --red     : #ef4444;          /* alerta / crítico */
   --yellow  : #eab308;          /* aviso */
-  --roxo    : #a855f7;          /* destaque secundário / tag */
 }

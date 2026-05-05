@@ -1666,7 +1666,7 @@ export default function App() {
     inp:       { background:t.inputBg, border:`1px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 13px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:DESIGN.fnt.b, transition:"border-color .15s, background .25s" },
     // Botões — cor sólida (sem gradiente), mais limpos
     // cor do texto adapta ao tema: dark=preto sobre ouro claro / light=branco sobre ouro escuro
-    btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:theme==="dark"?"#0a0a0a":"#ffffff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.ouro, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
+    btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:"#ffffff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.ouro, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:"#fff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.verde, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnOutline:{ borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.ouro, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnDanger: { borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.danger, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.danger,.3)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
@@ -1793,7 +1793,7 @@ export default function App() {
                 showToast("⚠️ Solicitação não encontrada. Tente fazer login novamente.","warn");
               }
             }catch{showToast("❌ Erro ao verificar status","err");}
-          }} style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:12,color:"#000",fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:10,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          }} style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:DESIGN.r.btn,color:"#ffffff",fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:10,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink:0}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Verificar Status
           </button>
           <button onClick={()=>{setAguardandoAprovacao(false);localStorage.removeItem("co_pending_user");setPendingUserInfo(null);}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:10,padding:"10px",color:t.txt2,fontSize:12,cursor:"pointer",width:"100%",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
@@ -1820,7 +1820,7 @@ export default function App() {
         `}</style>
 
         {/* Acento de fundo sutil */}
-        <div style={{position:"absolute",top:"8%",left:"50%",transform:"translateX(-50%)",width:"500px",height:"260px",background:`radial-gradient(ellipse,${hexRgb("#7c3aed",.06)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
+        <div style={{position:"absolute",top:"8%",left:"50%",transform:"translateX(-50%)",width:"500px",height:"260px",background:`radial-gradient(ellipse,${hexRgb(t.ouro, .06)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"absolute",bottom:"12%",left:"50%",transform:"translateX(-50%)",width:"400px",height:"200px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.04)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
 
         {/* Theme toggle */}
@@ -1835,7 +1835,7 @@ export default function App() {
           <svg width="56" height="56" viewBox="0 0 56 56" style={{marginBottom:14}}>
             <rect width="56" height="56" rx="14" fill={t.card} stroke={hexRgb(t.ouro,.25)} strokeWidth="1"/>
             <rect x="10" y="15" width="26" height="20" rx="3" fill={hexRgb(t.ouro,.06)} stroke={t.ouro} strokeWidth="1.5" opacity=".45"/>
-            <rect x="20" y="21" width="26" height="20" rx="3" fill={hexRgb("#7c3aed",.15)} stroke="#7c3aed" strokeWidth="2"/>
+            <rect x="20" y="21" width="26" height="20" rx="3" fill={hexRgb(t.ouro, .15)} stroke={t.ouro} strokeWidth="2"/>
             <circle cx="33" cy="31" r="3" fill={t.ouro}/>
           </svg>
           <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
@@ -1857,7 +1857,7 @@ export default function App() {
           <button
             onClick={() => iniciarOAuth("google")}
             style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"13px 12px",cursor:"pointer",fontSize:13,fontWeight:600,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .15s",letterSpacing:.2}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb("#7c3aed",.5);e.currentTarget.style.background=t.bgAlt}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro, .5);e.currentTarget.style.background=t.bgAlt}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2;e.currentTarget.style.background=t.card2}}
           >
             <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
@@ -1899,7 +1899,7 @@ export default function App() {
             </div>
             <button
               onClick={handleLogin}
-              style={{width:"100%",height:42,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:DESIGN.r.btn,color:"#000",fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:.3,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
+              style={{width:"100%",height:42,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:DESIGN.r.btn,color:"#ffffff",fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:.3,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
               Entrar
@@ -4021,7 +4021,7 @@ export default function App() {
             {/* Options */}
             <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
               {[
-                {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:"#7c3aed", l:"Faturamento", sub:"CTE · MDF · MAT · DT · NF · ID"},
+                {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:t.ouro, l:"Faturamento", sub:"CTE · MDF · MAT · DT · NF · ID"},
                 {k:"contratacao",ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, color:t.azulLt, l:"Contratação", sub:"Modelo completo de pagamento"},
                 {k:"descarga",   ico:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>, color:t.verde, l:"Descarga / Stretch", sub:"Solicitar pagamento descarga"},
                 {k:"diarias",   ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>, color:t.ouro, l:"Diárias", sub:"Solicitar pagamento diária"},
