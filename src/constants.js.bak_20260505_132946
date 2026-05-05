@@ -2,22 +2,22 @@
 
 export const themes = {
   dark: {
-    // Backgrounds — Mercury: Deep Space / Midnight Slate / Graphite
-    bg: "#171721", bgAlt: "#1e1e2a", card: "#1e1e2a", card2: "#272735",
-    // Bordas — Lead (#70707d)
-    borda: "rgba(112,112,125,.25)", borda2: "#70707d",
-    // Texto — Starlight / Silver
-    txt: "#ededf3", txt2: "#c3c3cc",
-    // Acento principal — Mercury Blue (substitui ouro)
-    ouro: "#5266eb", ouroDk: "#3d4fc8",
+    // Backgrounds — profundidade progressiva com leve matiz fria
+    bg: "#09090f", bgAlt: "#0d0d16", card: "#111119", card2: "#181825",
+    // Bordas — sutis mas definidas
+    borda: "#1c1c2a", borda2: "#262638",
+    // Texto — leve tonalidade fria para premium
+    txt: "#e8e8f2", txt2: "#8888b0",   // txt2 ≥5.86:1 sobre bg (WCAG AA ✓)
+    // Acento principal — ouro Binance (redesign v22)
+    ouro: "#F3BA2F", ouroDk: "#C99923",
     // Status
     verde: "#22c55e", verdeDk: "#16a34a",
     danger: "#ef4444", warn: "#f59e0b",
-    azul: "#3b82f6", azulLt: "#60a5fa", laranja: "#f97316", roxo: "#a855f7",
+    azul: "#3b82f6", azulLt: "#60a5fa", laranja: "#f57c00", roxo: "#a855f7",
     // Estrutura
-    headerBg: "#171721", modalBg: "#1e1e2a", inputBg: "#272735",
-    shadow: "rgba(0,0,0,.45)", gradientAuth: "#171721",
-    scrollThumb: "#272735", tableHeader: "#171721",
+    headerBg: "#09090f", modalBg: "#111119", inputBg: "#181825",
+    shadow: "rgba(0,0,0,.65)", gradientAuth: "#09090f",
+    scrollThumb: "#262638", tableHeader: "#0d0d16",
   },
   light: {
     // Backgrounds
@@ -92,15 +92,15 @@ export const LAYOUT = {
 //      (ou via console do navegador: auditarDesign())
 // ════════════════════════════════════════════════════════════
 export const DESIGN = {
-  // Raios de borda — Mercury: cards=0, containers=4, buttons/inputs=32 (pill)
-  r:   { btn:32, card:0, modal:4, tile:0, badge:4, inp:32, tag:4, ico:4, logo:4, sm:4, sidebar:4 },
+  // Raios de borda — refinados para look premium (redesign v22)
+  r:   { btn:8, card:12, modal:16, tile:10, badge:6, inp:10, tag:4, ico:10, logo:12, sm:6, sidebar:8 },
   // Tamanhos de ícone SVG (px)
   ico: { xs:10, sm:13, md:16, lg:20, xl:24 },
   // Stroke SVG — thin=linhas finas, md=padrão, thick=destaque
   sw:  { thin:1.5, md:2, thick:2.5 },
-  // Famílias tipográficas — Mercury: Manrope (display) / Inter (body)
-  fnt: { h:"'Manrope','Inter',system-ui,sans-serif", display:"'Manrope','Inter',system-ui,sans-serif", b:"'Inter','Manrope',system-ui,sans-serif" },
-  // Letter-spacing
+  // Famílias tipográficas — Inter para body (mais limpo e legível)
+  fnt: { h:"'Space Grotesk',sans-serif", display:"'Bebas Neue',sans-serif", b:"'Inter','Segoe UI',system-ui,sans-serif" },
+  // Letter-spacing — levemente reduzido para look mais refinado
   ls:  { label:2, badge:1, mono:2.5, btn:.2 },
 };
 // Utilitário: converte cor hex + alpha em rgba (use com cores do tema t.*)

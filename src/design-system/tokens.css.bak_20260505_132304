@@ -6,11 +6,11 @@
 
 :root {
 
-  /* ── Tipografia — Mercury (substitutos: Inter / Manrope) ────── */
-  --font-heading : 'Manrope', 'Inter', system-ui, sans-serif;
-  --font-display : 'Manrope', 'Inter', system-ui, sans-serif;
-  --font-body    : 'Inter', 'Manrope', system-ui, sans-serif;
-  --font-mono    : 'JetBrains Mono', monospace;
+  /* ── Tipografia ─────────────────────────────────────────────── */
+  --font-heading : 'Space Grotesk', sans-serif;
+  --font-display : 'Space Grotesk', sans-serif;
+  --font-body    : 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono    : 'DM Mono', 'JetBrains Mono', monospace;
 
   /* Tamanhos de texto */
   --text-2xs : 10px;
@@ -68,21 +68,20 @@
   --space-16: 64px;
   --space-20: 80px;
 
-  /* ── Border-radius — Mercury ────────────────────────────────── */
-  /* cards=0px · containers=4px · buttons/inputs=32px (pill) */
+  /* ── Border-radius ──────────────────────────────────────────── */
   --radius-none : 0;
   --radius-tag  : 4px;
-  --radius-sm   : 4px;
-  --radius-btn  : 32px;   /* pill */
-  --radius-badge: 4px;
-  --radius-sidebar: 4px;
-  --radius-tile : 0px;    /* sharp cards */
-  --radius-ico  : 4px;
-  --radius-inp  : 32px;   /* pill */
-  --radius-card : 0px;    /* sharp cards */
-  --radius-logo : 4px;
-  --radius-modal: 4px;
-  --radius-xl   : 4px;
+  --radius-sm   : 6px;
+  --radius-btn  : 8px;
+  --radius-badge: 6px;
+  --radius-sidebar: 8px;
+  --radius-tile : 10px;
+  --radius-ico  : 10px;
+  --radius-inp  : 10px;
+  --radius-card : 12px;
+  --radius-logo : 12px;
+  --radius-modal: 16px;
+  --radius-xl   : 20px;
   --radius-full : 9999px;
 
   /* ── Ícones (px) ────────────────────────────────────────────── */

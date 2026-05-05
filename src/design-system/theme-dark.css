@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   theme-dark.css — Tema Escuro · Controle Operacional
+   theme-dark.css — Mercury Dark Theme · Controle Operacional
    Ativação: adicione data-theme="dark" no <html> ou <body>
    ► Altere SOMENTE os valores aqui; nomes de variável ficam em tokens.css
    ═══════════════════════════════════════════════════════════════════ */
@@ -7,33 +7,33 @@
 [data-theme="dark"],
 .theme-dark {
 
-  /* ── Backgrounds ─────────────────────────────────────────────── */
-  --color-bg         : #09090f;   /* fundo raiz — mais profundo */
-  --color-bg-alt     : #0d0d16;   /* fundo alternativo, tabelas */
-  --color-card       : #111119;   /* superfície card nível 1 */
-  --color-card-2     : #181825;   /* superfície card nível 2 / input */
-  --color-header-bg  : #09090f;
-  --color-modal-bg   : #111119;
-  --color-input-bg   : #181825;
-  --color-table-header: #0d0d16;
+  /* ── Backgrounds — Mercury surfaces ─────────────────────────── */
+  --color-bg         : #171721;   /* Deep Space — fundo raiz */
+  --color-bg-alt     : #1e1e2a;   /* Midnight Slate — fundo alternativo */
+  --color-card       : #1e1e2a;   /* Midnight Slate — card nível 1 */
+  --color-card-2     : #272735;   /* Graphite — card nível 2 / input */
+  --color-header-bg  : #171721;
+  --color-modal-bg   : #1e1e2a;
+  --color-input-bg   : #272735;
+  --color-table-header: #171721;
 
   /* ── Bordas ──────────────────────────────────────────────────── */
-  --color-border     : #1c1c2a;   /* borda sutil */
-  --color-border-2   : #262638;   /* borda intermediária */
-  --color-border-focus: #F3BA2F;  /* foco de input */
+  --color-border     : rgba(112,112,125,.25);  /* Lead sutil */
+  --color-border-2   : #70707d;                /* Lead */
+  --color-border-focus: #5266eb;               /* Mercury Blue */
 
   /* ── Texto ───────────────────────────────────────────────────── */
-  --color-text       : #e8e8f2;   /* texto primário */
-  --color-text-2     : #8888b0;   /* texto secundário / placeholder */
-  --color-text-disabled: #4a4a6a;
-  --color-text-inverse: #09090f;  /* texto sobre fundo claro (ex: badge gold) */
+  --color-text       : #ededf3;   /* Starlight */
+  --color-text-2     : #c3c3cc;   /* Silver */
+  --color-text-disabled: #70707d; /* Lead */
+  --color-text-inverse: #ffffff;  /* Pure White — sobre botão azul */
 
-  /* ── Acento principal — Ouro Binance ─────────────────────────── */
-  --color-primary    : #F3BA2F;
-  --color-primary-dk : #C99923;
-  --color-primary-lt : #F8D474;
-  --color-primary-bg : rgba(243,186,47,.08);   /* bg sutil com acento */
-  --color-primary-border: rgba(243,186,47,.25);
+  /* ── Acento principal — Mercury Blue ────────────────────────── */
+  --color-primary    : #5266eb;
+  --color-primary-dk : #3d4fc8;
+  --color-primary-lt : #7080ef;
+  --color-primary-bg : rgba(82,102,235,.12);
+  --color-primary-border: rgba(82,102,235,.30);
 
   /* ── Status ──────────────────────────────────────────────────── */
   --color-success    : #22c55e;
@@ -57,48 +57,49 @@
   --color-info-border: rgba(59,130,246,.25);
 
   /* ── Overlays / Sombras ──────────────────────────────────────── */
-  --color-shadow     : rgba(0,0,0,.65);
-  --color-overlay    : rgba(0,0,0,.72);
-  --color-scroll-thumb: #262638;
+  /* Elevação via cor, não sombra (Mercury guideline) */
+  --color-shadow     : rgba(0,0,0,.45);
+  --color-overlay    : rgba(0,0,0,.65);
+  --color-scroll-thumb: #272735;
 
-  --shadow-xs  : 0 1px 2px rgba(0,0,0,.50);
-  --shadow-sm  : 0 1px 4px rgba(0,0,0,.55);
-  --shadow-md  : 0 4px 12px rgba(0,0,0,.60);
-  --shadow-lg  : 0 8px 24px rgba(0,0,0,.70);
-  --shadow-xl  : 0 16px 48px rgba(0,0,0,.75);
-  --shadow-card: 0 2px 8px rgba(0,0,0,.50);
-  --shadow-primary: 0 4px 16px rgba(243,186,47,.18);
+  --shadow-xs  : none;
+  --shadow-sm  : none;
+  --shadow-md  : none;
+  --shadow-lg  : 0 8px 32px rgba(0,0,0,.50);
+  --shadow-xl  : 0 16px 48px rgba(0,0,0,.60);
+  --shadow-card: none;
+  --shadow-primary: 0 4px 16px rgba(82,102,235,.25);
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
-  --color-sidebar-bg  : #0d0d16;
+  --color-sidebar-bg  : #171721;
   --color-sidebar-item: transparent;
-  --color-sidebar-item-hover: rgba(243,186,47,.07);
-  --color-sidebar-item-active: rgba(243,186,47,.12);
-  --color-sidebar-text: #8888b0;
-  --color-sidebar-text-active: #F3BA2F;
+  --color-sidebar-item-hover: rgba(82,102,235,.08);
+  --color-sidebar-item-active: rgba(82,102,235,.15);
+  --color-sidebar-text: #c3c3cc;
+  --color-sidebar-text-active: #5266eb;
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: dark;
 
-  /* ── Redesign YFGroup — Semantic Tokens ─────────────────────── */
+  /* ── Semantic Tokens — Mercury ───────────────────────────────── */
   /* Backgrounds */
-  --bg      : #080810;          /* fundo principal */
-  --surface : #0f0f1a;          /* fundo de surface / sidebar */
-  --card    : #13131f;          /* fundo de cards */
-  --card2   : #181826;          /* fundo de cards secundários */
+  --bg      : #171721;          /* Deep Space */
+  --surface : #1e1e2a;          /* Midnight Slate */
+  --card    : #1e1e2a;          /* Midnight Slate */
+  --card2   : #272735;          /* Graphite */
 
   /* Bordas */
-  --border  : #23233a;          /* borda padrão */
-  --border2 : #2e2e4a;          /* borda de foco / hover */
+  --border  : rgba(112,112,125,.25);   /* Lead sutil */
+  --border2 : #70707d;                 /* Lead */
 
   /* Texto */
-  --text    : #e8e8f0;          /* texto primário */
-  --text2   : #9090b0;          /* texto secundário */
-  --text3   : #5a5a7a;          /* texto terciário / labels */
+  --text    : #ededf3;          /* Starlight */
+  --text2   : #c3c3cc;          /* Silver */
+  --text3   : #70707d;          /* Lead */
 
-  /* Acentos (oklch) */
-  --accent  : #7c3aed;          /* violeta YFGroup brand */
-  --accent2 : rgba(124, 58, 237, 0.15);      /* violeta bg leve — equiv oklch(0.62 0.22 280 / 0.15) */
+  /* Acentos */
+  --accent  : #5266eb;                  /* Mercury Blue */
+  --accent2 : rgba(82,102,235,.15);     /* Mercury Blue bg leve */
   --cyan    : #06b6d4;          /* info / em rota */
   --green   : #22c55e;          /* sucesso / no prazo */
   --orange  : #f97316;          /* atenção / atraso */
