@@ -1,109 +1,109 @@
 /* ═══════════════════════════════════════════════════════════════════
-   theme-dark.css — Mercury Dark Theme · Controle Operacional
-   Ativação: adicione data-theme="dark" no <html> ou <body>
-   ► Altere SOMENTE os valores aqui; nomes de variável ficam em tokens.css
+   theme-dark.css — Binance Dark Theme · Controle Operacional
+   Ativação: data-theme="dark" no <html>
+   ► Para mudar cores: edite APENAS este arquivo.
+   ► Nomes de variável ficam em tokens.css.
    ═══════════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"],
 .theme-dark {
 
-  /* ── Backgrounds — Mercury surfaces ─────────────────────────── */
-  --color-bg         : #171721;   /* Deep Space — fundo raiz */
-  --color-bg-alt     : #1e1e2a;   /* Midnight Slate — fundo alternativo */
-  --color-card       : #1e1e2a;   /* Midnight Slate — card nível 1 */
-  --color-card-2     : #272735;   /* Graphite — card nível 2 / input */
-  --color-header-bg  : #171721;
-  --color-modal-bg   : #1e1e2a;
-  --color-input-bg   : #272735;
-  --color-table-header: #171721;
+  /* ── Backgrounds — Binance canvas hierarchy ──────────────────── */
+  --color-bg          : #0b0e11;   /* canvas-dark — floor da página */
+  --color-bg-alt      : #1e2329;   /* surface-card-dark */
+  --color-card        : #1e2329;   /* surface-card-dark */
+  --color-card-2      : #2b3139;   /* surface-elevated-dark */
+  --color-header-bg   : #0b0e11;
+  --color-modal-bg    : #1e2329;
+  --color-input-bg    : #1e2329;
+  --color-table-header: #0b0e11;
 
-  /* ── Bordas ──────────────────────────────────────────────────── */
-  --color-border     : rgba(112,112,125,.25);  /* Lead sutil */
-  --color-border-2   : #70707d;                /* Lead */
-  --color-border-focus: #5266eb;               /* Mercury Blue */
+  /* ── Bordas — hairline on dark = mesmo hex da surface elevada ── */
+  --color-border      : #2b3139;               /* hairline-on-dark */
+  --color-border-2    : #3a4148;               /* borda mais forte */
+  --color-border-focus: rgba(59,130,246,.50);  /* info-ring 50% */
 
   /* ── Texto ───────────────────────────────────────────────────── */
-  --color-text       : #ededf3;   /* Starlight */
-  --color-text-2     : #c3c3cc;   /* Silver */
-  --color-text-disabled: #70707d; /* Lead */
-  --color-text-inverse: #ffffff;  /* Pure White — sobre botão azul */
+  --color-text        : #eaecef;   /* body on dark */
+  --color-text-2      : #707a8a;   /* muted */
+  --color-text-3      : #929aa5;   /* muted-strong */
+  --color-text-disabled: #484d55;
+  --color-text-inverse: #181a20;   /* on-primary: preto sobre amarelo Binance */
 
-  /* ── Acento principal — Mercury Blue ────────────────────────── */
-  --color-primary    : #5266eb;
-  --color-primary-dk : #3d4fc8;
-  --color-primary-lt : #7080ef;
-  --color-primary-bg : rgba(82,102,235,.12);
-  --color-primary-border: rgba(82,102,235,.30);
+  /* ── Acento principal — Binance Yellow ───────────────────────── */
+  --color-primary     : #fcd535;
+  --color-primary-dk  : #f0b90b;   /* active / hover mais escuro */
+  --color-primary-lt  : #fde272;   /* variante clara */
+  --color-primary-bg  : rgba(252,213,53,.10);
+  --color-primary-border: rgba(252,213,53,.25);
+  --color-primary-disabled: #3a3a1f;
 
-  /* ── Status ──────────────────────────────────────────────────── */
-  --color-success    : #22c55e;
-  --color-success-dk : #16a34a;
-  --color-success-bg : rgba(34,197,94,.10);
-  --color-success-border: rgba(34,197,94,.25);
+  /* ── Trading — verde sobe / vermelho desce ───────────────────── */
+  --color-success     : #0ecb81;   /* trading-up */
+  --color-success-dk  : #0aa86a;
+  --color-success-bg  : rgba(14,203,129,.10);
+  --color-success-border: rgba(14,203,129,.25);
 
-  --color-danger     : #ef4444;
-  --color-danger-dk  : #dc2626;
-  --color-danger-bg  : rgba(239,68,68,.10);
-  --color-danger-border: rgba(239,68,68,.25);
+  --color-danger      : #f6465d;   /* trading-down */
+  --color-danger-dk   : #d9344a;
+  --color-danger-bg   : rgba(246,70,93,.10);
+  --color-danger-border: rgba(246,70,93,.25);
 
-  --color-warning    : #f59e0b;
-  --color-warning-dk : #d97706;
-  --color-warning-bg : rgba(245,158,11,.10);
-  --color-warning-border: rgba(245,158,11,.25);
+  --color-warning     : #f0b90b;
+  --color-warning-dk  : #d4a309;
+  --color-warning-bg  : rgba(240,185,11,.10);
+  --color-warning-border: rgba(240,185,11,.25);
 
-  --color-info       : #3b82f6;
-  --color-info-lt    : #60a5fa;
-  --color-info-bg    : rgba(59,130,246,.10);
-  --color-info-border: rgba(59,130,246,.25);
+  --color-info        : #3b82f6;
+  --color-info-lt     : #60a5fa;
+  --color-info-bg     : rgba(59,130,246,.10);
+  --color-info-border : rgba(59,130,246,.25);
 
-  /* ── Overlays / Sombras ──────────────────────────────────────── */
-  /* Elevação via cor, não sombra (Mercury guideline) */
-  --color-shadow     : rgba(0,0,0,.45);
-  --color-overlay    : rgba(0,0,0,.65);
-  --color-scroll-thumb: #272735;
+  /* ── Overlays / Sombras — elevação via cor, não shadow ──────── */
+  --color-shadow      : rgba(0,0,0,.50);
+  --color-overlay     : rgba(0,0,0,.72);
+  --color-scroll-thumb: #2b3139;
 
-  --shadow-xs  : none;
-  --shadow-sm  : none;
-  --shadow-md  : none;
-  --shadow-lg  : 0 8px 32px rgba(0,0,0,.50);
-  --shadow-xl  : 0 16px 48px rgba(0,0,0,.60);
-  --shadow-card: none;
-  --shadow-primary: 0 4px 16px rgba(82,102,235,.25);
+  --shadow-xs         : none;
+  --shadow-sm         : none;
+  --shadow-md         : none;
+  --shadow-lg         : 0 8px 32px rgba(0,0,0,.55);
+  --shadow-xl         : 0 16px 48px rgba(0,0,0,.65);
+  --shadow-card       : none;
+  --shadow-primary    : 0 4px 16px rgba(252,213,53,.20);
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
-  --color-sidebar-bg  : #171721;
-  --color-sidebar-item: transparent;
-  --color-sidebar-item-hover: rgba(82,102,235,.08);
-  --color-sidebar-item-active: rgba(82,102,235,.15);
-  --color-sidebar-text: #c3c3cc;
-  --color-sidebar-text-active: #5266eb;
+  --color-sidebar-bg        : #0b0e11;
+  --color-sidebar-item      : transparent;
+  --color-sidebar-item-hover: rgba(252,213,53,.08);
+  --color-sidebar-item-active: rgba(252,213,53,.15);
+  --color-sidebar-text      : #707a8a;
+  --color-sidebar-text-active: #fcd535;
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: dark;
 
-  /* ── Semantic Tokens — Mercury ───────────────────────────────── */
-  /* Backgrounds */
-  --bg      : #171721;          /* Deep Space */
-  --surface : #1e1e2a;          /* Midnight Slate */
-  --card    : #1e1e2a;          /* Midnight Slate */
-  --card2   : #272735;          /* Graphite */
+  /* ── Semantic tokens — mapeados ao DESIGN-binance.md ─────────── */
+  --bg      : #0b0e11;   /* canvas-dark */
+  --surface : #1e2329;   /* surface-card-dark */
+  --card    : #1e2329;   /* surface-card-dark */
+  --card2   : #2b3139;   /* surface-elevated-dark */
 
-  /* Bordas */
-  --border  : rgba(112,112,125,.25);   /* Lead sutil */
-  --border2 : #70707d;                 /* Lead */
+  --border  : #2b3139;   /* hairline-on-dark */
+  --border2 : #3a4148;
 
-  /* Texto */
-  --text    : #ededf3;          /* Starlight */
-  --text2   : #c3c3cc;          /* Silver */
-  --text3   : #70707d;          /* Lead */
+  --text    : #eaecef;   /* body on dark */
+  --text2   : #707a8a;   /* muted */
+  --text3   : #929aa5;   /* muted-strong */
 
-  /* Acentos */
-  --accent  : #5266eb;                  /* Mercury Blue */
-  --accent2 : rgba(82,102,235,.15);     /* Mercury Blue bg leve */
-  --cyan    : #06b6d4;          /* info / em rota */
-  --green   : #22c55e;          /* sucesso / no prazo */
-  --orange  : #f97316;          /* atenção / atraso */
-  --red     : #ef4444;          /* alerta / crítico */
-  --yellow  : #eab308;          /* aviso */
-  --roxo    : #a855f7;          /* destaque secundário / tag */
+  --accent  : #fcd535;               /* Binance Yellow */
+  --accent2 : rgba(252,213,53,.10);  /* Binance Yellow bg leve */
+  --on-primary: #181a20;             /* texto PRETO sobre amarelo */
+
+  --cyan    : #2dbdb6;   /* accent-turquoise */
+  --green   : #0ecb81;   /* trading-up */
+  --orange  : #f0b90b;   /* primary-active / warning */
+  --red     : #f6465d;   /* trading-down */
+  --yellow  : #fcd535;   /* mesmo que accent */
+  --roxo    : #2dbdb6;   /* accent-turquoise (reusa como "roxo") */
 }

@@ -16,7 +16,6 @@ const _t = {
   txt2:        "var(--text2)",
   ouro:        "var(--accent)",
   ouroDk:      "var(--color-primary-dk)",
-  onPrimary:   "var(--on-primary)",   /* texto sobre botão accent — preto no Binance Yellow */
   verde:       "var(--green)",
   verdeDk:     "var(--color-success-dk)",
   danger:      "var(--red)",

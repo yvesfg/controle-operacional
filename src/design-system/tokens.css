@@ -1,50 +1,47 @@
 /* ═══════════════════════════════════════════════════════════════════
-   tokens.css — Design System · Controle Operacional
-   ► Altere aqui → propaga em TODO o app que consome var(--*)
-   ► Cores NÃO ficam aqui — vão em theme-dark.css / theme-light.css
+   tokens.css — Binance Design System · Controle Operacional
+   ► Cores NÃO ficam aqui — ficam em theme-dark.css / theme-light.css
+   ► Este arquivo: tipografia, espaçamento, radii, layout, z-index
+   ► Altere aqui → propaga em TODO o app que consome var(--)
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
 
-  /* ── Tipografia — Mercury (substitutos: Inter / Manrope) ────── */
-  --font-heading : 'Manrope', 'Inter', system-ui, sans-serif;
-  --font-display : 'Manrope', 'Inter', system-ui, sans-serif;
-  --font-body    : 'Inter', 'Manrope', system-ui, sans-serif;
-  --font-mono    : 'JetBrains Mono', monospace;
+  /* ── Tipografia — BinanceNova→Inter / BinancePlex→IBM Plex Mono ─ */
+  --font-heading : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body    : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono    : 'IBM Plex Mono', 'JetBrains Mono', monospace;  /* BinancePlex → números */
 
-  /* Tamanhos de texto */
+  /* Tamanhos de texto — escala Binance */
   --text-2xs : 10px;
   --text-xs  : 11px;
-  --text-sm  : 12px;
-  --text-base: 13px;
-  --text-md  : 14px;
-  --text-lg  : 16px;
-  --text-xl  : 18px;
-  --text-2xl : 22px;
-  --text-3xl : 28px;
-  --text-4xl : 36px;
+  --text-sm  : 12px;   /* caption */
+  --text-base: 13px;   /* body-sm */
+  --text-md  : 14px;   /* body-md / button / nav-link */
+  --text-lg  : 16px;   /* title-sm / number-md */
+  --text-xl  : 20px;   /* title-md */
+  --text-2xl : 24px;   /* title-lg */
+  --text-3xl : 32px;   /* display-sm */
+  --text-4xl : 40px;   /* display-md / number-display */
 
   /* Line-height */
-  --leading-tight : 1.25;
-  --leading-snug  : 1.375;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.625;
+  --leading-tight  : 1.1;    /* hero-display / display-lg */
+  --leading-snug   : 1.2;    /* display-sm */
+  --leading-normal : 1.4;    /* caption / button / number */
+  --leading-relaxed: 1.5;    /* body */
 
   /* Letter-spacing */
-  --ls-tighter    : -0.02em;
-  --ls-tight      : -0.01em;
-  --ls-normal     :  0;
-  --ls-wide       :  0.02em;
-  --ls-wider      :  0.06em;
-  --ls-widest     :  0.12em;
-  --ls-label      :  0.08em;   /* rótulos uppercase */
-  --ls-badge      :  0.04em;
-  --ls-btn        :  0.01em;
-  --ls-mono       :  0.12em;
-  /* Redesign YFGroup */
-  --ls-page-title : -0.03em;  /* Page title Space Grotesk 700 20px */
-  --ls-card-value : -0.04em;  /* Card value Space Grotesk 700 26–40px */
-  --ls-section-lbl:  0.06em;  /* Section label DM Mono 11px UPPERCASE */
+  --ls-tighter : -1px;
+  --ls-tight   : -0.5px;
+  --ls-normal  :  0;
+  --ls-wide    :  0.02em;
+  --ls-wider   :  0.06em;
+  --ls-widest  :  0.12em;
+  --ls-label   :  0.08em;
+  --ls-badge   :  0.04em;
+  --ls-btn     :  0;
+  --ls-mono    :  0;
 
   /* Font-weight */
   --fw-normal  : 400;
@@ -53,37 +50,37 @@
   --fw-bold    : 700;
   --fw-black   : 900;
 
-  /* ── Espaçamento (escala 4px) ───────────────────────────────── */
+  /* ── Espaçamento — base 4px · escala Binance ────────────────── */
   --space-0 :  0px;
-  --space-1 :  4px;
-  --space-2 :  8px;
-  --space-3 : 12px;
-  --space-4 : 16px;
+  --space-1 :  4px;    /* xxs */
+  --space-2 :  8px;    /* xs */
+  --space-3 : 12px;    /* sm */
+  --space-4 : 16px;    /* md */
   --space-5 : 20px;
-  --space-6 : 24px;
+  --space-6 : 24px;    /* lg */
   --space-7 : 28px;
-  --space-8 : 32px;
+  --space-8 : 32px;    /* xl */
   --space-10: 40px;
-  --space-12: 48px;
+  --space-12: 48px;    /* xxl */
   --space-16: 64px;
-  --space-20: 80px;
+  --space-20: 80px;    /* section */
 
-  /* ── Border-radius — Mercury ────────────────────────────────── */
-  /* cards=0px · containers=4px · buttons/inputs=32px (pill) */
-  --radius-none : 0;
-  --radius-tag  : 4px;
-  --radius-sm   : 4px;
-  --radius-btn  : 32px;   /* pill */
-  --radius-badge: 4px;
-  --radius-sidebar: 4px;
-  --radius-tile : 0px;    /* sharp cards */
-  --radius-ico  : 4px;
-  --radius-inp  : 32px;   /* pill */
-  --radius-card : 0px;    /* sharp cards */
-  --radius-logo : 4px;
-  --radius-modal: 4px;
-  --radius-xl   : 4px;
-  --radius-full : 9999px;
+  /* ── Border-radius — hierarquia Binance ─────────────────────── */
+  /* xs=2  sm=4  md=6(buttons/inputs)  lg=8(cards)  xl=12(elevated) pill=9999 */
+  --radius-none   : 0;
+  --radius-tag    : 2px;    /* xs — badges muito pequenos */
+  --radius-sm     : 4px;    /* sm — inline buttons, subscribe */
+  --radius-btn    : 6px;    /* md — CTA padrão */
+  --radius-badge  : 4px;    /* sm */
+  --radius-sidebar: 6px;    /* md */
+  --radius-tile   : 8px;    /* lg — content cards */
+  --radius-ico    : 4px;    /* sm */
+  --radius-inp    : 6px;    /* md — standard inputs */
+  --radius-card   : 8px;    /* lg — content cards */
+  --radius-logo   : 8px;    /* lg */
+  --radius-modal  : 12px;   /* xl — elevated containers / modais */
+  --radius-xl     : 12px;   /* xl */
+  --radius-full   : 9999px; /* pill — CTAs de destaque */
 
   /* ── Ícones (px) ────────────────────────────────────────────── */
   --icon-2xs: 10px;
@@ -99,23 +96,20 @@
   --stroke-md    : 2;
   --stroke-thick : 2.5;
 
-  /* ── Layout / Estrutura ─────────────────────────────────────── */
+  /* ── Layout ──────────────────────────────────────────────────── */
   --sidebar-w          : 220px;
   --sidebar-collapsed-w: 64px;
-  --header-h           : 56px;
-  --header-h-mobile    : 48px;
-  --nav-h              : 60px;
-
-  /* ── Breakpoints (referência JS — use BP em constants.js) ───── */
-  /* xs:0  sm:480  md:768  lg:1200  xl:1536                       */
+  --header-h           : 64px;    /* Binance top-nav: 64px */
+  --header-h-mobile    : 56px;
+  --nav-h              : 64px;
 
   /* ── Z-index ─────────────────────────────────────────────────── */
-  --z-base   :  1;
-  --z-dropdown: 50;
-  --z-sidebar: 100;
-  --z-header : 200;
-  --z-modal  : 300;
-  --z-toast  : 400;
+  --z-base    :  1;
+  --z-dropdown:  50;
+  --z-sidebar : 100;
+  --z-header  : 200;
+  --z-modal   : 300;
+  --z-toast   : 400;
 
   /* ── Transições ─────────────────────────────────────────────── */
   --transition-fast  : 100ms ease;
@@ -124,16 +118,14 @@
   --transition-bounce: 280ms cubic-bezier(.34,1.56,.64,1);
 
   /* ── Dimensões de componente ────────────────────────────────── */
-  /* Button heights */
-  --btn-h-sm : 30px;
-  --btn-h-md : 36px;
-  --btn-h-lg : 44px;
-  --btn-h-xl : 52px;
+  --btn-h-sm : 28px;    /* subscribe compact */
+  --btn-h-md : 40px;    /* button-primary padrão */
+  --btn-h-lg : 48px;
+  --btn-h-xl : 56px;
 
-  /* Input heights */
-  --inp-h-sm : 30px;
-  --inp-h-md : 36px;
-  --inp-h-lg : 44px;
+  --inp-h-sm : 32px;
+  --inp-h-md : 40px;    /* search-input / text-input padrão */
+  --inp-h-lg : 48px;
 
   /* Badge padding */
   --badge-px-sm: var(--space-2);
@@ -142,12 +134,12 @@
   --badge-py-md: 4px;
 
   /* Card padding */
-  --card-p-sm: var(--space-3);
-  --card-p-md: var(--space-4);
-  --card-p-lg: var(--space-6);
+  --card-p-sm: var(--space-4);    /* 16px — trust badges */
+  --card-p-md: var(--space-6);    /* 24px — markets-table-card */
+  --card-p-lg: var(--space-8);    /* 32px — qr-promo-card */
 
   /* ── Opacidades úteis ───────────────────────────────────────── */
   --opacity-disabled: 0.45;
-  --opacity-hover   : 0.85;
+  --opacity-hover   : 0.88;
   --opacity-muted   : 0.6;
 }
