@@ -44,7 +44,6 @@ export default function ModalDetalhe({ ctx }) {
   if (!detalheDT) return null;
 
   const [ocorrModalLocalOpen, setOcorrModalLocalOpen] = React.useState(false);
-  const [dadosExpanded, setDadosExpanded] = React.useState(false);
 
   // ── Variáveis locais computadas a partir do contexto ──
   const r = detalheDT;
@@ -133,38 +132,25 @@ export default function ModalDetalhe({ ctx }) {
                 </div>
 
                 {/* ── Dados completos ── */}
-                {(()=>{
-                  const dadosTodos = [
-                    {l:"Motorista",v:r.nome},{l:"CPF",v:r.cpf},{l:"Placa",v:r.placa},{l:"Vínculo",v:r.vinculo},
-                    {l:"Origem",v:r.origem},{l:"Destino",v:r.destino},{l:"Status",v:r.status},{l:"Dias",v:r.dias},
-                    {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
-                    ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
-                    {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"MAT",v:r.mat},
-                    {l:"RO",v:r.ro},{l:"Status RO",v:r.ro_status},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
-                    {l:"ID (Shipmente)",v:r.id_doc},
-                  ].filter(f=>f.v);
-                  const VISIBLE = 16;
-                  const shown = dadosExpanded ? dadosTodos : dadosTodos.slice(0, VISIBLE);
-                  const hidden = dadosTodos.length - VISIBLE;
-                  return (
-                    <div>
-                      <div style={{...css.secTitle,marginBottom:8}}>{hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>,t.ouro,12)} Dados do Registro <span style={{flex:1,height:1,background:t.borda}} /></div>
-                      <div className="co-dados-grid">
-                        {shown.map((f,fi)=>(
-                          <div key={fi} style={{background:t.bg,borderRadius:6,padding:"4px 8px",border:`1px solid ${t.borda}`}}>
-                            <div style={{fontSize:7.5,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,fontWeight:600}}>{f.l}</div>
-                            <div style={{fontSize:11,fontWeight:600,color:t.txt,marginTop:1,wordBreak:"break-word"}}>{f.v}</div>
-                          </div>
-                        ))}
+                <div>
+                  <div style={{...css.secTitle,marginBottom:8}}>{hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>,t.ouro,12)} Dados do Registro <span style={{flex:1,height:1,background:t.borda}} /></div>
+                  <div className="co-dados-grid">
+                    {[
+                      {l:"Motorista",v:r.nome},{l:"CPF",v:r.cpf},{l:"Placa",v:r.placa},{l:"Vínculo",v:r.vinculo},
+                      {l:"Origem",v:r.origem},{l:"Destino",v:r.destino},{l:"Status",v:r.status},{l:"Dias",v:r.dias},
+                      {l:"Carregamento",v:r.data_carr},{l:"Agenda",v:r.data_agenda},{l:"Descarga",v:r.data_desc},{l:"Chegada",v:r.chegada},
+                      ...(isAdmin||perms.financeiro?[{l:"VL CTE",v:fmtMoeda(r.vl_cte)},{l:"VL Contrato",v:fmtMoeda(r.vl_contrato)},{l:"Adiant.",v:fmtMoeda(r.adiant)},{l:"Saldo",v:fmtMoeda(r.saldo)}]:[]),
+                      {l:"CTE",v:r.cte},{l:"MDF",v:r.mdf},{l:"NF",v:r.nf},{l:"MAT",v:r.mat},
+                      {l:"RO",v:r.ro},{l:"Status RO",v:r.ro_status},{l:"SGS",v:r.sgs},{l:"Gerenciadora",v:r.gerenc},{l:"Cliente",v:r.cliente},
+                      {l:"ID (Shipmente)",v:r.id_doc},
+                    ].filter(f=>f.v).map((f,fi)=>(
+                      <div key={fi} style={{background:t.bg,borderRadius:6,padding:"4px 8px",border:`1px solid ${t.borda}`}}>
+                        <div style={{fontSize:7.5,textTransform:"uppercase",letterSpacing:.8,color:t.txt2,fontWeight:600}}>{f.l}</div>
+                        <div style={{fontSize:11,fontWeight:600,color:t.txt,marginTop:1,wordBreak:"break-word"}}>{f.v}</div>
                       </div>
-                      {dadosTodos.length > VISIBLE && (
-                        <button onClick={()=>setDadosExpanded(v=>!v)} style={{width:"100%",marginTop:6,padding:"5px 0",borderRadius:7,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.5}}>
-                          {dadosExpanded ? "▲ Recolher" : `▼ Ver mais (${hidden} campo${hidden>1?"s":""})`}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })()}
+                    ))}
+                  </div>
+                </div>
 
                 {/* Acompanhamento Dia a Dia */}
                 {(()=>{
