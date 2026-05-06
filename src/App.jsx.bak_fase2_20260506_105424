@@ -30,11 +30,6 @@ import ModalMotorista  from './modals/ModalMotorista.jsx';
 import ModalDetalhe    from './modals/ModalDetalhe.jsx';
 import ModalUsuario    from './modals/ModalUsuario.jsx';
 import ModalConfigDB   from './modals/ModalConfigDB.jsx';
-import ModalWhatsApp       from './modals/ModalWhatsApp.jsx';
-import ModalNFD            from './modals/ModalNFD.jsx';
-import ModalRelatorios     from './modals/ModalRelatorios.jsx';
-import ModalCtrlFinanceiro from './modals/ModalCtrlFinanceiro.jsx';
-import ModalBusca          from './modals/ModalBusca.jsx';
 import RelatoriosView  from './relatorios/RelatoriosView.jsx';
 import OcorrModal from './components/OcorrModal.jsx';
 
@@ -102,12 +97,6 @@ export default function App() {
   const [buscaResult, setBuscaResult] = useState(null);
   const [buscaRelacionados, setBuscaRelacionados] = useState([]);
   const [buscaError, setBuscaError] = useState(null);
-  const [buscaModalOpen, setBuscaModalOpen] = useState(false);
-  useEffect(() => {
-    const onKey = (e) => { if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); setBuscaModalOpen(v=>!v); } };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
   const [historico, setHistorico] = useState(() => loadJSON("hist",[]));
 
   // Dashboard state
@@ -993,7 +982,7 @@ export default function App() {
     registrarLog("LOGOUT", `${usuarioLogado||perfil||"usuário"} saiu do sistema · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
     localStorage.removeItem("co_sessao");
     setAuthed(false); setPerfil(null); setPerms({});
-    setActiveTab("dashboard"); setAuthSenha(""); setAuthEmail("");
+    setActiveTab("busca"); setAuthSenha(""); setAuthEmail("");
     setUsuarioLogado(null);
   };
 
@@ -1811,20 +1800,6 @@ export default function App() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink:0}}><polyline points="15 18 9 12 15 6"/></svg> Voltar ao Login
           </button>
         </div>
-      <ModalBusca ctx={{
-        buscaModalOpen, setBuscaModalOpen,
-        buscaTipo, setBuscaTipo, buscaInput, setBuscaInput,
-        buscaResult, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
-        buscaError, setBuscaError, historico, buscar,
-        DADOS, motoristas, canEdit, connStatus,
-        setFormData, setEditIdx, setEditStep, setModalOpen,
-        setWppFatModal, setWppModal, setWppTel, setWppPgto,
-        setWppValCheque, setWppValConta, setWppObs,
-        setWppModal2, setWpp2Ro, setWpp2IncluirObs,
-        abrirWppPagModal, abrirOcorrModal,
-        dtBase, parseData, saveJSON, t, css, hIco, DESIGN,
-      }} />
-
         <Toast {...toast} />
       </div>
     );
@@ -3385,9 +3360,6 @@ export default function App() {
                   <span style={{fontSize:11,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length} alerta{alertas.length>1?"s":""}</span>
                 </button>
               )}
-              <button onClick={()=>setBuscaModalOpen(true)} style={{...css.hBtn,padding:"6px 8px"}} title="Buscar (Ctrl+K)">
-                {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,15,2)}
-              </button>
               {canEdit && (
                 <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{...css.btnGold,padding:"8px 16px",fontSize:12,gap:6}}>
                   {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",14,2.5)} Nova DT
@@ -3416,9 +3388,6 @@ export default function App() {
                   <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length}</span>
                 </button>
               )}
-              <button onClick={()=>setBuscaModalOpen(true)} style={{...css.hBtn,padding:"6px 7px"}} title="Buscar (Ctrl+K)">
-                {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,13,2)}
-              </button>
               {canEdit && (
                 <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{...css.btnGold,padding:"7px 12px",fontSize:11,gap:5}}>
                   {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",13,2.5)} Nova DT
@@ -3481,6 +3450,282 @@ export default function App() {
           />
         )}
 
+        {/* ═══ BUSCA ═══ */}
+        {activeTab === "busca" && (
+          <div>
+            <div style={{...css.secTitle,marginBottom:12}}>
+              {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13,2)} Buscar Registro
+              <span style={{flex:1,height:1,background:t.borda,marginLeft:4}}/>
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
+              {[
+                {k:"dt",    ico:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>,    l:"DT"},
+                {k:"cpf",   ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,                  l:"CPF"},
+                {k:"placa", ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>, l:"PLACA"},
+              ].map(b => (
+                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");setBuscaResult(null);setBuscaError(null)}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.btn,cursor:"pointer",background:buscaTipo===b.k?`rgba(240,185,11,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
+                  {hIco(b.ico,buscaTipo===b.k?t.ouro:t.txt2,15,2)} {b.l}
+                </button>
+              ))}
+            </div>
+
+            <div style={{display:"flex",gap:8,marginBottom:12}}>
+              <input value={buscaInput} onChange={e=>setBuscaInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&buscar()} placeholder={buscaTipo==="dt"?"00000000":buscaTipo==="cpf"?"000.000.000-00":"AAA0A00"} style={{...css.inp,flex:1,fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:3,textTransform:buscaTipo==="placa"?"uppercase":"none"}} />
+              <button onClick={buscar} style={{...css.btnGold,padding:"0 20px",fontSize:20}}>🔍</button>
+            </div>
+
+            <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:14,padding:"8px 12px",background:t.card,borderRadius:9,borderLeft:`3px solid ${t.verde}`}}>
+              <span style={{width:6,height:6,background:t.verde,borderRadius:"50%",animation:"pulse 2s infinite"}} />
+              <span style={{fontSize:11,color:t.txt2,fontWeight:500}}><strong style={{color:t.verde}}>{DADOS.length}</strong> registros · <span style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:4,padding:"1px 6px",fontSize:9,color:t.azulLt,fontWeight:700}}>{connStatus==="online"?"🟢 ONLINE":"⚫ LOCAL"}</span></span>
+            </div>
+
+            {/* Result card */}
+            {buscaResult && (
+              <div className="co-card" style={{...css.card,animation:"slideUp .3s ease"}}>
+                <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,background:t.headerBg}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 4px 14px rgba(240,185,11,.3)`}}>
+                    {hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.headerBg,18,2)}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{buscaResult.nome||"—"}</div>
+                    <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,marginTop:2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif"}}>DT {buscaResult.dt}</span>
+                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.verde,fontFamily:"'Bebas Neue',sans-serif"}}>{buscaResult.placa}</span>}
+                      {buscaResult.data_desc?<span style={{...css.badge(t.verde,`rgba(2,192,118,.1)`,`rgba(2,192,118,.3)`)}}> DESCARREGADO</span>:buscaResult.data_agenda?<span style={{...css.badge(t.ouro,`rgba(240,185,11,.08)`,`rgba(240,185,11,.3)`)}}>AGUARDANDO</span>:<span style={{...css.badge(t.danger,`rgba(246,70,93,.08)`,`rgba(246,70,93,.3)`)}}>SEM AGENDA</span>}
+                    </div>
+                  </div>
+                </div>
+                <div style={{padding:14,display:"grid",gap:8}}>
+                  {[
+                    {ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,lbl:"CPF",val:buscaResult.cpf},
+                    {ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,lbl:"Placa",val:buscaResult.placa,highlight:true,cor:t.verde},
+                    {ico:<><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></>,lbl:"Rota",val:`${buscaResult.origem||"—"} → ${buscaResult.destino||"—"}`},
+                    {ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,lbl:"Status",val:buscaResult.status},
+                  ].map((item,i)=>(
+                    <div key={i} style={{...css.card,padding:"9px 11px",display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{flexShrink:0}}>{hIco(item.ico,item.cor||t.txt2,16,1.8)}</div>
+                      <div style={{minWidth:0}}>
+                        <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:2}}>{item.lbl}</div>
+                        <div style={{fontWeight:600,color:item.cor||t.txt,fontFamily:item.highlight?"'Bebas Neue',sans-serif":"inherit",letterSpacing:item.highlight?3:0,fontSize:item.highlight?17:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.val||"—"}</div>
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div style={{...css.kpi(t.ouro),padding:"12px 10px"}}>
+                      {hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.ouro,14,2)}
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.ouro,marginTop:4}}>{buscaResult.data_carr||"—"}</div>
+                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Carregamento</div>
+                    </div>
+                    <div style={{...css.kpi(t.verde),padding:"12px 10px"}}>
+                      {hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,14,2)}
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.verde,marginTop:4}}>{buscaResult.data_agenda||"—"}</div>
+                      <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,marginTop:4}}>Agenda Desc.</div>
+                    </div>
+                  </div>
+                  {canFin && (
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                      {[
+                        {lbl:"Empresa",val:fmtMoeda(buscaResult.vl_cte),cor:t.verde},
+                        {lbl:"Motorista",val:fmtMoeda(buscaResult.vl_contrato),cor:t.azulLt},
+                        {lbl:"Adiantam.",val:fmtMoeda(buscaResult.adiant),cor:t.ouro},
+                      ].map((f,i)=>(
+                        <div key={i} style={{...css.kpi(f.cor),padding:"10px 8px"}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:1,color:f.cor,lineHeight:1}}>{f.val}</div>
+                          <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginTop:4}}>{f.lbl}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* ── Banner: Motorista não cadastrado ── */}
+                  {(() => {
+                    const cpfN = buscaResult.cpf?.replace(/\D/g,"");
+                    const placaN = buscaResult.placa?.toUpperCase().replace(/\W/g,"");
+                    const motCadastrado = motoristas.find(m =>
+                      (cpfN && m.cpf?.replace(/\D/g,"") === cpfN) ||
+                      [m.placa1,m.placa2,m.placa3,m.placa4].some(p => p && p.toUpperCase().replace(/\W/g,"") === placaN)
+                    );
+                    if (motCadastrado) return null;
+                    return (
+                      <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{flexShrink:0}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,18,2)}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,fontWeight:700,color:t.ouro}}>Motorista não cadastrado</div>
+                          <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Este motorista não está no cadastro. Deseja cadastrar?</div>
+                        </div>
+                        {canEdit && (
+                          <button onClick={()=>{
+                            setFormData({
+                              nome: buscaResult.nome || "",
+                              cpf: buscaResult.cpf || "",
+                              placa1: buscaResult.placa || "",
+                              vinculo: buscaResult.vinculo || "",
+                            });
+                            setEditIdx(-1);
+                            setModalOpen("motorista");
+                          }} style={{background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"7px 11px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",flexShrink:0}}>
+                            ＋ Cadastrar
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {canEdit && (
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      <button onClick={()=>{
+                        const idx = DADOS.findIndex(r=>r.dt===buscaResult.dt);
+                        setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
+                      }} style={{...css.btnGold,justifyContent:"center",padding:11,width:"100%"}}>
+                        {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)} EDITAR
+                      </button>
+
+                      {/* WhatsApp - 4 modelos (css.btnCard — alteração aqui propaga para todos os tiles WPP) */}
+                      <div style={{background:t.card2,borderRadius:12,padding:12,border:`1px solid rgba(37,211,102,.25)`}}>
+                        <div style={{...css.secTitle,color:"#25D366",marginBottom:10}}>
+                          {hIco(<><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l1.05-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></>,`#25D366`,13,2)}
+                          WHATSAPP · Escolha o modelo
+                          <span style={{flex:1,height:1,background:"rgba(37,211,102,.2)",marginLeft:4}}/>
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                          {[
+                            {l:"Faturamento", sub:"CTE · MDF · MAT",   cor:"#25D366",
+                             ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,
+                             fn:(mot)=>setWppFatModal({reg:buscaResult,mot})},
+                            {l:"Contratação", sub:"Pgto completo",     cor:"#25D366",
+                             ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+                             fn:(mot)=>{setWppModal({reg:buscaResult,mot});setWppTel((mot?.tel||buscaResult.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}},
+                            {l:"Descarga",    sub:"Stretch",           cor:t.azulLt,
+                             ico:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
+                             fn:(mot)=>abrirWppPagModal(buscaResult,mot,"descarga")},
+                            {l:"Diárias",    sub:"Pgto diária",        cor:t.danger,
+                             ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>,
+                             fn:(mot)=>abrirWppPagModal(buscaResult,mot,"diarias")},
+                          ].map((op,i)=>(
+                            <button key={i} onClick={()=>{
+                              const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                              op.fn(mot||null);
+                            }} style={{...css.btnCard(op.cor)}}>
+                              {hIco(op.ico, op.cor, 22, 2)}
+                              <span>{op.l}</span>
+                              <span style={{fontSize:9,opacity:.65,fontWeight:400,marginTop:-2}}>{op.sub}</span>
+                            </button>
+                          ))}
+                        </div>
+                        {/* DOC (com RO) */}
+                        <button onClick={()=>{
+                          const mot=motoristas.find(m=>(buscaResult.cpf&&m.cpf?.replace(/\D/g,"")===buscaResult.cpf?.replace(/\D/g,""))||(buscaResult.nome&&m.nome===buscaResult.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===buscaResult.placa));
+                          setWppModal2({reg:buscaResult,mot:mot||null});setWpp2Ro(buscaResult.ro||"");setWpp2IncluirObs(false);
+                        }} style={{...css.btnCard(t.txt2),width:"100%",marginTop:8,flexDirection:"row",justifyContent:"center",gap:8}}>
+                          {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.txt2,16,2)} DOC (com RO)
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {/* ── Botão Ocorrências (visível para todos) ── */}
+                  <button
+                    onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
+                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(232,130,12,.3)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
+                    style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"#E8820C",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
+                    {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`#E8820C`,16,2)} Ocorrências
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Outros registros (mesmo CPF / mesma Placa) ── */}
+            {buscaResult && buscaRelacionados.length > 0 && (
+              <div style={{marginTop:12,animation:"slideUp .3s"}}>
+                <div style={{...css.secTitle,marginBottom:8}}>
+                  {buscaTipo==="cpf"?<>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.ouro,11,2)}&nbsp;Outros DTs com este CPF</>:buscaTipo==="placa"?<>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,11,2)}&nbsp;Outros DTs com esta Placa</>:<>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,11,2)}&nbsp;Outros registros (mesmo CPF / Placa)</>}
+                  <span style={{flex:1,height:1,background:t.borda}} />
+                  <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{buscaRelacionados.length} registro{buscaRelacionados.length>1?"s":""}</span>
+                </div>
+                {buscaRelacionados.slice(0,10).map((r,i) => {
+                  const statusC = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.txt2;
+                  const statusL = r.data_desc ? "Descarregado" : r.data_agenda ? "Aguardando" : "—";
+                  return (
+                    <div key={i} onClick={()=>{
+                      setBuscaInput(r.dt);
+                      setBuscaTipo("dt");
+                      setTimeout(()=>{
+                        setBuscaResult(r);
+                        // recalcular relacionados
+                        const cpfN = r.cpf?.replace(/\D/g,"");
+                        const placaN = r.placa?.toUpperCase().replace(/\W/g,"");
+                        const rel = DADOS.filter(x =>
+                          x.dt !== r.dt && (
+                            (cpfN && x.cpf?.replace(/\D/g,"") === cpfN) ||
+                            (placaN && x.placa?.toUpperCase().replace(/\W/g,"") === placaN)
+                          )
+                        ).sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
+                        setBuscaRelacionados(rel);
+                      }, 0);
+                    }} style={{background:t.card,borderRadius:10,padding:"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
+                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde}}>{r.placa||""}</span>
+                        </div>
+                        <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+                          <span style={{display:"flex",alignItems:"center",gap:3}}>{hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.txt2,10,2)} {r.data_carr||"—"}</span>
+                          <span style={{display:"flex",alignItems:"center",gap:3}}>{hIco(<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,t.txt2,10,2)} {r.data_agenda||"—"}</span>
+                          <span style={{color:statusC,fontWeight:600}}>{statusL}</span>
+                        </div>
+                      </div>
+                      <span style={{color:t.txt2,fontSize:14,flexShrink:0}}>›</span>
+                    </div>
+                  );
+                })}
+                {buscaRelacionados.length > 10 && (
+                  <div style={{fontSize:10,color:t.txt2,textAlign:"center",padding:"6px 0"}}>… e mais {buscaRelacionados.length-10} registro(s)</div>
+                )}
+              </div>
+            )}
+
+            {/* Error */}
+            {buscaError && !buscaError.startsWith("__cpf_sem_dt__") && (
+              <div style={{...css.card,padding:"24px 16px",textAlign:"center",borderTop:`3px solid ${t.danger}`,animation:"slideUp .3s"}}>
+                <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}>{hIco(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,t.danger,32,2)}</div>
+                <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.danger,marginBottom:5}}>NÃO ENCONTRADO</h3>
+                <p style={{color:t.txt2,fontSize:11,marginBottom:4}}>Nenhum registro encontrado para <strong style={{color:t.txt}}>"{buscaError}"</strong></p>
+                <p style={{color:t.txt2,fontSize:10,marginBottom:14}}>
+                  {buscaTipo==="cpf"?"Nenhum motorista com este CPF nos registros.":buscaTipo==="placa"?"Nenhuma placa com este número nos registros.":"DT não localizada no sistema."}
+                </p>
+                {canEdit && (
+                  <button onClick={()=>{
+                    const fd = buscaTipo==="dt" ? {dt:buscaError}
+                             : buscaTipo==="cpf" ? {cpf:buscaError}
+                             : {placa:buscaError};
+                    setFormData(fd); setEditIdx(-1); setEditStep(1); setModalOpen("edit");
+                  }} style={{...css.btnGold,marginTop:4,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,color:"#fff",justifyContent:"center",width:"100%",fontSize:14}}>
+                    ＋ CADASTRAR NOVO REGISTRO
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* History */}
+            {historico.length > 0 && !buscaResult && !buscaError && (
+              <div style={{marginTop:16}}>
+                <div style={css.secTitle}>Histórico Recente <span style={{flex:1,height:1,background:t.borda}} /></div>
+                {historico.map((h,i) => (
+                  <div key={i} onClick={()=>{
+                    const dt=h.dt; setBuscaInput(dt); setBuscaTipo("dt");
+                    setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
+                    const c=dt.replace(/\D/g,"");
+                    const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
+                    if(found){setBuscaResult(found);const cpfN=found.cpf?.replace(/\D/g,""),placaN=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN&&x.cpf?.replace(/\D/g,"")===cpfN)||(placaN&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);}else{setBuscaError(dt);}
+                  }} style={{background:t.card,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,border:`1px solid ${t.borda}`,cursor:"pointer",marginBottom:7}}>
+                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.ouro,minWidth:80}}>{h.dt}</span>
+                    <span style={{fontSize:11,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:t.txt}}>{h.nome}</span>
+                    <span style={{marginLeft:"auto",color:t.borda,fontSize:12}}>›</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ═══ DASHBOARD ═══ */}
         {activeTab === "dashboard" && (
@@ -4223,16 +4468,634 @@ export default function App() {
         );
       })()}
 
-      <ModalWhatsApp ctx={{
-        wppTipoOpen, setWppTipoOpen, wppSearchTxt, setWppSearchTxt, wppSearchReg, setWppSearchReg,
-        buscaResult, wppModal, setWppModal, wppTel, setWppTel, wppPgto, setWppPgto,
-        wppValCheque, setWppValCheque, wppValConta, setWppValConta, wppObs, setWppObs,
-        wppModal2, setWppModal2, wpp2Ro, setWpp2Ro, wpp2Obs, setWpp2Obs, wpp2IncluirObs, setWpp2IncluirObs,
-        wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppFortes, setWppFortes,
-        wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
-        wppConfirmModal, setWppConfirmModal, DADOS, motoristas,
-        t, css, hIco, fmtMoeda, showToast, DESIGN, abrirWppPagModal,
-      }} />
+      {/* ═══ WHATSAPP CARD MODAL (Item 4) ═══ */}
+      {wppModal && (()=>{
+        const {reg, mot} = wppModal;
+        const adtNum = parseFloat(reg.adiant||0)||0;
+        const chequeNum = parseFloat(wppValCheque||0)||0;
+        const contaNum = parseFloat(wppValConta||0)||0;
+        const somaExcede = wppPgto==="ambos" && (chequeNum+contaNum) > adtNum && adtNum > 0;
+        const temConta = !!(mot?.banco || mot?.conta);
+        const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ") || reg.placa || "—";
+
+        const gerarMsg = () => {
+          const ln = "\n";
+          let msg = `DT: ${reg.dt||"—"}    DESTINO: ${reg.destino||"—"}${ln}`;
+          msg += `NOME: ${reg.nome||"—"}${ln}`;
+          msg += `CPF: ${reg.cpf||"—"}${ln}`;
+          msg += `TELEFONE: ${wppTel||"—"}${ln}`;
+          msg += `PLACAS: ${placas}${ln}`;
+          msg += `CARREGAR: ${reg.data_carr||"—"}${ln}`;
+          msg += `AG DESCARGA: ${reg.data_agenda||"—"}${ln}`;
+          msg += `VLR EMPRESA: ${fmtMoeda(reg.vl_cte)}${ln}`;
+          msg += `VLR MOT: ${fmtMoeda(reg.vl_contrato)}${ln}`;
+          msg += `ADT: ${fmtMoeda(reg.adiant)}${ln}`;
+          if (wppPgto==="cheque") {
+            msg += `PGTO: ✅ CHEQUE${ln}`;
+          } else if (wppPgto==="conta") {
+            msg += `PGTO: ✅ CONTA${ln}`;
+            if (temConta) {
+              msg += `  BCO: ${mot.banco||"—"}${ln}`;
+              msg += `  AGE: ${mot.agencia||"—"}${ln}`;
+              msg += `  C/C: ${mot.conta||"—"}${ln}`;
+              msg += `  FAV: ${mot.favorecido||mot?.nome||reg.nome||"—"}${ln}`;
+              if (mot?.pix_tipo) msg += `  PIX (${mot.pix_tipo}): ${mot.pix_chave||"—"}${ln}`;
+            }
+          } else {
+            msg += `PGTO: ✅ CHEQUE + CONTA${ln}`;
+            msg += `  Cheque: ${fmtMoeda(wppValCheque)}${ln}`;
+            msg += `  Conta: ${fmtMoeda(wppValConta)}${ln}`;
+            if (temConta) {
+              msg += `  BCO: ${mot.banco||"—"}${ln}`;
+              msg += `  AGE: ${mot.agencia||"—"}${ln}`;
+              msg += `  C/C: ${mot.conta||"—"}${ln}`;
+              msg += `  FAV: ${mot.favorecido||mot?.nome||reg.nome||"—"}${ln}`;
+              if (mot?.pix_tipo) msg += `  PIX (${mot.pix_tipo}): ${mot.pix_chave||"—"}${ln}`;
+            }
+          }
+          if (wppObs.trim()) msg += `OBSERVAÇÃO: ${wppObs.trim()}${ln}`;
+          msg += `${ln}YFGroup · Controle Operacional`;
+          return msg;
+        };
+
+        const enviar = () => {
+          if (somaExcede) { showToast("⚠️ Soma Cheque + Conta excede o ADT!","warn"); return; }
+          const tel = wppTel.replace(/\D/g,"");
+          const rawMsg = gerarMsg();
+          const url = tel ? `https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}` : `https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
+          const displayText = rawMsg.replace(/%0A/g,"\n");
+          setWppModal(null);
+          setWppConfirmModal({url, displayText});
+        };
+
+        const inpStyle = {...css.inp, fontSize:12, padding:"7px 10px"};
+        const labelStyle = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+        const pgtoOptions = [{k:"cheque",l:"📝 Cheque"},{k:"conta",l:"🏦 Conta"},{k:"ambos",l:"📝 + 🏦 Ambos"}];
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal(null)}>
+            <div style={{...css.modal,maxHeight:"96vh"}}>
+              {/* Header */}
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.06)"}}>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>WHATSAPP</div>
+                  <div style={{fontSize:9,color:t.txt2}}>Revise os dados antes de enviar</div>
+                </div>
+                <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+
+                {/* Linha DT + DESTINO */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div><label style={labelStyle}>DT</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.ouro}}>{reg.dt||"—"}</div></div>
+                  <div><label style={labelStyle}>Destino</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontSize:11,color:t.txt}}>{reg.destino||"—"}</div></div>
+                </div>
+
+                {/* Nome, CPF */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div><label style={labelStyle}>Nome</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontSize:12,color:t.txt,fontWeight:700}}>{reg.nome||"—"}</div></div>
+                  <div><label style={labelStyle}>CPF</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontSize:11,color:t.txt}}>{reg.cpf||"—"}</div></div>
+                </div>
+
+                {/* Telefone — editável */}
+                <div>
+                  <label style={labelStyle}>Telefone <span style={{color:t.verde,fontSize:8}}>(editável)</span></label>
+                  <input value={wppTel} onChange={e=>setWppTel(e.target.value)} placeholder="(XX) XXXXX-XXXX" style={inpStyle} />
+                  {!wppTel && <div style={{fontSize:9,color:t.warn,marginTop:3}}>⚠️ Motorista sem telefone cadastrado — o WhatsApp abrirá sem número</div>}
+                </div>
+
+                {/* Placas */}
+                <div>
+                  <label style={labelStyle}>Placas</label>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                    {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2.5,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"3px 9px"}}>{p}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Datas + Financeiro */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {[
+                    {l:"Carregar",v:reg.data_carr},
+                    {l:"Ag. Descarga",v:reg.data_agenda},
+                  ].map(f=>(
+                    <div key={f.l}><label style={labelStyle}>{f.l}</label><div style={{...inpStyle,background:t.card2,borderRadius:9,display:"flex",alignItems:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:1.5,color:t.ouro}}>{f.v||"—"}</div></div>
+                  ))}
+                </div>
+                {canFin && (
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                    {[{l:"VLR EMPRESA",v:reg.vl_cte,c:t.verde},{l:"VLR MOT",v:reg.vl_contrato,c:t.azulLt},{l:"ADT",v:reg.adiant,c:t.ouro}].map(f=>(
+                      <div key={f.l} style={{background:t.card2,borderRadius:9,padding:"8px 10px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:3}}>{f.l}</div>
+                        <div style={{fontSize:11,fontWeight:700,color:f.c}}>{fmtMoeda(f.v)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* PGTO */}
+                <div>
+                  <label style={{...labelStyle,marginBottom:7}}>PGTO · Forma de Pagamento</label>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                    {pgtoOptions.map(op=>(
+                      <button key={op.k} onClick={()=>setWppPgto(op.k)} style={{padding:"9px 6px",borderRadius:DESIGN.r.btn,border:`1.5px solid ${wppPgto===op.k?t.verde:t.borda}`,background:wppPgto===op.k?`rgba(2,192,118,.1)`:t.card2,color:wppPgto===op.k?t.verde:t.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,textAlign:"center",transition:"all .2s"}}>
+                        {op.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Conta — verificar dados bancários */}
+                {(wppPgto==="conta" || wppPgto==="ambos") && (
+                  <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${temConta?t.verde:t.warn}`}}>
+                    {temConta ? (
+                      <>
+                        <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Conta bancária cadastrada</div>
+                        <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
+                          <div>BCO: <strong style={{color:t.txt}}>{mot.banco||"—"}</strong></div>
+                          <div>AGE: <strong style={{color:t.txt}}>{mot.agencia||"—"}</strong> · C/C: <strong style={{color:t.txt}}>{mot.conta||"—"}</strong></div>
+                          <div>FAV: <strong style={{color:t.txt}}>{mot.favorecido||mot?.nome||reg.nome||"—"}</strong></div>
+                          {mot?.pix_tipo && <div style={{color:t.azulLt}}>PIX ({mot.pix_tipo}): <strong>{mot.pix_chave||"—"}</strong></div>}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{fontSize:10,color:t.warn}}>⚠️ Motorista sem conta bancária cadastrada. Cadastre na aba Motoristas antes de enviar.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Valores Cheque + Conta */}
+                {wppPgto==="ambos" && (
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div>
+                      <label style={labelStyle}>Valor Cheque (R$)</label>
+                      <input type="number" value={wppValCheque} onChange={e=>setWppValCheque(e.target.value)} placeholder="0,00" style={inpStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Valor Conta (R$)</label>
+                      <input type="number" value={wppValConta} onChange={e=>setWppValConta(e.target.value)} placeholder="0,00" style={inpStyle} />
+                    </div>
+                    {somaExcede && (
+                      <div style={{gridColumn:"1/-1",background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:8,padding:"8px 10px",fontSize:11,color:t.danger,fontWeight:600}}>
+                        ⚠️ Soma ({fmtMoeda((chequeNum+contaNum).toFixed(2))}) excede o ADT ({fmtMoeda(reg.adiant)})!
+                      </div>
+                    )}
+                    {!somaExcede && (chequeNum+contaNum)>0 && adtNum>0 && (
+                      <div style={{gridColumn:"1/-1",background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:8,padding:"8px 10px",fontSize:11,color:t.verde}}>
+                        ✅ Total: {fmtMoeda((chequeNum+contaNum).toFixed(2))} de {fmtMoeda(reg.adiant)}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Observação */}
+                <div>
+                  <label style={labelStyle}>Observação</label>
+                  <textarea value={wppObs} onChange={e=>setWppObs(e.target.value)} rows={2} placeholder="Qualquer observação relevante..." style={{...inpStyle,resize:"vertical",lineHeight:1.5}} />
+                </div>
+
+              </div>
+
+              {/* Botão enviar */}
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
+                <button onClick={()=>setWppModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={enviar} disabled={somaExcede} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:somaExcede?"not-allowed":"pointer",background:somaExcede?`rgba(128,128,128,.2)`:`rgba(37,211,102,.15)`,border:`1.5px solid ${somaExcede?t.borda:"rgba(37,211,102,.4)"}`,color:somaExcede?t.txt2:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                  📲 ENVIAR NO WHATSAPP
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ WHATSAPP DOC MODAL (Item 3 Sessão 4) ═══ */}
+      {wppModal2 && (()=>{
+        const {reg, mot} = wppModal2;
+        const nomeMotorista = mot?.nome || reg.nome || "";
+        const placas = [mot?.placa1||reg.placa, mot?.placa2, mot?.placa3, mot?.placa4].filter(Boolean).join(" / ") || reg.placa || "—";
+        const telMot = mot?.tel || reg.tel || "";
+        const roOk = wpp2Ro.trim().length > 0;
+
+        const inpStyle2 = {...css.inp, fontSize:12, padding:"7px 10px"};
+        const lbl2 = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+
+        const gerarMsgDoc = () => {
+          const ln = "%0A";
+          const b = (s) => `*${s}*`;
+          let msg = `${b("📄 DOCUMENTO")}${ln}`;
+          msg += `────────────────${ln}`;
+          msg += `${b("MOT:")} ${nomeMotorista}${ln}`;
+          msg += `${b("CTE:")} ${reg.cte||"—"}${ln}`;
+          msg += `${b("MDF:")} ${reg.mdf||"—"}${ln}`;
+          msg += `${b("MAT:")} ${reg.mat||"—"}${ln}`;
+          msg += `${b("PLACAS:")} ${placas}${ln}`;
+          msg += `────────────────${ln}`;
+          msg += `${b("DT:")} ${reg.dt||"—"}  ${b("NF:")} ${reg.nf||"—"}  ${b("ID:")} ${reg.id_doc||"—"}${ln}`;
+          msg += `${b("RO:")} ${wpp2Ro.trim()}${ln}`;
+          if (wpp2IncluirObs && wpp2Obs.trim()) msg += `${b("OBS:")} ${wpp2Obs.trim()}${ln}`;
+          msg += `────────────────${ln}`;
+          msg += `YFGroup · Controle Operacional`;
+          return msg;
+        };
+
+        const enviarDoc = () => {
+          if (!roOk) { showToast("⚠️ RO é obrigatório","warn"); return; }
+          // Memoriza OBS se preenchido e incluído
+          if (wpp2IncluirObs && wpp2Obs.trim()) saveJSON("co_wpp2_obs_last", wpp2Obs.trim());
+          const tel = telMot.replace(/\D/g,"");
+          const rawMsg = gerarMsgDoc();
+          const url = tel ? `https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}` : `https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
+          const displayText = rawMsg.replace(/%0A/g,"\n");
+          setWppModal2(null);
+          setWppConfirmModal({url, displayText});
+        };
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal2(null)}>
+            <div style={{...css.modal, maxHeight:"96vh"}}>
+              {/* Header */}
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📄</div>
+                <div style={{flex:1}}>
+                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>WHATSAPP DOC</div>
+                  <div style={{fontSize:9,color:t.txt2}}>Mensagem documentária · RO obrigatório</div>
+                </div>
+                <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+
+                {/* Motorista + Placas */}
+                <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                    <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700}}>Motorista</div>
+                    {telMot && <div style={{fontSize:9,color:t.txt2}}>📞 {telMot}</div>}
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3}}>{nomeMotorista||"—"}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
+                    {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"2px 8px"}}>{p}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Documentos */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  {[{l:"CTE",v:reg.cte},{l:"MDF",v:reg.mdf},{l:"MAT",v:reg.mat}].map(f=>(
+                    <div key={f.l} style={{background:t.card2,borderRadius:8,padding:"7px 9px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
+                      <div style={{fontSize:11,fontWeight:700,color:f.v?t.txt:t.txt2}}>{f.v||"—"}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DT / NF / ID */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  {[{l:"DT",v:reg.dt},{l:"NF",v:reg.nf},{l:"ID",v:reg.id_doc}].map(f=>(
+                    <div key={f.l} style={{background:t.card2,borderRadius:8,padding:"7px 9px",border:`1px solid ${t.borda}`,textAlign:"center"}}>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1.5,color:t.ouro}}>{f.v||"—"}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* RO — obrigatório */}
+                <div>
+                  <label style={{...lbl2,color:roOk?t.verde:t.danger}}>RO — Registro de Ocorrência <span style={{color:t.danger}}>*obrigatório</span></label>
+                  <input value={wpp2Ro} onChange={e=>setWpp2Ro(e.target.value)} placeholder="Nº do Registro de Ocorrência" style={{...inpStyle2,border:`1.5px solid ${roOk?t.verde:t.danger}`,width:"100%",boxSizing:"border-box"}} />
+                  {!roOk && <div style={{fontSize:9,color:t.danger,marginTop:3}}>⚠️ Informe o número do RO para prosseguir</div>}
+                </div>
+
+                {/* OBS — opcional com memória */}
+                <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                    <label style={{...lbl2,margin:0,flex:1}}>OBS — Observação <span style={{color:t.txt2,fontSize:11}}>(opcional)</span></label>
+                    <button onClick={()=>setWpp2IncluirObs(v=>!v)} style={{background:wpp2IncluirObs?`rgba(2,192,118,.12)`:`rgba(128,128,128,.08)`,border:`1.5px solid ${wpp2IncluirObs?t.verde:t.borda}`,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:9,fontWeight:700,color:wpp2IncluirObs?t.verde:t.txt2,fontFamily:"inherit"}}>
+                      {wpp2IncluirObs?"✅ Incluir":"⬜ Incluir"}
+                    </button>
+                  </div>
+                  <textarea value={wpp2Obs} onChange={e=>setWpp2Obs(e.target.value)} rows={2} placeholder={wpp2Obs?"Última OBS salva — edite se necessário":"Digite uma observação..."}
+                    style={{...inpStyle2,resize:"vertical",lineHeight:1.5,width:"100%",boxSizing:"border-box",opacity:wpp2IncluirObs?1:.55}} />
+                  {!wpp2IncluirObs && wpp2Obs && (
+                    <div style={{fontSize:8,color:t.txt2,marginTop:3}}>💾 Última OBS salva — clique em "Incluir" para adicionar à mensagem</div>
+                  )}
+                </div>
+
+                {/* Preview da mensagem */}
+                <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
+                  <div style={{fontFamily:"monospace",fontSize:9,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>
+                    {`📄 DOCUMENTO\n────────────────\nMOT: ${nomeMotorista||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nPLACAS: ${placas}\n────────────────\nDT: ${reg.dt||"—"}  NF: ${reg.nf||"—"}  ID: ${reg.id_doc||"—"}\nRO: ${wpp2Ro||"[obrigatório]"}${wpp2IncluirObs&&wpp2Obs?`\nOBS: ${wpp2Obs}`:""}\n────────────────\nYFGroup · Controle Operacional`}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Botão enviar */}
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
+                <button onClick={()=>setWppModal2(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={enviarDoc} disabled={!roOk} style={{flex:1,border:`1.5px solid ${roOk?"rgba(37,211,102,.4)":t.borda}`,borderRadius:10,padding:"12px 18px",cursor:roOk?"pointer":"not-allowed",background:roOk?`rgba(37,211,102,.15)`:`rgba(128,128,128,.08)`,color:roOk?"#25D366":t.txt2,fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                  📄 ENVIAR DOC NO WHATSAPP
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ WHATSAPP FATURAMENTO MODAL ═══ */}
+      {wppFatModal && (()=>{
+        const {reg,mot} = wppFatModal;
+        const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
+        const inpF = {...css.inp,fontSize:12,padding:"7px 10px"};
+        const lblF = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+
+        const gerarFat = () => {
+          const cleanNome = s => (s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();
+          const ln = "\n";
+          let m = `MOT: ${cleanNome(reg.nome)||"—"}${ln}`;
+          m += `CTE: ${reg.cte||"—"}${ln}`;
+          m += `MDF: ${reg.mdf||"—"}${ln}`;
+          m += `MAT: ${reg.mat||"—"}${ln}`;
+          m += `DT: ${reg.dt||"—"}${ln}`;
+          m += `NF: ${reg.nf||"—"}${ln}`;
+          m += `ID: ${reg.id_doc||"—"}${ln}`;
+          return m;
+        };
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppFatModal(null)}>
+            <div style={{...css.modal,maxHeight:"90vh"}}>
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.05)"}}>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>🧾</div>
+                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>CTE · MDF · MAT · DT · NF · ID</div></div>
+                <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+                <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
+                  <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
+                    {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();return`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id_doc||"—"}`;})()}
+                  </div>
+                </div>
+                {(()=>{
+                  const faltando=[];
+                  if(!reg.nome)faltando.push("Motorista");if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.mat)faltando.push("MAT");if(!reg.nf)faltando.push("NF");if(!reg.dt)faltando.push("DT");
+                  return faltando.length>0?(
+                    <div style={{background:`rgba(246,70,93,.07)`,border:`1.5px solid rgba(246,70,93,.3)`,borderRadius:8,padding:"10px 12px"}}>
+                      <div style={{fontSize:10,fontWeight:700,color:t.danger,marginBottom:5}}>⚠️ Campos obrigatórios vazios — edite o registro antes de enviar:</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                        {faltando.map(f=><span key={f} style={{background:`rgba(246,70,93,.12)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:4,padding:"2px 8px",fontSize:10,fontWeight:700,color:t.danger}}>{f}</span>)}
+                      </div>
+                    </div>
+                  ):(<div style={{background:`rgba(2,192,118,.07)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.verde,fontWeight:700}}>✅ Todos os campos estão preenchidos!</div>);
+                })()}
+              </div>
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
+                <button onClick={()=>setWppFatModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={()=>{
+                  const faltando=[];
+                  if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.nf)faltando.push("NF");
+                  if(faltando.length>0){if(!window.confirm(`⚠️ Campos vazios: ${faltando.join(", ")}.\nEnviar mesmo assim?`))return;}
+                  const tel=(mot?.tel||"").replace(/\D/g,"");
+                  const rawMsg=gerarFat();
+                  const url=tel?`https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}`:`https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
+                  setWppFatModal(null);
+                  setWppConfirmModal({url, displayText:rawMsg});
+                }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                  📲 PREPARAR MENSAGEM
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ WHATSAPP PAGAMENTO (Descarga / Diárias) MODAL ═══ */}
+      {wppPagModal && (()=>{
+        const {reg,mot,tipo} = wppPagModal;
+        const isDiaria = tipo === "diarias";
+        const nomeLabel = isDiaria ? "DIÁRIAS" : "DESCARGA / STRETCH";
+        const headerColor = isDiaria ? t.danger : t.azulLt;
+        const headerBg = isDiaria ? "rgba(246,70,93,.06)" : "rgba(22,119,255,.06)";
+        const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
+        const pixLabel = mot?.pix_tipo ? `${mot.pix_tipo}: ${mot.pix_chave||"—"}` : "—";
+        const inpP = {...css.inp,fontSize:12,padding:"7px 10px"};
+        const lblP = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
+
+        const cleanNome = s => (s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();
+        const gerarPag = () => {
+          const ln = "\n";
+          let m = `PREZADAS,${ln}SOLICITO O PAGAMENTO:${ln}`;
+          m += `MOT: ${cleanNome(reg.nome)||"—"}${ln}`;
+          m += `CTE: ${reg.cte||"—"}${ln}`;
+          m += `MDF: ${reg.mdf||"—"}${ln}`;
+          m += `MAR: ${reg.mat||"—"}${ln}`;
+          m += `PLACAS: ${placas}${ln}`;
+          m += `DT: ${reg.dt||"—"} NF: ${reg.nf||"—"} ID: ${reg.id_doc||"—"}${ln}`;
+          m += `${ln}`;
+          m += `BCO: ${mot?.banco||"—"}${ln}`;
+          m += `FAV: ${cleanNome(mot?.favorecido||mot?.nome||reg.nome)||"—"}${ln}`;
+          m += `PIX: ${pixLabel}${ln}`;
+          m += `AGE: ${mot?.agencia||"—"}${ln}`;
+          m += `C/C: ${mot?.conta||"—"}${ln}`;
+          if (wppFortes) {
+            m += `${ln}`;
+            if (isDiaria) {
+              wppDccMinutas.forEach((mn,idx)=>{
+                const td = mn.tipo||"D01-MAT";
+                m += `MINUTA DCC${wppDccMinutas.length>1?` (${idx+1})`:""}${ln}`;
+                m += `CTE ${td}: ${mn.cte||"—"}${ln}`;
+                m += `MDF ${td}: ${mn.mdf||"—"}${ln}`;
+                m += `${td}: ${mn.num||"—"}${ln}`;
+                if(mn.valor) m += `VALOR: ${fmtMoeda(mn.valor)}${ln}`;
+                m += `${ln}`;
+              });
+              if(wppCteComp.cte||wppCteComp.mdf||wppCteComp.mat){
+                m += `CTE COMPLEMENTAR:${ln}`;
+                if(wppCteComp.cte) m += `CTE COMP: ${wppCteComp.cte}${ln}`;
+                if(wppCteComp.mdf) m += `MDF COMP: ${wppCteComp.mdf}${ln}`;
+                if(wppCteComp.mat) m += `MAT COMP: ${wppCteComp.mat}${ln}`;
+              }
+            } else {
+              wppDscMinutas.forEach((mn,idx)=>{
+                const tp = mn.tipo||"MAM";
+                m += `MINUTA ${tp}${wppDscMinutas.length>1?` (${idx+1})`:""}${ln}`;
+                m += `CTE ${tp}: ${mn.cte||"—"}${ln}`;
+                m += `MDF ${tp}: ${mn.mdf||"—"}${ln}`;
+                m += `${tp}: ${mn.num||"—"}${ln}`;
+                m += `${ln}`;
+              });
+            }
+          }
+          return m.trim();
+        };
+
+        return (
+          <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppPagModal(null)}>
+            <div style={{...css.modal,maxHeight:"96vh"}}>
+              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:headerBg}}>
+                <div style={{width:36,height:36,borderRadius:9,background:`${headerColor}22`,border:`1px solid ${headerColor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>{isDiaria?"🛏️":"📦"}</div>
+                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:headerColor}}>{nomeLabel}</div><div style={{fontSize:9,color:t.txt2}}>Solicitar pagamento · {reg.nome||"—"}</div></div>
+                <button onClick={()=>setWppPagModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              </div>
+
+              <div style={{flex:1,minHeight:0,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10}}>
+                {/* Dados do registro */}
+                <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                    {[{l:"DT",v:reg.dt,c:t.ouro},{l:"NF",v:reg.nf,c:t.txt},{l:"ID",v:reg.id_doc,c:t.txt}].map(f=>(
+                      <div key={f.l} style={{textAlign:"center"}}>
+                        <div style={{fontSize:11,textTransform:"uppercase",color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
+                        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:1,color:f.c}}>{f.v||"—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}}>
+                    {[{l:"CTE",v:reg.cte},{l:"MDF",v:reg.mdf},{l:"MAR/MAT",v:reg.mat}].map(f=>(
+                      <div key={f.l} style={{textAlign:"center"}}>
+                        <div style={{fontSize:11,textTransform:"uppercase",color:t.txt2,fontWeight:700,marginBottom:2}}>{f.l}</div>
+                        <div style={{fontSize:11,fontWeight:600,color:t.txt}}>{f.v||"—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Dados bancários */}
+                {mot?.banco ? (
+                  <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.verde}33`,borderLeft:`3px solid ${t.verde}`}}>
+                    <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Dados bancários</div>
+                    <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
+                      <div>BCO: <strong style={{color:t.txt}}>{mot.banco}</strong></div>
+                      <div>FAV: <strong style={{color:t.txt}}>{mot.favorecido||mot.nome||reg.nome||"—"}</strong></div>
+                      {mot.pix_tipo && <div style={{color:t.azulLt}}>PIX ({mot.pix_tipo}): <strong>{mot.pix_chave||"—"}</strong></div>}
+                      <div>AGE: <strong style={{color:t.txt}}>{mot.agencia||"—"}</strong> · C/C: <strong style={{color:t.txt}}>{mot.conta||"—"}</strong></div>
+                    </div>
+                  </div>
+                ):(
+                  <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.ouro}}>⚠️ Motorista sem dados bancários. Cadastre na aba Motoristas.</div>
+                )}
+
+                {/* ── Minutas (DCC para Diárias / MAM-MRM para Descarga) ── */}
+                <div style={{background:t.card2,borderRadius:10,border:`1px solid ${t.borda}`,overflow:"hidden"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer"}} onClick={()=>setWppFortes(v=>!v)}>
+                    <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${wppFortes?t.verde:t.borda}`,background:wppFortes?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+                      {wppFortes && <span style={{color:"#fff",fontSize:10,fontWeight:700}}>✓</span>}
+                    </div>
+                    <span style={{fontSize:11,fontWeight:700,color:wppFortes?t.verde:t.txt2}}>{isDiaria?"Incluir Minuta DCC + CTE Complementar":"Incluir Minuta Descarga (MAM/MRM)"}</span>
+                  </div>
+                  {wppFortes && (
+                    <div style={{padding:"0 12px 12px",display:"flex",flexDirection:"column",gap:10,borderTop:`1px solid ${t.borda}`}}>
+                      {isDiaria ? (<>
+                        {/* Minutas DCC */}
+                        {wppDccMinutas.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(240,185,11,.04)`,borderRadius:8,border:`1px solid rgba(240,185,11,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                              <span style={{fontSize:10,fontWeight:700,color:t.ouro}}>{"MINUTA DCC "+(wppDccMinutas.length>1?"("+(idx+1)+")":"")}</span>
+                              {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div style={{display:"flex",gap:6,marginBottom:6}}>
+                              {["D01-MAT","D05-MAR"].map(d=>(
+                                <button key={d} onClick={()=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:d}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===d?t.ouro:t.borda}`,background:mn.tipo===d?`rgba(240,185,11,.12)`:t.card,color:mn.tipo===d?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{d}</button>
+                              ))}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                              <div><label style={lblP}>CTE {mn.tipo}</label><input value={mn.cte} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>MDF {mn.tipo}</label><input value={mn.mdf} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>{mn.tipo} (nº)</label><input value={mn.num} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>Valor (R$)</label><input type="number" value={mn.valor} onChange={e=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,valor:e.target.value}:m))} placeholder="0,00" style={inpP} /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setWppDccMinutas(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.07)`,border:`1px dashed rgba(240,185,11,.4)`,borderRadius:8,padding:"7px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta DCC</button>
+                        {/* CTE Complementar */}
+                        <div style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px"}}>
+                          <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>CTE COMPLEMENTAR DE DIÁRIAS</div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                            <div><label style={lblP}>CTE COMP</label><input value={wppCteComp.cte} onChange={e=>setWppCteComp(p=>({...p,cte:e.target.value}))} style={inpP} /></div>
+                            <div><label style={lblP}>MDF COMP</label><input value={wppCteComp.mdf} onChange={e=>setWppCteComp(p=>({...p,mdf:e.target.value}))} style={inpP} /></div>
+                            <div><label style={lblP}>MAT COMP</label><input value={wppCteComp.mat} onChange={e=>setWppCteComp(p=>({...p,mat:e.target.value}))} style={inpP} /></div>
+                          </div>
+                        </div>
+                      </>) : (<>
+                        {/* Minutas Descarga MAM/MRM */}
+                        {wppDscMinutas.map((mn,idx)=>(
+                          <div key={idx} style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                              <span style={{fontSize:10,fontWeight:700,color:t.azulLt}}>{"MINUTA DESCARGA "+(wppDscMinutas.length>1?"("+(idx+1)+")":"")}</span>
+                              {wppDscMinutas.length>1 && <button onClick={()=>setWppDscMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                            </div>
+                            <div style={{display:"flex",gap:6,marginBottom:6}}>
+                              {["MAM","MRM"].map(tp=>(
+                                <button key={tp} onClick={()=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{tp}</button>
+                              ))}
+                            </div>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                              <div><label style={lblP}>CTE {mn.tipo}</label><input value={mn.cte} onChange={e=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>MDF {mn.tipo}</label><input value={mn.mdf} onChange={e=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,mdf:e.target.value}:m))} style={inpP} /></div>
+                              <div><label style={lblP}>{mn.tipo} (nº)</label><input value={mn.num} onChange={e=>setWppDscMinutas(p=>p.map((m,i)=>i===idx?{...m,num:e.target.value}:m))} style={inpP} /></div>
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={()=>setWppDscMinutas(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.07)`,border:`1px dashed rgba(22,119,255,.4)`,borderRadius:8,padding:"7px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta Descarga</button>
+                      </>)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Preview */}
+                <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
+                  <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:7}}>Preview da mensagem</div>
+                  <div style={{fontFamily:"monospace",fontSize:9,color:t.txt,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{gerarPag()}</div>
+                </div>
+              </div>
+
+              <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
+                <button onClick={()=>setWppPagModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <button onClick={()=>{
+                  const tel=(mot?.tel||"").replace(/\D/g,"");
+                  const rawMsg=gerarPag();
+                  const url=tel?`https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}`:`https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
+                  setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
+                  setWppConfirmModal({url, displayText:rawMsg});
+                }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                  📲 PREPARAR MENSAGEM
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ WHATSAPP CONFIRM MODAL ═══ */}
+      {wppConfirmModal && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.72)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}} onClick={e=>{if(e.target===e.currentTarget)setWppConfirmModal(null);}}>
+          <div style={{background:"var(--card)",border:"1px solid var(--borda)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 32px 64px rgba(0,0,0,.5)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"96vh"}}>
+            {/* Header */}
+            <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--borda)",background:"rgba(37,211,102,.06)",flexShrink:0}}>
+              <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>MENSAGEM WHATSAPP</div>
+                <div style={{fontSize:9,color:"var(--text2)"}}>Copie o texto ou clique em Abrir no WhatsApp</div>
+              </div>
+              <button onClick={()=>setWppConfirmModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:"var(--text2)",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            {/* Texto */}
+            <div style={{flex:1,overflowY:"auto",padding:14}}>
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:"var(--text2)",fontWeight:700,marginBottom:6}}>Texto da mensagem</div>
+              <pre style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"var(--text)",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word",background:"var(--bg)",border:"1px solid var(--borda)",borderRadius:10,padding:"12px 14px",margin:0}}>{wppConfirmModal.displayText}</pre>
+            </div>
+            {/* Botões */}
+            <div style={{padding:"10px 14px 18px",borderTop:"1px solid var(--borda)",display:"flex",gap:8,flexShrink:0}}>
+              <button onClick={()=>{navigator.clipboard.writeText(wppConfirmModal.displayText);showToast("✅ Texto copiado!","ok");}} style={{flex:"0 0 auto",background:"transparent",border:"1.5px solid var(--borda)",borderRadius:9,padding:"10px 14px",color:"var(--text2)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>📋 COPIAR</button>
+              <button onClick={()=>{window.open(wppConfirmModal.url,"_blank");setWppConfirmModal(null);}} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:"rgba(37,211,102,.15)",border:"1.5px solid rgba(37,211,102,.4)",color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>📲 ABRIR NO WHATSAPP</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
       {dashDrillModal && (
@@ -4291,34 +5154,742 @@ export default function App() {
         </div>
       )}
 
-      <ModalRelatorios ctx={{
-        relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
-        relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,
-        relGeralOrigem, setRelGeralOrigem, relGeralDestino, setRelGeralDestino,
-        relGeralVinculo, setRelGeralVinculo, relGeralSecoes, setRelGeralSecoes,
-        relGeralLoading, setRelGeralLoading, relGeralStatusOper, setRelGeralStatusOper,
-        relDiariaOpen, setRelDiariaOpen, relDiariaFrom, setRelDiariaFrom, relDiariaTo, setRelDiariaTo,
-        relDiariaMotorista, setRelDiariaMotorista, relDiariaVinculo, setRelDiariaVinculo, relDiariaStatus, setRelDiariaStatus,
-        relDescargaOpen, setRelDescargaOpen, relDescargaFrom, setRelDescargaFrom, relDescargaTo, setRelDescargaTo,
-        relDescargaMotorista, setRelDescargaMotorista, relDescargaStatus, setRelDescargaStatus,
-        relOperOpen, setRelOperOpen, relOperFrom, setRelOperFrom, relOperTo, setRelOperTo, relOperSecoes, setRelOperSecoes,
-        DADOS, motoristas,
-        gerarRelatorioGeral, gerarRelatorioDiarias, gerarRelatorioDescargas, gerarRelatorioOperacional,
-        t, hIco, css,
-      }} />
+      {/* ═══ MODAL: RELATÓRIO GERAL ═══ */}
+      {relGeralOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelGeralOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:600,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            {/* Cabeçalho */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></>,t.ouro,20,1.8)}
+              </div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Geral de Operações</div>
+                <div style={{fontSize:10,color:t.txt2}}>Configure os filtros e seções do relatório PDF</div>
+              </div>
+              <button onClick={()=>setRelGeralOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
 
-      <ModalCtrlFinanceiro ctx={{
-        relCtrlDccOpen, setRelCtrlDccOpen,
-        relCtrlDccFrom, setRelCtrlDccFrom, relCtrlDccTo, setRelCtrlDccTo,
-        DADOS, apontItems, t, hIco, fmtMoeda, showToast,
-      }} />
+            {/* Período */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relGeralFrom} onChange={e=>setRelGeralFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relGeralTo} onChange={e=>setRelGeralTo(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+            </div>
 
-      <ModalNFD ctx={{
-        nfdAlertOpen, setNfdAlertOpen, nfdFotos, setNfdFotos,
-        nfdForm, setNfdForm, nfdRegistrarOutra, setNfdRegistrarOutra,
-        nfdUploadando, setNfdUploadando, formData, setFormData,
-        getConexao, showToast, t, css, hIco,
-      }} />
+            {/* Filtros */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              {(()=>{
+                const _uniq=(arr)=>[...new Set(arr.filter(Boolean))].sort();
+                const _nomes=_uniq(DADOS.map(r=>(r.nome||"").trim()));
+                const _origens=_uniq(DADOS.map(r=>(r.origem||"").trim()));
+                const _destinos=_uniq(DADOS.map(r=>(r.destino||r.cidade||"").trim()));
+                const _statuses=_uniq(DADOS.map(r=>(r.status||"").trim().toUpperCase()));
+                const _vinculos=_uniq(motoristas.map(m=>(m.vinculo||"").trim()));
+                return (<>
+                  <div>
+                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                    <select value={relGeralMotorista} onChange={e=>setRelGeralMotorista(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                      <option value="">Todos</option>
+                      {_nomes.map(n=><option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Operacional</label>
+                    <select value={relGeralStatusOper} onChange={e=>setRelGeralStatusOper(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                      <option value="">Todos</option>
+                      {_statuses.map(s=><option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status Diária</label>
+                    <select value={relGeralStatus} onChange={e=>setRelGeralStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                      <option value="">Todos</option>
+                      <option value="diaria">Com Diária</option>
+                      <option value="sem_diaria">Sem Diária</option>
+                      <option value="atraso">Perdeu Agenda</option>
+                      <option value="pendente">Pendente</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Origem</label>
+                    <select value={relGeralOrigem} onChange={e=>setRelGeralOrigem(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                      <option value="">Todas</option>
+                      {_origens.map(o=><option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Destino</label>
+                    <select value={relGeralDestino} onChange={e=>setRelGeralDestino(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                      <option value="">Todos</option>
+                      {_destinos.map(o=><option key={o} value={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                    <select value={relGeralVinculo} onChange={e=>setRelGeralVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                      <option value="">Todos</option>
+                      {_vinculos.filter(v=>v).map(v=><option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                </>);
+              })()}
+            </div>
+
+            {/* Seções */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Seções do Relatório</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+              {[
+                {k:"kpi",l:"Indicadores / KPIs"},
+                {k:"sumario",l:"Resumo por Motorista"},
+                {k:"registros",l:"Tabela de Registros"},
+                {k:"sgs",l:"Ocorrências SGS"},
+                {k:"ocorr_dt",l:"Ocorrências por DT"},
+                {k:"diarias",l:"Diárias do Período"},
+                {k:"descargas",l:"Descargas do Período"},
+              ].map(({k,l})=>(
+                <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relGeralSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
+                  <input type="checkbox" checked={!!relGeralSecoes[k]} onChange={e=>setRelGeralSecoes(p=>({...p,[k]:e.target.checked}))}
+                    style={{accentColor:t.ouro,width:14,height:14,cursor:"pointer"}} />
+                  <span style={{fontSize:11,fontWeight:600,color:relGeralSecoes[k]?t.txt:t.txt2}}>{l}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* Colunas da Tabela de Registros */}
+            {relGeralSecoes.registros&&(
+              <details style={{marginBottom:16}}>
+                <summary style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,cursor:"pointer",userSelect:"none",listStyle:"none",display:"flex",alignItems:"center",gap:6}}>
+                  {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></>,t.ouro,13,1.8)}
+                  Colunas da Tabela de Registros
+                  <span style={{marginLeft:"auto",fontSize:9,color:t.txt2,fontWeight:400}}>({Object.values(relGeralColunas).filter(Boolean).length} selecionadas)</span>
+                </summary>
+                <div style={{marginTop:8,display:"flex",gap:6,flexWrap:"wrap",paddingLeft:4}}>
+                  <button onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,true])))} style={{fontSize:9,padding:"2px 7px",borderRadius:5,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer"}}>Todas</button>
+                  <button onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,false])))} style={{fontSize:9,padding:"2px 7px",borderRadius:5,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer"}}>Nenhuma</button>
+                </div>
+                <div style={{marginTop:8,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:4}}>
+                  {[
+                    {k:"dt",l:"Espelho"},
+                    {k:"nome",l:"Motorista"},
+                    {k:"placa",l:"Placa"},
+                    {k:"origem",l:"Origem"},
+                    {k:"destino",l:"Destino"},
+                    {k:"cliente",l:"Cliente"},
+                    {k:"data_carr",l:"Carregamento"},
+                    {k:"data_agenda",l:"Agenda"},
+                    {k:"chegada",l:"Chegada"},
+                    {k:"data_desc",l:"Descarga"},
+                    {k:"dias",l:"Dias"},
+                    {k:"status",l:"Status Oper."},
+                    {k:"vl_cte",l:"Vl. CTE"},
+                    {k:"vl_contrato",l:"Vl. Contrato"},
+                    {k:"adiant",l:"Adiantamento"},
+                    {k:"saldo",l:"Saldo"},
+                    {k:"diaria_prev",l:"Diária Prev."},
+                    {k:"diaria_pg",l:"Diária Paga"},
+                    {k:"cte",l:"CTE"},
+                    {k:"mdf",l:"MDF-e"},
+                    {k:"nf",l:"NF"},
+                    {k:"mat",l:"MAT"},
+                    {k:"ro",l:"RO"},
+                    {k:"sgs",l:"SGS"},
+                    {k:"obs",l:"Observação"},
+                  ].map(({k,l})=>(
+                    <label key={k} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 6px",borderRadius:6,border:`1px solid ${relGeralColunas[k]?t.ouro+"44":t.borda}`,cursor:"pointer",fontSize:10,background:relGeralColunas[k]?"rgba(240,185,11,.05)":"transparent",transition:"all .12s"}}>
+                      <input type="checkbox" checked={!!relGeralColunas[k]} onChange={e=>setRelGeralColunas(p=>({...p,[k]:e.target.checked}))} style={{accentColor:t.ouro,width:11,height:11,cursor:"pointer"}} />
+                      <span style={{color:relGeralColunas[k]?t.txt:t.txt2}}>{l}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+            )}
+            {/* Aviso */}
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span style={{marginLeft:6}}>Deixe datas em branco para incluir <strong style={{color:t.ouro}}>todos os registros</strong>. Filtros podem ser combinados.</span>
+            </div>
+
+            {/* Botões */}
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setRelGeralOpen(false)}
+                style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>
+                Cancelar
+              </button>
+              <button
+                disabled={relGeralLoading}
+                onClick={async ()=>{
+                  setRelGeralOpen(false);
+                  // Se seção de ocorrências estiver ativa, pré-carrega do Supabase
+                  if (relGeralSecoes.ocorr_dt !== false) {
+                    setRelGeralLoading(true);
+                    try {
+                      // Calcula os DTs do período para pré-carregar suas ocorrências
+                      const parseD2 = s => { if(!s)return null; if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(`${p[2]}-${p[1]}-${p[0]}`);} if(/^\d{4}-\d{2}-\d{2}/.test(s))return new Date(s); return null; };
+                      const fromD2 = relGeralFrom ? new Date(relGeralFrom) : null;
+                      const toD2 = relGeralTo ? new Date(relGeralTo) : null;
+                      if(toD2) toD2.setHours(23,59,59,999);
+                      const dtsNoPeriodo = DADOS.filter(r => {
+                        const d = parseD2(r.data_carr || r.data_desc || r.chegada || "");
+                        if(!d) return !fromD2 && !toD2;
+                        if(fromD2 && d < fromD2) return false;
+                        if(toD2 && d > toD2) return false;
+                        return true;
+                      }).map(r => r.dt).filter(Boolean);
+                      await preCarregarOcorrencias(dtsNoPeriodo);
+                    } catch { /* silencioso */ }
+                    finally { setRelGeralLoading(false); }
+                  }
+                  gerarRelatorioGeral(relGeralFrom,relGeralTo,{
+                    motorista:relGeralMotorista,statusDiaria:relGeralStatus,
+                    statusOper:relGeralStatusOper,
+                    origem:relGeralOrigem,destino:relGeralDestino,
+                    vinculo:relGeralVinculo,secoes:relGeralSecoes,colunas:relGeralColunas
+                  });
+                  if(relGeralSecoes.apontamentos) setTimeout(()=>gerarRelatorioOperacional(relGeralFrom,relGeralTo,{sgs:false,apontamentos:true}),800);
+                }}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:relGeralLoading?`rgba(240,185,11,.06)`:`rgba(240,185,11,.13)`,color:t.ouro,cursor:relGeralLoading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s",opacity:relGeralLoading?.6:1}}>
+                {relGeralLoading
+                  ? <><span style={{fontSize:14,animation:"spin 1s linear infinite",display:"inline-block"}}>⏳</span> Buscando ocorrências...</>
+                  : <>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}Gerar Relatório PDF</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: RELATÓRIO DIÁRIAS ═══ */}
+      {relDiariaOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelDiariaOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:560,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>🛏️</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Diárias</div>
+                <div style={{fontSize:10,color:t.txt2}}>Financeiro e status de diárias por período</div>
+              </div>
+              <button onClick={()=>setRelDiariaOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relDiariaFrom} onChange={e=>setRelDiariaFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relDiariaTo} onChange={e=>setRelDiariaTo(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <input type="text" value={relDiariaMotorista} onChange={e=>setRelDiariaMotorista(e.target.value)} placeholder="Nome..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Vínculo</label>
+                <select value={relDiariaVinculo} onChange={e=>setRelDiariaVinculo(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="Agregado">Agregado</option>
+                  <option value="Terceiro">Terceiro</option>
+                  <option value="Frota">Frota</option>
+                </select>
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status da Diária</label>
+                <select value={relDiariaStatus} onChange={e=>setRelDiariaStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="diaria">Com Diária</option>
+                  <option value="sem_diaria">Sem Diária</option>
+                  <option value="atraso">Perdeu Agenda</option>
+                  <option value="pendente">Pendente</option>
+                </select>
+              </div>
+            </div>
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setRelDiariaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
+              <button onClick={()=>{setRelDiariaOpen(false);gerarRelatorioDiarias(relDiariaFrom,relDiariaTo,{motorista:relDiariaMotorista,vinculo:relDiariaVinculo,status:relDiariaStatus});}}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
+                Gerar Relatório PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: RELATÓRIO DESCARGAS ═══ */}
+      {relDescargaOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelDescargaOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📦</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Descargas</div>
+                <div style={{fontSize:10,color:t.txt2}}>Agenda, status e atrasos de descarga</div>
+              </div>
+              <button onClick={()=>setRelDescargaOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relDescargaFrom} onChange={e=>setRelDescargaFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relDescargaTo} onChange={e=>setRelDescargaTo(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+            </div>
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Filtros</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Motorista</label>
+                <input type="text" value={relDescargaMotorista} onChange={e=>setRelDescargaMotorista(e.target.value)} placeholder="Nome..." style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Status</label>
+                <select value={relDescargaStatus} onChange={e=>setRelDescargaStatus(e.target.value)} style={{...css.inp,width:"100%",appearance:"none",cursor:"pointer"}}>
+                  <option value="">Todos</option>
+                  <option value="descarregado">Descarregado</option>
+                  <option value="atrasado">Atrasado</option>
+                  <option value="pendente">Aguardando</option>
+                </select>
+              </div>
+            </div>
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
+            </div>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setRelDescargaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
+              <button onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
+                Gerar Relatório PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: RELATÓRIO OPERACIONAL ═══ */}
+      {relOperOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setRelOperOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:500,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📋</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Operacional</div>
+                <div style={{fontSize:10,color:t.txt2}}>SGS, Apontamentos e ID Diárias por período</div>
+              </div>
+              <button onClick={()=>setRelOperOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            {/* Período */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Inicial</label>
+                <input type="date" value={relOperFrom} onChange={e=>setRelOperFrom(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+              <div>
+                <label style={{display:"block",fontSize:9,fontWeight:600,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Data Final</label>
+                <input type="date" value={relOperTo} onChange={e=>setRelOperTo(e.target.value)} style={{...css.inp,width:"100%"}} />
+              </div>
+            </div>
+            {/* Seções */}
+            <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Seções do Relatório</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
+              {[
+                {k:"sgs",l:"Chamados SGS"},
+                {k:"apontamentos",l:"Apontamentos (Descarga/Stretch)"},
+              ].map(({k,l})=>(
+                <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relOperSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
+                  <input type="checkbox" checked={!!relOperSecoes[k]} onChange={e=>setRelOperSecoes(p=>({...p,[k]:e.target.checked}))}
+                    style={{accentColor:t.ouro,width:14,height:14,cursor:"pointer"}} />
+                  <span style={{fontSize:11,fontWeight:600,color:relOperSecoes[k]?t.txt:t.txt2}}>{l}</span>
+                </label>
+              ))}
+            </div>
+            {/* Info */}
+            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"flex-start",gap:6}}>
+              {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
+              <span>Deixe datas em branco para incluir <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
+            </div>
+            {/* Botões */}
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setRelOperOpen(false)}
+                style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>
+                Cancelar
+              </button>
+              <button onClick={()=>{setRelOperOpen(false);gerarRelatorioOperacional(relOperFrom,relOperTo,relOperSecoes);}}
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
+                Gerar Relatório PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ MODAL: PLANILHA CONTROLE FINANCEIRO OPERACIONAL ═══ */}
+      {relCtrlDccOpen && (()=>{
+        const gerarCtrlDcc = () => {
+          if(!relCtrlDccFrom||!relCtrlDccTo){showToast("⚠️ Selecione o período","warn");return;}
+          const [fyy,fmm,fdd] = relCtrlDccFrom.split("-").map(Number);
+          const [tyy,tmm,tdd] = relCtrlDccTo.split("-").map(Number);
+          const dFrom = new Date(fyy,fmm-1,fdd);
+          const dTo   = new Date(tyy,tmm-1,tdd,23,59,59);
+          const parseDataBr = s => {
+            if(!s) return null;
+            if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));}
+            if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
+            return null;
+          };
+          const linhas = [];
+          DADOS.forEach(reg=>{
+            // Usa data_carr OU data_desc como referência do período
+            const dataRef = reg.data_carr || reg.data_desc || "";
+            const dtRef = parseDataBr(dataRef);
+            if(!dtRef) return;
+            if(dtRef<dFrom||dtRef>dTo) return;
+            // Apontamento vinculado pela DT
+            const apont = apontItems.find(a=>a.dt_rel===reg.dt)||null;
+            // DCC minutas
+            const dccs = pj(reg.minutas_dcc,[]);
+            const dcc0 = dccs[0]||{};
+            const dcc1 = dccs[1]||{};
+            // CTE Complementares
+            const cteCompObj = pj(reg.minutas_cte_comp,{});
+            linhas.push({
+              dt:           reg.dt||"",
+              motorista:    reg.nome||"",
+              cpf:          reg.cpf||"",
+              placa:        reg.placa||"",
+              status:       reg.status||"",
+              data_carr:    reg.data_carr||"",
+              data_desc:    reg.data_desc||"",
+              origem:       reg.origem||"",
+              destino:      reg.destino||"",
+              cliente:      reg.cliente||"",
+              vl_cte:       reg.vl_cte||"",
+              vl_contrato:  reg.vl_contrato||"",
+              adiant:       reg.adiant||"",
+              saldo:        reg.saldo||"",
+              diaria_prev:  reg.diaria_prev||"",
+              diaria_pg:    reg.diaria_pg||"",
+              data_manifesto: reg.data_manifesto||"",
+              cte:          reg.cte||"",
+              mdf:          reg.mdf||"",
+              mat:          reg.mat||"",
+              nf:           reg.nf||"",
+              ro:           reg.ro||"",
+              chegada:      reg.chegada||"",
+              gerenc:       reg.gerenc||"",
+              sgs:          reg.sgs||"",
+              // CTE Complementares
+              cte_comp:     cteCompObj.cte||"",
+              mdf_comp:     cteCompObj.mdf||"",
+              mat_comp:     cteCompObj.mat||"",
+              // DCC D01-MAT (primeira minuta)
+              dcc0_tipo:    dcc0.tipo||"",
+              dcc0_cte:     dcc0.cte||"",
+              dcc0_mdf:     dcc0.mdf||"",
+              dcc0_num:     dcc0.num||"",
+              dcc0_valor:   dcc0.valor||"",
+              // DCC D05-MAR (segunda minuta)
+              dcc1_tipo:    dcc1.tipo||"",
+              dcc1_cte:     dcc1.cte||"",
+              dcc1_mdf:     dcc1.mdf||"",
+              dcc1_num:     dcc1.num||"",
+              dcc1_valor:   dcc1.valor||"",
+              // Apontamento vinculado
+              apont_num:    apont?.numero||"",
+              apont_frs:    apont?.frs_folha||"",
+              apont_mes:    apont?.mes_ref||"",
+              apont_filial: apont?.filial||"",
+              apont_valor:  apont?.valor||"",
+            });
+          });
+          if(linhas.length===0){showToast("Nenhum registro no período selecionado","warn");return;}
+          const cols = [
+            // Identificação
+            {k:"dt",          l:"DT"},
+            {k:"motorista",   l:"Motorista"},
+            {k:"cpf",         l:"CPF"},
+            {k:"placa",       l:"Placa"},
+            {k:"status",      l:"Status"},
+            // Datas e rota
+            {k:"data_carr",   l:"Carregamento"},
+            {k:"data_desc",   l:"Descarga"},
+            {k:"origem",      l:"Origem"},
+            {k:"destino",     l:"Destino"},
+            {k:"cliente",     l:"Cliente"},
+            // Financeiro
+            {k:"vl_cte",      l:"Valor CTE (Empresa)"},
+            {k:"vl_contrato", l:"Valor Motorista"},
+            {k:"adiant",      l:"Adiantamento"},
+            {k:"saldo",       l:"Saldo"},
+            {k:"diaria_prev", l:"Diária Devida (R$)"},
+            {k:"diaria_pg",   l:"Diária Paga (R$)"},
+            // Documentação
+            {k:"data_manifesto",l:"Data Manifesto"},
+            {k:"cte",         l:"CTE"},
+            {k:"mdf",         l:"MDF"},
+            {k:"mat",         l:"MAT / Contrato"},
+            {k:"nf",          l:"NF"},
+            {k:"ro",          l:"RO"},
+            {k:"chegada",     l:"Chegada no Cliente"},
+            {k:"obs_chegada", l:"OBS Chegada"},
+            {k:"obs_descarga",l:"OBS Descarga"},
+            {k:"gerenc",      l:"Gerenciadora"},
+            {k:"sgs",         l:"SGS"},
+            // CTE Complementares
+            {k:"cte_comp",    l:"CTE Comp."},
+            {k:"mdf_comp",    l:"MDF Comp."},
+            {k:"mat_comp",    l:"MAT Comp."},
+            // DCC D01-MAT
+            {k:"dcc0_tipo",   l:"DCC#1 Tipo"},
+            {k:"dcc0_cte",    l:"DCC#1 CTE"},
+            {k:"dcc0_mdf",    l:"DCC#1 MDF"},
+            {k:"dcc0_num",    l:"DCC#1 Nº"},
+            {k:"dcc0_valor",  l:"DCC#1 Valor"},
+            // DCC D05-MAR
+            {k:"dcc1_tipo",   l:"DCC#2 Tipo"},
+            {k:"dcc1_cte",    l:"DCC#2 CTE"},
+            {k:"dcc1_mdf",    l:"DCC#2 MDF"},
+            {k:"dcc1_num",    l:"DCC#2 Nº"},
+            {k:"dcc1_valor",  l:"DCC#2 Valor"},
+            // Apontamento
+            {k:"apont_num",   l:"Apontamento Nº"},
+            {k:"apont_frs",   l:"FRS · Folha"},
+            {k:"apont_mes",   l:"Mês Ref."},
+            {k:"apont_filial",l:"Filial"},
+            {k:"apont_valor", l:"Valor Apont."},
+          ];
+          const per = `${relCtrlDccFrom}_${relCtrlDccTo}`;
+          exportODS(linhas, cols, `controle-financeiro-${per}`);
+          showToast(`✅ Planilha gerada — ${linhas.length} registro(s)`,"ok");
+          setRelCtrlDccOpen(false);
+        };
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setRelCtrlDccOpen(false)}>
+            <div style={{background:t.card,borderRadius:16,padding:20,width:"100%",maxWidth:440,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)"}} onClick={e=>e.stopPropagation()}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"rgba(22,119,255,.12)",border:"1.5px solid rgba(22,119,255,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>,t.azulLt,20,1.8)}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:15,fontWeight:800,color:t.txt}}>Planilha Controle Financeiro</div>
+                  <div style={{fontSize:10,color:t.azulLt,fontWeight:600}}>Todos os dados operacionais do período</div>
+                </div>
+                <button onClick={()=>setRelCtrlDccOpen(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                  {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+                </button>
+              </div>
+              <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:8,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.7}}>
+                Exporta <strong style={{color:t.txt}}>todos os registros</strong> do período com todos os campos operacionais: DT, Motorista, CPF, Placa, Status, Datas, Origem/Destino, Cliente, <strong style={{color:t.verde}}>Financeiro</strong> (CTE, Contrato, ADT, Saldo, Diárias), Documentação (CTE, MDF, MAT, NF, RO), <strong style={{color:t.azulLt}}>CTE Comp.</strong>, DCC e Apontamentos vinculados.
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+                <div>
+                  <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>De (início)</label>
+                  <input type="date" value={relCtrlDccFrom} onChange={e=>setRelCtrlDccFrom(e.target.value)} style={{width:"100%",background:t.bg,border:`1.5px solid ${t.borda2}`,borderRadius:8,padding:"9px 10px",color:t.txt,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}} />
+                </div>
+                <div>
+                  <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Até (fim)</label>
+                  <input type="date" value={relCtrlDccTo} onChange={e=>setRelCtrlDccTo(e.target.value)} style={{width:"100%",background:t.bg,border:`1.5px solid ${t.borda2}`,borderRadius:8,padding:"9px 10px",color:t.txt,fontSize:12,fontFamily:"inherit",boxSizing:"border-box"}} />
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setRelCtrlDccOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 16px",color:t.txt2,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+                <button onClick={gerarCtrlDcc} style={{flex:1,background:`linear-gradient(135deg,rgba(22,119,255,.2),rgba(22,119,255,.1))`,border:`1.5px solid rgba(22,119,255,.5)`,borderRadius:9,padding:"10px",color:t.azulLt,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  {hIco(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,t.azulLt,15,2)} Gerar Planilha .XLS
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ═══ MODAL NFD — Nota de Devolução ═══ */}
+      {nfdAlertOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setNfdAlertOpen(false)}>
+          <div style={{background:t.card,borderRadius:18,padding:20,width:"100%",maxWidth:420,border:`1.5px solid rgba(246,70,93,.35)`,boxShadow:"0 24px 64px rgba(0,0,0,.6)",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <div style={{width:42,height:42,borderRadius:11,background:"rgba(246,70,93,.12)",border:"1.5px solid rgba(246,70,93,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></>,t.danger,20,2)}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>NFD — Nota de Devolução</div>
+                <div style={{fontSize:10,color:t.danger,fontWeight:600}}>Descarga registrada · Houve NFD?</div>
+              </div>
+              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);}} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            {/* Tipo */}
+            <div style={{marginBottom:8}}>
+              <div style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:'uppercase',letterSpacing:1,marginBottom:6}}>Tipo</div>
+              {(()=>{
+                const TIPOS_NFD=[
+                  {k:'avaria',l:'Avaria',cor:'#ff9800'},
+                  {k:'falta',l:'Falta',cor:'#f6465d'},
+                  {k:'dev_total',l:'Dev. Total',cor:'#9c27b0'},
+                  {k:'dev_parcial',l:'Dev. Parcial',cor:'#e91e63'},
+                  {k:'desacordo',l:'Desacordo',cor:'#f0b90b'},
+                  {k:'rod',l:'ROD',cor:'#ef5350'},
+                  {k:'sobra',l:'Sobra',cor:'#00e096'},
+                ];
+                const TIPOS_COM_NF_NFD=new Set(['falta','avaria','dev_total','dev_parcial','desacordo']);
+                const nfListNFD=(formData?.nf||'').split(',').map(s=>s.trim()).filter(Boolean);
+                return (<>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                    {TIPOS_NFD.map(tp=>{const ativo=nfdForm.tipo===tp.k;return(
+                      <button key={tp.k} onClick={()=>setNfdForm(p=>({...p,tipo:tp.k}))}
+                        style={{padding:'6px 4px',borderRadius:7,border:`1.5px solid ${ativo?tp.cor:t.borda}`,
+                          background:ativo?`${tp.cor}22`:'transparent',color:ativo?tp.cor:t.txt2,
+                          fontSize:10,fontWeight:ativo?700:400,cursor:'pointer',fontFamily:'inherit'}}>
+                        {tp.l}
+                      </button>
+                    );})}
+                  </div>
+                  {TIPOS_COM_NF_NFD.has(nfdForm.tipo)&&nfListNFD.length>0&&(
+                    <div style={{marginTop:8}}>
+                      <div style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:'uppercase',letterSpacing:1,marginBottom:6}}>NFs Afetadas</div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                        {nfListNFD.map(nf=>{
+                          const cur=(nfdForm.nfs||'').split(',').map(s=>s.trim()).filter(Boolean);
+                          const sel=cur.includes(nf);
+                          return(<button key={nf} onClick={()=>{const next=sel?cur.filter(x=>x!==nf):[...cur,nf];setNfdForm(p=>({...p,nfs:next.join(', ')}));}}
+                            style={{padding:'4px 10px',borderRadius:6,border:`1.5px solid ${sel?'#f0b90b':t.borda}`,
+                              background:sel?'rgba(240,185,11,.1)':t.bg,color:sel?'#f0b90b':t.txt2,
+                              fontSize:10,fontWeight:sel?700:400,cursor:'pointer'}}>
+                            {nf}
+                          </button>);
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {nfdForm.tipo==='rod'&&(
+                    <div style={{marginTop:8}}>
+                      <label style={{fontSize:9,textTransform:'uppercase',letterSpacing:1.2,color:t.txt2,fontWeight:600,display:'block',marginBottom:4}}>Localização da Carga</label>
+                      <input value={nfdForm.localizacao||''} onChange={e=>setNfdForm(p=>({...p,localizacao:e.target.value}))} placeholder='Ex: Em trânsito, SP – RJ km 210' style={css.inp}/>
+                    </div>
+                  )}
+                </>);
+              })()}
+            </div>
+            {/* Numero e Valor */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+              <div>
+                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>{nfdForm.tipo==="sobra"?"Referência (opc.)":"Nº NFD *"}</label>
+                <input value={nfdForm.numero} onChange={e=>setNfdForm(p=>({...p,numero:e.target.value}))} placeholder={nfdForm.tipo==="sobra"?"Ref. interna":"Ex: 00123456"} style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
+              </div>
+              <div>
+                <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:4}}>Valor (R$)</label>
+                <input value={nfdForm.valor} onChange={e=>setNfdForm(p=>({...p,valor:e.target.value}))} placeholder="0,00" style={{...css.inp,fontSize:12,padding:"9px 10px"}} />
+              </div>
+            </div>
+            {/* Fotos */}
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"flex",alignItems:"center",gap:5,marginBottom:5}}>
+                📷 Fotos do material
+                <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,color:t.txt2}}>{nfdForm.tipo==="sobra"?"— recomendado":"— opcional"} · máx. 5</span>
+              </label>
+              <input type="file" accept="image/*" multiple onChange={e=>{
+                const files=Array.from(e.target.files||[]);
+                if(nfdFotos.length+files.length>5){showToast("⚠️ Máximo 5 fotos","warn");e.target.value="";return;}
+                files.forEach(f=>{const rd=new FileReader();rd.onload=ev=>setNfdFotos(p=>[...p,{file:f,preview:ev.target.result,nome:f.name}]);rd.readAsDataURL(f);});
+                e.target.value="";
+              }} style={{...css.inp,padding:"7px 10px",fontSize:11,marginBottom:nfdFotos.length>0?8:0}} />
+              {nfdFotos.length>0&&(
+                <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:4}}>
+                  {nfdFotos.map((img,ii)=>(
+                    <div key={ii} style={{position:"relative"}}>
+                      <img src={img.preview} alt={img.nome} style={{width:68,height:68,objectFit:"cover",borderRadius:9,border:`1.5px solid ${t.borda}`}} />
+                      <button onClick={()=>setNfdFotos(p=>p.filter((_,j)=>j!==ii))} style={{position:"absolute",top:-5,right:-5,width:18,height:18,borderRadius:"50%",background:t.danger,border:"none",color:"#fff",fontSize:10,cursor:"pointer",lineHeight:"17px",fontWeight:700,padding:0}}>×</button>
+                      <div style={{fontSize:8,color:t.txt2,textAlign:"center",marginTop:2,maxWidth:68,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{img.nome}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Checkbox registrar outra */}
+            <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(240,185,11,.04)`,cursor:"pointer",userSelect:"none"}}>
+              <input type="checkbox" checked={nfdRegistrarOutra} onChange={e=>setNfdRegistrarOutra(e.target.checked)} style={{width:14,height:14,accentColor:"#F3BA2F",cursor:"pointer",flexShrink:0}} />
+              <span style={{fontSize:11,color:nfdRegistrarOutra?"#F3BA2F":t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
+            </label>
+            {/* Ações */}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);setNfdRegistrarOutra(false);}} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                Não houve NFD
+              </button>
+              <button disabled={nfdUploadando} onClick={async()=>{
+                if(nfdForm.tipo!=="sobra"&&!nfdForm.numero){showToast("⚠️ Informe o número da NFD","warn");return;}
+                const conn=getConexao();
+                let fotos=[];
+                if(nfdFotos.length>0){
+                  if(!conn){showToast("⚠️ Sem conexão — fotos não enviadas","warn");}
+                  else{
+                    setNfdUploadando(true);
+                    try{
+                      for(const img of nfdFotos){
+                        const ts=Date.now();
+                        const ext=(img.nome.split(".").pop()||"jpg").toLowerCase();
+                        const safeName=img.nome.replace(/[^a-zA-Z0-9._-]/g,"_");
+                        const filePath=`${formData.dt||"sem-dt"}/${ts}_${safeName}`;
+                        const url=await supaStorageUpload(conn.url,conn.key,"nfd-fotos",filePath,img.file);
+                        fotos.push(url);
+                      }
+                      showToast(`📷 ${fotos.length} foto(s) enviada(s)`,"ok");
+                    }catch(e){showToast("⚠️ Erro no upload: "+e.message,"warn");}
+                    setNfdUploadando(false);
+                  }
+                }
+                const nfdData={...nfdForm,...(fotos.length>0?{fotos}:{})};
+                setFormData(p=>({...p,nfd:nfdData}));
+                const label=nfdForm.tipo.toUpperCase()+(nfdForm.numero?" · Nº "+nfdForm.numero:"")+(fotos.length>0?" · "+fotos.length+"📷":"");
+                showToast(`✅ NFD registrada — ${label}`,"ok");
+                if(nfdRegistrarOutra){
+                  setNfdForm({numero:"",valor:"",tipo:"avaria"});
+                  setNfdFotos([]);
+                }else{
+                  setNfdAlertOpen(false);
+                  setNfdFotos([]);
+                  setNfdRegistrarOutra(false);
+                }
+              }} style={{flex:1,background:nfdUploadando?`rgba(246,70,93,.04)`:`linear-gradient(135deg,rgba(246,70,93,.2),rgba(246,70,93,.1))`,border:`1.5px solid rgba(246,70,93,.5)`,borderRadius:9,padding:"10px",color:t.danger,fontWeight:700,fontSize:12,cursor:nfdUploadando?"wait":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:5,opacity:nfdUploadando?.6:1}}>
+                {nfdUploadando
+                  ? <>{hIco(<><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>,t.danger,14,2)} Enviando fotos…</>
+                  : <>{hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,t.danger,14,2)} Registrar NFD</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ═══ ALERTA OCORRÊNCIA/RO — CHEGADA DO MOTORISTA ═══ */}
       {ocorrChegadaAlert && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setOcorrChegadaAlert(false)}>
