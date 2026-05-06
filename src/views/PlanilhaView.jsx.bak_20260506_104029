@@ -1,7 +1,7 @@
 /**
  * PlanilhaView.jsx — View de Planilha extraída do App.jsx
  * Props: ctx = { DADOS, planilhaSortKey, setPlanilhaSortKey, planilhaSortDir, setPlanilhaSortDir,
- *                planilhaPagina, setPlanilhaPagina, abrirDetalhe,
+ *                planilhaPagina, setPlanilhaPagina, planilhaDetalheReg, setPlanilhaDetalheReg,
  *                planilhaFiltroAno, setPlanilhaFiltroAno, planilhaFiltroMes, setPlanilhaFiltroMes,
  *                planilhaFiltroOrigem, setPlanilhaFiltroOrigem,
  *                t, isMobile, ExportMenu }
@@ -45,7 +45,7 @@ export default function PlanilhaView({ ctx }) {
     planilhaSortKey, setPlanilhaSortKey,
     planilhaSortDir, setPlanilhaSortDir,
     planilhaPagina, setPlanilhaPagina,
-    abrirDetalhe,
+    setPlanilhaDetalheReg,
     planilhaFiltroAno, setPlanilhaFiltroAno,
     planilhaFiltroMes, setPlanilhaFiltroMes,
     planilhaFiltroOrigem, setPlanilhaFiltroOrigem,
@@ -315,7 +315,7 @@ export default function PlanilhaView({ ctx }) {
             {dadosExibir.map((r, i) => (
               <tr key={i}
                 style={{ cursor: "pointer", background: i % 2 === 0 ? "transparent" : "var(--bg)" }}
-                onClick={() => abrirDetalhe(r)}
+                onClick={() => setPlanilhaDetalheReg(r)}
                 onMouseOver={e => e.currentTarget.style.background = "var(--surface)"}
                 onMouseOut={e => e.currentTarget.style.background = i % 2 === 0 ? "transparent" : "var(--bg)"}
               >
