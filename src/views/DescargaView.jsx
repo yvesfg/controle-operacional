@@ -141,7 +141,7 @@ export default function DescargaView({ ctx }) {
                 <>
                   <span className="co-filter-bar__label" style={{marginLeft:8}}>Colunas:</span>
                   {(isMobile?[1,2]:[1,2,3,4]).map(n => (
-                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} className={`co-tab${descargaCols===n?" co-tab--active":""}`}>{n}</button>
+                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:36,height:36,minWidth:36,minHeight:36,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?t.azul:t.borda}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?`rgba(22,119,255,.09)`:t.card2,color:descargaCols===n?t.azulLt:t.txt2,fontFamily:"inherit"}}>{n}</button>
                   ))}
                 </>
               )}
