@@ -25,7 +25,8 @@ import DashboardView   from './views/DashboardView.jsx';
 import DiariasView     from './views/DiariasView.jsx';
 import DescargaView    from './views/DescargaView.jsx';
 import AdminView       from './views/AdminView.jsx';
-import ModalEdit       from './modals/ModalEdit.jsx';
+import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
+function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
 import ModalDetalhe    from './modals/ModalDetalhe.jsx';
 import ModalUsuario    from './modals/ModalUsuario.jsx';
@@ -3847,7 +3848,7 @@ export default function App() {
 
 
       {/* ═══ EDIT MODAL ═══ */}
-      <ModalEdit ctx={{
+      {_renderModalEdit({ ctx: {
         formData, setFormData,
         modalOpen, setModalOpen,
         editIdx,
@@ -3860,7 +3861,7 @@ export default function App() {
         setNfdForm, setNfdFotos, setNfdAlertOpen,
         setOcorrChegadaAlert,
         salvarRegistro, deletarRegistro,
-      }} />
+      } })}
 
       {/* ═══ MODAL EXCLUIR TODOS (admin) ═══ */}
       {motExcluirTodosOpen && (

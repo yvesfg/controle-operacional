@@ -139,22 +139,6 @@ export default function ModalWhatsApp({ ctx }) {
       )}
 
 
-      {/* ═══ EDIT MODAL ═══ */}
-      <ModalEdit ctx={{
-        formData, setFormData,
-        modalOpen, setModalOpen,
-        editIdx,
-        excluirConfirm, setExcluirConfirm,
-        excluirTexto, setExcluirTexto,
-        DADOS, canFin,
-        t, css, DESIGN,
-        hIco,
-        brToInput, brToInputDT, inputToBr, inputToBrDT,
-        setNfdForm, setNfdFotos, setNfdAlertOpen,
-        setOcorrChegadaAlert,
-        salvarRegistro, deletarRegistro,
-      }} />
-
       {/* ═══ MODAL EXCLUIR TODOS (admin) ═══ */}
       {motExcluirTodosOpen && (
         <div style={{...css.overlay,alignItems:"center",backdropFilter:"blur(10px)",padding:20}} onClick={()=>setMotExcluirTodosOpen(false)}>

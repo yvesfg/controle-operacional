@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function ModalEdit({ ctx }) {
+function ModalEditComponent({ ctx }) {
   const {
     formData, setFormData,
     modalOpen, setModalOpen,
@@ -301,3 +301,5 @@ export default function ModalEdit({ ctx }) {
     </div>
   );
 }
+
+export default ModalEditComponent;
