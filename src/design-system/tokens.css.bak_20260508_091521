@@ -7,11 +7,11 @@
 
 :root {
 
-  /* ── Tipografia — Freight Command: Syne (headings) / Barlow (body) / IBM Plex Mono (data) ─ */
-  --font-heading : 'Syne', sans-serif;
-  --font-display : 'Syne', sans-serif;
-  --font-body    : 'Barlow', sans-serif;
-  --font-mono    : 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  /* ── Tipografia — BinanceNova→Inter / BinancePlex→IBM Plex Mono ─ */
+  --font-heading : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body    : 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono    : 'IBM Plex Mono', 'JetBrains Mono', monospace;  /* BinancePlex → números */
 
   /* Tamanhos de texto — escala Binance */
   --text-2xs : 10px;

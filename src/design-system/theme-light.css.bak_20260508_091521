@@ -30,13 +30,13 @@
   --color-text-disabled: #b0b6bf;
   --color-text-inverse: #181a20;   /* on-primary: preto sobre amarelo */
 
-  /* ── Acento principal — Amber Freight (light) ───────────────── */
-  --color-primary     : #d97706;
-  --color-primary-dk  : #b45309;
-  --color-primary-lt  : #f59e0b;
-  --color-primary-bg  : rgba(217,119,6,.10);
-  --color-primary-border: rgba(217,119,6,.30);
-  --color-primary-disabled: #d4b483;
+  /* ── Acento principal — Binance Yellow (mesmo no light) ──────── */
+  --color-primary     : #fcd535;
+  --color-primary-dk  : #f0b90b;
+  --color-primary-lt  : #fde272;
+  --color-primary-bg  : rgba(252,213,53,.12);
+  --color-primary-border: rgba(252,213,53,.35);
+  --color-primary-disabled: #e8d87a;
 
   /* ── Trading ─────────────────────────────────────────────────── */
   --color-success     : #0ecb81;
@@ -75,10 +75,10 @@
   /* ── Sidebar ─────────────────────────────────────────────────── */
   --color-sidebar-bg        : #ffffff;
   --color-sidebar-item      : transparent;
-  --color-sidebar-item-hover: rgba(217,119,6,.08);
-  --color-sidebar-item-active: rgba(217,119,6,.12);
+  --color-sidebar-item-hover: rgba(252,213,53,.08);
+  --color-sidebar-item-active: rgba(252,213,53,.14);
   --color-sidebar-text      : #707a8a;
-  --color-sidebar-text-active: #b45309;
+  --color-sidebar-text-active: #b8960a;   /* amarelo escurecido para contraste AA no light */
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: light;
@@ -96,14 +96,14 @@
   --text2   : #707a8a;   /* muted */
   --text3   : #929aa5;   /* muted-strong */
 
-  --accent  : #d97706;
-  --accent2 : rgba(217,119,6,.10);
-  --on-primary: #ffffff;
+  --accent  : #fcd535;               /* Binance Yellow */
+  --accent2 : rgba(252,213,53,.12);
+  --on-primary: #181a20;             /* texto PRETO sobre amarelo */
 
-  --cyan    : #0891b2;
-  --green   : #059669;
-  --orange  : #d97706;
-  --red     : #dc2626;
-  --yellow  : #d97706;
-  --roxo    : #0891b2;
+  --cyan    : #2dbdb6;
+  --green   : #0ecb81;
+  --orange  : #f0b90b;
+  --red     : #f6465d;
+  --yellow  : #fcd535;
+  --roxo    : #2dbdb6;
 }

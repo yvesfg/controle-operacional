@@ -8,20 +8,20 @@
 [data-theme="dark"],
 .theme-dark {
 
-  /* ── Backgrounds — Freight Command: azul-cinza industrial ───── */
-  --color-bg          : #07090d;   /* midnight floor */
-  --color-bg-alt      : #101620;   /* surface-card */
-  --color-card        : #101620;   /* surface-card */
-  --color-card-2      : #172030;   /* surface-elevated */
-  --color-header-bg   : #07090d;
-  --color-modal-bg    : #101620;
-  --color-input-bg    : #0d1219;
-  --color-table-header: #07090d;
+  /* ── Backgrounds — Binance canvas hierarchy ──────────────────── */
+  --color-bg          : #0b0e11;   /* canvas-dark — floor da página */
+  --color-bg-alt      : #1e2329;   /* surface-card-dark */
+  --color-card        : #1e2329;   /* surface-card-dark */
+  --color-card-2      : #2b3139;   /* surface-elevated-dark */
+  --color-header-bg   : #0b0e11;
+  --color-modal-bg    : #1e2329;
+  --color-input-bg    : #1e2329;
+  --color-table-header: #0b0e11;
 
-  /* ── Bordas ─────────────────────────────────────────────────── */
-  --color-border      : #1a2535;               /* hairline industrial */
-  --color-border-2    : #263444;               /* borda mais forte */
-  --color-border-focus: rgba(245,197,58,.40);  /* accent-ring 40% */
+  /* ── Bordas — hairline on dark = mesmo hex da surface elevada ── */
+  --color-border      : #2b3139;               /* hairline-on-dark */
+  --color-border-2    : #3a4148;               /* borda mais forte */
+  --color-border-focus: rgba(59,130,246,.50);  /* info-ring 50% */
 
   /* ── Texto ───────────────────────────────────────────────────── */
   --color-text        : #eaecef;   /* body on dark */
@@ -30,13 +30,13 @@
   --color-text-disabled: #484d55;
   --color-text-inverse: #181a20;   /* on-primary: preto sobre amarelo Binance */
 
-  /* ── Acento principal — Amber Freight ───────────────────────── */
-  --color-primary     : #f5c53a;
-  --color-primary-dk  : #e0ad20;   /* active / hover mais escuro */
-  --color-primary-lt  : #fad96e;   /* variante clara */
-  --color-primary-bg  : rgba(245,197,58,.10);
-  --color-primary-border: rgba(245,197,58,.25);
-  --color-primary-disabled: #35300f;
+  /* ── Acento principal — Binance Yellow ───────────────────────── */
+  --color-primary     : #fcd535;
+  --color-primary-dk  : #f0b90b;   /* active / hover mais escuro */
+  --color-primary-lt  : #fde272;   /* variante clara */
+  --color-primary-bg  : rgba(252,213,53,.10);
+  --color-primary-border: rgba(252,213,53,.25);
+  --color-primary-disabled: #3a3a1f;
 
   /* ── Trading — verde sobe / vermelho desce ───────────────────── */
   --color-success     : #0ecb81;   /* trading-up */
@@ -73,37 +73,37 @@
   --shadow-primary    : 0 4px 16px rgba(252,213,53,.20);
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
-  --color-sidebar-bg        : #07090d;
+  --color-sidebar-bg        : #0b0e11;
   --color-sidebar-item      : transparent;
-  --color-sidebar-item-hover: rgba(245,197,58,.08);
-  --color-sidebar-item-active: rgba(245,197,58,.14);
-  --color-sidebar-text      : #5a6a7a;
-  --color-sidebar-text-active: #f5c53a;
+  --color-sidebar-item-hover: rgba(252,213,53,.08);
+  --color-sidebar-item-active: rgba(252,213,53,.15);
+  --color-sidebar-text      : #707a8a;
+  --color-sidebar-text-active: #fcd535;
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: dark;
 
   /* ── Semantic tokens — mapeados ao DESIGN-binance.md ─────────── */
-  --bg      : #07090d;
-  --surface : #101620;
-  --card    : #101620;
-  --card2   : #172030;
+  --bg      : #0b0e11;   /* canvas-dark */
+  --surface : #1e2329;   /* surface-card-dark */
+  --card    : #1e2329;   /* surface-card-dark */
+  --card2   : #2b3139;   /* surface-elevated-dark */
 
-  --border  : #1a2535;
-  --border2 : #263444;
+  --border  : #2b3139;   /* hairline-on-dark */
+  --border2 : #3a4148;
 
-  --text    : #dde4ed;
-  --text2   : #5a6a7a;
-  --text3   : #7a8a9a;
+  --text    : #eaecef;   /* body on dark */
+  --text2   : #707a8a;   /* muted */
+  --text3   : #929aa5;   /* muted-strong */
 
-  --accent  : #f5c53a;
-  --accent2 : rgba(245,197,58,.10);
-  --on-primary: #0d0e08;
+  --accent  : #fcd535;               /* Binance Yellow */
+  --accent2 : rgba(252,213,53,.10);  /* Binance Yellow bg leve */
+  --on-primary: #181a20;             /* texto PRETO sobre amarelo */
 
-  --cyan    : #2dbdb6;
-  --green   : #0ecb81;
-  --orange  : #e0ad20;
-  --red     : #f6465d;
-  --yellow  : #f5c53a;
-  --roxo    : #2dbdb6;
+  --cyan    : #2dbdb6;   /* accent-turquoise */
+  --green   : #0ecb81;   /* trading-up */
+  --orange  : #f0b90b;   /* primary-active / warning */
+  --red     : #f6465d;   /* trading-down */
+  --yellow  : #fcd535;   /* mesmo que accent */
+  --roxo    : #2dbdb6;   /* accent-turquoise (reusa como "roxo") */
 }
