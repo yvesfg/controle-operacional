@@ -5,6 +5,7 @@ import './design-system/tokens.css'
 import './design-system/theme-dark.css'
 import './design-system/theme-light.css'
 import './design-system/components.css'
+import './design-system/layout.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
