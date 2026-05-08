@@ -350,7 +350,7 @@ export default function DescargaView({ ctx }) {
                               ⚠️ <strong>Colunas PAG. DESCARGA / PAG. STRETCH ainda não sincronizadas.</strong><br/>
                               Atualize o Apps Script (adicione os campos ao <code>mapearColuna</code>) e rode uma sincronização para liberar a comparação completa.
                             </div>}
-                            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                            <table className="ds-table ds-table--compact">
                               <thead><tr style={{background:t.card2}}>
                                 {["DT","NF","Dt Faturamento","Cliente","Desc.Plan","Desc.GSheets","Dif.Desc","Str.Plan","Str.GSheets","Dif.Str","Total Plan","Total GSheets","Status"].map(h=>(
                                   <th key={h} style={{padding:"7px 8px",textAlign:"left",fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.4,borderBottom:`1px solid ${t.borda}`,whiteSpace:"nowrap"}}>{h}</th>

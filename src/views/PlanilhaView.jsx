@@ -263,7 +263,7 @@ export default function PlanilhaView({ ctx }) {
 
       {/* ── Tabela ── */}
       <div style={{ flex: 1, overflowX: "auto", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, tableLayout: "fixed", minWidth: 480 }}>
+        <table className="ds-table ds-table--compact" style={{ tableLayout: "fixed", minWidth: 480 }}>
           <colgroup>
             {COLS.map(c => <col key={c.k} style={{ width: c.w }} />)}
           </colgroup>

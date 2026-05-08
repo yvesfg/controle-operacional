@@ -317,8 +317,8 @@ export default function DiariasView({ ctx }) {
                     </span>
                   </div>
                   {/* Tabela */}
-                  <div style={{overflowX:"auto",borderRadius:"0 0 11px 11px",border:`1px solid ${t.borda}`,borderTop:"none",maxHeight:"calc(100vh - 240px)",overflowY:"auto",margin:"0 -16px"}}>
-                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:600}}>
+                  <div className="ds-table-wrap" style={{borderTop:"none",maxHeight:"calc(100vh - 240px)",overflowY:"auto",margin:"0 -16px"}}>
+                    <table className="ds-table ds-table--compact" style={{minWidth:600}}>
                       <thead><tr>{["DT","Motorista","Placa","Origem","Agenda","Descarga","Atraso","Prev.","Pago"].map(h=>(
                         <th key={h} style={{background:t.tableHeader,padding:"9px 10px",textAlign:"left",fontSize:8,
                           textTransform:"uppercase",letterSpacing:1,color:t.txt2,
@@ -473,8 +473,8 @@ export default function DiariasView({ ctx }) {
                             ))}
                             <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{filtrado.length} reg.</span>
                           </div>
-                          <div style={{overflowX:"auto",borderRadius:11,border:`1px solid ${t.borda}`,maxHeight:"60vh",overflowY:"auto",margin:"0 -16px"}}>
-                            <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:720}}>
+                          <div className="ds-table-wrap" style={{maxHeight:"60vh",overflowY:"auto",margin:"0 -16px"}}>
+                            <table className="ds-table ds-table--compact" style={{minWidth:720}}>
                               <thead><tr>
                                 {["Status","DT","Motorista","Cliente","Qtd","Vlr Ext","Vlr App","Dif","RO"].map(h=>(
                                   <th key={h} style={{background:t.tableHeader,padding:"8px 10px",textAlign:"left",
