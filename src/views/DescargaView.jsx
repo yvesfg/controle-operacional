@@ -128,20 +128,20 @@ export default function DescargaView({ ctx }) {
             </div>)}
 
             {/* Toolbar view Descarga */}
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+            <div className="co-tabbar" style={{flexWrap:"wrap",marginBottom:12}}>
               {[
                 {v:"linhas",l:"Linhas",svg:<><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>},
                 {v:"blocos",l:"Blocos",svg:<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>}
               ].map(m => (
-                <button key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${descargaView===m.v?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:descargaView===m.v?"var(--accent2)":"var(--card2)",color:descargaView===m.v?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif",display:"flex",alignItems:"center",gap:4}}>
+                <button key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} className={`co-tab${descargaView===m.v?" co-tab--active":""}`} style={{display:"flex",alignItems:"center",gap:4}}>
                   {hIco(m.svg,descargaView===m.v?t.azulLt:t.txt2,14)} {m.l}
                 </button>
               ))}
               {descargaView==="blocos" && (
                 <>
-                  <span style={{fontSize:9,color:t.txt2,marginLeft:6}}>Colunas:</span>
+                  <span className="co-filter-bar__label" style={{marginLeft:8}}>Colunas:</span>
                   {(isMobile?[1,2]:[1,2,3,4]).map(n => (
-                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} style={{width:36,height:36,minWidth:36,minHeight:36,fontSize:11,fontWeight:700,border:`1.5px solid ${descargaCols===n?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:descargaCols===n?"var(--accent2)":"var(--card2)",color:descargaCols===n?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif"}}>{n}</button>
+                    <button key={n} onClick={()=>{setDescargaCols(n);saveJSON("co_descarga_cols",n);}} className={`co-tab${descargaCols===n?" co-tab--active":""}`}>{n}</button>
                   ))}
                 </>
               )}
