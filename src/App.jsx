@@ -1758,7 +1758,7 @@ export default function App() {
   if (aguardandoAprovacao && !authed) {
     return (
       <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
         <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>{theme==="dark"
               ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
               : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>}</button>
@@ -1863,14 +1863,14 @@ export default function App() {
             <rect x="20" y="21" width="26" height="20" rx="3" fill={hexRgb(t.ouro, .15)} stroke={t.ouro} strokeWidth="2"/>
             <circle cx="33" cy="31" r="3" fill={t.ouro}/>
           </svg>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
+          <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
           <div style={{width:32,height:2,background:t.ouro,borderRadius:1,margin:"6px 0"}}/>
           <div style={{fontSize:9,color:t.txt2,letterSpacing:".12em",textTransform:"uppercase"}}>Controle Operacional</div>
         </div>
 
         {/* ── Card ── */}
         <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"28px 28px 24px",display:"flex",flexDirection:"column",gap:0,animation:"loginFadeUp .4s ease-out",position:"relative",zIndex:1}}>
-          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:16,fontWeight:700,letterSpacing:"-.02em",color:t.txt,marginBottom:4}}>Entrar na plataforma</div>
+          <div style={{fontFamily:"var(--font-heading)",fontSize:16,fontWeight:700,letterSpacing:"-.02em",color:t.txt,marginBottom:4}}>Entrar na plataforma</div>
           <div style={{fontSize:12,color:t.txt2,marginBottom:20,lineHeight:1.5}}>Acesso restrito a operadores autorizados.</div>
 
           {/* Auth message */}
@@ -1949,7 +1949,7 @@ export default function App() {
   if (primeiroLogin) {
     return (
       <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh"}}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0}input::placeholder{color:${t.txt2}}`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}input::placeholder{color:${t.txt2}}`}</style>
         <div style={{width:56,height:56,background:t.card2,borderRadius:DESIGN.r.card,border:`1px solid ${hexRgb(t.ouro,.3)}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:14}}>🔑</div>
         <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:3,color:t.txt,marginBottom:4}}>PRIMEIRO ACESSO</div>
         <div style={{fontSize:11,color:t.txt2,marginBottom:20,textAlign:"center"}}>Configure sua senha de administrador e, opcionalmente, sua logo.</div>
@@ -2946,7 +2946,7 @@ export default function App() {
         @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.scrollThumb};border-radius:3px}
         input::placeholder,textarea::placeholder{color:${t.txt2}!important}
@@ -2980,9 +2980,9 @@ export default function App() {
         /* ── Desktop Sidebar ── */
         .co-sidebar{
           position:fixed;top:0;left:0;bottom:0;z-index:var(--z-sidebar);
-          width:220px;display:flex;flex-direction:column;
+          width:64px;display:flex;flex-direction:column;
           background:var(--surface);border-right:1px solid var(--border);
-          transition:width 0.25s cubic-bezier(0.4,0,0.2,1);overflow:hidden;flex-shrink:0;
+          transition:width 0.25s cubic-bezier(0.4,0,0.2,1),box-shadow 0.25s ease;overflow:hidden;flex-shrink:0;
         }
         .co-sidebar--collapsed{width:64px}
 
@@ -2992,8 +2992,8 @@ export default function App() {
           flex-shrink:0;overflow:hidden;
         }
         .co-sidebar--collapsed .co-sidebar__logo{justify-content:center;padding:8px;gap:0}
-        .co-sidebar__logo-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;letter-spacing:-0.01em;color:var(--text);line-height:1;white-space:nowrap;overflow:hidden}
-        .co-sidebar__logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;font-weight:400;white-space:nowrap;margin-top:2px}
+        .co-sidebar__logo-name{font-family:var(--font-heading);font-size:14px;font-weight:700;letter-spacing:-0.01em;color:var(--text);line-height:1;white-space:nowrap;overflow:hidden}
+        .co-sidebar__logo-sub{font-family:var(--font-mono);font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;font-weight:400;white-space:nowrap;margin-top:2px}
         .co-sidebar--collapsed .co-sidebar__logo-name,
         .co-sidebar--collapsed .co-sidebar__logo-sub{display:none}
 
@@ -3014,7 +3014,7 @@ export default function App() {
           display:flex;align-items:center;gap:10px;
           padding:8px 10px;border-radius:${DESIGN.r.sidebar}px;
           background:transparent;border:none;cursor:pointer;
-          color:var(--text2);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:500;
+          color:var(--text2);font-family:var(--font-body);font-size:13px;font-weight:500;
           text-align:left;width:100%;white-space:nowrap;
           transition:all 180ms ease;min-height:36px;overflow:hidden;
         }
@@ -3022,13 +3022,13 @@ export default function App() {
         .co-sidebar__item--active{background:var(--accent2);color:var(--accent)}
         .co-sidebar__item--active .co-sidebar__ico svg{stroke:var(--accent)}
         .co-sidebar--collapsed .co-sidebar__item{justify-content:center;padding:8px}
-        .co-sidebar__section-lbl{font-family:'DM Mono',monospace;font-size:9px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:14px 10px 6px;white-space:nowrap;overflow:hidden}
+        .co-sidebar__section-lbl{font-family:var(--font-mono);font-size:9px;font-weight:400;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:14px 10px 6px;white-space:nowrap;overflow:hidden}
         .co-sidebar__section-line{width:24px;height:1px;background:var(--border);margin:8px auto;display:none}
         .co-sidebar--collapsed .co-sidebar__section-lbl{display:none}
         .co-sidebar--collapsed .co-sidebar__section-line{display:block}
         .co-sidebar__badge-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--red);display:none}
         .co-sidebar--collapsed .co-sidebar__badge-dot{display:block}
-        .co-sidebar__badge-pill{background:var(--red);color:#fff;font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:auto;flex-shrink:0}
+        .co-sidebar__badge-pill{background:var(--red);color:#fff;font-family:var(--font-mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;margin-left:auto;flex-shrink:0}
         .co-sidebar--collapsed .co-sidebar__badge-pill{display:none}
         .co-sidebar--collapsed .co-sidebar__item-lbl{display:none}
         .co-sidebar__ico{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:20px;height:20px}
@@ -3059,12 +3059,46 @@ export default function App() {
         .co-sidebar__user-role{font-size:9px;color:${t.txt2};text-transform:uppercase;letter-spacing:.8px}
         .co-sidebar--collapsed .co-sidebar__user-info{display:none}
         .co-sidebar--collapsed .co-sidebar__user{justify-content:center;padding:8px}
+        @media(min-width:768px){
+          .co-sidebar:hover{width:220px;box-shadow:6px 0 32px rgba(0,0,0,.45)}
+          .co-sidebar:hover .co-sidebar__logo{justify-content:flex-start!important;padding:8px 12px!important;gap:10px!important}
+          .co-sidebar:hover .co-sidebar__logo-name,.co-sidebar:hover .co-sidebar__logo-sub{display:block!important}
+          .co-sidebar:hover .co-sidebar__item{justify-content:flex-start!important;padding:8px 10px!important}
+          .co-sidebar:hover .co-sidebar__item-lbl{display:block!important}
+          .co-sidebar:hover .co-sidebar__badge-pill{display:block!important}
+          .co-sidebar:hover .co-sidebar__badge-dot{display:none!important}
+          .co-sidebar:hover .co-sidebar__section-lbl{display:block!important;font-size:9px!important;letter-spacing:0.1em!important;padding:14px 10px 6px!important;white-space:nowrap!important}
+          .co-sidebar:hover .co-sidebar__section-line{display:none!important}
+          .co-sidebar:hover .co-sidebar__footer{align-items:flex-start!important}
+          .co-sidebar:hover .co-sidebar__footer-item{justify-content:flex-start!important;padding:7px 10px!important}
+          .co-sidebar:hover .co-sidebar__footer-lbl{display:block!important}
+          .co-sidebar:hover .co-sidebar__user{justify-content:flex-start!important;padding:8px 10px!important}
+          .co-sidebar:hover .co-sidebar__user-info{display:flex!important}
+          .co-sidebar:hover .co-sidebar__toggle{display:none!important}
+        }
+        /* ── Hover expand (desktop/tablet ≥768px) ─────────────────────── */
+        @media(min-width:768px){
+          .co-sidebar:hover{width:220px;box-shadow:6px 0 32px rgba(0,0,0,.45)}
+          .co-sidebar:hover .co-sidebar__logo{justify-content:flex-start!important;padding:8px 12px!important;gap:10px!important}
+          .co-sidebar:hover .co-sidebar__logo-name,.co-sidebar:hover .co-sidebar__logo-sub{display:block!important}
+          .co-sidebar:hover .co-sidebar__item{justify-content:flex-start!important;padding:8px 10px!important}
+          .co-sidebar:hover .co-sidebar__item-lbl{display:block!important}
+          .co-sidebar:hover .co-sidebar__badge-pill{display:block!important}
+          .co-sidebar:hover .co-sidebar__badge-dot{display:none!important}
+          .co-sidebar:hover .co-sidebar__section-lbl{display:block!important;font-size:9px!important;letter-spacing:0.1em!important;padding:14px 10px 6px!important;white-space:nowrap!important}
+          .co-sidebar:hover .co-sidebar__section-line{display:none!important}
+          .co-sidebar:hover .co-sidebar__footer{align-items:flex-start!important}
+          .co-sidebar:hover .co-sidebar__footer-item{justify-content:flex-start!important;padding:7px 10px!important}
+          .co-sidebar:hover .co-sidebar__footer-lbl{display:block!important}
+          .co-sidebar:hover .co-sidebar__user{justify-content:flex-start!important;padding:8px 10px!important}
+          .co-sidebar:hover .co-sidebar__user-info{display:flex!important}
+          .co-sidebar:hover .co-sidebar__toggle{display:none!important}
+        }
 
         /* ── Main content area (desktop) ── */
         .co-main{display:flex;flex-direction:column;flex:1;min-width:0;height:100vh;overflow:hidden}
         @media(min-width:768px){
-          .co-main{margin-left:220px;transition:margin-left 200ms ease}
-          .co-main--collapsed{margin-left:64px}
+          .co-main{margin-left:64px;transition:none}
           .co-mobile-nav{display:none!important}
         }
         @media(max-width:767px){
@@ -3239,22 +3273,21 @@ export default function App() {
       {/* ════════════════════════════════════════════
           SIDEBAR — sempre visível; icons no mobile, expand ao clicar
       ════════════════════════════════════════════ */}
-      <aside className={`co-sidebar${isWide&&sidebarCollapsed?" co-sidebar--collapsed":""}${!isWide&&mobileSidebarExpanded?" co-sidebar--mob-expanded":""}`}>
+      <aside className={`co-sidebar${isWide?" co-sidebar--collapsed":""}${!isWide&&mobileSidebarExpanded?" co-sidebar--mob-expanded":""}`}>
           {/* ── Logo ── */}
           <div className="co-sidebar__logo">
             <div style={{width:36,height:36,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             </div>
-            {(isWide?!sidebarCollapsed:mobileSidebarExpanded) && (
-              <div style={{overflow:"hidden",flex:1,minWidth:0}}>
+            <div style={{overflow:"hidden",flex:1,minWidth:0}}>
                 <div className="co-sidebar__logo-name">YFGroup</div>
                 <div className="co-sidebar__logo-sub">CTRL OPERACIONAL</div>
               </div>
-            )}
             <button
               className="co-sidebar__toggle"
+              style={{display:isWide?"none":"flex",alignItems:"center",justifyContent:"center"}}
               onClick={()=>isWide?setSidebarCollapsed(v=>!v):setMobileSidebarExpanded(v=>!v)}
-              title={(isWide?sidebarCollapsed:!mobileSidebarExpanded)?"Expandir":"Recolher"}
+              title={!mobileSidebarExpanded?"Expandir":"Recolher"}
             >
               {(isWide?sidebarCollapsed:!mobileSidebarExpanded)
                 ? hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt2,14,2)
@@ -3327,7 +3360,7 @@ export default function App() {
               if(isAdmin){setActiveTab("admin");if(!isWide)setMobileSidebarExpanded(false);}
               else{setModalOpen("usuario");}
             }}>
-              <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:12,fontWeight:700,color:"#fff",fontFamily:"'Space Grotesk',sans-serif",letterSpacing:"-0.01em"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:12,fontWeight:700,color:"#fff",fontFamily:"var(--font-heading)",letterSpacing:"-0.01em"}}>
                 {(usuarioLogado||"YF").slice(0,2).toUpperCase()}
               </div>
               <div className="co-sidebar__user-info" style={{flex:1,minWidth:0}}>
@@ -3366,7 +3399,7 @@ export default function App() {
           /* ── Desktop topbar: título da aba + status + alertas ── */
           <>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>
+              <div style={{fontFamily:"var(--font-heading)",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>
                 {tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}
               </div>
               <span style={{fontSize:9,fontWeight:700,letterSpacing:.8,padding:"2px 8px",borderRadius:DESIGN.r.badge,
@@ -3382,7 +3415,7 @@ export default function App() {
               {alertas.length > 0 && (
                 <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
                   {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,14)}
-                  <span style={{fontSize:11,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length} alerta{alertas.length>1?"s":""}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:t.danger,fontFamily:"var(--font-mono)"}}>{alertas.length} alerta{alertas.length>1?"s":""}</span>
                 </button>
               )}
               <button onClick={()=>setBuscaModalOpen(true)} style={{...css.hBtn,padding:"6px 8px"}} title="Buscar (Ctrl+K)">
@@ -3399,8 +3432,8 @@ export default function App() {
           /* ── Mobile topbar: aba ativa + ações ── */
           <>
             <div>
-              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
+              <div style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
+              <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
               <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
@@ -3413,7 +3446,7 @@ export default function App() {
               {alertas.length > 0 && (
                 <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"5px 9px",display:"flex",alignItems:"center",gap:4}}>
                   {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,12)}
-                  <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"'DM Mono',monospace"}}>{alertas.length}</span>
+                  <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"var(--font-mono)"}}>{alertas.length}</span>
                 </button>
               )}
               <button onClick={()=>setBuscaModalOpen(true)} style={{...css.hBtn,padding:"6px 7px"}} title="Buscar (Ctrl+K)">
@@ -3717,8 +3750,8 @@ export default function App() {
                 {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </>,"#25D366",20)}
                 <div>
-                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
-                  <div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
+                  <div style={{fontFamily:"var(--font-heading)",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
+                  <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
                 </div>
               </div>
               <button onClick={()=>setWppTipoOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:6,borderRadius:8}}>
@@ -3732,7 +3765,7 @@ export default function App() {
                   {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,"#25D366",14)}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {(wppSearchReg||buscaResult).dt} · {(wppSearchReg||buscaResult).nome||"—"}</div>
-                    {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{(wppSearchReg||buscaResult).placa}</div>}
+                    {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)"}}>{(wppSearchReg||buscaResult).placa}</div>}
                   </div>
                   <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
                     {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
@@ -3764,9 +3797,9 @@ export default function App() {
                           onMouseEnter={e=>{e.currentTarget.style.background=t.surface;}}
                           onMouseLeave={e=>{e.currentTarget.style.background=t.card2;}}
                         >
-                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
+                          <div style={{fontFamily:"var(--font-mono)",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
                           <div style={{fontSize:12,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                          {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{r.placa}</div>}
+                          {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",flexShrink:0}}>{r.placa}</div>}
                         </button>
                       ))}
                     </div>);
@@ -3800,7 +3833,7 @@ export default function App() {
                     {hIco(op.ico,op.color,18)}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"'Space Grotesk',sans-serif"}}>{op.l}</div>
+                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"var(--font-heading)"}}>{op.l}</div>
                     <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{op.sub}</div>
                   </div>
                   {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt3||t.txt2,14)}
