@@ -86,9 +86,8 @@ export default function DescargaView({ ctx }) {
               const _pymF=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};
               const _cnt=_tabAll.filter(r=>{const ym=_pymF(r.data_carr||r.data_agenda||"");if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniC||_fimC){const d=ym?.full||null;if(!d)return false;if(_iniC&&d<_iniC)return false;if(_fimC&&d>_fimC)return false;}return true;}).length;
               return (
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 10px",background:t.card,
-                  border:`1px solid ${t.borda}`,borderRadius:10,flexWrap:"wrap"}}>
-                  <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
+                <div className="co-filter-bar">
+                  <span className="co-filter-bar__label">Filtrar:</span>
                   <select value={dscFiltroAno} onChange={e=>{setDscFiltroAno(e.target.value);setDscFiltroMes("");}}
                     style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroAno?t.ouro:t.borda}`,background:dscFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                     <option value="">Todos os Anos</option>

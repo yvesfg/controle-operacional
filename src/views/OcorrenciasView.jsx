@@ -323,7 +323,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
       </div>
 
       {/* Busca + Filters row */}
-      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"7px 12px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,flexWrap:"wrap"}}>
+      <div className="co-filter-bar">
         <div style={{position:"relative",flexShrink:0}}>
           <span style={{position:"absolute",left:8,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",opacity:.5}}>
             <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
