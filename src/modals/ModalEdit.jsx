@@ -115,14 +115,14 @@ function ModalEditComponent({ ctx }) {
           </label>
 
         ) : f.type==="select_sim_nao" ? (
-          <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?.6:1}}>
+          <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?0.6:1}}>
             <option value="">— Selecione —</option>
             <option value="sim">✅ Sim</option>
             <option value="nao">❌ Não</option>
           </select>
 
         ) : f.type==="select_status" ? (
-          <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?.6:1}}>
+          <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?0.6:1}}>
             <option value="">— Selecione —</option>
             <option value="CARREGADO">📦 CARREGADO</option>
             <option value="PENDENTE">⏳ PENDENTE</option>
@@ -133,7 +133,7 @@ function ModalEditComponent({ ctx }) {
           </select>
 
         ) : f.type==="select_opts" ? (
-          <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?.6:1}}>
+          <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?0.6:1}}>
             <option value="">— Selecione —</option>
             {(f.opts||[]).map(o=><option key={o} value={o}>{o}</option>)}
           </select>
@@ -154,7 +154,7 @@ function ModalEditComponent({ ctx }) {
                   <input type="date" value={brToInput(formData[f.k])} readOnly={isLocked}
                     onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
                     onChange={isLocked?undefined:e=>setFormData(p=>({...p,[f.k]:inputToBr(e.target.value)}))}
-                    style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?.5:1,background:t.inputBg}} />
+                    style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?0.5:1,background:t.inputBg}} />
                 )}
               </div>
             );
@@ -202,7 +202,7 @@ function ModalEditComponent({ ctx }) {
               }
               if (f.k==="chegada" && v) setOcorrChegadaAlert(true);
             }}
-            style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:(isLocked||isDescAguardando)?"not-allowed":"text",opacity:(isLocked||isDescAguardando)?.5:1,background:isDescAguardando?`rgba(240,185,11,.04)`:t.inputBg}}
+            style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:(isLocked||isDescAguardando)?"not-allowed":"text",opacity:(isLocked||isDescAguardando)?0.5:1,background:isDescAguardando?`rgba(240,185,11,.04)`:t.inputBg}}
           />
         )}
       </div>
