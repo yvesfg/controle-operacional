@@ -143,19 +143,8 @@ export default function PlanilhaView({ ctx }) {
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 130px)" }}>
 
       {/* ── Barra de filtros ── */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        padding: "7px 12px",
-        background: "var(--card)",
-        borderBottom: "1px solid var(--border)",
-        flexShrink: 0, flexWrap: "wrap",
-      }}>
-        <span style={{
-          fontSize: 9, fontFamily: "'DM Mono', monospace", letterSpacing: "0.08em",
-          textTransform: "uppercase", color: "var(--text3)", marginRight: 2,
-        }}>
-          Filtrar:
-        </span>
+      <div className="co-filter-bar" style={{flexShrink:0}}>
+        <span className="co-filter-bar__label">Filtrar:</span>
 
         <select value={planilhaFiltroAno}
           onChange={e => { setPlanilhaFiltroAno(e.target.value); setPlanilhaPagina(1); }}

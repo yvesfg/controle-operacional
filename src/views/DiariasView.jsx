@@ -51,14 +51,14 @@ export default function DiariasView({ ctx }) {
               />
             </div>
 
-            <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center",flexWrap:"wrap"}}>
+            <div className="co-tabbar" style={{marginBottom:12}}>
               {[
                 {k:"resumo",l:"Resumo",svg:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
                 {k:"planilha",l:"Planilha",svg:<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>},
                 {k:"extrato",l:"Conferência",svg:<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m9 12 2 2 4-4"/></>}
               ].map(s => (
-                <button key={s.k} onClick={()=>setDSubTab(s.k)} style={{padding:"10px 20px",fontSize:12,fontWeight:700,border:`1.5px solid ${dSubTab===s.k?"var(--border2)":"var(--border)"}`,borderRadius:8,cursor:"pointer",background:dSubTab===s.k?"var(--surface)":"var(--card2)",color:dSubTab===s.k?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif",display:"flex",alignItems:"center",gap:5}}>
-                  {hIco(s.svg,dSubTab===s.k?t.ouro:t.txt2,18)} {s.l}
+                <button key={s.k} onClick={()=>setDSubTab(s.k)} className={`co-tab${dSubTab===s.k?" co-tab--active":""}`}>
+                  {hIco(s.svg,dSubTab===s.k?t.ouro:t.txt2,16)} {s.l}
                 </button>
               ))}
             </div>

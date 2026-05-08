@@ -3065,19 +3065,24 @@ export default function App() {
       <div className={coMainCls}>
 
       {/* TOPBAR — sticky dentro do co-main */}
-      <div className="co-topbar">
+      <div style={css.header}>
         {isWide ? (
           /* ── Desktop topbar: título da aba + status + alertas ── */
           <>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <div className="co-topbar__title">
+              <div style={{fontFamily:"var(--font-heading)",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>
                 {tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}
               </div>
-              <span className={`co-status-badge co-status-badge--${connStatus}`}>
+              <span style={{fontSize:9,fontWeight:700,letterSpacing:.8,padding:"2px 8px",borderRadius:DESIGN.r.badge,
+                background:connStatus==="online"?`rgba(34,197,94,.12)`:connStatus==="syncing"?`rgba(240,185,11,.12)`:`rgba(239,68,68,.12)`,
+                color:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger,
+                border:`1px solid ${connStatus==="online"?`rgba(34,197,94,.3)`:connStatus==="syncing"?`rgba(240,185,11,.3)`:`rgba(239,68,68,.3)`}`,
+                textTransform:"uppercase",
+              }}>
                 {connStatus==="online"?"Online":connStatus==="syncing"?"Sincronizando":"Offline"}
               </span>
             </div>
-            <div className="co-topbar__actions">
+            <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:5}}>
               {alertas.length > 0 && (
                 <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
                   {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,14)}
