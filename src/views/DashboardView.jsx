@@ -1,4 +1,9 @@
 import React from "react";
+import KpiCard     from '../components/KpiCard.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
+import DataRow     from '../components/DataRow.jsx';
+import SectionCard from '../components/SectionCard.jsx';
+import PageHeader  from '../components/PageHeader.jsx';
 import { parseData } from "../utils.js";
 
 export default function DashboardView({ ctx }) {
