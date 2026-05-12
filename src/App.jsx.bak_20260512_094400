@@ -36,8 +36,6 @@ import ModalNFD            from './modals/ModalNFD.jsx';
 import ModalRelatorios     from './modals/ModalRelatorios.jsx';
 import ModalCtrlFinanceiro from './modals/ModalCtrlFinanceiro.jsx';
 import ModalBusca          from './modals/ModalBusca.jsx';
-import ModalDashDrill      from './modals/ModalDashDrill.jsx';
-import ModalOcorrChegada   from './modals/ModalOcorrChegada.jsx';
 import RelatoriosView  from './relatorios/RelatoriosView.jsx';
 import OcorrModal from './components/OcorrModal.jsx';
 
@@ -3409,7 +3407,7 @@ export default function App() {
       {wppTipoOpen && (
         <div
           onClick={e=>{if(e.target===e.currentTarget)setWppTipoOpen(false);}}
-          style={{position:"fixed",inset:0,zIndex:"var(--z-modal)",background:"rgba(0,0,0,.62)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}}
+          style={{position:"fixed",inset:0,zIndex:1100,background:"rgba(0,0,0,.62)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}}
         >
           <div style={{background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,width:"100%",maxWidth:460,boxShadow:`0 32px 64px rgba(0,0,0,.4)`,overflow:"hidden",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
             {/* Header */}
@@ -3936,7 +3934,61 @@ export default function App() {
       }} />
 
       {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
-      <ModalDashDrill ctx={{ dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe }} />
+      {dashDrillModal && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.72)",zIndex:9990,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 68px"}} onClick={()=>setDashDrillModal(null)}>
+          <div style={{background:t.card,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:640,border:`1px solid ${t.borda}`,boxShadow:"0 -12px 48px rgba(0,0,0,.5)",maxHeight:"80vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+              <div style={{width:36,height:36,borderRadius:9,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
+                {dashDrillModal.type==="motorista"?"👨‍✈️":dashDrillModal.type==="destino"?"📍":"📊"}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
+                <div style={{fontSize:9,color:t.txt2,marginTop:2}}>{dashDrillModal.regs.length} viagem{dashDrillModal.regs.length!==1?"s":""} · {dashDrillModal.type==="motorista"?"Histórico do motorista":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}</div>
+              </div>
+              <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✕</button>
+            </div>
+            {/* Conteúdo */}
+            <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"10px 14px 14px",maxHeight:"calc(96vh - 120px)"}}>
+              {dashDrillModal.type==="destino"?(
+                /* Destino: lista de motoristas únicos com contagem */
+                (() => {
+                  const motMap = {};
+                  dashDrillModal.regs.forEach(r=>{if(r.nome){if(!motMap[r.nome])motMap[r.nome]={count:0,dts:[],destinos:new Set()};motMap[r.nome].count++;motMap[r.nome].dts.push(r.dt);motMap[r.nome].destinos.add(r.destino||"—");}});
+                  return Object.entries(motMap).sort((a,b)=>b[1].count-a[1].count).map(([nome,info])=>(
+                    <div key={nome} style={{background:t.card2,borderRadius:10,padding:"10px 12px",marginBottom:7,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:t.ouro,flexShrink:0}}>{nome.charAt(0)}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome}</div>
+                        <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{info.count} viagem{info.count!==1?"s":""} · DTs: {info.dts.slice(0,3).join(", ")}{info.dts.length>3?`... +${info.dts.length-3}`:""}</div>
+                      </div>
+                      <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.ouro,flexShrink:0}}>{info.count}</span>
+                    </div>
+                  ));
+                })()
+              ):(
+                /* Motorista ou Status: lista de viagens resumida */
+                dashDrillModal.regs.sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;}).map((r,i)=>(
+                  <div key={i} onClick={()=>{setDashDrillModal(null);abrirDetalhe(r);}} style={{background:t.card2,borderRadius:10,padding:"9px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`} onMouseLeave={e=>e.currentTarget.style.background=t.card2}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
+                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,letterSpacing:1}}>{r.dt}</span>
+                        {dashDrillModal.type==="motorista"&&<span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</span>}
+                        {r.status&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
+                      </div>
+                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.5}}>
+                        📍 {r.destino||"—"} · 📦 {r.data_carr||"—"} · {r.data_desc?`✅ ${r.data_desc}`:"⏳ Pendente"}
+                      </div>
+                    </div>
+                    <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>
+                  </div>
+                ))
+              )}
+              {dashDrillModal.regs.length===0&&<div style={{textAlign:"center",color:t.txt2,fontSize:12,padding:20}}>Nenhum registro encontrado.</div>}
+            </div>
+          </div>
+        </div>
+      )}
 
       <ModalRelatorios ctx={{
         relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
@@ -3967,7 +4019,51 @@ export default function App() {
         getConexao, showToast, t, css, hIco,
       }} />
       {/* ═══ ALERTA OCORRÊNCIA/RO — CHEGADA DO MOTORISTA ═══ */}
-      <ModalOcorrChegada ctx={{ ocorrChegadaAlert, setOcorrChegadaAlert, formData, setFormData, showToast, t, hIco, css, DESIGN }} />
+      {ocorrChegadaAlert && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.82)",zIndex:10000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setOcorrChegadaAlert(false)}>
+          <div style={{background:t.card,borderRadius:DESIGN.r.modal,padding:20,width:"100%",maxWidth:420,border:`1.5px solid rgba(232,130,12,.35)`,boxShadow:"0 24px 64px rgba(0,0,0,.6)"}} onClick={e=>e.stopPropagation()}>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+              <div style={{width:42,height:42,borderRadius:DESIGN.r.ico,background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,"#E8820C",20,2)}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>Motorista Chegou ao Cliente</div>
+                <div style={{fontSize:10,color:"#E8820C",fontWeight:600}}>Ocorrência/RO — registrar agora?</div>
+              </div>
+              <button onClick={()=>setOcorrChegadaAlert(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
+              </button>
+            </div>
+            <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:DESIGN.r.sm,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.7}}>
+              A <strong style={{color:t.txt}}>Ocorrência (RO)</strong> é inerente à existência de NFD e deve ser registrada a partir da chegada do motorista ao cliente. Se houver RO, preencha o número abaixo.
+            </div>
+            {/* Campo RO */}
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"block",marginBottom:5}}>Nº RO (Registro de Ocorrência)</label>
+              <input
+                value={formData.ro||""}
+                onChange={e=>setFormData(p=>({...p,ro:e.target.value}))}
+                placeholder="Ex: RO-2024-001 ou deixe vazio se não houver"
+                style={{...css.inp,fontSize:12,padding:"10px 12px"}}
+                autoFocus
+              />
+            </div>
+            {/* Ações */}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setOcorrChegadaAlert(false)} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:DESIGN.r.inp,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:DESIGN.fnt.b}}>
+                Sem Ocorrência
+              </button>
+              <button onClick={()=>{
+                setOcorrChegadaAlert(false);
+                if(formData.ro) showToast(`✅ RO registrado: ${formData.ro}`,"ok");
+              }} style={{flex:1,background:`linear-gradient(135deg,rgba(232,130,12,.2),rgba(232,130,12,.1))`,border:`1.5px solid rgba(232,130,12,.5)`,borderRadius:DESIGN.r.inp,padding:"10px",color:"#E8820C",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,"#E8820C",14,2)} Confirmar RO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OcorrModal unificado (nova ocorrencia) */}
       <OcorrModal

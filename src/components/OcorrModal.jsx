@@ -78,13 +78,8 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
 
   return (
     <div
+      className="co-modal-overlay co-modal-overlay--center"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(0,0,0,0.72)", backdropFilter: "blur(6px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "12px",
-      }}
     >
       <div style={{
         background: t.bg2 || t.card || t.bg,

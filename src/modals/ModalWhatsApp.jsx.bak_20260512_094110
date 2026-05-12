@@ -34,7 +34,7 @@ export default function ModalWhatsApp({ ctx }) {
       {wppTipoOpen && (
         <div
           onClick={e=>{if(e.target===e.currentTarget)setWppTipoOpen(false);}}
-          className="co-modal-overlay co-modal-overlay--center"
+          style={{position:"fixed",inset:0,zIndex:1100,background:"rgba(0,0,0,.62)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}}
         >
           <div style={{background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,width:"100%",maxWidth:460,boxShadow:`0 32px 64px rgba(0,0,0,.4)`,overflow:"hidden",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
             {/* Header */}
@@ -43,8 +43,8 @@ export default function ModalWhatsApp({ ctx }) {
                 {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </>,"#25D366",20)}
                 <div>
-                  <div style={{fontFamily:"var(--font-heading)",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
-                  <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
+                  <div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
                 </div>
               </div>
               <button onClick={()=>setWppTipoOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:6,borderRadius:8}}>
@@ -58,7 +58,7 @@ export default function ModalWhatsApp({ ctx }) {
                   {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,"#25D366",14)}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {(wppSearchReg||buscaResult).dt} · {(wppSearchReg||buscaResult).nome||"—"}</div>
-                    {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)"}}>{(wppSearchReg||buscaResult).placa}</div>}
+                    {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace"}}>{(wppSearchReg||buscaResult).placa}</div>}
                   </div>
                   <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
                     {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
@@ -90,9 +90,9 @@ export default function ModalWhatsApp({ ctx }) {
                           onMouseEnter={e=>{e.currentTarget.style.background=t.surface;}}
                           onMouseLeave={e=>{e.currentTarget.style.background=t.card2;}}
                         >
-                          <div style={{fontFamily:"var(--font-mono)",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
                           <div style={{fontSize:12,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                          {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",flexShrink:0}}>{r.placa}</div>}
+                          {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"'DM Mono',monospace",flexShrink:0}}>{r.placa}</div>}
                         </button>
                       ))}
                     </div>);
@@ -126,7 +126,7 @@ export default function ModalWhatsApp({ ctx }) {
                     {hIco(op.ico,op.color,18)}
                   </div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"var(--font-heading)"}}>{op.l}</div>
+                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"'Space Grotesk',sans-serif"}}>{op.l}</div>
                     <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{op.sub}</div>
                   </div>
                   {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt3||t.txt2,14)}
@@ -742,7 +742,7 @@ export default function ModalWhatsApp({ ctx }) {
 
       {/* ═══ WHATSAPP CONFIRM MODAL ═══ */}
       {wppConfirmModal && (
-        <div className="co-modal-overlay co-modal-overlay--center" style={{zIndex:"calc(var(--z-modal) + 10)"}} onClick={e=>{if(e.target===e.currentTarget)setWppConfirmModal(null);}}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.72)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}} onClick={e=>{if(e.target===e.currentTarget)setWppConfirmModal(null);}}>
           <div style={{background:"var(--card)",border:"1px solid var(--borda)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 32px 64px rgba(0,0,0,.5)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"96vh"}}>
             {/* Header */}
             <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--borda)",background:"rgba(37,211,102,.06)",flexShrink:0}}>
@@ -756,7 +756,7 @@ export default function ModalWhatsApp({ ctx }) {
             {/* Texto */}
             <div style={{flex:1,overflowY:"auto",padding:14}}>
               <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:"var(--text2)",fontWeight:700,marginBottom:6}}>Texto da mensagem</div>
-              <pre style={{fontFamily:"var(--font-mono)",fontSize:11,color:"var(--text)",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word",background:"var(--bg)",border:"1px solid var(--borda)",borderRadius:10,padding:"12px 14px",margin:0}}>{wppConfirmModal.displayText}</pre>
+              <pre style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"var(--text)",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word",background:"var(--bg)",border:"1px solid var(--borda)",borderRadius:10,padding:"12px 14px",margin:0}}>{wppConfirmModal.displayText}</pre>
             </div>
             {/* Botões */}
             <div style={{padding:"10px 14px 18px",borderTop:"1px solid var(--borda)",display:"flex",gap:8,flexShrink:0}}>

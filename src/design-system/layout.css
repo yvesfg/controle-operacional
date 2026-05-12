@@ -558,6 +558,31 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 .co-status-badge--offline  { color: var(--red);    background: rgba(246,70,93,.12);  border-color: rgba(246,70,93,.3);  }
 
 /* ════════════════════════════════════════════════════════════════════
+   MODAL OVERLAY — padrão unificado para todos os modais
+   Uso: <div class="co-modal-overlay"> (bottom-sheet por padrão)
+        <div class="co-modal-overlay co-modal-overlay--center"> (centralizado)
+   ════════════════════════════════════════════════════════════════════ */
+.co-modal-overlay {
+  position:        fixed;
+  inset:           0;
+  z-index:         var(--z-modal);
+  background:      rgba(0,0,0,.72);
+  backdrop-filter: blur(14px);
+  display:         flex;
+  align-items:     flex-end;
+  justify-content: center;
+  padding:         0;
+}
+.co-modal-overlay--center {
+  align-items:  center;
+  padding:      20px 16px;
+}
+.co-modal-overlay--top {
+  align-items:  flex-start;
+  padding:      48px 16px 16px;
+}
+
+/* ════════════════════════════════════════════════════════════════════
    RESPONSIVE GLOBAL
    ════════════════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
