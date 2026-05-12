@@ -72,8 +72,8 @@ export default function DiariasView({ ctx }) {
               ].map(tb => (
                 <div key={tb.k} onClick={()=>setDFiltro(dFiltro===tb.k?"todos":tb.k)} style={{border:`1.5px solid ${dFiltro===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dFiltro===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dFiltro===tb.k?tb.corLt:t.txt2,22)}
-                  <span style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:11,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:dFiltro===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
-                  <span style={{fontFamily:"var(--font-heading)",fontSize:isMobile?22:34,fontWeight:700,letterSpacing:"-0.04em",color:dFiltro===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
+                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:isMobile?9:11,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:dFiltro===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
+                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:isMobile?22:34,fontWeight:700,letterSpacing:"-0.04em",color:dFiltro===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
                 </div>
               ))}
             </div>
@@ -129,7 +129,7 @@ export default function DiariasView({ ctx }) {
                     {v:"linhas",l:"Linhas",svg:<><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>},
                     {v:"blocos",l:"Blocos",svg:<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>}
                   ].map(m => (
-                    <button key={m.v} onClick={()=>{setDiariaView(m.v);saveJSON("co_diaria_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${diariaView===m.v?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:diariaView===m.v?"var(--accent2)":"var(--card2)",color:diariaView===m.v?"var(--accent)":"var(--text2)",fontFamily:"var(--font-heading)",display:"flex",alignItems:"center",gap:4}}>
+                    <button key={m.v} onClick={()=>{setDiariaView(m.v);saveJSON("co_diaria_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${diariaView===m.v?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:diariaView===m.v?"var(--accent2)":"var(--card2)",color:diariaView===m.v?"var(--accent)":"var(--text2)",fontFamily:"'Space Grotesk',sans-serif",display:"flex",alignItems:"center",gap:4}}>
                       {hIco(m.svg,diariaView===m.v?t.azulLt:t.txt2,14)} {m.l}
                     </button>
                   ))}

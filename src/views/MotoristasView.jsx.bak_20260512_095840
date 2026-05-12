@@ -109,7 +109,7 @@ export default function MotoristasView({ ctx }) {
         {motoristas.length>0 && <span style={{opacity:.6}}>· exibindo {Math.min(motPagina*50,motFiltrados.length)} de {motFiltrados.length}</span>}
       </div>
       {motoristas.length === 0 ? (
-        <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:600,letterSpacing:"-0.02em",color:"var(--text2)"}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
+        <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>🚛</div><h3 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:15,fontWeight:600,letterSpacing:"-0.02em",color:"var(--text2)"}}>SEM MOTORISTAS</h3><p style={{fontSize:11,color:t.txt2}}>Clique em + NOVO para cadastrar.</p></div>
       ) : motFiltrados.length === 0 ? (
         <div style={css.empty}><div style={{fontSize:30,marginBottom:8}}>🔍</div><p style={{fontSize:12,color:t.txt2}}>Nenhum motorista encontrado para "{motBusca}"</p></div>
       ) : motFiltrados.slice(0, motPagina * 50).map((m,i) => {
