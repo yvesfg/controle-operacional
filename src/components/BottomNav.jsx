@@ -37,7 +37,7 @@ export default function BottomNav({ activeTab, onNavigate }) {
             <div style={{
               width:        "20px",
               height:       "20px",
-              background:   isActive ? "rgba(245,197,58,.15)" : "transparent",
+              background:   isActive ? "var(--accent2)" : "transparent",
               borderRadius: "var(--radius-btn)",
               transition:   "background var(--transition-fast)",
             }} />

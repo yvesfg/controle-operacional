@@ -607,7 +607,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   right: 0;
   height: 64px;
   background: var(--color-sidebar-bg);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--border);
   z-index: var(--z-sidebar);
   align-items: center;
   justify-content: space-around;
@@ -622,7 +622,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   }
 
   /* Views need bottom padding so content doesn't hide behind BottomNav */
-  .co-main-content {
+  .co-main {
     padding-bottom: 72px;
   }
 }
