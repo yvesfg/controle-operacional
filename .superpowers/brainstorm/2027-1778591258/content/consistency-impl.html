@@ -1,0 +1,169 @@
+<h2>Seções 9 e 10 — Regras de Consistência + React/Tailwind</h2>
+<p class="subtitle">Regras que evitam regressões de design + guia de implementação real no stack atual.</p>
+
+<div class="section">
+  <h3>Seção 9 — Regras de Consistência (não quebrar)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+    <div style="background:#101620;border:1.5px solid rgba(246,70,93,.25);border-radius:8px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#f6465d;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">🚫 Nunca fazer</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Hardcodar cor (<code style="background:#0d1219;padding:1px 4px;border-radius:3px">#f5c53a</code>) em vez de <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--accent)</code> — quebra o tema claro</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Hardcodar z-index (<code style="background:#0d1219;padding:1px 4px;border-radius:3px">9999</code>) em vez de <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--z-modal)</code> — empilhamento quebrará</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Usar <code style="background:#0d1219;padding:1px 4px;border-radius:3px">'Space Grotesk'</code> ou <code style="background:#0d1219;padding:1px 4px;border-radius:3px">'DM Mono'</code> — fontes fora do sistema</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Criar overlay com <code style="background:#0d1219;padding:1px 4px;border-radius:3px">position:fixed</code> inline — usar <code style="background:#0d1219;padding:1px 4px;border-radius:3px">.co-modal-overlay</code></span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Radius diferente de 2/4/6/8/12px — fora da escala aprovada</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Espaçamento fora da base 4px (ex: 7px, 11px, 15px)</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#f6465d;flex-shrink:0;margin-top:1px">✕</span><span style="font-size:11px;color:#dde4ed">Lógica de negócio dentro de componentes de UI (KpiCard, DataRow…)</span></div>
+      </div>
+    </div>
+
+    <div style="background:#101620;border:1.5px solid rgba(14,203,129,.25);border-radius:8px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#0ecb81;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">✅ Sempre fazer</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">Toda cor via CSS var: <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--accent)</code>, <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--text)</code>, <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--card)</code></span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">Toda fonte via token: <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--font-heading)</code>, <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--font-body)</code>, <code style="background:#0d1219;padding:1px 4px;border-radius:3px">var(--font-mono)</code></span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">Modais sempre via <code style="background:#0d1219;padding:1px 4px;border-radius:3px">.co-modal-overlay</code> + variante (--center, --top)</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">Animação de entrada: <code style="background:#0d1219;padding:1px 4px;border-radius:3px">slideUp</code> (center/top) ou <code style="background:#0d1219;padding:1px 4px;border-radius:3px">mslide</code> (bottom-sheet)</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">Novos modais → arquivo próprio em <code style="background:#0d1219;padding:1px 4px;border-radius:3px">src/modals/Modal*.jsx</code></span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">Props via <code style="background:#0d1219;padding:1px 4px;border-radius:3px">ctx</code> object (padrão já adotado em todos os modais)</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:#0ecb81;flex-shrink:0;margin-top:1px">✓</span><span style="font-size:11px;color:#dde4ed">StatusBadge para todo indicador de status — nunca inline ad hoc</span></div>
+      </div>
+    </div>
+
+    <!-- Status colors -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#dde4ed;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Status → Cor → Token</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:grid;grid-template-columns:120px 80px 1fr;gap:8px;align-items:center"><span style="font-size:11px;color:#0ecb81">No prazo</span><span style="font-size:10px;color:#5a6a7a;font-family:monospace">--green</span><span style="font-size:10px;color:#5a6a7a">rgba(14,203,129,.1) bg</span></div>
+        <div style="display:grid;grid-template-columns:120px 80px 1fr;gap:8px;align-items:center"><span style="font-size:11px;color:#f5c53a">Aguardando</span><span style="font-size:10px;color:#5a6a7a;font-family:monospace">--accent</span><span style="font-size:10px;color:#5a6a7a">rgba(245,197,58,.1) bg</span></div>
+        <div style="display:grid;grid-template-columns:120px 80px 1fr;gap:8px;align-items:center"><span style="font-size:11px;color:#f6465d">RO Pendente</span><span style="font-size:10px;color:#5a6a7a;font-family:monospace">--red</span><span style="font-size:10px;color:#5a6a7a">rgba(246,70,93,.1) bg</span></div>
+        <div style="display:grid;grid-template-columns:120px 80px 1fr;gap:8px;align-items:center"><span style="font-size:11px;color:#2dbdb6">Em trânsito</span><span style="font-size:10px;color:#5a6a7a;font-family:monospace">--cyan</span><span style="font-size:10px;color:#5a6a7a">rgba(45,189,182,.1) bg</span></div>
+        <div style="display:grid;grid-template-columns:120px 80px 1fr;gap:8px;align-items:center"><span style="font-size:11px;color:#5a6a7a">Encerrado</span><span style="font-size:10px;color:#5a6a7a;font-family:monospace">--text2</span><span style="font-size:10px;color:#5a6a7a">#172030 bg</span></div>
+      </div>
+    </div>
+
+    <!-- Responsive rule -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#dde4ed;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Breakpoints Responsivos</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:#0d1219;border-radius:5px;padding:10px;font-size:10px;color:#dde4ed;font-family:monospace">/* mobile */ @media (max-width: 767px) &#123;<br/>&nbsp;&nbsp;.co-sidebar &#123; display: none; &#125;<br/>&nbsp;&nbsp;.co-bottom-nav &#123; display: flex; &#125;<br/>&nbsp;&nbsp;.co-main &#123; padding-bottom: 64px; &#125;<br/>&#125;</div>
+        <div style="font-size:10px;color:#5a6a7a">Sidebar some. BottomNav aparece. Main ganha padding-bottom=64px para não sobrepor.</div>
+        <div style="background:#0d1219;border-radius:5px;padding:10px;font-size:10px;color:#dde4ed;font-family:monospace">/* tablet */ @media (768px – 1023px) &#123;<br/>&nbsp;&nbsp;--sidebar-w: var(--sidebar-collapsed-w); /* 64px */<br/>&#125;</div>
+        <div style="font-size:10px;color:#5a6a7a">Sidebar colapsa para ícones. Tooltip no hover revela o label.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Seção 10 — React + Tailwind: Guia de Implementação</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:10px">Estrutura de arquivos</div>
+      <div style="background:#0d1219;border-radius:6px;padding:12px;font-size:10px;color:#dde4ed;font-family:monospace;line-height:1.7">
+        src/<br/>
+        ├── design-system/<br/>
+        │&nbsp;&nbsp; ├── tokens.css<br/>
+        │&nbsp;&nbsp; ├── theme-dark.css<br/>
+        │&nbsp;&nbsp; ├── theme-light.css<br/>
+        │&nbsp;&nbsp; ├── layout.css<br/>
+        │&nbsp;&nbsp; └── components.css<br/>
+        ├── components/<br/>
+        │&nbsp;&nbsp; ├── KpiCard.jsx <span style="color:#f5c53a">← novo</span><br/>
+        │&nbsp;&nbsp; ├── StatusBadge.jsx <span style="color:#f5c53a">← novo</span><br/>
+        │&nbsp;&nbsp; ├── DataRow.jsx <span style="color:#f5c53a">← novo</span><br/>
+        │&nbsp;&nbsp; ├── SectionCard.jsx <span style="color:#f5c53a">← novo</span><br/>
+        │&nbsp;&nbsp; ├── PageHeader.jsx <span style="color:#f5c53a">← novo</span><br/>
+        │&nbsp;&nbsp; └── EmptyState.jsx <span style="color:#f5c53a">← novo</span><br/>
+        ├── modals/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#0ecb81">já existe ✓</span><br/>
+        ├── views/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#0ecb81">já existe ✓</span><br/>
+        └── App.jsx
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:8px">KpiCard — assinatura real</div>
+        <div style="background:#0d1219;border-radius:6px;padding:10px;font-size:10px;color:#dde4ed;font-family:monospace;line-height:1.6">
+          export function KpiCard(&#123;<br/>
+          &nbsp;&nbsp;label, value, delta,<br/>
+          &nbsp;&nbsp;deltaColor = 'neutral',<br/>
+          &nbsp;&nbsp;accent = false, // borda amber<br/>
+          &nbsp;&nbsp;onClick<br/>
+          &#125;) &#123;<br/>
+          &nbsp;&nbsp;return (<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&lt;div style=&#123;&#123;<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;background: 'var(--card)',<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;border: accent<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;? '1px solid rgba(245,197,58,.3)'<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: '1px solid var(--border)',<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;borderRadius: 'var(--radius-card)',<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;padding: 'var(--card-p-sm)'<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&#125;&#125;&gt;…&lt;/div&gt;<br/>
+          &nbsp;&nbsp;)<br/>
+          &#125;
+        </div>
+      </div>
+      <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:8px">StatusBadge — assinatura real</div>
+        <div style="background:#0d1219;border-radius:6px;padding:10px;font-size:10px;color:#dde4ed;font-family:monospace;line-height:1.6">
+          const STATUS_MAP = &#123;<br/>
+          &nbsp;&nbsp;'no-prazo':&nbsp;&nbsp;&#123; label:'No prazo', color:'var(--green)', bg:'rgba(14,203,129,.1)' &#125;,<br/>
+          &nbsp;&nbsp;'aguardando': &#123; label:'Aguardando', color:'var(--accent)', bg:'rgba(245,197,58,.1)' &#125;,<br/>
+          &nbsp;&nbsp;'ro-pendente':&#123; label:'RO Pendente', color:'var(--red)', bg:'rgba(246,70,93,.1)' &#125;,<br/>
+          &nbsp;&nbsp;'encerrado':&nbsp;&nbsp;&#123; label:'Encerrado', color:'var(--text2)', bg:'var(--card2)' &#125;,<br/>
+          &#125;;<br/>
+          export function StatusBadge(&#123; status &#125;) &#123;<br/>
+          &nbsp;&nbsp;const s = STATUS_MAP[status];<br/>
+          &nbsp;&nbsp;return &lt;span style=&#123;&#123;background:s.bg, color:s.color, …&#125;&#125;&gt;&#123;s.label&#125;&lt;/span&gt;;<br/>
+          &#125;
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:8px">Tailwind — quando usar (e quando não)</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:rgba(14,203,129,.06);border:1px solid rgba(14,203,129,.2);border-radius:6px;padding:10px">
+          <div style="font-size:10px;font-weight:700;color:#0ecb81;margin-bottom:4px">✓ Usar Tailwind para:</div>
+          <div style="font-size:11px;color:#dde4ed">Layout utilitário: <code style="background:#0d1219;padding:1px 4px;border-radius:2px">flex gap-2 items-center</code><br/>Responsividade: <code style="background:#0d1219;padding:1px 4px;border-radius:2px">hidden md:flex</code>, <code style="background:#0d1219;padding:1px 4px;border-radius:2px">grid-cols-2 md:grid-cols-4</code><br/>Estados hover: <code style="background:#0d1219;padding:1px 4px;border-radius:2px">hover:opacity-80</code></div>
+        </div>
+        <div style="background:rgba(246,70,93,.06);border:1px solid rgba(246,70,93,.2);border-radius:6px;padding:10px">
+          <div style="font-size:10px;font-weight:700;color:#f6465d;margin-bottom:4px">✕ Não usar Tailwind para:</div>
+          <div style="font-size:11px;color:#dde4ed">Cores: usar <code style="background:#0d1219;padding:1px 4px;border-radius:2px">var(--accent)</code>, não <code style="background:#0d1219;padding:1px 4px;border-radius:2px">text-yellow-400</code><br/>Fontes: usar tokens, não classes Tailwind de font-family<br/>Z-index: usar <code style="background:#0d1219;padding:1px 4px;border-radius:2px">var(--z-modal)</code>, não <code style="background:#0d1219;padding:1px 4px;border-radius:2px">z-50</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:8px">Prioridade de implementação</div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:20px;height:20px;background:rgba(245,197,58,.2);border:1px solid rgba(245,197,58,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#f5c53a;flex-shrink:0">1</div><div><div style="font-size:11px;font-weight:600;color:#dde4ed">StatusBadge + KpiCard</div><div style="font-size:10px;color:#5a6a7a">Usados em 100% das telas — criar primeiro</div></div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:20px;height:20px;background:rgba(245,197,58,.15);border:1px solid rgba(245,197,58,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#f5c53a;flex-shrink:0">2</div><div><div style="font-size:11px;font-weight:600;color:#dde4ed">DataRow + SectionCard</div><div style="font-size:10px;color:#5a6a7a">Base de todas as listagens</div></div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:20px;height:20px;background:rgba(245,197,58,.1);border:1px solid rgba(245,197,58,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#f5c53a;flex-shrink:0">3</div><div><div style="font-size:11px;font-weight:600;color:#dde4ed">BottomNav (mobile)</div><div style="font-size:10px;color:#5a6a7a">Responsividade mobile — 768px breakpoint</div></div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:20px;height:20px;background:#172030;border:1px solid #1a2535;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#5a6a7a;flex-shrink:0">4</div><div><div style="font-size:11px;font-weight:600;color:#dde4ed">PageHeader + EmptyState</div><div style="font-size:10px;color:#5a6a7a">Aplicar nas views existentes progressivamente</div></div></div>
+        <div style="display:flex;align-items:center;gap:10px"><div style="width:20px;height:20px;background:#172030;border:1px solid #1a2535;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#5a6a7a;flex-shrink:0">5</div><div><div style="font-size:11px;font-weight:600;color:#dde4ed">Quebrar App.jsx em módulos</div><div style="font-size:10px;color:#5a6a7a">9k linhas → extrair views e hooks progressivamente</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="aprovado" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Design completo aprovado — escrever spec</h3>
+      <p>Tudo certo. Pode salvar o documento de design e avançar para o plano de implementação.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ajustar" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Ainda tem ajuste</h3>
+      <p>Diga o que precisa mudar antes de fechar o design</p>
+    </div>
+  </div>
+</div>

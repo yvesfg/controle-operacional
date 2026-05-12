@@ -1,0 +1,207 @@
+<h2>Seção 4 — Design System Base</h2>
+<p class="subtitle">Tokens já existem — esta seção formaliza o uso correto de cada um. Zero valores novos, só sistematização.</p>
+
+<div class="section">
+  <h3>Cores — Paleta Semântica</h3>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px">
+    <div>
+      <div style="height:52px;background:#07090d;border-radius:6px;border:1px solid #1a2535;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--bg</div>
+      <div style="font-size:10px;color:#5a6a7a">#07090d</div>
+      <div style="font-size:9px;color:#3a4a5a">Fundo app</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#101620;border-radius:6px;border:1px solid #1a2535;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--card</div>
+      <div style="font-size:10px;color:#5a6a7a">#101620</div>
+      <div style="font-size:9px;color:#3a4a5a">Cards / modais</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#172030;border-radius:6px;border:1px solid #1a2535;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--card2</div>
+      <div style="font-size:10px;color:#5a6a7a">#172030</div>
+      <div style="font-size:9px;color:#3a4a5a">Hover / inputs</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#f5c53a;border-radius:6px;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--accent</div>
+      <div style="font-size:10px;color:#5a6a7a">#f5c53a</div>
+      <div style="font-size:9px;color:#3a4a5a">CTA primário · ativo</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#0ecb81;border-radius:6px;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--green</div>
+      <div style="font-size:10px;color:#5a6a7a">#0ecb81</div>
+      <div style="font-size:9px;color:#3a4a5a">Sucesso · no prazo</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#f6465d;border-radius:6px;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--red</div>
+      <div style="font-size:10px;color:#5a6a7a">#f6465d</div>
+      <div style="font-size:9px;color:#3a4a5a">Erro · ocorrência</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#f5c53a;border-radius:6px;margin-bottom:6px;opacity:.6"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">amber 60%</div>
+      <div style="font-size:10px;color:#5a6a7a">rgba(245,197,58,.6)</div>
+      <div style="font-size:9px;color:#3a4a5a">Aguardando</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#2dbdb6;border-radius:6px;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--cyan</div>
+      <div style="font-size:10px;color:#5a6a7a">#2dbdb6</div>
+      <div style="font-size:9px;color:#3a4a5a">Info · secundário</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#dde4ed;border-radius:6px;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#07090d">--text</div>
+      <div style="font-size:10px;color:#5a6a7a">#dde4ed</div>
+      <div style="font-size:9px;color:#3a4a5a">Texto principal</div>
+    </div>
+    <div>
+      <div style="height:52px;background:#5a6a7a;border-radius:6px;margin-bottom:6px"></div>
+      <div style="font-size:10px;font-weight:700;color:#dde4ed">--text2</div>
+      <div style="font-size:10px;color:#5a6a7a">#5a6a7a</div>
+      <div style="font-size:9px;color:#3a4a5a">Labels / meta</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Tipografia — Escala de uso</h3>
+  <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;gap:0">
+      <div style="padding:8px 14px;background:#0d1219;font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em">Token</div>
+      <div style="padding:8px 14px;background:#0d1219;font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em">Preview</div>
+      <div style="padding:8px 14px;background:#0d1219;font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em">Uso</div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;border-top:1px solid #1a2535">
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">--text-4xl · 40px</div>
+      <div style="padding:10px 14px;font-size:32px;font-weight:700;color:#f5c53a;font-family:'Syne',sans-serif">24</div>
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">KPI display hero</div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;border-top:1px solid #1a2535">
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">--text-2xl · 24px</div>
+      <div style="padding:10px 14px;font-size:22px;font-weight:700;color:#dde4ed;font-family:'Syne',sans-serif">Dashboard</div>
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">Título de página</div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;border-top:1px solid #1a2535">
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">--text-md · 14px</div>
+      <div style="padding:10px 14px;font-size:14px;font-weight:600;color:#dde4ed">João Silva — Placa ABC-1234</div>
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">Corpo / tabela</div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;border-top:1px solid #1a2535">
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">--text-sm · 12px</div>
+      <div style="padding:10px 14px;font-size:12px;color:#5a6a7a">NF 45.231 · há 12 min · Em trânsito</div>
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">Meta / caption</div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;border-top:1px solid #1a2535">
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">--font-mono · 12px</div>
+      <div style="padding:10px 14px;font-size:12px;color:#2dbdb6;font-family:'IBM Plex Mono',monospace">R$ 4.800,00 · #RO-2024-001</div>
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">Valores / códigos</div>
+    </div>
+    <div style="display:grid;grid-template-columns:140px 1fr 160px;border-top:1px solid #1a2535">
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">label · 9-10px</div>
+      <div style="padding:10px 14px;font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em">EM ROTA · HOJE</div>
+      <div style="padding:10px 14px;font-size:10px;color:#5a6a7a;display:flex;align-items:center">Labels de seção</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Componentes — Botões, Inputs, Badges, Cards</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <!-- Buttons -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="font-size:10px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Botões</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button style="background:#f5c53a;border:none;border-radius:6px;padding:10px 20px;font-size:13px;font-weight:700;color:#07090d;cursor:pointer;text-align:left">Primary — Confirmar</button>
+        <button style="background:transparent;border:1.5px solid #f5c53a;border-radius:6px;padding:10px 20px;font-size:13px;font-weight:700;color:#f5c53a;cursor:pointer;text-align:left">Secondary — Cancelar</button>
+        <button style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 20px;font-size:13px;font-weight:600;color:#dde4ed;cursor:pointer;text-align:left">Ghost — Filtrar</button>
+        <button style="background:rgba(246,70,93,.12);border:1px solid rgba(246,70,93,.3);border-radius:6px;padding:10px 20px;font-size:13px;font-weight:700;color:#f6465d;cursor:pointer;text-align:left">Danger — Excluir</button>
+      </div>
+    </div>
+
+    <!-- Inputs & Badges -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+        <div style="font-size:10px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Inputs</div>
+        <input style="width:100%;background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:9px 12px;font-size:13px;color:#dde4ed;box-sizing:border-box" placeholder="Buscar NF, motorista, placa…" />
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input style="flex:1;background:#0d1219;border:1.5px solid rgba(245,197,58,.4);border-radius:6px;padding:9px 12px;font-size:13px;color:#dde4ed;box-sizing:border-box" placeholder="Focus state…" />
+        </div>
+      </div>
+      <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+        <div style="font-size:10px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Badges de Status</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span style="background:rgba(14,203,129,.1);border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;color:#0ecb81">No prazo</span>
+          <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;color:#f5c53a">Aguardando</span>
+          <span style="background:rgba(246,70,93,.1);border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;color:#f6465d">RO Pendente</span>
+          <span style="background:rgba(45,189,182,.1);border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;color:#2dbdb6">Em trânsito</span>
+          <span style="background:#172030;border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;color:#5a6a7a">Encerrado</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h3>Espaçamento & Radius — Regras de uso</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:10px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Radius — hierarquia</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:24px;background:#f5c53a;border-radius:2px;flex-shrink:0"></div>
+          <span style="font-size:11px;color:#dde4ed">2px — badges muito pequenos</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:24px;background:#f5c53a;border-radius:4px;flex-shrink:0"></div>
+          <span style="font-size:11px;color:#dde4ed">4px — badges / ícones</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:24px;background:#f5c53a;border-radius:6px;flex-shrink:0"></div>
+          <span style="font-size:11px;color:#dde4ed">6px — botões / inputs</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:24px;background:#f5c53a;border-radius:8px;flex-shrink:0"></div>
+          <span style="font-size:11px;color:#dde4ed">8px — cards</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:32px;height:24px;background:#f5c53a;border-radius:12px;flex-shrink:0"></div>
+          <span style="font-size:11px;color:#dde4ed">12px — modais / elevated</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:10px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Espaçamento — base 4px</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:4px;height:14px;background:#f5c53a;border-radius:1px"></div><span style="font-size:11px;color:#dde4ed">4px — gap entre ícone e label</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:14px;background:#f5c53a;border-radius:1px"></div><span style="font-size:11px;color:#dde4ed">8px — gap entre badges</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:14px;background:#f5c53a;border-radius:1px"></div><span style="font-size:11px;color:#dde4ed">12px — padding interno button sm</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:14px;background:#f5c53a;border-radius:1px"></div><span style="font-size:11px;color:#dde4ed">16px — padding card / section</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:14px;background:#f5c53a;border-radius:1px"></div><span style="font-size:11px;color:#dde4ed">24px — gap entre cards</span></div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:14px;background:#f5c53a;border-radius:1px"></div><span style="font-size:11px;color:#dde4ed">32px — padding section maior</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="aprovado" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Aprovado — seguir para Componentes Reutilizáveis</h3>
+      <p>Design system está alinhado com o que já existe nos tokens</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ajustar" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Ajustar algo</h3>
+      <p>Diga no terminal o que precisa mudar</p>
+    </div>
+  </div>
+</div>

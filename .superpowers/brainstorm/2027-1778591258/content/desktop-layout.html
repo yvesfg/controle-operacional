@@ -1,0 +1,243 @@
+<h2>Seção 1 + 2 — Arquitetura Visual & Layout Desktop</h2>
+<p class="subtitle">Command Center — Opção B aprovada. Avalie a estrutura geral do layout.</p>
+
+<div class="section">
+  <h3>Arquitetura Visual</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px">
+    <div style="background:rgba(245,197,58,.08);border:1px solid rgba(245,197,58,.25);border-radius:8px;padding:16px">
+      <div class="label">Camada 1 — Tokens</div>
+      <p style="font-size:13px;margin:8px 0 0">tokens.css → theme-dark/light.css → components.css<br>Zero valores hardcoded nas views</p>
+    </div>
+    <div style="background:rgba(245,197,58,.08);border:1px solid rgba(245,197,58,.25);border-radius:8px;padding:16px">
+      <div class="label">Camada 2 — Shell</div>
+      <p style="font-size:13px;margin:8px 0 0">App.jsx → Sidebar + Header + &lt;Outlet&gt;<br>Z-index: sidebar=100, header=200, modal=300, toast=400</p>
+    </div>
+    <div style="background:rgba(245,197,58,.08);border:1px solid rgba(245,197,58,.25);border-radius:8px;padding:16px">
+      <div class="label">Camada 3 — Views</div>
+      <p style="font-size:13px;margin:8px 0 0">Dashboard / Planilha / Ocorrências / Descargas…<br>Modais extraídos em /modals/*.jsx</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Layout Desktop — Command Center</h3>
+  <div class="mockup">
+    <div class="mockup-header">Desktop 1440px — Sidebar expandida (220px)</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;border-radius:0 0 8px 8px">
+      <!-- Shell -->
+      <div style="display:flex;height:520px;background:#07090d;font-family:sans-serif">
+
+        <!-- Sidebar -->
+        <div style="width:200px;background:#0a0d13;border-right:1px solid #1a2535;display:flex;flex-direction:column;flex-shrink:0">
+          <!-- Logo -->
+          <div style="height:56px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid #1a2535;gap:10px">
+            <div style="width:28px;height:28px;background:#f5c53a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#07090d">CO</div>
+            <span style="font-size:13px;font-weight:700;color:#dde4ed">Controle Op.</span>
+          </div>
+          <!-- Nav items -->
+          <div style="padding:12px 8px;display:flex;flex-direction:column;gap:2px;flex:1">
+            <div style="padding:8px 10px;border-radius:6px;background:rgba(245,197,58,.12);border:1px solid rgba(245,197,58,.2);display:flex;align-items:center;gap:8px">
+              <div style="width:16px;height:16px;background:rgba(245,197,58,.4);border-radius:3px"></div>
+              <span style="font-size:12px;font-weight:700;color:#f5c53a">Dashboard</span>
+            </div>
+            <div style="padding:8px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="width:16px;height:16px;background:#1a2535;border-radius:3px"></div>
+              <span style="font-size:12px;color:#5a6a7a">Planilha</span>
+            </div>
+            <div style="padding:8px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="width:16px;height:16px;background:#1a2535;border-radius:3px"></div>
+              <span style="font-size:12px;color:#5a6a7a">Ocorrências</span>
+            </div>
+            <div style="padding:8px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="width:16px;height:16px;background:#1a2535;border-radius:3px"></div>
+              <span style="font-size:12px;color:#5a6a7a">Descargas</span>
+            </div>
+            <div style="padding:8px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="width:16px;height:16px;background:#1a2535;border-radius:3px"></div>
+              <span style="font-size:12px;color:#5a6a7a">Motoristas</span>
+            </div>
+            <div style="padding:8px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="width:16px;height:16px;background:#1a2535;border-radius:3px"></div>
+              <span style="font-size:12px;color:#5a6a7a">Relatórios</span>
+            </div>
+          </div>
+          <!-- Bottom user -->
+          <div style="padding:12px 8px;border-top:1px solid #1a2535">
+            <div style="padding:8px 10px;border-radius:6px;display:flex;align-items:center;gap:8px">
+              <div style="width:24px;height:24px;background:#f5c53a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#07090d">YF</div>
+              <span style="font-size:11px;color:#5a6a7a">Admin</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main area -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <!-- Header -->
+          <div style="height:56px;background:#07090d;border-bottom:1px solid #1a2535;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0">
+            <div style="flex:1">
+              <div style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:6px 12px;width:260px;display:flex;align-items:center;gap:8px">
+                <div style="width:12px;height:12px;background:#2b3748;border-radius:50%"></div>
+                <span style="font-size:11px;color:#3a4a5a">Buscar NF, motorista, placa…</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div style="width:32px;height:32px;background:#0d1219;border:1px solid #1a2535;border-radius:6px;display:flex;align-items:center;justify-content:center">
+                <div style="width:14px;height:14px;background:#2b3748;border-radius:2px"></div>
+              </div>
+              <div style="width:32px;height:32px;background:#0d1219;border:1px solid #1a2535;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative">
+                <div style="width:14px;height:14px;background:#2b3748;border-radius:2px"></div>
+                <div style="position:absolute;top:6px;right:6px;width:6px;height:6px;background:#f6465d;border-radius:50%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard content -->
+          <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px">
+
+            <!-- KPI strip -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:12px 14px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Em Rota</div>
+                <div style="font-size:22px;font-weight:700;color:#f5c53a">24</div>
+                <div style="font-size:10px;color:#0ecb81;margin-top:2px">↑ 3 desde ontem</div>
+              </div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:12px 14px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Chegadas Hoje</div>
+                <div style="font-size:22px;font-weight:700;color:#dde4ed">8</div>
+                <div style="font-size:10px;color:#5a6a7a;margin-top:2px">6 confirmadas</div>
+              </div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:12px 14px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Ocorrências Abertas</div>
+                <div style="font-size:22px;font-weight:700;color:#f6465d">3</div>
+                <div style="font-size:10px;color:#f6465d;margin-top:2px">2 pendentes RO</div>
+              </div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:12px 14px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">NFDs Hoje</div>
+                <div style="font-size:22px;font-weight:700;color:#dde4ed">12</div>
+                <div style="font-size:10px;color:#5a6a7a;margin-top:2px">4 com descarga pendente</div>
+              </div>
+            </div>
+
+            <!-- Main grid: lista + ações rápidas -->
+            <div style="display:grid;grid-template-columns:1fr 280px;gap:14px;flex:1">
+
+              <!-- Activity feed / status list -->
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;overflow:hidden">
+                <div style="padding:12px 16px;border-bottom:1px solid #1a2535;display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-size:12px;font-weight:700;color:#dde4ed">Motoristas em Rota</span>
+                  <div style="display:flex;gap:6px">
+                    <div style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:3px 8px;font-size:10px;color:#f5c53a">Ao Vivo</div>
+                    <div style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:3px 8px;font-size:10px;color:#5a6a7a">Filtrar</div>
+                  </div>
+                </div>
+                <!-- Table rows -->
+                <div style="display:flex;flex-direction:column">
+                  <div style="padding:10px 16px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:12px">
+                    <div style="width:6px;height:6px;background:#0ecb81;border-radius:50%;flex-shrink:0"></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;color:#dde4ed;font-weight:600">João Silva</div>
+                      <div style="font-size:10px;color:#5a6a7a">Placa ABC-1234 · NF 45.231</div>
+                    </div>
+                    <div style="font-size:10px;color:#5a6a7a">Em trânsito</div>
+                    <div style="background:rgba(14,203,129,.1);border-radius:4px;padding:2px 8px;font-size:10px;color:#0ecb81">No prazo</div>
+                  </div>
+                  <div style="padding:10px 16px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:12px">
+                    <div style="width:6px;height:6px;background:#f5c53a;border-radius:50%;flex-shrink:0"></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;color:#dde4ed;font-weight:600">Pedro Costa</div>
+                      <div style="font-size:10px;color:#5a6a7a">Placa DEF-5678 · NF 45.229</div>
+                    </div>
+                    <div style="font-size:10px;color:#5a6a7a">No cliente</div>
+                    <div style="background:rgba(245,197,58,.1);border-radius:4px;padding:2px 8px;font-size:10px;color:#f5c53a">Aguardando</div>
+                  </div>
+                  <div style="padding:10px 16px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:12px">
+                    <div style="width:6px;height:6px;background:#f6465d;border-radius:50%;flex-shrink:0"></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;color:#dde4ed;font-weight:600">Carlos Mendes</div>
+                      <div style="font-size:10px;color:#5a6a7a">Placa GHI-9012 · NF 45.218</div>
+                    </div>
+                    <div style="font-size:10px;color:#5a6a7a">Ocorrência</div>
+                    <div style="background:rgba(246,70,93,.1);border-radius:4px;padding:2px 8px;font-size:10px;color:#f6465d">RO Pendente</div>
+                  </div>
+                  <div style="padding:10px 16px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:12px">
+                    <div style="width:6px;height:6px;background:#0ecb81;border-radius:50%;flex-shrink:0"></div>
+                    <div style="flex:1">
+                      <div style="font-size:12px;color:#dde4ed;font-weight:600">Marco Oliveira</div>
+                      <div style="font-size:10px;color:#5a6a7a">Placa JKL-3456 · NF 45.215</div>
+                    </div>
+                    <div style="font-size:10px;color:#5a6a7a">Em trânsito</div>
+                    <div style="background:rgba(14,203,129,.1);border-radius:4px;padding:2px 8px;font-size:10px;color:#0ecb81">No prazo</div>
+                  </div>
+                  <div style="padding:10px 16px;display:flex;align-items:center;justify-content:center">
+                    <span style="font-size:11px;color:#f5c53a">+ 20 motoristas → ver todos</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick actions panel -->
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+                  <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Ações Rápidas</div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <button style="background:rgba(245,197,58,.1);border:1px solid rgba(245,197,58,.3);border-radius:6px;padding:10px 12px;color:#f5c53a;font-size:12px;font-weight:700;text-align:left;cursor:pointer;display:flex;align-items:center;gap:8px">
+                      <div style="width:18px;height:18px;background:rgba(245,197,58,.2);border-radius:3px"></div>
+                      Nova Ocorrência
+                    </button>
+                    <button style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 12px;color:#dde4ed;font-size:12px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:8px">
+                      <div style="width:18px;height:18px;background:#172030;border-radius:3px"></div>
+                      Confirmar Chegada
+                    </button>
+                    <button style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 12px;color:#dde4ed;font-size:12px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:8px">
+                      <div style="width:18px;height:18px;background:#172030;border-radius:3px"></div>
+                      Registrar Descarga
+                    </button>
+                    <button style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 12px;color:#dde4ed;font-size:12px;font-weight:600;text-align:left;cursor:pointer;display:flex;align-items:center;gap:8px">
+                      <div style="width:18px;height:18px;background:#172030;border-radius:3px"></div>
+                      Enviar WhatsApp
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Mini stats -->
+                <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+                  <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Hoje</div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                      <span style="font-size:11px;color:#5a6a7a">Diárias pagas</span>
+                      <span style="font-size:13px;font-weight:700;color:#0ecb81">R$ 4.800</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                      <span style="font-size:11px;color:#5a6a7a">Descargas</span>
+                      <span style="font-size:13px;font-weight:700;color:#dde4ed">R$ 1.240</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                      <span style="font-size:11px;color:#5a6a7a">Pendente</span>
+                      <span style="font-size:13px;font-weight:700;color:#f6465d">R$ 620</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="aprovado" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Aprovado — seguir para layout mobile</h3>
+      <p>Estrutura, KPIs, lista de motoristas e ações rápidas fazem sentido</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ajustar" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Ajustar antes de continuar</h3>
+      <p>Algo no layout desktop precisa mudar (diga o que no terminal)</p>
+    </div>
+  </div>
+</div>

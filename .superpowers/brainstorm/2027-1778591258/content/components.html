@@ -1,0 +1,182 @@
+<h2>Seção 5 — Componentes Reutilizáveis</h2>
+<p class="subtitle">8 componentes que cobrem ~80% das telas. Cada um tem props bem definidas e zero lógica de negócio.</p>
+
+<div class="section">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <!-- KpiCard -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed">KpiCard</div>
+        <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:#f5c53a">NOVO</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="background:#0d1219;border:1px solid #1a2535;border-radius:8px;padding:12px;flex:1">
+          <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Em Rota</div>
+          <div style="font-size:24px;font-weight:700;color:#f5c53a;line-height:1.2;margin:4px 0">24</div>
+          <div style="font-size:10px;color:#0ecb81">↑ 3 hoje</div>
+        </div>
+        <div style="background:#0d1219;border:1px solid rgba(246,70,93,.3);border-radius:8px;padding:12px;flex:1">
+          <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Ocorrências</div>
+          <div style="font-size:24px;font-weight:700;color:#f6465d;line-height:1.2;margin:4px 0">3</div>
+          <div style="font-size:10px;color:#f6465d">2 pendentes</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;background:#0d1219;border-radius:6px;padding:10px;font-size:10px;color:#5a6a7a;font-family:monospace">
+        &lt;KpiCard<br/>
+        &nbsp;&nbsp;label="Em Rota"<br/>
+        &nbsp;&nbsp;value={24}<br/>
+        &nbsp;&nbsp;delta="+3 hoje"<br/>
+        &nbsp;&nbsp;deltaColor="green"<br/>
+        &nbsp;&nbsp;accent="amber" /&gt;
+      </div>
+    </div>
+
+    <!-- StatusBadge -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed">StatusBadge</div>
+        <span style="background:rgba(14,203,129,.1);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:#0ecb81">EXISTE</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        <span style="background:rgba(14,203,129,.1);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:700;color:#0ecb81">No prazo</span>
+        <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:700;color:#f5c53a">Aguardando</span>
+        <span style="background:rgba(246,70,93,.1);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:700;color:#f6465d">RO Pendente</span>
+        <span style="background:rgba(45,189,182,.1);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:700;color:#2dbdb6">Em trânsito</span>
+        <span style="background:#172030;border-radius:4px;padding:4px 10px;font-size:11px;font-weight:700;color:#5a6a7a">Encerrado</span>
+      </div>
+      <div style="background:#0d1219;border-radius:6px;padding:10px;font-size:10px;color:#5a6a7a;font-family:monospace">
+        &lt;StatusBadge status="no-prazo" /&gt;<br/>
+        &lt;StatusBadge status="aguardando" /&gt;<br/>
+        &lt;StatusBadge status="ro-pendente" /&gt;
+      </div>
+    </div>
+
+    <!-- DataRow / MotoristaRow -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed">DataRow</div>
+        <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:#f5c53a">NOVO</span>
+      </div>
+      <div style="background:#0d1219;border-radius:8px;overflow:hidden">
+        <div style="padding:10px 14px;border-bottom:1px solid #1a2535;display:flex;align-items:center;gap:10px">
+          <div style="width:7px;height:7px;background:#0ecb81;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:#dde4ed">João Silva</div>
+            <div style="font-size:10px;color:#5a6a7a">ABC-1234 · NF 45.231</div>
+          </div>
+          <span style="background:rgba(14,203,129,.1);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:#0ecb81">No prazo</span>
+          <div style="width:28px;height:28px;background:#172030;border-radius:6px"></div>
+        </div>
+        <div style="padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <div style="width:7px;height:7px;background:#f6465d;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:#dde4ed">Carlos Mendes</div>
+            <div style="font-size:10px;color:#5a6a7a">GHI-9012 · NF 45.218</div>
+          </div>
+          <span style="background:rgba(246,70,93,.1);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;color:#f6465d">RO Pendente</span>
+          <div style="width:28px;height:28px;background:#172030;border-radius:6px"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;background:#0d1219;border-radius:6px;padding:8px;font-size:10px;color:#5a6a7a;font-family:monospace">
+        &lt;DataRow leading={dot} title="João" meta="ABC-1234" trailing={&lt;StatusBadge/&gt;} action={&lt;IconBtn/&gt;} /&gt;
+      </div>
+    </div>
+
+    <!-- SectionCard -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed">SectionCard</div>
+        <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:#f5c53a">NOVO</span>
+      </div>
+      <div style="background:#0d1219;border-radius:8px;overflow:hidden">
+        <div style="padding:10px 14px;border-bottom:1px solid #1a2535;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;font-weight:700;color:#dde4ed">Motoristas em Rota</span>
+          <div style="display:flex;gap:6px">
+            <span style="background:#172030;border:1px solid #1a2535;border-radius:4px;padding:3px 8px;font-size:10px;color:#f5c53a">Ao Vivo</span>
+            <span style="background:#172030;border:1px solid #1a2535;border-radius:4px;padding:3px 8px;font-size:10px;color:#5a6a7a">Filtrar</span>
+          </div>
+        </div>
+        <div style="padding:12px 14px;font-size:11px;color:#5a6a7a">← children vão aqui</div>
+      </div>
+      <div style="margin-top:8px;background:#0d1219;border-radius:6px;padding:8px;font-size:10px;color:#5a6a7a;font-family:monospace">
+        &lt;SectionCard title="Motoristas" actions={[…]}&gt;<br/>
+        &nbsp;&nbsp;{rows}<br/>
+        &lt;/SectionCard&gt;
+      </div>
+    </div>
+
+    <!-- PageHeader -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed">PageHeader</div>
+        <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:#f5c53a">NOVO</span>
+      </div>
+      <div style="background:#0d1219;border-radius:8px;padding:14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#dde4ed">Ocorrências</div>
+          <div style="font-size:11px;color:#5a6a7a;margin-top:2px">3 abertas · 2 pendentes RO</div>
+        </div>
+        <button style="background:#f5c53a;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;color:#07090d;cursor:pointer">+ Nova</button>
+      </div>
+      <div style="margin-top:8px;background:#0d1219;border-radius:6px;padding:8px;font-size:10px;color:#5a6a7a;font-family:monospace">
+        &lt;PageHeader title="Ocorrências" subtitle="3 abertas" action={&lt;Btn&gt;+ Nova&lt;/Btn&gt;} /&gt;
+      </div>
+    </div>
+
+    <!-- EmptyState -->
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#dde4ed">EmptyState</div>
+        <span style="background:rgba(245,197,58,.1);border-radius:4px;padding:2px 8px;font-size:9px;font-weight:700;color:#f5c53a">NOVO</span>
+      </div>
+      <div style="background:#0d1219;border-radius:8px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="width:40px;height:40px;background:#172030;border-radius:8px;display:flex;align-items:center;justify-content:center">
+          <div style="width:20px;height:20px;background:#2b3748;border-radius:4px"></div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#dde4ed">Nenhuma ocorrência</div>
+        <div style="font-size:11px;color:#5a6a7a;text-align:center">Nenhuma ocorrência aberta no momento.</div>
+        <button style="background:rgba(245,197,58,.1);border:1px solid rgba(245,197,58,.3);border-radius:6px;padding:8px 16px;font-size:12px;font-weight:700;color:#f5c53a;cursor:pointer;margin-top:4px">+ Nova Ocorrência</button>
+      </div>
+      <div style="margin-top:8px;background:#0d1219;border-radius:6px;padding:8px;font-size:10px;color:#5a6a7a;font-family:monospace">
+        &lt;EmptyState icon={AlertIcon} title="Nenhuma ocorrência" action={…} /&gt;
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h3>Componentes de Shell (layout)</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:6px">AppShell</div>
+      <div style="font-size:11px;color:#5a6a7a">Sidebar + Header + &lt;Outlet&gt;<br/>Controla collapsed state da sidebar<br/>Media query p/ mobile: esconde sidebar, mostra BottomNav</div>
+    </div>
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:6px">BottomNav <span style="font-size:9px;background:rgba(245,197,58,.1);color:#f5c53a;padding:2px 6px;border-radius:3px">MOBILE</span></div>
+      <div style="font-size:11px;color:#5a6a7a">5 tabs fixos no rodapé<br/>Visível só em &lt;768px<br/>Ativo = amber, inativo = text2</div>
+    </div>
+    <div style="background:#101620;border:1px solid #1a2535;border-radius:8px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:#dde4ed;margin-bottom:6px">ModalBase</div>
+      <div style="font-size:11px;color:#5a6a7a">Overlay + card animado<br/>Suporta: center / bottom-sheet / top<br/>ctx prop pattern já em uso</div>
+    </div>
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="aprovado" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Aprovado — seguir para as 3 telas de exemplo</h3>
+      <p>Componentes fazem sentido, props são claras</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ajustar" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Ajustar</h3>
+      <p>Falta algum componente ou algo precisa mudar</p>
+    </div>
+  </div>
+</div>

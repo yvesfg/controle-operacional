@@ -1,0 +1,189 @@
+<h2>Seção 3 — Layout Mobile</h2>
+<p class="subtitle">Supervisor em campo — painel simplificado com 4 ações rápidas. Sem sidebar.</p>
+
+<div class="split" style="align-items:flex-start;gap:32px">
+
+  <!-- Mobile mockup -->
+  <div style="flex:1;max-width:340px;margin:0 auto">
+    <div class="mockup">
+      <div class="mockup-header">iPhone / Android — 390px</div>
+      <div class="mockup-body" style="padding:0;background:#07090d;border-radius:0 0 8px 8px;overflow:hidden">
+        <div style="width:100%;background:#07090d;font-family:sans-serif;min-height:680px;display:flex;flex-direction:column;position:relative">
+
+          <!-- Status bar -->
+          <div style="height:44px;background:#07090d;display:flex;align-items:center;padding:0 16px;justify-content:space-between">
+            <span style="font-size:11px;font-weight:700;color:#dde4ed">9:41</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <div style="width:14px;height:8px;background:#dde4ed;border-radius:2px;opacity:.7"></div>
+              <div style="width:4px;height:8px;background:#dde4ed;border-radius:1px;opacity:.5"></div>
+            </div>
+          </div>
+
+          <!-- App Header -->
+          <div style="height:52px;background:#07090d;border-bottom:1px solid #1a2535;display:flex;align-items:center;padding:0 16px;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;background:#f5c53a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#07090d">CO</div>
+              <span style="font-size:14px;font-weight:700;color:#dde4ed">Controle Op.</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div style="width:36px;height:36px;background:#0d1219;border:1px solid #1a2535;border-radius:8px;display:flex;align-items:center;justify-content:center">
+                <div style="width:14px;height:14px;background:#2b3748;border-radius:2px"></div>
+              </div>
+              <div style="width:36px;height:36px;background:#0d1219;border:1px solid #1a2535;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative">
+                <div style="width:14px;height:14px;background:#2b3748;border-radius:2px"></div>
+                <div style="position:absolute;top:7px;right:7px;width:7px;height:7px;background:#f6465d;border-radius:50%;border:1.5px solid #07090d"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scroll content -->
+          <div style="flex:1;overflow:hidden;padding:14px 12px;display:flex;flex-direction:column;gap:12px">
+
+            <!-- KPI cards horizontal scroll -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:10px;padding:12px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Em Rota</div>
+                <div style="font-size:26px;font-weight:700;color:#f5c53a;line-height:1.1;margin-top:4px">24</div>
+                <div style="font-size:10px;color:#0ecb81;margin-top:3px">↑ 3 hoje</div>
+              </div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:10px;padding:12px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Ocorrências</div>
+                <div style="font-size:26px;font-weight:700;color:#f6465d;line-height:1.1;margin-top:4px">3</div>
+                <div style="font-size:10px;color:#f6465d;margin-top:3px">2 pendentes RO</div>
+              </div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:10px;padding:12px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Chegadas</div>
+                <div style="font-size:26px;font-weight:700;color:#dde4ed;line-height:1.1;margin-top:4px">8</div>
+                <div style="font-size:10px;color:#5a6a7a;margin-top:3px">6 confirmadas</div>
+              </div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:10px;padding:12px">
+                <div style="font-size:9px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">NFDs</div>
+                <div style="font-size:26px;font-weight:700;color:#dde4ed;line-height:1.1;margin-top:4px">12</div>
+                <div style="font-size:10px;color:#5a6a7a;margin-top:3px">4 descarga pend.</div>
+              </div>
+            </div>
+
+            <!-- 4 Quick action buttons -->
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Ações Rápidas</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button style="background:rgba(245,197,58,.1);border:1.5px solid rgba(245,197,58,.35);border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;cursor:pointer">
+                  <div style="width:28px;height:28px;background:rgba(245,197,58,.15);border-radius:6px"></div>
+                  <span style="font-size:12px;font-weight:700;color:#f5c53a">Nova Ocorrência</span>
+                </button>
+                <button style="background:#101620;border:1.5px solid #1a2535;border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;cursor:pointer">
+                  <div style="width:28px;height:28px;background:#172030;border-radius:6px"></div>
+                  <span style="font-size:12px;font-weight:600;color:#dde4ed">Confirmar Chegada</span>
+                </button>
+                <button style="background:#101620;border:1.5px solid #1a2535;border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;cursor:pointer">
+                  <div style="width:28px;height:28px;background:#172030;border-radius:6px"></div>
+                  <span style="font-size:12px;font-weight:600;color:#dde4ed">Registrar Descarga</span>
+                </button>
+                <button style="background:#101620;border:1.5px solid #1a2535;border-radius:10px;padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;cursor:pointer">
+                  <div style="width:28px;height:28px;background:#172030;border-radius:6px"></div>
+                  <span style="font-size:12px;font-weight:600;color:#dde4ed">Enviar WhatsApp</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Recent activity -->
+            <div style="background:#101620;border:1px solid #1a2535;border-radius:10px;overflow:hidden">
+              <div style="padding:10px 14px;border-bottom:1px solid #1a2535;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:11px;font-weight:700;color:#dde4ed">Últimas Atividades</span>
+                <span style="font-size:10px;color:#f5c53a">ver todos →</span>
+              </div>
+              <div style="padding:10px 14px;border-bottom:1px solid #0d1219;display:flex;gap:10px;align-items:center">
+                <div style="width:7px;height:7px;background:#f6465d;border-radius:50%;flex-shrink:0;margin-top:2px"></div>
+                <div>
+                  <div style="font-size:11px;font-weight:600;color:#dde4ed">Carlos Mendes — RO Pendente</div>
+                  <div style="font-size:10px;color:#5a6a7a">há 12 min · NF 45.218</div>
+                </div>
+              </div>
+              <div style="padding:10px 14px;border-bottom:1px solid #0d1219;display:flex;gap:10px;align-items:center">
+                <div style="width:7px;height:7px;background:#0ecb81;border-radius:50%;flex-shrink:0;margin-top:2px"></div>
+                <div>
+                  <div style="font-size:11px;font-weight:600;color:#dde4ed">Pedro Costa — Chegou ao cliente</div>
+                  <div style="font-size:10px;color:#5a6a7a">há 28 min · NF 45.229</div>
+                </div>
+              </div>
+              <div style="padding:10px 14px;display:flex;gap:10px;align-items:center">
+                <div style="width:7px;height:7px;background:#f5c53a;border-radius:50%;flex-shrink:0;margin-top:2px"></div>
+                <div>
+                  <div style="font-size:11px;font-weight:600;color:#dde4ed">João Silva — Saiu em rota</div>
+                  <div style="font-size:10px;color:#5a6a7a">há 1h · NF 45.231</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Nav -->
+          <div style="height:64px;background:#0a0d13;border-top:1px solid #1a2535;display:flex;align-items:center;justify-content:space-around;padding:0 8px 6px;flex-shrink:0">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:20px;height:20px;background:#f5c53a;border-radius:4px;opacity:.9"></div>
+              <span style="font-size:9px;font-weight:700;color:#f5c53a">Home</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:20px;height:20px;background:#2b3748;border-radius:4px"></div>
+              <span style="font-size:9px;color:#5a6a7a">Planilha</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:20px;height:20px;background:#2b3748;border-radius:4px"></div>
+              <span style="font-size:9px;color:#5a6a7a">Ocorrências</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:20px;height:20px;background:#2b3748;border-radius:4px"></div>
+              <span style="font-size:9px;color:#5a6a7a">Motoristas</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="width:20px;height:20px;background:#2b3748;border-radius:4px"></div>
+              <span style="font-size:9px;color:#5a6a7a">Mais</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breakdown -->
+  <div style="flex:1">
+    <h3>Decisões de design mobile</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+      <div style="background:rgba(245,197,58,.06);border:1px solid rgba(245,197,58,.2);border-radius:8px;padding:14px">
+        <div class="label">Sem sidebar — Bottom Nav (5 tabs)</div>
+        <p style="font-size:12px;margin:6px 0 0;color:#9ab">Home · Planilha · Ocorrências · Motoristas · Mais<br>Polegares alcançam todos sem reposicionamento de mão.</p>
+      </div>
+      <div style="background:rgba(14,203,129,.06);border:1px solid rgba(14,203,129,.2);border-radius:8px;padding:14px">
+        <div class="label" style="color:#0ecb81">4 KPIs em grid 2×2</div>
+        <p style="font-size:12px;margin:6px 0 0;color:#9ab">Mesmos dados do desktop, hierarquia adaptada.<br>Em Rota e Ocorrências têm destaque de cor (amber/red).</p>
+      </div>
+      <div style="background:rgba(245,197,58,.06);border:1px solid rgba(245,197,58,.2);border-radius:8px;padding:14px">
+        <div class="label">4 ações rápidas em grid 2×2</div>
+        <p style="font-size:12px;margin:6px 0 0;color:#9ab">Botões touch-friendly (min 48px height).<br>Ocorrência em amber — destaque para o fluxo mais urgente.</p>
+      </div>
+      <div style="background:rgba(45,189,182,.06);border:1px solid rgba(45,189,182,.2);border-radius:8px;padding:14px">
+        <div class="label" style="color:#2dbdb6">Feed de atividades recentes</div>
+        <p style="font-size:12px;margin:6px 0 0;color:#9ab">Sem tabela — lista cronológica simples.<br>Supervisor vê o que está acontecendo agora sem scroll lateral.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="aprovado" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Aprovado — seguir para Design System</h3>
+      <p>Layout mobile faz sentido para o supervisor em campo</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ajustar" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Ajustar</h3>
+      <p>Algo no mobile precisa mudar (diga o que no terminal)</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,253 @@
+<h2>Seções 6, 7 e 8 — 3 Telas de Exemplo</h2>
+<p class="subtitle">Dashboard · Listagem (Ocorrências) · Formulário (Nova Ocorrência). Todas usando os componentes aprovados.</p>
+
+<!-- Tabs -->
+<div style="display:flex;gap:4px;margin-bottom:20px;background:#0d1219;padding:4px;border-radius:8px;width:fit-content">
+  <div id="tab-dash" onclick="showScreen('dash')" style="padding:8px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;background:#f5c53a;color:#07090d">Dashboard</div>
+  <div id="tab-list" onclick="showScreen('list')" style="padding:8px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:#5a6a7a">Listagem</div>
+  <div id="tab-form" onclick="showScreen('form')" style="padding:8px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:#5a6a7a">Formulário</div>
+</div>
+
+<!-- DASHBOARD SCREEN -->
+<div id="screen-dash">
+  <div class="mockup">
+    <div class="mockup-header">Tela 6 — Dashboard (Command Center) · desktop 1280px</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden">
+      <div style="display:flex;height:560px;background:#07090d;font-family:sans-serif;font-size:12px">
+        <!-- Sidebar -->
+        <div style="width:180px;background:#0a0d13;border-right:1px solid #1a2535;display:flex;flex-direction:column;flex-shrink:0">
+          <div style="height:52px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #1a2535;gap:8px">
+            <div style="width:26px;height:26px;background:#f5c53a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#07090d">CO</div>
+            <span style="font-size:12px;font-weight:700;color:#dde4ed">Controle Op.</span>
+          </div>
+          <div style="padding:10px 6px;flex:1;display:flex;flex-direction:column;gap:2px">
+            <div style="padding:7px 9px;border-radius:5px;background:rgba(245,197,58,.12);border:1px solid rgba(245,197,58,.2);display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:rgba(245,197,58,.35);border-radius:3px"></div><span style="font-size:11px;font-weight:700;color:#f5c53a">Dashboard</span></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Planilha</span></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px;position:relative"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Ocorrências</span><div style="width:16px;height:16px;background:#f6465d;border-radius:8px;margin-left:auto;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff">3</div></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Descargas</span></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Motoristas</span></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Relatórios</span></div>
+          </div>
+          <div style="padding:10px 6px;border-top:1px solid #1a2535"><div style="padding:7px 9px;display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;background:#f5c53a;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#07090d">YF</div><span style="font-size:10px;color:#5a6a7a">Admin</span></div></div>
+        </div>
+        <!-- Content -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div style="height:52px;border-bottom:1px solid #1a2535;display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0">
+            <div style="flex:1;background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:6px 10px;width:220px;display:flex;gap:6px;align-items:center"><div style="width:10px;height:10px;background:#2b3748;border-radius:50%"></div><span style="font-size:10px;color:#3a4a5a">Buscar NF, motorista, placa…</span></div>
+            <div style="width:30px;height:30px;background:#0d1219;border:1px solid #1a2535;border-radius:5px"></div>
+            <div style="width:30px;height:30px;background:#0d1219;border:1px solid #1a2535;border-radius:5px;position:relative"><div style="position:absolute;top:6px;right:6px;width:6px;height:6px;background:#f6465d;border-radius:50%"></div></div>
+          </div>
+          <div style="flex:1;padding:14px;overflow:hidden;display:flex;flex-direction:column;gap:10px">
+            <!-- Page header -->
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-size:15px;font-weight:700;color:#dde4ed">Dashboard</div><div style="font-size:10px;color:#5a6a7a">Seg, 12 Mai 2026 · atualizado agora</div></div>
+              <div style="display:flex;gap:6px"><div style="background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:6px 12px;font-size:11px;color:#5a6a7a">Hoje</div><button style="background:#f5c53a;border:none;border-radius:5px;padding:6px 12px;font-size:11px;font-weight:700;color:#07090d;cursor:pointer">+ Ocorrência</button></div>
+            </div>
+            <!-- KPIs -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;padding:10px 12px"><div style="font-size:8px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Em Rota</div><div style="font-size:20px;font-weight:700;color:#f5c53a;margin:3px 0">24</div><div style="font-size:9px;color:#0ecb81">↑ 3 hoje</div></div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;padding:10px 12px"><div style="font-size:8px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Chegadas</div><div style="font-size:20px;font-weight:700;color:#dde4ed;margin:3px 0">8</div><div style="font-size:9px;color:#5a6a7a">6 confirmadas</div></div>
+              <div style="background:#101620;border:1px solid rgba(246,70,93,.3);border-radius:7px;padding:10px 12px"><div style="font-size:8px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Ocorrências</div><div style="font-size:20px;font-weight:700;color:#f6465d;margin:3px 0">3</div><div style="font-size:9px;color:#f6465d">2 RO pendentes</div></div>
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;padding:10px 12px"><div style="font-size:8px;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">NFDs</div><div style="font-size:20px;font-weight:700;color:#dde4ed;margin:3px 0">12</div><div style="font-size:9px;color:#5a6a7a">4 descarga pend.</div></div>
+            </div>
+            <!-- Main content -->
+            <div style="display:grid;grid-template-columns:1fr 240px;gap:10px;flex:1;min-height:0">
+              <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;overflow:hidden;display:flex;flex-direction:column">
+                <div style="padding:9px 13px;border-bottom:1px solid #1a2535;display:flex;align-items:center;justify-content:space-between;flex-shrink:0"><span style="font-size:11px;font-weight:700;color:#dde4ed">Motoristas em Rota</span><div style="display:flex;gap:5px"><span style="background:#0d1219;border:1px solid rgba(245,197,58,.2);border-radius:3px;padding:2px 7px;font-size:9px;color:#f5c53a">● Ao Vivo</span><span style="background:#0d1219;border:1px solid #1a2535;border-radius:3px;padding:2px 7px;font-size:9px;color:#5a6a7a">Filtrar</span></div></div>
+                <div style="overflow-y:auto;flex:1">
+                  <div style="padding:8px 13px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:9px"><div style="width:6px;height:6px;background:#0ecb81;border-radius:50%;flex-shrink:0"></div><div style="flex:1"><div style="font-size:11px;font-weight:600;color:#dde4ed">João Silva</div><div style="font-size:9px;color:#5a6a7a">ABC-1234 · NF 45.231</div></div><span style="background:rgba(14,203,129,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#0ecb81">No prazo</span></div>
+                  <div style="padding:8px 13px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:9px"><div style="width:6px;height:6px;background:#f5c53a;border-radius:50%;flex-shrink:0"></div><div style="flex:1"><div style="font-size:11px;font-weight:600;color:#dde4ed">Pedro Costa</div><div style="font-size:9px;color:#5a6a7a">DEF-5678 · NF 45.229</div></div><span style="background:rgba(245,197,58,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#f5c53a">Aguardando</span></div>
+                  <div style="padding:8px 13px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:9px"><div style="width:6px;height:6px;background:#f6465d;border-radius:50%;flex-shrink:0"></div><div style="flex:1"><div style="font-size:11px;font-weight:600;color:#dde4ed">Carlos Mendes</div><div style="font-size:9px;color:#5a6a7a">GHI-9012 · NF 45.218</div></div><span style="background:rgba(246,70,93,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#f6465d">RO Pendente</span></div>
+                  <div style="padding:8px 13px;border-bottom:1px solid #0d1219;display:flex;align-items:center;gap:9px"><div style="width:6px;height:6px;background:#0ecb81;border-radius:50%;flex-shrink:0"></div><div style="flex:1"><div style="font-size:11px;font-weight:600;color:#dde4ed">Marco Oliveira</div><div style="font-size:9px;color:#5a6a7a">JKL-3456 · NF 45.215</div></div><span style="background:rgba(14,203,129,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#0ecb81">No prazo</span></div>
+                  <div style="padding:8px 13px;display:flex;align-items:center;justify-content:center"><span style="font-size:10px;color:#f5c53a">+ 20 mais → ver todos</span></div>
+                </div>
+              </div>
+              <!-- Right panel -->
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;padding:12px">
+                  <div style="font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">Ações Rápidas</div>
+                  <div style="display:flex;flex-direction:column;gap:5px">
+                    <button style="background:rgba(245,197,58,.1);border:1px solid rgba(245,197,58,.3);border-radius:5px;padding:8px 10px;color:#f5c53a;font-size:11px;font-weight:700;text-align:left;cursor:pointer">Nova Ocorrência</button>
+                    <button style="background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:8px 10px;color:#dde4ed;font-size:11px;font-weight:600;text-align:left;cursor:pointer">Confirmar Chegada</button>
+                    <button style="background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:8px 10px;color:#dde4ed;font-size:11px;font-weight:600;text-align:left;cursor:pointer">Registrar Descarga</button>
+                    <button style="background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:8px 10px;color:#dde4ed;font-size:11px;font-weight:600;text-align:left;cursor:pointer">Enviar WhatsApp</button>
+                  </div>
+                </div>
+                <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;padding:12px">
+                  <div style="font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">Financeiro Hoje</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#5a6a7a">Diárias</span><span style="font-size:11px;font-weight:700;color:#0ecb81;font-family:monospace">R$ 4.800</span></div>
+                    <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#5a6a7a">Descargas</span><span style="font-size:11px;font-weight:700;color:#dde4ed;font-family:monospace">R$ 1.240</span></div>
+                    <div style="display:flex;justify-content:space-between"><span style="font-size:10px;color:#5a6a7a">Pendente</span><span style="font-size:11px;font-weight:700;color:#f6465d;font-family:monospace">R$ 620</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LISTAGEM SCREEN -->
+<div id="screen-list" style="display:none">
+  <div class="mockup">
+    <div class="mockup-header">Tela 7 — Listagem: Ocorrências · desktop 1280px</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden">
+      <div style="display:flex;height:560px;background:#07090d;font-family:sans-serif;font-size:12px">
+        <!-- Sidebar mini -->
+        <div style="width:180px;background:#0a0d13;border-right:1px solid #1a2535;display:flex;flex-direction:column;flex-shrink:0">
+          <div style="height:52px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #1a2535;gap:8px"><div style="width:26px;height:26px;background:#f5c53a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#07090d">CO</div><span style="font-size:12px;font-weight:700;color:#dde4ed">Controle Op.</span></div>
+          <div style="padding:10px 6px;flex:1;display:flex;flex-direction:column;gap:2px">
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Dashboard</span></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Planilha</span></div>
+            <div style="padding:7px 9px;border-radius:5px;background:rgba(245,197,58,.12);border:1px solid rgba(245,197,58,.2);display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:rgba(245,197,58,.35);border-radius:3px"></div><span style="font-size:11px;font-weight:700;color:#f5c53a">Ocorrências</span></div>
+            <div style="padding:7px 9px;border-radius:5px;display:flex;align-items:center;gap:7px"><div style="width:14px;height:14px;background:#172030;border-radius:3px"></div><span style="font-size:11px;color:#5a6a7a">Descargas</span></div>
+          </div>
+        </div>
+        <!-- Content -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div style="height:52px;border-bottom:1px solid #1a2535;display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0"><div style="flex:1;background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:6px 10px;display:flex;gap:6px;align-items:center"><div style="width:10px;height:10px;background:#2b3748;border-radius:50%"></div><span style="font-size:10px;color:#3a4a5a">Buscar NF, motorista, placa…</span></div><div style="width:30px;height:30px;background:#0d1219;border:1px solid #1a2535;border-radius:5px"></div></div>
+          <div style="flex:1;padding:14px;overflow:hidden;display:flex;flex-direction:column;gap:10px">
+            <!-- PageHeader -->
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div style="font-size:15px;font-weight:700;color:#dde4ed">Ocorrências</div><div style="font-size:10px;color:#5a6a7a">3 abertas · 2 pendentes de RO</div></div>
+              <button style="background:#f5c53a;border:none;border-radius:5px;padding:7px 14px;font-size:11px;font-weight:700;color:#07090d;cursor:pointer">+ Nova Ocorrência</button>
+            </div>
+            <!-- Filters -->
+            <div style="display:flex;gap:7px;align-items:center">
+              <div style="background:#0d1219;border:1px solid #1a2535;border-radius:5px;padding:6px 10px;flex:1;display:flex;gap:6px;align-items:center"><div style="width:10px;height:10px;background:#2b3748;border-radius:50%"></div><span style="font-size:10px;color:#3a4a5a">Filtrar por motorista, NF, status…</span></div>
+              <div style="display:flex;gap:5px">
+                <span style="background:rgba(246,70,93,.1);border:1px solid rgba(246,70,93,.3);border-radius:4px;padding:5px 10px;font-size:10px;font-weight:700;color:#f6465d;cursor:pointer">Abertas (3)</span>
+                <span style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:5px 10px;font-size:10px;color:#5a6a7a;cursor:pointer">Todas</span>
+                <span style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:5px 10px;font-size:10px;color:#5a6a7a;cursor:pointer">Encerradas</span>
+              </div>
+            </div>
+            <!-- Table -->
+            <div style="background:#101620;border:1px solid #1a2535;border-radius:7px;overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0">
+              <div style="display:grid;grid-template-columns:40px 160px 1fr 100px 100px 80px 80px;padding:8px 13px;background:#0d1219;border-bottom:1px solid #1a2535;flex-shrink:0">
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em"></div>
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Motorista</div>
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">NF / Descrição</div>
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Data</div>
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Nº RO</div>
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Status</div>
+                <div style="font-size:8px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.06em">Ação</div>
+              </div>
+              <div style="overflow-y:auto;flex:1">
+                <div style="display:grid;grid-template-columns:40px 160px 1fr 100px 100px 80px 80px;padding:9px 13px;border-bottom:1px solid #0d1219;align-items:center">
+                  <div style="width:7px;height:7px;background:#f6465d;border-radius:50%"></div>
+                  <div><div style="font-size:11px;font-weight:600;color:#dde4ed">Carlos Mendes</div><div style="font-size:9px;color:#5a6a7a">GHI-9012</div></div>
+                  <div><div style="font-size:11px;color:#dde4ed">NF 45.218</div><div style="font-size:9px;color:#5a6a7a">Avaria na carga — câmara fria</div></div>
+                  <div style="font-size:10px;color:#5a6a7a">12/05 09:34</div>
+                  <div style="font-size:10px;color:#5a6a7a;font-family:monospace">—</div>
+                  <span style="background:rgba(246,70,93,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#f6465d;width:fit-content">RO Pend.</span>
+                  <button style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:4px 8px;font-size:10px;color:#f5c53a;cursor:pointer">Registrar</button>
+                </div>
+                <div style="display:grid;grid-template-columns:40px 160px 1fr 100px 100px 80px 80px;padding:9px 13px;border-bottom:1px solid #0d1219;align-items:center">
+                  <div style="width:7px;height:7px;background:#f5c53a;border-radius:50%"></div>
+                  <div><div style="font-size:11px;font-weight:600;color:#dde4ed">Pedro Costa</div><div style="font-size:9px;color:#5a6a7a">DEF-5678</div></div>
+                  <div><div style="font-size:11px;color:#dde4ed">NF 45.220</div><div style="font-size:9px;color:#5a6a7a">Atraso — trânsito na BR-116</div></div>
+                  <div style="font-size:10px;color:#5a6a7a">12/05 07:15</div>
+                  <div style="font-size:10px;color:#2dbdb6;font-family:monospace">RO-2024-047</div>
+                  <span style="background:rgba(245,197,58,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#f5c53a;width:fit-content">Em andamento</span>
+                  <button style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:4px 8px;font-size:10px;color:#5a6a7a;cursor:pointer">Ver</button>
+                </div>
+                <div style="display:grid;grid-template-columns:40px 160px 1fr 100px 100px 80px 80px;padding:9px 13px;align-items:center">
+                  <div style="width:7px;height:7px;background:#f6465d;border-radius:50%"></div>
+                  <div><div style="font-size:11px;font-weight:600;color:#dde4ed">Marco Oliveira</div><div style="font-size:9px;color:#5a6a7a">JKL-3456</div></div>
+                  <div><div style="font-size:11px;color:#dde4ed">NF 45.201</div><div style="font-size:9px;color:#5a6a7a">Recusa de recebimento — cliente</div></div>
+                  <div style="font-size:10px;color:#5a6a7a">11/05 16:50</div>
+                  <div style="font-size:10px;color:#5a6a7a;font-family:monospace">—</div>
+                  <span style="background:rgba(246,70,93,.1);border-radius:3px;padding:2px 7px;font-size:9px;font-weight:700;color:#f6465d;width:fit-content">RO Pend.</span>
+                  <button style="background:#0d1219;border:1px solid #1a2535;border-radius:4px;padding:4px 8px;font-size:10px;color:#f5c53a;cursor:pointer">Registrar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULÁRIO SCREEN -->
+<div id="screen-form" style="display:none">
+  <div class="mockup">
+    <div class="mockup-header">Tela 8 — Formulário: Nova Ocorrência (modal) · desktop 1280px</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;position:relative">
+      <!-- Background (blurred) -->
+      <div style="height:560px;background:#07090d;display:flex;font-family:sans-serif;font-size:12px;filter:blur(2px);opacity:.4">
+        <div style="width:180px;background:#0a0d13;border-right:1px solid #1a2535"></div>
+        <div style="flex:1;padding:20px;display:flex;flex-direction:column;gap:10px">
+          <div style="height:20px;background:#101620;border-radius:4px;width:200px"></div>
+          <div style="height:200px;background:#101620;border-radius:7px"></div>
+        </div>
+      </div>
+      <!-- Modal overlay -->
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px">
+        <div style="background:#101620;border-radius:12px;padding:20px;width:100%;max-width:480px;border:1.5px solid #1a2535;box-shadow:0 24px 64px rgba(0,0,0,.7)">
+          <!-- Modal header -->
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+            <div style="width:38px;height:38px;background:rgba(246,70,93,.1);border:1px solid rgba(246,70,93,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:18px;height:18px;background:rgba(246,70,93,.4);border-radius:3px"></div></div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#dde4ed">Nova Ocorrência</div><div style="font-size:10px;color:#f6465d;margin-top:1px">Registrar RO · NF 45.218</div></div>
+            <div style="width:28px;height:28px;background:#0d1219;border:1px solid #1a2535;border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer"><div style="font-size:14px;color:#5a6a7a">✕</div></div>
+          </div>
+          <!-- Fields -->
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Motorista</div>
+              <div style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 12px;font-size:12px;color:#dde4ed">Carlos Mendes — GHI-9012</div>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Tipo de Ocorrência</div>
+              <div style="background:#0d1219;border:1px solid rgba(245,197,58,.4);border-radius:6px;padding:10px 12px;font-size:12px;color:#dde4ed;display:flex;justify-content:space-between;align-items:center">Avaria na carga <span style="color:#5a6a7a">▾</span></div>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Nº RO <span style="color:#5a6a7a;font-weight:400;text-transform:none">(opcional)</span></div>
+              <input style="width:100%;background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 12px;font-size:12px;color:#5a6a7a;box-sizing:border-box" placeholder="Ex: RO-2024-048 ou deixe vazio" />
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#5a6a7a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Descrição</div>
+              <div style="background:#0d1219;border:1px solid #1a2535;border-radius:6px;padding:10px 12px;font-size:12px;color:#5a6a7a;min-height:60px">Câmara fria desligou durante o transporte...</div>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button style="flex:1;background:#0d1219;border:1.5px solid #1a2535;border-radius:6px;padding:10px;font-size:12px;font-weight:700;color:#5a6a7a;cursor:pointer">Cancelar</button>
+            <button style="flex:1;background:#f5c53a;border:none;border-radius:6px;padding:10px;font-size:12px;font-weight:700;color:#07090d;cursor:pointer">Registrar Ocorrência</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px">
+  <div class="option" data-choice="aprovado" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Aprovado — seguir para Regras de Consistência + React/Tailwind</h3>
+      <p>As 3 telas estão alinhadas com o que preciso implementar</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ajustar" onclick="toggleSelect(this)">
+    <div class="letter">✎</div>
+    <div class="content">
+      <h3>Ajustar</h3>
+      <p>Algo nas telas precisa mudar antes de continuar</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(id) {
+  ['dash','list','form'].forEach(s => {
+    document.getElementById('screen-'+s).style.display = s === id ? '' : 'none';
+    var tab = document.getElementById('tab-'+s);
+    if(s === id) { tab.style.background='#f5c53a'; tab.style.color='#07090d'; }
+    else { tab.style.background='transparent'; tab.style.color='#5a6a7a'; }
+  });
+}
+</script>
