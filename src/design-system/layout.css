@@ -625,11 +625,6 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   .co-main-content {
     padding-bottom: 72px;
   }
-
-  /* Sidebar is never shown on mobile */
-  .co-sidebar {
-    display: none !important;
-  }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
