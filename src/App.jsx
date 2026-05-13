@@ -3009,7 +3009,7 @@ export default function App() {
                   </span>
                   <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
                 </button>
-                <div className="co-sidebar__section-lbl"><span style={{lineHeight:1.2}}>PÓS<br/>CARGA</span></div>
+                <div className="co-sidebar__section-lbl">PÓS CARGA</div>
                 <div className="co-sidebar__section-line"/>
                 {pcTabs.map(renderItem)}
               </>);
