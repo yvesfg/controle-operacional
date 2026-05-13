@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0b0e11" />
+    <meta name="description" content="Controle Operacional - YFGroup" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F69B;</text></svg>" />
+    <title>Controle Operacional</title>
+    <!-- YF Operacional — Freight Command Design System -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- Aplica data-theme ANTES do React renderizar — evita flash/tela preta -->
+    <script>
+      try {
+        var _t = localStorage.getItem("co_theme");
+        document.documentElement.setAttribute("data-theme", _t ? JSON.parse(_t) : "dark");
+      } catch(e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    </script>
+    <!-- Captura erros JS antes do React carregar -->
+    <script>
+      window.__errors = [];
+      window.onerror = function(msg, src, line, col, err) {
+        window.__errors.push({msg, src, line});
+        var d = document.getElementById('root');
+        if (d && !d.hasChildNodes()) {
+          d.innerHTML = '<div style="color:#f6465d;background:#07090d;padding:24px;font-family:monospace;font-size:13px;min-height:100vh"><b>ERRO JS:</b><br>' + msg + '<br><small>' + src + ':' + line + '</small></div>';
+        }
+      };
+      window.onunhandledrejection = function(e) {
+        var d = document.getElementById('root');
+        if (d && !d.hasChildNodes()) {
+          d.innerHTML = '<div style="color:#f6465d;background:#07090d;padding:24px;font-family:monospace;font-size:13px;min-height:100vh"><b>PROMISE REJECTION:</b><br>' + String(e.reason) + '</div>';
+        }
+      };
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
