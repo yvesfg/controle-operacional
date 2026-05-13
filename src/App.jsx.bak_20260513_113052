@@ -3037,7 +3037,7 @@ export default function App() {
                 {(usuarioLogado||"YF").slice(0,2).toUpperCase()}
               </div>
               <div className="co-sidebar__user-info" style={{flex:1,minWidth:0}}>
-                <div className="co-sidebar__user-name">{(usuarioLogado||perfil||"").split(" ")[0]}</div>
+                <div className="co-sidebar__user-name">{usuarioLogado||perfil}</div>
                 <div className="co-sidebar__user-role">{perfil}</div>
               </div>
               <button
