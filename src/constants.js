@@ -125,6 +125,12 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-05-13", sessao: "Sessão 19",
+    itens: [
+      "REFAC · Dashboard v2 — Remoção de excesso de cor; hierarquia via tamanho; donut substituído por barra horizontal stacked; Top Motoristas com cor única (Steel Blue) + barra de progresso; Diárias/Descargas com tiles neutros + tags semânticas; tabela com avatar+nome agrupado e rota inline; uppercase removido de nomes próprios/cidades; espaçamento global aumentado para 14px/18px/24px.",
+    ],
+  },
+  {
     data: "2026-05-13", sessao: "Sessao 18",
     itens: [
       "REFAC - Tipografia: Substituido Syne (headings) + Barlow (body) por Satoshi (Fontshare) como fonte unificada de display + body; IBM Plex Mono mantido para dados/codigos; preconnect adicionado para api.fontshare.com; letter-spacing recalibrado para -0.025em (display) / -0.005em (body); referencia hardcoded removida do App.jsx linha 1954; zero alteracao de JSX - tudo via tokens.css.",

@@ -32,20 +32,24 @@ export default function DashboardView({ ctx }) {
     : String(dashData.filtrado.length);
   const heroLabel = dashHeroTab==="cte" ? "Receita CTE no Período" : "Carregamentos no Período";
 
-  // Status p/ legenda do donut
   const statusMapDash={};
   dashData.filtrado.forEach(r=>{const s=(r.status||"Sem Status");statusMapDash[s]=(statusMapDash[s]||0)+1;});
   const statusArrDash = Object.entries(statusMapDash).sort((a,b)=>b[1]-a[1]).slice(0,4);
   const DONUT_LEGEND = ["#a855f7","#ec4899","#ef4444","#22c55e"];
   const totalStatusDash = statusArrDash.reduce((a,[,v])=>a+v,0);
 
-  // Recentes
+  const STATUS_COLOR_MAP = {
+    Carregado: t.ouro,   CARREGADO: t.ouro,
+    Pendente:  t.warn,   PENDENTE:  t.warn,
+    "No-Show": t.danger, "NO-SHOW": t.danger,
+    "Não aceite": "var(--text3)", "NÃO ACEITE": "var(--text3)",
+  };
+
   const recentesDash = [...dashData.filtrado]
     .filter(r=>r.nome)
     .sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return db&&da?db-da:0;})
     .slice(0,10);
 
-  // Status badge color
   const sc = s => {
     const u=(s||"").toUpperCase();
     if(u.includes("CARREGAD")) return t.roxo;
@@ -55,11 +59,11 @@ export default function DashboardView({ ctx }) {
     return "#3b82f6";
   };
 
-
   return (
-    <div>
-      {/* ── Filtros compactos ── */}
-      <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:12}}>
+    <div style={{padding:isMobile?"16px 12px":"24px"}}>
+
+      {/* ── Filtros ── */}
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
         <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
           <option value="todos">Mês: Todos</option>
           {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
@@ -85,26 +89,27 @@ export default function DashboardView({ ctx }) {
         const totalPgD  = comD.reduce((s,{r})=>s+(parseFloat(r.diaria_pg)||0),0);
         const saldoD = totalDevD-totalPgD;
         const kpis = [
-          {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",color:t.azulLt,border:`rgba(22,119,255,.2)`,icon:<><path d="M1 3h15v13H1z"/><path d="M16 8l4 2v5h-4V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
-          {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,color:taxaEfic>=90?t.verde:taxaEfic>=70?t.ouro:t.danger,border:taxaEfic>=90?`rgba(2,192,118,.2)`:taxaEfic>=70?`rgba(240,185,11,.2)`:`rgba(246,70,93,.2)`,icon:<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>},
-          {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",color:"#a855f7",border:`rgba(168,85,247,.2)`,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,click:()=>setActiveTab("planilha")},
-          {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,color:t.verde,border:`rgba(2,192,118,.2)`,icon:<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,click:()=>setActiveTab("motoristas")},
-          ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",color:t.verde,border:`rgba(2,192,118,.2)`,icon:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}]:[]),
-          ...(canFin?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,color:saldoD>0?t.danger:t.verde,border:saldoD>0?`rgba(246,70,93,.2)`:`rgba(2,192,118,.2)`,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
-          {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",color:alertas.length===0?t.verde:t.danger,border:alertas.length===0?`rgba(2,192,118,.2)`:`rgba(246,70,93,.2)`,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
+          {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",valColor:t.txt,color:t.azulLt,icon:<><path d="M1 3h15v13H1z"/><path d="M16 8l4 2v5h-4V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
+          {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,valColor:t.txt,color:taxaEfic>=90?t.verde:taxaEfic>=70?t.ouro:t.danger,icon:<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>},
+          {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",valColor:t.txt,color:"#a855f7",icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,click:()=>setActiveTab("planilha")},
+          {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,valColor:t.txt,color:t.verde,icon:<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,click:()=>setActiveTab("motoristas")},
+          ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",valColor:t.txt,color:t.verde,icon:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}]:[]),
+          ...(canFin?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,valColor:saldoD>0?t.danger:t.txt,color:saldoD>0?t.danger:t.verde,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
+          {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",valColor:alertas.length>0?t.danger:t.txt,color:alertas.length===0?t.verde:t.danger,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
         ];
         return (
-          <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:8,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
             {kpis.map((k,i)=>(
-              <div key={i} onClick={k.click} style={{background:t.card,borderRadius:isMobile?8:12,border:`1px solid ${t.borda}`,borderTop:`3px solid ${k.color}`,padding:isMobile?"8px 10px":"12px 14px",cursor:k.click?"pointer":"default",transition:"all .15s"}}
-                onMouseEnter={e=>k.click&&(e.currentTarget.style.background=t.card2)}
-                onMouseLeave={e=>k.click&&(e.currentTarget.style.background=t.card)}
+              <div key={i} onClick={k.click}
+                style={{position:"relative",background:t.card,borderRadius:isMobile?8:12,border:`1px solid ${t.borda}`,padding:isMobile?"14px":"16px 18px",cursor:k.click?"pointer":"default",transition:"all .15s"}}
+                onMouseEnter={e=>k.click&&(e.currentTarget.style.borderColor=t.borda2)}
+                onMouseLeave={e=>k.click&&(e.currentTarget.style.borderColor=t.borda)}
               >
-                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:isMobile?3:8}}>
-                  <div style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400,lineHeight:1.4,paddingRight:4}}>{k.label}</div>
-                  <div style={{width:isMobile?16:22,height:isMobile?16:22,borderRadius:6,background:`${k.color}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{hIco(k.icon,k.color,isMobile?9:11)}</div>
+                <div style={{position:"absolute",top:10,right:10,opacity:0.5}}>
+                  {hIco(k.icon,"var(--text3)",isMobile?9:11)}
                 </div>
-                <div style={{fontFamily:"var(--font-heading)",fontSize:isMobile?18:28,fontWeight:700,letterSpacing:"-0.04em",color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>
+                <div style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400,lineHeight:1.4,paddingRight:20,marginBottom:isMobile?3:8}}>{k.label}</div>
+                <div style={{fontFamily:"var(--font-heading)",fontSize:isMobile?18:28,fontWeight:700,letterSpacing:"-0.04em",color:k.valColor,lineHeight:1,marginBottom:2}}>{k.value}</div>
                 <div style={{fontFamily:"'DM Sans',sans-serif",fontSize:isMobile?9:12,color:"var(--text2)",lineHeight:1.3}}>{k.sub}</div>
               </div>
             ))}
@@ -118,11 +123,11 @@ export default function DashboardView({ ctx }) {
         dashData.filtrado.forEach(r=>{if(r.nome){if(!motCount[r.nome])motCount[r.nome]={ct:0,placa:r.placa||""};motCount[r.nome].ct++;if(!motCount[r.nome].placa&&r.placa)motCount[r.nome].placa=r.placa;}});
         const topMot=Object.entries(motCount).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
         const maxMot=topMot[0]?.[1]?.ct||1;
-        const cores=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];
         return (
-          <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:12,marginBottom:12}}>
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:14,marginBottom:14}}>
+
             {/* ─ Area Chart ─ */}
-            <div style={{...css.card,padding:16}}>
+            <div style={{...css.card,padding:18}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
                 <div>
                   <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Evolução do Período</div>
@@ -138,42 +143,37 @@ export default function DashboardView({ ctx }) {
               </div>
               <div style={{height:200}}><canvas ref={chartAreaRef} /></div>
             </div>
-            {/* ─ Status DTs ─ */}
-            <div style={{...css.card,padding:14}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Status das DTs</span>
-                <button onClick={()=>setActiveTab("planilha")} style={{fontSize:9,color:"#a855f7",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Detalhes ›</button>
+
+            {/* ─ Status DTs — barra horizontal stacked ─ */}
+            <div style={{...css.card,padding:18}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Status das DTs</span>
+                <span style={{fontFamily:DESIGN.fnt.h,fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-0.02em"}}>{totalStatusDash}</span>
               </div>
-              <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
-                <div style={{width:90,height:90}}><canvas ref={chartDonutRef} /></div>
-              </div>
-              <div style={{textAlign:"center",marginBottom:10}}>
-                <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:.5}}>Total de DTs</div>
-                <div style={{fontFamily:DESIGN.fnt.h,fontSize:24,letterSpacing:1,color:t.txt,lineHeight:1.1}}>{totalStatusDash}</div>
-              </div>
-              {statusArrDash.map(([s,v],i)=>{
-                const pct=totalStatusDash>0?Math.round(v/totalStatusDash*100):0;
-                return (
-                  <div key={s} style={{marginBottom:8}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                      <div style={{display:"flex",alignItems:"center",gap:5}}>
-                        <span style={{width:7,height:7,borderRadius:"50%",flexShrink:0,background:DONUT_LEGEND[i]||"#666"}}/>
-                        <span style={{fontSize:9,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:70}}>{s}</span>
-                      </div>
-                      <span style={{fontSize:10,fontWeight:700,color:t.txt,flexShrink:0}}>{v} <span style={{fontSize:8,color:t.txt2,fontWeight:400}}>{pct}%</span></span>
+              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                <div style={{height:8,background:t.bg,borderRadius:4,overflow:"hidden",display:"flex"}}>
+                  {statusArrDash.map(([nome,val],i)=>(
+                    <div key={nome} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%"}}/>
+                  ))}
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {statusArrDash.map(([nome,val],i)=>(
+                    <div key={nome} style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{width:6,height:6,borderRadius:"50%",background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],flexShrink:0}}/>
+                      <span style={{flex:1,fontSize:13,color:t.txt2}}>{nome}</span>
+                      <span style={{fontFamily:DESIGN.fnt.b,fontVariantNumeric:"tabular-nums",fontSize:13,fontWeight:500}}>{val}</span>
+                      <span style={{fontFamily:DESIGN.fnt.b,fontSize:11,color:"var(--text3)",minWidth:34,textAlign:"right"}}>{totalStatusDash>0?((val/totalStatusDash)*100).toFixed(0):0}%</span>
                     </div>
-                    <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${pct}%`,background:DONUT_LEGEND[i]||"#666",borderRadius:2}}/>
-                    </div>
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              </div>
             </div>
+
             {/* ─ Top Motoristas ─ */}
-            <div style={{...css.card,padding:14}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Top Motoristas</span>
-                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:9,color:t.ouro,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver todos ›</button>
+            <div style={{...css.card,padding:18}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
+                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver todos ›</button>
               </div>
               {topMot.length===0?(
                 <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
@@ -183,33 +183,35 @@ export default function DashboardView({ ctx }) {
                 const partes=(nome||"").split(" ").filter(Boolean);
                 const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
                 return (
-                  <div key={nome} style={{marginBottom:10}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                      <div style={{width:28,height:28,borderRadius:"50%",background:`${cores[i]}22`,border:`1px solid ${cores[i]}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cores[i],flexShrink:0}}>{initials}</div>
+                  <div key={nome} style={{marginBottom:i<topMot.length-1?14:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExib}</div>
+                        <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</div>
                         {placa&&<div style={{fontSize:8,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.5,marginTop:1}}>{placa}</div>}
                       </div>
-                      <span style={{fontFamily:"var(--font-mono)",fontSize:13,fontWeight:600,color:cores[i],flexShrink:0}}>{ct}</span>
+                      <span style={{fontFamily:"var(--font-mono)",fontSize:13,fontWeight:600,color:t.txt,fontVariantNumeric:"tabular-nums",flexShrink:0}}>{ct}</span>
                     </div>
                     <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${pct}%`,background:cores[i],borderRadius:2}}/>
+                      <div style={{height:"100%",width:`${pct}%`,background:t.ouro,borderRadius:2}}/>
                     </div>
                   </div>
                 );
               })}
             </div>
+
           </div>
         );
       })()}
 
       {/* ── Bottom: Registros Recentes + Painel Operacional ── */}
-      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12,alignItems:"start"}}>
-        {/* Registros Recentes — altura calculada para não cortar linhas */}
-        <div ref={dashRecCardRef} style={{...css.card,padding:14,display:"flex",flexDirection:"column"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexShrink:0}}>
-            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Registros Recentes</span>
-            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"#a855f7",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Tudo ›</button>
+      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:14,alignItems:"start"}}>
+
+        {/* Registros Recentes */}
+        <div ref={dashRecCardRef} style={{...css.card,padding:18,display:"flex",flexDirection:"column"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexShrink:0}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Registros Recentes</span>
+            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Tudo ›</button>
           </div>
           <div style={{display:"flex",flexDirection:"column",overflow:"hidden"}}>
             {recentesDash.length===0?(
@@ -218,30 +220,31 @@ export default function DashboardView({ ctx }) {
               const partes=(r.nome||"").split(" ").filter(Boolean);
               const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
               const initials=partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
-              const CORES_DASH=[t.ouro,t.azulLt,t.verde,"#a855f7","#ec4899"];
-              const cor=CORES_DASH[i%CORES_DASH.length];
               const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim();
               const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim();
               const rota=origemCurta&&destinoCurto?`${origemCurta} → ${destinoCurto}`:origemCurta||destinoCurto||"";
+              const statusColor=sc(r.status);
               return (
                 <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
-                  style={{height:40,display:"flex",alignItems:"center",gap:8,padding:"0 4px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s",flexShrink:0}}
+                  style={{height:44,display:"flex",alignItems:"center",gap:8,padding:"0 6px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s",flexShrink:0}}
                   onMouseEnter={e=>e.currentTarget.style.background=t.card2}
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}
                 >
-                  <div style={{width:26,height:26,borderRadius:"50%",background:`${cor}22`,border:`1px solid ${cor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:cor,flexShrink:0}}>{initials}</div>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
                   <div style={{minWidth:0,flex:"0 0 110px"}}>
-                    <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExib}</div>
+                    <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</div>
                     <div style={{fontSize:8,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.4,marginTop:1,display:"flex",gap:5,overflow:"hidden"}}>
                       {r.placa&&<span style={{flexShrink:0}}>{r.placa}</span>}
-                      <span style={{color:t.txt2,flexShrink:0}}>{r.dt}</span>
+                      <span style={{color:"var(--text3)",flexShrink:0}}>{r.dt}</span>
                     </div>
                   </div>
                   {rota&&<div style={{flex:1,fontSize:9,color:t.txt2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 4px"}}>{rota}</div>}
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2,flexShrink:0}}>
-                    <span style={{padding:"1px 5px",borderRadius:4,fontFamily:"var(--font-mono)",fontSize:9,fontWeight:500,textTransform:"uppercase",color:sc(r.status),background:`${sc(r.status)}1a`,whiteSpace:"nowrap",letterSpacing:"0.04em"}}>{(r.status||"–").slice(0,10)}</span>
-                    {canFin&&r.vl_cte&&parseFloat(r.vl_cte)>0&&<span style={{fontSize:9,fontWeight:600,color:t.txt,fontFamily:"var(--font-mono)"}}>{"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k"}</span>}
-                  </div>
+                  <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 6px",height:18,borderRadius:4,fontFamily:"var(--font-mono)",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em",color:statusColor,background:`${statusColor}1a`,whiteSpace:"nowrap",flexShrink:0}}>
+                    <span style={{width:5,height:5,borderRadius:"50%",background:"currentColor",flexShrink:0}}/>
+                    {(r.status||"–").slice(0,10)}
+                  </span>
+                  {canFin&&r.vl_cte&&parseFloat(r.vl_cte)>0&&<span style={{fontSize:9,fontWeight:500,color:t.txt,fontFamily:"var(--font-mono)",fontVariantNumeric:"tabular-nums",textAlign:"right",flexShrink:0}}>{"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k"}</span>}
+                  <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
               );
             })}
@@ -249,18 +252,24 @@ export default function DashboardView({ ctx }) {
         </div>
 
         {/* Painel Operacional: Diárias + Descargas + Top Pendentes */}
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+
           {/* Diárias */}
-          <div style={{...css.card,padding:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Diárias</span>
-              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:t.ouro,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
+          <div style={{...css.card,padding:18}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Diárias</span>
+              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
-              {[{l:"No Prazo",v:diariasData.ok,c:t.verde,bg:`rgba(2,192,118,.08)`},{l:"Perdeu Agenda",v:diariasData.atraso,c:t.danger,bg:`rgba(246,70,93,.08)`},{l:"Aguardando",v:diariasData.pend,c:t.ouro,bg:`rgba(240,185,11,.08)`}].map(d=>(
-                <div key={d.l} onClick={()=>setActiveTab("diarias")} style={{background:d.bg,borderRadius:8,padding:"8px 6px",textAlign:"center",cursor:"pointer"}}>
-                  <div style={{fontFamily:"var(--font-heading)",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:d.c,lineHeight:1}}>{d.v}</div>
-                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginTop:3,lineHeight:1.3}}>{d.l}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+              {[
+                {l:"No Prazo",       v:diariasData.ok,    tag:"● ok",       tagC:t.verde},
+                {l:"Perdeu Agenda",  v:diariasData.atraso, tag:"● atenção",  tagC:t.ouro},
+                {l:"Aguardando",     v:diariasData.pend,  tag:"● pendente", tagC:"var(--text3)"},
+              ].map(d=>(
+                <div key={d.l} onClick={()=>setActiveTab("diarias")} style={{background:t.bg,border:`1px solid ${t.borda}`,borderRadius:8,padding:12,cursor:"pointer"}}>
+                  <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1,marginBottom:3,fontVariantNumeric:"tabular-nums"}}>{d.v}</div>
+                  <div style={{fontFamily:"var(--font-mono)",fontSize:10,textTransform:"uppercase",letterSpacing:"0.04em",color:"var(--text3)",lineHeight:1.3}}>{d.l}</div>
+                  <div style={{fontFamily:"var(--font-mono)",fontSize:10,letterSpacing:"0.04em",color:d.tagC,marginTop:3}}>{d.tag}</div>
                 </div>
               ))}
             </div>
@@ -273,31 +282,37 @@ export default function DashboardView({ ctx }) {
               const pct=dev2>0?Math.min(100,Math.round(pg2/dev2*100)):0;
               return (
                 <div>
-                  <div style={{padding:"7px 10px",borderRadius:8,background:t.card2,border:`1px solid ${t.borda}`,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                    <div style={{fontSize:9,color:t.txt2}}>Saldo a pagar</div>
+                  <div style={{padding:"7px 10px",borderRadius:8,background:t.card2,border:`1px solid ${t.borda}`,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                    <div style={{fontSize:12,color:t.txt2}}>Saldo a pagar</div>
                     <div style={{fontSize:13,fontWeight:700,color:sld2>0?t.danger:t.verde,fontFamily:DESIGN.fnt.b}}>{fmtMoeda(Math.abs(sld2))}</div>
                   </div>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:8,color:t.txt2,marginBottom:3}}>
-                    <span>Pago: {fmtMoeda(pg2)}</span><span style={{color:pct>=80?t.verde:pct>=40?t.ouro:t.danger}}>{pct}%</span>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text3)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",marginBottom:4}}>
+                    <span>Pago: {fmtMoeda(pg2)}</span><span>{pct}%</span>
                   </div>
-                  <div style={{height:4,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${pct}%`,background:pct>=80?t.verde:pct>=40?t.ouro:t.danger,borderRadius:2,transition:"width .4s"}}/>
+                  <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${pct}%`,background:t.verde,borderRadius:2,transition:"width .4s"}}/>
                   </div>
                 </div>
               );
             })()}
           </div>
+
           {/* Descargas */}
-          <div style={{...css.card,padding:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Descargas</span>
-              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:9,color:t.azulLt,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
+          <div style={{...css.card,padding:18}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Descargas</span>
+              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
-              {[{l:"Hoje",v:descargaData.hoje.length,c:t.azulLt,bg:`rgba(22,119,255,.08)`},{l:"Em Atraso",v:descargaData.atrasados.length,c:t.danger,bg:`rgba(246,70,93,.08)`},{l:"Aguardando",v:descargaData.aguardando.length,c:t.ouro,bg:`rgba(240,185,11,.08)`}].map(d=>(
-                <div key={d.l} onClick={()=>setActiveTab("descarga")} style={{background:d.bg,borderRadius:8,padding:"8px 6px",textAlign:"center",cursor:"pointer"}}>
-                  <div style={{fontFamily:"var(--font-heading)",fontSize:20,fontWeight:700,letterSpacing:"-0.03em",color:d.c,lineHeight:1}}>{d.v}</div>
-                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginTop:3,lineHeight:1.3}}>{d.l}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+              {[
+                {l:"Hoje",       v:descargaData.hoje.length},
+                {l:"Em Atraso",  v:descargaData.atrasados.length,  tag:"● atraso", tagC:t.danger},
+                {l:"Aguardando", v:descargaData.aguardando.length},
+              ].map(d=>(
+                <div key={d.l} onClick={()=>setActiveTab("descarga")} style={{background:t.bg,border:`1px solid ${t.borda}`,borderRadius:8,padding:12,cursor:"pointer"}}>
+                  <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1,marginBottom:3,fontVariantNumeric:"tabular-nums"}}>{d.v}</div>
+                  <div style={{fontFamily:"var(--font-mono)",fontSize:10,textTransform:"uppercase",letterSpacing:"0.04em",color:"var(--text3)",lineHeight:1.3}}>{d.l}</div>
+                  {d.tag&&<div style={{fontFamily:"var(--font-mono)",fontSize:10,letterSpacing:"0.04em",color:d.tagC,marginTop:3}}>{d.tag}</div>}
                 </div>
               ))}
             </div>
@@ -306,13 +321,14 @@ export default function DashboardView({ ctx }) {
                 {descargaData.atrasados.slice(0,3).map((r,i)=>(
                   <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.4)}`:"none"}}>
                     <span style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:t.danger,whiteSpace:"nowrap",flexShrink:0}}>ATR</span>
-                    <span style={{fontSize:9,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(r.nome||"—").split(" ").slice(0,2).join(" ")}</span>
+                    <span style={{fontSize:9,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{(r.nome||"—").split(" ").slice(0,2).join(" ").toLowerCase()}</span>
                     <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap",flexShrink:0}}>{(r.destino||"—").split(/[-–]/)[0].trim()}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
+
           {/* Top Diárias Pendentes */}
           {canFin&&(()=>{
             const pendMap={};
@@ -329,20 +345,20 @@ export default function DashboardView({ ctx }) {
             if(!topPend.length)return null;
             const maxPend=topPend[0][1]||1;
             return (
-              <div style={{...css.card,padding:14}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                  <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700}}>Top Diárias Pendentes</span>
-                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:t.ouro,background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
+              <div style={{...css.card,padding:18}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Diárias Pendentes</span>
+                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
                 </div>
                 {topPend.map(([nome,sld],i)=>{
                   const partes=nome.split(" ").filter(Boolean);
                   const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0];
                   const pct=Math.round(sld/maxPend*100);
                   return (
-                    <div key={nome} style={{marginBottom:i<topPend.length-1?8:0}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                        <span style={{fontSize:9,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,paddingRight:6}}>{nomeExib}</span>
-                        <span style={{fontSize:9,fontWeight:700,color:t.ouro,fontFamily:"var(--font-mono)",flexShrink:0}}>{fmtMoeda(sld)}</span>
+                    <div key={nome} style={{marginBottom:i<topPend.length-1?10:0}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                        <span style={{fontSize:11,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,paddingRight:6,textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</span>
+                        <span style={{fontSize:11,fontWeight:600,color:t.ouro,fontFamily:"var(--font-mono)",fontVariantNumeric:"tabular-nums",flexShrink:0}}>{fmtMoeda(sld)}</span>
                       </div>
                       <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
                         <div style={{height:"100%",width:`${pct}%`,background:t.ouro,borderRadius:2}}/>
@@ -353,6 +369,7 @@ export default function DashboardView({ ctx }) {
               </div>
             );
           })()}
+
         </div>
       </div>
 
