@@ -37,7 +37,7 @@ input:focus,
 textarea:focus,
 select:focus {
   border-color: var(--accent) !important;
-  box-shadow:   0 0 0 2px rgba(59,130,246,.15) !important;
+  box-shadow:   0 0 0 2px rgba(245,197,58,.10) !important;
   outline:      none !important;
 }
 
@@ -121,23 +121,9 @@ select:focus {
   transition:  all 180ms ease; min-height: 36px; overflow: hidden;
 }
 .co-sidebar__item:hover            { background: rgba(255,255,255,0.04); color: var(--text); }
-.co-sidebar__item--active {
-  background   : var(--color-sidebar-item-active);
-  color        : var(--color-sidebar-text-active);
-  position     : relative;
-  padding-left : 8px;   /* compensar a borda-left de 2px */
-}
-.co-sidebar__item--active::before {
-  content      : '';
-  position     : absolute;
-  left         : 0; top: 6px; bottom: 6px;
-  width        : var(--sidebar-accent-w, 2px);
-  background   : var(--color-sidebar-accent);
-  border-radius: 0 2px 2px 0;
-}
-.co-sidebar__item--active .co-sidebar__ico svg { stroke: var(--color-sidebar-icon-active); }
-.co-sidebar--collapsed .co-sidebar__item        { justify-content: center; padding: 8px; }
-.co-sidebar--collapsed .co-sidebar__item--active { padding-left: 8px; }
+.co-sidebar__item--active          { background: var(--accent2); color: var(--accent); }
+.co-sidebar__item--active .co-sidebar__ico svg { stroke: var(--accent); }
+.co-sidebar--collapsed .co-sidebar__item { justify-content: center; padding: 8px; }
 
 /* ── Section labels ── */
 .co-sidebar__section-lbl {
@@ -347,7 +333,7 @@ select:focus {
 .co-mobile-nav__item--active::before {
   content:    ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
   width:      28px; height: 2.5px; border-radius: 0 0 3px 3px;
-  background: var(--accent); box-shadow: 0 0 8px rgba(59,130,246,.35);
+  background: var(--accent); box-shadow: 0 0 8px rgba(245,197,58,.5);
 }
 .co-mobile-nav__lbl {
   font-size:   clamp(6px,2.2vw,9px); font-weight: 500;
@@ -417,7 +403,7 @@ select:focus {
 button:active { transform: scale(0.97) !important; transition: transform .07s !important; }
 
 /* Tab hover */
-.co-tab:hover { color: var(--accent) !important; background: rgba(59,130,246,.05) !important; }
+.co-tab:hover { color: var(--accent) !important; background: rgba(245,197,58,.04) !important; }
 
 /* Section divider trail */
 .sec-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -429,15 +415,15 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 .co-kpi:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.12) !important; }
 
 /* Table row hover */
-.co-tr:hover td { background: rgba(59,130,246,.04) !important; }
+.co-tr:hover td { background: rgba(245,197,58,.03) !important; }
 
 /* DT chip */
 .dt-chip {
   font-family:    var(--font-mono);
   font-size:      13px; letter-spacing: 1.5px;
   color:          var(--accent);
-  background:     rgba(59,130,246,.10);
-  border:         1px solid rgba(59,130,246,.22);
+  background:     rgba(245,197,58,.10);
+  border:         1px solid rgba(245,197,58,.22);
   border-radius:  var(--radius-tag);
   padding:        2px 8px; font-weight: 700;
 }
@@ -569,9 +555,9 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   border:         1px solid;
   white-space:    nowrap;
 }
-.co-status-badge--online   { color: var(--green);  background: rgba(16,185,129,.08);  border-color: rgba(16,185,129,.20); }
-.co-status-badge--syncing  { color: var(--accent); background: rgba(59,130,246,.08);  border-color: rgba(59,130,246,.22); }
-.co-status-badge--offline  { color: var(--red);    background: rgba(239,68,68,.08);   border-color: rgba(239,68,68,.20);  }
+.co-status-badge--online   { color: var(--green);  background: rgba(14,203,129,.12); border-color: rgba(14,203,129,.3); }
+.co-status-badge--syncing  { color: var(--accent); background: rgba(245,197,58,.12); border-color: rgba(245,197,58,.3); }
+.co-status-badge--offline  { color: var(--red);    background: rgba(246,70,93,.12);  border-color: rgba(246,70,93,.3);  }
 
 /* ════════════════════════════════════════════════════════════════════
    MODAL OVERLAY — padrão unificado para todos os modais
