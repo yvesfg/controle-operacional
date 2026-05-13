@@ -159,7 +159,7 @@ select:focus {
 
 /* ── Footer ── */
 .co-sidebar__footer {
-  padding:    8px 6px 0; border-top: 1px solid var(--border);
+  padding:    8px 6px; border-top: 1px solid var(--border);
   display:    flex; flex-direction: column; gap: 3px; flex-shrink: 0;
 }
 .co-sidebar--collapsed .co-sidebar__footer { align-items: center; }
@@ -178,15 +178,13 @@ select:focus {
 
 /* ── User card ── */
 .co-sidebar__user {
-  padding:     8px 10px; border-radius: 0;
-  background:  var(--card2); border: none; border-top: 1px solid var(--border);
-  margin: 0 -6px; display: flex; align-items: center;
+  padding:     8px 10px; border-radius: var(--radius-sm);
+  background:  var(--card2); border: 1px solid var(--border);
+  margin-bottom: 2px; display: flex; align-items: center;
   gap: 8px; overflow: hidden;
 }
 .co-sidebar__user-name { font-size: 11px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.co-sidebar__user-role { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .8px; flex-shrink: 0; white-space: nowrap; }
-.co-sidebar__user-info { display: flex; align-items: center; justify-content: space-between; gap: 6px; flex: 1; min-width: 0; }
-.co-sidebar__footer-item--center { justify-content: center !important; }
+.co-sidebar__user-role { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .8px; }
 .co-sidebar--collapsed .co-sidebar__user-info { display: none; }
 .co-sidebar--collapsed .co-sidebar__user      { justify-content: center; padding: 8px; }
 
