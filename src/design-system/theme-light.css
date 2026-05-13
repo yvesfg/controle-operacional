@@ -1,109 +1,108 @@
 /* ═══════════════════════════════════════════════════════════════════
-   theme-light.css — Binance Light Theme · Controle Operacional
-   Ativação: data-theme="light" no <html>
-   ► Para mudar cores: edite APENAS este arquivo.
-   ► Nomes de variável ficam em tokens.css.
+   theme-light.css — STEEL BLUE LIGHT · Controle Operacional YFGroup
+   ► Versão clara da paleta Steel Blue, mantendo o mesmo accent #3b82f6
+   ► Ativação: data-theme="light" no <html>
    ═══════════════════════════════════════════════════════════════════ */
 
 [data-theme="light"],
 .theme-light {
 
-  /* ── Backgrounds — Binance canvas light ─────────────────────── */
-  --color-bg          : #ffffff;   /* canvas-light */
-  --color-bg-alt      : #f5f5f5;   /* surface-strong-light */
-  --color-card        : #ffffff;   /* canvas-light (cards on light) */
-  --color-card-2      : #f5f5f5;   /* surface-strong-light */
+  /* ── Backgrounds — branco com tint azul muito leve ──────────── */
+  --color-bg          : #f5f8fc;
+  --color-bg-alt      : #ffffff;
+  --color-card        : #ffffff;
+  --color-card-2      : #f0f4fa;
   --color-header-bg   : #ffffff;
   --color-modal-bg    : #ffffff;
-  --color-input-bg    : #ffffff;
-  --color-table-header: #fafafa;
+  --color-input-bg    : #f7faff;
+  --color-table-header: #f0f4fa;
 
-  /* ── Bordas — hairline on light ─────────────────────────────── */
-  --color-border      : #eaecef;   /* hairline-on-light */
-  --color-border-2    : #cdd1d6;   /* border-strong */
-  --color-border-focus: rgba(59,130,246,.50);
+  /* ── Bordas ─────────────────────────────────────────────────── */
+  --color-border      : #e2e8f2;
+  --color-border-2    : #cdd6e4;
+  --color-border-focus: rgba(59,130,246,.45);
 
   /* ── Texto ───────────────────────────────────────────────────── */
-  --color-text        : #181a20;   /* ink */
-  --color-text-2      : #707a8a;   /* muted */
-  --color-text-3      : #929aa5;   /* muted-strong */
-  --color-text-disabled: #b0b6bf;
-  --color-text-inverse: #181a20;   /* on-primary: preto sobre amarelo */
+  --color-text        : #0f1825;
+  --color-text-2      : #4a5a72;
+  --color-text-3      : #6a7a92;
+  --color-text-disabled: #aab4c4;
+  --color-text-inverse: #ffffff;
 
-  /* ── Acento principal — Amber Freight (light) ───────────────── */
-  --color-primary     : #d97706;
-  --color-primary-dk  : #b45309;
-  --color-primary-lt  : #f59e0b;
-  --color-primary-bg  : rgba(217,119,6,.10);
-  --color-primary-border: rgba(217,119,6,.30);
-  --color-primary-disabled: #d4b483;
+  /* ── Acento principal — Steel Blue #3b82f6 ──────────────────── */
+  --color-primary     : #3b82f6;
+  --color-primary-dk  : #2563eb;
+  --color-primary-lt  : #60a5fa;
+  --color-primary-bg  : rgba(59,130,246,.10);
+  --color-primary-border: rgba(59,130,246,.30);
+  --color-primary-disabled: #cdd6e4;
 
-  /* ── Trading ─────────────────────────────────────────────────── */
-  --color-success     : #0ecb81;
-  --color-success-dk  : #0aa86a;
-  --color-success-bg  : rgba(14,203,129,.10);
-  --color-success-border: rgba(14,203,129,.25);
+  /* ── Status semânticos ──────────────────────────────────────── */
+  --color-success     : #059669;
+  --color-success-dk  : #047857;
+  --color-success-bg  : rgba(5,150,105,.10);
+  --color-success-border: rgba(5,150,105,.28);
 
-  --color-danger      : #f6465d;
-  --color-danger-dk   : #d9344a;
-  --color-danger-bg   : rgba(246,70,93,.10);
-  --color-danger-border: rgba(246,70,93,.25);
+  --color-danger      : #dc2626;
+  --color-danger-dk   : #b91c1c;
+  --color-danger-bg   : rgba(220,38,38,.10);
+  --color-danger-border: rgba(220,38,38,.28);
 
-  --color-warning     : #f0b90b;
-  --color-warning-dk  : #d4a309;
-  --color-warning-bg  : rgba(240,185,11,.10);
-  --color-warning-border: rgba(240,185,11,.25);
+  --color-warning     : #d97706;
+  --color-warning-dk  : #b45309;
+  --color-warning-bg  : rgba(217,119,6,.10);
+  --color-warning-border: rgba(217,119,6,.28);
 
-  --color-info        : #3b82f6;
-  --color-info-lt     : #60a5fa;
-  --color-info-bg     : rgba(59,130,246,.10);
-  --color-info-border : rgba(59,130,246,.25);
+  --color-info        : #0891b2;
+  --color-info-lt     : #06b6d4;
+  --color-info-bg     : rgba(8,145,178,.10);
+  --color-info-border : rgba(8,145,178,.28);
 
-  /* ── Overlays / Sombras ──────────────────────────────────────── */
-  --color-shadow      : rgba(0,0,0,.06);
-  --color-overlay     : rgba(0,0,0,.45);
-  --color-scroll-thumb: #cdd1d6;
+  /* ── Overlays / Sombras (light usa shadow real) ─────────────── */
+  --color-shadow      : rgba(15,24,37,.08);
+  --color-overlay     : rgba(15,24,37,.45);
+  --color-scroll-thumb: #cdd6e4;
 
-  --shadow-xs         : 0 1px 2px rgba(0,0,0,.05);
-  --shadow-sm         : 0 1px 4px rgba(0,0,0,.07);
-  --shadow-md         : 0 4px 12px rgba(0,0,0,.09);
-  --shadow-lg         : 0 8px 24px rgba(0,0,0,.11);
-  --shadow-xl         : 0 16px 48px rgba(0,0,0,.13);
-  --shadow-card       : 0 1px 3px rgba(0,0,0,.08);
-  --shadow-primary    : 0 4px 16px rgba(252,213,53,.25);
+  --shadow-xs         : 0 1px 2px rgba(15,24,37,.04);
+  --shadow-sm         : 0 1px 3px rgba(15,24,37,.06);
+  --shadow-md         : 0 4px 8px rgba(15,24,37,.08);
+  --shadow-lg         : 0 8px 24px rgba(15,24,37,.10);
+  --shadow-xl         : 0 16px 40px rgba(15,24,37,.14);
+  --shadow-card       : 0 1px 3px rgba(15,24,37,.04);
+  --shadow-primary    : 0 4px 16px rgba(59,130,246,.20);
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
   --color-sidebar-bg        : #ffffff;
   --color-sidebar-item      : transparent;
-  --color-sidebar-item-hover: rgba(217,119,6,.08);
-  --color-sidebar-item-active: rgba(217,119,6,.12);
-  --color-sidebar-text      : #707a8a;
-  --color-sidebar-text-active: #b45309;
+  --color-sidebar-item-hover: rgba(59,130,246,.06);
+  --color-sidebar-item-active: rgba(59,130,246,.12);
+  --color-sidebar-text      : #4a5a72;
+  --color-sidebar-text-active: #2563eb;
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: light;
 
-  /* ── Semantic tokens ─────────────────────────────────────────── */
-  --bg      : #ffffff;
-  --surface : #fafafa;
+  /* ── Semantic tokens — mapeados ao constants.js ──────────────── */
+  --bg      : #f5f8fc;
+  --surface : #ffffff;
   --card    : #ffffff;
-  --card2   : #f5f5f5;
+  --card2   : #f0f4fa;
 
-  --border  : #eaecef;   /* hairline-on-light */
-  --border2 : #cdd1d6;   /* border-strong */
+  --border  : #e2e8f2;
+  --border2 : #cdd6e4;
 
-  --text    : #181a20;   /* ink */
-  --text2   : #707a8a;   /* muted */
-  --text3   : #929aa5;   /* muted-strong */
+  --text    : #0f1825;
+  --text2   : #4a5a72;
+  --text3   : #6a7a92;
 
-  --accent  : #d97706;
-  --accent2 : rgba(217,119,6,.10);
+  --accent  : #3b82f6;
+  --accent2 : rgba(59,130,246,.10);
   --on-primary: #ffffff;
 
   --cyan    : #0891b2;
   --green   : #059669;
   --orange  : #d97706;
   --red     : #dc2626;
-  --yellow  : #d97706;
+  --yellow  : #ca8a04;
   --roxo    : #0891b2;
 }

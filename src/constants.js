@@ -125,6 +125,12 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-05-13", sessao: "Sessão 17",
+    itens: [
+      "REFAC · Paleta — Substituído amarelo Binance (#f5c53a) por Steel Blue (#3b82f6) em theme-dark.css e theme-light.css; backups gerados em .bak_steel_20260513_*; fallbacks de tokens.css atualizados; zero alteração de JSX necessária graças ao proxy de CSS vars.",
+    ],
+  },
+  {
     data: "2026-03-25", sessao: "Sessão 16",
     itens: [
       "FEAT · Diária — Nova Lógica Simplificada: REGRA chegada ≤ agenda → COM DIÁRIA (dias = descarga - agenda); REGRA chegada > agenda → PERDA DE AGENDA; sem chegada → legado. Remove exigência de 'informou_analista' como critério.",
