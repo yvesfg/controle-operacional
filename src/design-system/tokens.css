@@ -39,11 +39,11 @@
   --color-shadow     : rgba(0,0,0,.55);
   --color-scroll-thumb: #2a3a52;
 
-  /* ── Tipografia — Freight Command: Syne (headings) / Barlow (body) / IBM Plex Mono (data) ─ */
-  --font-heading : 'Syne', sans-serif;
-  --font-display : 'Syne', sans-serif;
-  --font-body    : 'Barlow', sans-serif;
-  --font-mono    : 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  /* ── Tipografia — Satoshi (display + body) / IBM Plex Mono (data) ── */
+  --font-heading : 'Satoshi', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-display : 'Satoshi', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body    : 'Satoshi', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono    : 'IBM Plex Mono', 'JetBrains Mono', 'SF Mono', monospace;
 
   /* Tamanhos de texto — escala Binance */
   --text-2xs : 10px;
@@ -63,10 +63,10 @@
   --leading-normal : 1.4;    /* caption / button / number */
   --leading-relaxed: 1.5;    /* body */
 
-  /* Letter-spacing */
-  --ls-tighter : -1px;
-  --ls-tight   : -0.5px;
-  --ls-normal  :  0;
+  /* Letter-spacing — calibrado para Satoshi */
+  --ls-tighter : -0.04em;
+  --ls-tight   : -0.025em;
+  --ls-normal  :  -0.005em;
   --ls-wide    :  0.02em;
   --ls-wider   :  0.06em;
   --ls-widest  :  0.12em;
