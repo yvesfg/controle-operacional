@@ -24,7 +24,6 @@ export default function DashboardView({ ctx }) {
     fmtMoeda, isMobile,
     setDetalheDT, setModalOpen,
     descargaData,
-    setPlanilhaFiltroStatus,
   } = ctx;
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
@@ -154,12 +153,12 @@ export default function DashboardView({ ctx }) {
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
                 <div style={{height:8,background:t.bg,borderRadius:4,overflow:"hidden",display:"flex"}}>
                   {statusArrDash.map(([nome,val],i)=>(
-                    <div key={nome} title={nome} onClick={()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");}} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%",cursor:"pointer"}}/>
+                    <div key={nome} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%"}}/>
                   ))}
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {statusArrDash.map(([nome,val],i)=>(
-                    <div key={nome} onClick={()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");}} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",borderRadius:6,padding:"2px 4px",margin:"0 -4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    <div key={nome} style={{display:"flex",alignItems:"center",gap:10}}>
                       <span style={{width:6,height:6,borderRadius:"50%",background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],flexShrink:0}}/>
                       <span style={{flex:1,fontSize:13,color:t.txt2}}>{nome}</span>
                       <span style={{fontFamily:DESIGN.fnt.b,fontVariantNumeric:"tabular-nums",fontSize:13,fontWeight:500}}>{val}</span>

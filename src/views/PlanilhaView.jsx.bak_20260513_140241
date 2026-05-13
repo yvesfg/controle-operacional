@@ -52,7 +52,6 @@ export default function PlanilhaView({ ctx }) {
     planilhaFiltroDataDe, setPlanilhaFiltroDataDe,
     planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
     planilhaBusca, setPlanilhaBusca,
-    planilhaFiltroStatus, setPlanilhaFiltroStatus,
     t, isMobile,
     ExportMenu,
   } = ctx;
@@ -90,10 +89,6 @@ export default function PlanilhaView({ ctx }) {
         || (r.nome||"").toLowerCase().includes(q);
       if (!match) return false;
     }
-    if (planilhaFiltroStatus) {
-      const s = (r.status||"Sem Status");
-      if (s !== planilhaFiltroStatus) return false;
-    }
     return true;
   });
 
@@ -124,7 +119,7 @@ export default function PlanilhaView({ ctx }) {
     }
   };
 
-  const temFiltro = planilhaFiltroAno || planilhaFiltroMes || planilhaFiltroOrigem !== "todas" || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca || planilhaFiltroStatus;
+  const temFiltro = planilhaFiltroAno || planilhaFiltroMes || planilhaFiltroOrigem !== "todas" || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca;
 
   // ── Styles locais usando CSS variables ───────────────────────────────────
   const selectStyle = active => ({
@@ -201,14 +196,8 @@ export default function PlanilhaView({ ctx }) {
           }}
         />
 
-        {planilhaFiltroStatus && (
-          <span style={{display:"flex",alignItems:"center",gap:4,fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:6,background:"rgba(124,58,237,0.12)",border:"1px solid rgba(124,58,237,0.3)",color:"var(--accent)",fontFamily:"var(--font-heading)"}}>
-            Status: {planilhaFiltroStatus}
-            <button onClick={()=>{setPlanilhaFiltroStatus("");setPlanilhaPagina(1);}} style={{background:"none",border:"none",cursor:"pointer",color:"var(--accent)",fontSize:11,lineHeight:1,padding:0,marginLeft:2}}>×</button>
-          </span>
-        )}
         {temFiltro && (
-          <button onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); setPlanilhaPagina(1); }}
+          <button onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaPagina(1); }}
             style={{
               fontSize: 9, padding: "4px 8px", borderRadius: 6,
               border: "1px solid var(--border)", background: "transparent",

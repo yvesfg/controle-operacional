@@ -94,7 +94,6 @@ export default function App() {
   const [planilhaFiltroOrigem, setPlanilhaFiltroOrigem] = useState("todas"); // "todas" = sem filtro
   const [planilhaFiltroDataDe, setPlanilhaFiltroDataDe] = useState(""); // data inicio (yyyy-MM-dd)
   const [planilhaFiltroDataAte, setPlanilhaFiltroDataAte] = useState(""); // data fim (yyyy-MM-dd)
-  const [planilhaFiltroStatus, setPlanilhaFiltroStatus] = useState(""); // status filter do dashboard
   const [planilhaBusca, setPlanilhaBusca] = useState("");           // busca livre: dt|placa|nome
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
@@ -3203,7 +3202,6 @@ export default function App() {
             fmtMoeda, isMobile,
             setDetalheDT, setModalOpen,
             descargaData,
-            setPlanilhaFiltroStatus,
           }} />
         )}
 
@@ -3221,7 +3219,6 @@ export default function App() {
             planilhaFiltroDataDe, setPlanilhaFiltroDataDe,
             planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
             planilhaBusca, setPlanilhaBusca,
-            planilhaFiltroStatus, setPlanilhaFiltroStatus,
             t, isMobile, ExportMenu,
           }} />
         )}
