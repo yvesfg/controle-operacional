@@ -1,0 +1,109 @@
+/* ═══════════════════════════════════════════════════════════════════
+   theme-dark.css — Binance Dark Theme · Controle Operacional
+   Ativação: data-theme="dark" no <html>
+   ► Para mudar cores: edite APENAS este arquivo.
+   ► Nomes de variável ficam em tokens.css.
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"],
+.theme-dark {
+
+  /* ── Backgrounds — Freight Command: azul-cinza industrial ───── */
+  --color-bg          : #07090d;   /* midnight floor */
+  --color-bg-alt      : #101620;   /* surface-card */
+  --color-card        : #101620;   /* surface-card */
+  --color-card-2      : #172030;   /* surface-elevated */
+  --color-header-bg   : #07090d;
+  --color-modal-bg    : #101620;
+  --color-input-bg    : #0d1219;
+  --color-table-header: #07090d;
+
+  /* ── Bordas ─────────────────────────────────────────────────── */
+  --color-border      : #1a2535;               /* hairline industrial */
+  --color-border-2    : #263444;               /* borda mais forte */
+  --color-border-focus: rgba(245,197,58,.40);  /* accent-ring 40% */
+
+  /* ── Texto ───────────────────────────────────────────────────── */
+  --color-text        : #eaecef;   /* body on dark */
+  --color-text-2      : #707a8a;   /* muted */
+  --color-text-3      : #929aa5;   /* muted-strong */
+  --color-text-disabled: #484d55;
+  --color-text-inverse: #181a20;   /* on-primary: preto sobre amarelo Binance */
+
+  /* ── Acento principal — Amber Freight ───────────────────────── */
+  --color-primary     : #f5c53a;
+  --color-primary-dk  : #e0ad20;   /* active / hover mais escuro */
+  --color-primary-lt  : #fad96e;   /* variante clara */
+  --color-primary-bg  : rgba(245,197,58,.10);
+  --color-primary-border: rgba(245,197,58,.25);
+  --color-primary-disabled: #35300f;
+
+  /* ── Trading — verde sobe / vermelho desce ───────────────────── */
+  --color-success     : #0ecb81;   /* trading-up */
+  --color-success-dk  : #0aa86a;
+  --color-success-bg  : rgba(14,203,129,.10);
+  --color-success-border: rgba(14,203,129,.25);
+
+  --color-danger      : #f6465d;   /* trading-down */
+  --color-danger-dk   : #d9344a;
+  --color-danger-bg   : rgba(246,70,93,.10);
+  --color-danger-border: rgba(246,70,93,.25);
+
+  --color-warning     : #f0b90b;
+  --color-warning-dk  : #d4a309;
+  --color-warning-bg  : rgba(240,185,11,.10);
+  --color-warning-border: rgba(240,185,11,.25);
+
+  --color-info        : #3b82f6;
+  --color-info-lt     : #60a5fa;
+  --color-info-bg     : rgba(59,130,246,.10);
+  --color-info-border : rgba(59,130,246,.25);
+
+  /* ── Overlays / Sombras — elevação via cor, não shadow ──────── */
+  --color-shadow      : rgba(0,0,0,.50);
+  --color-overlay     : rgba(0,0,0,.72);
+  --color-scroll-thumb: #2b3139;
+
+  --shadow-xs         : none;
+  --shadow-sm         : none;
+  --shadow-md         : none;
+  --shadow-lg         : 0 8px 32px rgba(0,0,0,.55);
+  --shadow-xl         : 0 16px 48px rgba(0,0,0,.65);
+  --shadow-card       : none;
+  --shadow-primary    : 0 4px 16px rgba(252,213,53,.20);
+
+  /* ── Sidebar ─────────────────────────────────────────────────── */
+  --color-sidebar-bg        : #07090d;
+  --color-sidebar-item      : transparent;
+  --color-sidebar-item-hover: rgba(245,197,58,.08);
+  --color-sidebar-item-active: rgba(245,197,58,.14);
+  --color-sidebar-text      : #5a6a7a;
+  --color-sidebar-text-active: #f5c53a;
+
+  /* ── Scrollbar ───────────────────────────────────────────────── */
+  color-scheme: dark;
+
+  /* ── Semantic tokens — mapeados ao DESIGN-binance.md ─────────── */
+  --bg      : #07090d;
+  --surface : #101620;
+  --card    : #101620;
+  --card2   : #172030;
+
+  --border  : #1a2535;
+  --border2 : #263444;
+
+  --text    : #dde4ed;
+  --text2   : #5a6a7a;
+  --text3   : #7a8a9a;
+
+  --accent  : #f5c53a;
+  --accent2 : rgba(245,197,58,.10);
+  --on-primary: #0d0e08;
+
+  --cyan    : #2dbdb6;
+  --green   : #0ecb81;
+  --orange  : #e0ad20;
+  --red     : #f6465d;
+  --yellow  : #f5c53a;
+  --roxo    : #2dbdb6;
+}
