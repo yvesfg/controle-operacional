@@ -3310,7 +3310,6 @@ export default function App() {
             setDetalheDT, setModalOpen,
             descargaData,
             setPlanilhaFiltroStatus,
-            setBuscaInput, setBuscaTipo, setBuscaModalOpen,
           }} />
         )}
 

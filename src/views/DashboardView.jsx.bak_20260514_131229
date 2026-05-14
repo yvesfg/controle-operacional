@@ -25,7 +25,6 @@ export default function DashboardView({ ctx }) {
     setDetalheDT, setModalOpen,
     descargaData,
     setPlanilhaFiltroStatus,
-    setBuscaInput, setBuscaTipo, setBuscaModalOpen,
   } = ctx;
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
@@ -340,28 +339,24 @@ export default function DashboardView({ ctx }) {
               const pg=parseFloat(r.diaria_pg)||0;
               const sld=prev-pg;
               if(sld<=0)return;
-              if(!pendMap[r.nome]){pendMap[r.nome]={total:0,dt:r.dt};}
-              pendMap[r.nome].total+=sld;
+              if(!pendMap[r.nome])pendMap[r.nome]=0;
+              pendMap[r.nome]+=sld;
             });
-            const topPend=Object.entries(pendMap).map(([nome,{total,dt}])=>({nome,total,dt})).sort((a,b)=>b.total-a.total).slice(0,4);
+            const topPend=Object.entries(pendMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
             if(!topPend.length)return null;
-            const maxPend=topPend[0].total||1;
+            const maxPend=topPend[0][1]||1;
             return (
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Diárias Pendentes</span>
                   <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
                 </div>
-                {topPend.map(({nome,total:sld,dt},i)=>{
+                {topPend.map(([nome,sld],i)=>{
                   const partes=nome.split(" ").filter(Boolean);
                   const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0];
                   const pct=Math.round(sld/maxPend*100);
-                  const handleClick=()=>{ setBuscaInput(dt); setBuscaTipo("dt"); setBuscaModalOpen(true); };
                   return (
-                    <div key={nome} onClick={handleClick} title={`Abrir DT ${dt}`}
-                      style={{marginBottom:i<topPend.length-1?10:0,cursor:"pointer",borderRadius:6,padding:"4px 6px",margin:i<topPend.length-1?"0 -6px 4px -6px":"0 -6px",transition:"background .15s"}}
-                      onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`}
-                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    <div key={nome} style={{marginBottom:i<topPend.length-1?10:0}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                         <span style={{fontSize:11,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,paddingRight:6,textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</span>
                         <span style={{fontSize:11,fontWeight:600,color:t.ouro,fontFamily:"var(--font-mono)",fontVariantNumeric:"tabular-nums",flexShrink:0}}>{fmtMoeda(sld)}</span>
