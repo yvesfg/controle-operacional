@@ -585,6 +585,13 @@ export default function App() {
       setUsuarioLogado(nomeOAuth);
       saveJSON("co_sessao", {perfil:p, perms:pm, nome:nomeOAuth, ts:Date.now()});
       showToast(`✅ Login social realizado — bem-vindo, ${nomeOAuth}!`, "ok");
+      // Admin OAuth: acesso a todas as bases
+      const _todasOAdm = Object.values(BASES);
+      setBasesPermitidas(_todasOAdm);
+      const _savedOAdm = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
+      if (!_savedOAdm || !_todasOAdm.find(b => b.id === _savedOAdm.id)) {
+        setBaseAtual(_todasOAdm.length === 1 ? _todasOAdm[0] : null);
+      }
       return;
     }
 
