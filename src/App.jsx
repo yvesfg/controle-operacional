@@ -3480,6 +3480,7 @@ export default function App() {
           setModalOpen,
           getConexao, supaFetch,
           connStatus,
+          baseAtual, BASES,
           saveMotoristasLS,
           setMotImportPrefOpen, setMotImportPrefBusca, setMotImportPrefSel, setMotImportRaw,
           enviarEmailBoasVindas,
