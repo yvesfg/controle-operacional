@@ -3180,6 +3180,11 @@ export default function App() {
               <span className={`co-status-badge co-status-badge--${connStatus}`}>
                 {connStatus==="online"?"Online":connStatus==="syncing"?"Sincronizando":"Offline"}
               </span>
+              {baseAtual && (
+                <span style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"3px 7px",borderRadius:4,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`}}>
+                  ● {baseAtual.label}
+                </span>
+              )}
             </div>
             <div className="co-topbar__actions">
               {alertas.length > 0 && (
