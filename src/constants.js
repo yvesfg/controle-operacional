@@ -39,6 +39,14 @@ export const themes = { dark: _t, light: _t };
 //  CONSTANTS
 // ══════════════════════════════════════════════
 export const TABLE = "controle_operacional";
+
+// ── Bases operacionais — mapeia id → tabela Supabase ──────────
+// Para adicionar Belém independente: inserir entrada aqui + criar tabela no Supabase.
+export const BASES = {
+  imperatriz_belem: { id: "imperatriz_belem", label: "Imperatriz / Belém", table: "controle_operacional" },
+  maracanau:        { id: "maracanau",        label: "Maracanau",           table: "controle_operacional_maracanau" },
+};
+
 export const TABLE_USUARIOS = "co_usuarios";
 export const TABLE_CONFIG   = "co_config";
 export const TABLE_OCORR    = "co_ocorrencias";
