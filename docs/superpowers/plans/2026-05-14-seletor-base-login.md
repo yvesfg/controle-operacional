@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Adicionar seletor de base operacional (Imperatriz/Belém vs Maracanã) na tela de login, com permissões por usuário controladas pelo admin.
+**Goal:** Adicionar seletor de base operacional (Imperatriz/Belém vs Maracanau) na tela de login, com permissões por usuário controladas pelo admin.
 
 **Architecture:** Objeto `BASES` em `constants.js` mapeia id→tabela. Estado `baseAtual` em `App.jsx` guarda a base ativa; um `useRef` expõe o valor atual para dentro de callbacks sem alterar deps arrays. Após auth, o app carrega `bases_permitidas` do usuário e exibe o seletor se necessário. `AdminView` recebe `baseAtual` via ctx para filtrar status de sync e permitir edição de bases por usuário.
 
@@ -49,7 +49,7 @@ export const TABLE = "controle_operacional";
 // Para adicionar Belém independente: inserir entrada aqui + criar tabela no Supabase.
 export const BASES = {
   imperatriz_belem: { id: "imperatriz_belem", label: "Imperatriz / Belém", table: "controle_operacional" },
-  maracanau:        { id: "maracanau",        label: "Maracanã",            table: "controle_operacional_maracanau" },
+  maracanau:        { id: "maracanau",        label: "Maracanau",           table: "controle_operacional_maracanau" },
 };
 ```
 
