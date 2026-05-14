@@ -610,6 +610,16 @@ export default function App() {
             setUsuarioLogado(u.nome || u.email);
             saveJSON("co_sessao", {perfil:p, perms:pm, nome:u.nome||u.email, ts:Date.now()});
             showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
+            // Carregar bases permitidas do usuario OAuth
+            const _idsOAuth = Array.isArray(u.bases_permitidas) ? u.bases_permitidas
+              : (typeof u.bases_permitidas === "string" ? JSON.parse(u.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]);
+            const _basesOAuth = _idsOAuth.map(id => BASES[id]).filter(Boolean);
+            const _permitidasOAuth = _basesOAuth.length ? _basesOAuth : [BASES.imperatriz_belem];
+            setBasesPermitidas(_permitidasOAuth);
+            const _savedOAuth = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
+            if (!_savedOAuth || !_permitidasOAuth.find(b => b.id === _savedOAuth.id)) {
+              setBaseAtual(_permitidasOAuth.length === 1 ? _permitidasOAuth[0] : null);
+            }
           } else {
             // Usuário novo — registrar como pendente de aprovação
             const info = {email: emailOAuth, nome: nomeOAuth};
@@ -951,6 +961,13 @@ export default function App() {
         saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin",ts:Date.now()});
         registrarLog("LOGIN", `Admin logou no sistema (admin) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
         setAuthSenha(""); setAuthEmail("");
+        // Admin tem acesso a todas as bases
+        const _todasAdmin = Object.values(BASES);
+        setBasesPermitidas(_todasAdmin);
+        const _savedAdm = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
+        if (!_savedAdm || !_todasAdmin.find(b => b.id === _savedAdm.id)) {
+          setBaseAtual(_todasAdmin.length === 1 ? _todasAdmin[0] : null);
+        }
       } else {
         setAuthMsg({t:"err",m:"❌ Senha incorreta"});
         setAuthSenha("");
@@ -1000,6 +1017,16 @@ export default function App() {
       saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email,ts:Date.now()});
       registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
+      // Carregar bases permitidas do usuario
+      const _idsUsr = Array.isArray(found.bases_permitidas) ? found.bases_permitidas
+        : (typeof found.bases_permitidas === "string" ? JSON.parse(found.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]);
+      const _basesUsr = _idsUsr.map(id => BASES[id]).filter(Boolean);
+      const _permitidasUsr = _basesUsr.length ? _basesUsr : [BASES.imperatriz_belem];
+      setBasesPermitidas(_permitidasUsr);
+      const _savedUsr = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
+      if (!_savedUsr || !_permitidasUsr.find(b => b.id === _savedUsr.id)) {
+        setBaseAtual(_permitidasUsr.length === 1 ? _permitidasUsr[0] : null);
+      }
     } else {
       // Checar se existe na lista local para dar mensagem correta
       const emailExiste = usuarios.some(u => (u.email||"").toLowerCase() === login);
