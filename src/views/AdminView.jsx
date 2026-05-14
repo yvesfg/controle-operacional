@@ -1,6 +1,6 @@
 import React from "react";
 import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
-import { TABLE_USUARIOS, PERMS_PADRAO } from '../constants.js';
+import { TABLE_USUARIOS, PERMS_PADRAO, BASES as BASES_CONST } from '../constants.js';
 import { saveJSON, loadJSON } from '../utils.js';
 
 export default function AdminView({ ctx }) {
@@ -208,7 +208,8 @@ export default function AdminView({ ctx }) {
               const next=!gsheetsOpen; setGsheetsOpen(next);
               if(next&&!syncStatus){
                 setSyncStatusLoading(true);
-                const v=await getConfigRemoto("gsheet_sync_status");
+                const _syncKey = `gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`;
+                const v=await getConfigRemoto(_syncKey);
                 setSyncStatus(v?JSON.parse(v):null);
                 setSyncStatusLoading(false);
               }
@@ -223,7 +224,7 @@ export default function AdminView({ ctx }) {
                 <div style={{...css.card,padding:12,borderLeft:`3px solid ${syncStatus?(syncStatus.ok?t.verde:(syncStatus.erros_http>0?t.danger:t.ouro)):t.borda}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{fontSize:11,fontWeight:700,color:t.txt}}>📡 Última Sincronização</div>
-                    <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto("gsheet_sync_status");setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading?"⏳":"↺ Atualizar"}</button>
+                    <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto(`gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`);setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading?"⏳":"↺ Atualizar"}</button>
                   </div>
                   {syncStatusLoading && <div style={{fontSize:10,color:t.txt2}}>Buscando status...</div>}
                   {!syncStatusLoading && !syncStatus && (
