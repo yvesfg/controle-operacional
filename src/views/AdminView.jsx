@@ -149,19 +149,42 @@ export default function AdminView({ ctx }) {
                         <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.nome||u.email}</div>
                         <div style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>📧 {u.email}</div>
                       </div>
-                      <select value={u.perfil||"visualizador"} onChange={async e=>{
-                        const np=e.target.value;const pm={...PERMS_PADRAO[np]||PERMS_PADRAO.visualizador};
-                        const nu=[...usuarios];nu[i]={...nu[i],perfil:np,perms:pm};
-                        setUsuarios(nu);saveJSON("co_usuarios_local",nu);
-                        const conn=getConexao();
-                        if(conn)await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{perfil:np,perms:JSON.stringify(pm)}).catch(()=>{});
-                        showToast(`✅ ${u.nome||u.email} → ${np}`,"ok");
-                      }} style={{background:t.card2,border:`1px solid ${t.borda2||t.borda}`,borderRadius:6,padding:"4px 8px",fontSize:10,color:t.ouro,fontWeight:700,cursor:"pointer",fontFamily:"inherit",flexShrink:0}}>
-                        <option value="visualizador">Visualizador</option>
-                        <option value="operador">Operador</option>
-                        <option value="gerente">Gerente</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                      <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
+                        <select value={u.perfil||"visualizador"} onChange={async e=>{
+                          const np=e.target.value;const pm={...PERMS_PADRAO[np]||PERMS_PADRAO.visualizador};
+                          const nu=[...usuarios];nu[i]={...nu[i],perfil:np,perms:pm};
+                          setUsuarios(nu);saveJSON("co_usuarios_local",nu);
+                          const conn=getConexao();
+                          if(conn)await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{perfil:np,perms:JSON.stringify(pm)}).catch(()=>{});
+                          showToast(`✅ ${u.nome||u.email} → ${np}`,"ok");
+                        }} style={{background:t.card2,border:`1px solid ${t.borda2||t.borda}`,borderRadius:6,padding:"4px 8px",fontSize:10,color:t.ouro,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+                          <option value="visualizador">Visualizador</option>
+                          <option value="operador">Operador</option>
+                          <option value="gerente">Gerente</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                          {Object.values(ctx.BASES || BASES_CONST).map(base => {
+                            const ids = Array.isArray(u.bases_permitidas) ? u.bases_permitidas
+                              : (typeof u.bases_permitidas === "string" ? JSON.parse(u.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]);
+                            const checked = ids.includes(base.id);
+                            return (
+                              <label key={base.id} style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:t.txt2,cursor:"pointer",userSelect:"none"}}>
+                                <input type="checkbox" checked={checked} onChange={async()=>{
+                                  const newIds = checked ? ids.filter(x=>x!==base.id) : [...ids, base.id];
+                                  if (!newIds.length) { showToast("⚠️ Ao menos uma base é necessária","warn"); return; }
+                                  const nu=[...usuarios]; nu[i]={...nu[i],bases_permitidas:newIds};
+                                  setUsuarios(nu); saveJSON("co_usuarios_local",nu);
+                                  const conn=getConexao();
+                                  if(conn) await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{bases_permitidas:JSON.stringify(newIds)}).catch(()=>{});
+                                  showToast(`✅ Bases de ${u.nome||u.email} atualizadas`,"ok");
+                                }} style={{accentColor:t.ouro,cursor:"pointer"}} />
+                                {base.label}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                       <button onClick={()=>{if(confirm(`Revogar acesso de "${u.nome||u.email}"?`)){const nu=[...usuarios];nu.splice(i,1);setUsuarios(nu);saveJSON("co_usuarios_local",nu);const conn=getConexao();if(conn)supaFetch(conn.url,conn.key,"DELETE",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`).catch(()=>{});showToast("🚫 Acesso revogado");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                         {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.danger,12)}
                       </button>
