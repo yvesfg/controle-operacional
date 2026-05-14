@@ -3138,7 +3138,7 @@ export default function App() {
               if(isAdmin){setActiveTab("admin");if(!isWide)setMobileSidebarExpanded(false);}
               else{setModalOpen("usuario");}
             }}>
-              <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"#fff",fontFamily:"var(--font-heading)",letterSpacing:"-0.01em"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:12,fontWeight:700,color:"#fff",fontFamily:"var(--font-heading)",letterSpacing:"-0.01em"}}>
                 {(usuarioLogado||"YF").slice(0,2).toUpperCase()}
               </div>
               <div className="co-sidebar__user-info" style={{flex:1,minWidth:0}}>
@@ -3146,7 +3146,7 @@ export default function App() {
                 <div className="co-sidebar__user-role">{perfil}</div>
               </div>
               <button
-                className="co-sidebar__logout-btn"
+                className="co-sidebar__user-info"
                 onClick={e=>{e.stopPropagation();handleLogout();}}
                 title="Sair"
                 style={{background:"transparent",border:"none",cursor:"pointer",padding:4,borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",opacity:.6}}
