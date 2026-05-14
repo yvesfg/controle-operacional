@@ -35,8 +35,7 @@ export default function ModalBusca({ ctx }) {
                    animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
         {/* Header */}
         <div style={{padding:"14px 20px",borderBottom:`1px solid ${t.borda}`,display:"flex",
-                     alignItems:"center",gap:10,position:"sticky",top:48,background:t.card,
-                     zIndex:1,borderRadius:"20px 20px 0 0"}}>
+                     alignItems:"center",gap:10,borderRadius:"20px 20px 0 0"}}>
           {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.ouro,16,2)}
           <span style={{fontFamily:"var(--font-heading)",fontWeight:700,fontSize:15,color:t.txt}}>Buscar Registro</span>
           <kbd style={{marginLeft:"auto",fontSize:9,padding:"2px 6px",borderRadius:4,
@@ -51,12 +50,8 @@ export default function ModalBusca({ ctx }) {
           </button>
         </div>
         {/* Body */}
-        <div style={{padding:"16px 20px 20px",maxHeight:"calc(100vh - 180px)",overflowY:"auto"}}>
-            <div style={{...css.secTitle,marginBottom:12}}>
-              {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13,2)} Buscar Registro
-              <span style={{flex:1,height:1,background:t.borda,marginLeft:4}}/>
-            </div>
-            <div style={{display:"flex",gap:6,marginBottom:10,justifyContent:"center"}}>
+        <div style={{padding:"20px 20px 20px",maxHeight:"calc(100vh - 180px)",overflowY:"auto"}}>
+            <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
               {[
                 {k:"dt",    ico:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>,    l:"DT"},
                 {k:"cpf",   ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,                  l:"CPF"},
