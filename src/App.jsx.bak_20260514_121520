@@ -92,9 +92,6 @@ export default function App() {
   // Ref sempre atualizado — usado em callbacks (useCallback) sem precisar alterar dep arrays
   const tblRef = useRef(BASES.imperatriz_belem.table);
   useEffect(() => { tblRef.current = baseAtual?.table ?? BASES.imperatriz_belem.table; }, [baseAtual]);
-  // Re-sincroniza ao trocar de base (ex: selecionar Maracanau após login)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (authed && baseAtual) sincronizar(); }, [baseAtual]);
 
   // Data state
   const [dadosBase, setDadosBase] = useState([]);
