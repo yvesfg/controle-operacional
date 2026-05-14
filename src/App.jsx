@@ -78,6 +78,21 @@ export default function App() {
   const [aprovarModal, setAprovarModal] = useState(null); // usuário pendente a ser aprovado
   const [aprovarPerfil, setAprovarPerfil] = useState("operador");
 
+  // ── Base operacional ──────────────────────────────────────────
+  const [baseAtual, setBaseAtualState] = useState(() => {
+    try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; }
+  });
+  const [basesPermitidas, setBasesPermitidas] = useState([]);
+  // Helper: persiste no localStorage ao mesmo tempo que seta o estado
+  const setBaseAtual = (base) => {
+    if (base) localStorage.setItem("co_base_atual", JSON.stringify(base));
+    else localStorage.removeItem("co_base_atual");
+    setBaseAtualState(base);
+  };
+  // Ref sempre atualizado — usado em callbacks (useCallback) sem precisar alterar dep arrays
+  const tblRef = useRef(BASES.imperatriz_belem.table);
+  useEffect(() => { tblRef.current = baseAtual?.table ?? BASES.imperatriz_belem.table; }, [baseAtual]);
+
   // Data state
   const [dadosBase, setDadosBase] = useState([]);
   const [dadosExtras, setDadosExtras] = useState(() => loadJSON("dados_extras",[]));
