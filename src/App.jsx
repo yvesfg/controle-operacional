@@ -455,7 +455,7 @@ export default function App() {
       let offset = 0;
       const limit = 1000;
       while (true) {
-        const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE}?select=*&order=id.asc&limit=${limit}&offset=${offset}`);
+        const data = await supaFetch(conn.url, conn.key, "GET", `${tblRef.current}?select=*&order=id.asc&limit=${limit}&offset=${offset}`);
         if (!Array.isArray(data) || !data.length) break;
         all = [...all, ...data];
         if (data.length < limit) break;
@@ -1539,13 +1539,13 @@ export default function App() {
     // Converte strings vazias para null — evita erro 22P02 em campos numéricos do Postgres
     for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
     try {
-      await supaFetch(conn.url, conn.key, "POST", TABLE, [clean]);
+      await supaFetch(conn.url, conn.key, "POST", tblRef.current, [clean]);
     } catch(e) {
       // PGRST204: coluna não existe no schema cache → tenta novamente só com colunas conhecidas
       if (e.message && (e.message.includes("PGRST204") || e.message.includes("column") || e.message.includes("schema cache") || e.message.includes("400"))) {
         const safeClean = {};
         for (const k of SUPA_KNOWN_COLS) { if (clean[k] !== undefined) safeClean[k] = clean[k]; }
-        await supaFetch(conn.url, conn.key, "POST", TABLE, [safeClean]);
+        await supaFetch(conn.url, conn.key, "POST", tblRef.current, [safeClean]);
       } else {
         throw e;
       }
@@ -1610,7 +1610,7 @@ export default function App() {
     const conn = getConexao();
     if (conn) {
       try {
-        await supaFetch(conn.url, conn.key, "DELETE", `${TABLE}?dt=eq.${encodeURIComponent(dt)}`);
+        await supaFetch(conn.url, conn.key, "DELETE", `${tblRef.current}?dt=eq.${encodeURIComponent(dt)}`);
         await registrarLog("EXCLUIR_REGISTRO", `DT ${dt} excluido`);
         showToast("🗑️ Registro excluído!", "ok");
       } catch(e) { showToast("⚠️ Excluído local. Sync: "+e.message, "warn"); }
@@ -1633,7 +1633,7 @@ export default function App() {
         mat_comp:  detalheCteComp.mat||null,
         minutas_dsc: JSON.stringify(detalheMinDsc),
       };
-      await supaFetch(conn.url, conn.key, "PATCH", `${TABLE}?dt=eq.${encodeURIComponent(detalheDT.dt)}`, payload);
+      await supaFetch(conn.url, conn.key, "PATCH", `${tblRef.current}?dt=eq.${encodeURIComponent(detalheDT.dt)}`, payload);
       const updated = {...detalheDT, ...payload};
       setDetalheDT(updated);
       setDadosBase(prev => prev.map(r => r.dt === detalheDT.dt ? {...r, ...payload} : r));
