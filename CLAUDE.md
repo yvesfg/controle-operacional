@@ -1,11 +1,3 @@
-# CLAUDE.md
-
-Instruções para o Claude neste projeto. Seguir sempre — sem exceção.
-
----
-
-## Regras do Projeto
-## Design System
 This project uses a design system defined in `design.md`.
 Always refer to this file for styling, colors, and spacing.
 
