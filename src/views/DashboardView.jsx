@@ -182,14 +182,24 @@ export default function DashboardView({ ctx }) {
               ):topMot.map(([nome,{ct,placa}],i)=>{
                 const initials=(nome||"?").split(" ").filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
                 const pct=Math.round(ct/maxMot*100);
-                const partes=(nome||"").split(" ").filter(Boolean);
-                const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
+                const nomeCompleto=(nome||"").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+                const handleClickMot=()=>{
+                  const registros=dashData.filtrado.filter(r=>r.nome===nome);
+                  if(!registros.length)return;
+                  const ultimo=registros.reduce((a,b)=>{
+                    const da=a.data_carr||a.data_desc||"";
+                    const db=b.data_carr||b.data_desc||"";
+                    return db>da?b:a;
+                  });
+                  setDetalheDT(ultimo);
+                  setModalOpen("detalhe");
+                };
                 return (
-                  <div key={nome} style={{marginBottom:i<topMot.length-1?14:0}}>
+                  <div key={nome} onClick={handleClickMot} style={{marginBottom:i<topMot.length-1?14:0,cursor:"pointer",borderRadius:8,padding:"6px 6px 8px",margin:`0 -6px ${i<topMot.length-1?14:0}px`,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
                       <div style={{width:32,height:32,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</div>
+                        <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeCompleto}</div>
                         {placa&&<div style={{fontSize:8,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.5,marginTop:1}}>{placa}</div>}
                       </div>
                       <span style={{fontFamily:"var(--font-mono)",fontSize:13,fontWeight:600,color:t.txt,fontVariantNumeric:"tabular-nums",flexShrink:0}}>{ct}</span>
