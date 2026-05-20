@@ -113,21 +113,6 @@ function sincronizarComSupabase() {
           continue;
         }
 
-        // Normaliza origem (ex: "IMPERATRIZ - MA" → "IMPERATRIZ-MA")
-        if (reg.origem) {
-          reg.origem = reg.origem.replace(/\s*-\s*/g, '-').trim().toUpperCase();
-        }
-
-        // Valida origem — bloqueia valores fora do padrão
-        var ORIGENS_VALIDAS = ['IMPERATRIZ-MA', 'BELEM-PA'];
-        if (reg.origem && ORIGENS_VALIDAS.indexOf(reg.origem) === -1) {
-          statusGlobal.ignorados++;
-          if (statusGlobal.motivos_ignorados.length < 20) {
-            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': origem invalida "' + reg.origem + '" — esperado: IMPERATRIZ-MA ou BELEM-PA');
-          }
-          continue;
-        }
-
         registros.push(reg);
       }
 

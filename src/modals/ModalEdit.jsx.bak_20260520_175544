@@ -39,7 +39,7 @@ function ModalEditComponent({ ctx }) {
       {k:"vinculo",   l:"Vínculo", type:"select_opts", opts:["TERCEIRO","FROTA","AGREGADO"]},
     ]},
     {s:"Rota", ico:icoRota, fields:[
-      {k:"origem",    l:"Origem", type:"select_opts", opts:["IMPERATRIZ-MA","BELEM-PA"]},
+      {k:"origem",    l:"Origem"},
       {k:"destino",   l:"Destino"},
     ]},
     {s:"Documentação", ico:icoDocs, fields:[
