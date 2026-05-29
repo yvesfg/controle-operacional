@@ -119,7 +119,7 @@ function sincronizarComSupabase() {
         }
 
         // Valida origem — bloqueia valores fora do padrão
-        var ORIGENS_VALIDAS = ['IMPERATRIZ-MA', 'BELEM-PA', 'AÇAILÂNDIA-MA', 'ACAILANDIA-MA'];
+        var ORIGENS_VALIDAS = ['IMPERATRIZ-MA', 'BELEM-PA'];
         if (reg.origem && ORIGENS_VALIDAS.indexOf(reg.origem) === -1) {
           statusGlobal.ignorados++;
           if (statusGlobal.motivos_ignorados.length < 20) {
@@ -364,9 +364,6 @@ function mapearColuna(n) {
     'alguma ocorrencia / sgs': 'sgs',
     'alguma ocorrência / sgs': 'sgs',
     'alguma ocorrencia': 'sgs',
-
-    // ── Contratante (AVB) ──
-    'contratante': 'contratante',
 
     // ── Operacional ──
     'chegada': 'chegada', 'chegada no cliente': 'chegada',

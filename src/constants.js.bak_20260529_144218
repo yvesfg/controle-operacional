@@ -45,9 +45,6 @@ export const TABLE = "controle_operacional";
 export const BASES = {
   imperatriz_belem: { id: "imperatriz_belem", label: "Imperatriz / Belém", table: "controle_operacional" },
   maracanau:        { id: "maracanau",        label: "Maracanau",           table: "controle_operacional_maracanau" },
-  acailandia_avb:   { id: "acailandia_avb",   label: "Açailândia - AVB",    table: "controle_operacional_avb",
-                      noDiarias: true, hasContratante: true, origemPadrao: "AÇAILÂNDIA-MA",
-                      agendaKmDia: 500 },
 };
 
 export const TABLE_USUARIOS = "co_usuarios";
@@ -135,17 +132,6 @@ export const hexRgb = (colorOrVar, a) => {
 };
 
 export const DEV_CHANGELOG = [
-  {
-    data: "2026-05-29", sessao: "Sessão 20",
-    itens: [
-      "FEAT · Nova Base Açailândia - AVB: adicionada ao seletor de bases pós-login; tabela Supabase 'controle_operacional_avb'; permissão por usuário via co_usuarios.bases_permitidas.",
-      "FEAT · Diárias ocultadas para AVB: aba 'Diárias' removida da navegação quando a base selecionada é Açailândia (noDiarias:true na config da base).",
-      "FEAT · Campo Contratante: mapeado no Apps Script AVB e adicionado ao fieldCatalog; campo contratante exibível na Planilha.",
-      "FEAT · Dashboard Por Contratante (AVB): widget com ranking de viagens por contratante + barra de progresso; visível apenas na base AVB (hasContratante:true).",
-      "FEAT · Agenda auto-calculada (AVB): SyncSupabase_AVB.gs calcula data_agenda com base em distância Açailândia → destino a 500 km/dia; tabela de distâncias cobre principais destinos.",
-      "FEAT · SyncSupabase_AVB.gs: script Apps Script dedicado para a planilha AVB; origem fixada como AÇAILÂNDIA-MA; cálculo de agenda; lotes de 50; status gravado em co_config (chave gsheet_sync_status_avb).",
-    ],
-  },
   {
     data: "2026-05-13", sessao: "Sessão 19",
     itens: [
