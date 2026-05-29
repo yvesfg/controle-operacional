@@ -82,6 +82,8 @@ export default function App() {
   const [baseAtual, setBaseAtualState] = useState(() => {
     try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; }
   });
+  // Session token — mantido SÓ em memória (M2/M3: nunca persiste em localStorage)
+  const [sessionToken, setSessionToken] = useState(null);
   const [basesPermitidas, setBasesPermitidas] = useState([]);
   // Helper: persiste no localStorage ao mesmo tempo que seta o estado
   const setBaseAtual = (base) => {
@@ -634,6 +636,12 @@ export default function App() {
             const _permitidasOAuth = _basesOAuth.length ? _basesOAuth : [BASES.imperatriz_belem];
             setBasesPermitidas(_permitidasOAuth);
             setBaseAtual(_permitidasOAuth.length === 1 ? _permitidasOAuth[0] : null);
+            // Gera session token server-side para proteger escritas (M2/M3)
+            if (ENV_SUPA_URL && ENV_SUPA_KEY) {
+              supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "POST", "rpc/gerar_token_sessao", {p_email: u.email})
+                .then(tok => { if (typeof tok === "string") setSessionToken(tok); })
+                .catch(() => {});
+            }
           } else {
             // Usuário novo — registrar como pendente de aprovação
             const info = {email: emailOAuth, nome: nomeOAuth};
@@ -1022,6 +1030,8 @@ export default function App() {
       const pm = found.perms || {...PERMS_PADRAO[p]};
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado(found.nome || found.email);
+      // Salva session_token em memória (nunca em localStorage)
+      if (found.session_token) setSessionToken(found.session_token);
       saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now()});
       registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
@@ -1042,6 +1052,12 @@ export default function App() {
 
   const handleLogout = () => {
     registrarLog("LOGOUT", `${usuarioLogado||perfil||"usuário"} saiu do sistema · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
+    // Invalida token server-side (M2/M3)
+    const conn = getConexao();
+    if (conn && sessionToken) {
+      supaFetch(conn.url, conn.key, "POST", "rpc/logout_usuario", {p_token: sessionToken}).catch(()=>{});
+    }
+    setSessionToken(null);
     localStorage.removeItem("co_sessao");
     setAuthed(false); setPerfil(null); setPerms({});
     setActiveTab("dashboard"); setAuthSenha(""); setAuthEmail("");
@@ -1568,22 +1584,16 @@ export default function App() {
   const supaUpsert = async (reg) => {
     const conn = getConexao();
     if (!conn) throw new Error("Sem conexão");
+    if (!sessionToken) throw new Error("Sessão não autenticada");
     const clean = {...reg}; delete clean._override; delete clean._overrideDT;
     if (!clean.dt) throw new Error("DT obrigatório");
-    // Converte strings vazias para null — evita erro 22P02 em campos numéricos do Postgres
     for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
-    try {
-      await supaFetch(conn.url, conn.key, "POST", tblRef.current, [clean]);
-    } catch(e) {
-      // PGRST204: coluna não existe no schema cache → tenta novamente só com colunas conhecidas
-      if (e.message && (e.message.includes("PGRST204") || e.message.includes("column") || e.message.includes("schema cache") || e.message.includes("400"))) {
-        const safeClean = {};
-        for (const k of SUPA_KNOWN_COLS) { if (clean[k] !== undefined) safeClean[k] = clean[k]; }
-        await supaFetch(conn.url, conn.key, "POST", tblRef.current, [safeClean]);
-      } else {
-        throw e;
-      }
-    }
+    // M2/M3: escrita via RPC que valida token + base no servidor
+    await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional", {
+      p_token: sessionToken,
+      p_base:  baseAtual?.id ?? "imperatriz_belem",
+      p_dados: clean,
+    });
   };
 
   // Save record
@@ -1644,7 +1654,12 @@ export default function App() {
     const conn = getConexao();
     if (conn) {
       try {
-        await supaFetch(conn.url, conn.key, "DELETE", `${tblRef.current}?dt=eq.${encodeURIComponent(dt)}`);
+        // M2/M3: deleção via RPC que valida token + base no servidor
+        await supaFetch(conn.url, conn.key, "POST", "rpc/delete_operacional", {
+          p_token: sessionToken,
+          p_base:  baseAtual?.id ?? "imperatriz_belem",
+          p_dt:    dt,
+        });
         await registrarLog("EXCLUIR_REGISTRO", `DT ${dt} excluido`);
         showToast("🗑️ Registro excluído!", "ok");
       } catch(e) { showToast("⚠️ Excluído local. Sync: "+e.message, "warn"); }
@@ -1667,7 +1682,13 @@ export default function App() {
         mat_comp:  detalheCteComp.mat||null,
         minutas_dsc: JSON.stringify(detalheMinDsc),
       };
-      await supaFetch(conn.url, conn.key, "PATCH", `${tblRef.current}?dt=eq.${encodeURIComponent(detalheDT.dt)}`, payload);
+      // M2/M3: patch via RPC que valida token + base no servidor
+      await supaFetch(conn.url, conn.key, "POST", "rpc/patch_operacional", {
+        p_token: sessionToken,
+        p_base:  baseAtual?.id ?? "imperatriz_belem",
+        p_dt:    detalheDT.dt,
+        p_dados: payload,
+      });
       const updated = {...detalheDT, ...payload};
       setDetalheDT(updated);
       setDadosBase(prev => prev.map(r => r.dt === detalheDT.dt ? {...r, ...payload} : r));
