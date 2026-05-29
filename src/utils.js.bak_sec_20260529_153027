@@ -38,7 +38,7 @@ export function inputToBrDT(v) {
 export function dtBase(dt) { return dt ? dt.replace(/[.\-\/\s]/g,"") : ""; }
 export function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 export async function hashSenha(s) {
-  const e = new TextEncoder().encode(s); const h = await crypto.subtle.digest("SHA-256",e); return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  try { const e = new TextEncoder().encode(s); const h = await crypto.subtle.digest("SHA-256",e); return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join(""); } catch { return s; }
 }
 export async function verificarSenha(plain, stored) {
   if (plain === stored) return true;

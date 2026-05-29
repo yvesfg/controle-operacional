@@ -490,7 +490,7 @@ export default function App() {
         localStorage.removeItem("co_sessao");
       } else {
         setPerfil(s.perfil);
-        setPerms(PERMS_PADRAO[s.perfil] || {});
+        setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
         setUsuarioLogado(s.nome || s.perfil);
         setAuthed(true);
         return; // sessão válida — não verifica pendentes
@@ -595,7 +595,7 @@ export default function App() {
       const p = "admin"; const pm = {...PERMS_PADRAO.admin};
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado(nomeOAuth);
-      saveJSON("co_sessao", {perfil:p, nome:nomeOAuth, ts:Date.now()});
+      saveJSON("co_sessao", {perfil:p, perms:pm, nome:nomeOAuth, ts:Date.now()});
       showToast(`✅ Login social realizado — bem-vindo, ${nomeOAuth}!`, "ok");
       // Admin OAuth: acesso a todas as bases
       const _todasOAdm = Object.values(BASES);
@@ -604,11 +604,10 @@ export default function App() {
       return;
     }
 
-    // Busca usuário no Supabase via RPC (senha nunca trafega para o cliente)
+    // Busca usuário no Supabase (sincronização real)
     if (ENV_SUPA_URL && ENV_SUPA_KEY) {
-      supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "POST",
-        `rpc/buscar_usuario_por_email`,
-        {p_email: payload.email})
+      supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "GET",
+        `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(payload.email)}&select=*&limit=1`)
         .then(async data => {
           if (Array.isArray(data) && data.length > 0) {
             const u = data[0];
@@ -625,7 +624,7 @@ export default function App() {
             const pm = typeof u.perms === "string" ? JSON.parse(u.perms) : (u.perms || {...PERMS_PADRAO[p]});
             setPerfil(p); setPerms(pm); setAuthed(true);
             setUsuarioLogado(u.nome || u.email);
-            saveJSON("co_sessao", {perfil:p, nome:u.nome||u.email, ts:Date.now()});
+            saveJSON("co_sessao", {perfil:p, perms:pm, nome:u.nome||u.email, ts:Date.now()});
             showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
             // Carregar bases permitidas do usuario OAuth
             const _idsOAuth = Array.isArray(u.bases_permitidas) ? u.bases_permitidas
@@ -811,7 +810,7 @@ export default function App() {
         const aprovados = data.filter(u => !u.status || u.status === "aprovado");
         const pendentes = data.filter(u => u.status === "pendente");
         setUsuarios(aprovados);
-        saveJSON("co_usuarios_local", aprovados.map(({senha:_s,...r})=>r));
+        saveJSON("co_usuarios_local", aprovados);
         setUsuariosPendentes(pendentes);
       }
     } catch { /* silencioso */ }
@@ -955,6 +954,7 @@ export default function App() {
       if (conn) {
         try {
           storedHash = await getConfigRemoto("admin_senha_hash");
+          if (storedHash) saveJSON("co_admin_senha", storedHash); // espelha localmente
         } catch { /* fallback local */ }
       }
       if (!storedHash) storedHash = loadJSON("co_admin_senha", null);
@@ -971,7 +971,7 @@ export default function App() {
         const pm = {...PERMS_PADRAO.admin};
         setPerfil(p); setPerms(pm); setAuthed(true);
         setUsuarioLogado("Admin");
-        saveJSON("co_sessao",{perfil:p,nome:"Admin",ts:Date.now()});
+        saveJSON("co_sessao",{perfil:p,perms:pm,nome:"Admin",ts:Date.now()});
         registrarLog("LOGIN", `Admin logou no sistema (admin) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
         setAuthSenha(""); setAuthEmail("");
         // Admin tem acesso a todas as bases
@@ -990,18 +990,20 @@ export default function App() {
     const conn2 = getConexao();
     if (conn2) {
       try {
-        // RPC: hash calculado aqui, verificação feita no servidor — senha nunca retorna ao cliente
-        const hashInformado = await hashSenha(authSenha);
-        const remote = await supaFetch(conn2.url, conn2.key, "POST",
-          `rpc/autenticar_usuario`,
-          {p_email: authEmail.trim().toLowerCase(), p_hash: hashInformado});
+        const remote = await supaFetch(conn2.url, conn2.key, "GET",
+          `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(authEmail.trim())}&select=*&limit=1`);
         if (Array.isArray(remote) && remote.length > 0) {
-          found = remote[0];
-          // Atualiza cache local (sem senha, RPC já não retorna esse campo)
-          const cacheAtual = loadJSON("co_usuarios_local", []);
-          const cacheAtualizado = [...cacheAtual.filter(x => x.email !== found.email), found];
-          saveJSON("co_usuarios_local", cacheAtualizado);
-          setUsuarios(cacheAtualizado);
+          const u = remote[0];
+          let m = false;
+          try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
+          if (m) found = u;
+          // Atualiza cache local com dados frescos do Supabase
+          if (found) {
+            const cacheAtual = loadJSON("co_usuarios_local", []);
+            const cacheAtualizado = [...cacheAtual.filter(x => x.email !== u.email), u];
+            saveJSON("co_usuarios_local", cacheAtualizado);
+            setUsuarios(cacheAtualizado);
+          }
         }
       } catch { /* fallback lista local */ }
     }
@@ -1022,7 +1024,7 @@ export default function App() {
       const pm = found.perms || {...PERMS_PADRAO[p]};
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado(found.nome || found.email);
-      saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now()});
+      saveJSON("co_sessao",{perfil:p,perms:pm,nome:found.nome||found.email,ts:Date.now()});
       registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
       // Carregar bases permitidas do usuario
@@ -1601,18 +1603,18 @@ export default function App() {
         const filtered = newExtras.filter(x => x._overrideDT !== reg._overrideDT);
         filtered.push(reg);
         setDadosExtras(filtered);
-        saveJSON("dados_extras", filtered.map(({cpf:_c1,...r})=>r));
+        saveJSON("dados_extras", filtered);
       } else {
         newExtras[editIdx - dadosBase.length] = reg;
         setDadosExtras(newExtras);
-        saveJSON("dados_extras", newExtras.map(({cpf:_c2,...r})=>r));
+        saveJSON("dados_extras", newExtras);
       }
     } else {
       // Novo registro: registra data/hora de criação
       if (!reg.data_criacao) reg.data_criacao = new Date().toISOString();
       newExtras.push(reg);
       setDadosExtras(newExtras);
-      saveJSON("dados_extras", newExtras.map(({cpf:_c3,...r})=>r));
+      saveJSON("dados_extras", newExtras);
     }
 
     // Supabase sync
@@ -1639,7 +1641,7 @@ export default function App() {
   const deletarRegistro = async (dt) => {
     const newExtras = dadosExtras.filter(x => x._overrideDT !== dt && x.dt !== dt);
     setDadosExtras(newExtras);
-    saveJSON("dados_extras", newExtras.map(({cpf:_c4,...r})=>r));
+    saveJSON("dados_extras", newExtras);
     setDadosBase(prev => prev.filter(r => r.dt !== dt));
     const conn = getConexao();
     if (conn) {
@@ -1847,7 +1849,7 @@ export default function App() {
                   setUsuarioLogado(u.nome||u.email);
                   setAguardandoAprovacao(false);
                   localStorage.removeItem("co_pending_user");
-                  saveJSON("co_sessao",{perfil:p,nome:u.nome||u.email,ts:Date.now()});
+                  saveJSON("co_sessao",{perfil:p,perms:pm,nome:u.nome||u.email,ts:Date.now()});
                   showToast(`✅ Acesso aprovado! Bem-vindo, ${u.nome||u.email}!`,"ok");
                 } else {
                   showToast("⏳ Ainda aguardando aprovação...","warn");
