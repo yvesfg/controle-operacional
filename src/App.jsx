@@ -600,10 +600,7 @@ export default function App() {
       // Admin OAuth: acesso a todas as bases
       const _todasOAdm = Object.values(BASES);
       setBasesPermitidas(_todasOAdm);
-      const _savedOAdm = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
-      if (!_savedOAdm || !_todasOAdm.find(b => b.id === _savedOAdm.id)) {
-        setBaseAtual(_todasOAdm.length === 1 ? _todasOAdm[0] : null);
-      }
+      setBaseAtual(_todasOAdm.length === 1 ? _todasOAdm[0] : null);
       return;
     }
 
@@ -635,10 +632,7 @@ export default function App() {
             const _basesOAuth = _idsOAuth.map(id => BASES[id]).filter(Boolean);
             const _permitidasOAuth = _basesOAuth.length ? _basesOAuth : [BASES.imperatriz_belem];
             setBasesPermitidas(_permitidasOAuth);
-            const _savedOAuth = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
-            if (!_savedOAuth || !_permitidasOAuth.find(b => b.id === _savedOAuth.id)) {
-              setBaseAtual(_permitidasOAuth.length === 1 ? _permitidasOAuth[0] : null);
-            }
+            setBaseAtual(_permitidasOAuth.length === 1 ? _permitidasOAuth[0] : null);
           } else {
             // Usuário novo — registrar como pendente de aprovação
             const info = {email: emailOAuth, nome: nomeOAuth};
@@ -983,10 +977,7 @@ export default function App() {
         // Admin tem acesso a todas as bases
         const _todasAdmin = Object.values(BASES);
         setBasesPermitidas(_todasAdmin);
-        const _savedAdm = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
-        if (!_savedAdm || !_todasAdmin.find(b => b.id === _savedAdm.id)) {
-          setBaseAtual(_todasAdmin.length === 1 ? _todasAdmin[0] : null);
-        }
+        setBaseAtual(_todasAdmin.length === 1 ? _todasAdmin[0] : null);
       } else {
         setAuthMsg({t:"err",m:"❌ Senha incorreta"});
         setAuthSenha("");
@@ -1042,10 +1033,7 @@ export default function App() {
       const _basesUsr = _idsUsr.map(id => BASES[id]).filter(Boolean);
       const _permitidasUsr = _basesUsr.length ? _basesUsr : [BASES.imperatriz_belem];
       setBasesPermitidas(_permitidasUsr);
-      const _savedUsr = (() => { try { const s = localStorage.getItem("co_base_atual"); return s ? JSON.parse(s) : null; } catch { return null; } })();
-      if (!_savedUsr || !_permitidasUsr.find(b => b.id === _savedUsr.id)) {
-        setBaseAtual(_permitidasUsr.length === 1 ? _permitidasUsr[0] : null);
-      }
+      setBaseAtual(_permitidasUsr.length === 1 ? _permitidasUsr[0] : null);
     } else {
       // Checar se existe na lista local para dar mensagem correta
       const emailExiste = usuarios.some(u => (u.email||"").toLowerCase() === login);
