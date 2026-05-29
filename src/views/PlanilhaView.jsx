@@ -23,6 +23,25 @@ const COLS = [
   {h:"Status",    k:"status",      w:"11%"},
 ];
 
+// Colunas exclusivas AVB (acailandia_avb)
+const COLS_AVB = [
+  {h:"Cód.",       k:"codigo",        w:"7%"},
+  {h:"Carreg.",    k:"data_carr",     w:"8%"},
+  {h:"Contratante",k:"contratante",   w:"14%"},
+  {h:"Cliente",    k:"cliente",       w:"13%"},
+  {h:"Motorista",  k:"nome",          w:"13%"},
+  {h:"Placas",     k:"placa",         w:"9%"},
+  {h:"Origem",     k:"origem",        w:"9%"},
+  {h:"Destino",    k:"destino",       w:"9%"},
+  {h:"Status",     k:"status",        w:"7%"},
+  {h:"Gerenc.",    k:"gerenciadora",  w:"7%"},
+  {h:"Contrato",   k:"vl_contrato",   w:"8%"},
+  {h:"ADT",        k:"adiant",        w:"7%"},
+  {h:"Saldo",      k:"saldo",         w:"6%"},
+  {h:"CTE",        k:"cte",           w:"6%"},
+  {h:"MDF",        k:"mdf",           w:"6%"},
+];
+
 function toISO(d) {
   if (!d) return "";
   const s = String(d).trim();
@@ -34,8 +53,19 @@ function toISO(d) {
 
 function parseYMfilt(s) {
   if (!s) return null;
-  if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) { const p = s.split("/"); return { ano: p[2], mes: p[1] }; }
-  if (/^\d{4}-\d{2}-\d{2}/.test(s))   { const p = s.split("-"); return { ano: p[0], mes: p[1] }; }
+  const str = String(s).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(str)) { const p = str.split("/"); return { ano: p[2], mes: p[1] }; }
+  if (/^\d{4}-\d{2}-\d{2}/.test(str))   { const p = str.split("-"); return { ano: p[0], mes: p[1] }; }
+  return null;
+}
+
+// AVB: extrai ano/mes tentando varios campos de data do registro
+function parseYMfiltAvb(r) {
+  const campos = [r.data_carr, r.data_homerico, r.data_manifesto, r.data_liberacao];
+  for (const c of campos) {
+    const ym = parseYMfilt(c);
+    if (ym) return ym;
+  }
   return null;
 }
 
@@ -55,20 +85,25 @@ export default function PlanilhaView({ ctx }) {
     planilhaFiltroStatus, setPlanilhaFiltroStatus,
     t, isMobile,
     ExportMenu,
+    baseAtual,
+    planilhaFiltroContratante, setPlanilhaFiltroContratante,
+    planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
   } = ctx;
 
   // ── Filtros disponíveis ──────────────────────────────────────────────────
+  const isAvb = baseAtual?.id === "acailandia_avb";
+  const activeCols = isAvb ? COLS_AVB : COLS;
   const anosDisp = [...new Set(DADOS.map(r => {
-    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.ano;
   }).filter(Boolean))].sort((a, b) => b.localeCompare(a));
 
   const mesesDisp = [...new Set(DADOS.filter(r => {
     if (!planilhaFiltroAno) return true;
-    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.ano === planilhaFiltroAno;
   }).map(r => {
-    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.mes;
   }).filter(Boolean))].sort();
 
@@ -76,19 +111,33 @@ export default function PlanilhaView({ ctx }) {
 
   // ── Filtro e ordenação ────────────────────────────────────────────────────
   const dadosFiltrados = DADOS.filter(r => {
-    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
     if (planilhaFiltroAno   && ym?.ano !== planilhaFiltroAno)   return false;
     if (planilhaFiltroMes   && ym?.mes !== planilhaFiltroMes)   return false;
     if (planilhaFiltroOrigem && planilhaFiltroOrigem !== "todas"
         && (r.origem || "").trim() !== planilhaFiltroOrigem)    return false;
     if (planilhaFiltroDataDe && toISO(r.data_carr||r.data_agenda||"") < planilhaFiltroDataDe) return false;
     if (planilhaFiltroDataAte && toISO(r.data_carr||r.data_agenda||"") > planilhaFiltroDataAte) return false;
+    // Filtros exclusivos AVB
+    if (isAvb && planilhaFiltroContratante && (r.contratante||"").trim() !== planilhaFiltroContratante) return false;
+    if (isAvb && planilhaFiltroGerenciadora && (r.gerenciadora||"").trim() !== planilhaFiltroGerenciadora) return false;
     if (planilhaBusca) {
       const q = planilhaBusca.trim().toLowerCase();
-      const match = (r.dt||"").toLowerCase().includes(q)
+      const matchBase = (r.dt||"").toLowerCase().includes(q)
         || (r.placa||"").toLowerCase().includes(q)
         || (r.nome||"").toLowerCase().includes(q);
-      if (!match) return false;
+      // AVB: busca expandida
+      const matchAvb = isAvb && (
+        (r.codigo||"").toLowerCase().includes(q)
+        || (r.cte||"").toLowerCase().includes(q)
+        || (r.mdf||"").toLowerCase().includes(q)
+        || (r.nf||"").toLowerCase().includes(q)
+        || (r.cliente||"").toLowerCase().includes(q)
+        || (r.contratante||"").toLowerCase().includes(q)
+        || (r.gerenciadora||"").toLowerCase().includes(q)
+        || (r.placa2||"").toLowerCase().includes(q)
+      );
+      if (!matchBase && !matchAvb) return false;
     }
     if (planilhaFiltroStatus) {
       const s = (r.status||"Sem Status");
@@ -172,6 +221,26 @@ export default function PlanilhaView({ ctx }) {
           {origensDisp.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
 
+        {/* Filtros exclusivos AVB */}
+        {isAvb && (() => {
+          const contrats = [...new Set(DADOS.map(r=>(r.contratante||"").trim()).filter(Boolean))].sort();
+          const gerenc   = [...new Set(DADOS.map(r=>(r.gerenciadora||"").trim()).filter(Boolean))].sort();
+          return (<>
+            <select value={planilhaFiltroContratante||""}
+              onChange={e=>{setPlanilhaFiltroContratante(e.target.value);setPlanilhaPagina(1);}}
+              style={selectStyle(!!planilhaFiltroContratante)}>
+              <option value="">Contratante: Todos</option>
+              {contrats.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={planilhaFiltroGerenciadora||""}
+              onChange={e=>{setPlanilhaFiltroGerenciadora(e.target.value);setPlanilhaPagina(1);}}
+              style={selectStyle(!!planilhaFiltroGerenciadora)}>
+              <option value="">Gerenc.: Todas</option>
+              {gerenc.map(g=><option key={g} value={g}>{g}</option>)}
+            </select>
+          </>);
+        })()}
+
         <span style={{ fontSize:9, color:"var(--text3)", fontFamily:"var(--font-mono)", letterSpacing:"0.08em", textTransform:"uppercase", marginLeft:4 }}>De:</span>
         <input type="date" value={planilhaFiltroDataDe}
           onChange={e=>{ setPlanilhaFiltroDataDe(e.target.value); setPlanilhaPagina(1); }}
@@ -208,7 +277,7 @@ export default function PlanilhaView({ ctx }) {
           </span>
         )}
         {temFiltro && (
-          <button onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); setPlanilhaPagina(1); }}
+          <button onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); if(setPlanilhaFiltroContratante)setPlanilhaFiltroContratante(""); if(setPlanilhaFiltroGerenciadora)setPlanilhaFiltroGerenciadora(""); setPlanilhaPagina(1); }}
             style={{
               fontSize: 9, padding: "4px 8px", borderRadius: 6,
               border: "1px solid var(--border)", background: "transparent",
@@ -276,11 +345,11 @@ export default function PlanilhaView({ ctx }) {
       <div style={{ flex: 1, overflowX: "auto", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
         <table className="ds-table ds-table--compact" style={{ tableLayout: "fixed", minWidth: 480 }}>
           <colgroup>
-            {COLS.map(c => <col key={c.k} style={{ width: c.w }} />)}
+            {activeCols.map(c => <col key={c.k} style={{ width: c.w }} />)}
           </colgroup>
           <thead>
             <tr style={{ background: "var(--surface)" }}>
-              {COLS.map(c => {
+              {activeCols.map(c => {
                 const ativo = planilhaSortKey === c.k;
                 return (
                   <th key={c.k}
@@ -319,84 +388,36 @@ export default function PlanilhaView({ ctx }) {
                 onMouseOver={e => e.currentTarget.style.background = "var(--surface)"}
                 onMouseOut={e => e.currentTarget.style.background = i % 2 === 0 ? "transparent" : "var(--bg)"}
               >
-                {/* DT */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--accent)", fontWeight: 700, fontSize: 11, textAlign: "center",
-                  fontFamily: "var(--font-mono)", letterSpacing: "0.06em",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {r.dt}
-                </td>
-                {/* Motorista */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--text)", fontSize: 12,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  fontFamily: "'DM Sans', sans-serif",
-                }} title={r.nome || "—"}>
-                  {r.nome || "—"}
-                </td>
-                {/* Placa */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.06em", textAlign: "center",
-                  color: "var(--green, #22c55e)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {r.placa || "—"}
-                </td>
-                {/* Origem */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--text2)", fontSize: 10, textAlign: "center",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }} title={r.origem || "—"}>
-                  {r.origem || "—"}
-                </td>
-                {/* Destino */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--text2)", fontSize: 10,
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }} title={r.destino || "—"}>
-                  {r.destino || "—"}
-                </td>
-                {/* Carregamento */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--yellow, #eab308)", fontSize: 10, textAlign: "center",
-                  fontFamily: "var(--font-mono)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {r.data_carr || "—"}
-                </td>
-                {/* Agenda */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--text2)", fontSize: 10, textAlign: "center",
-                  fontFamily: "var(--font-mono)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {r.data_agenda || "—"}
-                </td>
-                {/* Descarga */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: r.data_desc ? "var(--green, #22c55e)" : "var(--red, #ef4444)",
-                  fontSize: 10, textAlign: "center", fontFamily: "var(--font-mono)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {r.data_desc || "—"}
-                </td>
-                {/* Status */}
-                <td style={{
-                  padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                  color: "var(--text2)", fontSize: 10, textAlign: "center",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>
-                  {r.status || "—"}
-                </td>
+                {activeCols.map(c => {
+                  let val = r[c.k];
+                  // AVB: placas agrupadas
+                  if (isAvb && c.k === "placa") val = [r.placa, r.placa2, r.placa3].filter(Boolean).join(" / ") || "—";
+                  // AVB: status badge simplificado
+                  const isStatus = c.k === "status";
+                  const isPend = isStatus && (val||"").toUpperCase() === "PENDENTE";
+                  const isCarreg = isStatus && (val||"").toUpperCase() === "CARREGADO";
+                  // AVB: flags documentais na coluna CTE/MDF
+                  const isCte = c.k === "cte", isMdf = c.k === "mdf";
+                  const hasVal = val && val !== "—" && val !== "";
+                  return (
+                    <td key={c.k} style={{
+                      padding: "7px 6px", borderBottom: "1px solid var(--border)",
+                      fontSize: c.k === "dt" ? 11 : 10, textAlign: "center",
+                      fontFamily: ["dt","codigo","placa","data_carr","data_agenda","cte","mdf","adiant","saldo","vl_contrato"].includes(c.k) ? "var(--font-mono)" : "inherit",
+                      color: c.k === "dt" ? "var(--accent)"
+                        : c.k === "placa" ? "var(--green, #22c55e)"
+                        : c.k === "data_carr" ? "var(--yellow, #eab308)"
+                        : (isCte || isMdf) ? (hasVal ? "var(--green, #22c55e)" : "var(--red, #ef4444)")
+                        : isStatus ? (isPend ? "var(--yellow, #eab308)" : isCarreg ? "var(--green, #22c55e)" : "var(--text2)")
+                        : "var(--text2)",
+                      fontWeight: c.k === "dt" ? 700 : 400,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      letterSpacing: c.k === "dt" ? "0.06em" : 0,
+                    }} title={String(val||"")}>
+                      {(isCte || isMdf) ? (hasVal ? val : "✗") : (val || "—")}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

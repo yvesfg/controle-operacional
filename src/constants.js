@@ -136,6 +136,21 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-05-29", sessao: "Sessao 21",
+    itens: [
+      "FIX · AVB Dashboard: origens dinamicas (nao mais fixadas em BELEM/IMPERATRIZ) — KPIs deixam de zerar ao selecionar AVB.",
+      "FIX · AVB Planilha: parseYMfiltAvb com fallback em data_homerico/data_manifesto — planilha abre no mes corrente.",
+      "FEAT · AVB Planilha: COLS_AVB com 15 colunas operacionais; busca expandida (codigo, cte, mdf, nf, cliente, contratante, gerenciadora); filtros Contratante e Gerenciadora na toolbar.",
+      "FEAT · AVB Dashboard: KPI strip financeiro (soma contratos, adiantamentos, saldo, ticket medio CTE excluindo PENDENTES); ranking contratante duplo (qtd + valor).",
+      "FEAT · AVB Descarga: tela renomeada para Logistica AVB com tiles Em Transito / Prev. Hoje / Pendentes / Doc. Incompleta / Fin. Pendente; cards com status documental CTE/MDF/NF e saldo.",
+      "FEAT · AVB Agenda: calcAgendaAvb cliente com tabela de distancias (30 rotas); usado como fallback quando data_agenda nao vem do script.",
+      "FEAT · AVB Alertas: flags data invalida, documentacao incompleta e codigo zero — alertas padrao de descarga/saldo ocultados no contexto AVB.",
+      "FEAT · AVB Sync: SUPA_KNOWN_COLS expandido com codigo, data_homerico, data_liberacao, gerenciadora, rdo, contrato_mat, cadastro_fortes, cte_comp_num, cte_comp_vlr.",
+      "FEAT · utils_avb.js: modulo exclusivo AVB — parseMoedaAvb, calcSaldoAvb, flagErroData, flagPendenciaDocumental, normContratanteAvb, calcAgendaAvb, DISTANCIAS_AVB.",
+      "INFO · Escopo: TODAS as mudancas acima sao condicionais a baseAtual.id === acailandia_avb. Zero impacto em Imperatriz/Belem e Maracanau.",
+    ],
+  },
+  {
     data: "2026-05-29", sessao: "Sessão 20",
     itens: [
       "FEAT · Nova Base Açailândia - AVB: adicionada ao seletor de bases pós-login; tabela Supabase 'controle_operacional_avb'; permissão por usuário via co_usuarios.bases_permitidas.",
