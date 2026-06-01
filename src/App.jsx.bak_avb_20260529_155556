@@ -97,14 +97,6 @@ export default function App() {
   // Re-sincroniza ao trocar de base (ex: selecionar Maracanau após login)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (authed && baseAtual) sincronizar(); }, [baseAtual]);
-  // Resetar filtros AVB ao trocar de base
-  useEffect(() => {
-    setPlanilhaFiltroContratante("");
-    setPlanilhaFiltroGerenciadora("");
-    setPlanilhaFiltroStatus("");
-    setPlanilhaBusca("");
-    setPlanilhaPagina(1);
-  }, [baseAtual?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Data state
   const [dadosBase, setDadosBase] = useState([]);
@@ -123,8 +115,6 @@ export default function App() {
   const [planilhaFiltroDataDe, setPlanilhaFiltroDataDe] = useState(""); // data inicio (yyyy-MM-dd)
   const [planilhaFiltroDataAte, setPlanilhaFiltroDataAte] = useState(""); // data fim (yyyy-MM-dd)
   const [planilhaFiltroStatus, setPlanilhaFiltroStatus] = useState(""); // status filter do dashboard
-  const [planilhaFiltroContratante, setPlanilhaFiltroContratante] = useState(""); // AVB only
-  const [planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora] = useState(""); // AVB only
   const [planilhaBusca, setPlanilhaBusca] = useState("");           // busca livre: dt|placa|nome
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
@@ -433,18 +423,6 @@ export default function App() {
     const list = [];
     DADOS.forEach(r => {
       if (!r.nome?.trim()) return;
-      // ── Alertas AVB (somente base acailandia_avb) ──
-      if (baseAtual?.id === "acailandia_avb") {
-        const camposDatas = [r.data_carr, r.data_homerico, r.data_liberacao, r.data_manifesto];
-        const dataInvalida = camposDatas.some(d => d && !/^\d{2}\/\d{2}\/\d{4}/.test(d) && !/^\d{4}-\d{2}-\d{2}/.test(d));
-        if (dataInvalida) list.push({tipo:"warn",cat:"data_avb",txt:`Data inválida: ${r.contratante||r.nome} · Cód ${r.codigo||"—"}`,reg:r});
-        const semDoc = !r.cte || !r.mdf || !r.nf;
-        if (semDoc && (r.status||"").toUpperCase()==="CARREGADO") list.push({tipo:"info",cat:"doc_avb",txt:`Docs incompletos: ${r.contratante||r.nome} · Cód ${r.codigo||"—"}`,reg:r});
-        const codZero = !r.codigo || r.codigo==="0" || r.codigo==="00" || r.codigo==="000";
-        if (codZero) list.push({tipo:"info",cat:"revisao_avb",txt:`Revisão: código zerado · ${r.contratante||r.nome} · ${r.data_carr||"s/data"}`,reg:r});
-        return; // alertas AVB tratados — não aplicar alertas de descarga/saldo
-      }
-      // ── Alertas padrão (Imperatriz/Belém / Maracanau) ──
       const da = parseData(r.data_agenda), dd = parseData(r.data_desc);
       // Alerta de atraso na descarga — inclui ref. ao registro para botão de calendário
       if (da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
@@ -455,7 +433,7 @@ export default function App() {
       }
     });
     return list;
-  }, [DADOS, baseAtual]);
+  }, [DADOS]);
 
   // Toast helper
   const showToast = useCallback((msg, type="") => {
@@ -514,16 +492,8 @@ export default function App() {
         localStorage.removeItem("co_sessao");
       } else {
         setPerfil(s.perfil);
-        setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
+        setPerms(PERMS_PADRAO[s.perfil] || {});
         setUsuarioLogado(s.nome || s.perfil);
-        // Restaurar bases da sessão
-        if (Array.isArray(s.baseIds) && s.baseIds.length) {
-          const _bs = s.baseIds.map(id => BASES[id]).filter(Boolean);
-          if (_bs.length) {
-            setBasesPermitidas(_bs);
-            setBaseAtual(_bs.length === 1 ? _bs[0] : null);
-          }
-        }
         setAuthed(true);
         return; // sessão válida — não verifica pendentes
       }
@@ -1062,7 +1032,7 @@ export default function App() {
       setUsuarioLogado(found.nome || found.email);
       // Salva session_token em memória (nunca em localStorage)
       if (found.session_token) setSessionToken(found.session_token);
-      saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now(),baseIds:_idsUsr,perms:PERMS_PADRAO[p]||{}});
+      saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now()});
       registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
       // Carregar bases permitidas do usuario
@@ -1189,17 +1159,16 @@ export default function App() {
       const sem = (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
       return sem.split(/\s*[-–]\s*|\s+(?=[A-Z]{2}$)/)[0].trim();
     };
-    // AVB: origens dinâmicas (qualquer cidade presente nos dados)
-    // Imperatriz/Belém: origens fixas para o filtro do dashboard
+    // Origens fixas: apenas BELEM-PA e IMPERATRIZ-MA (confirmado no Supabase)
     const ORIGENS_PERMITIDAS = [
       { norm: "BELEM",      label: "BELEM-PA" },
       { norm: "IMPERATRIZ", label: "IMPERATRIZ-MA" },
     ];
     // Filtra cidades pelo mês selecionado — mês seletor como origem dos filtros disponíveis
     const mesRegs = dashMes === "todos" ? DADOS : (grupos[dashMes]?.regs || []);
-    const cidades = baseAtual?.id === "acailandia_avb"
-      ? [...new Set(mesRegs.map(r => normOrigem(r.origem)).filter(Boolean))]
-      : ORIGENS_PERMITIDAS.filter(o => mesRegs.some(r => normOrigem(r.origem) === o.norm)).map(o => o.norm);
+    const cidades = ORIGENS_PERMITIDAS
+      .filter(o => mesRegs.some(r => normOrigem(r.origem) === o.norm))
+      .map(o => o.norm);
 
     // Aplica filtros: mês + cidade origem
     let filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
@@ -1207,20 +1176,8 @@ export default function App() {
 
     const dtsU = new Set(filtrado.map(r=>dtBase(r.dt)));
     let cteT = 0; filtrado.forEach(r=>{ const v=parseFloat(r.vl_cte); if(!isNaN(v)) cteT+=v; });
-    // ── Financeiro AVB — excluir PENDENTES das somas ──
-    let avbContratoT=0, avbAdtT=0, avbSaldoT=0;
-    if (baseAtual?.id === "acailandia_avb") {
-      filtrado.filter(r=>(r.status||"").toUpperCase()!=="PENDENTE").forEach(r=>{
-        const vc=parseFloat(String(r.vl_contrato||"").replace(/[R$\s.]/g,"").replace(",","."));
-        const va=parseFloat(String(r.adiant||"").replace(/[R$\s.]/g,"").replace(",","."));
-        const vs=parseFloat(String(r.saldo||"").replace(/[R$\s.]/g,"").replace(",","."));
-        if(!isNaN(vc)) avbContratoT+=vc;
-        if(!isNaN(va)) avbAdtT+=va;
-        if(!isNaN(vs)) avbSaldoT+=vs;
-      });
-    }
-    return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem, avbContratoT, avbAdtT, avbSaldoT };
-  }, [DADOS, dashMes, dashOrigem, baseAtual]);
+    return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem };
+  }, [DADOS, dashMes, dashOrigem]);
 
   // Reset dashOrigem quando o mês selecionado não contém a cidade atual
   useEffect(() => {
@@ -1622,11 +1579,7 @@ export default function App() {
     "cte","mdf","nf","mat","ro","ro_hora","ro_status","cliente","sgs",
     "chegada","obs_chegada","data_obs_chegada","desc_aguardando","data_desc","obs_descarga","data_obs_descarga","informou_analista","data_manifesto","gerenc","forms","updated_at",
     "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
-    "obs","sinistro","ocorrencias",
-    // ── Campos exclusivos AVB (acailandia_avb) ──
-    "codigo","data_homerico","data_liberacao","gerenciadora",
-    "rdo","contrato_mat","cadastro_fortes","cte_comp_num","cte_comp_vlr",
-    "contratante"
+    "obs","sinistro","ocorrencias"
   ];
   const supaUpsert = async (reg) => {
     const conn = getConexao();
@@ -3384,10 +3337,7 @@ export default function App() {
             planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
             planilhaBusca, setPlanilhaBusca,
             planilhaFiltroStatus, setPlanilhaFiltroStatus,
-            planilhaFiltroContratante, setPlanilhaFiltroContratante,
-            planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
             t, isMobile, ExportMenu,
-            baseAtual,
           }} />
         )}
 
@@ -3452,8 +3402,6 @@ export default function App() {
           showToast,
           parseRodorricaXLSX,
           motoristas,
-          baseAtual,
-          DADOS,
         }} />
 
         {/* ═══ OPERACIONAL ═══ */}

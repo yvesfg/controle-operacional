@@ -514,16 +514,8 @@ export default function App() {
         localStorage.removeItem("co_sessao");
       } else {
         setPerfil(s.perfil);
-        setPerms(s.perms || PERMS_PADRAO[s.perfil] || {});
+        setPerms(PERMS_PADRAO[s.perfil] || {});
         setUsuarioLogado(s.nome || s.perfil);
-        // Restaurar bases da sessão
-        if (Array.isArray(s.baseIds) && s.baseIds.length) {
-          const _bs = s.baseIds.map(id => BASES[id]).filter(Boolean);
-          if (_bs.length) {
-            setBasesPermitidas(_bs);
-            setBaseAtual(_bs.length === 1 ? _bs[0] : null);
-          }
-        }
         setAuthed(true);
         return; // sessão válida — não verifica pendentes
       }
@@ -1062,7 +1054,7 @@ export default function App() {
       setUsuarioLogado(found.nome || found.email);
       // Salva session_token em memória (nunca em localStorage)
       if (found.session_token) setSessionToken(found.session_token);
-      saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now(),baseIds:_idsUsr,perms:PERMS_PADRAO[p]||{}});
+      saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now()});
       registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
       // Carregar bases permitidas do usuario
