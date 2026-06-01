@@ -217,6 +217,7 @@ function mapearColunaAVB(n) {
   var mapa = {
     // DT
     'dt': 'dt', 'dt espelho': 'dt', 'espelho': 'dt',
+    'código': 'dt', 'codigo': 'dt',
 
     // Motorista / Contratante
     'motorista': 'nome', 'nome': 'nome',
