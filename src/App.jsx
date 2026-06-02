@@ -1010,7 +1010,7 @@ export default function App() {
           storedHash = await getConfigRemoto("admin_senha_hash");
         } catch { /* fallback local */ }
       }
-      if (!storedHash) storedHash = loadJSON("co_admin_senha", null);
+      // Fallback local removido por segurança — hash admin apenas no Supabase
 
       if (!storedHash) {
         setAuthMsg({t:"err",m:"⚠️ Senha admin não foi configurada. Acesse o painel admin e defina a senha."});
@@ -1116,7 +1116,7 @@ export default function App() {
     if (!primLoginSenha || primLoginSenha.length < 6) { showToast("⚠️ Senha deve ter ao menos 6 caracteres","warn"); return; }
     if (primLoginSenha !== primLoginSenha2) { showToast("❌ Senhas não conferem","err"); return; }
     const hash = await hashSenha(primLoginSenha);
-    saveJSON("co_admin_senha", hash);
+    // Hash admin não é mais salvo localmente — apenas no Supabase
     await setConfigRemoto("admin_senha_hash", hash); // ← sincroniza todos os dispositivos
     setPrimeiroLogin(false);
     setPrimLoginSenha(""); setPrimLoginSenha2("");
