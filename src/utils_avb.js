@@ -14,7 +14,13 @@ export const parseMoedaAvb = v => {
   if (!v) return null;
   const s = String(v).trim();
   if (s === "-" || s === "R$ -" || s === "R$-" || s === "0" || s === "") return null;
-  const n = parseFloat(s.replace(/[R$\s.]/g, "").replace(",", "."));
+  let clean = s.replace(/[R$\s]/g, "");
+  if (clean.includes(",")) {
+    // Formato brasileiro: pontos = milhar, vírgula = decimal
+    clean = clean.replace(/\./g, "").replace(",", ".");
+  }
+  // Sem vírgula: já está em formato decimal inglês (ex: "2706.29") — não remove pontos
+  const n = parseFloat(clean);
   return isNaN(n) ? null : n;
 };
 
