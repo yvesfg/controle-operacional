@@ -1,4 +1,10 @@
-import React from "react";
+import shutil, datetime
+
+path = r'C:\Users\yvesf\DevYFGroup\controle-operacional\src\views\avb\LogisticaAVB.jsx'
+ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+shutil.copy(path, path + f'.bak_{ts}')
+
+NEW = r'''import React from "react";
 import { calcAgendaAvb, fmtDataAvb } from "../../utils_avb.js";
 
 // LogisticaAVB — Tela de logística exclusiva Açailândia AVB
@@ -209,3 +215,9 @@ export default function LogisticaAVB({ ctx }) {
     </div>
   );
 }
+'''
+
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(NEW)
+
+print(f"OK: LogisticaAVB.jsx reescrita — {len(NEW.splitlines())} linhas")
