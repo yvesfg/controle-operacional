@@ -136,3 +136,21 @@
 
   color-scheme: dark;
 }
+
+/* ── AVB Identity — Laranja operacional (exclusivo base Açailândia) ── */
+[data-base="avb"] {
+  --accent               : #FF6B35;
+  --accent2              : rgba(255,107,53,.08);
+  --color-primary        : #FF6B35;
+  --color-primary-dk     : #e55a24;
+  --color-primary-lt     : #ff8c5a;
+  --color-primary-bg     : rgba(255,107,53,.08);
+  --color-primary-bg-hover: rgba(255,107,53,.14);
+  --color-primary-border : rgba(255,107,53,.24);
+  --color-border-focus   : rgba(255,107,53,.50);
+  --shadow-primary       : 0 2px 10px rgba(255,107,53,.18);
+  --color-sidebar-icon-active: #FF6B35;
+  --color-sidebar-accent : #FF6B35;
+  --color-sidebar-item-active: rgba(255,107,53,.10);
+  --focus-ring           : 0 0 0 2px rgba(255,107,53,.50);
+}

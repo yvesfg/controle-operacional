@@ -588,6 +588,15 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Identidade visual AVB — aplica data-base="avb" exclusivamente para Açailândia
+  useEffect(() => {
+    if (baseAtual?.id === "acailandia_avb") {
+      document.documentElement.setAttribute('data-base', 'avb');
+    } else {
+      document.documentElement.removeAttribute('data-base');
+    }
+  }, [baseAtual]);
+
   // ResizeObserver: calcula quantas linhas cabem em Registros Recentes sem cortar
   useEffect(() => {
     if (!dashRecCardRef.current) return;

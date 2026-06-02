@@ -8,8 +8,8 @@
 //   3) Pronto - sincronização automática a cada 15 minutos
 // ============================================================
 
-var SUPA_URL  = 'SUA_URL_SUPABASE';   // Ex: https://xyzabc.supabase.co
-var SUPA_KEY  = 'SUA_ANON_KEY';       // anon key do projeto Supabase
+var SUPA_URL  = 'https://qdrhkkjawklqfsoyxhpd.supabase.co';
+var SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkcmhra2phd2tscWZzb3l4aHBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1OTY2ODQsImV4cCI6MjA4OTE3MjY4NH0.zHl9-Ei9IDBcxzoZDz650E4JsBeV0HsQqTDgDZ4K1B8';
 var TABELA    = 'controle_operacional_avb';
 var TAB_CFG   = 'co_config';
 
@@ -97,9 +97,9 @@ function sincronizarAVB() {
         }
       }
 
-      var temColDT = Object.values(mapa).indexOf('dt') >= 0;
+      var temColDT = Object.values(mapa).indexOf('dt') >= 0 || Object.values(mapa).indexOf('codigo') >= 0;
       if (!temColDT) {
-        statusGlobal.info.push('Aba "' + nomAba + '" ignorada: sem coluna DT');
+        statusGlobal.info.push('Aba "' + nomAba + '" ignorada: sem coluna DT nem Codigo');
         continue;
       }
 
@@ -117,14 +117,14 @@ function sincronizarAVB() {
           var vs = v ? v.toString().trim() : '';
           if (vs || !reg.hasOwnProperty(mapa[i])) reg[mapa[i]] = vs;
           if (vs) linhaVazia = false;
-          if (mapa[i] === 'dt' && vs) temDT = true;
+          if ((mapa[i] === 'dt' || mapa[i] === 'codigo') && vs) temDT = true;
         });
 
         if (linhaVazia) continue;
         if (!temDT) {
           statusGlobal.ignorados++;
           if (statusGlobal.motivos_ignorados.length < 20)
-            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' L' + (r+1) + ': DT vazio');
+            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' L' + (r+1) + ': DT/Codigo vazio');
           continue;
         }
 
@@ -141,16 +141,26 @@ function sincronizarAVB() {
         registros.push(reg);
       }
 
-      // Deduplicar por DT
+      // Deduplicar por codigo (chave única AVB) ou dt como fallback
       var vistos = {};
-      registros.forEach(function(reg) { vistos[reg.dt] = reg; });
+      registros.forEach(function(reg) { vistos[reg.codigo || reg.dt] = reg; });
       registros = Object.values(vistos);
+
+      // Normalizar: todos os registros devem ter exatamente as mesmas chaves
+      // (PostgREST exige isso em upserts em lote — HTTP 400 "All object keys must match")
+      var todasChaves = {};
+      registros.forEach(function(reg) { Object.keys(reg).forEach(function(k) { todasChaves[k] = ''; }); });
+      registros = registros.map(function(reg) {
+        var normalizado = {};
+        Object.keys(todasChaves).forEach(function(k) { normalizado[k] = reg.hasOwnProperty(k) ? reg[k] : ''; });
+        return normalizado;
+      });
 
       // Enviar em lotes de 50
       for (var i = 0; i < registros.length; i += 50) {
         var lote = registros.slice(i, i + 50);
         try {
-          var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TABELA + '?on_conflict=dt', {
+          var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TABELA + '?on_conflict=codigo', {
             method: 'POST',
             headers: {
               apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY,
@@ -217,7 +227,8 @@ function mapearColunaAVB(n) {
   var mapa = {
     // DT
     'dt': 'dt', 'dt espelho': 'dt', 'espelho': 'dt',
-    'código': 'dt', 'codigo': 'dt',
+    // Codigo AVB — identificador único da planilha (coluna H); campo separado de DT
+    'código': 'codigo', 'codigo': 'codigo', 'cód': 'codigo', 'cod': 'codigo',
 
     // Motorista / Contratante
     'motorista': 'nome', 'nome': 'nome',
