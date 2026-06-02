@@ -1052,19 +1052,21 @@ export default function App() {
           found = remote[0];
           // Atualiza cache local (sem senha, RPC já não retorna esse campo)
           const cacheAtual = loadJSON("co_usuarios_local", []);
-          const cacheAtualizado = [...cacheAtual.filter(x => x.email !== found.email), found];
+          const {senha: _fs, ...foundSemSenha} = found;
+          const cacheAtualizado = [...cacheAtual.filter(x => x.email !== found.email), foundSemSenha];
           saveJSON("co_usuarios_local", cacheAtualizado);
           setUsuarios(cacheAtualizado);
         }
       } catch { /* fallback lista local */ }
     }
 
-    // Fallback: lista local (offline)
+    // Fallback offline: cache não armazena senha por segurança — exige conexão
     if (!found) {
       for (const u of usuarios) {
         if ((u.email||"").toLowerCase() === login) {
+          // Senha não é cacheada localmente — não é possível autenticar offline
           let m = false;
-          try { m = await verificarSenha(authSenha, u.senha); } catch { m = authSenha === u.senha; }
+          try { m = await verificarSenha(authSenha, u.senha); } catch { m = false; }
           if (m) { found = u; break; }
         }
       }
