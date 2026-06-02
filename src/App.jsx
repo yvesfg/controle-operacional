@@ -25,6 +25,11 @@ import DashboardView   from './views/DashboardView.jsx';
 import DiariasView     from './views/DiariasView.jsx';
 import DescargaView    from './views/DescargaView.jsx';
 import AdminView       from './views/AdminView.jsx';
+
+// ── Views exclusivas AVB — isoladas para não impactar Suzano ──
+import DashboardAVB from './views/avb/DashboardAVB.jsx';
+import PlanilhaAVB  from './views/avb/PlanilhaAVB.jsx';
+import LogisticaAVB from './views/avb/LogisticaAVB.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
@@ -3355,7 +3360,9 @@ export default function App() {
 
         {/* ═══ DASHBOARD ═══ */}
         {activeTab === "dashboard" && (
-          <DashboardView ctx={{
+          {/* Roteador: AVB usa DashboardAVB; Suzano usa DashboardView */}
+          {baseAtual?.id === "acailandia_avb"
+            ? <DashboardAVB ctx={{
             dashMes, setDashMes,
             dashOrigem, setDashOrigem,
             dashHeroTab, setDashHeroTab,
@@ -3376,11 +3383,35 @@ export default function App() {
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             baseAtual,
           }} />
+            : <DashboardView ctx={{
+            dashMes, setDashMes,
+            dashOrigem, setDashOrigem,
+            dashHeroTab, setDashHeroTab,
+            dashRecentesN, setDashRecentesN,
+            dashRecCardRef,
+            dashData,
+            canFin,
+            parseData,
+            t, css, DESIGN, hexRgb, hIco, showToast,
+            setActiveTab,
+            chartAreaRef, chartDonutRef,
+            diariasData, motoristas,
+            alertas, alertasOpen, setAlertasOpen,
+            fmtMoeda, isMobile,
+            setDetalheDT, setModalOpen,
+            descargaData,
+            setPlanilhaFiltroStatus,
+            setBuscaInput, setBuscaTipo, setBuscaModalOpen,
+            baseAtual,
+          }} />
+          }
         )}
 
         {/* ═══ PLANILHA ═══ */}
         {activeTab === "planilha" && (
-          <PlanilhaView ctx={{
+          {/* Roteador: AVB usa PlanilhaAVB; Suzano usa PlanilhaView */}
+          {baseAtual?.id === "acailandia_avb"
+            ? <PlanilhaAVB ctx={{
             DADOS,
             planilhaSortKey, setPlanilhaSortKey,
             planilhaSortDir, setPlanilhaSortDir,
@@ -3398,6 +3429,25 @@ export default function App() {
             t, isMobile, ExportMenu,
             baseAtual,
           }} />
+            : <PlanilhaView ctx={{
+            DADOS,
+            planilhaSortKey, setPlanilhaSortKey,
+            planilhaSortDir, setPlanilhaSortDir,
+            planilhaPagina, setPlanilhaPagina,
+            abrirDetalhe,
+            planilhaFiltroAno, setPlanilhaFiltroAno,
+            planilhaFiltroMes, setPlanilhaFiltroMes,
+            planilhaFiltroOrigem, setPlanilhaFiltroOrigem,
+            planilhaFiltroDataDe, setPlanilhaFiltroDataDe,
+            planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
+            planilhaBusca, setPlanilhaBusca,
+            planilhaFiltroStatus, setPlanilhaFiltroStatus,
+            planilhaFiltroContratante, setPlanilhaFiltroContratante,
+            planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
+            t, isMobile, ExportMenu,
+            baseAtual,
+          }} />
+          }
         )}
 
         {/* ═══ DIÁRIAS ═══ */}
@@ -3430,8 +3480,10 @@ export default function App() {
           extratoResultado,
         }} />
 
-        {/* ═══ DESCARGA ═══ */}
-        <DescargaView ctx={{
+        {/* ═══ DESCARGA / LOGÍSTICA ═══ */}
+        {/* Roteador: AVB usa LogisticaAVB; Suzano usa DescargaView */}
+        {baseAtual?.id === "acailandia_avb"
+          ? <LogisticaAVB ctx={{
           activeTab,
           descargaData,
           descargaNavDT, setDescargaNavDT,
@@ -3464,6 +3516,40 @@ export default function App() {
           baseAtual,
           DADOS,
         }} />
+          : <DescargaView ctx={{
+          activeTab,
+          descargaData,
+          descargaNavDT, setDescargaNavDT,
+          descargaCols, setDescargaCols,
+          descargaView, setDescargaView,
+          dscTab, setDscTab,
+          dscData, setDscData,
+          dscFiltroAno, setDscFiltroAno,
+          dscFiltroMes, setDscFiltroMes,
+          dscFiltroIni, setDscFiltroIni,
+          dscFiltroFim, setDscFiltroFim,
+          dscFiltroOrigem, setDscFiltroOrigem,
+          rodorricaRows, setRodorricaRows,
+          rodorricaFileName, setRodorricaFileName,
+          rodorricaFiltro, setRodorricaFiltro,
+          rodorricaPeriodoIni, setRodorricaPeriodoIni,
+          rodorricaPeriodoFim, setRodorricaPeriodoFim,
+          rodorricaPeriodoModal, setRodorricaPeriodoModal,
+          rodorricaResultado,
+          isMobile,
+          hIco,
+          diffDias,
+          parseData,
+          t, css, DESIGN,
+          hexRgb,
+          abrirDetalhe,
+          showToast,
+          parseRodorricaXLSX,
+          motoristas,
+          baseAtual,
+          DADOS,
+        }} />
+        }
 
         {/* ═══ OPERACIONAL ═══ */}
         {activeTab === "operacional" && (
