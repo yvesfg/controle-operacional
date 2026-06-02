@@ -1,4 +1,10 @@
-import React from "react";
+import shutil, datetime
+
+path = r'C:\Users\yvesf\DevYFGroup\controle-operacional\src\views\avb\DashboardAVB.jsx'
+ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+shutil.copy(path, path + f'.bak_{ts}')
+
+NEW = r'''import React from "react";
 import { parseData } from "../../utils.js";
 
 // DashboardAVB — Dashboard exclusivo Açailândia AVB
@@ -466,3 +472,9 @@ export default function DashboardAVB({ ctx }) {
     </div>
   );
 }
+'''
+
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(NEW)
+
+print(f"OK: DashboardAVB.jsx reescrito — {len(NEW.splitlines())} linhas")
