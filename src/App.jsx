@@ -3365,8 +3365,7 @@ export default function App() {
 
         {/* ═══ DASHBOARD ═══ */}
         {activeTab === "dashboard" && (
-          {/* Roteador: AVB usa DashboardAVB; Suzano usa DashboardView */}
-          {baseAtual?.id === "acailandia_avb"
+          baseAtual?.id === "acailandia_avb"
             ? <DashboardAVB ctx={{
             dashMes, setDashMes,
             dashOrigem, setDashOrigem,
@@ -3409,13 +3408,11 @@ export default function App() {
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             baseAtual,
           }} />
-          }
         )}
 
         {/* ═══ PLANILHA ═══ */}
         {activeTab === "planilha" && (
-          {/* Roteador: AVB usa PlanilhaAVB; Suzano usa PlanilhaView */}
-          {baseAtual?.id === "acailandia_avb"
+          baseAtual?.id === "acailandia_avb"
             ? <PlanilhaAVB ctx={{
             DADOS,
             planilhaSortKey, setPlanilhaSortKey,
@@ -3452,7 +3449,6 @@ export default function App() {
             t, isMobile, ExportMenu,
             baseAtual,
           }} />
-          }
         )}
 
         {/* ═══ DIÁRIAS ═══ */}
@@ -3486,7 +3482,6 @@ export default function App() {
         }} />
 
         {/* ═══ DESCARGA / LOGÍSTICA ═══ */}
-        {/* Roteador: AVB usa LogisticaAVB; Suzano usa DescargaView */}
         {baseAtual?.id === "acailandia_avb"
           ? <LogisticaAVB ctx={{
           activeTab,
