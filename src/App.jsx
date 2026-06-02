@@ -489,7 +489,11 @@ export default function App() {
       let offset = 0;
       const limit = 1000;
       while (true) {
-        const data = await supaFetch(conn.url, conn.key, "GET", `${tblRef.current}?select=*&order=id.asc&limit=${limit}&offset=${offset}`);
+        const data = sessionToken
+          ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_operacional",
+              {p_token: sessionToken, p_base: baseAtual?.id ?? "imperatriz_belem", p_limit: limit, p_offset: offset})
+              .then(r => Array.isArray(r) ? r.map(x => typeof x === "string" ? JSON.parse(x) : x) : [])
+          : await supaFetch(conn.url, conn.key, "GET", `${tblRef.current}?select=*&order=id.asc&limit=${limit}&offset=${offset}`);
         if (!Array.isArray(data) || !data.length) break;
         all = [...all, ...data];
         if (data.length < limit) break;
@@ -859,14 +863,16 @@ export default function App() {
     const conn = getConexao();
     if (!conn) return;
     try {
-      const data = await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?select=*`);
+      const data = sessionToken
+        ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_usuarios", {p_token: sessionToken})
+        : await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?select=*`);
       if (Array.isArray(data)) {
-        // Separa aprovados de pendentes
         const aprovados = data.filter(u => !u.status || u.status === "aprovado");
         const pendentes = data.filter(u => u.status === "pendente");
-        setUsuarios(aprovados);
-        saveJSON("co_usuarios_local", aprovados.map(({senha:_s,...r})=>r));
-        setUsuariosPendentes(pendentes);
+        const lista = sessionToken ? data : aprovados;
+        setUsuarios(lista);
+        saveJSON("co_usuarios_local", lista.map(({senha:_s,...r})=>r));
+        if (!sessionToken) setUsuariosPendentes(pendentes);
       }
     } catch { /* silencioso */ }
   }, [getConexao]);
@@ -876,8 +882,9 @@ export default function App() {
     const conn = getConexao();
     if (!conn) return;
     try {
-      const data = await supaFetch(conn.url, conn.key, "GET",
-        `${TABLE_USUARIOS}?status=eq.pendente&select=*&order=solicitado_em.desc`);
+      const data = sessionToken
+        ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_usuarios_pendentes", {p_token: sessionToken})
+        : await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?status=eq.pendente&select=*&order=solicitado_em.desc`);
       if (Array.isArray(data)) setUsuariosPendentes(data);
     } catch { /* silencioso */ }
   }, [getConexao]);
@@ -904,8 +911,12 @@ export default function App() {
     if (conn) {
       setOcorrLoading(true);
       try {
-        const data = await supaFetch(conn.url, conn.key, "GET",
-          `${TABLE_OCORR}?dt=eq.${encodeURIComponent(reg.dt)}&order=data_hora.asc&select=*`);
+        const raw5 = sessionToken
+          ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_ocorrencias",
+              {p_token: sessionToken, p_dt: reg.dt})
+          : await supaFetch(conn.url, conn.key, "GET",
+              `${TABLE_OCORR}?dt=eq.${encodeURIComponent(reg.dt)}&order=data_hora.asc&select=*`);
+        const data = Array.isArray(raw5) ? raw5.map(x => typeof x === "string" ? JSON.parse(x) : x) : [];
         if (Array.isArray(data)) {
           setOcorrencias(data);
           saveJSON(`co_ocorr_${reg.dt}`, data);
@@ -1032,6 +1043,13 @@ export default function App() {
         const _todasAdmin = Object.values(BASES);
         setBasesPermitidas(_todasAdmin);
         setBaseAtual(_todasAdmin.length === 1 ? _todasAdmin[0] : null);
+        // Gera session token para admin (necessario para RPCs autenticadas)
+        const connAdm = getConexao();
+        if (connAdm) {
+          supaFetch(connAdm.url, connAdm.key, "POST", "rpc/gerar_token_sessao", {p_email: "admin@sistema"})
+            .then(tok => { if (typeof tok === "string") setSessionToken(tok); })
+            .catch(() => {});
+        }
       } else {
         setAuthMsg({t:"err",m:"❌ Senha incorreta"});
         setAuthSenha("");
@@ -2515,10 +2533,16 @@ export default function App() {
     const conn = getConexao();
     if (!conn) return;
     try {
-      // Busca todas as ocorrências dos DTs em uma única query (PostgREST IN filter)
-      const dtsCod = dtList.map(dt => dt.replace(/'/g,"''")).join(",");
-      const data = await supaFetch(conn.url, conn.key, "GET",
-        `${TABLE_OCORR}?dt=in.(${encodeURIComponent(dtsCod)})&order=data_hora.asc&select=*`);
+      // Busca todas as ocorrencias dos DTs em uma unica query
+      const rawBulk = sessionToken
+        ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_ocorrencias_bulk",
+            {p_token: sessionToken, p_dts: dtList})
+        : await (async () => {
+            const dtsCod = dtList.map(dt => dt.replace(/'/g,"''")).join(",");
+            return supaFetch(conn.url, conn.key, "GET",
+              `${TABLE_OCORR}?dt=in.(${encodeURIComponent(dtsCod)})&order=data_hora.asc&select=*`);
+          })();
+      const data = Array.isArray(rawBulk) ? rawBulk.map(x => typeof x === "string" ? JSON.parse(x) : x) : [];
       if (Array.isArray(data)) {
         // Agrupa por DT e salva no localStorage
         const porDt = {};
