@@ -103,10 +103,8 @@ export default function ModalWhatsApp({ ctx }) {
             {/* Options */}
             <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
               {[
-                {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:t.ouro, l:"Faturamento", sub:"CTE · MDF · MAT · DT · NF · ID"},
+                {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:t.ouro, l:"Faturamento", sub:"CTE · MDF · MAT · CODIGO · NF"},
                 {k:"contratacao",ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, color:t.azulLt, l:"Contratação", sub:"Modelo completo de pagamento"},
-                {k:"descarga",   ico:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>, color:t.verde, l:"Descarga / Stretch", sub:"Solicitar pagamento descarga"},
-                {k:"diarias",   ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>, color:t.ouro, l:"Diárias", sub:"Solicitar pagamento diária"},
               ].map((op)=>(
                 <button key={op.k} onClick={()=>{
                   const _reg=wppSearchReg||buscaResult;
@@ -478,7 +476,8 @@ export default function ModalWhatsApp({ ctx }) {
 
       {/* ═══ WHATSAPP FATURAMENTO MODAL ═══ */}
       {wppFatModal && (()=>{
-        const {reg,mot} = wppFatModal;
+        const {reg,mot,base} = wppFatModal;
+        const isAvb = base === "acailandia_avb";
         const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
         const inpF = {...css.inp,fontSize:12,padding:"7px 10px"};
         const lblF = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
@@ -490,9 +489,13 @@ export default function ModalWhatsApp({ ctx }) {
           m += `CTE: ${reg.cte||"—"}${ln}`;
           m += `MDF: ${reg.mdf||"—"}${ln}`;
           m += `MAT: ${reg.mat||"—"}${ln}`;
-          m += `DT: ${reg.dt||"—"}${ln}`;
+          if (isAvb) {
+            m += `CODIGO: ${reg.codigo||"—"}${ln}`;
+          } else {
+            m += `DT: ${reg.dt||"—"}${ln}`;
+            m += `ID: ${reg.id_doc||"—"}${ln}`;
+          }
           m += `NF: ${reg.nf||"—"}${ln}`;
-          m += `ID: ${reg.id_doc||"—"}${ln}`;
           return m;
         };
 
@@ -501,19 +504,19 @@ export default function ModalWhatsApp({ ctx }) {
             <div style={{...css.modal,maxHeight:"90vh"}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.05)"}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>🧾</div>
-                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>CTE · MDF · MAT · DT · NF · ID</div></div>
+                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>{isAvb ? "CTE · MDF · MAT · CODIGO · NF" : "CTE · MDF · MAT · DT · NF · ID"}</div></div>
                 <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
               <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
                   <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
-                    {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();return`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\nDT: ${reg.dt||"—"}\nNF: ${reg.nf||"—"}\nID: ${reg.id_doc||"—"}`;})()}
+                    {(()=>{const cn=s=>(s||"").replace(/^[^a-zA-ZÀ-ÿ0-9]+/,"").trim();let p=`MOT: ${cn(reg.nome)||"—"}\nCTE: ${reg.cte||"—"}\nMDF: ${reg.mdf||"—"}\nMAT: ${reg.mat||"—"}\n`;p+=isAvb?`CODIGO: ${reg.codigo||"—"}\n`:`DT: ${reg.dt||"—"}\nID: ${reg.id_doc||"—"}\n`;p+=`NF: ${reg.nf||"—"}`;return p;})()}
                   </div>
                 </div>
                 {(()=>{
                   const faltando=[];
-                  if(!reg.nome)faltando.push("Motorista");if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.mat)faltando.push("MAT");if(!reg.nf)faltando.push("NF");if(!reg.dt)faltando.push("DT");
+                  if(!reg.nome)faltando.push("Motorista");if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.mat)faltando.push("MAT");if(!reg.nf)faltando.push("NF");if(isAvb){if(!reg.codigo)faltando.push("CODIGO");}else{if(!reg.dt)faltando.push("DT");}
                   return faltando.length>0?(
                     <div style={{background:`rgba(246,70,93,.07)`,border:`1.5px solid rgba(246,70,93,.3)`,borderRadius:8,padding:"10px 12px"}}>
                       <div style={{fontSize:10,fontWeight:700,color:t.danger,marginBottom:5}}>⚠️ Campos obrigatórios vazios — edite o registro antes de enviar:</div>
@@ -528,7 +531,7 @@ export default function ModalWhatsApp({ ctx }) {
                 <button onClick={()=>setWppFatModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
                 <button onClick={()=>{
                   const faltando=[];
-                  if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.nf)faltando.push("NF");
+                  if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.nf)faltando.push("NF");if(isAvb&&!reg.codigo)faltando.push("CODIGO");
                   if(faltando.length>0){if(!window.confirm(`⚠️ Campos vazios: ${faltando.join(", ")}.\nEnviar mesmo assim?`))return;}
                   const tel=(mot?.tel||"").replace(/\D/g,"");
                   const rawMsg=gerarFat();

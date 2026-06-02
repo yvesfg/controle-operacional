@@ -3792,7 +3792,7 @@ export default function App() {
                   if(!_reg){showToast("Busque um registro primeiro","warn");return;}
                   const mot=motoristas.find(m=>(_reg.cpf&&m.cpf?.replace(/\D/g,"")===_reg.cpf?.replace(/\D/g,""))||(_reg.nome&&m.nome===_reg.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===_reg.placa));
                   setWppTipoOpen(false);setWppSearchTxt("");setWppSearchReg(null);
-                  if(op.k==="faturamento"){setWppFatModal({reg:_reg,mot:mot||null});}
+                  if(op.k==="faturamento"){setWppFatModal({reg:_reg,mot:mot||null,base:baseAtual?.id});}
                   else if(op.k==="contratacao"){setWppModal({reg:_reg,mot:mot||null});setWppTel((mot?.tel||_reg.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
                   else if(op.k==="descarga"){abrirWppPagModal(_reg,mot,"descarga");}
                   else if(op.k==="diarias"){abrirWppPagModal(_reg,mot,"diarias");}
