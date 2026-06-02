@@ -1,4 +1,10 @@
-import React from "react";
+import shutil, datetime
+
+path = r'C:\Users\yvesf\DevYFGroup\controle-operacional\src\views\avb\PlanilhaAVB.jsx'
+ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+shutil.copy(path, path + f'.bak_{ts}')
+
+NEW = r'''import React from "react";
 
 // PlanilhaAVB — Planilha exclusiva Açailândia AVB
 // Sem código Suzano. Colunas, filtros e busca específicos AVB.
@@ -357,3 +363,9 @@ export default function PlanilhaAVB({ ctx }) {
     </div>
   );
 }
+'''
+
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(NEW)
+
+print(f"OK: PlanilhaAVB.jsx reescrita — {len(NEW.splitlines())} linhas")
