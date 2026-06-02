@@ -12,6 +12,7 @@ import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
   loadJSON, saveJSON, decodeJWT, iniciarOAuth,
   validarPlaca, normalizarPlaca, normalizarTelefone, normalizarNome } from './utils.js';
 import { supaFetch, supaStorageUpload } from './supabase.js';
+import { validarRegistroOperacional } from './validators.js';
 import { exportCSV, exportODS, exportPDF, ExportMenu,
   gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
 import Toast from './components/Toast.jsx';
@@ -1652,6 +1653,8 @@ export default function App() {
     const clean = {...reg}; delete clean._override; delete clean._overrideDT;
     if (!clean.dt) throw new Error("DT obrigatório");
     for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
+    const { ok: validOk, erros: validErros } = validarRegistroOperacional(clean);
+    if (!validOk) throw new Error("Dados inválidos: " + validErros.join("; "));
     // M2/M3: escrita via RPC que valida token + base no servidor
     await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional", {
       p_token: sessionToken,
