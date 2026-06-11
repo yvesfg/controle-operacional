@@ -26,6 +26,11 @@
 - `App.jsx` (supaUpsert + salvarRegistro): base AVB grava via `upsert_operacional_cod` por `codigo`; sem `dt` obrigatório. Sem código → confirm "carregamento avulso" antes de subir. `dadosBase` atualizado em memória. Demais bases inalteradas. Build ✓.
 - `SyncSupabase_AVB.gs` (backup .gs): `mapearColunaAVB` mapeia DATA LIBERAÇÃO→data_lib, HOMERICO→data_homerico, RDO, CADASTRO FORTES→cad_fortes, CTE COMP→cte_comp, CTE COMP VLR→vl_cte_comp, TELEFONE, RODORRICA, BANCO, AGÊNCIA, CONTA, CHAVE PIX, CPF/CNPJ, FAVORECIDO. **AÇÃO DO USUÁRIO: colar no editor do Apps Script.**
 
+**Ajustes finais (sync + dashboard):**
+- `vl_cte_comp` convertida de `numeric` para `text` (migration `vl_cte_comp_to_text`): célula vazia da planilha enviava `""` → HTTP 400 `invalid input syntax for type numeric` derrubava o lote inteiro (sincronizados:0). Resolvido — sync OK (data_lib 89, homerico 196, rdo 93, fortes 195, telefone 71). Bancárias 0 pois ainda vazias na planilha.
+- `dashMes` default = mês corrente (`MM/YYYY`) em vez de "todos"; Planilha já abria no mês corrente.
+- Dashboard (AVB): agrupamento mensal passou a usar a mesma cadeia de fallback do `parseYM` da Planilha (data_carr→data_homerico→data_manifesto). Antes contava só `data_carr` (25 em 06/2026); agora bate com a Planilha (~37). Demais bases inalteradas.
+
 ---
 
 ## 2026-06-11 — Nova logo redonda na tela de login
