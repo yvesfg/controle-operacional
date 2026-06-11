@@ -30,9 +30,14 @@ export default function DashboardView({ ctx }) {
   } = ctx;
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
+  const isAvbDash = baseAtual?.id === "acailandia_avb";
+  // AVB: "Carregamentos" contabiliza apenas status CARREGADO (exclui pendentes/no-show)
+  const carregadosN = isAvbDash
+    ? dashData.filtrado.filter(r=>(r.status||"").toUpperCase()==="CARREGADO").length
+    : dashData.filtrado.length;
   const heroNum = dashHeroTab==="cte" && canFin
     ? (dashData.cteT>=1000 ? "R$ "+(dashData.cteT/1000).toFixed(1)+"k" : "R$ "+Math.round(dashData.cteT).toLocaleString("pt-BR"))
-    : String(dashData.filtrado.length);
+    : String(carregadosN);
   const heroLabel = dashHeroTab==="cte" ? "Receita CTE no Período" : "Carregamentos no Período";
 
   const statusMapDash={};
@@ -135,6 +140,36 @@ export default function DashboardView({ ctx }) {
         return (
           <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpisAvb.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
             {kpisAvb.map((k,i)=>(
+              <div key={i} style={{background:t.card,borderRadius:isMobile?8:12,border:`1px solid ${t.borda}`,padding:isMobile?"14px":"14px 16px"}}>
+                <div style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:10,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400,lineHeight:1.4,marginBottom:4}}>{k.label}</div>
+                <div style={{fontFamily:"var(--font-heading)",fontSize:isMobile?16:24,fontWeight:700,letterSpacing:"-0.04em",color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>
+                <div style={{fontFamily:"'DM Sans',sans-serif",fontSize:isMobile?9:11,color:"var(--text2)"}}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── KPI Strip Operacional AVB: Trânsito / Liberação ── */}
+      {baseAtual?.id === "acailandia_avb" && (()=>{
+        const isCarr = r => (r.status||"").toUpperCase()==="CARREGADO";
+        const temVal = v => !!(v && String(v).trim());
+        const emTransito = dashData.filtrado.filter(r=>isCarr(r) && !temVal(r.data_final)).length;
+        const encerradas = dashData.filtrado.filter(r=>temVal(r.data_final)).length;
+        const aguardLib  = dashData.filtrado.filter(r=>isCarr(r) && !temVal(r.data_lib)).length;
+        const liberadas  = dashData.filtrado.filter(r=>temVal(r.data_lib));
+        let somaDias=0, nDias=0;
+        liberadas.forEach(r=>{ const dc=parseData(r.data_carr), dl=parseData(r.data_lib); if(dc&&dl){ const d=Math.round((dl-dc)/86400000); if(d>=0){somaDias+=d;nDias++;} } });
+        const tmLib = nDias>0 ? (somaDias/nDias).toFixed(1) : "—";
+        const kpisOp = [
+          {label:"Em Trânsito",           value:String(emTransito), sub:"CARREGADO sem data final", color:t.ouro},
+          {label:"Encerradas",            value:String(encerradas), sub:"com data final (descarregado)", color:t.verde},
+          {label:"Aguardando Liberação",  value:String(aguardLib),  sub:"CARREGADO sem liberação", color:aguardLib>0?t.danger:t.verde},
+          {label:"Tempo Médio Liberação", value:tmLib==="—"?"—":`${tmLib}d`, sub:nDias>0?`${nDias} liberadas · carreg.→lib.`:"sem dados", color:t.azulLt},
+        ];
+        return (
+          <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpisOp.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
+            {kpisOp.map((k,i)=>(
               <div key={i} style={{background:t.card,borderRadius:isMobile?8:12,border:`1px solid ${t.borda}`,padding:isMobile?"14px":"14px 16px"}}>
                 <div style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:10,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400,lineHeight:1.4,marginBottom:4}}>{k.label}</div>
                 <div style={{fontFamily:"var(--font-heading)",fontSize:isMobile?16:24,fontWeight:700,letterSpacing:"-0.04em",color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>

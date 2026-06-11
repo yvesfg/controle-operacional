@@ -83,6 +83,10 @@ function ModalEditComponent({ ctx }) {
       {k:"data_manifesto",   l:"Manifesto",                                    type:"date"},
       {k:"gerenc",           l:"Gerenciadora", type:"select_opts", opts:["SKYMARK (FRETEBRAS)","INFINITY","MUNDIAL","OPENTECH"], span:2},
       {k:"forms",            l:"FORMS",                                        type:"select_sim_nao"},
+      ...(isAvb ? [
+        {k:"baixa_homerico", l:"Baixa Homérico", type:"date"},
+        {k:"ganchos",        l:"Ganchos"},
+      ] : []),
     ]},
   ];
 

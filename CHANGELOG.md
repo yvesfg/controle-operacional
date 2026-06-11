@@ -30,6 +30,9 @@
 - `vl_cte_comp` convertida de `numeric` para `text` (migration `vl_cte_comp_to_text`): célula vazia da planilha enviava `""` → HTTP 400 `invalid input syntax for type numeric` derrubava o lote inteiro (sincronizados:0). Resolvido — sync OK (data_lib 89, homerico 196, rdo 93, fortes 195, telefone 71). Bancárias 0 pois ainda vazias na planilha.
 - `dashMes` default = mês corrente (`MM/YYYY`) em vez de "todos"; Planilha já abria no mês corrente.
 - Dashboard (AVB): agrupamento mensal passou a usar a mesma cadeia de fallback do `parseYM` da Planilha (data_carr→data_homerico→data_manifesto). Antes contava só `data_carr` (25 em 06/2026); agora bate com a Planilha (~37). Demais bases inalteradas.
+- Dashboard (AVB): KPI "Carregamentos" passou a contabilizar **somente status CARREGADO** (exclui pendentes) — junho: 22.
+- Dashboard (AVB): nova faixa operacional (não depende de canFin) com 4 KPIs: Em Trânsito (CARREGADO sem data_final), Encerradas (com data_final), Aguardando Liberação (CARREGADO sem data_lib), Tempo Médio Liberação (dias carreg.→data_lib).
+- Colunas GANCHOS e BAIXA HOMERICO (planilha aba 407814645): criadas no Supabase (`ganchos`, `baixa_homerico`, text), mapeadas no `mapearColunaAVB`, e adicionadas ao `ModalEdit` (seção Operacional, só AVB). DATA CHEGADA já mapeava para `chegada` (existente). **AÇÃO: re-colar .gs + rodar sync.**
 
 ---
 

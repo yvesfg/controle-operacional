@@ -269,8 +269,6 @@ function mapearColunaAVB(n) {
 
     // Datas adicionais AVB
     'data homerico': 'data_homerico', 'data homérico': 'data_homerico',
-    'baixa homerico': 'baixa_homerico', 'baixa homérico': 'baixa_homerico',
-    'ganchos': 'ganchos', 'gancho': 'ganchos',
     'data liberação': 'data_lib', 'data liberacao': 'data_lib', 'liberação': 'data_lib', 'liberacao': 'data_lib',
 
     // Documentos extras
