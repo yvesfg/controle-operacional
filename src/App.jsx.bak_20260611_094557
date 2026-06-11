@@ -153,7 +153,7 @@ export default function App() {
   const [historico, setHistorico] = useState(() => loadJSON("hist",[]));
 
   // Dashboard state
-  const [dashMes, setDashMes] = useState(()=>String(new Date().getMonth()+1).padStart(2,"0")+"/"+new Date().getFullYear());
+  const [dashMes, setDashMes] = useState("todos");
   const [dashOrigem, setDashOrigem] = useState("todos");
 
   // Diarias state
