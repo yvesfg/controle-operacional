@@ -86,10 +86,28 @@ export async function listarDespesas(conn, baseId, mesRef) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
-// Importa um mês: substitui o que já existir (base+mês) para não duplicar a própria importação.
-export async function substituirMes(conn, baseId, mesRef, linhas) {
-  await supaFetch(conn.url, conn.key, "DELETE",
-    `${TABELA}?base_id=eq.${q(baseId)}&mes_ref=eq.${q(mesRef)}&origem=eq.import`);
+// Importação NÃO destrutiva: compara o arquivo com o que já existe (base+mês) e
+// devolve apenas as linhas NOVAS, preservando as existentes (e suas flags).
+// Casamento por conteúdo (data+valor+natureza+histórico+conta) com multiplicidade,
+// para tratar linhas legitimamente repetidas (ex.: vários tickets de mesmo valor).
+const r2num = (v) => Math.round((parseFloat(v) + Number.EPSILON) * 100) / 100;
+const chaveLinha = (x) => `${x.dt_mov || ""}|${r2num(x.valor)}|${norm(x.natureza)}|${norm(x.historico)}|${norm(x.conta)}`;
+
+export async function diffImport(conn, baseId, mesRef, linhas) {
+  const existentes = await listarDespesas(conn, baseId, mesRef);
+  const existCount = {};
+  existentes.forEach((x) => { const k = chaveLinha(x); existCount[k] = (existCount[k] || 0) + 1; });
+  const porChave = {};
+  linhas.forEach((x) => { const k = chaveLinha(x); (porChave[k] = porChave[k] || []).push(x); });
+  const novas = [];
+  Object.keys(porChave).forEach((k) => {
+    const ja = existCount[k] || 0;
+    novas.push(...porChave[k].slice(ja)); // só o excedente além do que já existe
+  });
+  return { novas, jaExistem: linhas.length - novas.length, existentesTotal: existentes.length };
+}
+
+export async function inserirImportadas(conn, mesRef, linhas) {
   if (!linhas.length) return [];
   const payload = linhas.map((x) => ({ ...x, mes_ref: mesRef, origem: "import" }));
   return await supaFetch(conn.url, conn.key, "POST", TABELA, payload);

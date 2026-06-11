@@ -143,6 +143,7 @@ export const DEV_CHANGELOG = [
       "FEAT · Complementar (vl_cte_comp) selecionavel: default OFF na AVB (margem zero/repasse), ON na Suzano (margem cheia). Descarga e diaria D01/D05 desconsiderados por enquanto.",
       "FEAT · Creditos: linhas de valor negativo na planilha viram tipo=credito e abatem a despesa liquida; KPI Creditos separado; duplicidade so entre debitos.",
       "FEAT · Despesa indevida: flag no ModalDespesa; ao importar mes seguinte, painel concilia indevidas pendentes com creditos do mes por valor (sugere e usuario confirma o vinculo).",
+      "FEAT · Importacao nao-destrutiva: diffImport compara o arquivo com o que ja existe (chave conteudo + multiplicidade) e adiciona SO as linhas novas, preservando existentes e flags; se o mes ja foi importado, pede confirmacao e informa quantas novas.",
     ],
   },
   {

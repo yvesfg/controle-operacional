@@ -1,7 +1,7 @@
 import React from "react";
 import ModalDespesa from "../../modals/ModalDespesa.jsx";
 import {
-  parseDespesasXLSX, substituirMes, listarDespesas,
+  parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas,
   inserirManual, atualizarDespesa, deletarDespesa,
   listarIndevidasPendentes, vincularCredito,
 } from "../../despesas.js";
@@ -104,9 +104,25 @@ export default function ResultadoAVB({ ctx }) {
       const linhas = await parseDespesasXLSX(file);
       const porBase = {};
       linhas.forEach((l) => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
-      let total = 0;
-      for (const b of Object.keys(porBase)) { await substituirMes(conn, b, mesRef, porBase[b]); total += porBase[b].length; }
-      showToast?.(`Importado: ${total} despesas (${mesLabel(mesRef)}).`, "ok");
+      // Diff por base: descobre só as linhas novas, preservando as existentes (e flags)
+      let novasTodas = [], jaTotal = 0, existiaAlgum = false;
+      const resumo = [];
+      for (const b of Object.keys(porBase)) {
+        const { novas, jaExistem, existentesTotal } = await diffImport(conn, b, mesRef, porBase[b]);
+        novasTodas = novasTodas.concat(novas); jaTotal += jaExistem;
+        if (existentesTotal > 0) existiaAlgum = true;
+        resumo.push(`${b === "acailandia_avb" ? "AVB" : "IMP/BEL"}: ${novas.length} novas`);
+      }
+      if (existiaAlgum) {
+        const msg = `Mês ${mesLabel(mesRef)} já tem despesas importadas.\n\n`
+          + `Novas linhas: ${novasTodas.length} (${resumo.join(" · ")})\n`
+          + `Já existentes (mantidas com flags): ${jaTotal}\n\n`
+          + `Adicionar só as novas e preservar as existentes?`;
+        if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
+      }
+      if (novasTodas.length === 0) { showToast?.("Nenhuma novidade — tudo já estava importado.", "ok"); return; }
+      await inserirImportadas(conn, mesRef, novasTodas);
+      showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)}).`, "ok");
       await carregar();
     } catch (err) { showToast?.("Erro na importação: " + err.message, "erro"); }
     finally { setImporting(false); }
