@@ -136,6 +136,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-06-11", sessao: "Sessao 22",
+    itens: [
+      "FEAT · Resultado (Margem x Despesas): nova aba por base (AVB e Imperatriz/Belem), gated por permissao financeira. Receita (vl_cte) - Pago motorista (vl_contrato) = Margem, menos despesas incluidas do mes = Resultado.",
+      "FEAT · Despesas: tabela Supabase despesas_filial; importacao da planilha mensal (aba ACA->AVB, IMP+BELEM->imperatriz_belem); CRUD via ModalDespesa (editar/excluir/incluir manual); toggle incluir nas linhas marcadas como duplicidade.",
+      "FEAT · Complementar (vl_cte_comp) selecionavel: default OFF na AVB (margem zero/repasse), ON na Suzano (margem cheia). Descarga e diaria D01/D05 desconsiderados por enquanto.",
+    ],
+  },
+  {
     data: "2026-05-29", sessao: "Sessao 21",
     itens: [
       "FIX · AVB Dashboard: origens dinamicas (nao mais fixadas em BELEM/IMPERATRIZ) — KPIs deixam de zerar ao selecionar AVB.",
