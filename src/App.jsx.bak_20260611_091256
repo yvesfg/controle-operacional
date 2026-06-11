@@ -1670,17 +1670,8 @@ export default function App() {
     if (!conn) throw new Error("Sem conexão");
     if (!sessionToken) throw new Error("Sessão não autenticada");
     const clean = {...reg}; delete clean._override; delete clean._overrideDT;
-    for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
-    // AVB: âncora = codigo (coluna H); grava via upsert por codigo. Sem dt obrigatório.
-    if (baseAtual?.id === "acailandia_avb") {
-      await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional_cod", {
-        p_token: sessionToken,
-        p_base:  baseAtual.id,
-        p_dados: clean,
-      });
-      return;
-    }
     if (!clean.dt) throw new Error("DT obrigatório");
+    for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
     const { ok: validOk, erros: validErros } = validarRegistroOperacional(clean);
     if (!validOk) throw new Error("Dados inválidos: " + validErros.join("; "));
     // M2/M3: escrita via RPC que valida token + base no servidor
@@ -1694,31 +1685,6 @@ export default function App() {
   // Save record
   const salvarRegistro = async () => {
     const reg = {...formData};
-
-    // ── AVB: âncora = codigo. Sem código pode subir como avulso, com alerta. ──
-    if (baseAtual?.id === "acailandia_avb") {
-      if (!reg.codigo) {
-        const ok = window.confirm("\u26a0\ufe0f Este registro nao tem CODIGO (coluna H).\n\nSalvar assim mesmo como CARREGAMENTO AVULSO?\n(Recomendado definir um codigo para evitar duplicidade.)");
-        if (!ok) return;
-      }
-      if (editIdx >= 0 && reg.codigo) {
-        setDadosBase(prev => prev.map(r => r.codigo === reg.codigo ? {...r, ...reg} : r));
-      } else {
-        if (!reg.data_criacao) reg.data_criacao = new Date().toISOString();
-        setDadosBase(prev => [...prev, reg]);
-      }
-      const connAvb = getConexao();
-      if (connAvb) {
-        try {
-          await supaUpsert(reg);
-          await registrarLog(editIdx>=0 ? "EDITAR_REGISTRO" : "NOVO_REGISTRO", `COD ${reg.codigo||"(avulso)"} — ${reg.nome||"sem nome"}`, editIdx>=0 ? DADOS[editIdx] : null, reg);
-          showToast("✅ Salvo e sincronizado!","ok");
-        } catch(e) { showToast("⚠️ Salvo local. Sync: "+e.message,"warn"); }
-      } else { showToast("✅ Salvo localmente!","ok"); }
-      setModalOpen(null);
-      return;
-    }
-
     if (!reg.dt) { showToast("⚠️ DT obrigatório","warn"); return; }
 
     // local save

@@ -44,7 +44,8 @@ export default function LogisticaAVB({ ctx }) {
   const regs = DADOS||[];
 
   // ── Classificações ────────────────────────────────────────
-  const emTransito   = regs.filter(r=>(r.status||"").toUpperCase()==="CARREGADO"&&!r.chegada);
+  // Em trânsito = CARREGADO e ainda SEM data_final (descarregamento). Ao preencher data_final, encerra.
+  const emTransito   = regs.filter(r=>(r.status||"").toUpperCase()==="CARREGADO"&&!r.data_final);
   const prevHoje     = regs.filter(r=>{ const da=parseDMY(r.data_agenda); return da&&da.getTime()===hoje.getTime(); });
   const pendentes    = regs.filter(r=>(r.status||"").toUpperCase()==="PENDENTE");
   const docIncompleta= regs.filter(r=>(r.status||"").toUpperCase()==="CARREGADO"&&(!r.cte||!r.mdf||!r.nf));
@@ -189,6 +190,7 @@ export default function LogisticaAVB({ ctx }) {
                 if (!ag) return null;
                 return chip(`Prev. (${ag.dias}d)`, fmtDataAvb(ag.data), "#f59e0b");
               })()}
+              {r.data_final&&chip("Descarregado", r.data_final, t.verde)}
 
               {/* Status documental */}
               <div style={{background:t.card2,borderRadius:6,padding:"4px 8px",

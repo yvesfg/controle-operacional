@@ -14,11 +14,13 @@ function ModalEditComponent({ ctx }) {
     setNfdForm, setNfdFotos, setNfdAlertOpen,
     setOcorrChegadaAlert,
     salvarRegistro, deletarRegistro,
+    baseAtual,
   } = ctx;
 
   if (modalOpen !== "edit") return null;
 
   const isWide = typeof window !== "undefined" && window.innerWidth >= 768;
+  const isAvb = baseAtual?.id === "acailandia_avb";
 
   // ── ÍCONES ────────────────────────────────────────────────────────────
   const icoIdent = <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>;
@@ -61,6 +63,7 @@ function ModalEditComponent({ ctx }) {
       {k:"data_carr",   l:"Carregamento",                        type:"date"},
       {k:"data_agenda", l:"Agenda (DT PRV. P/ DESCARREGAR)",     type:"date_or_oc"},
       {k:"status",      l:"Status",                              type:"select_status"},
+      ...(isAvb ? [{k:"data_final", l:"Data Final (Descarregado — encerra trânsito)", type:"date"}] : []),
       {k:"dias",        l:"Dias",                                type:"computed_dias", lock:true},
     ]},
     {s:"Financeiro", ico:icoFin, fields:[

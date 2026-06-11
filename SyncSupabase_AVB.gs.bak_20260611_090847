@@ -266,26 +266,6 @@ function mapearColunaAVB(n) {
     'chegada': 'chegada', 'chegada no cliente': 'chegada', 'data chegada': 'chegada',
     'gerenc': 'gerenc', 'gerenciadora': 'gerenc',
     'manifesto': 'data_manifesto', 'data manifesto': 'data_manifesto',
-
-    // Datas adicionais AVB
-    'data homerico': 'data_homerico', 'data homérico': 'data_homerico',
-    'data liberação': 'data_lib', 'data liberacao': 'data_lib', 'liberação': 'data_lib', 'liberacao': 'data_lib',
-
-    // Documentos extras
-    'rdo': 'rdo',
-    'cadastro fortes': 'cad_fortes',
-    'cte comp': 'cte_comp',
-    'cte comp vlr': 'vl_cte_comp', 'cte comp valor': 'vl_cte_comp',
-
-    // Contato / Dados bancários (favorecido)
-    'telefone': 'telefone',
-    'nº app rodorrica': 'rodorrica', 'n app rodorrica': 'rodorrica', 'app rodorrica': 'rodorrica', 'rodorrica': 'rodorrica',
-    'banco': 'banco',
-    'agência': 'agencia', 'agencia': 'agencia',
-    'conta': 'conta',
-    'chave pix': 'chave_pix',
-    'cpf/cnpj': 'cpf_cnpj', 'cpf / cnpj': 'cpf_cnpj',
-    'favorecido': 'favorecido',
   };
   return mapa[n] || null;
 }

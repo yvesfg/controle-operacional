@@ -1,3 +1,33 @@
+## 2026-06-11 — Açailândia: remove tab "Operac." do sidebar + diagnóstico de sync
+
+**Solicitado:** Exclusivamente na base Açailândia: (1/2) verificar/comparar Supabase × Google Sheets de carga/descarga e a "data final"; (3) retirar "Operacional" do sidebar e checar campos exclusivos.
+
+**Implementado (item 3) — `src/App.jsx`:**
+- Tab `Operac.` marcado com `hideAvb:true` e novo filtro: oculto quando `baseAtual.id === "acailandia_avb"` (mantido nas demais bases). Build ✓.
+- Sem campo órfão: `OperacionalView` usa tabelas SGS/Apontamentos, não os campos exclusivos AVB de carga/descarga.
+
+**Diagnóstico (itens 1/2) — somente leitura, sem alteração de dados:**
+- "Data final" da AVB = `DATA LIBERAÇÃO` (`data_lib`), não `data_desc` (planilha AVB não tem descarga).
+- `data_lib` está VAZIA em 100% do Supabase (0/276); planilha tem 90 liberações preenchidas → `mapearColunaAVB` no `SyncSupabase_AVB.gs` não mapeia DATA LIBERAÇÃO (nem HOMERICO/RDO/CADASTRO FORTES/CTE COMP).
+- Comparação por CÓDIGO (3 abas): 197 em comum; 0 na planilha faltando no Supabase; 4 órfãos no Supabase (69674, 70752, 70780, 70876) + 75 linhas legadas só com `dt` (sync nunca deleta).
+- Descasamento app↔tabela: `SUPA_KNOWN_COLS` usa `data_liberacao/cadastro_fortes/cte_comp_num/gerenciadora`, mas a tabela tem `data_lib/cad_fortes/cte_comp/gerenc`.
+- Correções (sync .gs, SUPA_KNOWN_COLS, limpeza de órfãos) pendentes de aprovação.
+
+**Implementado (data_final / em trânsito) — após esclarecimento do usuário (data liberação ≠ descarga):**
+- Supabase: criada coluna `data_final` (text) em `controle_operacional_avb` via migration `add_data_final_avb`. RPCs montam colunas dinamicamente → reconhecem a coluna sem alteração.
+- `LogisticaAVB.jsx`: regra "Em Trânsito" passou de `CARREGADO && !chegada` para `CARREGADO && !data_final`; chip "Descarregado" exibido quando `data_final` preenchido.
+- `ModalEdit.jsx` + `App.jsx`: campo "Data Final (Descarregado)" (type date) na seção Agenda, exibido apenas na AVB (`baseAtual` passado ao ctx; `isAvb`).
+- Colunas na planilha SEM correspondente no Supabase (aba gid=407814645): TELEFONE, Nº APP RODORRICA, BANCO, AGÊNCIA, CONTA, CHAVE PIX, CPF/CNPJ, FAVORECIDO.
+
+**Gravação por CÓDIGO + limpeza + colunas (aprovado pelo usuário — âncora = codigo):**
+- LIMPEZA: removidas 75 linhas duplicadas (código gravado na coluna `dt` por import errado de 02/06; 100% tinham correspondente com `codigo`). Backup em `public._backup_avb_dups_20260611` (reversível). Tabela: 276→201, todos com código. Depois, 4 órfãos-com-código (69674, 70752, 70780, 70876) também removidos (não existiam na planilha; backup `_backup_avb_orfaos_20260611`) → 201→197, batendo exatamente com os 197 códigos da planilha.
+- COLUNAS novas no Supabase (migration `add_avb_missing_columns`): `telefone, rodorrica, banco, agencia, conta, chave_pix, cpf_cnpj, favorecido, data_homerico`.
+- RPC `upsert_operacional_cod` (migration): upsert ON CONFLICT (codigo), exclui `id` do INSERT (usa sequence). Testada (insert+update sem duplicar).
+- `App.jsx` (supaUpsert + salvarRegistro): base AVB grava via `upsert_operacional_cod` por `codigo`; sem `dt` obrigatório. Sem código → confirm "carregamento avulso" antes de subir. `dadosBase` atualizado em memória. Demais bases inalteradas. Build ✓.
+- `SyncSupabase_AVB.gs` (backup .gs): `mapearColunaAVB` mapeia DATA LIBERAÇÃO→data_lib, HOMERICO→data_homerico, RDO, CADASTRO FORTES→cad_fortes, CTE COMP→cte_comp, CTE COMP VLR→vl_cte_comp, TELEFONE, RODORRICA, BANCO, AGÊNCIA, CONTA, CHAVE PIX, CPF/CNPJ, FAVORECIDO. **AÇÃO DO USUÁRIO: colar no editor do Apps Script.**
+
+---
+
 ## 2026-06-11 — Nova logo redonda na tela de login
 
 **Solicitado:** Colocar a nova logo do YFGroup na tela de login, redonda (não quadrada) e um pouco maior.
