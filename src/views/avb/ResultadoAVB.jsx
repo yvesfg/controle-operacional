@@ -3,6 +3,7 @@ import ModalDespesa from "../../modals/ModalDespesa.jsx";
 import {
   parseDespesasXLSX, substituirMes, listarDespesas,
   inserirManual, atualizarDespesa, deletarDespesa,
+  listarIndevidasPendentes, vincularCredito,
 } from "../../despesas.js";
 
 // ResultadoAVB — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
@@ -48,6 +49,7 @@ export default function ResultadoAVB({ ctx }) {
   React.useEffect(() => { setIncluirComp(baseId === "imperatriz_belem"); }, [baseId]);
 
   const [despesas, setDespesas] = React.useState([]);
+  const [indevidas, setIndevidas] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const [modal, setModal] = React.useState({ open: false, inicial: null });
@@ -58,7 +60,13 @@ export default function ResultadoAVB({ ctx }) {
   const carregar = React.useCallback(async () => {
     if (!conn || !baseId || !mesRef) return;
     setLoading(true);
-    try { setDespesas(await listarDespesas(conn, baseId, mesRef)); }
+    try {
+      const [d, ind] = await Promise.all([
+        listarDespesas(conn, baseId, mesRef),
+        listarIndevidasPendentes(conn, baseId),
+      ]);
+      setDespesas(d); setIndevidas(ind);
+    }
     catch (e) { showToast?.("Erro ao carregar despesas: " + e.message, "erro"); }
     finally { setLoading(false); }
   }, [conn, baseId, mesRef, showToast]);
@@ -78,9 +86,12 @@ export default function ResultadoAVB({ ctx }) {
     return { receita, custo, comp, margem, n: regs.length };
   }, [DADOS, mesRef, incluirComp, baseId]);
 
-  const despInc = despesas.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
-  const despTot = despesas.reduce((s, d) => s + Number(d.valor || 0), 0);
-  const resultado = fin.margem - despInc;
+  const creditos = despesas.filter((d) => d.tipo === "credito");
+  const debitos = despesas.filter((d) => d.tipo !== "credito");
+  const despDebInc = debitos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
+  const credInc = creditos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
+  const despLiq = despDebInc + credInc;
+  const resultado = fin.margem - despLiq;
   const pct = (v) => (fin.receita ? (v / fin.receita * 100) : 0).toFixed(1) + "%";
 
   // ── Ações ──
@@ -118,6 +129,10 @@ export default function ResultadoAVB({ ctx }) {
       setDespesas((arr) => arr.map((x) => x.id === d.id ? { ...x, incluir: !x.incluir } : x));
       await atualizarDespesa(conn, d.id, { incluir: !d.incluir });
     } catch (e) { showToast?.("Erro: " + e.message, "erro"); carregar(); }
+  };
+  const vincular = async (indId, credId) => {
+    try { await vincularCredito(conn, indId, credId); showToast?.("Crédito vinculado à indevida.", "ok"); await carregar(); }
+    catch (e) { showToast?.("Erro ao vincular: " + e.message, "erro"); }
   };
 
   // Agrupa despesas por grupo p/ exibição
@@ -161,13 +176,43 @@ export default function ResultadoAVB({ ctx }) {
       </div>
 
       {/* KPIs do resultado */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap: 10, marginBottom: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>
         {kpi("Faturamento (CTE)", money(fin.receita), `${fin.n} viagens`, t.verde)}
         {kpi("Pago motorista", money(fin.custo), "vl. contrato", t.txt)}
         {kpi("Margem bruta", money(fin.margem), pct(fin.margem), t.ouro)}
-        {kpi("Despesas incl.", money(despInc), despTot !== despInc ? `de ${money(despTot)}` : null, t.danger)}
+        {kpi("Despesas (débito)", money(despDebInc), "incluídas", t.danger)}
+        {kpi("Créditos", money(Math.abs(credInc)), "abatem despesa", t.verde)}
         {kpi("Resultado", money(resultado), pct(resultado), resultado >= 0 ? t.verde : t.danger)}
       </div>
+
+      {/* Conciliação de indevidas → crédito */}
+      {indevidas.length > 0 && (
+        <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55` }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, marginBottom: 3 }}>Indevidas aguardando crédito ({indevidas.length})</div>
+          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>
+            Despesas marcadas como indevidas que ainda não voltaram como crédito. Sugestões por valor entre os créditos de {mesLabel(mesRef)}.
+          </div>
+          {indevidas.map((ind) => {
+            const cand = creditos.find((c) => Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)));
+            return (
+              <div key={ind.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px", borderBottom: `1px solid ${t.borda}55` }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.natureza || ind.historico || "—"}</div>
+                  <div style={{ fontSize: 10, color: t.txt2 }}>{mesLabel(ind.mes_ref)} · {money(Number(ind.valor || 0))}</div>
+                </div>
+                {cand ? (
+                  <button onClick={() => vincular(ind.id, cand.id)}
+                    style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 7, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
+                    ✓ Vincular crédito {money(Math.abs(Number(cand.valor || 0)))}
+                  </button>
+                ) : (
+                  <span style={{ fontSize: 10, color: t.txt2, whiteSpace: "nowrap" }}>sem crédito igual neste mês</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Lista de despesas */}
       <div style={{ ...card }}>
@@ -200,6 +245,8 @@ export default function ResultadoAVB({ ctx }) {
                     <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.natureza || d.historico || "—"}
                       {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
+                      {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
+                      {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
                       {d.dup_flag && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE?</span>}
                     </div>
                     {d.historico && d.natureza && (
@@ -212,7 +259,7 @@ export default function ResultadoAVB({ ctx }) {
                       <input type="checkbox" checked={d.incluir} onChange={() => toggleIncluir(d)} /> incl.
                     </label>
                   )}
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: t.txt, whiteSpace: "nowrap" }}>{money(Number(d.valor || 0))}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt, whiteSpace: "nowrap" }}>{money(Number(d.valor || 0))}</div>
                 </div>
               ))}
             </div>

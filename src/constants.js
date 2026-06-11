@@ -141,6 +141,8 @@ export const DEV_CHANGELOG = [
       "FEAT · Resultado (Margem x Despesas): nova aba por base (AVB e Imperatriz/Belem), gated por permissao financeira. Receita (vl_cte) - Pago motorista (vl_contrato) = Margem, menos despesas incluidas do mes = Resultado.",
       "FEAT · Despesas: tabela Supabase despesas_filial; importacao da planilha mensal (aba ACA->AVB, IMP+BELEM->imperatriz_belem); CRUD via ModalDespesa (editar/excluir/incluir manual); toggle incluir nas linhas marcadas como duplicidade.",
       "FEAT · Complementar (vl_cte_comp) selecionavel: default OFF na AVB (margem zero/repasse), ON na Suzano (margem cheia). Descarga e diaria D01/D05 desconsiderados por enquanto.",
+      "FEAT · Creditos: linhas de valor negativo na planilha viram tipo=credito e abatem a despesa liquida; KPI Creditos separado; duplicidade so entre debitos.",
+      "FEAT · Despesa indevida: flag no ModalDespesa; ao importar mes seguinte, painel concilia indevidas pendentes com creditos do mes por valor (sugere e usuario confirma o vinculo).",
     ],
   },
   {

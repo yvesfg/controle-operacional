@@ -9,7 +9,7 @@ const GRUPOS = ["ENCARGOS", "DESPESAS C/ PESSOAL", "DESPESAS FIXAS", "DESPESAS V
 export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial, t, isMobile }) {
   const ehEdicao = !!(inicial && inicial.id);
   const [form, setForm] = React.useState({
-    grupo: "DESPESAS VARIAVEIS", dt_mov: "", valor: "", natureza: "", conta: "", historico: "", incluir: true,
+    grupo: "DESPESAS VARIAVEIS", dt_mov: "", valor: "", natureza: "", conta: "", historico: "", incluir: true, indevida: false,
   });
 
   React.useEffect(() => {
@@ -22,8 +22,12 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
       conta: inicial?.conta || "",
       historico: inicial?.historico || "",
       incluir: inicial?.incluir !== false,
+      indevida: inicial?.indevida === true,
     });
   }, [open, inicial]);
+
+  // Despesa "indevida" só faz sentido para débitos (valor positivo)
+  const ehDebito = parseFloat(String(form.valor).replace(/[R$\s]/g, "").replace(",", ".")) >= 0;
 
   if (!open) return null;
 
@@ -39,7 +43,9 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
       natureza: form.natureza.trim() || null,
       conta: form.conta.trim() || null,
       historico: form.historico.trim() || null,
+      tipo: valorNum < 0 ? "credito" : "debito",
       incluir: form.incluir,
+      indevida: valorNum >= 0 ? form.indevida : false,
     });
   };
 
@@ -99,6 +105,14 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
             <input type="checkbox" checked={form.incluir} onChange={(e) => set("incluir", e.target.checked)} />
             Incluir no cálculo do resultado
           </label>
+          {ehDebito ? (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: t.danger, cursor: "pointer" }}>
+              <input type="checkbox" checked={form.indevida} onChange={(e) => set("indevida", e.target.checked)} />
+              Despesa indevida — aguardar crédito no mês seguinte
+            </label>
+          ) : (
+            <div style={{ fontSize: 11, color: t.txt2 }}>Valor negativo = crédito (abate a despesa do mês).</div>
+          )}
         </div>
 
         <div style={{ padding: "14px 20px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 10, justifyContent: "space-between" }}>

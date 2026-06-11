@@ -61,15 +61,16 @@ export function parseDespesasXLSX(file) {
                 natureza: row[4] != null ? String(row[4]).trim() : null,
                 conta: row[5] != null ? String(row[5]).trim() : null,
                 historico: row[6] != null ? String(row[6]).trim() : null,
+                tipo: r2(val) < 0 ? "credito" : "debito", // valor negativo = crédito que abate
                 dup_flag: false,
               });
             }
           });
         });
-        // dup_flag: mesma despesa (valor + natureza + histórico) aparecendo 2+ vezes
+        // dup_flag: só entre débitos (valor + natureza + histórico) aparecendo 2+ vezes
         const cont = {};
-        rows.forEach((x) => { const k = `${x.valor}||${norm(x.natureza)}||${norm(x.historico)}`; cont[k] = (cont[k] || 0) + 1; });
-        rows.forEach((x) => { const k = `${x.valor}||${norm(x.natureza)}||${norm(x.historico)}`; if (cont[k] > 1) x.dup_flag = true; });
+        rows.forEach((x) => { if (x.tipo !== "debito") return; const k = `${x.valor}||${norm(x.natureza)}||${norm(x.historico)}`; cont[k] = (cont[k] || 0) + 1; });
+        rows.forEach((x) => { if (x.tipo !== "debito") return; const k = `${x.valor}||${norm(x.natureza)}||${norm(x.historico)}`; if (cont[k] > 1) x.dup_flag = true; });
         resolve(rows);
       } catch (err) { reject(err); }
     };
@@ -108,4 +109,17 @@ export async function atualizarDespesa(conn, id, patch) {
 
 export async function deletarDespesa(conn, id) {
   return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q(id)}`);
+}
+
+// ── Conciliação de despesas indevidas → crédito ──────────────
+// Indevidas (débitos marcados) ainda sem crédito vinculado, de qualquer mês da base.
+export async function listarIndevidasPendentes(conn, baseId) {
+  const path = `${TABELA}?base_id=eq.${q(baseId)}&indevida=eq.true&credito_match_id=is.null&order=mes_ref.asc,valor.desc`;
+  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+}
+export async function vincularCredito(conn, indevidaId, creditoId) {
+  return await atualizarDespesa(conn, indevidaId, { credito_match_id: creditoId, recuperado_em: new Date().toISOString() });
+}
+export async function desvincularCredito(conn, indevidaId) {
+  return await atualizarDespesa(conn, indevidaId, { credito_match_id: null, recuperado_em: null });
 }
