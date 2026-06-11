@@ -1,3 +1,16 @@
+## 2026-06-11 — Nova logo redonda na tela de login
+
+**Solicitado:** Colocar a nova logo do YFGroup na tela de login, redonda (não quadrada) e um pouco maior.
+
+**Implementado:**
+- Imagem `logo-yfgroup-nova.png` recortada em círculo (PNG transparente, 256px) → `assets/images/logo-login.png`.
+- `src/App.jsx`: import da logo (`import loginLogo from '../assets/images/logo-login.png'`) e substituição dos 2 ícones SVG genéricos da tela de login/seletor de base por `<img>` redondo de 80px (antes 56px). Texto "YFGroup / Controle Operacional" mantido.
+- Import via módulo (não caminho absoluto) para respeitar o `base` dinâmico do Vite (Vercel `/` × GitHub Pages `/controle-operacional/`).
+
+**Resultado:** Build ✓ 0 erros; snapshot da tela confirma a logo no lugar do ícone.
+
+---
+
 ## 2026-05-01 — Modularização de App.jsx (Plano 2026-04-30)
 
 **Solicitado:** Quebrar App.jsx (9.053 linhas) em módulos focados sem mover lógica de negócio.

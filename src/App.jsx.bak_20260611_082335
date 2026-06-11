@@ -7,7 +7,6 @@ import { themes, TABLE, BASES, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
   DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY } from './constants.js';
 import { DEFAULT_LOGO } from './defaultLogo.js';
-import loginLogo from '../assets/images/logo-login.png';
 import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
   brToInputDT, inputToBrDT, dtBase, esc, hashSenha, verificarSenha,
   loadJSON, saveJSON, decodeJWT, iniciarOAuth,
@@ -2004,7 +2003,12 @@ export default function App() {
 
         {/* ── Logotipo ── */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28,animation:"loginPop .45s ease-out",position:"relative",zIndex:1}}>
-          <img src={loginLogo} alt="YFGroup" width="80" height="80" style={{marginBottom:14,borderRadius:"50%"}} />
+          <svg width="56" height="56" viewBox="0 0 56 56" style={{marginBottom:14}}>
+            <rect width="56" height="56" rx="14" fill={t.card} stroke={hexRgb(t.ouro,.25)} strokeWidth="1"/>
+            <rect x="10" y="15" width="26" height="20" rx="3" fill={hexRgb(t.ouro,.06)} stroke={t.ouro} strokeWidth="1.5" opacity=".45"/>
+            <rect x="20" y="21" width="26" height="20" rx="3" fill={hexRgb(t.ouro, .15)} stroke={t.ouro} strokeWidth="2"/>
+            <circle cx="33" cy="31" r="3" fill={t.ouro}/>
+          </svg>
           <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
           <div style={{width:32,height:2,background:t.ouro,borderRadius:1,margin:"6px 0"}}/>
           <div style={{fontSize:9,color:t.txt2,letterSpacing:".12em",textTransform:"uppercase"}}>Controle Operacional</div>
@@ -2094,7 +2098,12 @@ export default function App() {
 
         {/* Logotipo */}
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28,animation:"loginPop .45s ease-out",position:"relative",zIndex:1}}>
-          <img src={loginLogo} alt="YFGroup" width="80" height="80" style={{marginBottom:14,borderRadius:"50%"}} />
+          <svg width="56" height="56" viewBox="0 0 56 56" style={{marginBottom:14}}>
+            <rect width="56" height="56" rx="14" fill={t.card} stroke={hexRgb(t.ouro,.25)} strokeWidth="1"/>
+            <rect x="10" y="15" width="26" height="20" rx="3" fill={hexRgb(t.ouro,.06)} stroke={t.ouro} strokeWidth="1.5" opacity=".45"/>
+            <rect x="20" y="21" width="26" height="20" rx="3" fill={hexRgb(t.ouro,.15)} stroke={t.ouro} strokeWidth="2"/>
+            <circle cx="33" cy="31" r="3" fill={t.ouro}/>
+          </svg>
           <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
           <div style={{width:32,height:2,background:t.ouro,borderRadius:1,margin:"6px 0"}}/>
           <div style={{fontSize:9,color:t.txt2,letterSpacing:".12em",textTransform:"uppercase"}}>Controle Operacional</div>
