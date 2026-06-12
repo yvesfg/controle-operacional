@@ -1,4 +1,5 @@
 import React from "react";
+import Toggle from "../components/Toggle.jsx";
 
 export default function ModalRelatorios({ ctx }) {
   const {
@@ -129,8 +130,7 @@ export default function ModalRelatorios({ ctx }) {
                 {k:"descargas",l:"Descargas do Período"},
               ].map(({k,l})=>(
                 <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relGeralSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
-                  <input type="checkbox" checked={!!relGeralSecoes[k]} onChange={e=>setRelGeralSecoes(p=>({...p,[k]:e.target.checked}))}
-                    style={{accentColor:t.ouro,width:14,height:14,cursor:"pointer"}} />
+                  <Toggle checked={!!relGeralSecoes[k]} color={t.ouro} onChange={v=>setRelGeralSecoes(p=>({...p,[k]:v}))} />
                   <span style={{fontSize:11,fontWeight:600,color:relGeralSecoes[k]?t.txt:t.txt2}}>{l}</span>
                 </label>
               ))}
@@ -177,7 +177,7 @@ export default function ModalRelatorios({ ctx }) {
                     {k:"obs",l:"Observação"},
                   ].map(({k,l})=>(
                     <label key={k} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 6px",borderRadius:6,border:`1px solid ${relGeralColunas[k]?t.ouro+"44":t.borda}`,cursor:"pointer",fontSize:10,background:relGeralColunas[k]?"rgba(240,185,11,.05)":"transparent",transition:"all .12s"}}>
-                      <input type="checkbox" checked={!!relGeralColunas[k]} onChange={e=>setRelGeralColunas(p=>({...p,[k]:e.target.checked}))} style={{accentColor:t.ouro,width:11,height:11,cursor:"pointer"}} />
+                      <Toggle checked={!!relGeralColunas[k]} color={t.ouro} size={0.72} onChange={v=>setRelGeralColunas(p=>({...p,[k]:v}))} />
                       <span style={{color:relGeralColunas[k]?t.txt:t.txt2}}>{l}</span>
                     </label>
                   ))}
@@ -397,8 +397,7 @@ export default function ModalRelatorios({ ctx }) {
                 {k:"apontamentos",l:"Apontamentos (Descarga/Stretch)"},
               ].map(({k,l})=>(
                 <label key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:`rgba(128,128,128,.05)`,borderRadius:8,border:`1px solid ${relOperSecoes[k]?t.ouro+"44":t.borda}`,cursor:"pointer",transition:"all .15s"}}>
-                  <input type="checkbox" checked={!!relOperSecoes[k]} onChange={e=>setRelOperSecoes(p=>({...p,[k]:e.target.checked}))}
-                    style={{accentColor:t.ouro,width:14,height:14,cursor:"pointer"}} />
+                  <Toggle checked={!!relOperSecoes[k]} color={t.ouro} onChange={v=>setRelOperSecoes(p=>({...p,[k]:v}))} />
                   <span style={{fontSize:11,fontWeight:600,color:relOperSecoes[k]?t.txt:t.txt2}}>{l}</span>
                 </label>
               ))}

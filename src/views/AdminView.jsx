@@ -1,4 +1,5 @@
 import React from "react";
+import Toggle from "../components/Toggle.jsx";
 import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
 import { TABLE_USUARIOS, PERMS_PADRAO, BASES as BASES_CONST } from '../constants.js';
 import { saveJSON, loadJSON } from '../utils.js';
@@ -170,7 +171,7 @@ export default function AdminView({ ctx }) {
                             const checked = ids.includes(base.id);
                             return (
                               <label key={base.id} style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:t.txt2,cursor:"pointer",userSelect:"none"}}>
-                                <input type="checkbox" checked={checked} onChange={async()=>{
+                                <Toggle checked={checked} color={t.ouro} size={0.8} onChange={async()=>{
                                   const newIds = checked ? ids.filter(x=>x!==base.id) : [...ids, base.id];
                                   if (!newIds.length) { showToast("⚠️ Ao menos uma base é necessária","warn"); return; }
                                   const nu=[...usuarios]; nu[i]={...nu[i],bases_permitidas:newIds};
@@ -178,7 +179,7 @@ export default function AdminView({ ctx }) {
                                   const conn=getConexao();
                                   if(conn) await supaFetch(conn.url,conn.key,"PATCH",`${TABLE_USUARIOS}?email=eq.${encodeURIComponent(u.email)}`,{bases_permitidas:JSON.stringify(newIds)}).catch(()=>{});
                                   showToast(`✅ Bases de ${u.nome||u.email} atualizadas`,"ok");
-                                }} style={{accentColor:t.ouro,cursor:"pointer"}} />
+                                }} />
                                 {base.label}
                               </label>
                             );

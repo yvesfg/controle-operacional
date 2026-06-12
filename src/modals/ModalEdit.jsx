@@ -1,4 +1,5 @@
 import React from "react";
+import Toggle from "../components/Toggle.jsx";
 
 function ModalEditComponent({ ctx }) {
   const {
@@ -115,7 +116,7 @@ function ModalEditComponent({ ctx }) {
 
         {f.type==="checkbox" ? (
           <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${formData[f.k]==="sim"?t.ouro:t.borda}`,background:formData[f.k]==="sim"?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
-            <input type="checkbox" checked={formData[f.k]==="sim"} onChange={e=>{const checked=e.target.checked;setFormData(p=>({...p,[f.k]:checked?"sim":"", ...(checked?{data_desc:""}:{})}));}} style={{width:15,height:15,accentColor:t.ouro,cursor:"pointer"}} />
+            <Toggle checked={formData[f.k]==="sim"} color={t.ouro} onChange={checked=>setFormData(p=>({...p,[f.k]:checked?"sim":"", ...(checked?{data_desc:""}:{})}))} />
             <span style={{fontSize:11,color:formData[f.k]==="sim"?t.ouro:t.txt2,fontWeight:formData[f.k]==="sim"?700:400}}>
               {formData[f.k]==="sim" ? "⏳ Aguardando descarga" : "Marcar como Aguardando"}
             </span>
@@ -151,7 +152,7 @@ function ModalEditComponent({ ctx }) {
             return (
               <div style={{display:"flex",flexDirection:"column",gap:4}}>
                 <label style={{display:"flex",alignItems:"center",gap:7,cursor:isLocked?"not-allowed":"pointer",padding:"6px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${isOC?t.ouro:t.borda}`,background:isOC?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
-                  <input type="checkbox" disabled={isLocked} checked={isOC} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.checked?"OC":""}))} style={{width:13,height:13,accentColor:t.ouro,cursor:isLocked?"not-allowed":"pointer"}} />
+                  <Toggle checked={isOC} disabled={isLocked} color={t.ouro} size={0.9} onChange={v=>setFormData(p=>({...p,[f.k]:v?"OC":""}))} />
                   <span style={{fontSize:10,color:isOC?t.ouro:t.txt2,fontWeight:isOC?700:400,letterSpacing:.3}}>
                     {isOC ? "📋 OC – Ordem de Chegada" : "OC (sem data fixa)"}
                   </span>

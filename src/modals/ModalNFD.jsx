@@ -1,5 +1,6 @@
 import React from "react";
 import { supaStorageUpload } from "../supabase.js";
+import Toggle from "../components/Toggle.jsx";
 
 export default function ModalNFD({ ctx }) {
   const {
@@ -121,7 +122,7 @@ export default function ModalNFD({ ctx }) {
             </div>
             {/* Checkbox registrar outra */}
             <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(240,185,11,.04)`,cursor:"pointer",userSelect:"none"}}>
-              <input type="checkbox" checked={nfdRegistrarOutra} onChange={e=>setNfdRegistrarOutra(e.target.checked)} style={{width:14,height:14,accentColor:"#F3BA2F",cursor:"pointer",flexShrink:0}} />
+              <Toggle checked={nfdRegistrarOutra} color="#F3BA2F" onChange={setNfdRegistrarOutra} />
               <span style={{fontSize:11,color:nfdRegistrarOutra?"#F3BA2F":t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
             </label>
             {/* Ações */}

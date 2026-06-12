@@ -1,4 +1,5 @@
 import React from "react";
+import Toggle from "../components/Toggle.jsx";
 
 export default function MotoristasView({ ctx }) {
   const {
@@ -121,11 +122,11 @@ export default function MotoristasView({ ctx }) {
           <div key={i} className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${selecionado?`rgba(246,70,93,.4)`:t.borda}`,borderLeft:`4px solid ${selecionado?t.danger:vincBadgeC}`,padding:12,marginBottom:10,transition:"border .15s"}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
               {canEdit && (
-                <input type="checkbox" checked={selecionado} onChange={()=>{
+                <Toggle checked={selecionado} color={t.danger} size={0.85} onChange={()=>{
                   const ns=new Set(motSelecionados);
                   if(ns.has(idxReal))ns.delete(idxReal);else ns.add(idxReal);
                   setMotSelecionados(ns);
-                }} style={{width:16,height:16,cursor:"pointer",accentColor:t.danger,flexShrink:0}} />
+                }} />
               )}
               <div style={{width:38,height:38,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#000",flexShrink:0}}>{(m.nome||"M")[0].toUpperCase()}</div>
               <div style={{flex:1,minWidth:0}}>

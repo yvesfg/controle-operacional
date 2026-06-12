@@ -146,6 +146,7 @@ export const DEV_CHANGELOG = [
       "UX · Despesa indevida: ao marcar 'indevida' o 'Incluir no calculo' e desmarcado automaticamente (despesa indevida nao deve pesar no resultado ate voltar como credito).",
       "FEAT · Seletor de base no topo: gestor com acesso a multiplas bases troca IMPERATRIZ/BELEM <-> ACAILANDIA <-> MARACANAU pelo chip do cabecalho, sem deslogar (reseta para Dashboard).",
       "UI · Toggles estilo iOS (componente Toggle) no lugar de checkboxes nas telas financeiras (ModalDespesa, Resultado, Painel Financeiro).",
+      "UI · Sweep global: TODOS os checkboxes do app viraram Toggle (ModalEdit, ModalNFD, ModalRelatorios, AdminView, MotoristasView) — padrao visual unico em todo o sistema.",
     ],
   },
   {
