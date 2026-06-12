@@ -47,6 +47,11 @@ export default function PainelFinanceiro({ ctx }) {
   const [incluirComp, setIncluirComp] = React.useState(baseId === "imperatriz_belem");
   React.useEffect(() => { setIncluirComp(baseId === "imperatriz_belem"); }, [baseId]);
 
+  // Filtro por origem (só imperatriz_belem): despesas vêm tagueadas IMP/BELÉM na planilha.
+  const temFilial = baseId === "imperatriz_belem";
+  const [filial, setFilial] = React.useState("todos"); // todos | IMP | BELÉM
+  React.useEffect(() => { setFilial("todos"); }, [baseId]);
+
   // ── Despesas da base (todos os meses) ──
   const [despesas, setDespesas] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -81,10 +86,16 @@ export default function PainelFinanceiro({ ctx }) {
     return acc;
   }, [DADOS, incluirComp, baseId]);
 
+  // Despesas filtradas pela origem selecionada (IMP/BELÉM) — receita continua combinada.
+  const despesasView = React.useMemo(
+    () => (filial === "todos" ? despesas : despesas.filter((d) => d.aba_origem === filial)),
+    [despesas, filial]
+  );
+
   // ── Despesas por mês ──
   const despPorMes = React.useMemo(() => {
     const acc = {};
-    despesas.forEach((d) => {
+    despesasView.forEach((d) => {
       const m = d.mes_ref; if (!m) return;
       const a = acc[m] || (acc[m] = { deb: 0, cred: 0 });
       if (!d.incluir) return;
@@ -93,7 +104,7 @@ export default function PainelFinanceiro({ ctx }) {
     });
     Object.keys(acc).forEach((m) => { acc[m].liq = acc[m].deb + acc[m].cred; });
     return acc;
-  }, [despesas]);
+  }, [despesasView]);
 
   // ── Série mensal combinada (últimos 6 meses com qualquer movimento) ──
   const serie = React.useMemo(() => {
@@ -119,10 +130,10 @@ export default function PainelFinanceiro({ ctx }) {
   // ── Composição de despesas (mês selecionado) por grupo ──
   const composicao = React.useMemo(() => {
     const g = {};
-    despesas.filter((d) => d.mes_ref === mesRef && d.incluir && d.tipo !== "credito")
+    despesasView.filter((d) => d.mes_ref === mesRef && d.incluir && d.tipo !== "credito")
       .forEach((d) => { const k = d.grupo || "OUTRAS"; g[k] = (g[k] || 0) + Number(d.valor || 0); });
     return Object.entries(g).sort((a, b) => b[1] - a[1]);
-  }, [despesas, mesRef]);
+  }, [despesasView, mesRef]);
 
   // ── Charts ──
   const trendRef = React.useRef(null);
@@ -190,6 +201,18 @@ export default function PainelFinanceiro({ ctx }) {
           {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
           {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
+        {temFilial && (
+          <div style={{ display: "flex", border: `1px solid ${t.borda}`, borderRadius: 8, overflow: "hidden" }}>
+            {[["todos", "Imp + Bel"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]].map(([k, l]) => (
+              <button key={k} onClick={() => setFilial(k)}
+                style={{ fontSize: 12, fontWeight: filial === k ? 700 : 500, padding: "8px 12px", cursor: "pointer",
+                  border: "none", borderRight: k !== "BELÉM" ? `1px solid ${t.borda}` : "none",
+                  background: filial === k ? "var(--accent)" : "transparent", color: filial === k ? "#fff" : t.txt2 }}>
+                {l}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
           padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
           <Toggle checked={incluirComp} onChange={setIncluirComp}
@@ -199,6 +222,12 @@ export default function PainelFinanceiro({ ctx }) {
           {baseAtual?.label} · {r.n} viagens
         </div>
       </div>
+
+      {temFilial && filial !== "todos" && (
+        <div style={{ fontSize: 11, color: t.ouro, marginBottom: 12, marginTop: -6 }}>
+          Despesas filtradas: <b>{filial === "IMP" ? "Imperatriz" : "Belém"}</b> · receita/margem permanecem combinadas (Imp+Bel).
+        </div>
+      )}
 
       {semDados ? (
         <div style={{ ...card, textAlign: "center", color: t.txt2, fontSize: 13, padding: 32 }}>
