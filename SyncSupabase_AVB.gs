@@ -249,8 +249,8 @@ function mapearColunaAVB(n) {
     'data da descarga': 'data_desc', 'descarga': 'data_desc',
 
     // Financeiro
-    'vl cte': 'vl_cte', 'valor cte': 'vl_cte', 'vl_cte': 'vl_cte',
-    'vl contrato': 'vl_contrato', 'vl_contrato': 'vl_contrato', 'valor contrato': 'vl_contrato',
+    'vl cte': 'vl_cte', 'valor cte': 'vl_cte', 'valor do cte': 'vl_cte', 'vl. cte': 'vl_cte', 'vl_cte': 'vl_cte',
+    'vl contrato': 'vl_contrato', 'vl_contrato': 'vl_contrato', 'valor contrato': 'vl_contrato', 'valor do contrato': 'vl_contrato',
     'adiant': 'adiant', 'adiantamento': 'adiant',
     'saldo': 'saldo',
     'dias': 'dias',
