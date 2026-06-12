@@ -151,6 +151,7 @@ export const DEV_CHANGELOG = [
       "FEAT · Painel Financeiro: segmento Imp+Bel / Imperatriz / Belem (so imperatriz_belem) filtra as despesas por origem (aba da planilha) p/ acompanhar Belem; receita/margem seguem combinadas (caption avisa).",
       "FEAT · Painel Financeiro v2: variacao vs mes anterior (badge up/down) nos KPIs; cascata do resultado (Faturamento -> Pago motorista -> Despesas -> Creditos -> Resultado); maiores despesas do mes (top 5); acumulado do ano (YTD).",
       "FIX · Seletor de base sumia apos recarregar a pagina: sessao do admin/OAuth nao gravava baseIds e o restore nao repunha basesPermitidas. Agora grava baseIds e admin sempre ve todas as bases; chevron do seletor mais visivel.",
+      "FEAT · Painel Financeiro: split COMPLETO Imperatriz/Belem — o campo origem da viagem (IMPERATRIZ-MA/BELEM-PA) ja separa a receita; o segmento agora filtra receita E despesa por cidade (P&L isolado real, sem campo manual).",
     ],
   },
   {

@@ -23,6 +23,14 @@ const moneyK = (n) => { const a = Math.abs(n); const s = n < 0 ? "−" : ""; ret
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
 const mesCurto = (m) => { if (!m) return ""; const [, mo] = m.split("-"); return ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][parseInt(mo, 10)] || mo; };
 const cssVar = (n, fb) => { try { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v || fb; } catch { return fb; } };
+const normCidade = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+// origem da viagem (IMPERATRIZ-MA / BELEM-PA) → mesma origem da despesa (IMP / BELÉM)
+const origemBate = (origem, filial) => {
+  const o = normCidade(origem);
+  if (filial === "IMP") return o.includes("IMPERATRIZ");
+  if (filial === "BELÉM") return o.includes("BELEM");
+  return true;
+};
 
 export default function PainelFinanceiro({ ctx }) {
   const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
@@ -69,9 +77,11 @@ export default function PainelFinanceiro({ ctx }) {
   // ── Receita/custo por mês (das viagens) ──
   const receitaPorMes = React.useMemo(() => {
     const acc = {};
+    const filtraCidade = temFilial && filial !== "todos";
     (DADOS || []).forEach((r) => {
       const m = mesDe(r.data_carr); if (!m) return;
       if ((r.status || "").toUpperCase() === "PENDENTE") return;
+      if (filtraCidade && !origemBate(r.origem, filial)) return; // receita pela origem da viagem
       const a = acc[m] || (acc[m] = { receita: 0, custo: 0, comp: 0, n: 0 });
       a.receita += nCte(r.vl_cte); a.custo += nContrato(r.vl_contrato); a.comp += nCte(r.vl_cte_comp); a.n += 1;
     });
@@ -84,7 +94,7 @@ export default function PainelFinanceiro({ ctx }) {
       a.margem = a.receita - a.custo;
     });
     return acc;
-  }, [DADOS, incluirComp, baseId]);
+  }, [DADOS, incluirComp, baseId, temFilial, filial]);
 
   // Despesas filtradas pela origem selecionada (IMP/BELÉM) — receita continua combinada.
   const despesasView = React.useMemo(
@@ -270,7 +280,7 @@ export default function PainelFinanceiro({ ctx }) {
 
       {temFilial && filial !== "todos" && (
         <div style={{ fontSize: 11, color: t.ouro, marginBottom: 12, marginTop: -6 }}>
-          Despesas filtradas: <b>{filial === "IMP" ? "Imperatriz" : "Belém"}</b> · receita/margem permanecem combinadas (Imp+Bel).
+          Visão isolada: <b>{filial === "IMP" ? "Imperatriz" : "Belém"}</b> · receita pela origem da viagem + despesas da aba {filial}.
         </div>
       )}
 
