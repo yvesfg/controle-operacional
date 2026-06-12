@@ -137,6 +137,11 @@ export async function deletarDespesa(conn, id) {
   return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q(id)}`);
 }
 
+export async function deletarImportadas(conn, ids) {
+  if (!ids || ids.length === 0) return;
+  return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=in.(${ids.map(q).join(",")})`);
+}
+
 // ── Conciliação de despesas indevidas → crédito ──────────────
 // Indevidas (débitos marcados) ainda sem crédito vinculado, de qualquer mês da base.
 export async function listarIndevidasPendentes(conn, baseId) {

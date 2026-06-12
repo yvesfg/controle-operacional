@@ -3,7 +3,7 @@ import ModalDespesa from "../../modals/ModalDespesa.jsx";
 import Toggle from "../../components/Toggle.jsx";
 import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas,
-  inserirManual, atualizarDespesa, deletarDespesa,
+  inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
   listarIndevidasPendentes, vincularCredito,
 } from "../../despesas.js";
 
@@ -59,6 +59,9 @@ export default function ResultadoAVB({ ctx }) {
   const [importing, setImporting] = React.useState(false);
   const [modal, setModal] = React.useState({ open: false, inicial: null });
   const fileRef = React.useRef(null);
+  const [lastImportIds, setLastImportIds] = React.useState([]);
+  const [undoOpen, setUndoOpen] = React.useState(false);
+  const [undoInput, setUndoInput] = React.useState("");
 
   // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
   // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
@@ -150,7 +153,10 @@ export default function ResultadoAVB({ ctx }) {
         if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
       }
       if (novasTodas.length === 0) { showToast?.("Nenhuma novidade — tudo já estava importado.", "ok"); return; }
-      await inserirImportadas(conn, mesRef, novasTodas);
+      const inseridos = await inserirImportadas(conn, mesRef, novasTodas);
+      const ids = (Array.isArray(inseridos) ? inseridos : []).map(r => r.id).filter(Boolean);
+      setLastImportIds(ids);
+      setUndoOpen(false);
       showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)}).`, "ok");
       await carregar();
     } catch (err) { showToast?.("Erro na importação: " + err.message, "erro"); }
@@ -207,8 +213,16 @@ export default function ResultadoAVB({ ctx }) {
           <Toggle checked={incluirComp} onChange={setIncluirComp}
             label={`Incluir complementar ${baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}`} />
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
+          {lastImportIds.length > 0 && (
+            <button onClick={() => { setUndoOpen(o => !o); setUndoInput(""); }}
+              style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+                border: `1px solid ${t.danger||"#f6465d"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
+                color: t.danger||"#f6465d" }}>
+              ↩ Desfazer ({lastImportIds.length})
+            </button>
+          )}
           <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid var(--accent)`, background: "transparent", color: "var(--accent)", opacity: importing ? .6 : 1 }}>
@@ -219,6 +233,51 @@ export default function ResultadoAVB({ ctx }) {
               border: "none", background: "var(--accent)", color: "#fff" }}>+ Despesa</button>
         </div>
       </div>
+      {/* Painel de confirmação Desfazer importação */}
+      {undoOpen && lastImportIds.length > 0 && (
+        <div style={{ marginBottom: 14, padding: "14px 16px", borderRadius: 10,
+          background: `rgba(246,70,93,.07)`, border: `1px solid ${t.danger||"#f6465d"}` }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.danger||"#f6465d", marginBottom: 6 }}>
+            Desfazer a última importação? Isso removerá {lastImportIds.length} registro(s) adicionados agora.
+          </div>
+          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>
+            Registros editados manualmente após a importação <b>não</b> serão afetados.
+            Digite <b style={{ color: t.txt }}>sim</b> para confirmar:
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input value={undoInput} onChange={e => setUndoInput(e.target.value)}
+              placeholder="sim" autoFocus
+              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 7,
+                border: `1.5px solid ${undoInput === "sim" ? (t.danger||"#f6465d") : t.borda}`,
+                background: t.bg, color: t.txt, width: 90, fontFamily: "inherit" }} />
+            <button disabled={undoInput !== "sim" || importing}
+              onClick={async () => {
+                setImporting(true);
+                try {
+                  await deletarImportadas(conn, lastImportIds);
+                  setLastImportIds([]);
+                  setUndoOpen(false);
+                  setUndoInput("");
+                  showToast?.("Importação desfeita com sucesso.", "ok");
+                  await carregar();
+                } catch(e) { showToast?.("Erro ao desfazer: " + e.message, "erro"); }
+                finally { setImporting(false); }
+              }}
+              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 7, fontFamily: "inherit", cursor: "pointer",
+                background: undoInput === "sim" ? (t.danger||"#f6465d") : "transparent",
+                color: undoInput === "sim" ? "#fff" : (t.txt2||"#888"),
+                border: `1px solid ${undoInput === "sim" ? (t.danger||"#f6465d") : t.borda}`,
+                opacity: importing ? .6 : 1 }}>
+              Confirmar desfazer
+            </button>
+            <button onClick={() => { setUndoOpen(false); setUndoInput(""); }}
+              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 7, fontFamily: "inherit", cursor: "pointer",
+                background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* KPIs do resultado */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>

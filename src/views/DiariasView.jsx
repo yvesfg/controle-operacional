@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { exportCSV, exportODS, exportPDF, ExportMenu } from "../exportHelpers.jsx";
 
 export default function DiariasView({ ctx }) {
@@ -29,7 +29,12 @@ export default function DiariasView({ ctx }) {
     extratoFiltro, setExtratoFiltro,
     extratoRows, setExtratoRows,
     extratoResultado,
+    prevExtratoSnap, setPrevExtratoSnap,
+    extratoSheetInfo,
   } = ctx;
+
+  const [extratoUndoConfirm, setExtratoUndoConfirm] = useState(false);
+  const [extratoUndoInput, setExtratoUndoInput] = useState("");
 
   if (activeTab !== "diarias") return null;
   return (
@@ -368,6 +373,24 @@ export default function DiariasView({ ctx }) {
                   </label>
                 ) : (
                   <div>
+                    {/* Banner de abas detectadas */}
+                    {extratoSheetInfo && extratoSheetInfo.others.length > 0 && (
+                      <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:10,padding:"8px 12px",
+                        borderRadius:10,background:`rgba(240,185,11,.08)`,border:`1px solid ${hexRgb(t.ouro,.35)}`}}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round" style={{marginTop:2,flexShrink:0}}>
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <div style={{fontSize:10,color:t.ouro,lineHeight:1.6}}>
+                          <b>Aba lida:</b> <span style={{color:t.txt}}>{extratoSheetInfo.read}</span>
+                          {" — "}
+                          <b>Ignoradas:</b> <span style={{color:t.txt2}}>{extratoSheetInfo.others.join(", ")}</span>
+                          <br/>
+                          <span style={{color:t.txt2}}>Apenas a primeira aba é importada. Verifique se os dados são do mês correto.</span>
+                        </div>
+                      </div>
+                    )}
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,padding:"8px 12px",
                       borderRadius:10,background:`rgba(240,185,11,.06)`,border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -377,12 +400,57 @@ export default function DiariasView({ ctx }) {
                       </svg>
                       <span style={{fontSize:11,fontWeight:700,color:t.ouro,flex:1}}>{extratoFileName}</span>
                       <span style={{fontSize:10,color:t.txt2}}>{extratoRows.length} registros</span>
-                      <button onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");}}
+                      {prevExtratoSnap && (
+                        <button onClick={()=>{setExtratoUndoConfirm(true);setExtratoUndoInput("");}}
+                          style={{background:"transparent",border:`1px solid ${t.danger||"#f6465d"}`,borderRadius:6,
+                            padding:"2px 8px",fontSize:10,color:t.danger||"#f6465d",cursor:"pointer",fontFamily:"inherit"}}>
+                          &#8617; Desfazer
+                        </button>
+                      )}
+                      <button onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");setPrevExtratoSnap(null);setExtratoSheetInfo&&setExtratoUndoConfirm(false);}}
                         style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,
                           padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
                         &#215; Trocar
                       </button>
                     </div>
+                    {/* Modal confirmação desfazer */}
+                    {extratoUndoConfirm && (
+                      <div style={{marginBottom:12,padding:"12px 14px",borderRadius:10,
+                        background:`rgba(246,70,93,.07)`,border:`1px solid ${t.danger||"#f6465d"}`}}>
+                        <div style={{fontSize:11,fontWeight:700,color:t.danger||"#f6465d",marginBottom:8}}>
+                          Desfazer importação — restaurar "{prevExtratoSnap.fileName || 'vazio'}" ({prevExtratoSnap.rows.length} registros)?
+                        </div>
+                        <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>
+                          Digite <b style={{color:t.txt}}>sim</b> para confirmar:
+                        </div>
+                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                          <input value={extratoUndoInput} onChange={e=>setExtratoUndoInput(e.target.value)}
+                            placeholder="sim" autoFocus
+                            style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${extratoUndoInput==="sim"?t.danger||"#f6465d":t.borda}`,
+                              background:t.bg,color:t.txt,width:80,fontFamily:"inherit"}}/>
+                          <button disabled={extratoUndoInput!=="sim"}
+                            onClick={()=>{
+                              setExtratoRows(prevExtratoSnap.rows);
+                              setExtratoFileName(prevExtratoSnap.fileName);
+                              setExtratoFiltro("todos");
+                              setPrevExtratoSnap(null);
+                              setExtratoUndoConfirm(false);
+                              setExtratoUndoInput("");
+                            }}
+                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
+                              background:extratoUndoInput==="sim"?(t.danger||"#f6465d"):"transparent",
+                              color:extratoUndoInput==="sim"?"#fff":(t.txt2||"#888"),
+                              border:`1px solid ${extratoUndoInput==="sim"?(t.danger||"#f6465d"):t.borda}`}}>
+                            Confirmar
+                          </button>
+                          <button onClick={()=>{setExtratoUndoConfirm(false);setExtratoUndoInput("");}}
+                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
+                              background:"transparent",color:t.txt2,border:`1px solid ${t.borda}`}}>
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {/* Filtro de periodo */}
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,
                       padding:"10px 14px",borderRadius:10,background:t.card2,border:`1px solid ${t.borda}`}}>
