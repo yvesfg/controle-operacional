@@ -63,6 +63,7 @@ export default function ResultadoAVB({ ctx }) {
   const [undoOpen, setUndoOpen] = React.useState(false);
   const [undoInput, setUndoInput] = React.useState("");
   const [sheetSel, setSheetSel] = React.useState({ open: false, sheetsMeta: [], checked: {}, pendingRows: [], fileName: "" });
+  const [busca, setBusca] = React.useState("");
 
   // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
   // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
@@ -198,9 +199,19 @@ export default function ResultadoAVB({ ctx }) {
     catch (e) { showToast?.("Erro ao vincular: " + e.message, "erro"); }
   };
 
-  // Agrupa despesas por grupo p/ exibição
+  // Agrupa despesas por grupo p/ exibição (com filtro de busca)
+  const buscaQ = busca.trim().toLowerCase();
+  const despesasFiltradas = buscaQ
+    ? despesas.filter(d =>
+        (d.natureza || "").toLowerCase().includes(buscaQ) ||
+        (d.historico || "").toLowerCase().includes(buscaQ) ||
+        (d.grupo || "").toLowerCase().includes(buscaQ) ||
+        (d.conta || "").toLowerCase().includes(buscaQ) ||
+        String(Math.abs(Number(d.valor || 0)).toFixed(2)).includes(buscaQ)
+      )
+    : despesas;
   const porGrupo = {};
-  despesas.forEach((d) => { (porGrupo[d.grupo || "—"] = porGrupo[d.grupo || "—"] || []).push(d); });
+  despesasFiltradas.forEach((d) => { (porGrupo[d.grupo || "—"] = porGrupo[d.grupo || "—"] || []).push(d); });
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
   const kpi = (l, v, sub, cor) => (
@@ -402,9 +413,31 @@ export default function ResultadoAVB({ ctx }) {
 
       {/* Lista de despesas */}
       <div style={{ ...card }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Despesas · {mesLabel(mesRef)}</div>
-          <div style={{ fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)" }}>{despesas.length} lançamentos</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, flex: "0 0 auto" }}>Despesas · {mesLabel(mesRef)}</div>
+          <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round"
+              style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+              <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input value={busca} onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar despesa ou crédito..."
+              style={{ width: "100%", boxSizing: "border-box", paddingLeft: 30, paddingRight: busca ? 28 : 10,
+                paddingTop: 5, paddingBottom: 5, fontSize: 12, borderRadius: 7,
+                border: `1.5px solid ${busca ? t.ouro : t.borda}`, background: t.bg, color: t.txt,
+                fontFamily: "inherit", outline: "none" }} />
+            {busca && (
+              <button onClick={() => setBusca("")}
+                style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)",
+                  background: "none", border: "none", cursor: "pointer", color: t.txt2, fontSize: 14, lineHeight: 1, padding: 0 }}>
+                ×
+              </button>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)", flex: "0 0 auto" }}>
+            {buscaQ ? `${despesasFiltradas.length} de ${despesas.length}` : `${despesas.length}`} lançamentos
+          </div>
         </div>
 
         {loading && <div style={{ color: t.txt2, fontSize: 13, padding: 16, textAlign: "center" }}>Carregando...</div>}
