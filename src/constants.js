@@ -153,6 +153,8 @@ export const DEV_CHANGELOG = [
       "FIX · Seletor de base sumia apos recarregar a pagina: sessao do admin/OAuth nao gravava baseIds e o restore nao repunha basesPermitidas. Agora grava baseIds e admin sempre ve todas as bases; chevron do seletor mais visivel.",
       "FEAT · Painel Financeiro: split COMPLETO Imperatriz/Belem — o campo origem da viagem (IMPERATRIZ-MA/BELEM-PA) ja separa a receita; o segmento agora filtra receita E despesa por cidade (P&L isolado real, sem campo manual).",
       "FIX · Sync AVB (SyncSupabase_AVB.gs): faturamento/pago-motorista da AVB chegavam vazios porque os cabecalhos reais sao 'VALOR DO CTE' e 'VALOR DO CONTRATO' (com 'do') e o mapa so tinha 'valor cte'/'valor contrato'. Adicionados os variantes -> vl_cte e vl_contrato passam a sincronizar. Tambem mapeado 'CONTRATO MAT/MAR' -> mat (numero do documento de contrato). Re-rodar o Apps Script.",
+      "UI · Resultado: cada despesa mostra a data (dt_mov, DD/MM) numa coluna a esquerda; lancamentos sem data exibem 'sem data' em italico/dourado.",
+      "UX · Importacao de despesas: sinaliza filiais ausentes — se faltar a aba de AVB/Imperatriz/Belem no arquivo, pede confirmacao antes de gravar (e barra arquivo sem aba reconhecida).",
     ],
   },
   {

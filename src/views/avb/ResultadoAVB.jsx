@@ -26,6 +26,7 @@ const nContrato = (v) => {
 const mesDe = (s) => { if (!s) return null; const p = String(s).split("/"); return p.length >= 3 ? `${p[2]}-${p[1].padStart(2, "0")}` : null; };
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
+const fmtDiaMes = (iso) => { if (!iso) return null; const p = String(iso).split("-"); return p.length >= 3 ? `${p[2].slice(0, 2)}/${p[1]}` : null; };
 
 export default function ResultadoAVB({ ctx }) {
   const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
@@ -108,6 +109,18 @@ export default function ResultadoAVB({ ctx }) {
     setImporting(true);
     try {
       const linhas = await parseDespesasXLSX(file);
+      if (linhas.length === 0) { showToast?.("Nenhuma aba reconhecida (AÇA / IMP / BELÉM) no arquivo.", "erro"); return; }
+      // Sinaliza filiais ausentes — se faltar uma aba esperada, avisa antes de gravar.
+      const presentes = new Set(linhas.map((l) => l.aba_origem));
+      const ESPERADAS = [["AÇA", "Açailândia"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]];
+      const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
+      const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
+      if (faltando.length) {
+        const msg = `Filiais com lançamentos no arquivo: ${achadas.join(", ") || "—"}.\n\n`
+          + `⚠ SEM lançamentos: ${faltando.join(", ")}.\n\n`
+          + `Pode ser normal (mês sem movimento) ou uma aba esquecida.\nContinuar a importação?`;
+        if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
+      }
       const porBase = {};
       linhas.forEach((l) => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
       // Diff por base: descobre só as linhas novas, preservando as existentes (e flags)
@@ -268,6 +281,11 @@ export default function ResultadoAVB({ ctx }) {
                   style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6,
                     background: zebra, borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
                     cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, flexShrink: 0, width: isMobile ? 46 : 52, textAlign: "center",
+                    color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
+                    title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
+                    {fmtDiaMes(d.dt_mov) || "sem data"}
+                  </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.natureza || d.historico || "—"}
