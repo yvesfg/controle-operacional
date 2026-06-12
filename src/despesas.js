@@ -88,6 +88,12 @@ export async function listarDespesas(conn, baseId, mesRef) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
+// Todas as despesas da base (todos os meses) — usado pelo Painel Financeiro p/ evolução.
+export async function listarDespesasBase(conn, baseId) {
+  const path = `${TABELA}?base_id=eq.${q(baseId)}&order=mes_ref.asc`;
+  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+}
+
 // Importação NÃO destrutiva: compara o arquivo com o que já existe (base+mês) e
 // devolve apenas as linhas NOVAS, preservando as existentes (e suas flags).
 // Casamento por conteúdo (data+valor+natureza+histórico+conta) com multiplicidade,

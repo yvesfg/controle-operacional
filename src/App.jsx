@@ -34,6 +34,7 @@ import PlanilhaAVB  from './views/avb/PlanilhaAVB.jsx';
 import LogisticaAVB from './views/avb/LogisticaAVB.jsx';
 import GestaoAVB    from './views/avb/GestaoAVB.jsx';
 import ResultadoAVB from './views/avb/ResultadoAVB.jsx';
+import PainelFinanceiro from './views/PainelFinanceiro.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
@@ -2320,6 +2321,8 @@ export default function App() {
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
+    {k:"painel_financeiro", l:"Painel Financeiro", perm:"financeiro",
+      ico:(a)=>svgIco(a,<><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="4" width="3" height="13"/></>)},
     {k:"planilha", l:"Planilha", perm:"planilha",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>)},
     {k:"diarias", l:"Diárias", perm:"diarias",
@@ -3625,6 +3628,13 @@ export default function App() {
         {/* ═══ RESULTADO (Margem × Despesas) ═══ */}
         {activeTab === "resultado" && (
           <ResultadoAVB ctx={{
+            activeTab, baseAtual, DADOS, getConexao,
+            t, isMobile, showToast, canFin,
+          }} />
+        )}
+
+        {activeTab === "painel_financeiro" && (
+          <PainelFinanceiro ctx={{
             activeTab, baseAtual, DADOS, getConexao,
             t, isMobile, showToast, canFin,
           }} />

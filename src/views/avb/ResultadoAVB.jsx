@@ -258,12 +258,17 @@ export default function ResultadoAVB({ ctx }) {
                 color: t.txt2, textTransform: "uppercase", letterSpacing: "0.04em", padding: "6px 0", borderBottom: `1px solid ${t.borda}` }}>
                 <span>{g}</span><span>{money(subt)}</span>
               </div>
-              {linhas.map((d) => (
+              {linhas.map((d, i) => {
+                const zebra = i % 2 ? t.card2 : "transparent";
+                return (
                 <div key={d.id} onClick={() => setModal({ open: true, inicial: d })}
-                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px", borderBottom: `1px solid ${t.borda}55`,
-                    cursor: "pointer", opacity: d.incluir ? 1 : .45 }}>
+                  onMouseEnter={(e) => e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 10%, transparent)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = zebra}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6,
+                    background: zebra, borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
+                    cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.natureza || d.historico || "—"}
                       {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
                       {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
@@ -271,18 +276,22 @@ export default function ResultadoAVB({ ctx }) {
                       {d.dup_flag && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE?</span>}
                     </div>
                     {d.historico && d.natureza && (
-                      <div style={{ fontSize: 10, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.historico}</div>
+                      <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
                     )}
                   </div>
                   {/* Toggle incluir só nas linhas marcadas como duplicidade */}
                   {d.dup_flag && (
-                    <label onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: t.txt2 }}>
+                    <label onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
                       <input type="checkbox" checked={d.incluir} onChange={() => toggleIncluir(d)} /> incl.
                     </label>
                   )}
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt, whiteSpace: "nowrap" }}>{money(Number(d.valor || 0))}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt,
+                    whiteSpace: "nowrap", textAlign: "right", minWidth: isMobile ? 92 : 118, flexShrink: 0 }}>
+                    {d.tipo === "credito" ? "− " : ""}{money(Math.abs(Number(d.valor || 0)))}
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           );
         })}

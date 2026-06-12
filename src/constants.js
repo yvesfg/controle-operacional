@@ -141,6 +141,8 @@ export const DEV_CHANGELOG = [
       "FIX · Resultado: 'Pago motorista' inflado (~100x) — parser de vl_contrato removia o ponto decimal quando o valor ja vinha como decimal ingles (sem virgula). Agora so trata ponto como milhar quando ha virgula (espelha parseMoedaAvb).",
       "FIX · Resultado: tela piscando em 'Carregando...' apos importar — getConexao() devolvia objeto novo a cada render, recriando 'carregar' e disparando o useEffect em loop. conn agora memoizado (useMemo).",
       "FEAT · Importacao de despesas: aceita tambem .csv e .ods. CSV/aba unica infere a base pelo nome do arquivo (ACA->AVB, IMP/BEL->imperatriz_belem).",
+      "UI · Resultado: lista de despesas mais legivel — zebra striping, valores alinhados em coluna a direita, destaque no hover, credito com sinal '-' e barra verde lateral.",
+      "FEAT · Painel Financeiro: nova aba (gated por permissao financeira, todas as bases) com visao faturamento->margem->despesas->resultado da base logada. KPIs do mes + indicadores (indice de despesa, receita/viagem, despesa/viagem, ponto de equilibrio), grafico de evolucao 6 meses (faturamento x resultado) e composicao das despesas por grupo.",
     ],
   },
   {
