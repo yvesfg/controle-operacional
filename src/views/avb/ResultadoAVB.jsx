@@ -62,6 +62,7 @@ export default function ResultadoAVB({ ctx }) {
   const [lastImportIds, setLastImportIds] = React.useState([]);
   const [undoOpen, setUndoOpen] = React.useState(false);
   const [undoInput, setUndoInput] = React.useState("");
+  const [sheetSel, setSheetSel] = React.useState({ open: false, sheetsMeta: [], checked: {}, pendingRows: [], fileName: "" });
 
   // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
   // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
@@ -111,32 +112,46 @@ export default function ResultadoAVB({ ctx }) {
     if (!file || !conn || !mesRef) return;
     setImporting(true);
     try {
-      const linhas = await parseDespesasXLSX(file);
-      if (linhas.length === 0) { showToast?.("Nenhuma aba reconhecida (AÇA / IMP / BELÉM) no arquivo.", "erro"); return; }
-      // Sinaliza filiais ausentes — se faltar uma aba esperada, avisa antes de gravar.
-      const presentes = new Set(linhas.map((l) => l.aba_origem));
+      const { rows, sheetsMeta } = await parseDespesasXLSX(file);
+      if (rows.length === 0 && sheetsMeta.every(s => !s.recognized)) {
+        showToast?.("Nenhuma aba reconhecida (AÇA / IMP / BELÉM) no arquivo.", "erro"); return;
+      }
+      // Inicializa checkboxes: reconhecidas = true, ignoradas = false
+      const checked = {};
+      sheetsMeta.forEach(s => { if (s.recognized) checked[s.nome] = true; });
+      setSheetSel({ open: true, sheetsMeta, checked, pendingRows: rows, fileName: file.name });
+    } catch (err) { showToast?.("Erro ao ler arquivo: " + err.message, "erro"); }
+    finally { setImporting(false); }
+  };
+
+  const onConfirmSheets = async () => {
+    const { checked, pendingRows } = sheetSel;
+    // Filtra linhas das abas selecionadas e remove _sheetNome antes de gravar
+    // eslint-disable-next-line no-unused-vars
+    const linhas = pendingRows.filter(r => checked[r._sheetNome]).map(({ _sheetNome, ...rest }) => rest);
+    if (linhas.length === 0) { showToast?.("Nenhuma aba selecionada.", "warn"); return; }
+    setSheetSel(s => ({ ...s, open: false }));
+    setImporting(true);
+    try {
+      // Verifica filiais presentes após filtro
+      const presentes = new Set(linhas.map(l => l.aba_origem));
       const ESPERADAS = [["AÇA", "Açailândia"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]];
       const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
       const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
       if (faltando.length) {
-        const msg = `Filiais com lançamentos no arquivo: ${achadas.join(", ") || "—"}.\n\n`
-          + `⚠ SEM lançamentos: ${faltando.join(", ")}.\n\n`
-          + `Pode ser normal (mês sem movimento) ou uma aba esquecida.\nContinuar a importação?`;
+        const msg = `Filiais com lançamentos: ${achadas.join(", ") || "—"}.\n⚠ SEM lançamentos: ${faltando.join(", ")}.\nPode ser normal ou aba esquecida. Continuar?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
       }
-      // Detecta o mês predominante pelas datas (dt_mov) e avisa se diferir do mês selecionado.
+      // Verifica mês predominante
       const mesesArq = {};
-      linhas.forEach((l) => { if (l.dt_mov) { const m = String(l.dt_mov).slice(0, 7); mesesArq[m] = (mesesArq[m] || 0) + 1; } });
+      linhas.forEach(l => { if (l.dt_mov) { const m = String(l.dt_mov).slice(0, 7); mesesArq[m] = (mesesArq[m] || 0) + 1; } });
       const mesPredom = Object.keys(mesesArq).sort((a, b) => mesesArq[b] - mesesArq[a])[0];
       if (mesPredom && mesPredom !== mesRef) {
-        const msg = `As datas do arquivo são predominantemente de ${mesLabel(mesPredom)} `
-          + `(${mesesArq[mesPredom]} de ${linhas.length} linhas), mas o mês selecionado é ${mesLabel(mesRef)}.\n\n`
-          + `Importar mesmo assim em ${mesLabel(mesRef)}?`;
+        const msg = `Datas predominantemente de ${mesLabel(mesPredom)} (${mesesArq[mesPredom]}/${linhas.length} linhas), mas mês selecionado é ${mesLabel(mesRef)}.\nImportar mesmo assim?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada — selecione o mês correto.", "erro"); return; }
       }
       const porBase = {};
-      linhas.forEach((l) => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
-      // Diff por base: descobre só as linhas novas, preservando as existentes (e flags)
+      linhas.forEach(l => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
       let novasTodas = [], jaTotal = 0, existiaAlgum = false;
       const resumo = [];
       for (const b of Object.keys(porBase)) {
@@ -146,10 +161,7 @@ export default function ResultadoAVB({ ctx }) {
         resumo.push(`${b === "acailandia_avb" ? "AVB" : "IMP/BEL"}: ${novas.length} novas`);
       }
       if (existiaAlgum) {
-        const msg = `Mês ${mesLabel(mesRef)} já tem despesas importadas.\n\n`
-          + `Novas linhas: ${novasTodas.length} (${resumo.join(" · ")})\n`
-          + `Já existentes (mantidas com flags): ${jaTotal}\n\n`
-          + `Adicionar só as novas e preservar as existentes?`;
+        const msg = `Mês ${mesLabel(mesRef)} já tem despesas.\nNovas: ${novasTodas.length} (${resumo.join(" · ")})\nJá existentes (mantidas): ${jaTotal}\nAdicionar só as novas?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
       }
       if (novasTodas.length === 0) { showToast?.("Nenhuma novidade — tudo já estava importado.", "ok"); return; }
@@ -275,6 +287,76 @@ export default function ResultadoAVB({ ctx }) {
                 background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
               Cancelar
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal seleção de abas */}
+      {sheetSel.open && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setSheetSel(s => ({ ...s, open: false }))}>
+          <div style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px",
+            minWidth: 340, maxWidth: 520, width: "90vw", boxShadow: "0 8px 40px rgba(0,0,0,.5)", maxHeight: "80vh", overflowY: "auto" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Selecionar abas para importar</div>
+            <div style={{ fontSize: 11, color: t.txt2, marginBottom: 16 }}>
+              {sheetSel.fileName} — marque apenas as abas do mês correto <b style={{ color: t.ouro }}>{mesLabel(mesRef)}</b>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+              {sheetSel.sheetsMeta.map(s => {
+                const mesRefMM = mesRef ? mesRef.split("-").reverse().join("/") : "";
+                const temMesDivergente = s.recognized && s.meses.length > 0 && !s.meses.includes(mesRefMM);
+                return (
+                  <div key={s.nome} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                    borderRadius: 8, background: s.recognized ? (temMesDivergente ? `rgba(240,185,11,.08)` : `rgba(2,192,118,.06)`) : t.card2,
+                    border: `1px solid ${s.recognized ? (temMesDivergente ? t.ouro + "55" : t.verde + "44") : t.borda}`,
+                    opacity: s.recognized ? 1 : 0.5 }}>
+                    {s.recognized ? (
+                      <input type="checkbox" checked={!!sheetSel.checked[s.nome]}
+                        onChange={() => setSheetSel(prev => ({ ...prev, checked: { ...prev.checked, [s.nome]: !prev.checked[s.nome] } }))}
+                        style={{ width: 15, height: 15, cursor: "pointer", accentColor: t.verde, flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 15, height: 15, flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.nome}</div>
+                      {s.recognized ? (
+                        <div style={{ fontSize: 10, color: t.txt2 }}>
+                          <span style={{ color: t.azulLt || t.txt2, fontWeight: 600 }}>{s.baseLabel}</span>
+                          {s.meses.length > 0 && <> · <span style={{ color: temMesDivergente ? t.ouro : t.txt2 }}>{s.meses.join(", ")}</span></>}
+                          {" · "}{s.rowCount} linhas
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 10, color: t.txt2 }}>aba não reconhecida — ignorada automaticamente</div>
+                      )}
+                    </div>
+                    {temMesDivergente && (
+                      <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `rgba(240,185,11,.15)`, color: t.ouro, fontWeight: 700, whiteSpace: "nowrap" }}>
+                        mês diferente
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 10, color: t.txt2, marginBottom: 14 }}>
+              {Object.values(sheetSel.checked).filter(Boolean).length} de {sheetSel.sheetsMeta.filter(s => s.recognized).length} abas selecionadas ·{" "}
+              {sheetSel.pendingRows.filter(r => sheetSel.checked[r._sheetNome]).length} linhas
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => setSheetSel(s => ({ ...s, open: false }))}
+                style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
+                  background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                Cancelar
+              </button>
+              <button onClick={onConfirmSheets}
+                disabled={Object.values(sheetSel.checked).every(v => !v) || importing}
+                style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
+                  background: "var(--accent)", color: "#fff", border: "none",
+                  opacity: Object.values(sheetSel.checked).every(v => !v) || importing ? .5 : 1 }}>
+                {importing ? "Importando..." : `Importar selecionadas`}
+              </button>
+            </div>
           </div>
         </div>
       )}

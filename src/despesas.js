@@ -30,7 +30,9 @@ const dataISO = (d) => {
   return null;
 };
 
-// Lê o arquivo .xlsx e devolve as linhas de despesa já com base_id, grupo e dup_flag.
+// Lê o arquivo .xlsx e devolve { rows, sheetsMeta }.
+// rows: linhas de despesa com _sheetNome para filtragem posterior.
+// sheetsMeta: por aba — { nome, recognized, base_id, aba_origem, baseLabel, rowCount, meses }
 export function parseDespesasXLSX(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -39,13 +41,17 @@ export function parseDespesasXLSX(file) {
       try {
         const wb = XLSX.read(e.target.result, { type: "array", cellDates: true });
         const rows = [];
-        // CSV/aba única não carregam nome de aba útil → tenta inferir a base pelo nome do arquivo.
+        const sheetsMeta = [];
         const fileBase = (wb.SheetNames.length === 1) ? abaParaBase(file?.name) : null;
         wb.SheetNames.forEach((nome) => {
           const mapa = abaParaBase(nome) || fileBase;
-          if (!mapa) return; // ignora abas fora da gestão (Maracanaú)
+          if (!mapa) {
+            sheetsMeta.push({ nome, recognized: false, rowCount: 0, meses: [] });
+            return;
+          }
           const arr = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: null, raw: true });
-          let grupo = "DESPESAS C/ PESSOAL"; // bloco de salários vem no topo, antes de qualquer cabeçalho
+          let grupo = "DESPESAS C/ PESSOAL";
+          const sheetRows = [];
           arr.forEach((row) => {
             const a = row[0], val = row[2];
             const sa = (a == null ? "" : String(a)).trim();
@@ -53,7 +59,8 @@ export function parseDespesasXLSX(file) {
             if (SECS.has(saU)) { grupo = saU.replace("C/PESSOAL", "C/ PESSOAL"); return; }
             if (saU.startsWith("TOTAL") || saU === "FILIAL") return;
             if (typeof val === "number") {
-              rows.push({
+              const r = {
+                _sheetNome: nome,
                 base_id: mapa.base_id,
                 aba_origem: mapa.aba_origem,
                 grupo,
@@ -63,17 +70,31 @@ export function parseDespesasXLSX(file) {
                 natureza: row[4] != null ? String(row[4]).trim() : null,
                 conta: row[5] != null ? String(row[5]).trim() : null,
                 historico: row[6] != null ? String(row[6]).trim() : null,
-                tipo: r2(val) < 0 ? "credito" : "debito", // valor negativo = crédito que abate
+                tipo: r2(val) < 0 ? "credito" : "debito",
                 dup_flag: false,
-              });
+              };
+              sheetRows.push(r);
+              rows.push(r);
             }
           });
+          const mesSet = new Set();
+          sheetRows.forEach(r => {
+            if (r.dt_mov) { const p = r.dt_mov.split("-"); if (p.length >= 2) mesSet.add(`${p[1]}/${p[0]}`); }
+          });
+          sheetsMeta.push({
+            nome,
+            recognized: true,
+            base_id: mapa.base_id,
+            aba_origem: mapa.aba_origem,
+            baseLabel: mapa.base_id === "acailandia_avb" ? "AVB" : "IMP/BEL",
+            rowCount: sheetRows.length,
+            meses: [...mesSet].sort(),
+          });
         });
-        // dup_flag: só entre débitos (valor + natureza + histórico) aparecendo 2+ vezes
         const cont = {};
         rows.forEach((x) => { if (x.tipo !== "debito") return; const k = `${x.valor}||${norm(x.natureza)}||${norm(x.historico)}`; cont[k] = (cont[k] || 0) + 1; });
         rows.forEach((x) => { if (x.tipo !== "debito") return; const k = `${x.valor}||${norm(x.natureza)}||${norm(x.historico)}`; if (cont[k] > 1) x.dup_flag = true; });
-        resolve(rows);
+        resolve({ rows, sheetsMeta });
       } catch (err) { reject(err); }
     };
     reader.readAsArrayBuffer(file);
