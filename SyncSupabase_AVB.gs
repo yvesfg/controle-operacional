@@ -259,7 +259,7 @@ function mapearColunaAVB(n) {
     'cte': 'cte', 'mdf': 'mdf', 'nf': 'nf', 'nota fiscal': 'nf',
     'cliente': 'cliente',
     'ro': 'ro', 'r.o.': 'ro', 'registro ocorrencia': 'ro', 'registro de ocorrência': 'ro',
-    'mat': 'mat', 'mar': 'mat', 'mat/mar': 'mat', 'num contrato': 'mat',
+    'mat': 'mat', 'mar': 'mat', 'mat/mar': 'mat', 'num contrato': 'mat', 'contrato mat/mar': 'mat',
     'sgs': 'sgs', 'chamado sgs': 'sgs',
 
     // Operacional

@@ -152,7 +152,7 @@ export const DEV_CHANGELOG = [
       "FEAT · Painel Financeiro v2: variacao vs mes anterior (badge up/down) nos KPIs; cascata do resultado (Faturamento -> Pago motorista -> Despesas -> Creditos -> Resultado); maiores despesas do mes (top 5); acumulado do ano (YTD).",
       "FIX · Seletor de base sumia apos recarregar a pagina: sessao do admin/OAuth nao gravava baseIds e o restore nao repunha basesPermitidas. Agora grava baseIds e admin sempre ve todas as bases; chevron do seletor mais visivel.",
       "FEAT · Painel Financeiro: split COMPLETO Imperatriz/Belem — o campo origem da viagem (IMPERATRIZ-MA/BELEM-PA) ja separa a receita; o segmento agora filtra receita E despesa por cidade (P&L isolado real, sem campo manual).",
-      "FIX · Sync AVB (SyncSupabase_AVB.gs): faturamento/pago-motorista da AVB chegavam vazios porque os cabecalhos reais sao 'VALOR DO CTE' e 'VALOR DO CONTRATO' (com 'do') e o mapa so tinha 'valor cte'/'valor contrato'. Adicionados os variantes -> vl_cte e vl_contrato passam a sincronizar (re-rodar o Apps Script).",
+      "FIX · Sync AVB (SyncSupabase_AVB.gs): faturamento/pago-motorista da AVB chegavam vazios porque os cabecalhos reais sao 'VALOR DO CTE' e 'VALOR DO CONTRATO' (com 'do') e o mapa so tinha 'valor cte'/'valor contrato'. Adicionados os variantes -> vl_cte e vl_contrato passam a sincronizar. Tambem mapeado 'CONTRATO MAT/MAR' -> mat (numero do documento de contrato). Re-rodar o Apps Script.",
     ],
   },
   {
