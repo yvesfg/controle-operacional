@@ -39,8 +39,10 @@ export function parseDespesasXLSX(file) {
       try {
         const wb = XLSX.read(e.target.result, { type: "array", cellDates: true });
         const rows = [];
+        // CSV/aba única não carregam nome de aba útil → tenta inferir a base pelo nome do arquivo.
+        const fileBase = (wb.SheetNames.length === 1) ? abaParaBase(file?.name) : null;
         wb.SheetNames.forEach((nome) => {
-          const mapa = abaParaBase(nome);
+          const mapa = abaParaBase(nome) || fileBase;
           if (!mapa) return; // ignora abas fora da gestão (Maracanaú)
           const arr = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, defval: null, raw: true });
           let grupo = "DESPESAS C/ PESSOAL"; // bloco de salários vem no topo, antes de qualquer cabeçalho

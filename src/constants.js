@@ -136,6 +136,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-06-12", sessao: "Sessao 23",
+    itens: [
+      "FIX · Resultado: 'Pago motorista' inflado (~100x) — parser de vl_contrato removia o ponto decimal quando o valor ja vinha como decimal ingles (sem virgula). Agora so trata ponto como milhar quando ha virgula (espelha parseMoedaAvb).",
+      "FIX · Resultado: tela piscando em 'Carregando...' apos importar — getConexao() devolvia objeto novo a cada render, recriando 'carregar' e disparando o useEffect em loop. conn agora memoizado (useMemo).",
+      "FEAT · Importacao de despesas: aceita tambem .csv e .ods. CSV/aba unica infere a base pelo nome do arquivo (ACA->AVB, IMP/BEL->imperatriz_belem).",
+    ],
+  },
+  {
     data: "2026-06-11", sessao: "Sessao 22",
     itens: [
       "FEAT · Resultado (Margem x Despesas): nova aba por base (AVB e Imperatriz/Belem), gated por permissao financeira. Receita (vl_cte) - Pago motorista (vl_contrato) = Margem, menos despesas incluidas do mes = Resultado.",

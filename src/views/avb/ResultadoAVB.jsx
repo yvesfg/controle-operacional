@@ -16,7 +16,10 @@ const BASES_OK = ["acailandia_avb", "imperatriz_belem"];
 const nCte = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const nContrato = (v) => {
   if (v == null || v === "") return 0;
-  const n = parseFloat(String(v).replace(/[R$\s.]/g, "").replace(",", "."));
+  let s = String(v).replace(/[R$\s]/g, "");
+  // pt-BR (tem vírgula): ponto=milhar, vírgula=decimal. Sem vírgula: já é decimal — NÃO remove pontos.
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 };
 const mesDe = (s) => { if (!s) return null; const p = String(s).split("/"); return p.length >= 3 ? `${p[2]}-${p[1].padStart(2, "0")}` : null; };
@@ -55,7 +58,9 @@ export default function ResultadoAVB({ ctx }) {
   const [modal, setModal] = React.useState({ open: false, inicial: null });
   const fileRef = React.useRef(null);
 
-  const conn = getConexao && getConexao();
+  // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
+  // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
+  const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
 
   const carregar = React.useCallback(async () => {
     if (!conn || !baseId || !mesRef) return;
@@ -179,7 +184,7 @@ export default function ResultadoAVB({ ctx }) {
           Incluir complementar {baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}
         </label>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImport} style={{ display: "none" }} />
+          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
           <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid var(--accent)`, background: "transparent", color: "var(--accent)", opacity: importing ? .6 : 1 }}>
