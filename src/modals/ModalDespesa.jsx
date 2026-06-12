@@ -1,4 +1,5 @@
 import React from "react";
+import Toggle from "../components/Toggle.jsx";
 
 // ModalDespesa — criar/editar uma única despesa (CRUD da planilha de débitos).
 // Props: { open, onClose, onSave, onDelete, inicial, t, isMobile }
@@ -101,15 +102,15 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
             <label style={lbl}>Histórico</label>
             <textarea value={form.historico} onChange={(e) => set("historico", e.target.value)} rows={2} style={{ ...inp, resize: "vertical" }} />
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: t.txt, cursor: "pointer" }}>
-            <input type="checkbox" checked={form.incluir} onChange={(e) => set("incluir", e.target.checked)} />
-            Incluir no cálculo do resultado
-          </label>
+          <div style={{ fontSize: 13, color: t.txt }}>
+            <Toggle checked={form.incluir} onChange={(v) => set("incluir", v)} label="Incluir no cálculo do resultado" />
+          </div>
           {ehDebito ? (
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: t.danger, cursor: "pointer" }}>
-              <input type="checkbox" checked={form.indevida} onChange={(e) => set("indevida", e.target.checked)} />
-              Despesa indevida — aguardar crédito no mês seguinte
-            </label>
+            <div style={{ fontSize: 13, color: t.danger }}>
+              <Toggle checked={form.indevida} color={t.danger}
+                onChange={(v) => setForm((f) => ({ ...f, indevida: v, incluir: v ? false : f.incluir }))}
+                label="Despesa indevida — aguardar crédito no mês seguinte" />
+            </div>
           ) : (
             <div style={{ fontSize: 11, color: t.txt2 }}>Valor negativo = crédito (abate a despesa do mês).</div>
           )}

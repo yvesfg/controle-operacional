@@ -1,5 +1,6 @@
 import React from "react";
 import ModalDespesa from "../../modals/ModalDespesa.jsx";
+import Toggle from "../../components/Toggle.jsx";
 import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas,
   inserirManual, atualizarDespesa, deletarDespesa,
@@ -178,11 +179,11 @@ export default function ResultadoAVB({ ctx }) {
           {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
           {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
-        <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt, cursor: "pointer",
-          padding: "8px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
-          <input type="checkbox" checked={incluirComp} onChange={(e) => setIncluirComp(e.target.checked)} />
-          Incluir complementar {baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}
-        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
+          padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
+          <Toggle checked={incluirComp} onChange={setIncluirComp}
+            label={`Incluir complementar ${baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}`} />
+        </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
           <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
@@ -281,9 +282,9 @@ export default function ResultadoAVB({ ctx }) {
                   </div>
                   {/* Toggle incluir só nas linhas marcadas como duplicidade */}
                   {d.dup_flag && (
-                    <label onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
-                      <input type="checkbox" checked={d.incluir} onChange={() => toggleIncluir(d)} /> incl.
-                    </label>
+                    <span onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
+                      <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.82} /> incl.
+                    </span>
                   )}
                   <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt,
                     whiteSpace: "nowrap", textAlign: "right", minWidth: isMobile ? 92 : 118, flexShrink: 0 }}>

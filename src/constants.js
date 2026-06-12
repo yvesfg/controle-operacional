@@ -143,6 +143,9 @@ export const DEV_CHANGELOG = [
       "FEAT · Importacao de despesas: aceita tambem .csv e .ods. CSV/aba unica infere a base pelo nome do arquivo (ACA->AVB, IMP/BEL->imperatriz_belem).",
       "UI · Resultado: lista de despesas mais legivel — zebra striping, valores alinhados em coluna a direita, destaque no hover, credito com sinal '-' e barra verde lateral.",
       "FEAT · Painel Financeiro: nova aba (gated por permissao financeira, todas as bases) com visao faturamento->margem->despesas->resultado da base logada. KPIs do mes + indicadores (indice de despesa, receita/viagem, despesa/viagem, ponto de equilibrio), grafico de evolucao 6 meses (faturamento x resultado) e composicao das despesas por grupo.",
+      "UX · Despesa indevida: ao marcar 'indevida' o 'Incluir no calculo' e desmarcado automaticamente (despesa indevida nao deve pesar no resultado ate voltar como credito).",
+      "FEAT · Seletor de base no topo: gestor com acesso a multiplas bases troca IMPERATRIZ/BELEM <-> ACAILANDIA <-> MARACANAU pelo chip do cabecalho, sem deslogar (reseta para Dashboard).",
+      "UI · Toggles estilo iOS (componente Toggle) no lugar de checkboxes nas telas financeiras (ModalDespesa, Resultado, Painel Financeiro).",
     ],
   },
   {

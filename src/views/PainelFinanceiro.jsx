@@ -1,6 +1,7 @@
 import React from "react";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
+import Toggle from "../components/Toggle.jsx";
 
 // PainelFinanceiro — visão financeira por base (faturamento → margem → despesas → resultado).
 // Escopado à base logada. Faturamento/margem vêm das viagens (DADOS); despesas da tabela
@@ -189,11 +190,11 @@ export default function PainelFinanceiro({ ctx }) {
           {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
           {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
-        <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt, cursor: "pointer",
-          padding: "8px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
-          <input type="checkbox" checked={incluirComp} onChange={(e) => setIncluirComp(e.target.checked)} />
-          Incluir complementar {baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}
-        </label>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
+          padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
+          <Toggle checked={incluirComp} onChange={setIncluirComp}
+            label={`Incluir complementar ${baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}`} />
+        </div>
         <div style={{ marginLeft: "auto", fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)" }}>
           {baseAtual?.label} · {r.n} viagens
         </div>
