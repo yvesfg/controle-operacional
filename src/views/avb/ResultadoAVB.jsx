@@ -2,7 +2,7 @@ import React from "react";
 import ModalDespesa from "../../modals/ModalDespesa.jsx";
 import Toggle from "../../components/Toggle.jsx";
 import {
-  parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas,
+  parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas, listarDespesasBase,
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
   listarIndevidasPendentes, vincularCredito,
 } from "../../despesas.js";
@@ -64,6 +64,18 @@ export default function ResultadoAVB({ ctx }) {
   const [undoInput, setUndoInput] = React.useState("");
   const [sheetSel, setSheetSel] = React.useState({ open: false, sheetsMeta: [], checked: {}, pendingRows: [], fileName: "" });
   const [busca, setBusca] = React.useState("");
+  const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
+  const [despesasTodas, setDespesasTodas] = React.useState([]);
+  const [loadingTodas, setLoadingTodas] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!buscaTodosMeses || !conn || !baseId) return;
+    setLoadingTodas(true);
+    listarDespesasBase(conn, baseId)
+      .then(setDespesasTodas)
+      .catch(e => showToast?.("Erro ao carregar todos os meses: " + e.message, "erro"))
+      .finally(() => setLoadingTodas(false));
+  }, [buscaTodosMeses, conn, baseId, showToast]);
 
   // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
   // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
@@ -201,15 +213,16 @@ export default function ResultadoAVB({ ctx }) {
 
   // Agrupa despesas por grupo p/ exibição (com filtro de busca)
   const buscaQ = busca.trim().toLowerCase();
+  const pool = buscaTodosMeses ? despesasTodas : despesas;
   const despesasFiltradas = buscaQ
-    ? despesas.filter(d =>
+    ? pool.filter(d =>
         (d.natureza || "").toLowerCase().includes(buscaQ) ||
         (d.historico || "").toLowerCase().includes(buscaQ) ||
         (d.grupo || "").toLowerCase().includes(buscaQ) ||
         (d.conta || "").toLowerCase().includes(buscaQ) ||
         String(Math.abs(Number(d.valor || 0)).toFixed(2)).includes(buscaQ)
       )
-    : despesas;
+    : pool;
   const porGrupo = {};
   despesasFiltradas.forEach((d) => { (porGrupo[d.grupo || "—"] = porGrupo[d.grupo || "—"] || []).push(d); });
 
@@ -435,13 +448,18 @@ export default function ResultadoAVB({ ctx }) {
               </button>
             )}
           </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
+            <Toggle checked={buscaTodosMeses} onChange={v => { setBuscaTodosMeses(v); }}
+              label="Todos os meses" size={0.82} />
+          </div>
           <div style={{ fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)", flex: "0 0 auto" }}>
-            {buscaQ ? `${despesasFiltradas.length} de ${despesas.length}` : `${despesas.length}`} lançamentos
+            {buscaQ ? `${despesasFiltradas.length} de ${pool.length}` : `${pool.length}`} lançamentos
+            {loadingTodas && " ⏳"}
           </div>
         </div>
 
-        {loading && <div style={{ color: t.txt2, fontSize: 13, padding: 16, textAlign: "center" }}>Carregando...</div>}
-        {!loading && despesas.length === 0 && (
+        {(loading || loadingTodas) && <div style={{ color: t.txt2, fontSize: 13, padding: 16, textAlign: "center" }}>Carregando...</div>}
+        {!loading && !loadingTodas && despesasFiltradas.length === 0 && pool.length === 0 && (
           <div style={{ color: t.txt2, fontSize: 13, padding: 24, textAlign: "center" }}>
             Nenhuma despesa neste mês. Importe a planilha ou adicione manualmente.
           </div>
@@ -465,11 +483,19 @@ export default function ResultadoAVB({ ctx }) {
                   style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6,
                     background: zebra, borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
                     cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s" }}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, flexShrink: 0, width: isMobile ? 46 : 52, textAlign: "center",
-                    color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
-                    title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
-                    {fmtDiaMes(d.dt_mov) || "sem data"}
-                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: isMobile ? 46 : 52 }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, textAlign: "center",
+                      color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
+                      title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
+                      {fmtDiaMes(d.dt_mov) || "sem data"}
+                    </span>
+                    {buscaTodosMeses && d.mes_ref && (
+                      <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: t.azulLt || t.txt2,
+                        background: `rgba(100,160,255,.12)`, borderRadius: 3, padding: "1px 4px", marginTop: 2, whiteSpace: "nowrap" }}>
+                        {mesLabel(d.mes_ref)}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.natureza || d.historico || "—"}
