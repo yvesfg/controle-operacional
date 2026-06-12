@@ -121,6 +121,16 @@ export default function ResultadoAVB({ ctx }) {
           + `Pode ser normal (mês sem movimento) ou uma aba esquecida.\nContinuar a importação?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
       }
+      // Detecta o mês predominante pelas datas (dt_mov) e avisa se diferir do mês selecionado.
+      const mesesArq = {};
+      linhas.forEach((l) => { if (l.dt_mov) { const m = String(l.dt_mov).slice(0, 7); mesesArq[m] = (mesesArq[m] || 0) + 1; } });
+      const mesPredom = Object.keys(mesesArq).sort((a, b) => mesesArq[b] - mesesArq[a])[0];
+      if (mesPredom && mesPredom !== mesRef) {
+        const msg = `As datas do arquivo são predominantemente de ${mesLabel(mesPredom)} `
+          + `(${mesesArq[mesPredom]} de ${linhas.length} linhas), mas o mês selecionado é ${mesLabel(mesRef)}.\n\n`
+          + `Importar mesmo assim em ${mesLabel(mesRef)}?`;
+        if (!window.confirm(msg)) { showToast?.("Importação cancelada — selecione o mês correto.", "erro"); return; }
+      }
       const porBase = {};
       linhas.forEach((l) => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
       // Diff por base: descobre só as linhas novas, preservando as existentes (e flags)
