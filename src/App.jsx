@@ -538,6 +538,8 @@ export default function App() {
             setBasesPermitidas(_bs);
             setBaseAtual(_bs.length === 1 ? _bs[0] : null);
           }
+        } else if (s.perfil === "admin") {
+          setBasesPermitidas(Object.values(BASES)); // sessao antiga sem baseIds: admin ve todas
         }
         setAuthed(true);
         return; // sessão válida — não verifica pendentes
@@ -681,7 +683,7 @@ export default function App() {
             const pm = typeof u.perms === "string" ? JSON.parse(u.perms) : (u.perms || {...PERMS_PADRAO[p]});
             setPerfil(p); setPerms(pm); setAuthed(true);
             setUsuarioLogado(u.nome || u.email);
-            saveJSON("co_sessao", {perfil:p, nome:u.nome||u.email, ts:Date.now()});
+            saveJSON("co_sessao", {perfil:p, nome:u.nome||u.email, ts:Date.now(), baseIds: (Array.isArray(u.bases_permitidas) ? u.bases_permitidas : (typeof u.bases_permitidas === "string" ? JSON.parse(u.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]))});
             showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
             // Carregar bases permitidas do usuario OAuth
             const _idsOAuth = Array.isArray(u.bases_permitidas) ? u.bases_permitidas
@@ -1040,7 +1042,7 @@ export default function App() {
         const pm = {...PERMS_PADRAO.admin};
         setPerfil(p); setPerms(pm); setAuthed(true);
         setUsuarioLogado("Admin");
-        saveJSON("co_sessao",{perfil:p,nome:"Admin",ts:Date.now()});
+        saveJSON("co_sessao",{perfil:p,nome:"Admin",ts:Date.now(),baseIds:Object.keys(BASES)});
         registrarLog("LOGIN", `Admin logou no sistema (admin) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
         setAuthSenha(""); setAuthEmail("");
         // Admin tem acesso a todas as bases
@@ -3321,10 +3323,10 @@ export default function App() {
               </span>
               {baseAtual && (
                 <div style={{position:"relative"}}>
-                  <button onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
+                  <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
                     style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 9px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:6}}>
                     ● {baseAtual.label}
-                    {basesPermitidas.length>1 && <span style={{fontSize:8,opacity:.8}}>▼</span>}
+                    {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}>▾</span>}
                   </button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>

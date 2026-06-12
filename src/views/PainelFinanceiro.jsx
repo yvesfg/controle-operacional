@@ -127,6 +127,26 @@ export default function PainelFinanceiro({ ctx }) {
   const despPorVg = r.n ? dp.liq / r.n : 0;
   const breakeven = r.margem > 0 ? dp.liq * r.receita / r.margem : 0; // faturamento p/ resultado zero
 
+  // ── Mês anterior (variação) ──
+  const prevMes = mesRef ? (() => { const [y, mo] = mesRef.split("-").map(Number); const d = new Date(y, mo - 2, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })() : null;
+  const rp = receitaPorMes[prevMes] || { receita: 0, margem: 0, n: 0 };
+  const dpp = despPorMes[prevMes] || { deb: 0, cred: 0, liq: 0 };
+  const prevResultado = rp.margem - dpp.liq;
+
+  // ── Acumulado do ano (YTD) ──
+  const ytd = React.useMemo(() => {
+    const ano = (mesRef || "").split("-")[0]; let fat = 0, mrg = 0, desp = 0;
+    Object.keys(receitaPorMes).forEach((m) => { if (m.startsWith(ano + "-")) { fat += receitaPorMes[m].receita; mrg += receitaPorMes[m].margem; } });
+    Object.keys(despPorMes).forEach((m) => { if (m.startsWith(ano + "-")) desp += despPorMes[m].liq; });
+    return { ano, fat, desp, resultado: mrg - desp };
+  }, [receitaPorMes, despPorMes, mesRef]);
+
+  // ── Maiores despesas do mês ──
+  const topDespesas = React.useMemo(() =>
+    despesasView.filter((d) => d.mes_ref === mesRef && d.incluir && d.tipo !== "credito")
+      .sort((a, b) => Number(b.valor || 0) - Number(a.valor || 0)).slice(0, 5),
+    [despesasView, mesRef]);
+
   // ── Composição de despesas (mês selecionado) por grupo ──
   const composicao = React.useMemo(() => {
     const g = {};
@@ -138,6 +158,7 @@ export default function PainelFinanceiro({ ctx }) {
   // ── Charts ──
   const trendRef = React.useRef(null);
   const donutRef = React.useRef(null);
+  const wfRef = React.useRef(null);
   const instRef = React.useRef({});
   React.useEffect(() => {
     const verde = cssVar("--green", "#22c55e"), red = cssVar("--red", "#ef4444"), azul = cssVar("--color-info-lt", "#1677ff");
@@ -170,8 +191,25 @@ export default function PainelFinanceiro({ ctx }) {
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${c.label}: ${money(c.parsed)}` } } } },
       });
     }
-    return () => { instRef.current.trend?.destroy(); instRef.current.donut?.destroy(); instRef.current = {}; };
-  }, [serie, composicao]);
+    // Cascata do resultado (waterfall): Faturamento → −Pago motorista → −Despesas → +Créditos → Resultado
+    if (wfRef.current && r.n > 0) {
+      instRef.current.wf?.destroy();
+      const fat = r.receita, custo = r.custo, deb = dp.deb, credAbs = Math.abs(dp.cred), margem = r.margem;
+      const ranges = [[0, fat], [margem, fat], [margem - deb, margem], [margem - deb, resultado], [0, resultado]];
+      const mags = [fat, -custo, -deb, credAbs, resultado];
+      const cores = [verde, red, red, verde, resultado >= 0 ? azul : red];
+      instRef.current.wf = new Chart(wfRef.current, {
+        type: "bar",
+        data: { labels: ["Faturamento", "Pago motorista", "Despesas", "Créditos", "Resultado"],
+          datasets: [{ data: ranges, backgroundColor: cores, borderRadius: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money(mags[c.dataIndex]) } } },
+          scales: { x: { ticks: { color: txt2, font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: txt2, font: { size: 10 }, callback: (v) => moneyK(v) }, grid: { color: grid } } } },
+      });
+    }
+    return () => { instRef.current.trend?.destroy(); instRef.current.donut?.destroy(); instRef.current.wf?.destroy(); instRef.current = {}; };
+  }, [serie, composicao, mesRef]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
   const kpi = (l, v, sub, cor, destaque) => (
@@ -189,6 +227,13 @@ export default function PainelFinanceiro({ ctx }) {
   );
   const PAL = ["#1677ff", "#f0b90b", "#22c55e", "#a855f7", "#ec4899", "#06b6d4", "#ef4444"];
   const totalComp = composicao.reduce((s, [, v]) => s + v, 0) || 1;
+  // Variação vs mês anterior (badge ▲/▼). higherIsGood=false p/ despesa.
+  const delta = (cur, prev, higherIsGood = true) => {
+    if (!prev) return null;
+    const d = (cur - prev) / Math.abs(prev) * 100;
+    const good = higherIsGood ? d >= 0 : d <= 0;
+    return <span style={{ marginLeft: 5, color: good ? t.verde : t.danger, fontWeight: 700 }}>{d >= 0 ? "▲" : "▼"}{Math.abs(d).toFixed(0)}%</span>;
+  };
 
   const semDados = !loading && r.n === 0 && composicao.length === 0;
 
@@ -237,10 +282,10 @@ export default function PainelFinanceiro({ ctx }) {
         <>
           {/* KPIs principais */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 10, marginBottom: 12 }}>
-            {kpi("Faturamento (CTE)", money(r.receita), `${r.n} viagens`, t.verde)}
-            {kpi("Margem bruta", money(r.margem), `${margemPct.toFixed(1)}% do fat.`, t.ouro)}
-            {kpi("Despesas", money(dp.deb), dp.cred < 0 ? `créd. ${money(Math.abs(dp.cred))}` : "incluídas", t.danger)}
-            {kpi("Resultado", money(resultado), `${resultPct.toFixed(1)}%`, resultado >= 0 ? t.verde : t.danger, true)}
+            {kpi("Faturamento (CTE)", money(r.receita), <>{r.n} viagens{delta(r.receita, rp.receita)}</>, t.verde)}
+            {kpi("Margem bruta", money(r.margem), <>{margemPct.toFixed(1)}% do fat.{delta(r.margem, rp.margem)}</>, t.ouro)}
+            {kpi("Despesas", money(dp.deb), <>{dp.cred < 0 ? `créd. ${money(Math.abs(dp.cred))}` : "incluídas"}{delta(dp.deb, dpp.deb, false)}</>, t.danger)}
+            {kpi("Resultado", money(resultado), <>{resultPct.toFixed(1)}%{delta(resultado, prevResultado)}</>, resultado >= 0 ? t.verde : t.danger, true)}
           </div>
 
           {/* Indicadores derivados */}
@@ -281,6 +326,44 @@ export default function PainelFinanceiro({ ctx }) {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Linha inferior: cascata do resultado + maiores despesas + acumulado do ano */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.5fr 1fr", gap: 14, marginTop: 14 }}>
+            <div style={{ ...card }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4 }}>Cascata do resultado · {mesLabel(mesRef)}</div>
+              <div style={{ fontSize: 10, color: t.txt2, marginBottom: 10 }}>Do faturamento ao resultado, passo a passo</div>
+              <div style={{ position: "relative", height: 240 }}>
+                <canvas ref={wfRef} role="img" aria-label="Cascata: faturamento menos pago motorista e despesas, mais créditos, igual resultado" />
+              </div>
+            </div>
+            <div style={{ ...card, display: "flex", flexDirection: "column" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Maiores despesas do mês</div>
+              {topDespesas.length === 0 ? (
+                <div style={{ color: t.txt2, fontSize: 12, padding: 16, textAlign: "center" }}>Sem despesas neste mês.</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 7, flex: 1 }}>
+                  {topDespesas.map((d, i) => (
+                    <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: t.txt2, width: 16, flexShrink: 0 }}>{i + 1}.</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.natureza || d.historico || "—"}</div>
+                        <div style={{ fontSize: 9, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.grupo}</div>
+                      </div>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: t.danger, whiteSpace: "nowrap" }}>{money(Number(d.valor || 0))}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${t.borda}` }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text3)", marginBottom: 7 }}>Acumulado {ytd.ano}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+                  <div><div style={{ fontSize: 9, color: t.txt2 }}>Faturamento</div><div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: t.verde }}>{moneyK(ytd.fat)}</div></div>
+                  <div><div style={{ fontSize: 9, color: t.txt2 }}>Despesas</div><div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: t.danger }}>{moneyK(ytd.desp)}</div></div>
+                  <div><div style={{ fontSize: 9, color: t.txt2 }}>Resultado</div><div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: ytd.resultado >= 0 ? t.verde : t.danger }}>{moneyK(ytd.resultado)}</div></div>
+                </div>
+              </div>
             </div>
           </div>
         </>

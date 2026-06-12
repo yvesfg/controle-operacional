@@ -149,6 +149,8 @@ export const DEV_CHANGELOG = [
       "UI · Sweep global: TODOS os checkboxes do app viraram Toggle (ModalEdit, ModalNFD, ModalRelatorios, AdminView, MotoristasView) — padrao visual unico em todo o sistema.",
       "UI · Logo do login: removido o brilho/estrela ao lado do 'P', fundo azul padrao preservado, recorte circular centralizado e exportada em 512x512 nitida (logo-login.png).",
       "FEAT · Painel Financeiro: segmento Imp+Bel / Imperatriz / Belem (so imperatriz_belem) filtra as despesas por origem (aba da planilha) p/ acompanhar Belem; receita/margem seguem combinadas (caption avisa).",
+      "FEAT · Painel Financeiro v2: variacao vs mes anterior (badge up/down) nos KPIs; cascata do resultado (Faturamento -> Pago motorista -> Despesas -> Creditos -> Resultado); maiores despesas do mes (top 5); acumulado do ano (YTD).",
+      "FIX · Seletor de base sumia apos recarregar a pagina: sessao do admin/OAuth nao gravava baseIds e o restore nao repunha basesPermitidas. Agora grava baseIds e admin sempre ve todas as bases; chevron do seletor mais visivel.",
     ],
   },
   {
