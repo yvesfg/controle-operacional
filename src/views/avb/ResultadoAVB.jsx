@@ -82,6 +82,7 @@ export default function ResultadoAVB({ ctx }) {
   const [sheetSel, setSheetSel] = React.useState({ open: false, sheetsMeta: [], checked: {}, pendingRows: [], fileName: "" });
   const [busca, setBusca] = React.useState("");
   const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
+  const [vincManual, setVincManual] = React.useState(null); // ind.id em modo de seleção manual
   const [despesasTodas, setDespesasTodas] = React.useState([]);
   const [loadingTodas, setLoadingTodas] = React.useState(false);
 
@@ -414,23 +415,64 @@ export default function ResultadoAVB({ ctx }) {
         <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55` }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, marginBottom: 3 }}>Indevidas aguardando crédito ({indevidas.length})</div>
           <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>
-            Despesas marcadas como indevidas que ainda não voltaram como crédito. Sugestões por valor entre os créditos de {mesLabel(mesRef)}.
+            Ficam aqui até o crédito ser vinculado — aparecem em todos os meses até resolver.
+            {creditos.length > 0 && <> Créditos disponíveis em <b style={{ color: t.txt }}>{mesLabel(mesRef)}</b>: {creditos.length}.</>}
           </div>
           {indevidas.map((ind) => {
             const cand = creditos.find((c) => Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)));
+            const emPickMode = vincManual === ind.id;
             return (
-              <div key={ind.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px", borderBottom: `1px solid ${t.borda}55` }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.natureza || ind.historico || "—"}</div>
-                  <div style={{ fontSize: 10, color: t.txt2 }}>{mesLabel(ind.mes_ref)} · {money(Number(ind.valor || 0))}</div>
+              <div key={ind.id} style={{ padding: "8px 4px", borderBottom: `1px solid ${t.borda}55` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.natureza || ind.historico || "—"}</div>
+                    <div style={{ fontSize: 10, color: t.txt2 }}>{mesLabel(ind.mes_ref)} · {money(Number(ind.valor || 0))}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                    {cand && !emPickMode && (
+                      <button onClick={() => vincular(ind.id, cand.id)}
+                        style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 7, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
+                        ✓ {money(Math.abs(Number(cand.valor || 0)))}
+                      </button>
+                    )}
+                    {!emPickMode && (
+                      creditos.length > 0 ? (
+                        <button onClick={() => setVincManual(ind.id)}
+                          style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer",
+                            border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, whiteSpace: "nowrap" }}>
+                          {cand ? "outro..." : "Vincular crédito"}
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 10, color: t.txt2, whiteSpace: "nowrap" }}>sem créditos em {mesLabel(mesRef)}</span>
+                      )
+                    )}
+                    {emPickMode && (
+                      <button onClick={() => setVincManual(null)}
+                        style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer",
+                          border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {cand ? (
-                  <button onClick={() => vincular(ind.id, cand.id)}
-                    style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 7, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
-                    ✓ Vincular crédito {money(Math.abs(Number(cand.valor || 0)))}
-                  </button>
-                ) : (
-                  <span style={{ fontSize: 10, color: t.txt2, whiteSpace: "nowrap" }}>sem crédito igual neste mês</span>
+                {emPickMode && (
+                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ fontSize: 10, color: t.txt2, marginBottom: 2 }}>Escolha o crédito de {mesLabel(mesRef)}:</div>
+                    {creditos.map((c) => (
+                      <button key={c.id}
+                        onClick={() => { vincular(ind.id, c.id); setVincManual(null); }}
+                        style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer", textAlign: "left",
+                          border: `1px solid ${Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)) ? t.verde : t.borda}`,
+                          background: Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)) ? `rgba(2,192,118,.08)` : t.card2,
+                          color: t.txt }}>
+                        <span style={{ fontWeight: 600 }}>{money(Math.abs(Number(c.valor || 0)))}</span>
+                        {" — "}{c.natureza || c.historico || "—"}
+                        {Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)) && (
+                          <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>✓ valor igual</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             );
