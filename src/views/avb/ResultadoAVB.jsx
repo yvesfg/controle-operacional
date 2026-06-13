@@ -3,6 +3,7 @@ import ModalDespesa from "../../modals/ModalDespesa.jsx";
 import Toggle from "../../components/Toggle.jsx";
 import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas, listarDespesasBase,
+  listarMesesComDespesas,
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
   listarIndevidasPendentes, vincularCredito,
 } from "../../despesas.js";
@@ -40,11 +41,27 @@ export default function ResultadoAVB({ ctx }) {
   }
 
   // Meses disponíveis a partir dos dados operacionais
-  const mesesDisp = React.useMemo(() => {
+  const mesesOp = React.useMemo(() => {
     const s = new Set();
     (DADOS || []).forEach((r) => { const m = mesDe(r.data_carr); if (m) s.add(m); });
-    return [...s].sort().reverse();
+    return s;
   }, [DADOS]);
+
+  // Meses com despesas gravadas na base (complementa mesesOp)
+  const [mesesDespesas, setMesesDespesas] = React.useState([]);
+  const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
+
+  const carregarMeses = React.useCallback(() => {
+    if (!conn || !baseId) return;
+    listarMesesComDespesas(conn, baseId).then(setMesesDespesas).catch(() => {});
+  }, [conn, baseId]);
+
+  React.useEffect(() => { carregarMeses(); }, [carregarMeses]);
+
+  const mesesDisp = React.useMemo(() => {
+    const s = new Set([...mesesOp, ...mesesDespesas]);
+    return [...s].sort().reverse();
+  }, [mesesOp, mesesDespesas]);
 
   const [mesRef, setMesRef] = React.useState("");
   React.useEffect(() => { if (!mesRef && mesesDisp.length) setMesRef(mesesDisp[0]); }, [mesesDisp, mesRef]);
@@ -67,10 +84,6 @@ export default function ResultadoAVB({ ctx }) {
   const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
   const [despesasTodas, setDespesasTodas] = React.useState([]);
   const [loadingTodas, setLoadingTodas] = React.useState(false);
-
-  // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
-  // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
-  const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
 
   React.useEffect(() => {
     if (!buscaTodosMeses || !conn || !baseId) return;
@@ -183,6 +196,7 @@ export default function ResultadoAVB({ ctx }) {
       setLastImportIds(ids);
       setUndoOpen(false);
       showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)}).`, "ok");
+      carregarMeses();
       await carregar();
     } catch (err) { showToast?.("Erro na importação: " + err.message, "erro"); }
     finally { setImporting(false); }

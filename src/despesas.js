@@ -115,6 +115,13 @@ export async function listarDespesasBase(conn, baseId) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
+// Meses distintos com despesas registradas — leve (só coluna mes_ref).
+export async function listarMesesComDespesas(conn, baseId) {
+  const path = `${TABELA}?base_id=eq.${q(baseId)}&select=mes_ref&order=mes_ref.desc`;
+  const rows = (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+  return [...new Set(rows.map((r) => r.mes_ref).filter(Boolean))].sort().reverse();
+}
+
 // Importação NÃO destrutiva: compara o arquivo com o que já existe (base+mês) e
 // devolve apenas as linhas NOVAS, preservando as existentes (e suas flags).
 // Casamento por conteúdo (data+valor+natureza+histórico+conta) com multiplicidade,
