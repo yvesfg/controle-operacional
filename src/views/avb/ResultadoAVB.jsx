@@ -68,6 +68,10 @@ export default function ResultadoAVB({ ctx }) {
   const [despesasTodas, setDespesasTodas] = React.useState([]);
   const [loadingTodas, setLoadingTodas] = React.useState(false);
 
+  // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
+  // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
+  const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
+
   React.useEffect(() => {
     if (!buscaTodosMeses || !conn || !baseId) return;
     setLoadingTodas(true);
@@ -76,10 +80,6 @@ export default function ResultadoAVB({ ctx }) {
       .catch(e => showToast?.("Erro ao carregar todos os meses: " + e.message, "erro"))
       .finally(() => setLoadingTodas(false));
   }, [buscaTodosMeses, conn, baseId, showToast]);
-
-  // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
-  // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
-  const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
 
   const carregar = React.useCallback(async () => {
     if (!conn || !baseId || !mesRef) return;
