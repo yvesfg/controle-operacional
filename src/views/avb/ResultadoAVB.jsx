@@ -118,10 +118,16 @@ export default function ResultadoAVB({ ctx }) {
     if (!file || !conn || !mesRef) return;
     setImporting(true);
     try {
-      const linhas = await parseDespesasXLSX(file);
-      if (linhas.length === 0) { showToast?.("Nenhuma aba reconhecida (AÇA / IMP / BELÉM) no arquivo.", "erro"); return; }
-      // Sinaliza filiais ausentes — se faltar uma aba esperada, avisa antes de gravar.
-      const presentes = new Set(linhas.map((l) => l.aba_origem));
+      const linhas0 = await parseDespesasXLSX(file);
+      if (linhas0.length === 0) { showToast?.("Nenhuma aba reconhecida (AÇA / IMP / BELÉM) no arquivo.", "erro"); return; }
+      // Competência por DATA: mantém só as linhas do mês selecionado (+ sem data) e ignora as
+      // datadas em outro mês — evita que abas de outro mês (planilha separada por abas) caiam
+      // no mês errado, que foi o que contaminou 03/2026 com lançamentos de 05/2026.
+      const mesDaLinha = (l) => (l.dt_mov ? String(l.dt_mov).slice(0, 7) : null);
+      const linhas = linhas0.filter((l) => { const m = mesDaLinha(l); return !m || m === mesRef; });
+      const foraMes = linhas0.filter((l) => { const m = mesDaLinha(l); return m && m !== mesRef; });
+      // Sinaliza filiais ausentes — sobre o arquivo inteiro (antes do filtro de mês).
+      const presentes = new Set(linhas0.map((l) => l.aba_origem));
       const ESPERADAS = [["AÇA", "Açailândia"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]];
       const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
       const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
@@ -131,14 +137,19 @@ export default function ResultadoAVB({ ctx }) {
           + `Pode ser normal (mês sem movimento) ou uma aba esquecida.\nContinuar a importação?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
       }
-      // Detecta o mês predominante pelas datas (dt_mov) e avisa se diferir do mês selecionado.
-      const mesesArq = {};
-      linhas.forEach((l) => { if (l.dt_mov) { const m = String(l.dt_mov).slice(0, 7); mesesArq[m] = (mesesArq[m] || 0) + 1; } });
-      const mesPredom = Object.keys(mesesArq).sort((a, b) => mesesArq[b] - mesesArq[a])[0];
-      if (mesPredom && mesPredom !== mesRef) {
-        const msg = `As datas do arquivo são predominantemente de ${mesLabel(mesPredom)} `
-          + `(${mesesArq[mesPredom]} de ${linhas.length} linhas), mas o mês selecionado é ${mesLabel(mesRef)}.\n\n`
-          + `Importar mesmo assim em ${mesLabel(mesRef)}?`;
+      // Linhas de outro mês: ignoradas. Se o arquivo não tem nenhuma linha datada do mês
+      // selecionado, é o arquivo errado → aborta (não importa só as linhas sem data).
+      if (foraMes.length) {
+        const porMes = {};
+        foraMes.forEach((l) => { const m = mesDaLinha(l); porMes[m] = (porMes[m] || 0) + 1; });
+        const det = Object.keys(porMes).sort().map((m) => `${mesLabel(m)}: ${porMes[m]}`).join(" · ");
+        const datadasNoMes = linhas.filter((l) => mesDaLinha(l)).length;
+        if (datadasNoMes === 0) {
+          showToast?.(`O arquivo não tem lançamentos datados de ${mesLabel(mesRef)} (${foraMes.length} de outros meses: ${det}). Selecione o mês correto.`, "erro");
+          return;
+        }
+        const msg = `O arquivo tem ${foraMes.length} linha(s) de OUTRO mês (${det}) que serão IGNORADAS — `
+          + `só entram as de ${mesLabel(mesRef)}.\n\nContinuar?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada — selecione o mês correto.", "erro"); return; }
       }
       const porBase = {};
@@ -161,7 +172,7 @@ export default function ResultadoAVB({ ctx }) {
       }
       if (novasTodas.length === 0) { showToast?.("Nenhuma novidade — tudo já estava importado.", "ok"); return; }
       await inserirImportadas(conn, mesRef, novasTodas);
-      showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)}).`, "ok");
+      showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)})${foraMes.length ? ` · ${foraMes.length} de outros meses ignoradas` : ""}.`, "ok");
       await carregar();
     } catch (err) { showToast?.("Erro na importação: " + err.message, "erro"); }
     finally { setImporting(false); }

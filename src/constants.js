@@ -139,6 +139,8 @@ export const DEV_CHANGELOG = [
     data: "2026-06-15", sessao: "Sessao 24",
     itens: [
       "FEAT · Resultado: clicar numa despesa marcada como DUPLICIDADE? abre um painel comparativo com os outros lancamentos de mesmo valor, natureza e historico do mes — cada um com o toggle 'incl.' (para desligar o repetido) e botao Editar; mostra quantos estao incluidos e o total. Linhas sem duplicidade continuam abrindo a edicao direto.",
+      "FIX · Importacao de despesas: lancamentos de OUTRO mes (planilha com a base separada em abas de meses diferentes) entravam no mes selecionado. Agora a competencia segue a DATA (dt_mov): so entram as linhas do mes selecionado (+ sem data); as de outro mes sao ignoradas com aviso, e arquivo sem nenhuma linha do mes selecionado e barrado.",
+      "DATA · Limpeza: removidas 94 linhas de maio/2026 que haviam sido importadas por engano em 03/2026 (Acailandia) — eram duplicatas exatas das de 05/2026, sem flags. Depois, conferida contra a planilha original, removidas mais 2 linhas SEM DATA que tambem haviam vazado da aba de maio (DESPESAS BANCARIAS 4.938,79 e SINISTRO ACO VERDE 10x10 6.851,31). 03/2026 Acailandia fechou em 79.998,19, batendo com o TOTAL da aba ACAI 032026.",
     ],
   },
   {
