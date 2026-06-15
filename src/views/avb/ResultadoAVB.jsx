@@ -544,6 +544,19 @@ export default function ResultadoAVB({ ctx }) {
           </div>
         )}
 
+        {/* Cabeçalho de colunas — só no desktop (tabela multi-coluna) */}
+        {!loading && !isMobile && despesasFiltradas.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 10px", borderLeft: "2px solid transparent",
+            fontSize: 10.5, fontWeight: 700, color: t.txt2, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <span style={{ width: 70, flexShrink: 0 }}>Data</span>
+            <span style={{ flex: "1.3 1 0", minWidth: 0 }}>Natureza</span>
+            <span style={{ flex: "1.7 1 0", minWidth: 0 }}>Histórico</span>
+            <span style={{ width: 130, flexShrink: 0 }}>Conta</span>
+            <span style={{ width: 56, flexShrink: 0 }} />
+            <span style={{ width: 150, flexShrink: 0, textAlign: "right" }}>Valor</span>
+          </div>
+        )}
+
         {!loading && Object.keys(porGrupo).map((g) => {
           const linhas = porGrupo[g];
           const subt = linhas.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
@@ -555,49 +568,102 @@ export default function ResultadoAVB({ ctx }) {
               </div>
               {linhas.map((d, i) => {
                 const zebra = i % 2 ? t.card2 : "transparent";
-                return (
-                <div key={d.id} onClick={() => abrirRegistro(d)}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 10%, transparent)"}
-                  onMouseLeave={(e) => e.currentTarget.style.background = zebra}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6,
-                    background: zebra, borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
-                    cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: isMobile ? 46 : 52 }}>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, textAlign: "center",
-                      color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
-                      title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
-                      {fmtDiaMes(d.dt_mov) || "sem data"}
-                    </span>
-                    {buscaTodosMeses && d.mes_ref && (
-                      <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: t.azulLt || t.txt2,
-                        background: `rgba(100,160,255,.12)`, borderRadius: 3, padding: "1px 4px", marginTop: 2, whiteSpace: "nowrap" }}>
-                        {mesLabel(d.mes_ref)}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {d.natureza || d.historico || "—"}
-                      {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
-                      {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
-                      {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
-                      {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
-                    </div>
-                    {d.historico && d.natureza && (
-                      <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
-                    )}
-                  </div>
-                  {/* Toggle incluir só nas linhas marcadas como duplicidade */}
-                  {d.dup_flag && (
-                    <span onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
-                      <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.82} /> incl.
-                    </span>
-                  )}
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt,
-                    whiteSpace: "nowrap", textAlign: "right", minWidth: isMobile ? 92 : 118, flexShrink: 0 }}>
+                const badges = (
+                  <>
+                    {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
+                    {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
+                    {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
+                    {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
+                  </>
+                );
+                const toggleDup = d.dup_flag ? (
+                  <span onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 9.5, color: t.txt2 }}>
+                    <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.78} /> incl.
+                  </span>
+                ) : null;
+                const valorSpan = (
+                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt }}>
                     {d.tipo === "credito" ? "− " : ""}{money(Math.abs(Number(d.valor || 0)))}
+                  </span>
+                );
+                const rowEvents = {
+                  onClick: () => abrirRegistro(d),
+                  onMouseEnter: (e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 10%, transparent)"),
+                  onMouseLeave: (e) => (e.currentTarget.style.background = zebra),
+                };
+                const rowBase = {
+                  display: "flex", alignItems: "center", gap: 10, borderRadius: 6, background: zebra,
+                  borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
+                  cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s",
+                };
+
+                if (isMobile) {
+                  return (
+                    <div key={d.id} {...rowEvents} style={{ ...rowBase, padding: "9px 10px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 46 }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, textAlign: "center",
+                          color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
+                          title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
+                          {fmtDiaMes(d.dt_mov) || "sem data"}
+                        </span>
+                        {buscaTodosMeses && d.mes_ref && (
+                          <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: t.azulLt || t.txt2,
+                            background: `rgba(100,160,255,.12)`, borderRadius: 3, padding: "1px 4px", marginTop: 2, whiteSpace: "nowrap" }}>
+                            {mesLabel(d.mes_ref)}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {d.natureza || d.historico || "—"}{badges}
+                        </div>
+                        {d.historico && d.natureza && (
+                          <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
+                        )}
+                      </div>
+                      {toggleDup}
+                      <div style={{ fontSize: 13, whiteSpace: "nowrap", textAlign: "right", minWidth: 92, flexShrink: 0 }}>{valorSpan}</div>
+                    </div>
+                  );
+                }
+
+                // Desktop: linha em colunas alinhadas (tabela)
+                return (
+                  <div key={d.id} {...rowEvents} style={{ ...rowBase, padding: "10px 10px" }}>
+                    {/* Data */}
+                    <div style={{ width: 70, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5,
+                        color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
+                        title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
+                        {fmtDiaMes(d.dt_mov) || "sem data"}
+                      </span>
+                      {buscaTodosMeses && d.mes_ref && (
+                        <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: t.azulLt || t.txt2,
+                          background: `rgba(100,160,255,.12)`, borderRadius: 3, padding: "1px 4px", marginTop: 2, whiteSpace: "nowrap", alignSelf: "flex-start" }}>
+                          {mesLabel(d.mes_ref)}
+                        </span>
+                      )}
+                    </div>
+                    {/* Natureza (texto com ellipsis + badges sempre visíveis) */}
+                    <div style={{ flex: "1.3 1 0", minWidth: 0, display: "flex", alignItems: "center" }}>
+                      <span style={{ flex: "0 1 auto", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, color: t.txt, fontWeight: 600 }}>
+                        {d.natureza || "—"}
+                      </span>
+                      <span style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>{badges}</span>
+                    </div>
+                    {/* Histórico */}
+                    <div style={{ flex: "1.7 1 0", minWidth: 0, fontSize: 13, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {d.historico || ""}
+                    </div>
+                    {/* Conta */}
+                    <div style={{ width: 130, flexShrink: 0, fontSize: 12, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {d.conta || ""}
+                    </div>
+                    {/* Incluir (só duplicidade) */}
+                    <div style={{ width: 56, flexShrink: 0, display: "flex", justifyContent: "center" }}>{toggleDup}</div>
+                    {/* Valor */}
+                    <div style={{ width: 150, flexShrink: 0, fontSize: 16, textAlign: "right", whiteSpace: "nowrap" }}>{valorSpan}</div>
                   </div>
-                </div>
                 );
               })}
             </div>
