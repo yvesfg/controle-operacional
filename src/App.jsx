@@ -3376,7 +3376,7 @@ export default function App() {
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:210,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
                         {basesPermitidas.map(b=>(
-                          <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); setActiveTab("dashboard"); }}
+                          <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); }}
                             style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:12,cursor:"pointer"}}
                             onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.16)}
                             onMouseLeave={e=>e.currentTarget.style.background=b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent"}>
