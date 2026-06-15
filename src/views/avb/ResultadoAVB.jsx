@@ -1,6 +1,7 @@
 import React from "react";
 import ModalDespesa from "../../modals/ModalDespesa.jsx";
 import Toggle from "../../components/Toggle.jsx";
+import useModalEsc from "../../hooks/useModalEsc.js";
 import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas, listarDespesasBase,
   listarMesesComDespesas,
@@ -95,6 +96,11 @@ export default function ResultadoAVB({ ctx }) {
     if (d.dup_flag) setDupModal({ open: true, registro: d });
     else setModal({ open: true, inicial: d });
   };
+
+  // ESC fecha os modais desta tela (empilháveis: dup/seleção de abas por cima da edição)
+  useModalEsc(modal.open, () => setModal({ open: false, inicial: null }));
+  useModalEsc(dupModal.open, () => setDupModal({ open: false, registro: null }));
+  useModalEsc(sheetSel.open, () => setSheetSel((s) => ({ ...s, open: false })));
 
   React.useEffect(() => {
     if (!buscaTodosMeses || !conn || !baseId) return;

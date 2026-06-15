@@ -95,7 +95,7 @@ export default function ModalDetalhe({ ctx }) {
                       autoFocus
                       value={excluirTexto}
                       onChange={e=>setExcluirTexto(e.target.value.toUpperCase())}
-                      onKeyDown={e=>{if(e.key==="Escape"){setExcluirConfirm(null);setExcluirTexto("");}}}
+                      onKeyDown={e=>{if(e.key==="Escape"){e.stopPropagation();setExcluirConfirm(null);setExcluirTexto("");}}}
                       placeholder="EXCLUIR"
                       style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:"#ef4444",fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
                     />

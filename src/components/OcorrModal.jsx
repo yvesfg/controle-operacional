@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import useModalEsc from "../hooks/useModalEsc.js";
 
 const TIPOS = [
   { k: "falta",       l: "Falta",        cor: "#f6465d" },
@@ -33,6 +34,8 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
       setLocalizacao("");
     }
   }, [open]);
+
+  useModalEsc(open, onClose);
 
   if (!open) return null;
 

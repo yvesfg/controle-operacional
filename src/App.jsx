@@ -27,6 +27,7 @@ import DashboardView   from './views/DashboardView.jsx';
 import DiariasView     from './views/DiariasView.jsx';
 import DescargaView    from './views/DescargaView.jsx';
 import AdminView       from './views/AdminView.jsx';
+import useModalEsc      from './hooks/useModalEsc.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVB.jsx';
@@ -416,6 +417,31 @@ export default function App() {
   const [relDescargaTo, setRelDescargaTo] = useState("");
   const [relDescargaMotorista, setRelDescargaMotorista] = useState("");
   const [relDescargaStatus, setRelDescargaStatus] = useState("");
+
+  // ── ESC fecha o modal aberto (global) ──
+  const fecharTopoModal = () => {
+    if (usuarioEmailPreview) return setUsuarioEmailPreview(null);
+    if (motImportPrefOpen) return setMotImportPrefOpen(false);
+    if (wppPagModal) return setWppPagModal(null);
+    if (wppFatModal) return setWppFatModal(null);
+    if (wppModal2) return setWppModal2(null);
+    if (wppModal) return setWppModal(null);
+    if (aprovarModal) return setAprovarModal(null);
+    if (rodorricaPeriodoModal) return setRodorricaPeriodoModal(false);
+    if (relCtrlDccOpen) return setRelCtrlDccOpen(false);
+    if (relOperOpen) return setRelOperOpen(false);
+    if (relDescargaOpen) return setRelDescargaOpen(false);
+    if (relDiariaOpen) return setRelDiariaOpen(false);
+    if (relGeralOpen) return setRelGeralOpen(false);
+    if (nfdAlertOpen) return setNfdAlertOpen(false);
+    if (dashDrillModal) return setDashDrillModal(null);
+    if (ocorrChegadaAlert) return setOcorrChegadaAlert(false);
+    if (buscaModalOpen) return setBuscaModalOpen(false);
+    if (modalOpen === "detalhe") { setModalOpen(null); setDetalheDT(null); return; }
+    if (modalOpen) return setModalOpen(null);
+  };
+  const algumModalAberto = !!(aprovarModal || rodorricaPeriodoModal || usuarioEmailPreview || motImportPrefOpen || wppPagModal || wppFatModal || wppModal2 || wppModal || relCtrlDccOpen || relOperOpen || relDescargaOpen || relDiariaOpen || relGeralOpen || nfdAlertOpen || dashDrillModal || ocorrChegadaAlert || buscaModalOpen || modalOpen);
+  useModalEsc(algumModalAberto, fecharTopoModal);
 
   // Chart refs
   const chartCarregRef = useRef(null);
