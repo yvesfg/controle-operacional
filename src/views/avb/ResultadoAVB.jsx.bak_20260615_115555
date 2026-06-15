@@ -27,9 +27,6 @@ const mesDe = (s) => { if (!s) return null; const p = String(s).split("/"); retu
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
 const fmtDiaMes = (iso) => { if (!iso) return null; const p = String(iso).split("-"); return p.length >= 3 ? `${p[2].slice(0, 2)}/${p[1]}` : null; };
-// Chave de duplicidade — mesma usada no parser (valor + natureza + histórico) p/ reagrupar os possíveis duplicados.
-const normTxt = (s) => (s || "").toUpperCase().replace(/\s+/g, " ").trim();
-const dupKeyOf = (d) => `${Math.round((Number(d.valor) + Number.EPSILON) * 100) / 100}||${normTxt(d.natureza)}||${normTxt(d.historico)}`;
 
 export default function ResultadoAVB({ ctx }) {
   const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
@@ -61,14 +58,7 @@ export default function ResultadoAVB({ ctx }) {
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const [modal, setModal] = React.useState({ open: false, inicial: null });
-  const [dupModal, setDupModal] = React.useState({ open: false, registro: null });
   const fileRef = React.useRef(null);
-
-  // Clique na linha: se for possível duplicidade, mostra os semelhantes; senão, edita.
-  const abrirRegistro = (d) => {
-    if (d.dup_flag) setDupModal({ open: true, registro: d });
-    else setModal({ open: true, inicial: d });
-  };
 
   // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
   // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
@@ -295,7 +285,7 @@ export default function ResultadoAVB({ ctx }) {
               {linhas.map((d, i) => {
                 const zebra = i % 2 ? t.card2 : "transparent";
                 return (
-                <div key={d.id} onClick={() => abrirRegistro(d)}
+                <div key={d.id} onClick={() => setModal({ open: true, inicial: d })}
                   onMouseEnter={(e) => e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 10%, transparent)"}
                   onMouseLeave={(e) => e.currentTarget.style.background = zebra}
                   style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6,
@@ -312,7 +302,7 @@ export default function ResultadoAVB({ ctx }) {
                       {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
                       {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
                       {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
-                      {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
+                      {d.dup_flag && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE?</span>}
                     </div>
                     {d.historico && d.natureza && (
                       <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
@@ -335,59 +325,6 @@ export default function ResultadoAVB({ ctx }) {
           );
         })}
       </div>
-
-      {/* Modal de possível duplicidade — lista os lançamentos de mesma chave (valor + natureza + histórico) */}
-      {dupModal.open && dupModal.registro && (() => {
-        const chave = dupKeyOf(dupModal.registro);
-        const grupo = despesas.filter((x) => x.tipo !== "credito" && dupKeyOf(x) === chave);
-        const incluidos = grupo.filter((x) => x.incluir);
-        const totalIncl = incluidos.reduce((s, x) => s + Number(x.valor || 0), 0);
-        const fechar = () => setDupModal({ open: false, registro: null });
-        return (
-          <div onClick={fechar} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex",
-            alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ ...card, maxWidth: 560, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: t.txt }}>Possível duplicidade · {money(Number(dupModal.registro.valor || 0))}</div>
-                <button onClick={fechar} style={{ border: "none", background: "transparent", color: t.txt2, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
-              </div>
-              <div style={{ fontSize: 11.5, color: t.txt2, marginBottom: 12 }}>
-                {grupo.length} lançamentos de mesmo valor, natureza e histórico em {mesLabel(mesRef)}. Desligue o(s) repetido(s) com o toggle <b>incl.</b> para não somar nas despesas.
-              </div>
-              {grupo.map((d) => (
-                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px",
-                  borderBottom: `1px solid ${t.borda}55`, opacity: d.incluir ? 1 : .5,
-                  background: d.id === dupModal.registro.id ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "transparent", borderRadius: 6 }}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, flexShrink: 0, width: 52, textAlign: "center",
-                    color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}>
-                    {fmtDiaMes(d.dt_mov) || "sem data"}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {d.natureza || d.historico || "—"}
-                      {d.aba_origem && <span style={{ marginLeft: 6, fontSize: 9, color: t.txt2, fontWeight: 700 }}>{d.aba_origem}</span>}
-                      {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
-                    </div>
-                    {d.historico && d.natureza && (
-                      <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
-                    )}
-                  </div>
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
-                    <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.82} /> incl.
-                  </span>
-                  <button onClick={() => { fechar(); setModal({ open: true, inicial: d }); }}
-                    style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 7, cursor: "pointer",
-                      border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, flexShrink: 0 }}>Editar</button>
-                </div>
-              ))}
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: t.txt, marginTop: 12, paddingTop: 8 }}>
-                <span>{incluidos.length} de {grupo.length} incluídos</span>
-                <span style={{ fontFamily: "var(--font-mono)" }}>{money(totalIncl)}</span>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       <ModalDespesa open={modal.open} inicial={modal.inicial} t={t} isMobile={isMobile}
         onClose={() => setModal({ open: false, inicial: null })} onSave={salvar} onDelete={excluir} />

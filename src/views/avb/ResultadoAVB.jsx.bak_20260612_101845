@@ -1,6 +1,5 @@
 import React from "react";
 import ModalDespesa from "../../modals/ModalDespesa.jsx";
-import Toggle from "../../components/Toggle.jsx";
 import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas,
   inserirManual, atualizarDespesa, deletarDespesa,
@@ -17,19 +16,12 @@ const BASES_OK = ["acailandia_avb", "imperatriz_belem"];
 const nCte = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const nContrato = (v) => {
   if (v == null || v === "") return 0;
-  let s = String(v).replace(/[R$\s]/g, "");
-  // pt-BR (tem vírgula): ponto=milhar, vírgula=decimal. Sem vírgula: já é decimal — NÃO remove pontos.
-  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  const n = parseFloat(s);
+  const n = parseFloat(String(v).replace(/[R$\s.]/g, "").replace(",", "."));
   return isNaN(n) ? 0 : n;
 };
 const mesDe = (s) => { if (!s) return null; const p = String(s).split("/"); return p.length >= 3 ? `${p[2]}-${p[1].padStart(2, "0")}` : null; };
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
-const fmtDiaMes = (iso) => { if (!iso) return null; const p = String(iso).split("-"); return p.length >= 3 ? `${p[2].slice(0, 2)}/${p[1]}` : null; };
-// Chave de duplicidade — mesma usada no parser (valor + natureza + histórico) p/ reagrupar os possíveis duplicados.
-const normTxt = (s) => (s || "").toUpperCase().replace(/\s+/g, " ").trim();
-const dupKeyOf = (d) => `${Math.round((Number(d.valor) + Number.EPSILON) * 100) / 100}||${normTxt(d.natureza)}||${normTxt(d.historico)}`;
 
 export default function ResultadoAVB({ ctx }) {
   const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
@@ -61,18 +53,9 @@ export default function ResultadoAVB({ ctx }) {
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const [modal, setModal] = React.useState({ open: false, inicial: null });
-  const [dupModal, setDupModal] = React.useState({ open: false, registro: null });
   const fileRef = React.useRef(null);
 
-  // Clique na linha: se for possível duplicidade, mostra os semelhantes; senão, edita.
-  const abrirRegistro = (d) => {
-    if (d.dup_flag) setDupModal({ open: true, registro: d });
-    else setModal({ open: true, inicial: d });
-  };
-
-  // getConexao() devolve um objeto NOVO a cada chamada; memoiza p/ não recriar `carregar`
-  // a cada render (senão o useEffect re-dispara em loop → "Carregando..." piscando).
-  const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
+  const conn = getConexao && getConexao();
 
   const carregar = React.useCallback(async () => {
     if (!conn || !baseId || !mesRef) return;
@@ -119,28 +102,6 @@ export default function ResultadoAVB({ ctx }) {
     setImporting(true);
     try {
       const linhas = await parseDespesasXLSX(file);
-      if (linhas.length === 0) { showToast?.("Nenhuma aba reconhecida (AÇA / IMP / BELÉM) no arquivo.", "erro"); return; }
-      // Sinaliza filiais ausentes — se faltar uma aba esperada, avisa antes de gravar.
-      const presentes = new Set(linhas.map((l) => l.aba_origem));
-      const ESPERADAS = [["AÇA", "Açailândia"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]];
-      const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
-      const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
-      if (faltando.length) {
-        const msg = `Filiais com lançamentos no arquivo: ${achadas.join(", ") || "—"}.\n\n`
-          + `⚠ SEM lançamentos: ${faltando.join(", ")}.\n\n`
-          + `Pode ser normal (mês sem movimento) ou uma aba esquecida.\nContinuar a importação?`;
-        if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
-      }
-      // Detecta o mês predominante pelas datas (dt_mov) e avisa se diferir do mês selecionado.
-      const mesesArq = {};
-      linhas.forEach((l) => { if (l.dt_mov) { const m = String(l.dt_mov).slice(0, 7); mesesArq[m] = (mesesArq[m] || 0) + 1; } });
-      const mesPredom = Object.keys(mesesArq).sort((a, b) => mesesArq[b] - mesesArq[a])[0];
-      if (mesPredom && mesPredom !== mesRef) {
-        const msg = `As datas do arquivo são predominantemente de ${mesLabel(mesPredom)} `
-          + `(${mesesArq[mesPredom]} de ${linhas.length} linhas), mas o mês selecionado é ${mesLabel(mesRef)}.\n\n`
-          + `Importar mesmo assim em ${mesLabel(mesRef)}?`;
-        if (!window.confirm(msg)) { showToast?.("Importação cancelada — selecione o mês correto.", "erro"); return; }
-      }
       const porBase = {};
       linhas.forEach((l) => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
       // Diff por base: descobre só as linhas novas, preservando as existentes (e flags)
@@ -212,13 +173,13 @@ export default function ResultadoAVB({ ctx }) {
           {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
           {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
-          padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
-          <Toggle checked={incluirComp} onChange={setIncluirComp}
-            label={`Incluir complementar ${baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}`} />
-        </div>
+        <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt, cursor: "pointer",
+          padding: "8px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
+          <input type="checkbox" checked={incluirComp} onChange={(e) => setIncluirComp(e.target.checked)} />
+          Incluir complementar {baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}
+        </label>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImport} style={{ display: "none" }} />
           <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid var(--accent)`, background: "transparent", color: "var(--accent)", opacity: importing ? .6 : 1 }}>
@@ -292,102 +253,35 @@ export default function ResultadoAVB({ ctx }) {
                 color: t.txt2, textTransform: "uppercase", letterSpacing: "0.04em", padding: "6px 0", borderBottom: `1px solid ${t.borda}` }}>
                 <span>{g}</span><span>{money(subt)}</span>
               </div>
-              {linhas.map((d, i) => {
-                const zebra = i % 2 ? t.card2 : "transparent";
-                return (
-                <div key={d.id} onClick={() => abrirRegistro(d)}
-                  onMouseEnter={(e) => e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 10%, transparent)"}
-                  onMouseLeave={(e) => e.currentTarget.style.background = zebra}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6,
-                    background: zebra, borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
-                    cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s" }}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, flexShrink: 0, width: isMobile ? 46 : 52, textAlign: "center",
-                    color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}
-                    title={d.dt_mov ? "" : "Lançamento sem data na planilha"}>
-                    {fmtDiaMes(d.dt_mov) || "sem data"}
-                  </span>
+              {linhas.map((d) => (
+                <div key={d.id} onClick={() => setModal({ open: true, inicial: d })}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 4px", borderBottom: `1px solid ${t.borda}55`,
+                    cursor: "pointer", opacity: d.incluir ? 1 : .45 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.natureza || d.historico || "—"}
                       {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
                       {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
                       {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
-                      {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
+                      {d.dup_flag && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE?</span>}
                     </div>
                     {d.historico && d.natureza && (
-                      <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
+                      <div style={{ fontSize: 10, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.historico}</div>
                     )}
                   </div>
                   {/* Toggle incluir só nas linhas marcadas como duplicidade */}
                   {d.dup_flag && (
-                    <span onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
-                      <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.82} /> incl.
-                    </span>
+                    <label onClick={(e) => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: t.txt2 }}>
+                      <input type="checkbox" checked={d.incluir} onChange={() => toggleIncluir(d)} /> incl.
+                    </label>
                   )}
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt,
-                    whiteSpace: "nowrap", textAlign: "right", minWidth: isMobile ? 92 : 118, flexShrink: 0 }}>
-                    {d.tipo === "credito" ? "− " : ""}{money(Math.abs(Number(d.valor || 0)))}
-                  </div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt, whiteSpace: "nowrap" }}>{money(Number(d.valor || 0))}</div>
                 </div>
-                );
-              })}
+              ))}
             </div>
           );
         })}
       </div>
-
-      {/* Modal de possível duplicidade — lista os lançamentos de mesma chave (valor + natureza + histórico) */}
-      {dupModal.open && dupModal.registro && (() => {
-        const chave = dupKeyOf(dupModal.registro);
-        const grupo = despesas.filter((x) => x.tipo !== "credito" && dupKeyOf(x) === chave);
-        const incluidos = grupo.filter((x) => x.incluir);
-        const totalIncl = incluidos.reduce((s, x) => s + Number(x.valor || 0), 0);
-        const fechar = () => setDupModal({ open: false, registro: null });
-        return (
-          <div onClick={fechar} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", display: "flex",
-            alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
-            <div onClick={(e) => e.stopPropagation()} style={{ ...card, maxWidth: 560, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: t.txt }}>Possível duplicidade · {money(Number(dupModal.registro.valor || 0))}</div>
-                <button onClick={fechar} style={{ border: "none", background: "transparent", color: t.txt2, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
-              </div>
-              <div style={{ fontSize: 11.5, color: t.txt2, marginBottom: 12 }}>
-                {grupo.length} lançamentos de mesmo valor, natureza e histórico em {mesLabel(mesRef)}. Desligue o(s) repetido(s) com o toggle <b>incl.</b> para não somar nas despesas.
-              </div>
-              {grupo.map((d) => (
-                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px",
-                  borderBottom: `1px solid ${t.borda}55`, opacity: d.incluir ? 1 : .5,
-                  background: d.id === dupModal.registro.id ? "color-mix(in srgb, var(--accent) 10%, transparent)" : "transparent", borderRadius: 6 }}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, flexShrink: 0, width: 52, textAlign: "center",
-                    color: d.dt_mov ? t.txt2 : t.ouro, fontStyle: d.dt_mov ? "normal" : "italic" }}>
-                    {fmtDiaMes(d.dt_mov) || "sem data"}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {d.natureza || d.historico || "—"}
-                      {d.aba_origem && <span style={{ marginLeft: 6, fontSize: 9, color: t.txt2, fontWeight: 700 }}>{d.aba_origem}</span>}
-                      {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
-                    </div>
-                    {d.historico && d.natureza && (
-                      <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>
-                    )}
-                  </div>
-                  <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
-                    <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.82} /> incl.
-                  </span>
-                  <button onClick={() => { fechar(); setModal({ open: true, inicial: d }); }}
-                    style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 7, cursor: "pointer",
-                      border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, flexShrink: 0 }}>Editar</button>
-                </div>
-              ))}
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: t.txt, marginTop: 12, paddingTop: 8 }}>
-                <span>{incluidos.length} de {grupo.length} incluídos</span>
-                <span style={{ fontFamily: "var(--font-mono)" }}>{money(totalIncl)}</span>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       <ModalDespesa open={modal.open} inicial={modal.inicial} t={t} isMobile={isMobile}
         onClose={() => setModal({ open: false, inicial: null })} onSave={salvar} onDelete={excluir} />

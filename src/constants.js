@@ -136,6 +136,12 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-06-15", sessao: "Sessao 24",
+    itens: [
+      "FEAT · Resultado: clicar numa despesa marcada como DUPLICIDADE? abre um painel comparativo com os outros lancamentos de mesmo valor, natureza e historico do mes — cada um com o toggle 'incl.' (para desligar o repetido) e botao Editar; mostra quantos estao incluidos e o total. Linhas sem duplicidade continuam abrindo a edicao direto.",
+    ],
+  },
+  {
     data: "2026-06-12", sessao: "Sessao 23",
     itens: [
       "FIX · Resultado: 'Pago motorista' inflado (~100x) — parser de vl_contrato removia o ponto decimal quando o valor ja vinha como decimal ingles (sem virgula). Agora so trata ponto como milhar quando ha virgula (espelha parseMoedaAvb).",
