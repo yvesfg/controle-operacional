@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ExportMenu } from "../exportHelpers.jsx";
 import { saveJSON, parseData, diffDias } from "../utils.js";
 import { calcAgendaAvb, fmtDataAvb } from "../utils_avb.js";
@@ -36,7 +36,12 @@ export default function DescargaView({ ctx }) {
     motoristas,
     baseAtual,
     DADOS,
+    prevRodorricaSnap, setPrevRodorricaSnap,
+    rodorricaSheetInfo,
   } = ctx;
+
+  const [rodoUndoConfirm, setRodoUndoConfirm] = useState(false);
+  const [rodoUndoInput, setRodoUndoInput] = useState("");
 
   if (activeTab !== "descarga") return null;
 
@@ -423,12 +428,75 @@ export default function DescargaView({ ctx }) {
                   </div>
                 ) : (
                   <div style={{marginBottom:16}}>
+                    {/* Banner de abas detectadas */}
+                    {rodorricaSheetInfo && rodorricaSheetInfo.others.length > 0 && (
+                      <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:10,padding:"8px 12px",
+                        borderRadius:10,background:`rgba(240,185,11,.08)`,border:`1px solid ${hexRgb(t.ouro,.35)}`}}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2"
+                          strokeLinecap="round" strokeLinejoin="round" style={{marginTop:2,flexShrink:0}}>
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <div style={{fontSize:10,color:t.ouro,lineHeight:1.6}}>
+                          <b>Aba lida:</b> <span style={{color:t.txt}}>{rodorricaSheetInfo.read}</span>
+                          {" — "}
+                          <b>Ignoradas:</b> <span style={{color:t.txt2}}>{rodorricaSheetInfo.others.join(", ")}</span>
+                          <br/>
+                          <span style={{color:t.txt2}}>Apenas a aba "Aprovados"/"BASE" (ou primeira) é importada. Verifique se os dados são do mês correto.</span>
+                        </div>
+                      </div>
+                    )}
                     <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,marginBottom:12}}>
                       {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.verde,16)}
                       <span style={{fontSize:11,fontWeight:700,color:t.ouro,flex:1}}>{rodorricaFileName}</span>
                       <span style={{fontSize:10,color:t.txt2}}>{rodorricaRows.length} registros</span>
-                      <button onClick={()=>{setRodorricaRows([]);setRodorricaFileName(null);setRodorricaFiltro("todos");setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
+                      {prevRodorricaSnap && (
+                        <button onClick={()=>{setRodoUndoConfirm(true);setRodoUndoInput("");}}
+                          style={{background:"transparent",border:`1px solid ${t.danger||"#f6465d"}`,borderRadius:6,
+                            padding:"2px 8px",fontSize:10,color:t.danger||"#f6465d",cursor:"pointer",fontFamily:"inherit"}}>
+                          &#8617; Desfazer
+                        </button>
+                      )}
+                      <button onClick={()=>{setRodorricaRows([]);setRodorricaFileName(null);setRodorricaFiltro("todos");setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");setPrevRodorricaSnap(null);setRodoUndoConfirm(false);}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
                     </div>
+                    {/* Modal confirmação desfazer */}
+                    {rodoUndoConfirm && (
+                      <div style={{marginBottom:12,padding:"12px 14px",borderRadius:10,
+                        background:`rgba(246,70,93,.07)`,border:`1px solid ${t.danger||"#f6465d"}`}}>
+                        <div style={{fontSize:11,fontWeight:700,color:t.danger||"#f6465d",marginBottom:8}}>
+                          Desfazer importação — restaurar "{prevRodorricaSnap.fileName || 'vazio'}" ({prevRodorricaSnap.rows.length} registros)?
+                        </div>
+                        <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>
+                          Digite <b style={{color:t.txt}}>sim</b> para confirmar:
+                        </div>
+                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                          <input value={rodoUndoInput} onChange={e=>setRodoUndoInput(e.target.value)}
+                            placeholder="sim" autoFocus
+                            style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${rodoUndoInput==="sim"?t.danger||"#f6465d":t.borda}`,
+                              background:t.bg,color:t.txt,width:80,fontFamily:"inherit"}}/>
+                          <button disabled={rodoUndoInput!=="sim"}
+                            onClick={()=>{
+                              setRodorricaRows(prevRodorricaSnap.rows);
+                              setRodorricaFileName(prevRodorricaSnap.fileName);
+                              setRodorricaFiltro("todos");
+                              setPrevRodorricaSnap(null);
+                              setRodoUndoConfirm(false);
+                              setRodoUndoInput("");
+                            }}
+                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
+                              background:rodoUndoInput==="sim"?(t.danger||"#f6465d"):"transparent",
+                              color:rodoUndoInput==="sim"?"#fff":(t.txt2||"#888"),
+                              border:`1px solid ${rodoUndoInput==="sim"?(t.danger||"#f6465d"):t.borda}`}}>
+                            Confirmar
+                          </button>
+                          <button onClick={()=>{setRodoUndoConfirm(false);setRodoUndoInput("");}}
+                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
+                              background:"transparent",color:t.txt2,border:`1px solid ${t.borda}`}}>
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {/* Filtro de período */}
                     <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",padding:"7px 12px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:10,marginBottom:8,fontSize:11}}>
                       <span style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:t.txt2}}>Período:</span>

@@ -168,6 +168,8 @@ export default function App() {
   const [dPlanFiltroFim, setDPlanFiltroFim] = useState("");
   const [extratoRows, setExtratoRows] = useState([]);
   const [extratoFileName, setExtratoFileName] = useState(null);
+  const [prevExtratoSnap, setPrevExtratoSnap] = useState(null);
+  const [extratoSheetInfo, setExtratoSheetInfo] = useState(null);
   const [extratoFiltro, setExtratoFiltro] = useState("todos");
   const [extratoDataIni, setExtratoDataIni] = useState("");
   const [extratoDataFim, setExtratoDataFim] = useState("");
@@ -183,6 +185,8 @@ export default function App() {
   // Conferência Planilha RODORRICA
   const [rodorricaRows, setRodorricaRows] = useState([]);
   const [rodorricaFileName, setRodorricaFileName] = useState(null);
+  const [prevRodorricaSnap, setPrevRodorricaSnap] = useState(null);
+  const [rodorricaSheetInfo, setRodorricaSheetInfo] = useState(null);
   const [rodorricaFiltro, setRodorricaFiltro] = useState("todos");
   const [rodorricaPeriodoIni, setRodorricaPeriodoIni] = useState("");
   const [rodorricaPeriodoFim, setRodorricaPeriodoFim] = useState("");
@@ -2236,7 +2240,10 @@ export default function App() {
     reader.onload = (ev) => {
       try {
         const wb = XLSX.read(ev.target.result, {type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
+        const sheetRead = wb.SheetNames[0];
+        const othersSheets = wb.SheetNames.slice(1);
+        setExtratoSheetInfo({ read: sheetRead, others: othersSheets });
+        const ws = wb.Sheets[sheetRead];
         const json = XLSX.utils.sheet_to_json(ws, {header:0, defval:''});
         const rows = json.map(r => ({
           ro: String(r['Numero RO']||'').trim(),
@@ -2265,6 +2272,9 @@ export default function App() {
           setExtratoDataIni(fmt(minD));
           setExtratoDataFim(fmt(maxD));
         }
+        if (extratoRows.length > 0 || extratoFileName) {
+          setPrevExtratoSnap({ rows: extratoRows, fileName: extratoFileName });
+        }
         setExtratoRows(rows);
         setExtratoFileName(file.name);
         setExtratoFiltro('todos');
@@ -2281,7 +2291,10 @@ export default function App() {
     reader.onload = (ev) => {
       try {
         const wb = XLSX.read(ev.target.result, { type:'array', cellDates:true });
-        const ws = wb.Sheets['Aprovados'] || wb.Sheets['BASE'] || wb.Sheets[wb.SheetNames[0]];
+        const targetName = wb.SheetNames.find(n => n === 'Aprovados') || wb.SheetNames.find(n => n === 'BASE') || wb.SheetNames[0];
+        const othersRodo = wb.SheetNames.filter(n => n !== targetName);
+        setRodorricaSheetInfo({ read: targetName, others: othersRodo });
+        const ws = wb.Sheets[targetName];
         const json = XLSX.utils.sheet_to_json(ws, { header:0, defval:'', raw:false });
         const _xlsxDate = v => {
           if (!v) return '';
@@ -2307,6 +2320,9 @@ export default function App() {
           status:        String(r['Status']||'').trim(),
           pagoOTM:       parseFloat(r['Pago OTM'])||0,
         })).filter(r => r.dt && r.dt.length > 0 && r.dt !== 'undefined' && /^\d{6,}$/.test(r.dt));
+        if (rodorricaRows.length > 0 || rodorricaFileName) {
+          setPrevRodorricaSnap({ rows: rodorricaRows, fileName: rodorricaFileName });
+        }
         setRodorricaRows(rows);
         setRodorricaFileName(file.name);
         setRodorricaFiltro('todos');
@@ -3569,6 +3585,8 @@ export default function App() {
           extratoFiltro, setExtratoFiltro,
           extratoRows, setExtratoRows,
           extratoResultado,
+          prevExtratoSnap, setPrevExtratoSnap,
+          extratoSheetInfo,
         }} />
 
         {/* ═══ DESCARGA / LOGÍSTICA ═══ */}
@@ -3605,6 +3623,8 @@ export default function App() {
           motoristas,
           baseAtual,
           DADOS,
+          prevRodorricaSnap, setPrevRodorricaSnap,
+          rodorricaSheetInfo,
         }} />
           : <DescargaView ctx={{
           activeTab,
@@ -3638,6 +3658,8 @@ export default function App() {
           motoristas,
           baseAtual,
           DADOS,
+          prevRodorricaSnap, setPrevRodorricaSnap,
+          rodorricaSheetInfo,
         }} />
         }
 
