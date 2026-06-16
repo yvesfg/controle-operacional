@@ -3,6 +3,7 @@
  */
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import OcorrModal from "../components/OcorrModal.jsx";
+import { clickable } from "../utils.js";
 
 const Ico = ({ size=16, color="currentColor", sw=1.8, children, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -32,10 +33,9 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
 
   return (
     <div
-      onClick={() => onOpen(r)}
+      {...clickable(() => onOpen(r))}
       style={{
         background:"var(--card)", border:"1px solid var(--border)",
-        borderLeft:`3px solid ${topBadge.color}`,
         borderRadius:"var(--radius-card,12px)", padding:"10px 12px",
         cursor:"pointer", transition:"border-color 0.15s,background 0.15s",
         display:"flex", flexDirection:"column", gap:7,

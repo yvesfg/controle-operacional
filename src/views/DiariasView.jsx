@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { exportCSV, exportODS, exportPDF, ExportMenu } from "../exportHelpers.jsx";
+import { clickable } from "../utils.js";
 
 export default function DiariasView({ ctx }) {
   const {
@@ -75,7 +76,7 @@ export default function DiariasView({ ctx }) {
                 {k:"atraso",   svg:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>, l:"Perdeu Agenda",ct:diariasData.atraso,cor:t.danger, corLt:"#f6465d", bg:"rgba(246,70,93,.07)"},
                 {k:"pendente", svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Sem Descarga",ct:diariasData.pend,  cor:t.ouro,    corLt:"#ffe57a", bg:"rgba(240,185,11,.07)"},
               ].map(tb => (
-                <div key={tb.k} onClick={()=>setDFiltro(dFiltro===tb.k?"todos":tb.k)} style={{border:`1.5px solid ${dFiltro===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dFiltro===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
+                <div key={tb.k} {...clickable(()=>setDFiltro(dFiltro===tb.k?"todos":tb.k))} style={{border:`1.5px solid ${dFiltro===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dFiltro===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dFiltro===tb.k?tb.corLt:t.txt2,22)}
                   <span style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:11,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:dFiltro===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
                   <span style={{fontFamily:"var(--font-heading)",fontSize:isMobile?22:34,fontWeight:700,letterSpacing:"-0.04em",color:dFiltro===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
@@ -177,7 +178,7 @@ export default function DiariasView({ ctx }) {
                       :"⏳ Aguardando";
                     const tipoColor = tipo==="diaria"?`rgba(246,70,93,.08)`:tipo==="atraso"?`rgba(240,185,11,.08)`:tipo==="sem_diaria"?`rgba(2,192,118,.08)`:tipo==="ok"?`rgba(2,192,118,.08)`:`rgba(240,185,11,.06)`;
                     return (
-                      <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:_isDHL?`rgba(240,185,11,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:t.borda}`,borderLeft:`4px solid ${borderC}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(240,185,11,.22)`:"none"}}>
+                      <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:_isDHL?`rgba(240,185,11,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:hexRgb(borderC,.5)}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(240,185,11,.22)`:"none"}}>
                         <div style={{fontSize:16,fontWeight:700,color:t.txt,marginBottom:5,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           {r.nome||"—"}
                           <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:tipoColor,color:borderC,border:`1px solid ${borderC}33`}}>
@@ -218,7 +219,7 @@ export default function DiariasView({ ctx }) {
                         ...(r.ro?[{l:"RO",v:r.ro,c:t.laranja}]:[]),
                       ];
                       return (
-                        <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,borderLeft:`4px solid ${borderC}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
+                        <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${hexRgb(borderC,.5)}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer"}}>
                           <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                             <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${borderC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:borderC,flexShrink:0}}>{initials}</div>
                             <div style={{flex:1,minWidth:0}}>
