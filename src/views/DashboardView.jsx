@@ -239,7 +239,7 @@ export default function DashboardView({ ctx }) {
             <div style={{...css.card,padding:18}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
-                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver todos ›</button>
+                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver todos ›</button>
               </div>
               {topMot.length===0?(
                 <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
@@ -287,7 +287,7 @@ export default function DashboardView({ ctx }) {
         <div ref={dashRecCardRef} style={{...css.card,padding:18,display:"flex",flexDirection:"column"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexShrink:0}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Registros Recentes</span>
-            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver Tudo ›</button>
+            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver Tudo ›</button>
           </div>
           <div style={{display:"flex",flexDirection:"column",overflow:"hidden"}}>
             {recentesDash.length===0?(
@@ -371,7 +371,7 @@ export default function DashboardView({ ctx }) {
                           </div>
                         </div>
                         <div style={{height:4,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                          <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,var(--accent),${t.azulLt})`,borderRadius:2,transition:"width .4s"}}/>
+                          <div style={{height:"100%",width:"100%",transform:`scaleX(${pct/100})`,transformOrigin:"left",background:`linear-gradient(90deg,var(--accent),${t.azulLt})`,borderRadius:2,transition:"transform .4s"}}/>
                         </div>
                       </div>
                     );
@@ -385,7 +385,7 @@ export default function DashboardView({ ctx }) {
           <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Diárias</span>
-              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
+              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver ›</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
@@ -417,7 +417,7 @@ export default function DashboardView({ ctx }) {
                     <span>Pago: {fmtMoeda(pg2)}</span><span>{pct}%</span>
                   </div>
                   <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${pct}%`,background:t.verde,borderRadius:2,transition:"width .4s"}}/>
+                    <div style={{height:"100%",width:"100%",transform:`scaleX(${pct/100})`,transformOrigin:"left",background:t.verde,borderRadius:2,transition:"transform .4s"}}/>
                   </div>
                 </div>
               );
@@ -428,7 +428,7 @@ export default function DashboardView({ ctx }) {
           <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Descargas</span>
-              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
+              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver ›</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
@@ -475,7 +475,7 @@ export default function DashboardView({ ctx }) {
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Diárias Pendentes</span>
-                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:0}}>Ver ›</button>
+                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver ›</button>
                 </div>
                 {topPend.map(({nome,total:sld,dt},i)=>{
                   const partes=nome.split(" ").filter(Boolean);

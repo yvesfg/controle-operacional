@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ExportMenu } from "../exportHelpers.jsx";
-import { saveJSON, parseData, diffDias } from "../utils.js";
+import { saveJSON, parseData, diffDias, clickable } from "../utils.js";
 import { calcAgendaAvb, fmtDataAvb } from "../utils_avb.js";
 
 export default function DescargaView({ ctx }) {
@@ -100,8 +100,8 @@ export default function DescargaView({ ctx }) {
     const cardStyle = r => {
       const isPend = (r.status||"").toUpperCase()==="PENDENTE";
       return {
-        background: t.card, borderRadius:12, border:`1px solid ${t.borda}`,
-        borderLeft:`4px solid ${isPend?"#f59e0b":t.azul}`,
+        background: t.card, borderRadius:12,
+        border:`1px solid ${isPend?hexRgb(t.laranja,.55):hexRgb(t.azul,.4)}`,
         padding:12, cursor:"pointer", marginBottom:8, transition:"border-color .15s",
       };
     };
@@ -118,7 +118,7 @@ export default function DescargaView({ ctx }) {
         {/* Tiles */}
         <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(3,1fr)":"repeat(5,1fr)",gap:isMobile?4:6,marginBottom:14}}>
           {TILES.map(tb=>(
-            <div key={tb.k} onClick={()=>setAvbTile(tb.k)}
+            <div key={tb.k} {...clickable(()=>setAvbTile(tb.k))}
               style={{border:`1.5px solid ${avbTile===tb.k?tb.cor:t.borda}`,borderRadius:8,
                 padding:isMobile?"10px 5px":"16px 8px",cursor:"pointer",
                 background:avbTile===tb.k?tb.bg:t.card2,
@@ -158,7 +158,7 @@ export default function DescargaView({ ctx }) {
           const hasCte=!!r.cte, hasMdf=!!r.mdf, hasNf=!!r.nf;
           const isPend=(r.status||"").toUpperCase()==="PENDENTE";
           return (
-            <div key={i} style={cardStyle(r)} onClick={()=>abrirDetalhe(r)}>
+            <div key={i} style={cardStyle(r)} {...clickable(()=>abrirDetalhe(r))}>
               {/* Linha 1: motorista + status */}
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                 <div style={{flex:1,fontSize:14,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
@@ -236,7 +236,7 @@ export default function DescargaView({ ctx }) {
                 {k:"carrega",svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,l:"Carrega Hoje",ct:descargaData.carregaHoje?.length||0,cor:t.verde,corLt:"#00e096",bg:"rgba(2,192,118,.07)"},
                 {k:"semMotorista",svg:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></>,l:"Sem Motorista",ct:descargaData.semMotorista?.length||0,cor:"#9c27b0",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
               ].map(tb => (
-                <div key={tb.k} onClick={()=>setDscTab(tb.k)} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
+                <div key={tb.k} {...clickable(()=>setDscTab(tb.k))} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,22)}
                   <span style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:11,fontWeight:400,textTransform:"uppercase",letterSpacing:"0.06em",color:dscTab===tb.k?tb.corLt:t.txt2,textAlign:"center",lineHeight:1.2,whiteSpace:"normal",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{tb.l}</span>
                   <span style={{fontFamily:"var(--font-heading)",fontSize:isMobile?22:34,fontWeight:700,letterSpacing:"-0.04em",color:dscTab===tb.k?tb.corLt:t.txt2,lineHeight:1,marginTop:2}}>{tb.ct}</span>
@@ -329,7 +329,7 @@ export default function DescargaView({ ctx }) {
                   const isAtrasado = dscTab === "atrasado";
                   const _isDHL2 = descargaNavDT && r.dt === descargaNavDT;
                   return (
-                    <div key={i} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" style={{background:_isDHL2?`rgba(22,119,255,.06)`:t.card,borderRadius:11,padding:12,border:`1px solid ${_isDHL2?t.azulLt:t.borda}`,borderLeft:`3px solid ${_isDHL2?t.azulLt:isAtrasado?t.danger:t.azul}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL2?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
+                    <div key={i} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" style={{background:_isDHL2?`rgba(22,119,255,.06)`:t.card,borderRadius:11,padding:12,border:`1px solid ${_isDHL2?t.azulLt:isAtrasado?hexRgb(t.danger,.5):hexRgb(t.azul,.35)}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL2?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
                       <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                         {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
@@ -373,7 +373,7 @@ export default function DescargaView({ ctx }) {
                     ...(r.ro?[{l:"RO",v:r.ro,c:t.laranja}]:[]),
                   ];
                   return (
-                    <div key={i} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" style={{background:_isDHL3?`rgba(22,119,255,.06)`:t.card,borderRadius:12,border:`1px solid ${_isDHL3?t.azulLt:t.borda}`,borderLeft:`4px solid ${accentC}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL3?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
+                    <div key={i} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" style={{background:_isDHL3?`rgba(22,119,255,.06)`:t.card,borderRadius:12,border:`1px solid ${_isDHL3?t.azulLt:hexRgb(accentC,.5)}`,padding:12,display:"flex",flexDirection:"column",gap:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL3?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
                       <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
                         <div style={{width:40,height:40,borderRadius:"50%",background:avatarBg,border:`1.5px solid ${accentC}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:accentC,flexShrink:0}}>{initials}</div>
                         <div style={{flex:1,minWidth:0}}>
@@ -558,7 +558,7 @@ export default function DescargaView({ ctx }) {
                           {/* KPI cards */}
                           <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:10}}>
                             {KPIS.map(k=>(
-                              <div key={k.k} onClick={()=>setRodorricaFiltro(rodorricaFiltro===k.k?"todos":k.k)}
+                              <div key={k.k} {...clickable(()=>setRodorricaFiltro(rodorricaFiltro===k.k?"todos":k.k))}
                                 style={{background:k.bg,border:`1.5px solid ${rodorricaFiltro===k.k?k.c:t.borda}`,borderRadius:10,padding:"9px 8px",cursor:"pointer",textAlign:"center"}}>
                                 <div style={{fontSize:20,fontFamily:"'Bebas Neue',sans-serif",color:k.c}}>{k.v}</div>
                                 <div style={{fontSize:8,fontWeight:700,color:k.c,textTransform:"uppercase",letterSpacing:.5}}>{k.l}</div>
