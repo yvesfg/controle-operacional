@@ -34,7 +34,7 @@ import DashboardAVB from './views/avb/DashboardAVB.jsx';
 import PlanilhaAVB  from './views/avb/PlanilhaAVB.jsx';
 import LogisticaAVB from './views/avb/LogisticaAVB.jsx';
 import GestaoAVB    from './views/avb/GestaoAVB.jsx';
-import ResultadoAVB from './views/avb/ResultadoAVB.jsx';
+import Resultado from './views/Resultado.jsx';
 import PainelFinanceiro from './views/PainelFinanceiro.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
@@ -2380,7 +2380,7 @@ export default function App() {
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>)},
     {k:"gestao", l:"Gestão", avbOnly:true,
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></>)},
-    {k:"resultado", l:"Resultado", perm:"financeiro", resultadoBases:true,
+    {k:"resultado", l:"Resultado", perm:"financeiro",
       ico:(a)=>svgIco(a,<><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></>)},
     {k:"motoristas", l:"Motori.",
       ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
@@ -2389,7 +2389,6 @@ export default function App() {
   ].filter(tb => !tb.perm || perms[tb.perm] !== false)
     .filter(tb => !(tb.k === "diarias" && baseAtual?.noDiarias))
     .filter(tb => !tb.avbOnly || baseAtual?.id === "acailandia_avb")
-    .filter(tb => !tb.resultadoBases || baseAtual?.id === "acailandia_avb" || baseAtual?.id === "imperatriz_belem")
     .filter(tb => !tb.hideAvb || baseAtual?.id !== "acailandia_avb");
 
   // ══════════════════════════════════════════════════════
@@ -3700,7 +3699,7 @@ export default function App() {
 
         {/* ═══ RESULTADO (Margem × Despesas) ═══ */}
         {activeTab === "resultado" && (
-          <ResultadoAVB ctx={{
+          <Resultado ctx={{
             activeTab, baseAtual, DADOS, getConexao,
             t, isMobile, showToast, canFin,
           }} />

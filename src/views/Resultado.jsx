@@ -1,19 +1,18 @@
 import React from "react";
-import ModalDespesa from "../../modals/ModalDespesa.jsx";
-import Toggle from "../../components/Toggle.jsx";
-import useModalEsc from "../../hooks/useModalEsc.js";
+import ModalDespesa from "../modals/ModalDespesa.jsx";
+import Toggle from "../components/Toggle.jsx";
+import useModalEsc from "../hooks/useModalEsc.js";
+import { BASES } from "../constants.js";
 import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas, listarDespesasBase,
   listarMesesComDespesas,
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
   listarIndevidasPendentes, vincularCredito,
-} from "../../despesas.js";
+} from "../despesas.js";
 
-// ResultadoAVB — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
-// despesas mensais persistidas (tabela despesas_filial). Aba por base, gated por canFin.
-// Bases atendidas: acailandia_avb e imperatriz_belem.
-
-const BASES_OK = ["acailandia_avb", "imperatriz_belem"];
+// Resultado — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
+// despesas mensais persistidas (tabela despesas_filial). Aba por base (qualquer base),
+// gated por permissão financeira (canFin).
 
 // parsers numéricos espelhando o App: vl_cte/vl_cte_comp já vêm decimais; vl_contrato pode vir pt-BR.
 const nCte = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
@@ -33,13 +32,10 @@ const fmtDiaMes = (iso) => { if (!iso) return null; const p = String(iso).split(
 const normTxt = (s) => (s || "").toUpperCase().replace(/\s+/g, " ").trim();
 const dupKeyOf = (d) => `${Math.round((Number(d.valor) + Number.EPSILON) * 100) / 100}||${normTxt(d.natureza)}||${normTxt(d.historico)}`;
 
-export default function ResultadoAVB({ ctx }) {
+export default function Resultado({ ctx }) {
   const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
   if (activeTab !== "resultado") return null;
   const baseId = baseAtual?.id;
-  if (!BASES_OK.includes(baseId)) {
-    return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Resultado disponível apenas para Açailândia (AVB) e Imperatriz/Belém.</div>;
-  }
   if (canFin === false) {
     return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Sem permissão financeira para visualizar o Resultado.</div>;
   }
@@ -214,7 +210,7 @@ export default function ResultadoAVB({ ctx }) {
         const { novas, jaExistem, existentesTotal } = await diffImport(conn, b, mesRef, porBase[b]);
         novasTodas = novasTodas.concat(novas); jaTotal += jaExistem;
         if (existentesTotal > 0) existiaAlgum = true;
-        resumo.push(`${b === "acailandia_avb" ? "AVB" : "IMP/BEL"}: ${novas.length} novas`);
+        resumo.push(`${BASES[b]?.label || b}: ${novas.length} novas`);
       }
       if (existiaAlgum) {
         const msg = `Mês ${mesLabel(mesRef)} já tem despesas.\nNovas: ${novasTodas.length} (${resumo.join(" · ")})\nJá existentes (mantidas): ${jaTotal}\nAdicionar só as novas?`;
