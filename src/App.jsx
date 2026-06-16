@@ -4245,7 +4245,7 @@ export default function App() {
                       🔗 Encontramos placas dos contatos importados em DTs do sistema. Aceite para preencher o nome do motorista automaticamente.
                     </div>
                     {vinculos.map((v,vi)=>(
-                      <div key={vi} style={{background:t.card,borderRadius:10,border:`1px solid ${v.aceito===true?t.verde:v.aceito===false?t.borda:t.borda}`,borderLeft:`3px solid ${v.aceito===true?t.verde:v.aceito===false?`rgba(128,128,128,.3)`:t.azulLt}`,padding:"10px 12px",opacity:v.aceito===false?.5:1,transition:"all .18s"}}>
+                      <div key={vi} style={{background:t.card,borderRadius:10,border:`1px solid ${v.aceito===true?t.verde:v.aceito===false?`rgba(128,128,128,.3)`:t.azulLt}`,padding:"10px 12px",opacity:v.aceito===false?.5:1,transition:"all .18s"}}>
                         <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
                           <div style={{flex:1}}>
                             <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:3}}>{v.contato.nome}</div>
@@ -4275,7 +4275,7 @@ export default function App() {
                     <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ {novos.length} novo{novos.length!==1?"s":""} a adicionar</div>
                     <div style={{display:"flex",flexDirection:"column",gap:4}}>
                       {novos.map((n,i)=>(
-                        <div key={i} style={{background:t.card2,borderRadius:8,padding:"7px 10px",border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.verde}`,fontSize:10,color:t.txt}}>
+                        <div key={i} style={{background:t.card2,borderRadius:8,padding:"7px 10px",border:`1px solid ${t.verde}`,fontSize:10,color:t.txt}}>
                           <strong>{n.nome}</strong>
                           {n.tel && <span style={{color:t.txt2,marginLeft:8}}>📞 {n.tel}</span>}
                           {n.placa1 && <span style={{color:t.ouro,marginLeft:8}}>🚛 {n.placa1}</span>}
