@@ -146,7 +146,6 @@ export default function LogisticaAVB({ ctx }) {
         return (
           <div key={i} onClick={()=>abrirDetalhe(r)}
             style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,
-              borderLeft:`4px solid ${isPend?t.ouro:borderColor}`,
               padding:14,cursor:"pointer",marginBottom:8,transition:"border-color .15s"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
             onMouseLeave={e=>e.currentTarget.style.borderColor=t.borda}>

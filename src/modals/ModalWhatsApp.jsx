@@ -278,7 +278,7 @@ export default function ModalWhatsApp({ ctx }) {
 
                 {/* Conta — verificar dados bancários */}
                 {(wppPgto==="conta" || wppPgto==="ambos") && (
-                  <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${temConta?t.verde:t.warn}`}}>
+                  <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${temConta?t.verde:t.warn}`}}>
                     {temConta ? (
                       <>
                         <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Conta bancária cadastrada</div>
@@ -639,7 +639,7 @@ export default function ModalWhatsApp({ ctx }) {
 
                 {/* Dados bancários */}
                 {mot?.banco ? (
-                  <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.verde}33`,borderLeft:`3px solid ${t.verde}`}}>
+                  <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.verde}33`}}>
                     <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Dados bancários</div>
                     <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
                       <div>BCO: <strong style={{color:t.txt}}>{mot.banco}</strong></div>

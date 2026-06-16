@@ -162,7 +162,6 @@ export default function GestaoAVB({ ctx }) {
         return (
           <div key={i} onClick={()=>abrirDetalhe(r)}
             style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,
-              borderLeft:`4px solid ${completo?"#10b981":proxEtapa?.cor||t.borda}`,
               padding:14,marginBottom:8,cursor:"pointer",transition:"border-color .15s"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
             onMouseLeave={e=>e.currentTarget.style.borderColor=t.borda}>

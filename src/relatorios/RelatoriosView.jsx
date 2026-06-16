@@ -213,8 +213,7 @@ export default function RelatoriosView({
             ].map(c => (
               <div key={c.label} style={{
                 background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderLeft: `4px solid ${c.border}`,
+                border: `1px solid ${c.border}`,
                 borderRadius: "var(--radius-card, 12px)",
                 padding: isMobile ? "12px 10px" : "18px 16px",
               }}>

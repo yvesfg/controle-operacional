@@ -119,7 +119,7 @@ export default function MotoristasView({ ctx }) {
         const vincBadgeC = m.vinculo==="Frota"?t.azulLt:m.vinculo==="Agregado"?t.ouro:m.vinculo==="Terceiro"?t.verde:t.txt2;
         const vincBadgeBg = m.vinculo==="Frota"?`rgba(22,119,255,.08)`:m.vinculo==="Agregado"?`rgba(240,185,11,.08)`:m.vinculo==="Terceiro"?`rgba(2,192,118,.08)`:`rgba(128,128,128,.06)`;
         return (
-          <div key={i} className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${selecionado?`rgba(246,70,93,.4)`:t.borda}`,borderLeft:`4px solid ${selecionado?t.danger:vincBadgeC}`,padding:12,marginBottom:10,transition:"border .15s"}}>
+          <div key={i} className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${selecionado?t.danger:vincBadgeC}`,padding:12,marginBottom:10,transition:"border .15s"}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
               {canEdit && (
                 <Toggle checked={selecionado} color={t.danger} size={0.85} onChange={()=>{
