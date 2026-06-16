@@ -25,7 +25,7 @@ export default function Toggle({ checked, onChange, label, color, disabled, size
       <span style={{
         position: "absolute", top: 2, left: checked ? W - K - 2 : 2, width: K, height: K,
         borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.35)",
-        transition: "left .2s cubic-bezier(.34,1.56,.64,1)",
+        transition: "left .2s cubic-bezier(.22,1,.36,1)",
       }} />
     </span>
   );

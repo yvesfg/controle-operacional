@@ -177,7 +177,7 @@
   --transition-fast  : 100ms ease;
   --transition-base  : 180ms ease;
   --transition-slow  : 320ms ease;
-  --transition-bounce: 280ms cubic-bezier(.34,1.56,.64,1);
+  --transition-bounce: 280ms cubic-bezier(.22,1,.36,1);
 
   /* ── Dimensões de componente ────────────────────────────────── */
   --btn-h-sm : 28px;    /* subscribe compact */

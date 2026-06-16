@@ -121,3 +121,10 @@ bg `#f5f8fc`, card `#ffffff`, text `#0f1825`, text-2 `#4a5a72`, **text-3 `#5f6f8
 ~600 literais de cor hardcoded (`#hex` / `rgba(...)`) ainda existem fora dos tokens, concentrados em
 `App.jsx` (154), `DescargaView` (60), `ModalWhatsApp` (47), `DiariasView` (46), `OcorrenciasView` (45), `ModalDetalhe` (33), `AdminView` (24)…
 **Consequência:** mudar um token corrige a maior parte do app, mas esses pontos ficam defasados (não trocam de tema, não respondem ao token). Backlog: varrer e substituir por `var(--…)`/`t.*`, priorizando os maiores ofensores. Não introduzir novos.
+
+## Anti-patterns — estado e exceções conscientes
+Varredura concluída (jun/2026): **side-stripe (`border-left` colorido) eliminado** em toda a produção — cards usam borda completa 1px na cor do status; KPIs usam **borda superior** (acento premium, ban-compliant); bounce-easing trocado por ease-out-quint. Restam **5 findings do detector, todos exceções intencionais e corretas** (não corrigir):
+- **Sidebar `transition: width`** (`components.css`, `layout.css` ×2) — o collapse da sidebar reflui o conteúdo; `transform` não substitui. Mantido.
+- **`font-family: Arial`** (`exportHelpers`, `ReportBuilder`) — contexto de exportação/PDF/impressão; Arial é a fonte correta para documentos. Mantido.
+
+Os protótipos em `src/design-system/*.html` não são código de produção — findings ali são ignorados.

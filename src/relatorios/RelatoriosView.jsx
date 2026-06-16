@@ -271,8 +271,9 @@ export default function RelatoriosView({
                       <div style={{ height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
                         <div style={{
                           height: "100%", background: row.color, borderRadius: 2,
-                          width: row.total > 0 ? `${(row.val / row.total) * 100}%` : "0%",
-                          transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
+                          width: "100%", transformOrigin: "left",
+                          transform: `scaleX(${row.total > 0 ? (row.val / row.total) : 0})`,
+                          transition: "transform 0.6s cubic-bezier(0.4,0,0.2,1)",
                         }} />
                       </div>
                     </div>

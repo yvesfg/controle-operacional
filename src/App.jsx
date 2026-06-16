@@ -1901,9 +1901,9 @@ export default function App() {
     tabBar:    { display:"flex", background:t.headerBg, borderBottom:`1px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .25s", justifyContent:"space-between" },
     tab:       (a) => ({ flex:"0 0 auto", padding:"13px 16px", fontSize:10, fontWeight:a?700:500, letterSpacing:.5, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .15s", borderBottom:a?`2px solid ${t.ouro}`:"2px solid transparent", marginBottom:"-1px", display:"flex", alignItems:"center", gap:5 }),
     card:      { background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .25s, border-color .25s" },
-    cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderLeft:`3px solid ${c}`, overflow:"visible", transition:"all .2s, background .25s" }),
-    // KPI com borda lateral (mais premium que borda superior)
-    kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"20px 16px", border:`1px solid ${t.borda}`, borderLeft:`3px solid ${c}`, textAlign:"center", cursor:"default", transition:"all .2s, background .25s" }),
+    cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderTop:`3px solid ${c}`, overflow:"visible", transition:"all .2s, background .25s" }),
+    // KPI com borda superior (acento premium, sem side-stripe)
+    kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"20px 16px", border:`1px solid ${t.borda}`, borderTop:`3px solid ${c}`, textAlign:"center", cursor:"default", transition:"all .2s, background .25s" }),
     // tile-card colorido — grade WPP, ações em grade
     btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`2px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:DESIGN.fnt.b, cursor:"pointer", transition:"all .15s", lineHeight:1.3 }),
     // Inputs — borda mais definida, sem efeito de blur
@@ -2452,10 +2452,10 @@ export default function App() {
   .driver-name{font-size:20px;font-weight:800;color:#0a1628;margin-bottom:4px}
   .driver-info{font-size:10px;color:#4a5568;line-height:2}
   .driver-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:#f0b90b22;color:#7a5500;border:1px solid #f0b90b55}
-  .trip-row-ok td:first-child{border-left:3px solid #22c55e}
-  .trip-row-atraso td:first-child{border-left:3px solid #ef4444}
-  .trip-row-diaria td:first-child{border-left:3px solid #3b82f6}
-  .trip-row-pend td:first-child{border-left:3px solid #f59e0b}
+  .trip-row-ok td{background:rgba(34,197,94,.08)}
+  .trip-row-atraso td{background:rgba(239,68,68,.08)}
+  .trip-row-diaria td{background:rgba(59,130,246,.08)}
+  .trip-row-pend td{background:rgba(245,158,11,.08)}
   .sgs-item{background:#fff8ec;border:1px solid #f5dfa0;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;gap:14px;align-items:flex-start}
   .sgs-num{background:#f0b90b;color:#0a1628;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:800;white-space:nowrap}
   .sgs-info{font-size:10px;color:#5a4200;line-height:1.8}

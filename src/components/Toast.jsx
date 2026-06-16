@@ -11,7 +11,7 @@ export default function Toast({ msg, type, visible }) {
       transform:`translateX(-50%) translateY(${visible?0:110}px)`,
       background:t.card,border:`1px solid ${colors[type]||t.ouro}`,borderRadius:12,
       padding:"10px 18px",fontSize:13,color:colors[type]||t.ouro,fontWeight:600,
-      zIndex:"var(--z-toast)",transition:"transform .3s cubic-bezier(.34,1.56,.64,1)",
+      zIndex:"var(--z-toast)",transition:"transform .3s cubic-bezier(.22,1,.36,1)",
       whiteSpace:"nowrap",pointerEvents:"none",backdropFilter:"blur(12px)",
       boxShadow:`0 8px 32px ${t.shadow}`,
     }}>{msg}</div>
