@@ -149,7 +149,7 @@ export default function DashboardAVB({ ctx }) {
       </div>
 
       {/* ══ RASTREAMENTO DOCUMENTAL — painel central ══ */}
-      <div style={{...css.card,padding:18,marginBottom:14,borderLeft:`3px solid ${docColor}`}}>
+      <div style={{...css.card,padding:18,marginBottom:14,border:`1px solid ${hexRgb(docColor,.5)}`}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
           <div>
             <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",
@@ -166,9 +166,9 @@ export default function DashboardAVB({ ctx }) {
 
         {/* Barra de progresso geral */}
         <div style={{height:6,borderRadius:3,background:t.card2,overflow:"hidden",marginBottom:14}}>
-          <div style={{height:"100%",width:`${taxaDoc}%`,
+          <div style={{height:"100%",width:"100%",transform:`scaleX(${taxaDoc/100})`,transformOrigin:"left",
             background:`linear-gradient(90deg,var(--accent),${t.verde})`,
-            borderRadius:3,transition:"width .5s"}}/>
+            borderRadius:3,transition:"transform .5s"}}/>
         </div>
 
         {/* Tiles: Sem CTE / Sem MDF / Sem NF */}
@@ -333,9 +333,9 @@ export default function DashboardAVB({ ctx }) {
                       </div>
                     </div>
                     <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:`${pct}%`,
+                      <div style={{height:"100%",width:"100%",transform:`scaleX(${pct/100})`,transformOrigin:"left",
                         background:`linear-gradient(90deg,var(--accent),${t.azulLt})`,
-                        borderRadius:2,transition:"width .4s"}}/>
+                        borderRadius:2,transition:"transform .4s"}}/>
                     </div>
                   </div>
                 );

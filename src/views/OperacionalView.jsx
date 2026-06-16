@@ -21,6 +21,7 @@
  *   ctx.css, ctx.hIco
  */
 import React from "react";
+import { clickable } from "../utils.js";
 
 // ── Ícone SVG ─────────────────────────────────────────────────────────────────
 const Ico = ({ size = 16, color = "currentColor", sw = 1.8, children, style }) => (
@@ -254,7 +255,7 @@ export default function OperacionalView({ ctx }) {
                 const toggleExpand = () => { setExpandedSgsId(isExpanded ? null : (s.id || i)); setSgsRetornoForm({ data: "", descricao: "" }); };
 
                 return (
-                  <div key={s.id || i} style={{ background: t.card, borderRadius: 11, border: `1px solid ${isExpanded ? statusC : t.borda}`, borderLeft: `3px solid ${statusC}`, overflow: "hidden", transition: "border .2s" }}>
+                  <div key={s.id || i} style={{ background: t.card, borderRadius: 11, border: `1px solid ${statusC}`, overflow: "hidden", transition: "border .2s" }}>
                     <div onClick={toggleExpand} style={{ padding: 12, cursor: "pointer" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                         <div style={{ flex: 1 }}>
@@ -364,7 +365,7 @@ export default function OperacionalView({ ctx }) {
                 const tipoLabel = tipo === "diaria" ? `🛏️ ${dias || 0}d de diária` : `⚠️ Perdeu Agenda`;
                 const tipoColor = tipo === "diaria" ? t.danger : t.ouro;
                 return (
-                  <div key={i} onClick={() => abrirDetalhe(r)} style={{ background: t.card, borderRadius: 11, border: `1px solid ${t.borda}`, borderLeft: `3px solid ${tipoColor}`, padding: 12, cursor: "pointer" }}>
+                  <div key={i} {...clickable(() => abrirDetalhe(r))} style={{ background: t.card, borderRadius: 11, border: `1px solid ${tipoColor}`, padding: 12, cursor: "pointer" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       {r.nome || "—"}
                       <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(246,70,93,.08)`, color: tipoColor, border: `1px solid ${tipoColor}33` }}>{tipoLabel}</span>
@@ -495,7 +496,7 @@ export default function OperacionalView({ ctx }) {
                 const semFRS = !a.frs_folha;
                 const bordaC = semFRS ? t.danger : semNF ? t.warn : t.verde;
                 return (
-                  <div key={a.id || i} style={{ background: t.card, borderRadius: 11, border: `1px solid var(--border)`, borderLeft: `3px solid ${bordaC}`, padding: 12 }}>
+                  <div key={a.id || i} style={{ background: t.card, borderRadius: 11, border: `1px solid ${bordaC}`, padding: 12 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
                       <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, letterSpacing: "-0.01em", color: "var(--yellow, #eab308)" }}>{a.numero || a.apontamento || "—"}</span>
                       {(a.item || a.linha) && <span style={{ fontSize: 9, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 6px" }}>It.{a.item || "?"} / Ln.{a.linha || "?"}</span>}

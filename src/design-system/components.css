@@ -168,12 +168,12 @@
   box-shadow  : var(--shadow-md);
 }
 
-/* Card com acento lateral de status */
-.ds-card--accent-primary { border-left: 3px solid var(--color-primary); }
-.ds-card--accent-success { border-left: 3px solid var(--color-success); }
-.ds-card--accent-danger  { border-left: 3px solid var(--color-danger);  }
-.ds-card--accent-warning { border-left: 3px solid var(--color-warning); }
-.ds-card--accent-info    { border-left: 3px solid var(--color-info);    }
+/* Card com acento de status — borda completa (sem side-stripe) */
+.ds-card--accent-primary { border: 1px solid var(--color-primary); }
+.ds-card--accent-success { border: 1px solid var(--color-success); }
+.ds-card--accent-danger  { border: 1px solid var(--color-danger);  }
+.ds-card--accent-warning { border: 1px solid var(--color-warning); }
+.ds-card--accent-info    { border: 1px solid var(--color-info);    }
 
 .ds-card__header {
   display        : flex;

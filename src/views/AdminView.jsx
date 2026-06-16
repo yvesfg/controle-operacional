@@ -245,7 +245,7 @@ export default function AdminView({ ctx }) {
               <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
 
                 {/* ── PAINEL DE STATUS DA ÚLTIMA SINCRONIZAÇÃO ── */}
-                <div style={{...css.card,padding:12,borderLeft:`3px solid ${syncStatus?(syncStatus.ok?t.verde:(syncStatus.erros_http>0?t.danger:t.ouro)):t.borda}`}}>
+                <div style={{...css.card,padding:12,border:`1px solid ${syncStatus?(syncStatus.ok?t.verde:(syncStatus.erros_http>0?t.danger:t.ouro)):t.borda}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{fontSize:11,fontWeight:700,color:t.txt}}>📡 Última Sincronização</div>
                     <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto(`gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`);setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading?"⏳":"↺ Atualizar"}</button>
@@ -712,7 +712,7 @@ function mapearColuna(n){
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
 
                     {/* ── PAINEL AUDITORIA DE DESIGN ── */}
-                    <div style={{...css.card,borderLeft:`3px solid ${t.ouro}`,overflow:"visible"}}>
+                    <div style={{...css.card,border:`1px solid ${t.ouro}`,overflow:"visible"}}>
                       <div style={{padding:"10px 14px 8px",borderBottom:`1px solid ${t.borda}`}}>
                         <div style={{...css.secTitle,marginBottom:4}}>
                           {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></>,t.ouro,13,2)}
@@ -767,7 +767,7 @@ function mapearColuna(n){
                     </div>
 
                     {DEV_CHANGELOG.map((sessao,si)=>(
-                      <div key={si} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,borderLeft:`3px solid ${t.azulLt}`,overflow:"hidden"}}>
+                      <div key={si} style={{background:t.card,borderRadius:10,border:`1px solid ${t.azulLt}`,overflow:"hidden"}}>
                         <div style={{padding:"8px 12px",background:t.card2,display:"flex",alignItems:"center",gap:8}}>
                           <span style={{fontSize:12}}>🧑‍💻</span>
                           <span style={{fontSize:11,fontWeight:700,color:t.txt}}>{sessao.sessao}</span>
@@ -799,7 +799,7 @@ function mapearColuna(n){
                     ):(
                       <div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:360,overflowY:"auto"}}>
                         {logsData.map((log,li)=>(
-                          <div key={li} style={{background:t.card,borderRadius:9,padding:"8px 12px",border:"1px solid "+t.borda,borderLeft:"3px solid "+(log.acao&&log.acao.includes("DELETAR")?t.danger:log.acao&&log.acao.includes("NOVO")?t.verde:t.ouro)}}>
+                          <div key={li} style={{background:t.card,borderRadius:9,padding:"8px 12px",border:"1px solid "+(log.acao&&log.acao.includes("DELETAR")?t.danger:log.acao&&log.acao.includes("NOVO")?t.verde:t.ouro)}}>
                             <div style={{display:"flex",justifyContent:"space-between",gap:8,marginBottom:2}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.txt}}>{log.acao}</span>
                               <span style={{fontSize:8,color:t.txt2,flexShrink:0}}>{new Date(log.data_hora).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span>
