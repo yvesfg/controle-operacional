@@ -440,44 +440,60 @@ export default function ResultadoAVB({ ctx }) {
       </div>
 
       {/* Conciliação de indevidas → crédito */}
-      {indevidas.length > 0 && (
+      {indevidas.length > 0 && (() => {
+        const totalIndevido = indevidas.reduce((s, i) => s + Math.abs(Number(i.valor || 0)), 0);
+        return (
         <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55` }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, marginBottom: 3 }}>Indevidas aguardando crédito ({indevidas.length})</div>
-          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>
-            Ficam aqui até o crédito ser vinculado — aparecem em todos os meses até resolver.
-            {creditos.length > 0 && <> Créditos disponíveis em <b style={{ color: t.txt }}>{mesLabel(mesRef)}</b>: {creditos.length}.</>}
+          {/* Cabeçalho */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Indevidas aguardando crédito</span>
+            <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{indevidas.length}</span>
           </div>
-          {indevidas.map((ind) => {
+          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
+            Ficam aqui até o crédito ser vinculado — aparecem em todos os meses até resolver.
+          </div>
+
+          {/* Mini-cards de resumo — reusa o primitivo kpi() dos KPIs do topo (consistência global) */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            {kpi("Total indevido", money(totalIndevido), `${indevidas.length} ${indevidas.length === 1 ? "lançamento" : "lançamentos"}`, t.danger)}
+            {kpi("Créditos disponíveis", String(creditos.length), `em ${mesLabel(mesRef)}`, creditos.length > 0 ? t.verde : t.txt2)}
+          </div>
+
+          {/* Linhas */}
+          {indevidas.map((ind, i) => {
             const cand = creditos.find((c) => Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)));
             const emPickMode = vincManual === ind.id;
             return (
-              <div key={ind.id} style={{ padding: "8px 4px", borderBottom: `1px solid ${t.borda}55` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div key={ind.id} style={{ padding: "11px 4px", borderBottom: i < indevidas.length - 1 ? `1px solid ${t.borda}55` : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "6px 10px", borderRadius: 8, minWidth: 84, textAlign: "center", flexShrink: 0 }}>{money(Math.abs(Number(ind.valor || 0)))}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.natureza || ind.historico || "—"}</div>
-                    <div style={{ fontSize: 10, color: t.txt2 }}>{mesLabel(ind.mes_ref)} · {money(Number(ind.valor || 0))}</div>
+                    <div style={{ fontSize: 10, marginTop: 1, color: cand ? t.verde : t.txt2 }}>
+                      {cand ? "→ crédito de valor igual encontrado" : creditos.length > 0 ? "sem crédito de valor igual" : `sem créditos em ${mesLabel(mesRef)}`}
+                      <span style={{ color: t.txt2 }}> · {mesLabel(ind.mes_ref)}</span>
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                    {cand && !emPickMode && (
+                    {!emPickMode && cand && (
                       <button onClick={() => vincular(ind.id, cand.id)}
-                        style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 7, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
-                        ✓ {money(Math.abs(Number(cand.valor || 0)))}
+                        style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
+                        Vincular
                       </button>
                     )}
-                    {!emPickMode && (
-                      creditos.length > 0 ? (
-                        <button onClick={() => setVincManual(ind.id)}
-                          style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer",
-                            border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, whiteSpace: "nowrap" }}>
-                          {cand ? "outro..." : "Vincular crédito"}
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 10, color: t.txt2, whiteSpace: "nowrap" }}>sem créditos em {mesLabel(mesRef)}</span>
-                      )
+                    {!emPickMode && creditos.length > 0 && (
+                      <button onClick={() => setVincManual(ind.id)}
+                        style={{ fontSize: 11, padding: "7px 12px", borderRadius: 8, cursor: "pointer",
+                          border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, whiteSpace: "nowrap" }}>
+                        {cand ? "outro..." : "Escolher"}
+                      </button>
                     )}
                     {emPickMode && (
                       <button onClick={() => setVincManual(null)}
-                        style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer",
+                        style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer",
                           border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
                         ✕
                       </button>
@@ -507,7 +523,8 @@ export default function ResultadoAVB({ ctx }) {
             );
           })}
         </div>
-      )}
+        );
+      })()}
 
       {/* Lista de despesas */}
       <div style={{ ...card }}>
