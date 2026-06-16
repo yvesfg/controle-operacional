@@ -1,3 +1,17 @@
+## 2026-06-16 — Nova aba global "Créditos Pendentes"
+
+**Solicitado:** Implementar o que foi combinado em 15/06 — tela global de créditos pendentes (verificar/identificar por filial e cobrar caso o crédito não venha). Decisões fechadas: (a) "Cobrar" = registrar + gerar texto de cobrança por filial; (b) filtrar por filial + cliente.
+
+**Implementado:**
+- **Supabase** (migration `add_cobranca_cols_despesas_filial`): 2 colunas novas em `despesas_filial` — `cobrado_em` (timestamptz) e `cobranca_obs` (text). Diferenciam *pendente sem cobrar* → *cobrado, aguardando crédito* → *recuperado*.
+- **`src/despesas.js`:** `listarIndevidasPendentesGlobal(conn)` (todas as filiais: `indevida=true AND credito_match_id IS NULL`), `marcarCobrado(conn,id,obs)`, `desmarcarCobrado(conn,id)`.
+- **`src/views/CreditosPendentes.jsx`** (novo): aba global gated por `canFin`. KPIs (total pendente, a cobrar, já cobrados, item mais antigo), aging por lançamento (faixas 0–30/31–60/60+), agrupamento por filial, filtros (filial + status + busca), ação "Cobrar" inline (registra data/obs) e "Gerar cobrança" por filial (texto pronto p/ copiar). Mesmos primitivos visuais do Painel Financeiro.
+- **`src/App.jsx`:** import + tab `creditos_pendentes` (perm `financeiro`, após Painel Financeiro) + bloco de render. Edição via script Python (sem Edit/Write direto). Build ✓.
+
+**Observação (filtro "cliente"):** `despesas_filial` não tem coluna `cliente` (suas linhas são lançamentos financeiros: natureza/conta/histórico). O filtro "cliente" foi implementado como **busca textual** sobre natureza/histórico/conta/obs — equivalente prático de "a quem cobrar". Um campo `cliente` estruturado seria uma mudança maior, a avaliar se necessário.
+
+**Pendente (não implementado nesta etapa):** vasculhar modais inline para refatorar — já anotado na memória do projeto; fica para quando solicitado (um passo de cada vez).
+
 ## 2026-06-11 — Açailândia: remove tab "Operac." do sidebar + diagnóstico de sync
 
 **Solicitado:** Exclusivamente na base Açailândia: (1/2) verificar/comparar Supabase × Google Sheets de carga/descarga e a "data final"; (3) retirar "Operacional" do sidebar e checar campos exclusivos.

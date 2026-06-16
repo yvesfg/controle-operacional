@@ -182,3 +182,17 @@ export async function vincularCredito(conn, indevidaId, creditoId) {
 export async function desvincularCredito(conn, indevidaId) {
   return await atualizarDespesa(conn, indevidaId, { credito_match_id: null, recuperado_em: null });
 }
+
+// ── Créditos Pendentes (visão global de cobrança) ────────────
+// Todas as indevidas sem crédito vinculado, de TODAS as filiais (sem filtro de base).
+export async function listarIndevidasPendentesGlobal(conn) {
+  const path = `${TABELA}?indevida=eq.true&credito_match_id=is.null&order=dt_mov.asc,valor.desc`;
+  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+}
+// Marca/registra que a indevida foi cobrada (data + observação). Não vincula crédito.
+export async function marcarCobrado(conn, id, obs) {
+  return await atualizarDespesa(conn, id, { cobrado_em: new Date().toISOString(), cobranca_obs: obs || null });
+}
+export async function desmarcarCobrado(conn, id) {
+  return await atualizarDespesa(conn, id, { cobrado_em: null, cobranca_obs: null });
+}

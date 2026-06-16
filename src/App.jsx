@@ -36,6 +36,7 @@ import LogisticaAVB from './views/avb/LogisticaAVB.jsx';
 import GestaoAVB    from './views/avb/GestaoAVB.jsx';
 import Resultado from './views/Resultado.jsx';
 import PainelFinanceiro from './views/PainelFinanceiro.jsx';
+import CreditosPendentes from './views/CreditosPendentes.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
@@ -2368,6 +2369,8 @@ export default function App() {
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
     {k:"painel_financeiro", l:"Painel Financeiro", perm:"financeiro",
       ico:(a)=>svgIco(a,<><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="4" width="3" height="13"/></>)},
+    {k:"creditos_pendentes", l:"Créditos Pendentes", perm:"financeiro",
+      ico:(a)=>svgIco(a,<><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></>)},
     {k:"planilha", l:"Planilha", perm:"planilha",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>)},
     {k:"diarias", l:"Diárias", perm:"diarias",
@@ -3708,6 +3711,13 @@ export default function App() {
         {activeTab === "painel_financeiro" && (
           <PainelFinanceiro ctx={{
             activeTab, baseAtual, DADOS, getConexao,
+            t, isMobile, showToast, canFin,
+          }} />
+        )}
+
+        {activeTab === "creditos_pendentes" && (
+          <CreditosPendentes ctx={{
+            activeTab, baseAtual, getConexao,
             t, isMobile, showToast, canFin,
           }} />
         )}
