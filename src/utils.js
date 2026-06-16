@@ -87,3 +87,18 @@ export function normalizarNome(n) {
   return n.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
+// ── Acessibilidade: props para um elemento clicável que não é <button> ──────
+// Uso: <div {...clickable(onClick)}>…</div> → role + foco por teclado + Enter/Espaço.
+// Sem onClick (ex.: card não-navegável) retorna {} e o elemento não fica focável.
+export function clickable(onClick) {
+  if (!onClick) return {};
+  return {
+    onClick,
+    role: "button",
+    tabIndex: 0,
+    onKeyDown: (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(e); }
+    },
+  };
+}
+

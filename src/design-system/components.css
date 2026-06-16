@@ -43,6 +43,11 @@
   outline        : 2px solid var(--color-primary);
   outline-offset : 2px;
 }
+/* Foco visível p/ elementos clicáveis não-<button> (div com role="button" via clickable()) */
+[role="button"]:focus-visible {
+  outline        : none;
+  box-shadow     : var(--focus-ring);
+}
 .ds-btn:disabled {
   opacity: var(--opacity-disabled);
   cursor : not-allowed;

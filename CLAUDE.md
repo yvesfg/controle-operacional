@@ -1,5 +1,5 @@
-This project uses a design system defined in `design.md`.
-Always refer to this file for styling, colors, and spacing.
+This project uses a design system documented in `DESIGN.md` (single source of truth — read it before any styling work).
+The runtime values live in `src/design-system/` (`tokens.css`, `theme-dark.css`, `theme-light.css`) and are mirrored in JS by `src/constants.js` (`t` / `DESIGN` / `css`). Change colors/type/spacing **only** via those tokens — never hardcode hex in JSX. Old design docs (Mercury, Binance-yellow) are archived in `docs/design-archive/`; ignore them.
 
 - Criar **backup** antes de qualquer alteração (`arquivo.bak_YYYYMMDD_HHMMSS`).
 - Registrar **changelog curto**: o que foi solicitado e o que foi implementado.

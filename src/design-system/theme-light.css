@@ -25,7 +25,7 @@
   /* ── Texto ───────────────────────────────────────────────────── */
   --color-text        : #0f1825;
   --color-text-2      : #4a5a72;
-  --color-text-3      : #6a7a92;
+  --color-text-3      : #5f6f88;
   --color-text-disabled: #aab4c4;
   --color-text-inverse: #ffffff;
 
@@ -93,7 +93,7 @@
 
   --text    : #0f1825;
   --text2   : #4a5a72;
-  --text3   : #6a7a92;
+  --text3   : #5f6f88;
 
   --accent  : #3b82f6;
   --accent2 : rgba(59,130,246,.10);

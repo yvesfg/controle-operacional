@@ -29,7 +29,7 @@
   /* ── Texto — três níveis claros, sem branco puro ───────────── */
   --color-text          : #dde5f0;   /* primário — off-white frio    */
   --color-text-2        : #8892a8;   /* secundário — labels/meta     */
-  --color-text-3        : #4e5e78;   /* terciário — muted/placeholder*/
+  --color-text-3        : #7c89a6;   /* terciário — muted/placeholder*/
   --color-text-disabled : #2e3e56;
   --color-text-inverse  : #ffffff;
 
@@ -123,7 +123,7 @@
   --border2 : #243348;
   --text    : #dde5f0;
   --text2   : #8892a8;
-  --text3   : #4e5e78;
+  --text3   : #7c89a6;
   --accent  : #3b82f6;
   --accent2 : rgba(59,130,246,.08);
   --on-primary: #ffffff;
