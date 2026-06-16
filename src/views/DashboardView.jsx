@@ -72,15 +72,15 @@ export default function DashboardView({ ctx }) {
 
       {/* ── Filtros ── */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
-        <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
+        <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
           <option value="todos">Mês: Todos</option>
           {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
         </select>
         {dashOrigem!=="todos" && (
-          <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:9,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
+          <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:10,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
         )}
         {dashOrigem==="todos" && dashData.cidades.length>0 && (
-          <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:9,height:26,cursor:"pointer",marginLeft:4}}>
+          <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",marginLeft:4}}>
             <option value="todos">Origem: Todas</option>
             {dashData.cidades.map(c=><option key={c} value={c}>{c==="BELEM"?"BELEM-PA":c==="IMPERATRIZ"?"IMPERATRIZ-MA":c}</option>)}
           </select>
@@ -103,16 +103,16 @@ export default function DashboardView({ ctx }) {
           {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",valColor:t.txt,color:"var(--accent)",icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,click:()=>setActiveTab("planilha")},
           {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,valColor:t.txt,color:t.verde,icon:<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,click:()=>setActiveTab("motoristas")},
           ...(canFin&&baseAtual?.id!=="acailandia_avb"?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",valColor:t.txt,color:t.verde,icon:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}]:[]),
-          ...(canFin&&baseAtual?.id!=="acailandia_avb"?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,valColor:saldoD>0?t.danger:t.txt,color:saldoD>0?t.danger:t.verde,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
-          {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",valColor:alertas.length>0?t.danger:t.txt,color:alertas.length===0?t.verde:t.danger,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
+          ...(canFin&&baseAtual?.id!=="acailandia_avb"?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,valColor:saldoD>0?t.danger:t.txt,color:saldoD>0?t.danger:t.verde,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
+          {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",valColor:alertas.length>0?t.danger:t.txt,color:alertas.length===0?t.verde:t.danger,danger:alertas.length>0,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
         ];
         return (
           <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
             {kpis.map((k,i)=>(
               <div key={i} {...clickable(k.click)}
-                style={{position:"relative",background:t.card,borderRadius:isMobile?8:12,border:`1px solid ${t.borda}`,padding:isMobile?"14px":"16px 18px",cursor:k.click?"pointer":"default",transition:"all .15s"}}
-                onMouseEnter={e=>k.click&&(e.currentTarget.style.borderColor=t.borda2)}
-                onMouseLeave={e=>k.click&&(e.currentTarget.style.borderColor=t.borda)}
+                style={{position:"relative",background:k.danger?hexRgb(t.danger,.05):t.card,borderRadius:isMobile?8:12,border:k.danger?`1.5px solid ${hexRgb(t.danger,.45)}`:`1px solid ${t.borda}`,padding:isMobile?"14px":"16px 18px",cursor:k.click?"pointer":"default",transition:"all .15s"}}
+                onMouseEnter={e=>k.click&&(e.currentTarget.style.borderColor=k.danger?t.danger:t.borda2)}
+                onMouseLeave={e=>k.click&&(e.currentTarget.style.borderColor=k.danger?hexRgb(t.danger,.45):t.borda)}
               >
                 <div style={{position:"absolute",top:10,right:10,opacity:0.5}}>
                   {hIco(k.icon,"var(--text3)",isMobile?10:11)}
@@ -198,13 +198,13 @@ export default function DashboardView({ ctx }) {
                 <div>
                   <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Evolução do Período</div>
                   <div style={{display:"flex",gap:6,marginTop:6}}>
-                    <button onClick={()=>setDashHeroTab("carr")} style={{padding:"3px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="carr"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="carr"?t.txt:"transparent",color:dashHeroTab==="carr"?t.bg:t.txt2}}>Carregamentos</button>
-                    {canFin&&<button onClick={()=>setDashHeroTab("cte")} style={{padding:"3px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="cte"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="cte"?t.txt:"transparent",color:dashHeroTab==="cte"?t.bg:t.txt2}}>Receita CTE</button>}
+                    <button onClick={()=>setDashHeroTab("carr")} style={{padding:"3px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="carr"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="carr"?t.txt:"transparent",color:dashHeroTab==="carr"?t.bg:t.txt2}}>Carregamentos</button>
+                    {canFin&&<button onClick={()=>setDashHeroTab("cte")} style={{padding:"3px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="cte"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="cte"?t.txt:"transparent",color:dashHeroTab==="cte"?t.bg:t.txt2}}>Receita CTE</button>}
                   </div>
                 </div>
                 <div style={{textAlign:"right"}}>
                   <div style={{fontFamily:"var(--font-heading)",fontSize:28,fontWeight:700,letterSpacing:"-0.04em",color:"var(--text)",lineHeight:1}}>{heroNum}</div>
-                  <div style={{fontSize:9,color:t.verde}}>↗ {heroLabel}</div>
+                  <div style={{fontSize:10,color:t.verde}}>↗ {heroLabel}</div>
                 </div>
               </div>
               <div style={{height:200}}><canvas ref={chartAreaRef} /></div>
@@ -217,9 +217,9 @@ export default function DashboardView({ ctx }) {
                 <span style={{fontFamily:DESIGN.fnt.h,fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-0.02em"}}>{totalStatusDash}</span>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
-                <div style={{height:8,background:t.bg,borderRadius:4,overflow:"hidden",display:"flex"}}>
+                <div style={{height:10,background:t.bg,borderRadius:4,overflow:"hidden",display:"flex",gap:2}}>
                   {statusArrDash.map(([nome,val],i)=>(
-                    <div key={nome} title={nome} {...clickable(()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");})} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%",cursor:"pointer"}}/>
+                    <div key={nome} title={nome} aria-label={`${nome}: ${val} (${totalStatusDash>0?((val/totalStatusDash)*100).toFixed(0):0}%)`} {...clickable(()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");})} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%",cursor:"pointer"}}/>
                   ))}
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -239,7 +239,7 @@ export default function DashboardView({ ctx }) {
             <div style={{...css.card,padding:18}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
-                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver todos ›</button>
+                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
               </div>
               {topMot.length===0?(
                 <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
@@ -261,7 +261,7 @@ export default function DashboardView({ ctx }) {
                 return (
                   <div key={nome} {...clickable(handleClickMot)} style={{marginBottom:i<topMot.length-1?14:0,cursor:"pointer",borderRadius:8,padding:"6px 6px 8px",margin:`0 -6px ${i<topMot.length-1?14:0}px`,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
-                      <div style={{width:32,height:32,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeCompleto}</div>
                         {placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.5,marginTop:1}}>{placa}</div>}
@@ -287,7 +287,7 @@ export default function DashboardView({ ctx }) {
         <div ref={dashRecCardRef} style={{...css.card,padding:18,display:"flex",flexDirection:"column"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexShrink:0}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Registros Recentes</span>
-            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver Tudo ›</button>
+            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver Tudo ›</button>
           </div>
           <div style={{display:"flex",flexDirection:"column",overflow:"hidden"}}>
             {recentesDash.length===0?(
@@ -306,7 +306,7 @@ export default function DashboardView({ ctx }) {
                   onMouseEnter={e=>e.currentTarget.style.background=t.card2}
                   onMouseLeave={e=>e.currentTarget.style.background="transparent"}
                 >
-                  <div style={{width:26,height:26,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
                   <div style={{minWidth:0,flex:"0 0 110px"}}>
                     <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</div>
                     <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.4,marginTop:1,display:"flex",gap:5,overflow:"hidden"}}>
@@ -345,7 +345,7 @@ export default function DashboardView({ ctx }) {
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Rotas</span>
-                  <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topRotas.length} destinos</span>
+                  <span style={{fontSize:10,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topRotas.length} destinos</span>
                 </div>
                 {topRotas.length===0
                   ?<div style={{textAlign:"center",padding:16,color:t.txt2,fontSize:11}}>Sem dados no período</div>
@@ -362,12 +362,12 @@ export default function DashboardView({ ctx }) {
                             <span style={{fontFamily:"var(--font-mono)",fontSize:12,fontWeight:800,color:"var(--accent)",minWidth:18,letterSpacing:"-0.02em"}}>{i+1}</span>
                             <div>
                               <div style={{fontSize:12,color:t.txt,fontWeight:600,lineHeight:1.2}}>{destCurto}</div>
-                              {uf&&<div style={{fontSize:9,color:t.txt2,fontFamily:"var(--font-mono)",marginTop:1}}>{uf}</div>}
+                              {uf&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",marginTop:1}}>{uf}</div>}
                             </div>
                           </div>
                           <div style={{textAlign:"right"}}>
                             <div style={{fontFamily:"var(--font-mono)",fontSize:15,fontWeight:700,color:t.txt,lineHeight:1}}>{total}</div>
-                            <div style={{fontSize:9,color:efPct>=90?t.verde:efPct>=70?t.ouro:t.txt2,marginTop:1}}>{efPct}% efet.</div>
+                            <div style={{fontSize:10,color:efPct>=90?t.verde:efPct>=70?t.ouro:t.txt2,marginTop:1}}>{efPct}% efet.</div>
                           </div>
                         </div>
                         <div style={{height:4,borderRadius:2,background:t.card2,overflow:"hidden"}}>
@@ -385,7 +385,7 @@ export default function DashboardView({ ctx }) {
           <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Diárias</span>
-              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver ›</button>
+              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
@@ -428,7 +428,7 @@ export default function DashboardView({ ctx }) {
           <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Descargas</span>
-              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver ›</button>
+              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
@@ -475,7 +475,7 @@ export default function DashboardView({ ctx }) {
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Diárias Pendentes</span>
-                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:"6px 4px",margin:"-6px -4px"}}>Ver ›</button>
+                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
                 </div>
                 {topPend.map(({nome,total:sld,dt},i)=>{
                   const partes=nome.split(" ").filter(Boolean);
@@ -521,21 +521,20 @@ export default function DashboardView({ ctx }) {
             const top=Object.entries(cMap).sort((a,b)=>b[1].viagens-a[1].viagens);
             if(!top.length)return null;
             const maxVg=top[0][1].viagens||1;
-            const medalhas=["🥇","🥈","🥉"];
-            const podColors=["var(--accent)","#94a3b8","#cd7c32"];
+            const podColors=["var(--accent)","var(--cat-gray)","var(--cat-amber)"];
             const fmt=v=>v>=1000?"R$"+(v/1000).toFixed(1)+"k":"R$"+Math.round(v).toLocaleString("pt-BR");
             return (
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Contratantes</span>
-                  <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{top.length} ativos</span>
+                  <span style={{fontSize:10,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{top.length} ativos</span>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:`repeat(${Math.min(top.length,3)},1fr)`,gap:8,marginBottom:top.length>3?14:0}}>
                   {top.slice(0,3).map(([nome,{viagens,comDoc,vlr}],i)=>{
                     const ef=viagens>0?Math.round(comDoc/viagens*100):0;
                     return (
                       <div key={nome} style={{background:t.bg,border:`2px solid ${i===0?"var(--accent)":t.borda}`,borderRadius:10,padding:"12px 8px",textAlign:"center"}}>
-                        <div style={{fontSize:20,marginBottom:4,lineHeight:1}}>{medalhas[i]}</div>
+                        <div style={{width:22,height:22,margin:"0 auto 6px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-mono)",fontSize:11,fontWeight:700,color:t.onPrimary,background:podColors[i],lineHeight:1}}>{i+1}</div>
                         <div style={{fontFamily:"var(--font-heading)",fontSize:i===0?13:11,fontWeight:700,color:podColors[i],letterSpacing:"-0.02em",lineHeight:1.2,marginBottom:6,textTransform:"capitalize",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome.toLowerCase()}</div>
                         <div style={{fontFamily:"var(--font-mono)",fontSize:i===0?24:18,fontWeight:800,color:t.txt,lineHeight:1,marginBottom:2}}>{viagens}</div>
                         <div style={{fontSize:10,color:t.txt2,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:4}}>viagens</div>
@@ -553,7 +552,7 @@ export default function DashboardView({ ctx }) {
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                         <span style={{fontSize:10,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,paddingRight:6,textTransform:"capitalize"}}>{nome.toLowerCase()}</span>
                         <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
-                          <span style={{fontSize:9,color:ef>=90?t.verde:ef>=70?t.ouro:t.danger}}>{ef}%</span>
+                          <span style={{fontSize:10,color:ef>=90?t.verde:ef>=70?t.ouro:t.danger}}>{ef}%</span>
                           <span style={{fontSize:10,fontWeight:600,color:t.txt,fontFamily:"var(--font-mono)"}}>{viagens}</span>
                         </div>
                       </div>

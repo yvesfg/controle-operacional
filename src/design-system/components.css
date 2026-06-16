@@ -718,3 +718,13 @@
 .ds-chip--info    { background: var(--chip-info-bg);    border-color: var(--chip-info-border);    color: var(--chip-info-text);    }
 .ds-chip--neutral { background: var(--chip-neutral-bg); border-color: var(--chip-neutral-border); color: var(--chip-neutral-text); }
 .ds-chip--primary { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary-text); }
+
+/* ── Reduced motion — sobrepõe inline styles via !important; PRODUCT.md exige alternativa instantânea ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
