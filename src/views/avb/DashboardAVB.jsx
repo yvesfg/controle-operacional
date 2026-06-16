@@ -1,5 +1,5 @@
 import React from "react";
-import { parseData } from "../../utils.js";
+import { parseData, clickable } from "../../utils.js";
 
 // DashboardAVB — Dashboard exclusivo Açailândia AVB
 // Foco: Rastreamento Documental (CTE / MDF / NF) + KPIs operacionais AVB
@@ -131,7 +131,7 @@ export default function DashboardAVB({ ctx }) {
             icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
             click:()=>setAlertasOpen(!alertasOpen)},
         ].map((k,i)=>(
-          <div key={i} onClick={k.click}
+          <div key={i} {...clickable(k.click)}
             style={{position:"relative",background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,
               padding:isMobile?"14px":"16px 18px",cursor:k.click?"pointer":"default",transition:"border-color .15s"}}
             onMouseEnter={e=>k.click&&(e.currentTarget.style.borderColor="var(--accent)")}
@@ -201,7 +201,7 @@ export default function DashboardAVB({ ctx }) {
                 const nomeExib=partes.slice(0,2).join(" ").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
                 const destCurto=(r.destino||"—").split(/\s*[-–]\s*/)[0].trim();
                 return (
-                  <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
+                  <div key={i} {...clickable(()=>{setDetalheDT(r);setModalOpen("detalhe");})}
                     style={{display:"flex",alignItems:"center",gap:8,padding:"5px 8px",borderRadius:6,
                       cursor:"pointer",background:"transparent",transition:"background .1s"}}
                     onMouseEnter={e=>e.currentTarget.style.background=t.card2}
@@ -284,7 +284,7 @@ export default function DashboardAVB({ ctx }) {
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {statusArr.map(([nome,val],i)=>(
-              <div key={nome} onClick={()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");}}
+              <div key={nome} {...clickable(()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");})}
                 style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",borderRadius:5,
                   padding:"2px 4px",margin:"0 -4px",transition:"background .12s"}}
                 onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.05)"}
@@ -366,7 +366,7 @@ export default function DashboardAVB({ ctx }) {
                 const statusColor=sc(r.status);
                 const docCompleto = r.cte&&r.mdf&&r.nf;
                 return (
-                  <div key={i} onClick={()=>{setDetalheDT(r);setModalOpen("detalhe");}}
+                  <div key={i} {...clickable(()=>{setDetalheDT(r);setModalOpen("detalhe");})}
                     style={{height:46,display:"flex",alignItems:"center",gap:8,padding:"0 6px",
                       borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",
                       borderRadius:6,transition:"background .1s"}}

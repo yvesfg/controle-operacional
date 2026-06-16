@@ -20,7 +20,7 @@ export default function AlterarSenhaAdmin({ t, css, showToast, onSalvar }) {
 
   return (
     <>
-      <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setOpen(!open)}>
+      <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setOpen(!open)}>
         🔑 Alterar Senha do Admin <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{open?"▲":"▼"}</span>
         <span style={{flex:1,height:1,background:t.borda}} />
       </div>

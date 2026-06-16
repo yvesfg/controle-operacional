@@ -1,4 +1,5 @@
 import React from "react";
+import { clickable } from "../../utils.js";
 
 // GestaoAVB — Gestão operacional Açailândia AVB
 // Acompanha cada carga pelas etapas do fluxo real do embarcador:
@@ -160,7 +161,7 @@ export default function GestaoAVB({ ctx }) {
         const isPend = (r.status||"").toUpperCase()==="PENDENTE";
 
         return (
-          <div key={i} onClick={()=>abrirDetalhe(r)}
+          <div key={i} {...clickable(()=>abrirDetalhe(r))}
             style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,
               padding:14,marginBottom:8,cursor:"pointer",transition:"border-color .15s"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}

@@ -1,6 +1,6 @@
 import React from "react";
 import { TABLE_USUARIOS, PERMS_PADRAO, PERMS_LISTA } from "../constants.js";
-import { hashSenha, saveJSON } from "../utils.js";
+import { hashSenha, saveJSON, clickable } from "../utils.js";
 import { supaFetch } from "../supabase.js";
 
 export default function ModalUsuario({ ctx }) {
@@ -57,7 +57,7 @@ export default function ModalUsuario({ ctx }) {
                     {k:"operador",ico:"⚙️",l:"Operador",desc:"Edita operacional"},
                     {k:"visualizador",ico:"👁️",l:"Visual.",desc:"Somente leitura"},
                   ].map(r => (
-                    <div key={r.k} onClick={()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}}))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
+                    <div key={r.k} {...clickable(()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}})))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
                       <span style={{fontSize:16}}>{r.ico}</span>
                       <span style={{fontSize:10,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
                       <span style={{fontSize:8,color:t.txt2,lineHeight:1.2}}>{r.desc}</span>
@@ -72,7 +72,7 @@ export default function ModalUsuario({ ctx }) {
                   {PERMS_LISTA.filter(p=>p.key!=="config_db"&&p.key!=="usuarios").map(p => {
                     const val = (formData.perms||PERMS_PADRAO[formData.perfil||"operador"])[p.key];
                     return (
-                      <div key={p.key} onClick={()=>setFormData(prev=>({...prev,perms:{...(prev.perms||PERMS_PADRAO[prev.perfil||"operador"]),[p.key]:!val}}))}
+                      <div key={p.key} {...clickable(()=>setFormData(prev=>({...prev,perms:{...(prev.perms||PERMS_PADRAO[prev.perfil||"operador"]),[p.key]:!val}})))}
                         style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:`1px solid ${val?t.verde:t.borda}`,cursor:"pointer",background:val?`rgba(2,192,118,.06)`:"transparent"}}>
                         <div style={{width:16,height:16,borderRadius:4,background:val?t.verde:t.borda2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
                           {val&&<span style={{fontSize:10,color:"#fff",fontWeight:700}}>✓</span>}

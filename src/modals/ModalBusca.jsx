@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { clickable } from "../utils.js";
 
 export default function ModalBusca({ ctx }) {
   const {
@@ -239,7 +240,7 @@ export default function ModalBusca({ ctx }) {
                   const statusC = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.txt2;
                   const statusL = r.data_desc ? "Descarregado" : r.data_agenda ? "Aguardando" : "—";
                   return (
-                    <div key={i} onClick={()=>{
+                    <div key={i} {...clickable(()=>{
                       setBuscaInput(r.dt);
                       setBuscaTipo("dt");
                       setTimeout(()=>{
@@ -255,7 +256,7 @@ export default function ModalBusca({ ctx }) {
                         ).sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
                         setBuscaRelacionados(rel);
                       }, 0);
-                    }} style={{background:t.card,borderRadius:10,padding:"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}>
+                    })} style={{background:t.card,borderRadius:10,padding:"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
                           <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
@@ -304,13 +305,13 @@ export default function ModalBusca({ ctx }) {
               <div style={{marginTop:16}}>
                 <div style={css.secTitle}>Histórico Recente <span style={{flex:1,height:1,background:t.borda}} /></div>
                 {historico.map((h,i) => (
-                  <div key={i} onClick={()=>{
+                  <div key={i} {...clickable(()=>{
                     const dt=h.dt; setBuscaInput(dt); setBuscaTipo("dt");
                     setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
                     const c=dt.replace(/\D/g,"");
                     const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
                     if(found){setBuscaResult(found);const cpfN=found.cpf?.replace(/\D/g,""),placaN=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN&&x.cpf?.replace(/\D/g,"")===cpfN)||(placaN&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);}else{setBuscaError(dt);}
-                  }} style={{background:t.card,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,border:`1px solid ${t.borda}`,cursor:"pointer",marginBottom:7}}>
+                  })} style={{background:t.card,borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10,border:`1px solid ${t.borda}`,cursor:"pointer",marginBottom:7}}>
                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.ouro,minWidth:80}}>{h.dt}</span>
                     <span style={{fontSize:11,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:t.txt}}>{h.nome}</span>
                     <span style={{marginLeft:"auto",color:t.borda,fontSize:12}}>›</span>

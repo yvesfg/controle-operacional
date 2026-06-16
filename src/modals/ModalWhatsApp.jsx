@@ -1,4 +1,5 @@
 import React from "react";
+import { clickable } from "../utils.js";
 
 export default function ModalWhatsApp({ ctx }) {
   const {
@@ -654,7 +655,7 @@ export default function ModalWhatsApp({ ctx }) {
 
                 {/* ── Minutas (DCC para Diárias / MAM-MRM para Descarga) ── */}
                 <div style={{background:t.card2,borderRadius:10,border:`1px solid ${t.borda}`,overflow:"hidden"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer"}} onClick={()=>setWppFortes(v=>!v)}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer"}} {...clickable(()=>setWppFortes(v=>!v))}>
                     <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${wppFortes?t.verde:t.borda}`,background:wppFortes?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
                       {wppFortes && <span style={{color:"#fff",fontSize:10,fontWeight:700}}>✓</span>}
                     </div>

@@ -130,7 +130,7 @@ export default function AdminView({ ctx }) {
             )}
 
             {/* ── Usuários com Acesso Ativo — colapsável ── */}
-            <div style={{...css.secTitle,marginTop:10,cursor:"pointer",userSelect:"none"}} onClick={()=>setOauthAccessOpen(!oauthAccessOpen)}>
+            <div style={{...css.secTitle,margin:"10px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setOauthAccessOpen(!oauthAccessOpen)}>
               <svg width="14" height="14" viewBox="0 0 48 48" style={{flexShrink:0,marginRight:2}}><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
               Usuários com Acesso ({usuarios.length}) <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{oauthAccessOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
@@ -196,7 +196,7 @@ export default function AdminView({ ctx }) {
             )}
 
             {/* Conexões Supabase — colapsável */}
-            <div style={{...css.secTitle,marginTop:20,cursor:"pointer",userSelect:"none"}} onClick={()=>setConexoesOpen(!conexoesOpen)}>
+            <div style={{...css.secTitle,margin:"20px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setConexoesOpen(!conexoesOpen)}>
               {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.ouro,12)} Conexões Supabase <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{conexoesOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
@@ -228,7 +228,7 @@ export default function AdminView({ ctx }) {
             )}
 
             {/* Google Sheets */}
-            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={async()=>{
+            <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={async()=>{
               const next=!gsheetsOpen; setGsheetsOpen(next);
               if(next&&!syncStatus){
                 setSyncStatusLoading(true);
@@ -484,7 +484,7 @@ function mapearColuna(n){
             </div>
 
             {/* EMAIL BOAS-VINDAS */}
-            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setEmailTemplateOpen(!emailTemplateOpen)}>
+            <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setEmailTemplateOpen(!emailTemplateOpen)}>
               {hIco(<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,t.ouro,12)} Email de Boas-vindas<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{emailTemplateOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
@@ -513,7 +513,7 @@ function mapearColuna(n){
             )}
 
             {/* NORMALIZAR CONTATOS (Item 3) — colapsável */}
-            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={()=>setContatosAdminOpen(!contatosAdminOpen)}>
+            <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setContatosAdminOpen(!contatosAdminOpen)}>
               {hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Contatos / Motoristas <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{contatosAdminOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
@@ -693,7 +693,7 @@ function mapearColuna(n){
             </div>}
 
             {/* LOG DE ALTERACOES */}
-            <div style={{...css.secTitle,marginTop:24,cursor:"pointer",userSelect:"none"}} onClick={async()=>{const next=!logsOpen;setLogsOpen(next);if(next)await carregarLogs();}}>
+            <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={async()=>{const next=!logsOpen;setLogsOpen(next);if(next)await carregarLogs();}}>
               {hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Log de Alterações<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{logsOpen?"▲":"▼"}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>

@@ -1,4 +1,5 @@
 import React from "react";
+import { clickable } from "../utils.js";
 
 export default function ModalDashDrill({ ctx }) {
   const { dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe } = ctx;
@@ -42,7 +43,7 @@ export default function ModalDashDrill({ ctx }) {
             })()
           ):(
             dashDrillModal.regs.sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;}).map((r,i)=>(
-              <div key={i} onClick={()=>{setDashDrillModal(null);abrirDetalhe(r);}} style={{background:t.card2,borderRadius:10,padding:"9px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`} onMouseLeave={e=>e.currentTarget.style.background=t.card2}>
+              <div key={i} {...clickable(()=>{setDashDrillModal(null);abrirDetalhe(r);})} style={{background:t.card2,borderRadius:10,padding:"9px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(240,185,11,.06)`} onMouseLeave={e=>e.currentTarget.style.background=t.card2}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,letterSpacing:1}}>{r.dt}</span>

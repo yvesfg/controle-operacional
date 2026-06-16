@@ -1,5 +1,6 @@
 import React from "react";
 import { calcAgendaAvb, fmtDataAvb } from "../../utils_avb.js";
+import { clickable } from "../../utils.js";
 
 // LogisticaAVB — Tela de logística exclusiva Açailândia AVB
 // Sem código Suzano (descargaData, rodorrica, Conferência, Sem Motorista).
@@ -89,7 +90,7 @@ export default function LogisticaAVB({ ctx }) {
       <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(3,1fr)":"repeat(5,1fr)",
         gap:isMobile?4:8,marginBottom:16}}>
         {TILES.map(tb=>(
-          <div key={tb.k} onClick={()=>setAvbTile(tb.k)}
+          <div key={tb.k} {...clickable(()=>setAvbTile(tb.k))}
             style={{border:`1.5px solid ${avbTile===tb.k?tb.cor:t.borda}`,borderRadius:10,
               padding:isMobile?"10px 5px":"16px 8px",cursor:"pointer",
               background:avbTile===tb.k?tb.bg:t.card2,
@@ -144,7 +145,7 @@ export default function LogisticaAVB({ ctx }) {
         const borderColor = docOk ? "var(--accent)" : t.danger;
 
         return (
-          <div key={i} onClick={()=>abrirDetalhe(r)}
+          <div key={i} {...clickable(()=>abrirDetalhe(r))}
             style={{background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,
               padding:14,cursor:"pointer",marginBottom:8,transition:"border-color .15s"}}
             onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}

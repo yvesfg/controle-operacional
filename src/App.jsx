@@ -10,7 +10,7 @@ import { DEFAULT_LOGO } from './defaultLogo.js';
 import loginLogo from '../assets/images/logo-login.png';
 import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
   brToInputDT, inputToBrDT, dtBase, esc, hashSenha, verificarSenha,
-  loadJSON, saveJSON, decodeJWT, iniciarOAuth,
+  loadJSON, saveJSON, decodeJWT, iniciarOAuth, clickable,
   validarPlaca, normalizarPlaca, normalizarTelefone, normalizarNome } from './utils.js';
 import { supaFetch, supaStorageUpload } from './supabase.js';
 import { validarRegistroOperacional } from './validators.js';
@@ -18,25 +18,25 @@ import { exportCSV, exportODS, exportPDF, ExportMenu,
   gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
 import Toast from './components/Toast.jsx';
 import AlterarSenhaAdmin from './components/AlterarSenhaAdmin.jsx';
-import ReportBuilder from './relatorios/ReportBuilder.jsx';
-import OcorrenciasView from './views/OcorrenciasView.jsx';
-import OperacionalView from './views/OperacionalView.jsx';
-import PlanilhaView    from './views/PlanilhaView.jsx';
-import MotoristasView  from './views/MotoristasView.jsx';
-import DashboardView   from './views/DashboardView.jsx';
-import DiariasView     from './views/DiariasView.jsx';
-import DescargaView    from './views/DescargaView.jsx';
-import AdminView       from './views/AdminView.jsx';
+import ReportBuilder from './relatorios/ReportBuilderWrapper.jsx';
+import OcorrenciasView from './views/OcorrenciasViewWrapper.jsx';
+import OperacionalView from './views/OperacionalViewWrapper.jsx';
+import PlanilhaView    from './views/PlanilhaViewWrapper.jsx';
+import MotoristasView  from './views/MotoristasViewWrapper.jsx';
+import DashboardView   from './views/DashboardViewWrapper.jsx';
+import DiariasView     from './views/DiariasViewWrapper.jsx';
+import DescargaView    from './views/DescargaViewWrapper.jsx';
+import AdminView       from './views/AdminViewWrapper.jsx';
 import useModalEsc      from './hooks/useModalEsc.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
-import DashboardAVB from './views/avb/DashboardAVB.jsx';
-import PlanilhaAVB  from './views/avb/PlanilhaAVB.jsx';
-import LogisticaAVB from './views/avb/LogisticaAVB.jsx';
-import GestaoAVB    from './views/avb/GestaoAVB.jsx';
-import Resultado from './views/Resultado.jsx';
-import PainelFinanceiro from './views/PainelFinanceiro.jsx';
-import CreditosPendentes from './views/CreditosPendentes.jsx';
+import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
+import PlanilhaAVB  from './views/avb/PlanilhaAVBWrapper.jsx';
+import LogisticaAVB from './views/avb/LogisticaAVBWrapper.jsx';
+import GestaoAVB    from './views/avb/GestaoAVBWrapper.jsx';
+import Resultado from './views/ResultadoWrapper.jsx';
+import PainelFinanceiro from './views/PainelFinanceiroWrapper.jsx';
+import CreditosPendentes from './views/CreditosPendentesWrapper.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
@@ -50,7 +50,7 @@ import ModalCtrlFinanceiro from './modals/ModalCtrlFinanceiro.jsx';
 import ModalBusca          from './modals/ModalBusca.jsx';
 import ModalDashDrill      from './modals/ModalDashDrill.jsx';
 import ModalOcorrChegada   from './modals/ModalOcorrChegada.jsx';
-import RelatoriosView  from './relatorios/RelatoriosView.jsx';
+import RelatoriosView  from './relatorios/RelatoriosViewWrapper.jsx';
 import OcorrModal from './components/OcorrModal.jsx';
 
 
@@ -1914,7 +1914,7 @@ export default function App() {
     btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:"#fff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.verde, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnOutline:{ borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.ouro, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
     btnDanger: { borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.danger, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.danger,.3)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
-    secTitle:  { fontSize:9, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
+    secTitle:  { fontSize:11, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
     badge:     (c,bg,bc) => ({ padding:"2px 8px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
     // Overlay com blur mais pronunciado para foco no modal
@@ -3316,10 +3316,10 @@ export default function App() {
             </button>
 
             {/* User info — clicável → abre admin se admin, perfil caso contrário */}
-            <div className="co-sidebar__user" style={{cursor:"pointer"}} onClick={()=>{
+            <div className="co-sidebar__user" style={{cursor:"pointer"}} {...clickable(()=>{
               if(isAdmin){setActiveTab("admin");if(!isWide)setMobileSidebarExpanded(false);}
               else{setModalOpen("usuario");}
-            }}>
+            })}>
               <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg, var(--accent), var(--cyan))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"#fff",fontFamily:"var(--font-heading)",letterSpacing:"-0.01em"}}>
                 {(usuarioLogado||"YF").slice(0,2).toUpperCase()}
               </div>
@@ -3448,7 +3448,7 @@ export default function App() {
       {alertasOpen && alertas.length > 0 && (
         <div style={{background:t.card,borderBottom:`1px solid ${t.borda}`,animation:"fadeIn .2s",position:"sticky",top:56,zIndex:89,maxHeight:"50vh",overflowY:"auto",boxShadow:`0 8px 24px ${t.shadow}`}}>
           {alertas.slice(0,10).map((a,i) => (
-            <div key={i} onClick={()=>{ if(a.reg){ abrirDetalhe(a.reg); setAlertasOpen(false); } }} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`,cursor:a.reg?"pointer":"default",transition:"background .15s"}} onMouseEnter={e=>{ if(a.reg) e.currentTarget.style.background=t.card2; }} onMouseLeave={e=>{ e.currentTarget.style.background=""; }}>
+            <div key={i} {...clickable(()=>{ if(a.reg){ abrirDetalhe(a.reg); setAlertasOpen(false); } })} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`,cursor:a.reg?"pointer":"default",transition:"background .15s"}} onMouseEnter={e=>{ if(a.reg) e.currentTarget.style.background=t.card2; }} onMouseLeave={e=>{ e.currentTarget.style.background=""; }}>
               <span style={{flexShrink:0}}>{a.tipo==="danger"?hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,16):hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,16)}</span>
               <span style={{fontSize:11,color:t.txt2,lineHeight:1.5,flex:1}}>{a.txt}{a.reg&&<span style={{color:t.azulLt,fontSize:10,marginLeft:6}}>↗ ver DT</span>}</span>
               {a.cat==="descarga" && a.reg && (
@@ -4295,9 +4295,9 @@ export default function App() {
                         <div key={ci} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,overflow:"hidden"}}>
                           {/* Compare header */}
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",borderBottom:`1px solid ${t.borda}`}}>
-                            <div style={{padding:"6px 10px",background:c.escolha==="manter"?`rgba(2,192,118,.08)`:t.card2,borderRight:`1px solid ${t.borda}`,cursor:"pointer",transition:"background .2s"}} onClick={()=>{
+                            <div style={{padding:"6px 10px",background:c.escolha==="manter"?`rgba(2,192,118,.08)`:t.card2,borderRight:`1px solid ${t.borda}`,cursor:"pointer",transition:"background .2s"}} {...clickable(()=>{
                               const nc=[...conflitos]; nc[ci]={...nc[ci],escolha:"manter"}; setMotImportData({novos,conflitos:nc});
-                            }}>
+                            })}>
                               <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
                                 <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${c.escolha==="manter"?t.verde:t.borda}`,background:c.escolha==="manter"?t.verde:"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                                   {c.escolha==="manter" && <div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}} />}
@@ -4308,9 +4308,9 @@ export default function App() {
                                 <div key={f.l} style={{fontSize:9,color:t.txt2}}>{f.l}: <strong style={{color:t.txt}}>{f.v}</strong></div>
                               ))}
                             </div>
-                            <div style={{padding:"6px 10px",background:c.escolha==="usar"?`rgba(22,119,255,.08)`:t.card2,cursor:"pointer",transition:"background .2s"}} onClick={()=>{
+                            <div style={{padding:"6px 10px",background:c.escolha==="usar"?`rgba(22,119,255,.08)`:t.card2,cursor:"pointer",transition:"background .2s"}} {...clickable(()=>{
                               const nc=[...conflitos]; nc[ci]={...nc[ci],escolha:"usar"}; setMotImportData({novos,conflitos:nc});
-                            }}>
+                            })}>
                               <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
                                 <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${c.escolha==="usar"?t.azulLt:t.borda}`,background:c.escolha==="usar"?t.azulLt:"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
                                   {c.escolha==="usar" && <div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}} />}

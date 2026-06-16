@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
+import { clickable } from "../utils.js";
 import {
   FIELD_CATALOG,
   FIELD_GROUPS,
@@ -496,7 +497,7 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
             const isCollapsed = sidebarCollapsed[g.modulo];
             return (
               <div key={g.modulo}>
-                <div style={S.groupHeader} onClick={() => toggleSidebarGroup(g.modulo)}>
+                <div style={S.groupHeader} {...clickable(() => toggleSidebarGroup(g.modulo))}>
                   <span>{g.label}</span>
                   {isCollapsed ? <IcoChevronR/> : <IcoChevronD/>}
                 </div>
