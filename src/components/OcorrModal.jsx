@@ -2,16 +2,16 @@ import React, { useState, useEffect } from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
 
 const TIPOS = [
-  { k: "falta",       l: "Falta",        cor: "#f6465d" },
-  { k: "avaria",      l: "Avaria",       cor: "#ff9800" },
-  { k: "dev_total",   l: "Dev. Total",   cor: "#9c27b0" },
-  { k: "dev_parcial", l: "Dev. Parcial", cor: "#e91e63" },
-  { k: "desacordo",   l: "Desacordo",    cor: "#f0b90b" },
-  { k: "rod",         l: "ROD",          cor: "#ef5350" },
-  { k: "sobra",       l: "Sobra",        cor: "#00e096" },
-  { k: "info",        l: "Info",         cor: "#1677ff" },
-  { k: "alerta",      l: "Alerta",       cor: "#f6465d" },
-  { k: "status",      l: "Status",       cor: "#02c076" },
+  { k: "falta",       l: "Falta",        cor: "var(--cat-red)" },
+  { k: "avaria",      l: "Avaria",       cor: "var(--cat-orange)" },
+  { k: "dev_total",   l: "Dev. Total",   cor: "var(--cat-purple)" },
+  { k: "dev_parcial", l: "Dev. Parcial", cor: "var(--cat-pink)" },
+  { k: "desacordo",   l: "Desacordo",    cor: "var(--cat-gold)" },
+  { k: "rod",         l: "ROD",          cor: "var(--cat-coral)" },
+  { k: "sobra",       l: "Sobra",        cor: "var(--cat-mint)" },
+  { k: "info",        l: "Info",         cor: "var(--cat-blue)" },
+  { k: "alerta",      l: "Alerta",       cor: "var(--cat-red)" },
+  { k: "status",      l: "Status",       cor: "var(--cat-green)" },
 ];
 
 const TIPOS_COM_NF = new Set(["falta", "avaria", "dev_total", "dev_parcial", "desacordo"]);
@@ -109,7 +109,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
             {dtRecord && (
               <span style={{
                 padding: "2px 7px", borderRadius: 5,
-                background: "rgba(22,119,255,0.12)", color: "#1677ff",
+                background: "rgba(22,119,255,0.12)", color: "var(--cat-blue)",
                 fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
               }}>DT {dtRecord.dt}</span>
             )}
@@ -190,7 +190,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                 {nfInput.trim() && (
                   <button
                     onClick={() => parseAndAddNfs(nfInput)}
-                    style={{ padding: "6px 10px", borderRadius: 7, border: "none", background: "#1677ff", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                    style={{ padding: "6px 10px", borderRadius: 7, border: "none", background: "var(--cat-blue)", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
                   >+</button>
                 )}
               </div>
@@ -205,9 +205,9 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                         onClick={() => setNfsRec(prev => { const n = new Set(prev); n.has(nf) ? n.delete(nf) : n.add(nf); return n; })}
                         style={{
                           padding: "3px 9px", borderRadius: 5,
-                          border: `1.5px solid ${sel ? "#f0b90b" : t.borda}`,
+                          border: `1.5px solid ${sel ? "var(--cat-gold)" : t.borda}`,
                           background: sel ? "rgba(240,185,11,0.13)" : "transparent",
-                          color: sel ? "#f0b90b" : t.txt2,
+                          color: sel ? "var(--cat-gold)" : t.txt2,
                           fontSize: 10, fontWeight: sel ? 700 : 400,
                           cursor: "pointer", fontFamily: "inherit",
                         }}
@@ -222,7 +222,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                         padding: "3px 6px 3px 9px", borderRadius: 5,
                         border: "1.5px solid #f0b90b",
                         background: "rgba(240,185,11,0.13)",
-                        color: "#f0b90b", fontSize: 10, fontWeight: 700,
+                        color: "var(--cat-gold)", fontSize: 10, fontWeight: 700,
                       }}
                     >
                       {nf}

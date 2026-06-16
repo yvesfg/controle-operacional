@@ -58,6 +58,19 @@
   --color-info-bg     : rgba(8,145,178,.10);
   --color-info-border : rgba(8,145,178,.28);
 
+  /* ── Paleta categórica (light) — variantes mais escuras p/ contraste em branco ── */
+  --cat-blue   : #1565c0;
+  --cat-red    : #d32f2f;
+  --cat-coral  : #e53935;
+  --cat-orange : #ef6c00;
+  --cat-amber  : #c2660c;
+  --cat-gold   : #b8860b;
+  --cat-purple : #7b1fa2;
+  --cat-pink   : #c2185b;
+  --cat-green  : #059669;
+  --cat-mint   : #047857;
+  --cat-gray   : #5f6f88;
+
   /* ── Overlays / Sombras (light usa shadow real) ─────────────── */
   --color-shadow      : rgba(15,24,37,.08);
   --color-overlay     : rgba(15,24,37,.45);

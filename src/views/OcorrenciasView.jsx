@@ -169,9 +169,9 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
     "Diária":    "var(--red,#ef4444)",
     DCC:              "var(--cyan,#06b6d4)",
     Atraso:           "var(--red,#ef4444)",
-    RO:               "#f97316",
-    NFD:              "#ef4444",
-    Sobra:            "#a855f7",
+    RO:               "var(--cat-orange)",
+    NFD:              "var(--red)",
+    Sobra:            "var(--cat-purple)",
   };
 
   const { entries, stats } = useMemo(() => {

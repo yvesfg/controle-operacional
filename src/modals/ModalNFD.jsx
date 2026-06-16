@@ -38,13 +38,13 @@ export default function ModalNFD({ ctx }) {
               <div style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:'uppercase',letterSpacing:1,marginBottom:6}}>Tipo</div>
               {(()=>{
                 const TIPOS_NFD=[
-                  {k:'avaria',l:'Avaria',cor:'#ff9800'},
-                  {k:'falta',l:'Falta',cor:'#f6465d'},
-                  {k:'dev_total',l:'Dev. Total',cor:'#9c27b0'},
-                  {k:'dev_parcial',l:'Dev. Parcial',cor:'#e91e63'},
-                  {k:'desacordo',l:'Desacordo',cor:'#f0b90b'},
-                  {k:'rod',l:'ROD',cor:'#ef5350'},
-                  {k:'sobra',l:'Sobra',cor:'#00e096'},
+                  {k:'avaria',l:'Avaria',cor:'var(--cat-orange)'},
+                  {k:'falta',l:'Falta',cor:'var(--cat-red)'},
+                  {k:'dev_total',l:'Dev. Total',cor:'var(--cat-purple)'},
+                  {k:'dev_parcial',l:'Dev. Parcial',cor:'var(--cat-pink)'},
+                  {k:'desacordo',l:'Desacordo',cor:'var(--cat-gold)'},
+                  {k:'rod',l:'ROD',cor:'var(--cat-coral)'},
+                  {k:'sobra',l:'Sobra',cor:'var(--cat-mint)'},
                 ];
                 const TIPOS_COM_NF_NFD=new Set(['falta','avaria','dev_total','dev_parcial','desacordo']);
                 const nfListNFD=(formData?.nf||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -67,8 +67,8 @@ export default function ModalNFD({ ctx }) {
                           const cur=(nfdForm.nfs||'').split(',').map(s=>s.trim()).filter(Boolean);
                           const sel=cur.includes(nf);
                           return(<button key={nf} onClick={()=>{const next=sel?cur.filter(x=>x!==nf):[...cur,nf];setNfdForm(p=>({...p,nfs:next.join(', ')}));}}
-                            style={{padding:'4px 10px',borderRadius:6,border:`1.5px solid ${sel?'#f0b90b':t.borda}`,
-                              background:sel?'rgba(240,185,11,.1)':t.bg,color:sel?'#f0b90b':t.txt2,
+                            style={{padding:'4px 10px',borderRadius:6,border:`1.5px solid ${sel?'var(--cat-gold)':t.borda}`,
+                              background:sel?'rgba(240,185,11,.1)':t.bg,color:sel?'var(--cat-gold)':t.txt2,
                               fontSize:10,fontWeight:sel?700:400,cursor:'pointer'}}>
                             {nf}
                           </button>);

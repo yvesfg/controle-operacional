@@ -80,7 +80,7 @@ export default function DescargaView({ ctx }) {
        svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>},
       {k:"pendente", l:"Pendentes",   ct:pendentes.length,    cor:"#f59e0b", corLt:"#fde68a", bg:"rgba(245,158,11,.07)", list:pendentes,
        svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>},
-      {k:"docInc",   l:"Doc. Incompleta", ct:docIncompleta.length, cor:t.danger, corLt:"#f6465d", bg:"rgba(246,70,93,.07)", list:docIncompleta,
+      {k:"docInc",   l:"Doc. Incompleta", ct:docIncompleta.length, cor:t.danger, corLt:"var(--cat-red)", bg:"rgba(246,70,93,.07)", list:docIncompleta,
        svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9.01" y2="13"/><line x1="9" y1="17" x2="9.01" y2="17"/></>},
       {k:"finPend",  l:"Fin. Pendente", ct:finPendente.length, cor:"#a855f7", corLt:"#c084fc", bg:"rgba(168,85,247,.07)", list:finPendente,
        svg:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>},
@@ -230,11 +230,11 @@ export default function DescargaView({ ctx }) {
             <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(3,1fr)":"repeat(6,1fr)",gap:isMobile?4:6,marginBottom:12}}>
               {[
                 {k:"hoje",svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,l:"Descarrega Hoje",ct:descargaData.hoje.length,cor:t.azul,corLt:t.azulLt,bg:"rgba(22,119,255,.07)"},
-                {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length,cor:t.danger,corLt:"#f6465d",bg:"rgba(246,70,93,.07)"},
-                {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"#f0b90b",corLt:"#ffe57a",bg:"rgba(240,185,11,.07)"},
-                {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"#9c27b0",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"},
-                {k:"carrega",svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,l:"Carrega Hoje",ct:descargaData.carregaHoje?.length||0,cor:t.verde,corLt:"#00e096",bg:"rgba(2,192,118,.07)"},
-                {k:"semMotorista",svg:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></>,l:"Sem Motorista",ct:descargaData.semMotorista?.length||0,cor:"#9c27b0",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
+                {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length,cor:t.danger,corLt:"var(--cat-red)",bg:"rgba(246,70,93,.07)"},
+                {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"var(--cat-gold)",corLt:"#ffe57a",bg:"rgba(240,185,11,.07)"},
+                {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"var(--cat-purple)",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"},
+                {k:"carrega",svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,l:"Carrega Hoje",ct:descargaData.carregaHoje?.length||0,cor:t.verde,corLt:"var(--cat-mint)",bg:"rgba(2,192,118,.07)"},
+                {k:"semMotorista",svg:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></>,l:"Sem Motorista",ct:descargaData.semMotorista?.length||0,cor:"var(--cat-purple)",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
               ].map(tb => (
                 <div key={tb.k} {...clickable(()=>setDscTab(tb.k))} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,22)}
@@ -357,7 +357,7 @@ export default function DescargaView({ ctx }) {
                   const isAtrasado = dscTab === "atrasado";
                   const isAguardando = dscTab === "aguardando";
                   const _isDHL3 = descargaNavDT && r.dt === descargaNavDT;
-                  const accentC = _isDHL3?t.azulLt:isAtrasado ? t.danger : isAguardando ? "#f0b90b" : t.azul;
+                  const accentC = _isDHL3?t.azulLt:isAtrasado ? t.danger : isAguardando ? "var(--cat-gold)" : t.azul;
                   const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : isAguardando ? `rgba(240,185,11,.1)` : `rgba(22,119,255,.1)`;
                   const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
                   const saldoPg = parseFloat(r.saldo), vl = parseFloat(r.vl_contrato);
@@ -366,8 +366,8 @@ export default function DescargaView({ ctx }) {
                     {l:"DT",v:r.dt,c:t.ouro},
                     {l:"Placa",v:r.placa||"—",c:t.verde},
                     {l:"Destino",v:r.destino||"—",c:t.txt2},
-                    ...(isAguardando&&r.chegada?[{l:"Chegada",v:r.chegada,c:"#f0b90b"}]:[]),
-                    {l:"Agenda",v:r.data_agenda||"—",c:isAtrasado?t.danger:isAguardando?"#f0b90b":t.ouro},
+                    ...(isAguardando&&r.chegada?[{l:"Chegada",v:r.chegada,c:"var(--cat-gold)"}]:[]),
+                    {l:"Agenda",v:r.data_agenda||"—",c:isAtrasado?t.danger:isAguardando?"var(--cat-gold)":t.ouro},
                     {l:"Descarga",v:r.data_desc||"Pendente",c:r.data_desc?t.verde:t.txt2},
                     ...(r.origem?[{l:"Origem",v:r.origem,c:t.txt2}]:[]),
                     ...(r.ro?[{l:"RO",v:r.ro,c:t.laranja}]:[]),
@@ -452,8 +452,8 @@ export default function DescargaView({ ctx }) {
                       <span style={{fontSize:10,color:t.txt2}}>{rodorricaRows.length} registros</span>
                       {prevRodorricaSnap && (
                         <button onClick={()=>{setRodoUndoConfirm(true);setRodoUndoInput("");}}
-                          style={{background:"transparent",border:`1px solid ${t.danger||"#f6465d"}`,borderRadius:6,
-                            padding:"2px 8px",fontSize:10,color:t.danger||"#f6465d",cursor:"pointer",fontFamily:"inherit"}}>
+                          style={{background:"transparent",border:`1px solid ${t.danger||"var(--cat-red)"}`,borderRadius:6,
+                            padding:"2px 8px",fontSize:10,color:t.danger||"var(--cat-red)",cursor:"pointer",fontFamily:"inherit"}}>
                           &#8617; Desfazer
                         </button>
                       )}
@@ -462,8 +462,8 @@ export default function DescargaView({ ctx }) {
                     {/* Modal confirmação desfazer */}
                     {rodoUndoConfirm && (
                       <div style={{marginBottom:12,padding:"12px 14px",borderRadius:10,
-                        background:`rgba(246,70,93,.07)`,border:`1px solid ${t.danger||"#f6465d"}`}}>
-                        <div style={{fontSize:11,fontWeight:700,color:t.danger||"#f6465d",marginBottom:8}}>
+                        background:`rgba(246,70,93,.07)`,border:`1px solid ${t.danger||"var(--cat-red)"}`}}>
+                        <div style={{fontSize:11,fontWeight:700,color:t.danger||"var(--cat-red)",marginBottom:8}}>
                           Desfazer importação — restaurar "{prevRodorricaSnap.fileName || 'vazio'}" ({prevRodorricaSnap.rows.length} registros)?
                         </div>
                         <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>
@@ -472,7 +472,7 @@ export default function DescargaView({ ctx }) {
                         <div style={{display:"flex",gap:8,alignItems:"center"}}>
                           <input value={rodoUndoInput} onChange={e=>setRodoUndoInput(e.target.value)}
                             placeholder="sim" autoFocus
-                            style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${rodoUndoInput==="sim"?t.danger||"#f6465d":t.borda}`,
+                            style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${rodoUndoInput==="sim"?t.danger||"var(--cat-red)":t.borda}`,
                               background:t.bg,color:t.txt,width:80,fontFamily:"inherit"}}/>
                           <button disabled={rodoUndoInput!=="sim"}
                             onClick={()=>{
@@ -484,9 +484,9 @@ export default function DescargaView({ ctx }) {
                               setRodoUndoInput("");
                             }}
                             style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
-                              background:rodoUndoInput==="sim"?(t.danger||"#f6465d"):"transparent",
+                              background:rodoUndoInput==="sim"?(t.danger||"var(--cat-red)"):"transparent",
                               color:rodoUndoInput==="sim"?"#fff":(t.txt2||"#888"),
-                              border:`1px solid ${rodoUndoInput==="sim"?(t.danger||"#f6465d"):t.borda}`}}>
+                              border:`1px solid ${rodoUndoInput==="sim"?(t.danger||"var(--cat-red)"):t.borda}`}}>
                             Confirmar
                           </button>
                           <button onClick={()=>{setRodoUndoConfirm(false);setRodoUndoInput("");}}
@@ -534,14 +534,14 @@ export default function DescargaView({ ctx }) {
                     {rodorricaResultado && (()=>{
                       const {totais,linhas,syncOk} = rodorricaResultado;
                       const fmtR = v => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-                      const STATUS_COR = {BATE:"#02c076",MAIOR:"#f6465d",MENOR:"#f0b90b",SEM_APP:"#ff9800",FORA_PLAN:"#9c27b0",SEM_DADOS:"#848e9c",SEM_SYNC:"#3b82f6",INEXISTENTE:"#848e9c"};
+                      const STATUS_COR = {BATE:"var(--cat-green)",MAIOR:"var(--cat-red)",MENOR:"var(--cat-gold)",SEM_APP:"var(--cat-orange)",FORA_PLAN:"var(--cat-purple)",SEM_DADOS:"var(--cat-gray)",SEM_SYNC:"var(--accent)",INEXISTENTE:"var(--cat-gray)"};
                       const STATUS_LABEL = {BATE:"✓ BATE",MAIOR:"↑ MAIOR",MENOR:"↓ MENOR",SEM_APP:"— SEM PAG.",FORA_PLAN:"◊ FORA PLAN.",SEM_DADOS:"? SEM DT",SEM_SYNC:"↻ SEM SYNC",INEXISTENTE:"∅"};
                       const KPIS = [
-                        {k:"BATE",l:"Bate",c:"#02c076",bg:"rgba(2,192,118,.08)",v:totais.bate},
-                        {k:"MAIOR",l:"Planilha Maior",c:"#f6465d",bg:"rgba(246,70,93,.08)",v:totais.maior},
-                        {k:"MENOR",l:"Planilha Menor",c:"#f0b90b",bg:"rgba(240,185,11,.08)",v:totais.menor},
-                        {k:"SEM_APP",l:"Sem Pag.App",c:"#ff9800",bg:"rgba(255,152,0,.08)",v:totais.semApp},
-                        {k:"SEM_DADOS",l:"Sem DT",c:"#848e9c",bg:t.card2,v:totais.semDados},
+                        {k:"BATE",l:"Bate",c:"var(--cat-green)",bg:"rgba(2,192,118,.08)",v:totais.bate},
+                        {k:"MAIOR",l:"Planilha Maior",c:"var(--cat-red)",bg:"rgba(246,70,93,.08)",v:totais.maior},
+                        {k:"MENOR",l:"Planilha Menor",c:"var(--cat-gold)",bg:"rgba(240,185,11,.08)",v:totais.menor},
+                        {k:"SEM_APP",l:"Sem Pag.App",c:"var(--cat-orange)",bg:"rgba(255,152,0,.08)",v:totais.semApp},
+                        {k:"SEM_DADOS",l:"Sem DT",c:"var(--cat-gray)",bg:t.card2,v:totais.semDados},
                       ];
                       const _pIni = rodorricaPeriodoIni ? new Date(rodorricaPeriodoIni+"T00:00:00") : null;
                       const _pFim = rodorricaPeriodoFim ? new Date(rodorricaPeriodoFim+"T23:59:59") : null;
@@ -551,7 +551,7 @@ export default function DescargaView({ ctx }) {
                         return (!_pIni||dc>=_pIni)&&(!_pFim||dc<=_pFim);
                       }) : linhas;
                       const filtrado = rodorricaFiltro === "todos" ? linhasPeriodo : linhasPeriodo.filter(x=>x.conf===rodorricaFiltro);
-                      const _confCor = c => ({BATE:"#02c076",MAIOR:"#f6465d",MENOR:"#f0b90b",SEM_APP:"#ff9800",FORA_PLAN:"#9c27b0",SEM_DADOS:"#848e9c",SEM_SYNC:"#3b82f6",INEXISTENTE:"#848e9c"}[c]||t.txt2);
+                      const _confCor = c => ({BATE:"var(--cat-green)",MAIOR:"var(--cat-red)",MENOR:"var(--cat-gold)",SEM_APP:"var(--cat-orange)",FORA_PLAN:"var(--cat-purple)",SEM_DADOS:"var(--cat-gray)",SEM_SYNC:"var(--accent)",INEXISTENTE:"var(--cat-gray)"}[c]||t.txt2);
                       const _confLbl = c => ({BATE:"✓",MAIOR:"↑",MENOR:"↓",SEM_APP:"—",FORA_PLAN:"◊",SEM_DADOS:"?",SEM_SYNC:"↻",INEXISTENTE:"∅"}[c]||c);
                       return (
                         <div>
@@ -567,13 +567,13 @@ export default function DescargaView({ ctx }) {
                           </div>
                           {/* Alertas de tipo */}
                           {(totais.semStrech>0||totais.semDescarga>0)&&(<div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
-                            {totais.semStrech>0&&<span style={{fontSize:10,background:"rgba(246,70,93,.1)",border:"1px solid #f6465d44",borderRadius:6,padding:"3px 10px",color:"#f6465d"}}>⚠ {totais.semStrech} NFs com Descarga sem Stretch</span>}
-                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(240,185,11,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"#f0b90b"}}>⚠ {totais.semDescarga} NFs com Stretch sem Descarga</span>}
+                            {totais.semStrech>0&&<span style={{fontSize:10,background:"rgba(246,70,93,.1)",border:"1px solid #f6465d44",borderRadius:6,padding:"3px 10px",color:"var(--cat-red)"}}>⚠ {totais.semStrech} NFs com Descarga sem Stretch</span>}
+                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(240,185,11,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"var(--cat-gold)"}}>⚠ {totais.semDescarga} NFs com Stretch sem Descarga</span>}
                           </div>)}
                           {/* Totais */}
                           <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"7px 12px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10}}>
                             <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8}}>Risco:</span>
-                            <span style={{fontSize:13,fontWeight:700,color:"#f6465d"}}>{fmtR(totais.valorEmRisco)}</span>
+                            <span style={{fontSize:13,fontWeight:700,color:"var(--cat-red)"}}>{fmtR(totais.valorEmRisco)}</span>
                             <span style={{fontSize:10,color:t.txt2,marginLeft:8}}>Planilha: <b style={{color:t.txt}}>{fmtR(totais.totalPlanilha)}</b></span>
                             <span style={{fontSize:10,color:t.txt2}}>App: <b style={{color:t.txt}}>{fmtR(totais.totalApp)}</b></span>
                             <button onClick={()=>setRodorricaPeriodoModal(true)} style={{marginLeft:"auto",fontSize:9,padding:"3px 10px",borderRadius:6,border:`1.5px solid ${t.ouro}`,background:"transparent",color:t.ouro,cursor:"pointer",fontFamily:"inherit"}}>📅 Período</button>
@@ -582,7 +582,7 @@ export default function DescargaView({ ctx }) {
                           </div>
                           {/* Tabela */}
                           <div style={{overflowX:"auto"}}>
-                            {!syncOk&&<div style={{background:"rgba(59,130,246,.1)",border:"1.5px solid rgba(59,130,246,.3)",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:10,color:"#3b82f6",lineHeight:1.6}}>
+                            {!syncOk&&<div style={{background:"rgba(59,130,246,.1)",border:"1.5px solid rgba(59,130,246,.3)",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:10,color:"var(--accent)",lineHeight:1.6}}>
                               ⚠️ <strong>Colunas PAG. DESCARGA / PAG. STRETCH ainda não sincronizadas.</strong><br/>
                               Atualize o Apps Script (adicione os campos ao <code>mapearColuna</code>) e rode uma sincronização para liberar a comparação completa.
                             </div>}
@@ -600,7 +600,7 @@ export default function DescargaView({ ctx }) {
                                   const cDesc = _confCor(row.confDesc); const cStr = _confCor(row.confStr);
                                   return (
                                     <tr key={i} style={{borderBottom:`1px solid ${t.borda}`,background:i%2===0?t.bg:t.card}}>
-                                      <td style={{padding:"5px 8px",fontWeight:700,color:t.ouro,whiteSpace:"nowrap"}}>{row.dt}{row.semStrech&&<span title="Sem Stretch" style={{marginLeft:4,fontSize:8,color:"#f6465d"}}>▲</span>}{row.semDescarga&&<span title="Sem Descarga" style={{marginLeft:4,fontSize:8,color:"#f0b90b"}}>▲</span>}</td>
+                                      <td style={{padding:"5px 8px",fontWeight:700,color:t.ouro,whiteSpace:"nowrap"}}>{row.dt}{row.semStrech&&<span title="Sem Stretch" style={{marginLeft:4,fontSize:8,color:"var(--cat-red)"}}>▲</span>}{row.semDescarga&&<span title="Sem Descarga" style={{marginLeft:4,fontSize:8,color:"var(--cat-gold)"}}>▲</span>}</td>
                                       <td style={{padding:"5px 8px",color:t.azulLt,whiteSpace:"nowrap",fontSize:10}}>{row.nf||"—"}</td>
                                       <td style={{padding:"5px 8px",color:t.txt2,whiteSpace:"nowrap",fontSize:10}}>{row.dtCarregamento||"—"}</td>
                                       <td style={{padding:"5px 8px",color:t.txt,maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:10}}>{row.cliente||"—"}</td>

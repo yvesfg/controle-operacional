@@ -56,7 +56,7 @@ export default function ModalDetalhe({ ctx }) {
     {ico:"📅",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
     {ico:"🏁",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
   ];
-  const tipoColors = {info:"#1677ff", alerta:t.danger, status:t.verde, falta:"#f6465d", avaria:"#ff9800", dev_total:"#9c27b0", dev_parcial:"#e91e63", desacordo:"#f0b90b", rod:"#ef5350", sobra:"#00e096"};
+  const tipoColors = {info:"var(--cat-blue)", alerta:t.danger, status:t.verde, falta:"var(--cat-red)", avaria:"var(--cat-orange)", dev_total:"var(--cat-purple)", dev_parcial:"var(--cat-pink)", desacordo:"var(--cat-gold)", rod:"var(--cat-coral)", sobra:"var(--cat-mint)"};
   const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
   const ocorrSinteticas = [
     ...(r.obs_chegada  ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.data_obs_chegada||r.chegada||""}]  : []),

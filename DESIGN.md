@@ -75,6 +75,10 @@ A mesma situação deve ter a mesma cor em todo widget. Use **só** estes tokens
 
 Não introduza novos hexes de status no JSX (ver leak conhecido abaixo). `--yellow` (`#eab308`) existe por retrocompat; para "atenção" prefira `--orange`/`--color-warning`.
 
+### Categorias — `--cat-*` (não confundir com status)
+Paleta para **mapas multi-estado** que precisam de mais hues que os 4 status (tipos de ocorrência, reconciliação RODORRICA, badges, tiles). Os mapas (`tipoColors`, `TIPOS`/`TIPOS_NFD`, `STATUS_COR`/`_confCor`, `BADGE_COLORS`) apontam pra estes tokens — mude o token e propaga em todos:
+`--cat-blue` `--cat-red` `--cat-coral` `--cat-orange` `--cat-amber` `--cat-gold` `--cat-purple` `--cat-pink` `--cat-green` `--cat-mint` `--cat-gray`. Dark = valores históricos (refactor sem mudança visual); light = variantes mais escuras p/ contraste em branco. **Status** (prazo/atraso/pendente/crítico) continua usando `--green/--orange/--red/--cyan`; `--cat-*` é só para diferenciação de categoria.
+
 ### Bordas / chips / sombras
 - Bordas: `--border #1a2436`, `--border2 #243348`, `--color-border-subtle rgba(255,255,255,.04)`.
 - Chips de status: `--chip-{success,danger,warning,info,neutral}-{bg,border,text}` (bg sutil + borda semântica).

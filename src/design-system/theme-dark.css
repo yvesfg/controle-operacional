@@ -64,6 +64,21 @@
   --color-info-bg        : rgba(6,182,212,.08);
   --color-info-border    : rgba(6,182,212,.20);
 
+  /* ── Paleta categórica — para mapas multi-estado (tipos de ocorrência,
+        reconciliação RODORRICA, badges). NÃO são status; são categorias.
+        Dark = valores históricos (refactor sem mudança visual). ───────── */
+  --cat-blue   : #1677ff;
+  --cat-red    : #f6465d;
+  --cat-coral  : #ef5350;
+  --cat-orange : #ff9800;
+  --cat-amber  : #E8820C;
+  --cat-gold   : #f0b90b;
+  --cat-purple : #9c27b0;
+  --cat-pink   : #e91e63;
+  --cat-green  : #02c076;
+  --cat-mint   : #00e096;
+  --cat-gray   : #848e9c;
+
   /* ── Chips de status — bg sutil + borda semântica ───────────── */
   /* border + bg sutil comunica status melhor que fundo sólido     */
   --chip-success-bg    : rgba(16,185,129,.08);
