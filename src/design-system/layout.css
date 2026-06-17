@@ -765,6 +765,34 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   margin-left: var(--sidebar-glass-w) !important;
 }
 
+/* ── Dark glass: hover-expand (sobrescreve o bloco glass acima) ── */
+@media (min-width: 768px) {
+  [data-theme="dark"] .co-sidebar:hover {
+    width: 220px !important;
+    box-shadow: 6px 0 32px rgba(0,0,0,.55) !important;
+  }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo {
+    justify-content: flex-start !important;
+    padding: 8px 12px 8px 10px !important; /* 10px = (56px sidebar - 36px icon) / 2 → ícone não se move */
+    gap: 10px !important;
+  }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo-name,
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo-sub  { display: block !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__item       { justify-content: flex-start !important; padding: 8px 10px !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__item-lbl   { display: block !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__badge-pill { display: block !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__badge-dot  { display: none  !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__section-lbl { display: block !important; font-size: 9px !important; letter-spacing: 0.1em !important; padding: 14px 10px 6px !important; white-space: nowrap !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__section-line { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer      { align-items: stretch !important; flex-direction: column !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer-item { justify-content: flex-start !important; padding: 7px 10px !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer-lbl  { display: block !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__user        { justify-content: flex-start !important; flex-direction: row !important; padding: 8px 10px !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__user-info   { display: flex !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logout-btn  { display: flex !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__toggle      { display: none !important; }
+}
+
 /* ════════════════════════════════════════════════════════════════════
    ROW CARDS — PlanilhaView nova UI (2026-06)
    ════════════════════════════════════════════════════════════════════ */
