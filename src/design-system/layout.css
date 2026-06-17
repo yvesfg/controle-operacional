@@ -1014,3 +1014,25 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
     margin-left: 0 !important;
   }
 }
+
+/* ── Desktop: travar sidebar glass no hover — desabilita expand-on-hover ── */
+@media (min-width: 768px) {
+  [data-theme="dark"] .co-sidebar:hover {
+    width: var(--sidebar-glass-w) !important;
+    box-shadow: none !important;
+  }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo { justify-content: center !important; padding: 14px 0 !important; gap: 0 !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo-name,
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo-sub    { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__item         { justify-content: center !important; padding: 8px !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__item-lbl     { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__badge-pill   { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__section-lbl  { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer        { align-items: center !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer-item  { justify-content: center !important; padding: 7px !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer-lbl   { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__user          { justify-content: center !important; padding: 4px 0 !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__user-info    { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logout-btn   { display: none !important; }
+  [data-theme="dark"] .co-sidebar:hover .co-sidebar__toggle       { display: none !important; }
+}
