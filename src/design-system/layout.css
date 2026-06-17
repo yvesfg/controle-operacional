@@ -992,3 +992,25 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 [data-theme="light"] .pv-toolbar,
 [data-theme="light"] .pv-kpi-strip,
 [data-theme="light"] .pv-table-wrap { /* herda estilos existentes via fallback */ }
+
+/* ── Mobile: restaurar sidebar overlay com labels (max-width 767px) ── */
+@media (max-width: 767px) {
+  [data-theme="dark"] .co-sidebar {
+    width: 220px !important;
+  }
+  [data-theme="dark"] .co-sidebar .co-sidebar__item-lbl,
+  [data-theme="dark"] .co-sidebar .co-sidebar__logo-name,
+  [data-theme="dark"] .co-sidebar .co-sidebar__logo-sub {
+    display: inline !important;
+  }
+  [data-theme="dark"] .co-sidebar .co-sidebar__section-lbl {
+    display: block !important;
+  }
+  [data-theme="dark"] .co-sidebar .co-sidebar__item {
+    justify-content: flex-start;
+    padding: 8px 10px;
+  }
+  [data-theme="dark"] .co-main {
+    margin-left: 0 !important;
+  }
+}
