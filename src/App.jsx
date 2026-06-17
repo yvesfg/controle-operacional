@@ -672,6 +672,10 @@ export default function App() {
     // Limpa hash da URL (evita reprocessar no reload)
     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
 
+    // Guardar tokens Supabase Auth para SSO no hub
+    const refreshTokenOAuth = params.get("refresh_token") || "";
+    saveJSON("co_supa_tokens", { access_token: accessToken, refresh_token: refreshTokenOAuth });
+
     const payload = decodeJWT(accessToken);
     if (!payload?.email) { setAuthMsg({t:"err",m:"❌ Email não encontrado no token OAuth"}); return; }
 
@@ -1099,6 +1103,19 @@ export default function App() {
     const conn2 = getConexao();
     if (conn2) {
       try {
+        // Tentar Supabase Auth com mesmas credenciais (para SSO no hub — não bloqueia)
+        try {
+          const _surl = conn2.url.replace(/\/$/,"");
+          const _sr = await fetch(`${_surl}/auth/v1/token?grant_type=password`, {
+            method:"POST",
+            headers:{"Content-Type":"application/json","apikey":conn2.key},
+            body:JSON.stringify({email:authEmail.trim().toLowerCase(),password:authSenha})
+          });
+          if (_sr.ok) {
+            const _st = await _sr.json();
+            if (_st.access_token) saveJSON("co_supa_tokens",{access_token:_st.access_token,refresh_token:_st.refresh_token||""});
+          }
+        } catch {}
         // RPC: hash calculado aqui, verificação feita no servidor — senha nunca retorna ao cliente
         const hashInformado = await hashSenha(authSenha);
         const remote = await supaFetch(conn2.url, conn2.key, "POST",
@@ -1168,6 +1185,7 @@ export default function App() {
     setBasesPermitidas([]);
     setBaseAtual(null);
     setHubScreen(null);
+    localStorage.removeItem("co_supa_tokens");
   };
 
   // Salvar nova senha no primeiro login (local + Supabase)
@@ -2195,7 +2213,16 @@ export default function App() {
             const on = m.ativo;
             return (
               <button key={m.slug} disabled={!on}
-                onClick={()=>{ if(m.slug==="controle_op") setHubScreen("controle_op"); else if(m.slug==="frota") window.open(FROTA_URL,"_blank"); }}
+                onClick={()=>{
+                  if(m.slug==="controle_op") setHubScreen("controle_op");
+                  else if(m.slug==="frota") {
+                    const _tk = loadJSON("co_supa_tokens", null);
+                    const _dest = (_tk && _tk.access_token)
+                      ? `${FROTA_URL}/auth/hub?access_token=${encodeURIComponent(_tk.access_token)}&refresh_token=${encodeURIComponent(_tk.refresh_token||"")}`
+                      : FROTA_URL;
+                    window.open(_dest, "_blank");
+                  }
+                }}
                 style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,padding:"20px 10px 18px",background:on?t.card:t.card2,
                   border:`1.5px solid ${on?t.borda2||t.borda:t.borda}`,borderRadius:14,cursor:on?"pointer":"not-allowed",
                   opacity:on?1:.4,transition:"border-color .18s, transform .18s, background .18s",position:"relative",overflow:"hidden"}}
