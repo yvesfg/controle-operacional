@@ -1,5 +1,5 @@
 import React from "react";
-import { TABLE_USUARIOS, PERMS_PADRAO, PERMS_LISTA } from "../constants.js";
+import { TABLE_USUARIOS, PERMS_PADRAO, PERMS_LISTA, BASES } from "../constants.js";
 import { hashSenha, saveJSON, clickable } from "../utils.js";
 import { supaFetch } from "../supabase.js";
 
@@ -66,7 +66,7 @@ export default function ModalUsuario({ ctx }) {
                 </div>
               </div>
               {/* Permissões */}
-              <div>
+              <div style={{marginBottom:14}}>
                 <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:8}}>Permissões</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
                   {PERMS_LISTA.filter(p=>p.key!=="config_db"&&p.key!=="usuarios").map(p => {
@@ -82,6 +82,34 @@ export default function ModalUsuario({ ctx }) {
                     );
                   })}
                 </div>
+              </div>
+              {/* Bases Permitidas */}
+              <div>
+                <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:8}}>Bases Permitidas</label>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {Object.values(BASES).map(base => {
+                    const bases = formData.bases_permitidas || [];
+                    const ativo = bases.includes(base.id);
+                    return (
+                      <div key={base.id} {...clickable(()=>setFormData(prev=>{
+                        const cur = prev.bases_permitidas||[];
+                        return {...prev, bases_permitidas: ativo ? cur.filter(b=>b!==base.id) : [...cur, base.id]};
+                      }))}
+                        style={{display:"flex",alignItems:"center",gap:10,padding:"12px 12px",borderRadius:8,border:`1px solid ${ativo?t.azul:t.borda}`,cursor:"pointer",background:ativo?`rgba(var(--color-info-rgb,33,150,243),.06)`:"transparent"}}>
+                        <div style={{width:18,height:18,borderRadius:5,background:ativo?t.azul:t.borda2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
+                          {ativo&&<span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>}
+                        </div>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:700,color:ativo?t.txt:t.txt2}}>{base.label}</div>
+                          <div style={{fontSize:9,color:t.txt2,marginTop:1}}>Tabela: {base.table}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {(!formData.bases_permitidas || formData.bases_permitidas.length === 0) && (
+                  <p style={{fontSize:9,color:t.danger,marginTop:6}}>⚠️ Nenhuma base selecionada — usuário não verá dados operacionais.</p>
+                )}
               </div>
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
