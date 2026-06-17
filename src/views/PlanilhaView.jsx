@@ -69,6 +69,40 @@ function parseYMfiltAvb(r) {
   return null;
 }
 
+// ── Glass helpers ────────────────────────────────────────────────────────────
+function usePvExpanded() {
+  const [expanded, setExpanded] = React.useState(() => new Set());
+  const toggle = (id) => setExpanded(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  return [expanded, toggle];
+}
+
+function PvBadge({ status }) {
+  const s = (status || "").toLowerCase();
+  let cls = "pv-badge pv-badge-default";
+  if (s.includes("ok") || s.includes("concluí") || s.includes("normal")) cls = "pv-badge pv-badge-ok";
+  else if (s.includes("pend") || s.includes("aguard")) cls = "pv-badge pv-badge-pend";
+  else if (s.includes("atraso") || s.includes("atrasad")) cls = "pv-badge pv-badge-atraso";
+  else if (s.includes("trânsito") || s.includes("transito") || s.includes("viagem")) cls = "pv-badge pv-badge-transito";
+  return <span className={cls}>● {status || "—"}</span>;
+}
+
+function fmtR(v) {
+  const n = parseFloat(String(v || "0").replace(/\./g,"").replace(",","."));
+  if (isNaN(n)) return "—";
+  return "R$" + n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function calcMargem(row) {
+  const cte = parseFloat(String(row.vl_cte || row.cte || 0).replace(/\./g,"").replace(",",".")) || 0;
+  const cont = parseFloat(String(row.vl_contrato || row.contrato || 0).replace(/\./g,"").replace(",",".")) || 0;
+  if (!cte && !cont) return null;
+  return cte - cont;
+}
+
 export default function PlanilhaView({ ctx }) {
   const {
     DADOS,
@@ -164,6 +198,13 @@ export default function PlanilhaView({ ctx }) {
   const inicio       = (paginaAtual - 1) * REGISTROS_POR_PAGINA;
   const dadosExibir  = dadosSortados.slice(inicio, inicio + REGISTROS_POR_PAGINA);
 
+  const [pvExpanded, pvToggle] = usePvExpanded();
+
+  const totalViagens = dadosFiltrados.length;
+  const totalMargem = dadosFiltrados.reduce((acc, r) => { const m = calcMargem(r); return acc + (m || 0); }, 0);
+  const pendentes = dadosFiltrados.filter(r => { const s = (r.status || "").toLowerCase(); return s.includes("pend") || s.includes("aguard") || s.includes("atraso"); }).length;
+  const handleEditar = (row, e) => { e.stopPropagation(); if (abrirDetalhe) abrirDetalhe(row); };
+
   const toggleSort = k => {
     if (planilhaSortKey === k) {
       setPlanilhaSortDir(d => d === "asc" ? "desc" : "asc");
@@ -175,157 +216,73 @@ export default function PlanilhaView({ ctx }) {
 
   const temFiltro = planilhaFiltroAno || planilhaFiltroMes || planilhaFiltroOrigem !== "todas" || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca || planilhaFiltroStatus;
 
-  // ── Styles locais usando CSS variables ───────────────────────────────────
-  const selectStyle = active => ({
-    fontSize: 11, fontWeight: 700, padding: "4px 8px",
-    borderRadius: 6, fontFamily: "var(--font-heading)",
-    border: `1.5px solid ${active ? "var(--accent)" : "var(--border)"}`,
-    background: active ? "var(--accent2, rgba(124,58,237,0.1))" : "var(--card)",
-    color: active ? "var(--accent)" : "var(--text)", cursor: "pointer",
-  });
-
-  const paginaBtnStyle = disabled => ({
-    padding: "4px 8px", fontSize: 9,
-    border: `1px solid ${disabled ? "var(--border)" : "var(--accent)"}`,
-    borderRadius: 4, cursor: disabled ? "not-allowed" : "pointer",
-    background: "transparent",
-    color: disabled ? "var(--text3)" : "var(--accent)",
-    fontWeight: 600,
-  });
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 130px)" }}>
-
-      {/* ── Barra de filtros ── */}
-      <div className="co-filter-bar" style={{flexShrink:0}}>
-        <span className="co-filter-bar__label">Filtrar:</span>
-
-        <select value={planilhaFiltroAno}
+    <div className="pv-shell">
+      {/* ── Toolbar ── */}
+      <div className="pv-toolbar">
+        {baseAtual && (
+          <span className="pv-filter-pill active">{baseAtual.nome || baseAtual.label || baseAtual.id} ▾</span>
+        )}
+        <select
+          className="pv-filter-pill"
+          value={planilhaFiltroAno || ""}
           onChange={e => { setPlanilhaFiltroAno(e.target.value); setPlanilhaPagina(1); }}
-          style={selectStyle(!!planilhaFiltroAno)}>
-          <option value="">Todos os Anos</option>
-          {anosDisp.map(a => <option key={a} value={a}>{a}</option>)}
+          style={{ appearance: "none", cursor: "pointer" }}
+        >
+          <option value="">Todos os anos</option>
+          {anosDisp.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
-
-        <select value={planilhaFiltroMes}
+        <select
+          className="pv-filter-pill"
+          value={planilhaFiltroMes || ""}
           onChange={e => { setPlanilhaFiltroMes(e.target.value); setPlanilhaPagina(1); }}
-          style={selectStyle(!!planilhaFiltroMes)}>
-          <option value="">Todos os Meses</option>
+          style={{ appearance: "none", cursor: "pointer" }}
+        >
+          <option value="">Todos os meses</option>
           {mesesDisp.map(m => <option key={m} value={m}>{MESES_PT[m] || m}</option>)}
         </select>
-
-        <select value={planilhaFiltroOrigem}
+        <select
+          className="pv-filter-pill"
+          value={planilhaFiltroOrigem || "todas"}
           onChange={e => { setPlanilhaFiltroOrigem(e.target.value); setPlanilhaPagina(1); }}
-          style={{ ...selectStyle(planilhaFiltroOrigem !== "todas"), maxWidth: 200 }}>
-          <option value="todas">Todas as Origens</option>
+          style={{ appearance: "none", cursor: "pointer" }}
+        >
+          <option value="todas">Todas as origens</option>
           {origensDisp.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
-
-        {/* Filtros exclusivos AVB */}
         {isAvb && (() => {
           const contrats = [...new Set(DADOS.map(r=>(r.contratante||"").trim()).filter(Boolean))].sort();
           const gerenc   = [...new Set(DADOS.map(r=>(r.gerenciadora||"").trim()).filter(Boolean))].sort();
           return (<>
-            <select value={planilhaFiltroContratante||""}
-              onChange={e=>{setPlanilhaFiltroContratante(e.target.value);setPlanilhaPagina(1);}}
-              style={selectStyle(!!planilhaFiltroContratante)}>
+            <select className="pv-filter-pill" value={planilhaFiltroContratante||""} onChange={e=>{setPlanilhaFiltroContratante(e.target.value);setPlanilhaPagina(1);}} style={{appearance:"none",cursor:"pointer"}}>
               <option value="">Contratante: Todos</option>
               {contrats.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
-            <select value={planilhaFiltroGerenciadora||""}
-              onChange={e=>{setPlanilhaFiltroGerenciadora(e.target.value);setPlanilhaPagina(1);}}
-              style={selectStyle(!!planilhaFiltroGerenciadora)}>
+            <select className="pv-filter-pill" value={planilhaFiltroGerenciadora||""} onChange={e=>{setPlanilhaFiltroGerenciadora(e.target.value);setPlanilhaPagina(1);}} style={{appearance:"none",cursor:"pointer"}}>
               <option value="">Gerenc.: Todas</option>
               {gerenc.map(g=><option key={g} value={g}>{g}</option>)}
             </select>
           </>);
         })()}
-
-        <span style={{ fontSize:9, color:"var(--text3)", fontFamily:"var(--font-mono)", letterSpacing:"0.08em", textTransform:"uppercase", marginLeft:4 }}>De:</span>
-        <input type="date" value={planilhaFiltroDataDe}
-          onChange={e=>{ setPlanilhaFiltroDataDe(e.target.value); setPlanilhaPagina(1); }}
-          style={{ fontSize:11, fontWeight:600, padding:"4px 8px", borderRadius:6,
-            border:`1.5px solid ${planilhaFiltroDataDe?"var(--accent)":"var(--border)"}`,
-            background: planilhaFiltroDataDe?"var(--accent2,rgba(124,58,237,0.1))":"var(--card)",
-            color:"var(--text)", height:28, width:130, cursor:"pointer" }} />
-        <span style={{ fontSize:10, color:"var(--text3)" }}>até</span>
-        <input type="date" value={planilhaFiltroDataAte}
-          onChange={e=>{ setPlanilhaFiltroDataAte(e.target.value); setPlanilhaPagina(1); }}
-          style={{ fontSize:11, fontWeight:600, padding:"4px 8px", borderRadius:6,
-            border:`1.5px solid ${planilhaFiltroDataAte?"var(--accent)":"var(--border)"}`,
-            background: planilhaFiltroDataAte?"var(--accent2,rgba(124,58,237,0.1))":"var(--card)",
-            color:"var(--text)", height:28, width:130, cursor:"pointer" }} />
-
         <input
           type="text"
-          placeholder="Buscar DT, Placa ou Nome..."
+          placeholder="Buscar..."
           value={planilhaBusca}
           onChange={e => { setPlanilhaBusca(e.target.value); setPlanilhaPagina(1); }}
-          style={{
-            fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6,
-            border: `1.5px solid ${planilhaBusca ? "var(--accent)" : "var(--border)"}`,
-            background: planilhaBusca ? "var(--accent2, rgba(124,58,237,0.1))" : "var(--card)",
-            color: "var(--text)", height: 28, width: 210, outline: "none",
-            fontFamily: "var(--font-heading)",
-          }}
+          className="pv-filter-pill"
+          style={{ minWidth: 140, outline: "none" }}
         />
-
         {planilhaFiltroStatus && (
-          <span style={{display:"flex",alignItems:"center",gap:4,fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:6,background:"rgba(124,58,237,0.12)",border:"1px solid rgba(124,58,237,0.3)",color:"var(--accent)",fontFamily:"var(--font-heading)"}}>
+          <span className="pv-filter-pill active" style={{ display: "flex", alignItems: "center", gap: 4 }}>
             Status: {planilhaFiltroStatus}
-            <button onClick={()=>{setPlanilhaFiltroStatus("");setPlanilhaPagina(1);}} style={{background:"none",border:"none",cursor:"pointer",color:"var(--accent)",fontSize:11,lineHeight:1,padding:0,marginLeft:2}}>×</button>
+            <button onClick={() => { setPlanilhaFiltroStatus(""); setPlanilhaPagina(1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 11, padding: 0, marginLeft: 2 }}>×</button>
           </span>
         )}
         {temFiltro && (
-          <button onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); if(setPlanilhaFiltroContratante)setPlanilhaFiltroContratante(""); if(setPlanilhaFiltroGerenciadora)setPlanilhaFiltroGerenciadora(""); setPlanilhaPagina(1); }}
-            style={{
-              fontSize: 9, padding: "4px 8px", borderRadius: 6,
-              border: "1px solid var(--border)", background: "transparent",
-              color: "var(--text2)", cursor: "pointer",
-            }}>
+          <button className="pv-filter-pill" onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); if(setPlanilhaFiltroContratante)setPlanilhaFiltroContratante(""); if(setPlanilhaFiltroGerenciadora)setPlanilhaFiltroGerenciadora(""); setPlanilhaPagina(1); }}>
             ✕ Limpar
           </button>
         )}
-
-        <span style={{
-          marginLeft: "auto", fontSize: 10, fontFamily: "var(--font-mono)",
-          color: "var(--text2)", fontWeight: 600,
-        }}>
-          {dadosFiltrados.length} de {DADOS.length} registros
-        </span>
-      </div>
-
-      {/* ── Toolbar: paginação + exportar ── */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "8px 12px",
-        background: "var(--surface)",
-        borderBottom: "1px solid var(--border)",
-        flexShrink: 0, flexWrap: "wrap", gap: 8,
-      }}>
-        <span style={{
-          fontSize: 10, fontFamily: "var(--font-mono)",
-          color: "var(--text2)", fontWeight: 600, letterSpacing: "0.02em",
-        }}>
-          {dadosFiltrados.length} registros · pág. {paginaAtual}/{totalPaginas}
-          {planilhaSortKey && (
-            <span style={{ color: "var(--accent)", marginLeft: 8 }}>
-              ord. por {planilhaSortKey} {planilhaSortDir === "asc" ? "↑" : "↓"}
-              <button onClick={() => { setPlanilhaSortKey(null); setPlanilhaSortDir("asc"); }}
-                style={{ background: "none", border: "none", color: "var(--text3)", cursor: "pointer", fontSize: 10, padding: "0 3px" }}>
-                ✕
-              </button>
-            </span>
-          )}
-        </span>
-
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <button onClick={() => setPlanilhaPagina(1)}                      disabled={paginaAtual === 1}           style={paginaBtnStyle(paginaAtual === 1)}>⏮</button>
-          <button onClick={() => setPlanilhaPagina(p => Math.max(1, p-1))}  disabled={paginaAtual === 1}           style={paginaBtnStyle(paginaAtual === 1)}>◀</button>
-          <button onClick={() => setPlanilhaPagina(p => Math.min(totalPaginas, p+1))} disabled={paginaAtual === totalPaginas} style={paginaBtnStyle(paginaAtual === totalPaginas)}>▶</button>
-          <button onClick={() => setPlanilhaPagina(totalPaginas)}            disabled={paginaAtual === totalPaginas} style={paginaBtnStyle(paginaAtual === totalPaginas)}>⏭</button>
-        </div>
-
         {ExportMenu && (
           <ExportMenu
             dados={dadosFiltrados}
@@ -339,89 +296,110 @@ export default function PlanilhaView({ ctx }) {
             titulo="Planilha Operacional"
           />
         )}
+        <div className="pv-spacer" />
       </div>
 
-      {/* ── Tabela ── */}
-      <div style={{ flex: 1, overflowX: "auto", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-        <table className="ds-table ds-table--compact" style={{ tableLayout: "fixed", minWidth: 480 }}>
-          <colgroup>
-            {activeCols.map(c => <col key={c.k} style={{ width: c.w }} />)}
-          </colgroup>
-          <thead>
-            <tr style={{ background: "var(--surface)" }}>
-              {activeCols.map(c => {
-                const ativo = planilhaSortKey === c.k;
-                return (
-                  <th key={c.k}
-                    onClick={() => toggleSort(c.k)}
-                    title={`Ordenar por ${c.h}`}
-                    style={{
-                      padding: "9px 6px", textAlign: "center",
-                      fontSize: 9, fontFamily: "var(--font-mono)",
-                      letterSpacing: "0.06em", textTransform: "uppercase",
-                      color: ativo ? "var(--accent)" : "var(--text3)",
-                      borderBottom: `2px solid ${ativo ? "var(--accent)" : "var(--border)"}`,
-                      whiteSpace: "nowrap", position: "sticky", top: 0, zIndex: 1,
-                      background: "var(--surface)",
-                      overflow: "hidden", textOverflow: "ellipsis",
-                      cursor: "pointer", userSelect: "none",
-                      transition: "color 0.15s, border-color 0.15s",
-                      fontWeight: 400,
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                      {c.h}
-                      <span style={{ fontSize: 9, lineHeight: 1, opacity: ativo ? 1 : 0.35 }}>
-                        {ativo ? (planilhaSortDir === "asc" ? "▲" : "▼") : "⇅"}
-                      </span>
-                    </span>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {dadosExibir.map((r, i) => (
-              <tr key={i}
-                style={{ cursor: "pointer", background: i % 2 === 0 ? "transparent" : "var(--bg)" }}
-                onClick={() => abrirDetalhe(r)}
-                onMouseOver={e => e.currentTarget.style.background = "var(--surface)"}
-                onMouseOut={e => e.currentTarget.style.background = i % 2 === 0 ? "transparent" : "var(--bg)"}
-              >
-                {activeCols.map(c => {
-                  let val = r[c.k];
-                  // AVB: placas agrupadas
-                  if (isAvb && c.k === "placa") val = [r.placa, r.placa2, r.placa3].filter(Boolean).join(" / ") || "—";
-                  // AVB: status badge simplificado
-                  const isStatus = c.k === "status";
-                  const isPend = isStatus && (val||"").toUpperCase() === "PENDENTE";
-                  const isCarreg = isStatus && (val||"").toUpperCase() === "CARREGADO";
-                  // AVB: flags documentais na coluna CTE/MDF
-                  const isCte = c.k === "cte", isMdf = c.k === "mdf";
-                  const hasVal = val && val !== "—" && val !== "";
-                  return (
-                    <td key={c.k} style={{
-                      padding: "7px 6px", borderBottom: "1px solid var(--border)",
-                      fontSize: c.k === "dt" ? 11 : 10, textAlign: "center",
-                      fontFamily: ["dt","codigo","placa","data_carr","data_agenda","cte","mdf","adiant","saldo","vl_contrato"].includes(c.k) ? "var(--font-mono)" : "inherit",
-                      color: c.k === "dt" ? "var(--accent)"
-                        : c.k === "placa" ? "var(--green, #22c55e)"
-                        : c.k === "data_carr" ? "var(--yellow, #eab308)"
-                        : (isCte || isMdf) ? (hasVal ? "var(--green, #22c55e)" : "var(--red, #ef4444)")
-                        : isStatus ? (isPend ? "var(--yellow, #eab308)" : isCarreg ? "var(--green, #22c55e)" : "var(--text2)")
-                        : "var(--text2)",
-                      fontWeight: c.k === "dt" ? 700 : 400,
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      letterSpacing: c.k === "dt" ? "0.06em" : 0,
-                    }} title={String(val||"")}>
-                      {(isCte || isMdf) ? (hasVal ? val : "✗") : (val || "—")}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* ── KPI strip ── */}
+      <div className="pv-kpi-strip">
+        <div className="pv-kpi-chip">
+          <span className="pv-kpi-value" style={{ color: "#a5b4fc" }}>{totalViagens}</span>
+          <span className="pv-kpi-label">viagens</span>
+        </div>
+        <div className="pv-kpi-chip">
+          <span className="pv-kpi-value" style={{ color: totalMargem >= 0 ? "#86efac" : "#fca5a5" }}>{fmtR(totalMargem)}</span>
+          <span className="pv-kpi-label">margem total</span>
+        </div>
+        <div className="pv-kpi-chip">
+          <span className="pv-kpi-value" style={{ color: pendentes > 0 ? "#fca5a5" : "#86efac" }}>{pendentes}</span>
+          <span className="pv-kpi-label">pendentes/atraso</span>
+        </div>
+        <div className="pv-kpi-chip">
+          <span className="pv-kpi-value" style={{ color: "#fde68a" }}>{dadosExibir.length}</span>
+          <span className="pv-kpi-label">nesta página</span>
+        </div>
+        <span style={{ marginLeft: "auto", fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text2)", fontWeight: 600 }}>
+          {dadosFiltrados.length} de {DADOS.length} registros · pág. {paginaAtual}/{totalPaginas}
+          {planilhaSortKey && (
+            <span style={{ color: "var(--accent)", marginLeft: 8 }}>
+              ord. por {planilhaSortKey} {planilhaSortDir === "asc" ? "↑" : "↓"}
+              <button onClick={() => { setPlanilhaSortKey(null); setPlanilhaSortDir("asc"); }} style={{ background: "none", border: "none", color: "var(--text3)", cursor: "pointer", fontSize: 10, padding: "0 3px" }}>✕</button>
+            </span>
+          )}
+        </span>
+      </div>
+
+      {/* ── Cards ── */}
+      <div className="pv-table-wrap">
+        <div className="pv-table-header">
+          <div className="pv-th" style={{ flex: "1.2" }}>Código</div>
+          <div className="pv-th" style={{ flex: "2" }}>Motorista</div>
+          <div className="pv-th" style={{ flex: "2" }}>Rota</div>
+          <div className="pv-th" style={{ flex: "1.2" }}>Status</div>
+          <div className="pv-th" style={{ flex: "1.2" }}>Margem</div>
+          <div className="pv-th" style={{ width: 28 }}></div>
+        </div>
+
+        <div className="pv-rows">
+          {dadosExibir.map((row, i) => {
+            const rowId = row.id || row.codigo || i;
+            const isExp = pvExpanded.has(rowId);
+            const margem = calcMargem(row);
+            const margemColor = margem == null ? "inherit" : margem >= 0 ? "#86efac" : "#fca5a5";
+            const rota = [row.origem, row.destino].filter(Boolean).join(" → ") || "—";
+            return (
+              <div key={rowId} className={`pv-row-card${isExp ? " expanded" : ""}`}>
+                <div className="pv-row-main" onClick={() => pvToggle(rowId)}>
+                  <div style={{ flex: "1.2", fontSize: 11, color: "#a5b4fc", fontFamily: "var(--font-mono)" }}>
+                    {row.codigo || row.dt || row.id || `#${i+1}`}
+                  </div>
+                  <div style={{ flex: 2, fontSize: 11, color: "rgba(255,255,255,0.75)" }}>
+                    {row.nome || row.motorista || "—"}
+                  </div>
+                  <div style={{ flex: 2, fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{rota}</div>
+                  <div style={{ flex: "1.2" }}><PvBadge status={row.status} /></div>
+                  <div style={{ flex: "1.2", fontSize: 11, fontWeight: 600, color: margemColor }}>
+                    {margem != null ? fmtR(margem) : "—"}
+                  </div>
+                  <div className="pv-toggle" style={{ width: 28, textAlign: "center" }}>
+                    {isExp ? "▴" : "▾"}
+                  </div>
+                </div>
+                <div className="pv-row-detail">
+                  {row.placa && <div className="pv-detail-chip"><div className="dc-label">Placa</div><div className="dc-val">{isAvb ? [row.placa,row.placa2,row.placa3].filter(Boolean).join(" / ") : row.placa}</div></div>}
+                  {(row.vl_cte || row.cte) && <div className="pv-detail-chip"><div className="dc-label">CTE</div><div className="dc-val">{fmtR(row.vl_cte || row.cte)}</div></div>}
+                  {(row.vl_contrato || row.contrato) && <div className="pv-detail-chip"><div className="dc-label">Contrato</div><div className="dc-val">{fmtR(row.vl_contrato || row.contrato)}</div></div>}
+                  {row.data_carr && <div className="pv-detail-chip"><div className="dc-label">Carreg.</div><div className="dc-val">{row.data_carr}</div></div>}
+                  {(row.data_desc || row.data_final) && <div className="pv-detail-chip"><div className="dc-label">Descarga</div><div className="dc-val">{row.data_desc || row.data_final}</div></div>}
+                  {row.contratante && <div className="pv-detail-chip"><div className="dc-label">Contratante</div><div className="dc-val">{row.contratante}</div></div>}
+                  {row.gerenciadora && <div className="pv-detail-chip"><div className="dc-label">Gerenc.</div><div className="dc-val">{row.gerenciadora}</div></div>}
+                  {row.mdf && <div className="pv-detail-chip"><div className="dc-label">MDF</div><div className="dc-val">{row.mdf}</div></div>}
+                  <div className="pv-detail-actions">
+                    {abrirDetalhe && (
+                      <button className="pv-btn-action primary" onClick={e => handleEditar(row, e)}>Editar</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {dadosExibir.length === 0 && (
+            <div style={{ padding: "40px 14px", textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 12 }}>
+              Nenhum registro encontrado
+            </div>
+          )}
+        </div>
+
+        {dadosFiltrados.length > REGISTROS_POR_PAGINA && (
+          <div className="pv-pagination">
+            <button className="pv-page-btn" disabled={paginaAtual <= 1} onClick={() => setPlanilhaPagina(1)}>⏮</button>
+            <button className="pv-page-btn" disabled={paginaAtual <= 1} onClick={() => setPlanilhaPagina(p => Math.max(1, p - 1))}>← Ant</button>
+            <span>Pág {paginaAtual} / {totalPaginas}</span>
+            <button className="pv-page-btn" disabled={paginaAtual >= totalPaginas} onClick={() => setPlanilhaPagina(p => Math.min(totalPaginas, p + 1))}>Próx →</button>
+            <button className="pv-page-btn" disabled={paginaAtual >= totalPaginas} onClick={() => setPlanilhaPagina(totalPaginas)}>⏭</button>
+            <div className="pv-spacer" />
+            <span>{dadosFiltrados.length} registros</span>
+          </div>
+        )}
       </div>
     </div>
   );
