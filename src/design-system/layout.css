@@ -74,7 +74,7 @@ select:focus {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0; overflow: hidden;
 }
-.co-sidebar--collapsed .co-sidebar__logo { justify-content: center; padding: 8px; gap: 0; }
+.co-sidebar--collapsed .co-sidebar__logo { justify-content: flex-start; padding: 8px 8px 8px 14px; gap: 0; }
 .co-sidebar__logo-ico  { background: var(--accent) !important; }
 .co-sidebar__logo-name {
   font-family:    var(--font-heading);
@@ -216,7 +216,7 @@ select:focus {
 /* ── Desktop hover-expand (≥ 768px) ── */
 @media (min-width: 768px) {
   .co-sidebar:hover                              { width: 220px; box-shadow: 6px 0 32px rgba(0,0,0,.45); }
-  .co-sidebar:hover .co-sidebar__logo            { justify-content: flex-start !important; padding: 8px 12px !important; gap: 10px !important; }
+  .co-sidebar:hover .co-sidebar__logo            { justify-content: flex-start !important; padding: 8px 12px 8px 14px !important; gap: 10px !important; }
   .co-sidebar:hover .co-sidebar__logo-name,
   .co-sidebar:hover .co-sidebar__logo-sub        { display: block !important; }
   .co-sidebar:hover .co-sidebar__item            { justify-content: flex-start !important; padding: 8px 10px !important; }
@@ -1015,27 +1015,6 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   }
 }
 
-/* ── Desktop: travar sidebar glass no hover — desabilita expand-on-hover ── */
-@media (min-width: 768px) {
-  [data-theme="dark"] .co-sidebar:hover {
-    width: var(--sidebar-glass-w) !important;
-    box-shadow: none !important;
-  }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo { justify-content: center !important; padding: 14px 0 !important; gap: 0 !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo-name,
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logo-sub    { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__item         { justify-content: center !important; padding: 8px !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__item-lbl     { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__badge-pill   { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__section-lbl  { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer        { align-items: center !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer-item  { justify-content: center !important; padding: 7px !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__footer-lbl   { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__user          { justify-content: center !important; padding: 4px 0 !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__user-info    { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__logout-btn   { display: none !important; }
-  [data-theme="dark"] .co-sidebar:hover .co-sidebar__toggle       { display: none !important; }
-}
 
 /* ════════════════════════════════════════════════════════════════════
    LOGIN / APPROVAL SCREEN — glass background (linked to --app-gradient)
