@@ -73,7 +73,7 @@ export default function ModalUsuario({ ctx }) {
                     const val = (formData.perms||PERMS_PADRAO[formData.perfil||"operador"])[p.key];
                     return (
                       <div key={p.key} {...clickable(()=>setFormData(prev=>({...prev,perms:{...(prev.perms||PERMS_PADRAO[prev.perfil||"operador"]),[p.key]:!val}})))}
-                        style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:8,border:`1px solid ${val?t.verde:t.borda}`,cursor:"pointer",background:val?`rgba(2,192,118,.06)`:"transparent"}}>
+                        style={{display:"flex",alignItems:"center",gap:8,padding:"14px 10px",borderRadius:8,border:`1px solid ${val?t.verde:t.borda}`,cursor:"pointer",background:val?`rgba(2,192,118,.06)`:"transparent"}}>
                         <div style={{width:16,height:16,borderRadius:4,background:val?t.verde:t.borda2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
                           {val&&<span style={{fontSize:10,color:"#fff",fontWeight:700}}>✓</span>}
                         </div>

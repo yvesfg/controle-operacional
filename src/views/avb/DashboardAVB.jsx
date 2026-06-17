@@ -202,7 +202,7 @@ export default function DashboardAVB({ ctx }) {
                 const destCurto=(r.destino||"—").split(/\s*[-–]\s*/)[0].trim();
                 return (
                   <div key={i} {...clickable(()=>{setDetalheDT(r);setModalOpen("detalhe");})}
-                    style={{display:"flex",alignItems:"center",gap:8,padding:"5px 8px",borderRadius:6,
+                    style={{display:"flex",alignItems:"center",gap:8,padding:isMobile?"14px 8px":"5px 8px",borderRadius:6,
                       cursor:"pointer",background:"transparent",transition:"background .1s"}}
                     onMouseEnter={e=>e.currentTarget.style.background=t.card2}
                     onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
@@ -286,7 +286,7 @@ export default function DashboardAVB({ ctx }) {
             {statusArr.map(([nome,val],i)=>(
               <div key={nome} {...clickable(()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");})}
                 style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",borderRadius:5,
-                  padding:"2px 4px",margin:"0 -4px",transition:"background .12s"}}
+                  padding:isMobile?"15px 4px":"2px 4px",margin:"0 -4px",transition:"background .12s"}}
                 onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.05)"}
                 onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                 <span style={{width:6,height:6,borderRadius:"50%",
