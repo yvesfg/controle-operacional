@@ -2,26 +2,32 @@
 import React from "react";
 
 const STATUS_MAP = {
-  "no-prazo":    { label: "No prazo",    color: "var(--green)",  bg: "rgba(14,203,129,.1)"  },
-  "aguardando":  { label: "Aguardando",  color: "var(--accent)", bg: "rgba(245,197,58,.1)"  },
-  "ro-pendente": { label: "RO Pendente", color: "var(--red)",    bg: "rgba(246,70,93,.1)"   },
-  "em-transito": { label: "Em trânsito", color: "var(--cyan)",   bg: "rgba(45,189,182,.1)"  },
-  "encerrado":   { label: "Encerrado",   color: "var(--text2)",  bg: "var(--card2)"         },
-  "no-cliente":  { label: "No cliente",  color: "var(--accent)", bg: "rgba(245,197,58,.1)"  },
+  "no-prazo":    { label: "No prazo",    bg: "rgba(34,197,94,0.12)",   color: "#86efac", border: "rgba(34,197,94,0.22)"   },
+  "aguardando":  { label: "Aguardando",  bg: "rgba(234,179,8,0.12)",   color: "#fde68a", border: "rgba(234,179,8,0.22)"   },
+  "ro-pendente": { label: "RO Pendente", bg: "rgba(239,68,68,0.12)",   color: "#fca5a5", border: "rgba(239,68,68,0.22)"   },
+  "em-transito": { label: "Em trânsito", bg: "rgba(79,70,229,0.12)",   color: "#a5b4fc", border: "rgba(79,70,229,0.22)"   },
+  "encerrado":   { label: "Encerrado",   bg: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.45)", border: "rgba(255,255,255,0.10)" },
+  "no-cliente":  { label: "No cliente",  bg: "rgba(234,179,8,0.12)",   color: "#fde68a", border: "rgba(234,179,8,0.22)"   },
 };
 
 export default function StatusBadge({ status }) {
-  const s = STATUS_MAP[status] ?? { label: status, color: "var(--text2)", bg: "var(--card2)" };
+  const s = STATUS_MAP[status] ?? {
+    label: status,
+    bg: "rgba(255,255,255,0.05)",
+    color: "rgba(255,255,255,0.5)",
+    border: "rgba(255,255,255,0.10)",
+  };
   return (
     <span style={{
-      background:    s.bg,
-      color:         s.color,
-      borderRadius:  "var(--radius-badge)",
-      padding:       "3px 10px",
-      fontSize:      "var(--text-2xs)",
-      fontWeight:    "var(--fw-bold)",
-      whiteSpace:    "nowrap",
-      fontFamily:    "var(--font-body)",
+      background:   s.bg,
+      color:        s.color,
+      border:       `1px solid ${s.border}`,
+      borderRadius: "20px",
+      padding:      "2px 9px",
+      fontSize:     "11px",
+      fontWeight:   600,
+      whiteSpace:   "nowrap",
+      letterSpacing: "0.2px",
     }}>
       {s.label}
     </span>

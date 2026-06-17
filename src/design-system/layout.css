@@ -1036,3 +1036,45 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   [data-theme="dark"] .co-sidebar:hover .co-sidebar__logout-btn   { display: none !important; }
   [data-theme="dark"] .co-sidebar:hover .co-sidebar__toggle       { display: none !important; }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   LOGIN / APPROVAL SCREEN — glass background (linked to --app-gradient)
+   Adicionar className="co-login-screen" no div raiz de login/aprovação
+   ════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] .co-login-screen {
+  background: var(--app-gradient) !important;
+  position: relative;
+  overflow: hidden;
+}
+[data-theme="dark"] .co-login-screen::before {
+  content: "";
+  position: absolute;
+  width: 420px; height: 420px;
+  border-radius: 50%;
+  background: var(--blob-1);
+  filter: blur(80px);
+  top: -100px; left: -120px;
+  pointer-events: none;
+}
+[data-theme="dark"] .co-login-screen::after {
+  content: "";
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: var(--blob-2);
+  filter: blur(60px);
+  bottom: -80px; right: -80px;
+  pointer-events: none;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MODAL GLASS — painel interno de todos os modais no tema dark
+   O overlay já tem backdrop-filter; aqui aplicamos glass no painel filho
+   ════════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] .co-modal-overlay > div,
+[data-theme="dark"] .co-modal-panel {
+  background: rgba(12, 20, 32, 0.90) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55) !important;
+}
