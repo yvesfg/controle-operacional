@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+﻿import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
 
@@ -34,9 +34,7 @@ import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
 import PlanilhaAVB  from './views/avb/PlanilhaAVBWrapper.jsx';
 import LogisticaAVB from './views/avb/LogisticaAVBWrapper.jsx';
 import GestaoAVB    from './views/avb/GestaoAVBWrapper.jsx';
-import Resultado from './views/ResultadoWrapper.jsx';
-import PainelFinanceiro from './views/PainelFinanceiroWrapper.jsx';
-import CreditosPendentes from './views/CreditosPendentesWrapper.jsx';
+import FinanceiroView from './views/FinanceiroViewWrapper.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
@@ -1644,9 +1642,9 @@ export default function App() {
         type:"line",
         data:{labels:areaLabels,datasets:[{data:areaData,borderColor:"#a855f7",borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#a855f7",tension:.4,fill:true,
           backgroundColor:(ctx)=>{
-            const c=ctx.chart.ctx, h=ctx.chart.height;
+            const c=ctx.chart.ctx, h=ctx.chart.height||200;
             const g=c.createLinearGradient(0,0,0,h);
-            g.addColorStop(0,"rgba(168,85,247,.30)"); g.addColorStop(1,"rgba(168,85,247,0)");
+            g.addColorStop(0,isDark?"rgba(168,85,247,.30)":"rgba(168,85,247,.45)"); g.addColorStop(1,"rgba(168,85,247,0)");
             return g;
           }
         }]},
@@ -2367,10 +2365,8 @@ export default function App() {
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
-    {k:"painel_financeiro", l:"Painel Financeiro", perm:"financeiro",
+    {k:"financeiro", l:"Financeiro", perm:"financeiro",
       ico:(a)=>svgIco(a,<><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="4" width="3" height="13"/></>)},
-    {k:"creditos_pendentes", l:"Créditos Pendentes", perm:"financeiro",
-      ico:(a)=>svgIco(a,<><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></>)},
     {k:"planilha", l:"Planilha", perm:"planilha",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>)},
     {k:"diarias", l:"Diárias", perm:"diarias",
@@ -2383,8 +2379,6 @@ export default function App() {
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>)},
     {k:"gestao", l:"Gestão", avbOnly:true,
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></>)},
-    {k:"resultado", l:"Resultado", perm:"financeiro",
-      ico:(a)=>svgIco(a,<><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></>)},
     {k:"motoristas", l:"Motori.",
       ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
     {k:"relatorios", l:"Relatórios",
@@ -3700,25 +3694,11 @@ export default function App() {
           }} />
         )}
 
-        {/* ═══ RESULTADO (Margem × Despesas) ═══ */}
-        {activeTab === "resultado" && (
-          <Resultado ctx={{
+        {/* ═══ FINANCEIRO (Painel + Resultado + Cobranças) ═══ */}
+        {activeTab === "financeiro" && (
+          <FinanceiroView ctx={{
             activeTab, baseAtual, DADOS, getConexao,
-            t, isMobile, showToast, canFin,
-          }} />
-        )}
-
-        {activeTab === "painel_financeiro" && (
-          <PainelFinanceiro ctx={{
-            activeTab, baseAtual, DADOS, getConexao,
-            t, isMobile, showToast, canFin,
-          }} />
-        )}
-
-        {activeTab === "creditos_pendentes" && (
-          <CreditosPendentes ctx={{
-            activeTab, baseAtual, getConexao,
-            t, isMobile, showToast, canFin,
+            t, css, DESIGN, isMobile, showToast, canFin,
           }} />
         )}
 
