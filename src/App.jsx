@@ -61,6 +61,7 @@ export default function App() {
 
   // Auth state
   const [authed, setAuthed] = useState(false);
+  const [hubScreen, setHubScreen] = useState(null); // null | "controle_op" | "frota" ...
   const [perfil, setPerfil] = useState(null);
   const [perms, setPerms] = useState({});
   const [authEmail, setAuthEmail] = useState("");
@@ -570,6 +571,7 @@ export default function App() {
         } else if (s.perfil === "admin") {
           setBasesPermitidas(Object.values(BASES)); // sessao antiga sem baseIds: admin ve todas
         }
+        setHubScreen("controle_op");
         setAuthed(true);
         return; // sessão válida — não verifica pendentes
       }
@@ -1165,6 +1167,7 @@ export default function App() {
     setUsuarioLogado(null);
     setBasesPermitidas([]);
     setBaseAtual(null);
+    setHubScreen(null);
   };
 
   // Salvar nova senha no primeiro login (local + Supabase)
@@ -2158,8 +2161,78 @@ export default function App() {
     );
   }
 
+  // ── Hub: Seletor de Módulo ───────────────────────────────────────
+  if (authed && !hubScreen) {
+    const HUB_MODULOS = [
+      { slug:"controle_op", ico:"🏭", label:"Controle Operacional", desc:"Gestão de cargas e operações", ativo:true },
+      { slug:"frota",       ico:"🚛", label:"Frota Pro",            desc:"Gestão de veículos e pneus",  ativo:true },
+      { slug:"calculadora", ico:"🧮", label:"Calculadora de Frete", desc:"Cálculo de custo e margem",   ativo:false },
+      { slug:"antt",        ico:"📋", label:"Consulta ANTT",        desc:"RNTRC, CIOT e rastreio",       ativo:false },
+      { slug:"financeiro",  ico:"💰", label:"Financeiro",           desc:"DRE, contas e fluxo de caixa", ativo:false },
+    ];
+    const FROTA_URL = "http://localhost:3000"; // ajuste para prod
+    return (
+      <div style={{...css.app,background:t.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
+        <style>{`@keyframes hubFadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}@keyframes hubPop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
+        <div style={{position:"absolute",top:"0%",left:"50%",transform:"translateX(-50%)",width:"700px",height:"340px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.07)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
+
+        {/* Logo */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:36,animation:"hubPop .45s ease-out",position:"relative",zIndex:1}}>
+          <img src={loginLogo} alt="YFGroup" width="72" height="72" style={{marginBottom:12,borderRadius:"50%"}}/>
+          <div style={{fontFamily:"var(--font-heading)",fontSize:24,fontWeight:700,letterSpacing:"-.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
+          <div style={{width:36,height:2,background:t.ouro,borderRadius:1,margin:"7px 0"}}/>
+          <div style={{fontSize:9,color:t.txt2,letterSpacing:".14em",textTransform:"uppercase"}}>Selecione o módulo</div>
+        </div>
+
+        {/* Grid de módulos */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,maxWidth:560,width:"100%",animation:"hubFadeUp .4s ease-out",position:"relative",zIndex:1}}>
+          {HUB_MODULOS.map(m => {
+            const isAtivo = m.ativo;
+            return (
+              <button
+                key={m.slug}
+                disabled={!isAtivo}
+                onClick={() => {
+                  if (m.slug === "controle_op") setHubScreen("controle_op");
+                  else if (m.slug === "frota") window.open(FROTA_URL,"_blank");
+                }}
+                style={{
+                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                  gap:10,padding:"24px 12px 20px",
+                  background: isAtivo ? t.card : t.card2,
+                  border:`1.5px solid ${isAtivo ? t.borda2||t.borda : t.borda}`,
+                  borderRadius:16,cursor:isAtivo?"pointer":"not-allowed",
+                  opacity:isAtivo?1:.45,
+                  transition:"all .2s",position:"relative",overflow:"hidden",
+                }}
+                onMouseEnter={e=>{if(isAtivo){e.currentTarget.style.borderColor=hexRgb(t.ouro,.55);e.currentTarget.style.background=t.bgAlt||t.card2;e.currentTarget.style.transform="translateY(-3px)";}}}
+                onMouseLeave={e=>{if(isAtivo){e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.background=isAtivo?t.card:t.card2;e.currentTarget.style.transform="none";}}}
+              >
+                {!isAtivo && (
+                  <div style={{position:"absolute",top:8,right:9,fontSize:8,background:hexRgb(t.txt2,.12),color:t.txt2,borderRadius:4,padding:"2px 6px",fontFamily:"var(--font-mono)",letterSpacing:".06em"}}>EM BREVE</div>
+                )}
+                <div style={{width:54,height:54,borderRadius:14,background:`linear-gradient(135deg,${hexRgb(t.ouro,.18)},${hexRgb(t.ouro,.06)})`,border:`1.5px solid ${hexRgb(t.ouro,.25)}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>
+                  {m.ico}
+                </div>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"var(--font-heading)",fontSize:13,fontWeight:700,color:t.txt,letterSpacing:"-.01em",lineHeight:1.2}}>{m.label}</div>
+                  <div style={{fontSize:9,color:t.txt2,marginTop:4,lineHeight:1.4}}>{m.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <button onClick={handleLogout} style={{marginTop:28,background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,position:"relative",zIndex:1}}>
+          Sair e trocar conta
+        </button>
+        <Toast {...toast}/>
+      </div>
+    );
+  }
+
   // ── Seletor de Base Operacional ───────────────────────────────
-  if (authed && !baseAtual && basesPermitidas.length > 1) {
+  if (authed && hubScreen === "controle_op" && !baseAtual && basesPermitidas.length > 1) {
     return (
       <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
         <style>{`@keyframes loginFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}@keyframes loginPop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
