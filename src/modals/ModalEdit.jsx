@@ -283,23 +283,23 @@ function ModalEditComponent({ ctx }) {
         <div style={{display:"flex",flexDirection:"column",gap:0,flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
           {excluirConfirm==="edit" && (
             <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 16px 8px",background:"rgba(220,38,38,.06)",borderBottom:`1px solid rgba(220,38,38,.2)`}}>
-              <span style={{fontSize:11,color:"#ef4444",fontWeight:600,whiteSpace:"nowrap"}}>Digite EXCLUIR para confirmar:</span>
+              <span style={{fontSize:11,color:t.danger,fontWeight:600,whiteSpace:"nowrap"}}>Digite EXCLUIR para confirmar:</span>
               <input
                 autoFocus
                 value={excluirTexto}
                 onChange={e=>setExcluirTexto(e.target.value.toUpperCase())}
                 onKeyDown={e=>{if(e.key==="Escape"){e.stopPropagation();setExcluirConfirm(null);setExcluirTexto("");}}}
                 placeholder="EXCLUIR"
-                style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:"#ef4444",fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
+                style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:t.danger,fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
               />
-              <button onClick={()=>{if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt);}} disabled={excluirTexto!=="EXCLUIR"} style={{background:excluirTexto==="EXCLUIR"?"#ef4444":"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}>CONFIRMAR</button>
+              <button onClick={()=>{if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt);}} disabled={excluirTexto!=="EXCLUIR"} style={{background:excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}>CONFIRMAR</button>
               <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
             </div>
           )}
           <div style={{display:"flex",gap:8,padding:"10px 16px 18px"}}>
             <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
             {editIdx>=0 && excluirConfirm!=="edit" && (
-              <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:"#ef4444",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑️ EXCLUIR</button>
+              <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑️ EXCLUIR</button>
             )}
             <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
           </div>

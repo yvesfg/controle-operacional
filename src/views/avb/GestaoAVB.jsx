@@ -6,12 +6,12 @@ import { clickable } from "../../utils.js";
 // Homérico → Gerenciadora → Fortes (CTE/MDF) → NF → ADT → Viagem
 
 const ETAPAS = [
-  { k:"homerico",  l:"Homérico",    check: r => !!(r.codigo&&r.codigo.trim()),                             cor:"#06b6d4"  },
+  { k:"homerico",  l:"Homérico",    check: r => !!(r.codigo&&r.codigo.trim()),                             cor:"var(--cyan)"  },
   { k:"gerenc",    l:"Gerenciadora",check: r => !!(r.gerenc&&r.gerenc.trim()),                              cor:"#a855f7"  },
   { k:"fortes",    l:"Fortes",      check: r => !!(r.cte&&r.mdf),                                          cor:"var(--accent)" },
   { k:"nf",        l:"NF Recebida", check: r => !!(r.nf&&r.nf.trim()),                                     cor:"#22c55e"  },
-  { k:"adt",       l:"ADT Pago",    check: r => { const n=parseFloat(String(r.adiant||"").replace(/[R$\s]/g,"").replace(",",".")); return !isNaN(n)&&n>0; }, cor:"#f59e0b" },
-  { k:"viagem",    l:"Em Viagem",   check: r => (r.status||"").toUpperCase()==="CARREGADO",                 cor:"#10b981"  },
+  { k:"adt",       l:"ADT Pago",    check: r => { const n=parseFloat(String(r.adiant||"").replace(/[R$\s]/g,"").replace(",",".")); return !isNaN(n)&&n>0; }, cor:"var(--orange)" },
+  { k:"viagem",    l:"Em Viagem",   check: r => (r.status||"").toUpperCase()==="CARREGADO",                 cor:"var(--green)"  },
 ];
 
 // Índice da etapa em que a carga está travada (primeira não concluída)
@@ -88,7 +88,7 @@ export default function GestaoAVB({ ctx }) {
     { l:"Em Viagem",      v:regs.filter(r=>(r.status||"").toUpperCase()==="CARREGADO"&&r.cte&&r.mdf&&r.nf).length, c:t.verde  },
     { l:"Doc Completa",   v:regs.filter(r=>r.cte&&r.mdf&&r.nf).length,       c:t.verde  },
     { l:"Sem Doc",        v:regs.filter(r=>!r.cte||!r.mdf||!r.nf).length,    c:t.danger },
-    { l:"Aguard. ADT",    v:regs.filter(r=>r.nf&&!(parseMoeda(r.adiant)||0)).length, c:"#f59e0b"},
+    { l:"Aguard. ADT",    v:regs.filter(r=>r.nf&&!(parseMoeda(r.adiant)||0)).length, c:t.laranja},
     { l:"CTE Compl.",     v:regs.filter(r=>r.cte_comp&&r.cte_comp.trim()).length, c:"#a855f7"},
   ];
 
@@ -182,7 +182,7 @@ export default function GestaoAVB({ ctx }) {
               )}
               <span style={{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:4,flexShrink:0,
                 background:isPend?"rgba(245,158,11,.1)":completo?"rgba(16,185,129,.1)":"rgba(255,107,53,.1)",
-                color:isPend?t.ouro:completo?"#10b981":"var(--accent)",
+                color:isPend?t.ouro:completo?t.verde:"var(--accent)",
                 border:`1px solid ${isPend?t.ouro+"44":completo?"rgba(16,185,129,.3)":"rgba(255,107,53,.3)"}`}}>
                 {r.status||"—"}
               </span>
@@ -221,7 +221,7 @@ export default function GestaoAVB({ ctx }) {
                 );
               })}
               {completo&&(
-                <span style={{fontSize:9,fontWeight:700,color:"#10b981",fontFamily:"var(--font-mono)",
+                <span style={{fontSize:9,fontWeight:700,color:t.verde,fontFamily:"var(--font-mono)",
                   marginLeft:4,letterSpacing:"0.04em"}}>✓ COMPLETO</span>
               )}
             </div>
@@ -245,7 +245,7 @@ export default function GestaoAVB({ ctx }) {
                 </span>
               )}
               {adiant&&adiant>0&&(
-                <span style={{fontSize:9,color:"#f59e0b",fontFamily:"var(--font-mono)",
+                <span style={{fontSize:9,color:t.laranja,fontFamily:"var(--font-mono)",
                   background:"rgba(245,158,11,.08)",borderRadius:4,padding:"2px 6px"}}>
                   ADT {fmtM(adiant)}
                 </span>
