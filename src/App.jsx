@@ -61,7 +61,7 @@ export default function App() {
 
   // Auth state
   const [authed, setAuthed] = useState(false);
-  const [hubScreen, setHubScreen] = useState(null); // null | "controle_op" | "frota" ...
+  const [hubScreen, setHubScreen] = useState(null); // null = hub | "controle_op" = app principal
   const [perfil, setPerfil] = useState(null);
   const [perms, setPerms] = useState({});
   const [authEmail, setAuthEmail] = useState("");
@@ -672,9 +672,9 @@ export default function App() {
     // Limpa hash da URL (evita reprocessar no reload)
     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
 
-    // Guardar tokens Supabase Auth para SSO no hub
+    // Guardar tokens Supabase Auth para SSO no hub (sessionStorage: morre com a aba)
     const refreshTokenOAuth = params.get("refresh_token") || "";
-    saveJSON("co_supa_tokens", { access_token: accessToken, refresh_token: refreshTokenOAuth });
+    try { sessionStorage.setItem("co_supa_tokens", JSON.stringify({ access_token: accessToken, refresh_token: refreshTokenOAuth })); } catch {}
 
     const payload = decodeJWT(accessToken);
     if (!payload?.email) { setAuthMsg({t:"err",m:"❌ Email não encontrado no token OAuth"}); return; }
@@ -1113,9 +1113,9 @@ export default function App() {
           });
           if (_sr.ok) {
             const _st = await _sr.json();
-            if (_st.access_token) saveJSON("co_supa_tokens",{access_token:_st.access_token,refresh_token:_st.refresh_token||""});
+            if (_st.access_token) try { sessionStorage.setItem("co_supa_tokens", JSON.stringify({access_token:_st.access_token,refresh_token:_st.refresh_token||""})); } catch {}
           }
-        } catch {}
+        } catch (e) { console.error("[SSO] token fetch falhou:", e); }
         // RPC: hash calculado aqui, verificação feita no servidor — senha nunca retorna ao cliente
         const hashInformado = await hashSenha(authSenha);
         const remote = await supaFetch(conn2.url, conn2.key, "POST",
@@ -1185,7 +1185,8 @@ export default function App() {
     setBasesPermitidas([]);
     setBaseAtual(null);
     setHubScreen(null);
-    localStorage.removeItem("co_supa_tokens");
+    sessionStorage.removeItem("co_supa_tokens");
+    localStorage.removeItem("co_pending_user");
   };
 
   // Salvar nova senha no primeiro login (local + Supabase)
@@ -2216,11 +2217,36 @@ export default function App() {
                 onClick={()=>{
                   if(m.slug==="controle_op") setHubScreen("controle_op");
                   else if(m.slug==="frota") {
-                    const _tk = loadJSON("co_supa_tokens", null);
-                    const _dest = (_tk && _tk.access_token)
-                      ? `${FROTA_URL}/auth/hub?access_token=${encodeURIComponent(_tk.access_token)}&refresh_token=${encodeURIComponent(_tk.refresh_token||"")}`
-                      : FROTA_URL;
-                    window.open(_dest, "_blank");
+                    // Abre frota-pro sem tokens na URL; frota-pro pedirá via postMessage
+                    const _win = window.open(`${FROTA_URL}/auth/hub`, "_blank");
+                    if (_win) {
+                      // Aguarda frota-pro ficar pronto e responde com tokens
+                      const _handler = (e) => {
+                        if (!FROTA_URL.startsWith(e.origin)) return;
+                        if (e.data?.type !== "REQUEST_CO_TOKENS") return;
+                        window.removeEventListener("message", _handler);
+                        try {
+                          const _raw = sessionStorage.getItem("co_supa_tokens");
+                          const _tk = _raw ? JSON.parse(_raw) : null;
+                          // Checar expiração do JWT antes de enviar
+                          if (_tk?.access_token) {
+                            try {
+                              const _pay = JSON.parse(atob(_tk.access_token.split(".")[1]));
+                              if (_pay.exp && _pay.exp * 1000 < Date.now()) {
+                                _win.postMessage({ type: "SUPA_TOKENS", expired: true }, e.origin);
+                                return;
+                              }
+                            } catch {}
+                            _win.postMessage({ type: "SUPA_TOKENS", access_token: _tk.access_token, refresh_token: _tk.refresh_token || "" }, e.origin);
+                          } else {
+                            _win.postMessage({ type: "SUPA_TOKENS", access_token: null }, e.origin);
+                          }
+                        } catch (err) { console.error("[SSO] erro ao enviar tokens:", err); }
+                      };
+                      window.addEventListener("message", _handler);
+                      // Limpar listener se janela fechar antes de responder
+                      const _pollClose = setInterval(() => { if (_win.closed) { clearInterval(_pollClose); window.removeEventListener("message", _handler); } }, 1000);
+                    }
                   }
                 }}
                 style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,padding:"20px 10px 18px",background:on?t.card:t.card2,
