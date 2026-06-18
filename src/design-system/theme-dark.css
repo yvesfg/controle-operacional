@@ -1,47 +1,47 @@
 /* ═══════════════════════════════════════════════════════════════════
-   theme-dark.css — STEEL BLUE PREMIUM · Controle Operacional YFGroup
-   ► Refinamento incremental sobre Steel Blue — sem redesign.
-   ► Backup do anterior: theme-dark.css.bak_premium_*
+   theme-dark.css — BINANCE YELLOW · Controle Operacional YFGroup
+   ► Identidade Binance: amarelo #FCD535 sobre near-black #0b0e11.
+   ► Accent único; foco azul (info). AVB mantém laranja por filial.
+   ► Backup do anterior (Steel Blue): theme-dark.css.bak_*
    ═══════════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"],
 .theme-dark {
 
-  /* ── Backgrounds — camadas com profundidade real ─────────────── */
-  /* Separação tonal aumentada: olho percebe hierarquia sem esforço  */
-  --color-bg          : #080c12;   /* base da página — mais fundo   */
-  --color-bg-alt      : #0f1520;   /* surface/alt — acima do bg     */
-  --color-card        : #131c28;   /* card padrão                   */
-  --color-card-2      : #1a2540;   /* card elevado / hover fill     */
-  --color-header-bg   : #080c12;   /* topbar/tabbar flush com bg    */
-  --color-modal-bg    : #0f1722;   /* modal ligeiramente acima bg   */
-  --color-input-bg    : #0b1219;   /* input mais fundo que card     */
-  --color-table-header: #0b1016;   /* thead escuro, contrasta linhas*/
+  /* ── Backgrounds — Binance near-black, neutro (sem tint azul) ── */
+  /* Profundidade por blocos de cor: canvas → card → elevado        */
+  --color-bg          : #0b0e11;   /* canvas-dark Binance           */
+  --color-bg-alt      : #14181d;   /* surface/alt — acima do bg     */
+  --color-card        : #1e2329;   /* surface-card-dark Binance     */
+  --color-card-2      : #2b3139;   /* surface-elevated-dark / hover */
+  --color-header-bg   : #0b0e11;   /* topbar/tabbar flush com canvas*/
+  --color-modal-bg    : #1e2329;   /* modal = card                  */
+  --color-input-bg    : #181a20;   /* input mais fundo que card     */
+  --color-table-header: #181a20;   /* thead escuro, contrasta linhas*/
 
-  /* ── Bordas — dessaturadas, quasi-neutras ───────────────────── */
-  /* Menos azul = bordas separam sem chamar atenção               */
-  --color-border        : #1a2436;
-  --color-border-2      : #243348;
+  /* ── Bordas — hairline neutro (Binance hairline-on-dark) ─────── */
+  --color-border        : #2b3139;
+  --color-border-2      : #3a424c;
   --color-border-subtle : rgba(255,255,255,.04);   /* separadores ghost    */
-  --color-border-strong : #2e4060;                  /* ênfase / focus-adj   */
-  --color-border-focus  : rgba(59,130,246,.50);
+  --color-border-strong : #474d57;                  /* ênfase / focus-adj   */
+  --color-border-focus  : rgba(59,130,246,.55);     /* foco azul (Binance)  */
 
-  /* ── Texto — três níveis claros, sem branco puro ───────────── */
-  --color-text          : #dde5f0;   /* primário — off-white frio    */
-  --color-text-2        : #8892a8;   /* secundário — labels/meta     */
-  --color-text-3        : #7c89a6;   /* terciário — muted/placeholder*/
-  --color-text-disabled : #2e3e56;
+  /* ── Texto — Binance body/muted, sem branco puro ───────────── */
+  --color-text          : #eaecef;   /* body-on-dark Binance         */
+  --color-text-2        : #929aa5;   /* muted-strong — labels/meta   */
+  --color-text-3        : #848e9c;   /* muted — placeholder/terciário*/
+  --color-text-disabled : #3a424c;
   --color-text-inverse  : #ffffff;
 
-  /* ── Azul primário (mantém valores, adiciona camadas) ───────── */
-  --color-primary          : #3b82f6;
-  --color-primary-dk       : #2563eb;
-  --color-primary-lt       : #60a5fa;
-  --color-primary-text     : #93c5fd;   /* texto sobre fundo azul escuro */
-  --color-primary-bg       : rgba(59,130,246,.08);   /* mais sutil */
-  --color-primary-bg-hover : rgba(59,130,246,.13);
-  --color-primary-border   : rgba(59,130,246,.22);   /* mais elegante */
-  --color-primary-disabled : #1a2a44;
+  /* ── Accent — Binance Yellow #FCD535 (único accent de marca) ── */
+  --color-primary          : #fcd535;
+  --color-primary-dk       : #f0b90b;   /* press/hover (Binance active)  */
+  --color-primary-lt       : #fde047;
+  --color-primary-text     : #fcd535;   /* texto/ícone accent sobre dark */
+  --color-primary-bg       : rgba(252,213,53,.08);
+  --color-primary-bg-hover : rgba(252,213,53,.13);
+  --color-primary-border   : rgba(252,213,53,.24);
+  --color-primary-disabled : #3a3a1f;   /* yellow dessaturado (Binance)  */
 
   /* ── Status ─────────────────────────────────────────────────── */
   --color-success        : #10b981;
@@ -106,14 +106,14 @@
   --color-sidebar-border      : rgba(255,255,255,.05);
   --color-sidebar-item        : transparent;
   --color-sidebar-item-hover  : rgba(255,255,255,.05);   /* neutro, não azul */
-  --color-sidebar-item-active : rgba(59,130,246,.10);    /* azul muito sutil  */
-  --color-sidebar-text        : #6b7a94;
-  --color-sidebar-text-hover  : #9aa8c0;
-  --color-sidebar-text-active : #dde5f0;   /* quase branco — não azul */
-  --color-sidebar-icon        : #4e5e78;
-  --color-sidebar-icon-hover  : #8892a8;
-  --color-sidebar-icon-active : #3b82f6;   /* ícone ativo fica azul  */
-  --color-sidebar-accent      : #3b82f6;   /* borda esquerda do ativo */
+  --color-sidebar-item-active : rgba(252,213,53,.10);    /* amarelo muito sutil */
+  --color-sidebar-text        : #707a8a;
+  --color-sidebar-text-hover  : #b7bdc6;
+  --color-sidebar-text-active : #eaecef;   /* quase branco — não amarelo */
+  --color-sidebar-icon        : #5d6673;
+  --color-sidebar-icon-hover  : #929aa5;
+  --color-sidebar-icon-active : #fcd535;   /* ícone ativo fica amarelo */
+  --color-sidebar-accent      : #fcd535;   /* borda esquerda do ativo */
 
   /* ── Sombras — contidas, sem glow excessivo ─────────────────── */
   --shadow-xs         : none;
@@ -122,26 +122,26 @@
   --shadow-lg         : 0 8px 32px rgba(0,0,0,.60);
   --shadow-xl         : 0 16px 48px rgba(0,0,0,.70);
   --shadow-card       : none;
-  --shadow-primary    : 0 2px 10px rgba(59,130,246,.18);   /* glow reduzido */
+  --shadow-primary    : 0 2px 10px rgba(252,213,53,.18);   /* glow amarelo reduzido */
 
   /* ── Focus / Overlay ────────────────────────────────────────── */
-  --focus-ring        : 0 0 0 2px rgba(59,130,246,.50);
-  --color-overlay     : rgba(4,8,18,.82);
-  --color-scroll-thumb: #243348;
+  --focus-ring        : 0 0 0 2px rgba(59,130,246,.55);    /* foco azul (Binance info) */
+  --color-overlay     : rgba(5,7,10,.82);
+  --color-scroll-thumb: #3a424c;
 
   /* ── Aliases semânticos — retrocompatibilidade total ────────── */
-  --bg      : #080c12;
-  --surface : #0f1520;
-  --card    : #131c28;
-  --card2   : #1a2540;
-  --border  : #1a2436;
-  --border2 : #243348;
-  --text    : #dde5f0;
-  --text2   : #8892a8;
-  --text3   : #7c89a6;
-  --accent  : #3b82f6;
-  --accent2 : rgba(59,130,246,.08);
-  --on-primary: #ffffff;
+  --bg      : #0b0e11;
+  --surface : #14181d;
+  --card    : #1e2329;
+  --card2   : #2b3139;
+  --border  : #2b3139;
+  --border2 : #3a424c;
+  --text    : #eaecef;
+  --text2   : #929aa5;
+  --text3   : #848e9c;
+  --accent  : #fcd535;
+  --accent2 : rgba(252,213,53,.08);
+  --on-primary: #181a20;
   --cyan    : #06b6d4;
   --green   : #10b981;
   --orange  : #f59e0b;

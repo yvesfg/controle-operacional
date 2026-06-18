@@ -2,9 +2,10 @@
 
 > **Fonte única de verdade do design.** Este documento descreve o sistema **realmente em produção**.
 > Os valores vivem em `src/design-system/` (CSS) e são espelhados em JS por `src/constants.js`.
-> Docs antigos (Mercury, Binance-yellow) foram arquivados em `docs/design-archive/` — não use.
+> Docs antigos (Mercury, Steel Blue) foram substituídos. A identidade atual é **Binance Yellow**.
 
-**Register:** product · **Tema:** dark (padrão) + light · **Identidade:** Steel Blue Premium
+**Register:** product · **Tema:** dark (padrão) + light · **Identidade:** Binance Yellow (#FCD535 sobre near-black #0b0e11)
+> Accent único amarelo (escasso: CTA/destaque/marca). Foco em azul info (#3b82f6). Botão primário = amarelo com texto preto (#181a20). Base AVB mantém laranja por filial. No tema **light** o accent vira dourado legível (#a8810c) — amarelo puro é ilegível como texto sobre branco.
 
 ---
 
@@ -35,34 +36,35 @@ src/constants.js
 ### Backgrounds (camadas com profundidade)
 | Token | Valor | Papel |
 |---|---|---|
-| `--color-bg` / `--bg` | `#080c12` | base da página |
-| `--color-bg-alt` / `--surface` | `#0f1520` | surface acima do bg |
-| `--color-card` / `--card` | `#131c28` | card padrão |
-| `--color-card-2` / `--card2` | `#1a2540` | card elevado / hover fill |
-| `--color-modal-bg` | `#0f1722` | modal |
-| `--color-input-bg` | `#0b1219` | input (mais fundo que card) |
-| `--color-table-header` | `#0b1016` | thead |
+| `--color-bg` / `--bg` | `#0b0e11` | base da página (canvas-dark Binance) |
+| `--color-bg-alt` / `--surface` | `#14181d` | surface acima do bg |
+| `--color-card` / `--card` | `#1e2329` | card padrão (surface-card-dark) |
+| `--color-card-2` / `--card2` | `#2b3139` | card elevado / hover fill (elevated) |
+| `--color-modal-bg` | `#1e2329` | modal (= card) |
+| `--color-input-bg` | `#181a20` | input (mais fundo que card) |
+| `--color-table-header` | `#181a20` | thead |
 
 ### Texto (3 níveis) — **contraste verificado WCAG AA**
 | Token | Valor | Contraste s/ card | Uso |
 |---|---|---|---|
-| `--color-text` / `--text` | `#dde5f0` | ~13:1 | texto primário |
-| `--color-text-2` / `--text2` | `#8892a8` | ~5.4:1 ✅ | secundário, labels, meta |
-| `--color-text-3` / `--text3` | `#7c89a6` | ~4.6:1 ✅ | terciário / placeholder / labels pequenos |
-| `--color-text-disabled` | `#2e3e56` | — | desabilitado |
+| `--color-text` / `--text` | `#eaecef` | ~13:1 | texto primário (body Binance) |
+| `--color-text-2` / `--text2` | `#929aa5` | ~5.4:1 ✅ | secundário, labels, meta |
+| `--color-text-3` / `--text3` | `#848e9c` | ~4.6:1 ✅ | terciário / placeholder / labels pequenos |
+| `--color-text-disabled` | `#3a424c` | — | desabilitado |
 
-> ⚠️ `--text-3` foi `#4e5e78` (2.6:1, **falhava AA**) e foi corrigido para `#7c89a6`. Como muitos rótulos
-> (headers mono uppercase de card) usam `var(--text3)`, este token precisa ficar legível mesmo a 9–11px.
-> Regra: rótulo pequeno e importante usa `--text2` ou `--text3`; **nunca** abaixo de 4.5:1.
+> ⚠️ Sobre o card `#1e2329` (Binance), `--text3` precisa ficar ≥4.5:1 mesmo a 9–11px (muitos rótulos
+> mono uppercase usam `var(--text3)`). Regra: rótulo pequeno e importante usa `--text2` ou `--text3`; **nunca** abaixo de 4.5:1.
 
-### Accent (Steel Blue) + por-filial
-| Token | dark | papel |
-|---|---|---|
-| `--color-primary` / `--accent` | `#3b82f6` | accent principal |
-| `--color-primary-dk` | `#2563eb` | hover/pressed |
-| `--color-primary-lt` | `#60a5fa` | realce |
-| `--color-primary-text` | `#93c5fd` | texto sobre fundo azul escuro |
-| **AVB** `[data-base="avb"]` `--accent` | `#FF6B35` | laranja operacional (Açailândia) |
+### Accent (Binance Yellow) + por-filial
+| Token | dark | light | papel |
+|---|---|---|---|
+| `--color-primary` / `--accent` | `#fcd535` | `#a8810c` | accent principal (amarelo dark / dourado legível light) |
+| `--color-primary-dk` | `#f0b90b` | `#8a6a08` | hover/pressed (Binance active) |
+| `--color-primary-lt` | `#fde047` | `#c79a1a` | realce |
+| `--color-primary-text` | `#fcd535` | `#8a6a08` | texto/ícone accent |
+| `--on-primary` | `#181a20` | `#181a20` | texto sobre botão accent (preto) |
+| `--color-border-focus` | `rgba(59,130,246,.55)` | `rgba(59,130,246,.45)` | anel de foco **azul** (Binance info) |
+| **AVB** `[data-base="avb"]` `--accent` | `#FF6B35` | — | laranja operacional (Açailândia) — mantido por filial |
 
 ### Status — **semântico, fonte única**
 A mesma situação deve ter a mesma cor em todo widget. Use **só** estes tokens:

@@ -64,7 +64,7 @@
 /* Variantes */
 .ds-btn--primary {
   background  : var(--color-primary);
-  color       : var(--color-text-inverse);
+  color       : var(--on-primary);
   border-color: var(--color-primary);
 }
 .ds-btn--primary:hover:not(:disabled) {
@@ -425,7 +425,7 @@
 }
 .ds-badge--primary-solid {
   background  : var(--color-primary);
-  color       : var(--color-text-inverse);
+  color       : var(--on-primary);
   border-color: var(--color-primary);
 }
 .ds-badge--success {
@@ -718,6 +718,33 @@
 .ds-chip--info    { background: var(--chip-info-bg);    border-color: var(--chip-info-border);    color: var(--chip-info-text);    }
 .ds-chip--neutral { background: var(--chip-neutral-bg); border-color: var(--chip-neutral-border); color: var(--chip-neutral-text); }
 .ds-chip--primary { background: var(--color-primary-bg); border-color: var(--color-primary-border); color: var(--color-primary-text); }
+
+/* ════════════════════════════════════════════════════════════════════
+   POLISH GLOBAL — foco acessível + microelevação (propaga via tokens)
+   ════════════════════════════════════════════════════════════════════ */
+/* Anel de foco azul (Binance info) para teclado — vence inline styles
+   pois outline não é definido inline; aplica-se a todo o app.          */
+.ds-input:focus-visible,
+.ds-select:focus-visible,
+.ds-textarea:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline       : 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+/* Microelevação no hover de cards interativos do design-system */
+.ds-card--hoverable:hover,
+.ds-kpi:hover {
+  transform : translateY(-2px);
+  transition: transform var(--transition-base),
+              border-color var(--transition-base),
+              box-shadow var(--transition-base);
+}
+.ds-kpi { transition: transform var(--transition-base), border-color var(--transition-base); }
+.ds-kpi:hover { border-color: var(--color-border-2); }
 
 /* ── Reduced motion — sobrepõe inline styles via !important; PRODUCT.md exige alternativa instantânea ── */
 @media (prefers-reduced-motion: reduce) {
