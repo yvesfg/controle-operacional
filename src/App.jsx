@@ -28,6 +28,7 @@ import DiariasView     from './views/DiariasViewWrapper.jsx';
 import DescargaView    from './views/DescargaViewWrapper.jsx';
 import AdminView       from './views/AdminViewWrapper.jsx';
 import useModalEsc      from './hooks/useModalEsc.js';
+import { usePlanilhaState } from './hooks/usePlanilhaState.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -131,18 +132,14 @@ export default function App() {
 
   // UI state
   const [activeTab, setActiveTab] = useState("planilha");
-  const [planilhaSortKey, setPlanilhaSortKey] = useState(null);   // coluna ativa: 'dt'|'nome'|'placa'|...
-  const [planilhaSortDir, setPlanilhaSortDir] = useState("asc");  // 'asc'|'desc'
-  const [planilhaPagina, setPlanilhaPagina] = useState(1);        // página atual (começa em 1)
-  const [planilhaFiltroAno, setPlanilhaFiltroAno] = useState(()=>String(new Date().getFullYear()));
-  const [planilhaFiltroMes, setPlanilhaFiltroMes] = useState(()=>String(new Date().getMonth()+1).padStart(2,"0"));
-  const [planilhaFiltroOrigem, setPlanilhaFiltroOrigem] = useState("todas"); // "todas" = sem filtro
-  const [planilhaFiltroDataDe, setPlanilhaFiltroDataDe] = useState(""); // data inicio (yyyy-MM-dd)
-  const [planilhaFiltroDataAte, setPlanilhaFiltroDataAte] = useState(""); // data fim (yyyy-MM-dd)
-  const [planilhaFiltroStatus, setPlanilhaFiltroStatus] = useState(""); // status filter do dashboard
-  const [planilhaFiltroContratante, setPlanilhaFiltroContratante] = useState(""); // AVB only
-  const [planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora] = useState(""); // AVB only
-  const [planilhaBusca, setPlanilhaBusca] = useState("");           // busca livre: dt|placa|nome
+  const {
+    planilhaSortKey, setPlanilhaSortKey, planilhaSortDir, setPlanilhaSortDir,
+    planilhaPagina, setPlanilhaPagina, planilhaFiltroAno, setPlanilhaFiltroAno,
+    planilhaFiltroMes, setPlanilhaFiltroMes, planilhaFiltroOrigem, setPlanilhaFiltroOrigem,
+    planilhaFiltroDataDe, setPlanilhaFiltroDataDe, planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
+    planilhaFiltroStatus, setPlanilhaFiltroStatus, planilhaFiltroContratante, setPlanilhaFiltroContratante,
+    planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora, planilhaBusca, setPlanilhaBusca,
+  } = usePlanilhaState();
   const [toast, setToast] = useState({msg:"",type:"",visible:false});
   const [connStatus, setConnStatus] = useState("offline");
   const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
