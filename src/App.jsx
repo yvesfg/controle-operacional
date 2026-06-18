@@ -44,6 +44,8 @@ import { useAdminState } from './hooks/useAdminState.js';
 import { useOperacionalState } from './hooks/useOperacionalState.js';
 import { useBuscaState } from './hooks/useBuscaState.js';
 import { useViewPrefsState } from './hooks/useViewPrefsState.js';
+import { useAuthState } from './hooks/useAuthState.js';
+import { useCoreState } from './hooks/useCoreState.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -81,35 +83,15 @@ export default function App() {
   const [theme, setTheme] = useState(() => loadJSON("co_theme","dark"));
   const t = themes[theme] || themes.dark;
 
-  // Auth state
-  const [authed, setAuthed] = useState(false);
-  const [hubScreen, setHubScreen] = useState(null); // null = hub | "controle_op" = app principal
-  const [perfil, setPerfil] = useState(null);
-  const [perms, setPerms] = useState({});
-  const [authEmail, setAuthEmail] = useState("");
-  const [authSenha, setAuthSenha] = useState("");
-  const [authMsg, setAuthMsg] = useState(null);
-  const [primeiroLogin, setPrimeiroLogin] = useState(false);
-  const [primLoginSenha, setPrimLoginSenha] = useState("");
-  const [primLoginSenha2, setPrimLoginSenha2] = useState("");
-  const [customLogo, setCustomLogo] = useState(() => {
-    // Logo migration v1 (Apr 2026): limpa logo pre-YFGroup armazenada no localStorage
-    const MK = "co_logo_migrated_v1";
-    if (!loadJSON(MK, false)) {
-      saveJSON("co_custom_logo", null);
-      saveJSON(MK, true);
-      return null;
-    }
-    return loadJSON("co_custom_logo", null);
-  });
-  const [usuarioLogado, setUsuarioLogado] = useState(null); // nome do usuário logado
-  const [usuarios, setUsuarios] = useState(() => loadJSON("co_usuarios_local",[]));
-  // Aprovação de acesso Google
-  const [aguardandoAprovacao, setAguardandoAprovacao] = useState(false);
-  const [pendingUserInfo, setPendingUserInfo] = useState(null); // {email, nome}
-  const [usuariosPendentes, setUsuariosPendentes] = useState([]);
-  const [aprovarModal, setAprovarModal] = useState(null); // usuário pendente a ser aprovado
-  const [aprovarPerfil, setAprovarPerfil] = useState("operador");
+  const {
+    authed, setAuthed, hubScreen, setHubScreen, perfil, setPerfil, perms, setPerms,
+    authEmail, setAuthEmail, authSenha, setAuthSenha, authMsg, setAuthMsg,
+    primeiroLogin, setPrimeiroLogin, primLoginSenha, setPrimLoginSenha, primLoginSenha2, setPrimLoginSenha2,
+    customLogo, setCustomLogo,
+    usuarioLogado, setUsuarioLogado, usuarios, setUsuarios,
+    aguardandoAprovacao, setAguardandoAprovacao, pendingUserInfo, setPendingUserInfo,
+    usuariosPendentes, setUsuariosPendentes, aprovarModal, setAprovarModal, aprovarPerfil, setAprovarPerfil,
+  } = useAuthState();
 
   // ── Base operacional ──────────────────────────────────────────
   const [baseAtual, setBaseAtualState] = useState(() => {
@@ -139,14 +121,12 @@ export default function App() {
     setPlanilhaPagina(1);
   }, [baseAtual?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Data state
-  const [dadosBase, setDadosBase] = useState([]);
-  const [dadosExtras, setDadosExtras] = useState(() => loadJSON("dados_extras",[]));
-  const [motoristas, setMotoristas] = useState(() => loadJSON("co_motoristas",[]));
-  const [conexoes, setConexoes] = useState(() => loadJSON("co_conexoes",[]));
-
-  // UI state
-  const [activeTab, setActiveTab] = useState("planilha");
+  const {
+    dadosBase, setDadosBase, dadosExtras, setDadosExtras,
+    motoristas, setMotoristas, conexoes, setConexoes,
+    activeTab, setActiveTab, toast, setToast,
+    connStatus, setConnStatus, ultimaSync, setUltimaSync,
+  } = useCoreState();
   const {
     planilhaSortKey, setPlanilhaSortKey, planilhaSortDir, setPlanilhaSortDir,
     planilhaPagina, setPlanilhaPagina, planilhaFiltroAno, setPlanilhaFiltroAno,
@@ -155,9 +135,7 @@ export default function App() {
     planilhaFiltroStatus, setPlanilhaFiltroStatus, planilhaFiltroContratante, setPlanilhaFiltroContratante,
     planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora, planilhaBusca, setPlanilhaBusca,
   } = usePlanilhaState();
-  const [toast, setToast] = useState({msg:"",type:"",visible:false});
-  const [connStatus, setConnStatus] = useState("offline");
-  const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
+  // toast/connStatus/ultimaSync — via useCoreState (above)
 
   const {
     buscaTipo, setBuscaTipo, buscaInput, setBuscaInput,
