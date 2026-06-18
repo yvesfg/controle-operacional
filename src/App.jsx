@@ -31,6 +31,8 @@ import useModalEsc      from './hooks/useModalEsc.js';
 import { usePlanilhaState } from './hooks/usePlanilhaState.js';
 import { useDescargaState } from './hooks/useDescargaState.js';
 import { useRelatoriosState } from './hooks/useRelatoriosState.js';
+import { useDashboardState } from './hooks/useDashboardState.js';
+import { useDiariasState } from './hooks/useDiariasState.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -160,18 +162,19 @@ export default function App() {
   }, []);
   const [historico, setHistorico] = useState(() => loadJSON("hist",[]));
 
-  // Dashboard state
-  const [dashMes, setDashMes] = useState(()=>String(new Date().getMonth()+1).padStart(2,"0")+"/"+new Date().getFullYear());
-  const [dashOrigem, setDashOrigem] = useState("todos");
+  const {
+    dashMes, setDashMes, dashOrigem, setDashOrigem,
+    dashChartType, setDashChartType, dashGroupBy, setDashGroupBy,
+    dashDrillModal, setDashDrillModal, dashHeroTab, setDashHeroTab,
+    dashRecentesN, setDashRecentesN, dashRecCardRef,
+  } = useDashboardState();
 
-  // Diarias state
-  const [dFiltro, setDFiltro] = useState("todos");
-  const [dSubTab, setDSubTab] = useState("resumo");
-  const [dPlanFiltroAno, setDPlanFiltroAno] = useState(()=>String(new Date().getFullYear()));
-  const [dPlanFiltroMes, setDPlanFiltroMes] = useState(()=>String(new Date().getMonth()+1).padStart(2,"0"));
-  const [dPlanFiltroOrigem, setDPlanFiltroOrigem] = useState("todas");
-  const [dPlanFiltroIni, setDPlanFiltroIni] = useState("");
-  const [dPlanFiltroFim, setDPlanFiltroFim] = useState("");
+  const {
+    dFiltro, setDFiltro, dSubTab, setDSubTab,
+    dPlanFiltroAno, setDPlanFiltroAno, dPlanFiltroMes, setDPlanFiltroMes,
+    dPlanFiltroOrigem, setDPlanFiltroOrigem, dPlanFiltroIni, setDPlanFiltroIni,
+    dPlanFiltroFim, setDPlanFiltroFim,
+  } = useDiariasState();
   const {
     extratoRows, setExtratoRows, extratoFileName, setExtratoFileName,
     prevExtratoSnap, setPrevExtratoSnap, extratoSheetInfo, setExtratoSheetInfo,
@@ -332,13 +335,7 @@ export default function App() {
   const [wpp2IncluirObs, setWpp2IncluirObs] = useState(false);
   const [wpp2Conflitos, setWpp2Conflitos] = useState([]); // para resolver conflitos de importação
 
-  // Dashboard extras
-  const [dashChartType, setDashChartType] = useState("bar"); // bar | pie
-  const [dashGroupBy, setDashGroupBy] = useState("mes"); // mes | motorista | destino | status
-  const [dashDrillModal, setDashDrillModal] = useState(null); // {type, label, regs}
-  const [dashHeroTab, setDashHeroTab] = useState("carr"); // 'carr' | 'cte'
-  const [dashRecentesN, setDashRecentesN] = useState(8);
-  const dashRecCardRef = useRef(null);
+  // Dashboard state — via useDashboardState (above)
 
   // ── Aba Operacional ──
   const [operSubTab, setOperSubTab] = useState("sgs");
