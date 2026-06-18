@@ -76,7 +76,7 @@ export default function AppModals({ ctx }) {
     ocorrChegadaAlert, setOcorrChegadaAlert,
     ocorrModalOpen, setOcorrModalOpen, ocorrModalDT, ocorrModalRecord,
     buscaModalOpen, setBuscaModalOpen, buscaTipo, setBuscaTipo,
-    buscaInput, setBuscaInput, setBuscaResult, setBuscaRelacionados,
+    buscaInput, setBuscaInput, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
     buscaError, setBuscaError, historico, buscar, canEdit, connStatus,
     dtBase, saveJSON,
     toast,
