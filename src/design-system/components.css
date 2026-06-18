@@ -746,6 +746,15 @@ a:focus-visible,
 .ds-kpi { transition: transform var(--transition-base), border-color var(--transition-base); }
 .ds-kpi:hover { border-color: var(--color-border-2); }
 
+/* ── Hover-lift global nos cards inline (css.card / css.kpi / css.cardKanban) ──
+   Esses presets renderizam `border-radius: var(--radius-card)` inline mas NÃO
+   definem transform/box-shadow inline — então o :hover abaixo aplica e a
+   transição `all .2s` que já existe no preset anima. Zero edição de JSX.      */
+[style*="--radius-card"]:hover {
+  transform : translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.40);
+}
+
 /* ── Reduced motion — sobrepõe inline styles via !important; PRODUCT.md exige alternativa instantânea ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

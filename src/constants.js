@@ -140,7 +140,7 @@ export const DEV_CHANGELOG = [
     itens: [
       "FIX · Boot: corrigido ReferenceError que derrubava o app (useAuthHandlers recebia registrarLog antes do useAdminHandlers declara-lo — TDZ); reordenadas as chamadas. Tambem corrigido buscaRelacionados nao destruturado no AppModals e chave duplicada no ctx.",
       "DESIGN · Identidade migrada de Steel Blue para BINANCE YELLOW (#FCD535 sobre near-black #0b0e11) via tokens (theme-dark/light + tokens.css), sem tocar JSX. Accent unico amarelo; foco azul (info); botao primario amarelo com texto preto (#181a20). Superficies neutras Binance (card #1e2329 / elevado #2b3139). Tema light usa dourado legivel #a8810c (amarelo puro e ilegivel como texto no branco). Base AVB mantem laranja por filial. Glass do login/filtros realinhado pro amarelo.",
-      "UX · Polish global: anel de foco azul acessivel (:focus-visible) em campos/botoes/links; microelevacao no hover dos cards do design-system; scrollbar tematizada.",
+      "UX · Polish global: anel de foco azul acessivel (:focus-visible) em campos/botoes/links; scrollbar tematizada; hover-lift (translateY -2px + sombra) em TODOS os cards via seletor global [style*=--radius-card]:hover — cobre css.card/css.kpi/css.cardKanban (inline) e .ds-card/.ds-kpi, sem editar JSX.",
     ],
   },
   {
