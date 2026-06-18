@@ -43,6 +43,8 @@ import { useUIState } from './hooks/useUIState.js';
 import { useAdminState } from './hooks/useAdminState.js';
 import { useAdminHandlers } from './hooks/useAdminHandlers.js';
 import { useAuthHandlers } from './hooks/useAuthHandlers.js';
+import { useOcorrHandlers } from './hooks/useOcorrHandlers.js';
+import { useBuscarHandlers } from './hooks/useBuscarHandlers.js';
 import { useSyncHandlers } from './hooks/useSyncHandlers.js';
 import { useOperacionalState } from './hooks/useOperacionalState.js';
 import { useBuscaState } from './hooks/useBuscaState.js';
@@ -589,179 +591,24 @@ export default function App() {
 
   // carregarAponts / syncUsuariosRemoto / carregarPendentes — via useSyncHandlers
 
-  // ── Ocorrências ──
-  const abrirDetalhe = useCallback(async (reg) => {
-    setDetalheDT(reg);
-    setOcorrencias([]);
-    setNovaOcorr("");
-    setOcorrListExpanded(false);
-    setAcompDias([]);
-    setAcompDiaSel(null);
-    setAcompTexto("");
-    setAcompImagens([]);
-    setModalOpen("detalhe");
-    // Carregar acompanhamento local
-    const acompLocal = JSON.parse(localStorage.getItem("co_acomp_"+reg.dt) || "[]");
-    setAcompDias(acompLocal);
-    // Carregar ocorrências locais
-    const local = loadJSON(`co_ocorr_${reg.dt}`, []);
-    setOcorrencias(local);
-    // Carregar do Supabase
-    const conn = getConexao();
-    if (conn) {
-      setOcorrLoading(true);
-      try {
-        const raw5 = sessionToken
-          ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_ocorrencias",
-              {p_token: sessionToken, p_dt: reg.dt})
-          : await supaFetch(conn.url, conn.key, "GET",
-              `${TABLE_OCORR}?dt=eq.${encodeURIComponent(reg.dt)}&order=data_hora.asc&select=*`);
-        const data = Array.isArray(raw5) ? raw5.map(x => typeof x === "string" ? JSON.parse(x) : x) : [];
-        if (Array.isArray(data)) {
-          setOcorrencias(data);
-          saveJSON(`co_ocorr_${reg.dt}`, data);
-        }
-      } catch { /* usa local */ }
-      finally { setOcorrLoading(false); }
-    }
-  }, [getConexao]);
+  // ── Ocorrências ── via useOcorrHandlers
+  const { abrirDetalhe, adicionarOcorrencia, salvarOcorrenciaExterna, abrirOcorrModal, adicionarOcorrenciaModal } = useOcorrHandlers({
+    getConexao, showToast, sessionToken, usuarioLogado, perfil, DADOS,
+    setDetalheDT, setOcorrencias, setNovaOcorr, setOcorrListExpanded,
+    setAcompDias, setAcompDiaSel, setAcompTexto, setAcompImagens, setModalOpen,
+    setOcorrLoading,
+    detalheDT, ocorrencias,
+    ocorrModalNova, ocorrModalTipo, ocorrModalDT, ocorrModalList,
+    setOcorrModalList, setOcorrModalNova, setOcorrModalDT, setOcorrModalRecord, setOcorrModalOpen,
+  });
+    // handleLogin / handleLogout / handlePrimeiroLoginSalvar — via useAuthHandlers
 
-  const adicionarOcorrencia = useCallback(async ({dt, tipo, texto, nfs, localizacao}) => {
-    if (!texto || !texto.trim() || !dt) return;
-    const nova = {
-      dt,
-      data_hora: new Date().toISOString(),
-      texto: texto.trim(),
-      tipo: tipo || "info",
-      usuario: usuarioLogado || perfil || "sistema",
-      ...(nfs ? { nfs } : {}),
-      ...(localizacao ? { localizacao } : {}),
-    };
-    // Se for o DT aberto no modal de detalhe, atualiza a lista local
-    if (detalheDT && detalheDT.dt === dt) {
-      const updated = [...ocorrencias, nova];
-      setOcorrencias(updated);
-      saveJSON(`co_ocorr_${dt}`, updated);
-    } else {
-      const existing = loadJSON(`co_ocorr_${dt}`, []);
-      saveJSON(`co_ocorr_${dt}`, [...existing, nova]);
-    }
-    // Salvar no Supabase
-    const conn = getConexao();
-    if (conn) {
-      try {
-        await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]);
-      } catch { /* silencioso */ }
-    }
-    showToast("✅ Ocorrência registrada","ok");
-  }, [detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
-  // Salvar ocorrencia a partir de modal externo (OcorrenciasView)
-  const salvarOcorrenciaExterna = useCallback(async (dt, tipo, texto, nfs, localizacao) => {
-    if (!dt || !texto.trim()) return;
-    const nova = {
-      dt,
-      data_hora: new Date().toISOString(),
-      texto: texto.trim(),
-      tipo,
-      usuario: usuarioLogado || perfil || "sistema",
-    };
-    const existing = loadJSON(`co_ocorr_${dt}`, []);
-    const updated = [...existing, nova];
-    saveJSON(`co_ocorr_${dt}`, updated);
-    const conn = getConexao();
-    if (conn) {
-      try { await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]); }
-      catch { /* silencioso */ }
-    }
-    showToast("\u2705 Ocorr\u00eancia registrada", "ok");
-  }, [getConexao, usuarioLogado, perfil, showToast]);
-
-  // Abre OcorrModal para nova ocorrência
-  const abrirOcorrModal = (dt, record=null) => {
-    setOcorrModalDT(dt);
-    setOcorrModalRecord(record || DADOS.find(d=>d.dt===dt) || null);
-    setOcorrModalOpen(true);
-  };
-
-  const adicionarOcorrenciaModal = useCallback(async () => {
-    if (!ocorrModalNova.trim() || !ocorrModalDT) return;
-    const nova = {
-      dt: ocorrModalDT.dt,
-      data_hora: new Date().toISOString(),
-      texto: ocorrModalNova.trim(),
-      tipo: ocorrModalTipo,
-      usuario: usuarioLogado || perfil || "sistema",
-    };
-    const updated = [...ocorrModalList, nova];
-    setOcorrModalList(updated);
-    saveJSON(`co_ocorr_${ocorrModalDT.dt}`, updated);
-    setOcorrModalNova("");
-    const conn = getConexao();
-    if (conn) {
-      try { await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]); }
-      catch { /* silencioso */ }
-    }
-    showToast("✅ Ocorrência registrada","ok");
-  }, [ocorrModalNova, ocorrModalTipo, ocorrModalDT, ocorrModalList, getConexao, usuarioLogado, perfil, showToast]);
-
-  // handleLogin / handleLogout / handlePrimeiroLoginSalvar — via useAuthHandlers
-
-  // Search
-  const buscar = () => {
-    setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
-    const v = buscaInput.trim();
-    if (!v) return;
-    let found = null;
-    let relacionados = [];
-
-    if (buscaTipo === "dt") {
-      const c = v.replace(/\D/g,"");
-      found = DADOS.find(r => r.dt?.replace(/\D/g,"") === c || dtBase(r.dt)?.replace(/\D/g,"") === c);
-      if (found) {
-        // Buscar outros registros com mesmo CPF ou mesma Placa
-        const cpfN = found.cpf?.replace(/\D/g,"");
-        const placaN = found.placa?.toUpperCase().replace(/\W/g,"");
-        relacionados = DADOS.filter(r =>
-          r.dt !== found.dt && (
-            (cpfN && r.cpf?.replace(/\D/g,"") === cpfN) ||
-            (placaN && r.placa?.toUpperCase().replace(/\W/g,"") === placaN)
-          )
-        ).sort((a,b) => {
-          const da = parseData(a.data_carr), db = parseData(b.data_carr);
-          return da && db ? db - da : 0; // mais recente primeiro
-        });
-      }
-    } else if (buscaTipo === "cpf") {
-      const cpfN = v.replace(/\D/g,"");
-      const todos = DADOS.filter(r => r.cpf?.replace(/\D/g,"") === cpfN)
-        .sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
-      found = todos[0] || null;
-      relacionados = todos.slice(1);
-    } else {
-      const placaN = v.toUpperCase().replace(/\W/g,"");
-      const todos = DADOS.filter(r => r.placa?.toUpperCase().replace(/\W/g,"") === placaN)
-        .sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
-      found = todos[0] || null;
-      relacionados = todos.slice(1);
-    }
-
-    if (found) {
-      setBuscaResult(found);
-      setBuscaRelacionados(relacionados);
-      const newH = [{dt:found.dt,nome:found.nome||"—"},...historico.filter(h=>h.dt!==found.dt)].slice(0,5);
-      setHistorico(newH);
-      saveJSON("hist",newH);
-    } else {
-      // CPF/Placa não achou registro — checar se existe em dados com info parcial
-      if (buscaTipo === "cpf") {
-        const cpfN = v.replace(/\D/g,"");
-        const temCpf = DADOS.some(r => r.cpf?.replace(/\D/g,"") === cpfN);
-        setBuscaError(temCpf ? `__cpf_sem_dt__${v}` : v);
-      } else {
-        setBuscaError(v);
-      }
-    }
-  };
+  // Search — via useBuscarHandlers
+  const { buscar } = useBuscarHandlers({
+    DADOS, buscaInput, buscaTipo,
+    setBuscaResult, setBuscaError, setBuscaRelacionados,
+    historico, setHistorico,
+  });
 
   // Dashboard data
   const dashData = useMemo(() => {
