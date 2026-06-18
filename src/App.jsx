@@ -41,6 +41,8 @@ import { useMotoristaState } from './hooks/useMotoristaState.js';
 import { useWppState } from './hooks/useWppState.js';
 import { useUIState } from './hooks/useUIState.js';
 import { useAdminState } from './hooks/useAdminState.js';
+import { useAdminHandlers } from './hooks/useAdminHandlers.js';
+import { useSyncHandlers } from './hooks/useSyncHandlers.js';
 import { useOperacionalState } from './hooks/useOperacionalState.js';
 import { useBuscaState } from './hooks/useBuscaState.js';
 import { useViewPrefsState } from './hooks/useViewPrefsState.js';
@@ -359,42 +361,11 @@ export default function App() {
     return conexoes[ativa] || conexoes[0] || null;
   }, [conexoes]);
 
-  // Sync
-  const sincronizar = useCallback(async () => {
-    const conn = getConexao();
-    if (!conn) { showToast("Sem conexão — configure o Supabase","warn"); return; }
-    setConnStatus("syncing");
-    try {
-      let all = [];
-      let offset = 0;
-      const limit = 1000;
-      while (true) {
-        const data = sessionToken
-          ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_operacional",
-              {p_token: sessionToken, p_base: baseAtual?.id ?? "imperatriz_belem", p_limit: limit, p_offset: offset})
-              .then(r => Array.isArray(r) ? r.map(x => typeof x === "string" ? JSON.parse(x) : x) : [])
-          : await supaFetch(conn.url, conn.key, "GET", `${tblRef.current}?select=*&order=id.asc&limit=${limit}&offset=${offset}`);
-        if (!Array.isArray(data) || !data.length) break;
-        all = [...all, ...data];
-        if (data.length < limit) break;
-        offset += limit;
-      }
-      setDadosBase(all);
-      // Permite DT sem motorista sincronizarem normalmente
-      const dts = new Set(all.map(r => r.dt));
-      const newExtras = dadosExtras.filter(r => !dts.has(r.dt) && !dts.has(r._overrideDT) && r.nome);
-      setDadosExtras(newExtras);
-      saveJSON("dados_extras", newExtras);
-      const now = new Date().toLocaleString("pt-BR");
-      localStorage.setItem("ultima_sync", JSON.stringify(now));
-      setUltimaSync(now);
-      setConnStatus("online");
-      showToast(`✅ ${all.length} registros sincronizados!`,"ok");
-    } catch(e) {
-      setConnStatus("error");
-      showToast(`⚠️ ${e.message}`,"warn");
-    }
-  }, [getConexao, dadosExtras, showToast]);
+  const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
+    getConexao, showToast, tblRef, sessionToken, baseAtual,
+    dadosExtras, setDadosBase, setDadosExtras, setConnStatus, setUltimaSync,
+    setApontItems, setApontLoading, setUsuarios, setUsuariosPendentes,
+  });
 
   // Auto-login from session (com expiração de 24h)
   useEffect(() => {
@@ -623,158 +594,12 @@ export default function App() {
     } catch { /* silencioso */ }
   }, [getConexao]);
 
-  // ── Log de alterações (Item 8) ──
-  const registrarLog = useCallback(async (acao, descricao, dados_antes = null, dados_depois = null) => {
-    const conn = getConexao();
-    const entrada = {
-      data_hora: new Date().toISOString(),
-      usuario: usuarioLogado || perfil || "sistema",
-      perfil_usuario: perfil || "desconhecido",
-      acao,
-      descricao,
-      dados_antes: dados_antes ? JSON.stringify(dados_antes) : null,
-      dados_depois: dados_depois ? JSON.stringify(dados_depois) : null,
-    };
-    // Salva local como fallback
-    const logsLocal = loadJSON("co_logs_local", []);
-    logsLocal.unshift(entrada);
-    saveJSON("co_logs_local", logsLocal.slice(0, 200)); // máximo 200 entradas locais
-    // Salva no Supabase
-    if (conn) {
-      try { await supaFetch(conn.url, conn.key, "POST", TABLE_LOGS, [entrada]); } catch { /* silencioso */ }
-    }
-  }, [getConexao, usuarioLogado, perfil]);
-
-  // Item 7 — Gerar email de boas-vindas
-  const gerarCorpoEmail = useCallback((template, usuario, senhaPlain = "") => {
-    return (template.corpo || "")
-      .replace(/{nome}/g, usuario.nome || "")
-      .replace(/{email}/g, usuario.email || "")
-      .replace(/{senha}/g, senhaPlain || "(senha definida no cadastro)")
-      .replace(/{perfil}/g, usuario.perfil || "operador");
-  }, []);
-
-  const enviarEmailBoasVindas = useCallback((usuario, senhaPlain = "", forcarExterno = false) => {
-    const corpo = gerarCorpoEmail(emailTemplate, usuario, senhaPlain);
-    const assunto = (emailTemplate.assunto || "").replace(/{nome}/g, usuario.nome || "");
-    if (forcarExterno) {
-      // Abre cliente de email externo (Mail, Outlook, etc)
-      const mailtoLink = `mailto:${usuario.email}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-      window.open(mailtoLink, "_blank");
-    } else {
-      // Abre Gmail diretamente
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(usuario.email)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-      window.open(gmailUrl, "_blank");
-    }
-    showToast(`📧 Email preparado para ${usuario.email}`,"ok");
-  }, [emailTemplate, gerarCorpoEmail, showToast]);
-
-  // Item 8 — Carregar logs do Supabase
-  const carregarLogs = useCallback(async () => {
-    const conn = getConexao();
-    if (!conn) {
-      setLogsData(loadJSON("co_logs_local", []));
-      return;
-    }
-    try {
-      const data = await supaFetch(conn.url, conn.key, "GET",
-        `${TABLE_LOGS}?order=data_hora.desc&limit=100&select=*`);
-      if (Array.isArray(data)) setLogsData(data);
-    } catch {
-      setLogsData(loadJSON("co_logs_local", []));
-    }
-  }, [getConexao]);
-
-  // Sincronizar usuários do Supabase
-  // ── Helpers de mapeamento co_apontamentos ──────────────────────────────
-  const apontToSupabase = (a) => ({
-    apontamento:           a.numero || a.apontamento,
-    item:                  a.item   ? parseInt(a.item)  : null,
-    linha:                 a.linha  ? parseInt(a.linha) : null,
-    descricao_apontamento: a.descricao_apontamento || null,
-    pedido:                a.pedido || null,
-    valor_rs:              a.valor  ? parseFloat(String(a.valor).replace(",",".")) : null,
-    filial:                a.filial || null,
-    tipo:                  a.tipo   || "descarga",
-    dt_relacionado:        a.dt_rel || a.dt_relacionado || null,
-    folha_registro:        a.frs_folha || a.folha_registro || null,
-    nf_numero:             a.nf_numero || null,
-    data_emissao:          a.data_emissao || null,
-    cidade:                a.cidade || null,
-    periodo_referente:     a.mes_ref || a.periodo_referente || null,
-    data_apontamento:      a.data_apontamento || null,
-  });
-  const apontFromSupabase = (r) => ({
-    id:                    r.id,
-    numero:                r.apontamento,
-    apontamento:           r.apontamento,
-    item:                  r.item   != null ? String(r.item)  : "",
-    linha:                 r.linha  != null ? String(r.linha) : "",
-    descricao_apontamento: r.descricao_apontamento || "",
-    pedido:                r.pedido || "",
-    mes_ref:               r.periodo_referente || "",
-    periodo_referente:     r.periodo_referente || "",
-    filial:                r.filial || "",
-    valor:                 r.valor_rs != null ? String(r.valor_rs) : "",
-    frs_folha:             r.folha_registro || "",
-    folha_registro:        r.folha_registro || "",
-    tipo:                  r.tipo || "descarga",
-    dt_rel:                r.dt_relacionado || "",
-    dt_relacionado:        r.dt_relacionado || "",
-    nf_numero:             r.nf_numero || "",
-    data_emissao:          r.data_emissao || "",
-    cidade:                r.cidade || "",
-    data_apontamento:      r.data_apontamento || "",
-    criado_em:             r.created_at || "",
-    updated_at:            r.updated_at || "",
-    status_alerta:         r.status_alerta || false,
+  const { registrarLog, gerarCorpoEmail, enviarEmailBoasVindas, carregarLogs } = useAdminHandlers({
+    getConexao, showToast, emailTemplate, setLogsData, usuarioLogado, perfil,
   });
 
-  const carregarAponts = useCallback(async () => {
-    const conn = getConexao();
-    if (!conn) return;
-    try {
-      setApontLoading(true);
-      const data = await supaFetch(conn.url, conn.key, "GET",
-        `${TABLE_APOINTS}?select=*&order=created_at.desc&limit=500`);
-      if (Array.isArray(data) && data.length > 0) {
-        const mapped = data.map(apontFromSupabase);
-        setApontItems(mapped);
-        saveJSON("co_aponts", mapped);
-      }
-    } catch { /* usa localStorage */ }
-    finally { setApontLoading(false); }
-  }, [getConexao]);
 
-  const syncUsuariosRemoto = useCallback(async () => {
-    const conn = getConexao();
-    if (!conn) return;
-    try {
-      const data = sessionToken
-        ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_usuarios", {p_token: sessionToken})
-        : await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?select=*`);
-      if (Array.isArray(data)) {
-        const aprovados = data.filter(u => !u.status || u.status === "aprovado");
-        const pendentes = data.filter(u => u.status === "pendente");
-        const lista = sessionToken ? data : aprovados;
-        setUsuarios(lista);
-        saveJSON("co_usuarios_local", lista.map(({senha:_s,...r})=>r));
-        if (!sessionToken) setUsuariosPendentes(pendentes);
-      }
-    } catch { /* silencioso */ }
-  }, [getConexao]);
-
-  // Recarrega apenas os pendentes de aprovação (uso no painel admin)
-  const carregarPendentes = useCallback(async () => {
-    const conn = getConexao();
-    if (!conn) return;
-    try {
-      const data = sessionToken
-        ? await supaFetch(conn.url, conn.key, "POST", "rpc/listar_usuarios_pendentes", {p_token: sessionToken})
-        : await supaFetch(conn.url, conn.key, "GET", `${TABLE_USUARIOS}?status=eq.pendente&select=*&order=solicitado_em.desc`);
-      if (Array.isArray(data)) setUsuariosPendentes(data);
-    } catch { /* silencioso */ }
-  }, [getConexao]);
+  // carregarAponts / syncUsuariosRemoto / carregarPendentes — via useSyncHandlers
 
   // ── Ocorrências ──
   const abrirDetalhe = useCallback(async (reg) => {

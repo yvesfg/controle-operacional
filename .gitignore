@@ -41,3 +41,4 @@ SUPABASE_REGRAS.md
 .github_token
 setup_vm_git.sh
 *.bak_*
+.vercel
