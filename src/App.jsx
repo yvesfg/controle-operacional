@@ -39,6 +39,11 @@ import { useDiariasState } from './hooks/useDiariasState.js';
 import { useModalState } from './hooks/useModalState.js';
 import { useMotoristaState } from './hooks/useMotoristaState.js';
 import { useWppState } from './hooks/useWppState.js';
+import { useUIState } from './hooks/useUIState.js';
+import { useAdminState } from './hooks/useAdminState.js';
+import { useOperacionalState } from './hooks/useOperacionalState.js';
+import { useBuscaState } from './hooks/useBuscaState.js';
+import { useViewPrefsState } from './hooks/useViewPrefsState.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -154,19 +159,12 @@ export default function App() {
   const [connStatus, setConnStatus] = useState("offline");
   const [ultimaSync, setUltimaSync] = useState(loadJSON("ultima_sync",""));
 
-  // Search state
-  const [buscaTipo, setBuscaTipo] = useState("dt");
-  const [buscaInput, setBuscaInput] = useState("");
-  const [buscaResult, setBuscaResult] = useState(null);
-  const [buscaRelacionados, setBuscaRelacionados] = useState([]);
-  const [buscaError, setBuscaError] = useState(null);
-  const [buscaModalOpen, setBuscaModalOpen] = useState(false);
-  useEffect(() => {
-    const onKey = (e) => { if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); setBuscaModalOpen(v=>!v); } };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-  const [historico, setHistorico] = useState(() => loadJSON("hist",[]));
+  const {
+    buscaTipo, setBuscaTipo, buscaInput, setBuscaInput,
+    buscaResult, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
+    buscaError, setBuscaError, buscaModalOpen, setBuscaModalOpen,
+    historico, setHistorico,
+  } = useBuscaState();
 
   const {
     dashMes, setDashMes, dashOrigem, setDashOrigem,
@@ -194,22 +192,11 @@ export default function App() {
     rodorricaPeriodoFim, setRodorricaPeriodoFim, rodorricaPeriodoModal, setRodorricaPeriodoModal,
   } = useDescargaState();
 
-  // View mode state (linhas | blocos) + colunas para Diarias e Descarga
-  const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","blocos"));
-  const [diariaCols, setDiariaCols] = useState(() => {
-    // Migration: padroniza diariaCols para 3 (Abr 2026)
-    const MK = "co_diaria_cols_migv3";
-    if (!loadJSON(MK, false)) {
-      saveJSON("co_diaria_cols", 3);
-      saveJSON(MK, true);
-      return 3;
-    }
-    return loadJSON("co_diaria_cols", 3);
-  });
-  const [descargaView, setDescargaView] = useState(() => loadJSON("co_descarga_view","blocos"));
-  const [descargaCols, setDescargaCols] = useState(() => loadJSON("co_descarga_cols", 2));
-  const [diariaNavDT, setDiariaNavDT] = useState(null);    // DT destacada ao navegar do modal
-  const [descargaNavDT, setDescargaNavDT] = useState(null); // DT destacada ao navegar do modal
+  const {
+    diariaView, setDiariaView, diariaCols, setDiariaCols,
+    descargaView, setDescargaView, descargaCols, setDescargaCols,
+    diariaNavDT, setDiariaNavDT, descargaNavDT, setDescargaNavDT,
+  } = useViewPrefsState();
 
   const {
     modalOpen, setModalOpen, editIdx, setEditIdx, editStep, setEditStep,
@@ -228,41 +215,23 @@ export default function App() {
     acompDias, setAcompDias, acompDiaSel, setAcompDiaSel, acompTexto, setAcompTexto, acompImagens, setAcompImagens,
   } = useModalState();
 
-  // Alerts
-  const [alertasOpen, setAlertasOpen] = useState(false);
-  const [baseMenuOpen, setBaseMenuOpen] = useState(false);
-  const [conexoesOpen, setConexoesOpen] = useState(false);
-  const [contatosAdminOpen, setContatosAdminOpen] = useState(false);
-  const [gsheetsOpen, setGsheetsOpen] = useState(false);
-  const [oauthAccessOpen, setOauthAccessOpen] = useState(false);
-  const [syncStatus, setSyncStatus] = useState(null);       // último status gravado pelo Apps Script
-  const [syncStatusLoading, setSyncStatusLoading] = useState(false);
-  const [adminEmailVal, setAdminEmailVal] = useState(()=>loadJSON("co_admin_email","yvesfg@gmail.com"));
-  const [isMobile, setIsMobile] = useState(()=>window.innerWidth<=600);
-  const [isWide,   setIsWide]   = useState(()=>window.innerWidth>=768);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(()=>loadJSON("co_sidebar_collapsed", window.innerWidth>=768&&window.innerWidth<1200));
-  const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
-  useEffect(()=>{
-    const fn=()=>{setIsMobile(window.innerWidth<=600);setIsWide(window.innerWidth>=768);};
-    window.addEventListener("resize",fn);
-    return()=>window.removeEventListener("resize",fn);
-  },[]);
-  useEffect(()=>{ saveJSON("co_sidebar_collapsed", sidebarCollapsed); },[sidebarCollapsed]);
+  const {
+    alertasOpen, setAlertasOpen, baseMenuOpen, setBaseMenuOpen,
+    conexoesOpen, setConexoesOpen, contatosAdminOpen, setContatosAdminOpen,
+    gsheetsOpen, setGsheetsOpen, oauthAccessOpen, setOauthAccessOpen,
+    syncStatus, setSyncStatus, syncStatusLoading, setSyncStatusLoading,
+    adminEmailVal, setAdminEmailVal,
+    isMobile, setIsMobile, isWide, setIsWide,
+    sidebarCollapsed, setSidebarCollapsed, mobileSidebarExpanded, setMobileSidebarExpanded,
+  } = useUIState();
 
 
 
-  // Item 7 — Email template e envio
-  const [emailTemplateOpen, setEmailTemplateOpen] = useState(false);
-  const [emailTemplate, setEmailTemplate] = useState(() => loadJSON("co_email_template", {
-    assunto: "Bem-vindo ao Controle Operacional — YFGroup",
-    corpo: `Olá {nome},\n\nSeu acesso ao sistema de Controle Operacional da YFGroup foi criado com sucesso!\n\nSeus dados de acesso:\n- Email: {email}\n- Senha temporária: {senha}\n- Perfil: {perfil}\n\nAcesse o sistema em: https://controle-operacional-omega.vercel.app\n\nRecomendamos trocar sua senha no primeiro acesso.\n\nAtenciosamente,\nAdministração — YFGroup`,
-  }));
-  const [usuarioEmailPreview, setUsuarioEmailPreview] = useState(null);
-
-  // Item 8 — Log de alterações
-  const [logsOpen, setLogsOpen] = useState(false);
-  const [logsData, setLogsData] = useState([]);
-  const [logsSubTab, setLogsSubTab] = useState("dev"); // 'dev' | 'op'
+  const {
+    emailTemplateOpen, setEmailTemplateOpen, emailTemplate, setEmailTemplate,
+    usuarioEmailPreview, setUsuarioEmailPreview,
+    logsOpen, setLogsOpen, logsData, setLogsData, logsSubTab, setLogsSubTab,
+  } = useAdminState();
 
   const {
     wppModal, setWppModal, wppTel, setWppTel, wppPgto, setWppPgto,
@@ -292,27 +261,13 @@ export default function App() {
 
   // Dashboard state — via useDashboardState (above)
 
-  // ── Aba Operacional ──
-  const [operSubTab, setOperSubTab] = useState("sgs");
-  const [filtroOcorr, setFiltroOcorr] = useState(null); // null = todos | "SGS" | "Ocorrência" | "Diária/Atraso" | "DCC"
-  const [sgsItems, setSgsItems] = useState(() => loadJSON("co_sgs", []));
-  const [sgsFormOpen, setSgsFormOpen] = useState(false);
-  const [sgsForm, setSgsForm] = useState({numero:"", data_chamado:"", ultimo_retorno:"", descricao:"", dt_rel:"", status:"aberto"});
-  const [apontItems, setApontItems] = useState(() => loadJSON("co_aponts", []));
-  const [apontFormOpen, setApontFormOpen] = useState(false);
-  const [apontLoading, setApontLoading] = useState(false);
-  const [apontForm, setApontForm] = useState({
-    numero:"", item:"", linha:"", descricao_apontamento:"",
-    pedido:"", mes_ref:"", filial:"", valor:"", frs_folha:"",
-    tipo:"descarga", dt_rel:"", cidade:"",
-    nf_numero:"", data_emissao:"",
-    data_apontamento: new Date().toISOString().split("T")[0],
-  });
-
-  // wppTipoOpen/wppDccMinutas state — via useWppState (above)
-  // SGS: retornos interativos
-  const [expandedSgsId, setExpandedSgsId] = useState(null);
-  const [sgsRetornoForm, setSgsRetornoForm] = useState({data:"",descricao:""});
+  const {
+    operSubTab, setOperSubTab, filtroOcorr, setFiltroOcorr,
+    sgsItems, setSgsItems, sgsFormOpen, setSgsFormOpen, sgsForm, setSgsForm,
+    expandedSgsId, setExpandedSgsId, sgsRetornoForm, setSgsRetornoForm,
+    apontItems, setApontItems, apontFormOpen, setApontFormOpen,
+    apontLoading, setApontLoading, apontForm, setApontForm,
+  } = useOperacionalState();
   const {
     relGeralOpen, setRelGeralOpen, reportBuilderOpen, setReportBuilderOpen,
     relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
