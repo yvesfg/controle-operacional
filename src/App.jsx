@@ -578,6 +578,10 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Roda uma única vez no mount — processa hash OAuth do redirect
 
+  const { registrarLog, gerarCorpoEmail, enviarEmailBoasVindas, carregarLogs } = useAdminHandlers({
+    getConexao, showToast, emailTemplate, setLogsData, usuarioLogado, perfil,
+  });
+
   const { getConfigRemoto, setConfigRemoto, handleLogin, handleLogout, handlePrimeiroLoginSalvar } = useAuthHandlers({
     getConexao, showToast, registrarLog,
     sessionToken, usuarioLogado, perfil,
@@ -589,9 +593,6 @@ export default function App() {
     setSessionToken, setBasesPermitidas, setBaseAtual, setHubScreen, setActiveTab,
   });
 
-  const { registrarLog, gerarCorpoEmail, enviarEmailBoasVindas, carregarLogs } = useAdminHandlers({
-    getConexao, showToast, emailTemplate, setLogsData, usuarioLogado, perfil,
-  });
 
 
   // carregarAponts / syncUsuariosRemoto / carregarPendentes — via useSyncHandlers
@@ -1808,7 +1809,6 @@ export default function App() {
         formData, setFormData, modalOpen, setModalOpen, editIdx, setEditIdx,
         excluirConfirm, setExcluirConfirm, excluirTexto, setExcluirTexto,
         canFin, brToInput, brToInputDT, inputToBr, inputToBrDT,
-        setNfdForm, setNfdFotos, setNfdAlertOpen, setOcorrChegadaAlert,
         baseAtual, salvarRegistro, deletarRegistro,
         motExcluirTodosOpen, setMotExcluirTodosOpen, motExcluirTodosTexto, setMotExcluirTodosTexto,
         motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
