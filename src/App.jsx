@@ -29,6 +29,7 @@ import DescargaView    from './views/DescargaViewWrapper.jsx';
 import AdminView       from './views/AdminViewWrapper.jsx';
 import useModalEsc      from './hooks/useModalEsc.js';
 import { usePlanilhaState } from './hooks/usePlanilhaState.js';
+import { useDescargaState } from './hooks/useDescargaState.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -170,31 +171,18 @@ export default function App() {
   const [dPlanFiltroOrigem, setDPlanFiltroOrigem] = useState("todas");
   const [dPlanFiltroIni, setDPlanFiltroIni] = useState("");
   const [dPlanFiltroFim, setDPlanFiltroFim] = useState("");
-  const [extratoRows, setExtratoRows] = useState([]);
-  const [extratoFileName, setExtratoFileName] = useState(null);
-  const [prevExtratoSnap, setPrevExtratoSnap] = useState(null);
-  const [extratoSheetInfo, setExtratoSheetInfo] = useState(null);
-  const [extratoFiltro, setExtratoFiltro] = useState("todos");
-  const [extratoDataIni, setExtratoDataIni] = useState("");
-  const [extratoDataFim, setExtratoDataFim] = useState("");
-
-  // Descarga state
-  const [dscTab, setDscTab] = useState("hoje");
-  const [dscFiltroAno, setDscFiltroAno] = useState(()=>String(new Date().getFullYear()));
-  const [dscFiltroMes, setDscFiltroMes] = useState(()=>String(new Date().getMonth()+1).padStart(2,"0"));
-  const [dscFiltroOrigem, setDscFiltroOrigem] = useState("todas");
-  const [dscFiltroIni, setDscFiltroIni] = useState("");
-  const [dscFiltroFim, setDscFiltroFim] = useState("");
-  const [dscData, setDscData] = useState(new Date().toISOString().slice(0,10));
-  // Conferência Planilha RODORRICA
-  const [rodorricaRows, setRodorricaRows] = useState([]);
-  const [rodorricaFileName, setRodorricaFileName] = useState(null);
-  const [prevRodorricaSnap, setPrevRodorricaSnap] = useState(null);
-  const [rodorricaSheetInfo, setRodorricaSheetInfo] = useState(null);
-  const [rodorricaFiltro, setRodorricaFiltro] = useState("todos");
-  const [rodorricaPeriodoIni, setRodorricaPeriodoIni] = useState("");
-  const [rodorricaPeriodoFim, setRodorricaPeriodoFim] = useState("");
-  const [rodorricaPeriodoModal, setRodorricaPeriodoModal] = useState(false);
+  const {
+    extratoRows, setExtratoRows, extratoFileName, setExtratoFileName,
+    prevExtratoSnap, setPrevExtratoSnap, extratoSheetInfo, setExtratoSheetInfo,
+    extratoFiltro, setExtratoFiltro, extratoDataIni, setExtratoDataIni, extratoDataFim, setExtratoDataFim,
+    dscTab, setDscTab, dscFiltroAno, setDscFiltroAno, dscFiltroMes, setDscFiltroMes,
+    dscFiltroOrigem, setDscFiltroOrigem, dscFiltroIni, setDscFiltroIni, dscFiltroFim, setDscFiltroFim,
+    dscData, setDscData,
+    rodorricaRows, setRodorricaRows, rodorricaFileName, setRodorricaFileName,
+    prevRodorricaSnap, setPrevRodorricaSnap, rodorricaSheetInfo, setRodorricaSheetInfo,
+    rodorricaFiltro, setRodorricaFiltro, rodorricaPeriodoIni, setRodorricaPeriodoIni,
+    rodorricaPeriodoFim, setRodorricaPeriodoFim, rodorricaPeriodoModal, setRodorricaPeriodoModal,
+  } = useDescargaState();
 
   // View mode state (linhas | blocos) + colunas para Diarias e Descarga
   const [diariaView, setDiariaView] = useState(() => loadJSON("co_diaria_view","blocos"));
