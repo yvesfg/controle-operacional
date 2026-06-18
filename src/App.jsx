@@ -44,6 +44,7 @@ import { useAdminState } from './hooks/useAdminState.js';
 import { useAdminHandlers } from './hooks/useAdminHandlers.js';
 import { useAuthHandlers } from './hooks/useAuthHandlers.js';
 import { useOcorrHandlers } from './hooks/useOcorrHandlers.js';
+import { useDTHandlers } from './hooks/useDTHandlers.js';
 import { useBuscarHandlers } from './hooks/useBuscarHandlers.js';
 import { useSyncHandlers } from './hooks/useSyncHandlers.js';
 import { useOperacionalState } from './hooks/useOperacionalState.js';
@@ -1062,178 +1063,18 @@ export default function App() {
   // Save conexoes
   const saveConexoesLS = (c) => { setConexoes(c); saveJSON("co_conexoes",c); };
 
-  // Supabase upsert
-  // Colunas conhecidas do Supabase. Se a tabela não tiver desc_aguardando ainda,
-  // o retry remove campos desconhecidos automaticamente para não bloquear o save.
-  const SUPA_KNOWN_COLS = [
-    "dt","nome","cpf","placa","placa2","placa3","vinculo","origem","destino",
-    "data_carr","data_agenda","status","dias",
-    "vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg","vl_cte_comp",
-    "cte","mdf","nf","mat","ro","ro_hora","ro_status","cliente","sgs",
-    "chegada","obs_chegada","data_obs_chegada","desc_aguardando","data_desc","obs_descarga","data_obs_descarga","informou_analista","data_manifesto","gerenc","forms","updated_at",
-    "data_criacao","minutas_dcc","cte_comp","mdf_comp","mat_comp",
-    "obs","sinistro","ocorrencias",
-    // ── Campos exclusivos AVB (acailandia_avb) ──
-    "codigo","data_homerico","data_liberacao","gerenciadora",
-    "rdo","contrato_mat","cadastro_fortes","cte_comp_num","cte_comp_vlr",
-    "contratante"
-  ];
-  const supaUpsert = async (reg) => {
-    const conn = getConexao();
-    if (!conn) throw new Error("Sem conexão");
-    if (!sessionToken) throw new Error("Sessão não autenticada");
-    const clean = {...reg}; delete clean._override; delete clean._overrideDT;
-    for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
-    // AVB: âncora = codigo (coluna H); grava via upsert por codigo. Sem dt obrigatório.
-    if (baseAtual?.id === "acailandia_avb") {
-      await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional_cod", {
-        p_token: sessionToken,
-        p_base:  baseAtual.id,
-        p_dados: clean,
-      });
-      return;
-    }
-    if (!clean.dt) throw new Error("DT obrigatório");
-    const { ok: validOk, erros: validErros } = validarRegistroOperacional(clean);
-    if (!validOk) throw new Error("Dados inválidos: " + validErros.join("; "));
-    // M2/M3: escrita via RPC que valida token + base no servidor
-    await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional", {
-      p_token: sessionToken,
-      p_base:  baseAtual?.id ?? "imperatriz_belem",
-      p_dados: clean,
-    });
-  };
+  // supaUpsert / salvarRegistro / deletarRegistro / salvarMinutasDetalhe — via useDTHandlers
+    // supaUpsert / salvarRegistro / deletarRegistro / salvarMinutasDetalhe
+  const { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe } = useDTHandlers({
+    getConexao, showToast, sessionToken, baseAtual, registrarLog,
+    DADOS, formData, editIdx, dadosBase, dadosExtras,
+    setDadosBase, setDadosExtras, setModalOpen,
+    setDetalheDT, setExcluirConfirm, setExcluirTexto,
+    detalheDT, detalheMinDcc, detalheCteComp, detalheMinDsc,
+    setSalvandoMins,
+  });
 
-  // Save record
-  const salvarRegistro = async () => {
-    const reg = {...formData};
-
-    // ── AVB: âncora = codigo. Sem código pode subir como avulso, com alerta. ──
-    if (baseAtual?.id === "acailandia_avb") {
-      if (!reg.codigo) {
-        const ok = window.confirm("\u26a0\ufe0f Este registro nao tem CODIGO (coluna H).\n\nSalvar assim mesmo como CARREGAMENTO AVULSO?\n(Recomendado definir um codigo para evitar duplicidade.)");
-        if (!ok) return;
-      }
-      if (editIdx >= 0 && reg.codigo) {
-        setDadosBase(prev => prev.map(r => r.codigo === reg.codigo ? {...r, ...reg} : r));
-      } else {
-        if (!reg.data_criacao) reg.data_criacao = new Date().toISOString();
-        setDadosBase(prev => [...prev, reg]);
-      }
-      const connAvb = getConexao();
-      if (connAvb) {
-        try {
-          await supaUpsert(reg);
-          await registrarLog(editIdx>=0 ? "EDITAR_REGISTRO" : "NOVO_REGISTRO", `COD ${reg.codigo||"(avulso)"} — ${reg.nome||"sem nome"}`, editIdx>=0 ? DADOS[editIdx] : null, reg);
-          showToast("✅ Salvo e sincronizado!","ok");
-        } catch(e) { showToast("⚠️ Salvo local. Sync: "+e.message,"warn"); }
-      } else { showToast("✅ Salvo localmente!","ok"); }
-      setModalOpen(null);
-      return;
-    }
-
-    if (!reg.dt) { showToast("⚠️ DT obrigatório","warn"); return; }
-
-    // local save
-    const newExtras = [...dadosExtras];
-    const existIdx = DADOS.findIndex(r => r.dt === reg.dt);
-    if (editIdx >= 0) {
-      if (editIdx < dadosBase.length) {
-        reg._override = true;
-        reg._overrideDT = dadosBase[editIdx].dt;
-        const filtered = newExtras.filter(x => x._overrideDT !== reg._overrideDT);
-        filtered.push(reg);
-        setDadosExtras(filtered);
-        saveJSON("dados_extras", filtered.map(({cpf:_c1,...r})=>r));
-      } else {
-        newExtras[editIdx - dadosBase.length] = reg;
-        setDadosExtras(newExtras);
-        saveJSON("dados_extras", newExtras.map(({cpf:_c2,...r})=>r));
-      }
-    } else {
-      // Novo registro: registra data/hora de criação
-      if (!reg.data_criacao) reg.data_criacao = new Date().toISOString();
-      newExtras.push(reg);
-      setDadosExtras(newExtras);
-      saveJSON("dados_extras", newExtras.map(({cpf:_c3,...r})=>r));
-    }
-
-    // Supabase sync
-    const conn = getConexao();
-    if (conn) {
-      try {
-        await supaUpsert(reg);
-        await registrarLog(
-          editIdx>=0 ? "EDITAR_REGISTRO" : "NOVO_REGISTRO",
-          `DT ${reg.dt} — ${reg.nome||"sem nome"}`,
-          editIdx>=0 ? DADOS[editIdx] : null,
-          reg
-        );
-        showToast("✅ Salvo e sincronizado!","ok");
-      }
-      catch(e) { showToast("⚠️ Salvo local. Sync: "+e.message,"warn"); }
-    } else {
-      showToast("✅ Salvo localmente!","ok");
-    }
-    setModalOpen(null);
-  };
-
-  // Delete record
-  const deletarRegistro = async (dt) => {
-    const newExtras = dadosExtras.filter(x => x._overrideDT !== dt && x.dt !== dt);
-    setDadosExtras(newExtras);
-    saveJSON("dados_extras", newExtras.map(({cpf:_c4,...r})=>r));
-    setDadosBase(prev => prev.filter(r => r.dt !== dt));
-    const conn = getConexao();
-    if (conn) {
-      try {
-        // M2/M3: deleção via RPC que valida token + base no servidor
-        await supaFetch(conn.url, conn.key, "POST", "rpc/delete_operacional", {
-          p_token: sessionToken,
-          p_base:  baseAtual?.id ?? "imperatriz_belem",
-          p_dt:    dt,
-        });
-        await registrarLog("EXCLUIR_REGISTRO", `DT ${dt} excluido`);
-        showToast("🗑️ Registro excluído!", "ok");
-      } catch(e) { showToast("⚠️ Excluído local. Sync: "+e.message, "warn"); }
-    } else { showToast("🗑️ Registro excluído localmente!", "ok"); }
-    setModalOpen(null); setDetalheDT(null);
-    setExcluirConfirm(null); setExcluirTexto("");
-  };
-
-  // Salva minutas DCC / MAM-MRM no Supabase via PATCH
-  const salvarMinutasDetalhe = async () => {
-    if (!detalheDT) return;
-    const conn = getConexao();
-    if (!conn) { showToast("⚠️ Sem conexão","warn"); return; }
-    setSalvandoMins(true);
-    try {
-      const payload = {
-        minutas_dcc: JSON.stringify(detalheMinDcc),
-        cte_comp:  detalheCteComp.cte||null,
-        mdf_comp:  detalheCteComp.mdf||null,
-        mat_comp:  detalheCteComp.mat||null,
-        minutas_dsc: JSON.stringify(detalheMinDsc),
-      };
-      // M2/M3: patch via RPC que valida token + base no servidor
-      await supaFetch(conn.url, conn.key, "POST", "rpc/patch_operacional", {
-        p_token: sessionToken,
-        p_base:  baseAtual?.id ?? "imperatriz_belem",
-        p_dt:    detalheDT.dt,
-        p_dados: payload,
-      });
-      const updated = {...detalheDT, ...payload};
-      setDetalheDT(updated);
-      setDadosBase(prev => prev.map(r => r.dt === detalheDT.dt ? {...r, ...payload} : r));
-      showToast("✅ Documentos salvos!","ok");
-    } catch(e) {
-      showToast("⚠️ Erro: "+e.message,"warn");
-    } finally {
-      setSalvandoMins(false);
-    }
-  };
-
-  // Abre o modal WPP pré-preenchido com minutas salvas no registro
+    // Abre o modal WPP pré-preenchido com minutas salvas no registro
   const abrirWppPagModal = (reg, mot, tipo) => {
     const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
     const dcc = pj(reg?.minutas_dcc, [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]);
