@@ -36,6 +36,9 @@ import { useDescargaState } from './hooks/useDescargaState.js';
 import { useRelatoriosState } from './hooks/useRelatoriosState.js';
 import { useDashboardState } from './hooks/useDashboardState.js';
 import { useDiariasState } from './hooks/useDiariasState.js';
+import { useModalState } from './hooks/useModalState.js';
+import { useMotoristaState } from './hooks/useMotoristaState.js';
+import { useWppState } from './hooks/useWppState.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -208,56 +211,22 @@ export default function App() {
   const [diariaNavDT, setDiariaNavDT] = useState(null);    // DT destacada ao navegar do modal
   const [descargaNavDT, setDescargaNavDT] = useState(null); // DT destacada ao navegar do modal
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(null); // 'edit'|'motorista'|'usuario'|'configdb'|'detalhe'
-  const [editIdx, setEditIdx] = useState(-1);
-  const [editStep, setEditStep] = useState(1);
-  const [formData, setFormData] = useState({});
-  const [excluirConfirm, setExcluirConfirm] = useState(null); // null | 'edit' | 'detalhe'
-  const [excluirTexto, setExcluirTexto] = useState("");
-
-  // Detalhe / Ocorrências
-  const [detalheDT, setDetalheDT] = useState(null);       // registro aberto no modal
-  const [ocorrencias, setOcorrencias] = useState([]);      // lista de ocorrências do DT atual
-  const [novaOcorr, setNovaOcorr] = useState("");
-  const [novaOcorrTipo, setNovaOcorrTipo] = useState("info"); // info | alerta | status
-  const [ocorrLoading, setOcorrLoading] = useState(false);
-  const [ocorrListExpanded, setOcorrListExpanded] = useState(false); // expande lista no modal detalhe
-  // Modal de nova ocorrência (OcorrModal unificado)
-  const [ocorrModalOpen, setOcorrModalOpen] = useState(false);
-  const [ocorrModalDT, setOcorrModalDT] = useState(null);
-  const [ocorrModalRecord, setOcorrModalRecord] = useState(null);
-  // (legacy mini-modal states mantidos para compatibilidade)
-  const [ocorrModalList, setOcorrModalList] = useState([]);
-  const [ocorrModalLoading, setOcorrModalLoading] = useState(false);
-  const [ocorrModalExpanded, setOcorrModalExpanded] = useState(false);
-  const [ocorrModalNova, setOcorrModalNova] = useState("");
-  const [ocorrModalTipo, setOcorrModalTipo] = useState("info");
-
-  // Minutas no modal de detalhe (Supabase)
-  const [detalheMinDcc, setDetalheMinDcc] = useState([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]);
-  const [detalheCteComp, setDetalheCteComp] = useState({cte:"",mdf:"",mat:""});
-  const [detalheMinDsc, setDetalheMinDsc] = useState([{tipo:"MAM",cte:"",mdf:"",num:""}]);
-  const [salvandoMins, setSalvandoMins] = useState(false);
-  const [detalheTemDcc, setDetalheTemDcc] = useState(null); // null=auto | "sim" | "nao"
-  // Seções colapsáveis do modal de detalhe
-  const [detalheSecDcc,    setDetalheSecDcc]    = useState(true);
-  const [detalheSecCteComp,setDetalheSecCteComp]= useState(false);
-  const [detalheSecMinDsc, setDetalheSecMinDsc] = useState(true);
-  // NFD — Nota de Devolução
-  const [nfdAlertOpen, setNfdAlertOpen] = useState(false);
-  const [nfdForm, setNfdForm]           = useState({numero:"",valor:"",tipo:"avaria",nfs:"",localizacao:""});
-  const [nfdFotos, setNfdFotos]         = useState([]);
-  const [nfdUploadando, setNfdUploadando] = useState(false);
-  const [nfdRegistrarOutra, setNfdRegistrarOutra] = useState(false);
-  // Alerta de Ocorrência/RO na chegada do motorista
-  const [ocorrChegadaAlert, setOcorrChegadaAlert] = useState(false);
-
-  // Item 4 - Acompanhamento dia a dia da DT
-  const [acompDias, setAcompDias] = useState([]);
-  const [acompDiaSel, setAcompDiaSel] = useState(null);
-  const [acompTexto, setAcompTexto] = useState("");
-  const [acompImagens, setAcompImagens] = useState([]);
+  const {
+    modalOpen, setModalOpen, editIdx, setEditIdx, editStep, setEditStep,
+    formData, setFormData, excluirConfirm, setExcluirConfirm, excluirTexto, setExcluirTexto,
+    detalheDT, setDetalheDT, ocorrencias, setOcorrencias,
+    novaOcorr, setNovaOcorr, novaOcorrTipo, setNovaOcorrTipo,
+    ocorrLoading, setOcorrLoading, ocorrListExpanded, setOcorrListExpanded,
+    ocorrModalOpen, setOcorrModalOpen, ocorrModalDT, setOcorrModalDT, ocorrModalRecord, setOcorrModalRecord,
+    ocorrModalList, setOcorrModalList, ocorrModalLoading, setOcorrModalLoading,
+    ocorrModalExpanded, setOcorrModalExpanded, ocorrModalNova, setOcorrModalNova, ocorrModalTipo, setOcorrModalTipo,
+    detalheMinDcc, setDetalheMinDcc, detalheCteComp, setDetalheCteComp,
+    detalheMinDsc, setDetalheMinDsc, salvandoMins, setSalvandoMins, detalheTemDcc, setDetalheTemDcc,
+    detalheSecDcc, setDetalheSecDcc, detalheSecCteComp, setDetalheSecCteComp, detalheSecMinDsc, setDetalheSecMinDsc,
+    nfdAlertOpen, setNfdAlertOpen, nfdForm, setNfdForm, nfdFotos, setNfdFotos,
+    nfdUploadando, setNfdUploadando, nfdRegistrarOutra, setNfdRegistrarOutra, ocorrChegadaAlert, setOcorrChegadaAlert,
+    acompDias, setAcompDias, acompDiaSel, setAcompDiaSel, acompTexto, setAcompTexto, acompImagens, setAcompImagens,
+  } = useModalState();
 
   // Alerts
   const [alertasOpen, setAlertasOpen] = useState(false);
@@ -295,48 +264,31 @@ export default function App() {
   const [logsData, setLogsData] = useState([]);
   const [logsSubTab, setLogsSubTab] = useState("dev"); // 'dev' | 'op'
 
-  // WhatsApp card modal (Item 4)
-  const [wppModal, setWppModal] = useState(null); // {reg, mot}
-  const [wppTel, setWppTel] = useState("");
-  const [wppPgto, setWppPgto] = useState("cheque"); // 'cheque'|'conta'|'ambos'
-  const [wppValCheque, setWppValCheque] = useState("");
-  const [wppValConta, setWppValConta] = useState("");
-  const [wppObs, setWppObs] = useState("");
+  const {
+    wppModal, setWppModal, wppTel, setWppTel, wppPgto, setWppPgto,
+    wppValCheque, setWppValCheque, wppValConta, setWppValConta, wppObs, setWppObs,
+    wppModal2, setWppModal2, wpp2Ro, setWpp2Ro, wpp2Obs, setWpp2Obs,
+    wpp2IncluirObs, setWpp2IncluirObs, wpp2Conflitos, setWpp2Conflitos,
+    wppTipoOpen, setWppTipoOpen, wppSearchTxt, setWppSearchTxt, wppSearchReg, setWppSearchReg,
+    wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppConfirmModal, setWppConfirmModal,
+    wppFortes, setWppFortes, wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp,
+    wppDscMinutas, setWppDscMinutas,
+  } = useWppState();
 
-  // Motoristas — busca local (Item 3)
-  const [motBusca, setMotBusca] = useState("");
+  const {
+    motBusca, setMotBusca,
+    motImportOpen, setMotImportOpen, motImportData, setMotImportData,
+    motImportConfirm, setMotImportConfirm, motImportStep, setMotImportStep,
+    motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
+    motSelecionados, setMotSelecionados, motExcluirLoteTexto, setMotExcluirLoteTexto,
+    motExcluirLoteOpen, setMotExcluirLoteOpen, motExcluirTodosOpen, setMotExcluirTodosOpen,
+    motExcluirTodosTexto, setMotExcluirTodosTexto, motPagina, setMotPagina,
+    motImportPrefOpen, setMotImportPrefOpen, motImportRaw, setMotImportRaw,
+    motImportPrefSel, setMotImportPrefSel, motImportPrefBusca, setMotImportPrefBusca,
+    motDupSugest, setMotDupSugest,
+  } = useMotoristaState();
 
-  // Importação de contatos (Item 1 sessão 4)
-  const [motImportOpen, setMotImportOpen] = useState(false);
-  const [motImportData, setMotImportData] = useState(null); // {novos:[], conflitos:[{atual,import,escolha}], vinculos:[]}
-  const [motImportConfirm, setMotImportConfirm] = useState("");
-  const [motImportStep, setMotImportStep] = useState(1); // 1=revisão, 2=sugestões de vínculo
-  // Sugestão de compatíveis (pós-importação)
-  const [motSugestOpen, setMotSugestOpen] = useState(false);
-  const [motSugestData, setMotSugestData] = useState([]); // [{mot, reg, placa, aceito}]
-  // Seleção em lote
-  const [motSelecionados, setMotSelecionados] = useState(new Set());
-  const [motExcluirLoteTexto, setMotExcluirLoteTexto] = useState("");
-  const [motExcluirLoteOpen, setMotExcluirLoteOpen] = useState(false);
-  // Excluir TODOS (admin)
-  const [motExcluirTodosOpen, setMotExcluirTodosOpen] = useState(false);
-  const [motExcluirTodosTexto, setMotExcluirTodosTexto] = useState("");
-  // Paginacao da lista de motoristas
-  const [motPagina, setMotPagina] = useState(1);
-  // Filtro de prefixos na importacao
-  const [motImportPrefOpen, setMotImportPrefOpen] = useState(false);
-  const [motImportRaw, setMotImportRaw] = useState([]);
-  const [motImportPrefSel, setMotImportPrefSel] = useState(new Set());
-  const [motImportPrefBusca, setMotImportPrefBusca] = useState("");
-  // Duplicata no cadastro
-  const [motDupSugest, setMotDupSugest] = useState(null); // motorista existente similar
-
-  // Segundo WhatsApp — formato documentário (Item 3 sessão 4)
-  const [wppModal2, setWppModal2] = useState(null); // {reg, mot}
-  const [wpp2Ro, setWpp2Ro] = useState("");
-  const [wpp2Obs, setWpp2Obs] = useState(() => loadJSON("co_wpp2_obs_last",""));
-  const [wpp2IncluirObs, setWpp2IncluirObs] = useState(false);
-  const [wpp2Conflitos, setWpp2Conflitos] = useState([]); // para resolver conflitos de importação
+  // wppModal2 state — via useWppState (above)
 
   // Dashboard state — via useDashboardState (above)
 
@@ -357,21 +309,7 @@ export default function App() {
     data_apontamento: new Date().toISOString().split("T")[0],
   });
 
-  // ── WhatsApp tipos ──
-  const [wppTipoOpen, setWppTipoOpen] = useState(false);
-  const [wppSearchTxt, setWppSearchTxt] = useState("");   // busca no modal WPP
-  const [wppSearchReg, setWppSearchReg] = useState(null); // registro selecionado no modal WPP
-  const [wppFatModal, setWppFatModal] = useState(null); // {reg, mot}
-  const [wppPagModal, setWppPagModal] = useState(null); // {reg, mot, tipo:'descarga'|'diarias'}
-  const [wppConfirmModal, setWppConfirmModal] = useState(null); // {url, displayText}
-  const [wppFortes, setWppFortes] = useState(false);
-  // DCC Minutas (Diárias) — suporta múltiplas minutas
-  const _initDcc = () => [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}];
-  const [wppDccMinutas, setWppDccMinutas] = useState(_initDcc());
-  const [wppCteComp, setWppCteComp] = useState({cte:"",mdf:"",mat:""});
-  // Minutas Descarga (MAM/MRM) — suporta múltiplas minutas
-  const _initDsc = () => [{tipo:"MAM",cte:"",mdf:"",num:""}];
-  const [wppDscMinutas, setWppDscMinutas] = useState(_initDsc());
+  // wppTipoOpen/wppDccMinutas state — via useWppState (above)
   // SGS: retornos interativos
   const [expandedSgsId, setExpandedSgsId] = useState(null);
   const [sgsRetornoForm, setSgsRetornoForm] = useState({data:"",descricao:""});
@@ -2707,113 +2645,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ═══ WPP SELECT MODAL ═══ */}
-      {wppTipoOpen && (
-        <div
-          onClick={e=>{if(e.target===e.currentTarget)setWppTipoOpen(false);}}
-          style={{position:"fixed",inset:0,zIndex:"var(--z-modal)",background:"rgba(0,0,0,.62)",backdropFilter:"blur(4px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px"}}
-        >
-          <div style={{background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,width:"100%",maxWidth:460,boxShadow:`0 32px 64px rgba(0,0,0,.4)`,overflow:"hidden",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
-            {/* Header */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:`1px solid ${t.borda}`,background:"rgba(37,211,102,.05)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </>,"#25D366",20)}
-                <div>
-                  <div style={{fontFamily:"var(--font-heading)",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
-                  <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
-                </div>
-              </div>
-              <button onClick={()=>setWppTipoOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:6,borderRadius:8}}>
-                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18)}
-              </button>
-            </div>
-            {/* Search / DT Context */}
-            <div style={{padding:"12px 16px",borderBottom:`1px solid ${t.borda}`}}>
-              {(wppSearchReg||buscaResult) ? (
-                <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",background:"rgba(37,211,102,.09)",border:"1px solid rgba(37,211,102,.22)",borderRadius:10}}>
-                  {hIco(<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,"#25D366",14)}
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {(wppSearchReg||buscaResult).dt} · {(wppSearchReg||buscaResult).nome||"—"}</div>
-                    {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)"}}>{(wppSearchReg||buscaResult).placa}</div>}
-                  </div>
-                  <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
-                    {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <div style={{position:"relative"}}>
-                    <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",display:"flex",alignItems:"center"}}>
-                      {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.txt2,14)}
-                    </span>
-                    <input
-                      value={wppSearchTxt}
-                      onChange={e=>setWppSearchTxt(e.target.value)}
-                      placeholder="DT, motorista ou placa…"
-                      style={{width:"100%",padding:"9px 10px 9px 34px",border:`1px solid ${t.borda}`,borderRadius:9,background:t.card2,color:t.txt,fontSize:13,fontFamily:"inherit",outline:"none"}}
-                      onFocus={e=>{e.target.style.borderColor=t.azulLt;}}
-                      onBlur={e=>{e.target.style.borderColor=t.borda;}}
-                    />
-                  </div>
-                  {wppSearchTxt.length>=2 && (() => {
-                    const _q=wppSearchTxt.toLowerCase();
-                    const _res=DADOS.filter(r=>(r.dt&&String(r.dt).toLowerCase().includes(_q))||(r.nome&&r.nome.toLowerCase().includes(_q))||(r.placa&&r.placa.toLowerCase().includes(_q))).slice(0,5);
-                    if(!_res.length) return <div style={{fontSize:11,color:t.txt2,marginTop:6,textAlign:"center",padding:"6px 0"}}>Nenhum resultado</div>;
-                    return (<div style={{marginTop:6,display:"flex",flexDirection:"column",gap:3,maxHeight:180,overflowY:"auto"}}>
-                      {_res.map((r,i)=>(
-                        <button key={i} onClick={()=>{setWppSearchReg(r);setWppSearchTxt("");}}
-                          style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:8,cursor:"pointer",textAlign:"left",width:"100%"}}
-                          onMouseEnter={e=>{e.currentTarget.style.background=t.surface;}}
-                          onMouseLeave={e=>{e.currentTarget.style.background=t.card2;}}
-                        >
-                          <div style={{fontFamily:"var(--font-mono)",fontSize:11,color:t.ouro,fontWeight:700,flexShrink:0}}>DT {r.dt}</div>
-                          <div style={{fontSize:12,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</div>
-                          {r.placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",flexShrink:0}}>{r.placa}</div>}
-                        </button>
-                      ))}
-                    </div>);
-                  })()}
-                </div>
-              )}
-            </div>
-            {/* Options */}
-            <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
-              {[
-                {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:t.ouro, l:"Faturamento", sub:"CTE · MDF · MAT · DT · NF · ID"},
-                {k:"contratacao",ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, color:t.azulLt, l:"Contratação", sub:"Modelo completo de pagamento"},
-                {k:"descarga",   ico:<><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>, color:t.verde, l:"Descarga / Stretch", sub:"Solicitar pagamento descarga"},
-                {k:"diarias",   ico:<><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/></>, color:t.ouro, l:"Diárias", sub:"Solicitar pagamento diária"},
-              ].map((op)=>(
-                <button key={op.k} onClick={()=>{
-                  const _reg=wppSearchReg||buscaResult;
-                  if(!_reg){showToast("Busque um registro primeiro","warn");return;}
-                  const mot=motoristas.find(m=>(_reg.cpf&&m.cpf?.replace(/\D/g,"")===_reg.cpf?.replace(/\D/g,""))||(_reg.nome&&m.nome===_reg.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===_reg.placa));
-                  setWppTipoOpen(false);setWppSearchTxt("");setWppSearchReg(null);
-                  if(op.k==="faturamento"){setWppFatModal({reg:_reg,mot:mot||null,base:baseAtual?.id});}
-                  else if(op.k==="contratacao"){setWppModal({reg:_reg,mot:mot||null});setWppTel((mot?.tel||_reg.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
-                  else if(op.k==="descarga"){abrirWppPagModal(_reg,mot,"descarga");}
-                  else if(op.k==="diarias"){abrirWppPagModal(_reg,mot,"diarias");}
-                }}
-                style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:12,cursor:"pointer",textAlign:"left",width:"100%",transition:"all .15s"}}
-                onMouseEnter={e=>{e.currentTarget.style.background=`rgba(${op.color.includes("#7c")?'124,58,237':op.color===t.azulLt?'22,119,255':op.color===t.verde?'34,197,94':'240,185,11'},.1)`;e.currentTarget.style.borderColor=op.color}}
-                onMouseLeave={e=>{e.currentTarget.style.background=t.card2;e.currentTarget.style.borderColor=t.borda}}
-                >
-                  <div style={{width:42,height:42,borderRadius:11,background:op.color+"18",border:`1px solid ${op.color}33`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    {hIco(op.ico,op.color,18)}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"var(--font-heading)"}}>{op.l}</div>
-                    <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{op.sub}</div>
-                  </div>
-                  {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt3||t.txt2,14)}
-                </button>
-              ))}
-            </div>
-            <div style={{height:8}}/>
-          </div>
-        </div>
-      )}
 
 
       {/* ═══ EDIT MODAL ═══ */}
