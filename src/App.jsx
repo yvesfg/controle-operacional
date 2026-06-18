@@ -50,6 +50,11 @@ import ModalDashDrill      from './modals/ModalDashDrill.jsx';
 import ModalOcorrChegada   from './modals/ModalOcorrChegada.jsx';
 import RelatoriosView  from './relatorios/RelatoriosViewWrapper.jsx';
 import OcorrModal from './components/OcorrModal.jsx';
+import AprovacaoScreen    from './screens/AprovacaoScreen.jsx';
+import LoginScreen        from './screens/LoginScreen.jsx';
+import HubScreen          from './screens/HubScreen.jsx';
+import BaseSelectorScreen from './screens/BaseSelectorScreen.jsx';
+import PrimeiroLoginScreen from './screens/PrimeiroLoginScreen.jsx';
 
 
 // ══════════════════════════════════════════════
@@ -2011,356 +2016,63 @@ export default function App() {
   //  TELA: AGUARDANDO APROVAÇÃO
   // ══════════════════════════════════════════════
   if (aguardandoAprovacao && !authed) {
-    return (
-      <div className="co-login-screen" style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
-        <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>{theme==="dark"
-              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>}</button>
-        <div style={{width:"100%",maxWidth:340,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"36px 28px",boxShadow:`0 24px 64px ${t.shadow}`,display:"flex",flexDirection:"column",alignItems:"center",position:"relative",zIndex:1}}>
-          <div style={{fontSize:9,background:hexRgb(t.ouro,.1),border:`1px solid ${hexRgb(t.ouro,.3)}`,color:t.ouro,borderRadius:DESIGN.r.badge,padding:"3px 10px",letterSpacing:DESIGN.ls.label,fontWeight:700,marginBottom:24,textTransform:"uppercase"}}>YFGROUP</div>
-          <div style={{width:68,height:68,background:t.card2,borderRadius:DESIGN.r.card,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-            </svg>
-          </div>
-          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:21,letterSpacing:3,color:t.txt,textAlign:"center",lineHeight:1.1,marginBottom:8}}>Aguardando Aprovação</div>
-          <div style={{fontSize:12,color:t.txt2,textAlign:"center",marginBottom:10,lineHeight:1.7}}>
-            Sua solicitação de acesso foi registrada.<br/>
-            Aguarde o administrador liberar seu acesso.
-          </div>
-          {pendingUserInfo?.email && (
-            <div style={{fontSize:11,color:t.ouro,fontWeight:600,marginBottom:22,padding:"7px 14px",background:hexRgb(t.ouro,.07),borderRadius:DESIGN.r.inp,border:`1px solid ${hexRgb(t.ouro,.2)}`,display:"flex",alignItems:"center",gap:6}}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> {pendingUserInfo.email}
-            </div>
-          )}
-          <button onClick={async()=>{
-            const conn=getConexao();
-            if(!conn){showToast("⚠️ Sem conexão com banco","warn");return;}
-            showToast("🔄 Verificando status...","ok");
-            try{
-              const data=await supaFetch(conn.url,conn.key,"GET",
-                `${TABLE_USUARIOS}?email=eq.${encodeURIComponent(pendingUserInfo.email)}&select=*&limit=1`);
-              if(Array.isArray(data)&&data.length>0){
-                const u=data[0];
-                if(u.status!=="pendente"){
-                  const p=u.perfil||"visualizador";
-                  const pm=typeof u.perms==="string"?JSON.parse(u.perms):(u.perms||{...PERMS_PADRAO[p]});
-                  setPerfil(p);setPerms(pm);setAuthed(true);
-                  setUsuarioLogado(u.nome||u.email);
-                  setAguardandoAprovacao(false);
-                  localStorage.removeItem("co_pending_user");
-                  saveJSON("co_sessao",{perfil:p,nome:u.nome||u.email,ts:Date.now()});
-                  showToast(`✅ Acesso aprovado! Bem-vindo, ${u.nome||u.email}!`,"ok");
-                } else {
-                  showToast("⏳ Ainda aguardando aprovação...","warn");
-                }
-              } else {
-                showToast("⚠️ Solicitação não encontrada. Tente fazer login novamente.","warn");
-              }
-            }catch{showToast("❌ Erro ao verificar status","err");}
-          }} style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:DESIGN.r.btn,color:t.onPrimary,fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:10,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink:0}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Verificar Status
-          </button>
-          <button onClick={()=>{setAguardandoAprovacao(false);localStorage.removeItem("co_pending_user");setPendingUserInfo(null);}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:10,padding:"10px",color:t.txt2,fontSize:12,cursor:"pointer",width:"100%",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink:0}}><polyline points="15 18 9 12 15 6"/></svg> Voltar ao Login
-          </button>
-        </div>
-
-
-        <Toast {...toast} />
-      </div>
-    );
+    return <AprovacaoScreen
+      t={t} css={css} theme={theme} setTheme={setTheme}
+      pendingUserInfo={pendingUserInfo} setPendingUserInfo={setPendingUserInfo}
+      setAguardandoAprovacao={setAguardandoAprovacao}
+      setPerfil={setPerfil} setPerms={setPerms} setAuthed={setAuthed}
+      setUsuarioLogado={setUsuarioLogado}
+      getConexao={getConexao} showToast={showToast}
+      toast={toast}
+    />;
   }
 
   // ══════════════════════════════════════════════
   //  AUTH SCREEN
   // ══════════════════════════════════════════════
   if (!authed) {
-    const ano = new Date().toLocaleDateString("pt-BR",{month:"short",year:"numeric"}).toUpperCase().replace(". ","/" );
-    return (
-      <div className="co-login-screen" style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
-        <style>{`
-          @keyframes loginFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-          @keyframes loginPop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
-          *{box-sizing:border-box;margin:0;padding:0}
-          ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:${t.scrollThumb};border-radius:2px}
-        `}</style>
-
-        {/* Acento de fundo sutil */}
-        <div style={{position:"absolute",top:"8%",left:"50%",transform:"translateX(-50%)",width:"500px",height:"260px",background:`radial-gradient(ellipse,${hexRgb(t.ouro, .06)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
-        <div style={{position:"absolute",bottom:"12%",left:"50%",transform:"translateX(-50%)",width:"400px",height:"200px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.04)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
-
-        {/* Theme toggle */}
-        <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>
-          {theme==="dark"
-              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>}
-        </button>
-
-        {/* ── Logotipo ── */}
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28,animation:"loginPop .45s ease-out",position:"relative",zIndex:1}}>
-          <img src={loginLogo} alt="YFGroup" width="80" height="80" style={{marginBottom:14,borderRadius:"50%"}} />
-          <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
-          <div style={{width:32,height:2,background:t.ouro,borderRadius:1,margin:"6px 0"}}/>
-          <div style={{fontSize:9,color:t.txt2,letterSpacing:".12em",textTransform:"uppercase"}}>Controle Operacional</div>
-        </div>
-
-        {/* ── Card ── */}
-        <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"28px 28px 24px",display:"flex",flexDirection:"column",gap:0,animation:"loginFadeUp .4s ease-out",position:"relative",zIndex:1}}>
-          <div style={{fontFamily:"var(--font-heading)",fontSize:16,fontWeight:700,letterSpacing:"-.02em",color:t.txt,marginBottom:4}}>Entrar na plataforma</div>
-          <div style={{fontSize:12,color:t.txt2,marginBottom:20,lineHeight:1.5}}>Acesso restrito a operadores autorizados.</div>
-
-          {/* Auth message */}
-          {authMsg && (
-            <div style={{padding:"10px 12px",borderRadius:DESIGN.r.inp,fontSize:12,fontWeight:600,textAlign:"center",marginBottom:16,lineHeight:1.5,background:authMsg.t==="err"?hexRgb(t.danger,.08):hexRgb(t.verde,.08),color:authMsg.t==="err"?t.danger:t.verde,border:`1px solid ${authMsg.t==="err"?hexRgb(t.danger,.2):hexRgb(t.verde,.2)}`}}>{authMsg.m}</div>
-          )}
-
-          {/* Google button */}
-          <button
-            onClick={() => iniciarOAuth("google")}
-            style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:t.card2,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"13px 12px",cursor:"pointer",fontSize:13,fontWeight:600,color:t.txt,fontFamily:DESIGN.fnt.b,transition:"all .15s",letterSpacing:.2}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro, .5);e.currentTarget.style.background=t.bgAlt}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2;e.currentTarget.style.background=t.card2}}
-          >
-            <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-            Continuar com Google
-          </button>
-
-          {/* Separador */}
-          <div style={{display:"flex",alignItems:"center",gap:10,margin:"16px 0"}}>
-            <div style={{flex:1,height:"0.5px",background:t.borda}}/>
-            <span style={{fontSize:9,color:t.txt2,letterSpacing:".06em"}}>OU</span>
-            <div style={{flex:1,height:"0.5px",background:t.borda}}/>
-          </div>
-
-          {/* Form email/senha */}
-          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
-            <div style={{position:"relative"}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              <input
-                type="email"
-                placeholder="Email"
-                value={authEmail}
-                onChange={e=>setAuthEmail(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&handleLogin()}
-                autoComplete="username"
-                style={{width:"100%",height:42,background:t.inputBg,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"0 12px 0 34px",color:t.txt,fontSize:13,outline:"none",fontFamily:DESIGN.fnt.b}}
-              />
-            </div>
-            <div style={{position:"relative"}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <input
-                type="password"
-                placeholder="Senha"
-                value={authSenha}
-                onChange={e=>setAuthSenha(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&handleLogin()}
-                autoComplete="current-password"
-                style={{width:"100%",height:42,background:t.inputBg,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"0 12px 0 34px",color:t.txt,fontSize:13,outline:"none",fontFamily:DESIGN.fnt.b}}
-              />
-            </div>
-            <button
-              onClick={handleLogin}
-              style={{width:"100%",height:42,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:DESIGN.r.btn,color:t.onPrimary,fontWeight:700,fontSize:13,cursor:"pointer",letterSpacing:.3,fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              Entrar
-            </button>
-          </div>
-
-          {/* Status */}
-          <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
-            <span style={{width:6,height:6,borderRadius:"50%",background:"#22c55e",display:"inline-block",flexShrink:0}}/>
-            <span style={{fontSize:9,color:t.txt2,letterSpacing:".08em",textTransform:"uppercase"}}>Sistema Online — {ano}</span>
-          </div>
-        </div>
-
-        <Toast {...toast} />
-      </div>
-    );
+    return <LoginScreen
+      t={t} css={css} theme={theme} setTheme={setTheme}
+      authEmail={authEmail} setAuthEmail={setAuthEmail}
+      authSenha={authSenha} setAuthSenha={setAuthSenha}
+      authMsg={authMsg}
+      handleLogin={handleLogin} iniciarOAuth={iniciarOAuth}
+      toast={toast}
+    />;
   }
 
   // ── Hub: Seletor de Módulo ────────────────────────────────────
   if (authed && !hubScreen) {
-    const FROTA_URL = import.meta.env.VITE_FROTA_URL || "http://localhost:3000";
-    const HUB_MODS = [
-      { slug:"controle_op", label:"Controle Operacional", desc:"Cargas · Operações · Relatórios", ativo:true,
-        svg:<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></> },
-      { slug:"frota", label:"Frota Pro", desc:"Veículos · Pneus · Viagens", ativo:true,
-        svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></> },
-      { slug:"calculadora", label:"Calculadora de Frete", desc:"Custo · Margem · Tabela", ativo:false,
-        svg:<><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M9 7h6M9 12h6M9 17h3"/></> },
-      { slug:"antt", label:"Consulta ANTT", desc:"RNTRC · CIOT · Rastreio", ativo:false,
-        svg:<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/><path d="M11 8v3l2 2"/></> },
-      { slug:"financeiro", label:"Financeiro", desc:"DRE · Contas · Fluxo de Caixa", ativo:false,
-        svg:<><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="4" width="3" height="13"/></> },
-    ];
-    return (
-      <div style={{...css.app,background:t.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
-        <style>{`@keyframes hubUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}@keyframes hubPop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}`}</style>
-        <div style={{position:"absolute",top:"-5%",left:"50%",transform:"translateX(-50%)",width:"700px",height:"380px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.07)} 0%,transparent 68%)`,pointerEvents:"none"}}/>
-
-        {/* Logo */}
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32,animation:"hubPop .4s ease-out",position:"relative",zIndex:1}}>
-          <img src={loginLogo} alt="YFGroup" width="68" height="68" style={{marginBottom:12,borderRadius:"50%"}}/>
-          <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
-          <div style={{width:32,height:2,background:t.ouro,borderRadius:1,margin:"6px 0"}}/>
-          <div style={{fontSize:9,color:t.txt2,letterSpacing:".14em",textTransform:"uppercase"}}>Selecione o módulo</div>
-        </div>
-
-        {/* Cards */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:520,width:"100%",animation:"hubUp .38s ease-out",position:"relative",zIndex:1}}>
-          {HUB_MODS.map(m => {
-            const on = m.ativo;
-            return (
-              <button key={m.slug} disabled={!on}
-                onClick={()=>{
-                  if(m.slug==="controle_op") setHubScreen("controle_op");
-                  else if(m.slug==="frota") {
-                    // Abre frota-pro sem tokens na URL; frota-pro pedirá via postMessage
-                    const _win = window.open(`${FROTA_URL}/auth/hub`, "_blank");
-                    if (_win) {
-                      // Aguarda frota-pro ficar pronto e responde com tokens
-                      const _handler = (e) => {
-                        if (!FROTA_URL.startsWith(e.origin)) return;
-                        if (e.data?.type !== "REQUEST_CO_TOKENS") return;
-                        window.removeEventListener("message", _handler);
-                        try {
-                          const _raw = sessionStorage.getItem("co_supa_tokens");
-                          const _tk = _raw ? JSON.parse(_raw) : null;
-                          // Checar expiração do JWT antes de enviar
-                          if (_tk?.access_token) {
-                            try {
-                              const _pay = JSON.parse(atob(_tk.access_token.split(".")[1]));
-                              if (_pay.exp && _pay.exp * 1000 < Date.now()) {
-                                _win.postMessage({ type: "SUPA_TOKENS", expired: true }, e.origin);
-                                return;
-                              }
-                            } catch {}
-                            _win.postMessage({ type: "SUPA_TOKENS", access_token: _tk.access_token, refresh_token: _tk.refresh_token || "" }, e.origin);
-                          } else {
-                            _win.postMessage({ type: "SUPA_TOKENS", access_token: null }, e.origin);
-                          }
-                        } catch (err) { console.error("[SSO] erro ao enviar tokens:", err); }
-                      };
-                      window.addEventListener("message", _handler);
-                      // Limpar listener se janela fechar antes de responder
-                      const _pollClose = setInterval(() => { if (_win.closed) { clearInterval(_pollClose); window.removeEventListener("message", _handler); } }, 1000);
-                    }
-                  }
-                }}
-                style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,padding:"20px 10px 18px",background:on?t.card:t.card2,
-                  border:`1.5px solid ${on?t.borda2||t.borda:t.borda}`,borderRadius:14,cursor:on?"pointer":"not-allowed",
-                  opacity:on?1:.4,transition:"border-color .18s, transform .18s, background .18s",position:"relative",overflow:"hidden"}}
-                onMouseEnter={e=>{if(on){e.currentTarget.style.borderColor=hexRgb(t.ouro,.6);e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.background=t.bgAlt||t.card2;}}}
-                onMouseLeave={e=>{if(on){e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.transform="none";e.currentTarget.style.background=on?t.card:t.card2;}}}
-              >
-                {!on&&<span style={{position:"absolute",top:7,right:8,fontSize:7,fontFamily:"var(--font-mono)",letterSpacing:".06em",color:t.txt2,background:hexRgb(t.txt2,.1),borderRadius:3,padding:"2px 5px"}}>EM BREVE</span>}
-                <span className="co-sidebar__ico" style={{width:52,height:52,borderRadius:13,flexShrink:0,
-                  background:`linear-gradient(135deg,${hexRgb(t.ouro,.16)},${hexRgb(t.ouro,.05)})`,
-                  border:`1.5px solid ${hexRgb(t.ouro,.22)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                    stroke={on?t.ouro:t.txt2} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    {m.svg}
-                  </svg>
-                </span>
-                <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"var(--font-heading)",fontSize:12,fontWeight:700,color:on?t.txt:t.txt2,letterSpacing:"-.01em",lineHeight:1.2}}>{m.label}</div>
-                  <div style={{fontSize:8.5,color:t.txt2,marginTop:3,lineHeight:1.4}}>{m.desc}</div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <button onClick={handleLogout} style={{marginTop:24,background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,position:"relative",zIndex:1}}>
-          Sair e trocar conta
-        </button>
-        <Toast {...toast}/>
-      </div>
-    );
+    return <HubScreen
+      t={t} css={css}
+      onSelectControleOp={() => setHubScreen("controle_op")}
+      frotaUrl={import.meta.env.VITE_FROTA_URL || "http://localhost:3000"}
+      handleLogout={handleLogout}
+      toast={toast}
+    />;
   }
   // ── Seletor de Base Operacional ───────────────────────────────
   if (authed && hubScreen === "controle_op" && !baseAtual && basesPermitidas.length > 1) {
-    return (
-      <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
-        <style>{`@keyframes loginFadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}@keyframes loginPop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}*{box-sizing:border-box}`}</style>
-        <div style={{position:"absolute",top:"8%",left:"50%",transform:"translateX(-50%)",width:"500px",height:"260px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.06)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
-
-        {/* Logotipo */}
-        <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28,animation:"loginPop .45s ease-out",position:"relative",zIndex:1}}>
-          <img src={loginLogo} alt="YFGroup" width="80" height="80" style={{marginBottom:14,borderRadius:"50%"}} />
-          <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1}}>YFGroup</div>
-          <div style={{width:32,height:2,background:t.ouro,borderRadius:1,margin:"6px 0"}}/>
-          <div style={{fontSize:9,color:t.txt2,letterSpacing:".12em",textTransform:"uppercase"}}>Controle Operacional</div>
-        </div>
-
-        {/* Card seletor */}
-        <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"28px 28px 24px",display:"flex",flexDirection:"column",gap:12,animation:"loginFadeUp .4s ease-out",position:"relative",zIndex:1}}>
-          <div style={{fontFamily:"var(--font-heading)",fontSize:16,fontWeight:700,letterSpacing:"-.02em",color:t.txt,marginBottom:4}}>Selecione a base de operação</div>
-          <div style={{fontSize:12,color:t.txt2,marginBottom:8,lineHeight:1.5}}>Você tem acesso a múltiplas bases. Escolha com qual deseja trabalhar agora.</div>
-          {basesPermitidas.map(base => (
-            <button
-              key={base.id}
-              onClick={() => setBaseAtual(base)}
-              style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:t.card2,border:`1px solid ${t.borda2||t.borda}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",textAlign:"left",transition:"all .15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.55);e.currentTarget.style.background=t.bgAlt||t.card2}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.background=t.card2}}
-            >
-              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${hexRgb(t.ouro,.18)},${hexRgb(t.ouro,.08)})`,border:`1px solid ${hexRgb(t.ouro,.3)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              </div>
-              <div>
-                <div style={{fontFamily:"var(--font-heading)",fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-.01em"}}>{base.label}</div>
-                <div style={{fontSize:10,color:t.txt2,marginTop:2,fontFamily:"var(--font-mono)",letterSpacing:".04em"}}>{base.table}</div>
-              </div>
-            </button>
-          ))}
-          <button onClick={handleLogout} style={{marginTop:4,background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>
-            Sair e trocar conta
-          </button>
-        </div>
-        <Toast {...toast} />
-      </div>
-    );
+    return <BaseSelectorScreen
+      t={t} css={css}
+      basesPermitidas={basesPermitidas} setBaseAtual={setBaseAtual}
+      handleLogout={handleLogout}
+      toast={toast}
+    />;
   }
 
   // ══════════════════════════════════════════════
   //  MODAL PRIMEIRO LOGIN (troca de senha + logo)
   // ══════════════════════════════════════════════
   if (primeiroLogin) {
-    return (
-      <div style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh"}}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}input::placeholder{color:${t.txt2}}`}</style>
-        <div style={{width:56,height:56,background:t.card2,borderRadius:DESIGN.r.card,border:`1px solid ${hexRgb(t.ouro,.3)}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:14}}>🔑</div>
-        <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:3,color:t.txt,marginBottom:4}}>PRIMEIRO ACESSO</div>
-        <div style={{fontSize:11,color:t.txt2,marginBottom:20,textAlign:"center"}}>Configure sua senha de administrador e, opcionalmente, sua logo.</div>
-
-        <div style={{width:"100%",maxWidth:360,...css.card,boxShadow:`0 24px 60px ${t.shadow}`,padding:18,display:"flex",flexDirection:"column",gap:14}}>
-          <div>
-            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Nova Senha *</label>
-            <input type="password" value={primLoginSenha} onChange={e=>setPrimLoginSenha(e.target.value)} placeholder="Mínimo 6 caracteres" style={css.inp} />
-          </div>
-          <div>
-            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Confirmar Senha *</label>
-            <input type="password" value={primLoginSenha2} onChange={e=>setPrimLoginSenha2(e.target.value)} placeholder="Repita a senha" style={css.inp} onKeyDown={e=>e.key==="Enter"&&handlePrimeiroLoginSalvar()} />
-          </div>
-          <div>
-            <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:600,display:"block",marginBottom:4}}>Logo da Empresa (opcional)</label>
-            <input type="file" accept="image/*" onChange={e=>{
-              const f = e.target.files?.[0];
-              if (!f) return;
-              const reader = new FileReader();
-              reader.onload = ev => { const b64 = ev.target.result; setCustomLogo(b64); saveJSON("co_custom_logo", b64); };
-              reader.readAsDataURL(f);
-            }} style={{...css.inp,padding:"7px 10px",fontSize:11}} />
-            {customLogo && <img src={customLogo} alt="preview" style={{width:60,height:60,objectFit:"contain",borderRadius:10,marginTop:8,border:`1px solid ${t.borda}`}} />}
-          </div>
-          <button onClick={handlePrimeiroLoginSalvar} style={{...css.btnGold,justifyContent:"center",padding:13,fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>✅ CONFIRMAR E ENTRAR</button>
-        </div>
-        <Toast {...toast} />
-      </div>
-    );
+    return <PrimeiroLoginScreen
+      t={t} css={css}
+      primLoginSenha={primLoginSenha} setPrimLoginSenha={setPrimLoginSenha}
+      primLoginSenha2={primLoginSenha2} setPrimLoginSenha2={setPrimLoginSenha2}
+      customLogo={customLogo} setCustomLogo={setCustomLogo}
+      handlePrimeiroLoginSalvar={handlePrimeiroLoginSalvar}
+      toast={toast}
+    />;
   }
 
   // ══════════════════════════════════════════════
