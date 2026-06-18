@@ -45,6 +45,9 @@ import { useAdminHandlers } from './hooks/useAdminHandlers.js';
 import { useAuthHandlers } from './hooks/useAuthHandlers.js';
 import { useOcorrHandlers } from './hooks/useOcorrHandlers.js';
 import { useDTHandlers } from './hooks/useDTHandlers.js';
+import { useWppHandlers } from './hooks/useWppHandlers.js';
+import { useCss } from './hooks/useCss.js';
+import { useAuditDesign } from './hooks/useAuditDesign.js';
 import { useBuscarHandlers } from './hooks/useBuscarHandlers.js';
 import { useSyncHandlers } from './hooks/useSyncHandlers.js';
 import { useOperacionalState } from './hooks/useOperacionalState.js';
@@ -1064,7 +1067,6 @@ export default function App() {
   const saveConexoesLS = (c) => { setConexoes(c); saveJSON("co_conexoes",c); };
 
   // supaUpsert / salvarRegistro / deletarRegistro / salvarMinutasDetalhe — via useDTHandlers
-    // supaUpsert / salvarRegistro / deletarRegistro / salvarMinutasDetalhe
   const { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe } = useDTHandlers({
     getConexao, showToast, sessionToken, baseAtual, registrarLog,
     DADOS, formData, editIdx, dadosBase, dadosExtras,
@@ -1074,131 +1076,21 @@ export default function App() {
     setSalvandoMins,
   });
 
-    // Abre o modal WPP pré-preenchido com minutas salvas no registro
-  const abrirWppPagModal = (reg, mot, tipo) => {
-    const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
-    const dcc = pj(reg?.minutas_dcc, [{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]);
-    const comp = {cte:reg?.cte_comp||"", mdf:reg?.mdf_comp||"", mat:reg?.mat_comp||""};
-    const dsc = pj(reg?.minutas_dsc, [{tipo:"MAM",cte:"",mdf:"",num:""}]);
-    const temDados = dcc.some(m=>m.cte||m.mdf||m.num) || comp.cte || dsc.some(m=>m.cte||m.mdf||m.num);
-    setWppPagModal({reg, mot: mot||null, tipo});
-    setWppFortes(temDados);
-    setWppDccMinutas(dcc);
-    setWppCteComp(comp);
-    setWppDscMinutas(dsc);
-  };
+  // abrirWppPagModal — via useWppHandlers
+  const { abrirWppPagModal } = useWppHandlers({
+    setWppPagModal, setWppFortes, setWppDccMinutas, setWppCteComp, setWppDscMinutas,
+  });
 
   const isAdmin = perfil === "admin";
   const canEdit = isAdmin || perms.editar;
   const canFin = perms.financeiro;
 
-  // ══════════════════════════════════════════════
-  //  STYLES
-  // ══════════════════════════════════════════════
-  // Mapeamento de status para cores de borda kanban
-  const statusBorderColor = (tipo) => {
-    if(tipo==="sem_diaria"||tipo==="ok") return t.verde;
-    if(tipo==="diaria"||tipo==="atraso") return t.danger;
-    if(tipo==="pendente") return t.ouro;
-    return t.borda;
-  };
+  // css + statusBorderColor — via useCss
+  const { css, statusBorderColor } = useCss(t);
 
-  // ── css: todos os valores de design derivam de DESIGN.* e t.*
-  // ── Para alterar globalmente: edite DESIGN no topo do arquivo
-  const css = {
-    app:       { minHeight:"100vh", background:t.bg, color:t.txt, fontFamily:DESIGN.fnt.b, transition:"background .25s, color .25s" },
-    // Topbar — sticky dentro do co-main (desktop) ou fixed no mobile
-    header:    { background:t.headerBg, padding:"0 16px", borderBottom:`1px solid ${t.borda}`, position:"sticky", top:0, left:0, right:0, zIndex:90, display:"flex", alignItems:"center", gap:8, height:56, boxShadow:`0 1px 0 ${t.borda}`, transition:"background .25s", flexShrink:0 },
-    // Logo flat — sem gradiente, borda dourada sutil define o acento
-    logo:      { width:40, height:40, background:t.card2, borderRadius:DESIGN.r.logo, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, border:`1px solid ${hexRgb(t.ouro,.28)}` },
-    // Botão header — transparente, borda mínima
-    hBtn:      { background:"transparent", border:`1.5px solid ${t.borda2}`, borderRadius:DESIGN.r.sm, padding:"7px 9px", color:t.txt2, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontWeight:500, transition:"all .15s" },
-    tabBar:    { display:"flex", background:t.headerBg, borderBottom:`1px solid ${t.borda}`, overflow:"visible", padding:"0 12px", gap:2, scrollbarWidth:"none", transition:"background .25s", justifyContent:"space-between" },
-    tab:       (a) => ({ flex:"0 0 auto", padding:"13px 16px", fontSize:10, fontWeight:a?700:500, letterSpacing:.5, textTransform:"uppercase", color:a?t.ouro:t.txt2, border:"none", background:"transparent", cursor:"pointer", borderRadius:0, whiteSpace:"nowrap", transition:"all .15s", borderBottom:a?`2px solid ${t.ouro}`:"2px solid transparent", marginBottom:"-1px", display:"flex", alignItems:"center", gap:5 }),
-    card:      { background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, overflow:"hidden", transition:"all .2s, background .25s, border-color .25s" },
-    cardKanban:(c) => ({ background:t.card, borderRadius:DESIGN.r.card, border:`1px solid ${t.borda}`, borderTop:`3px solid ${c}`, overflow:"visible", transition:"all .2s, background .25s" }),
-    // KPI com borda superior (acento premium, sem side-stripe)
-    kpi:       (c) => ({ background:t.card, borderRadius:DESIGN.r.card, padding:"20px 16px", border:`1px solid ${t.borda}`, borderTop:`3px solid ${c}`, textAlign:"center", cursor:"default", transition:"all .2s, background .25s" }),
-    // tile-card colorido — grade WPP, ações em grade
-    btnCard:   (c) => ({ background:t.card, borderRadius:DESIGN.r.tile, padding:"14px 10px", border:`1px solid ${t.borda}`, borderTop:`2px solid ${c}`, textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:6, color:c, fontWeight:700, fontSize:12, fontFamily:DESIGN.fnt.b, cursor:"pointer", transition:"all .15s", lineHeight:1.3 }),
-    // Inputs — borda mais definida, sem efeito de blur
-    inp:       { background:t.inputBg, border:`1px solid ${t.borda2}`, borderRadius:DESIGN.r.inp, padding:"11px 13px", color:t.txt, fontSize:13, outline:"none", width:"100%", fontFamily:DESIGN.fnt.b, transition:"border-color .15s, background .25s" },
-    // Botões — cor sólida (sem gradiente), mais limpos
-    // cor do texto adapta ao tema: dark=preto sobre ouro claro / light=branco sobre ouro escuro
-    btnGold:   { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:t.onPrimary, fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.ouro, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
-    btnGreen:  { border:"none", borderRadius:DESIGN.r.btn, padding:"11px 20px", color:"#fff", fontWeight:700, fontSize:13, letterSpacing:DESIGN.ls.btn, cursor:"pointer", background:t.verde, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
-    btnOutline:{ borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.ouro, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.ouro,.4)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
-    btnDanger: { borderRadius:DESIGN.r.btn, padding:"10px 18px", color:t.danger, fontWeight:600, fontSize:13, cursor:"pointer", background:"transparent", border:`1px solid ${hexRgb(t.danger,.3)}`, display:"inline-flex", alignItems:"center", gap:8, transition:"all .15s", minHeight:42, whiteSpace:"nowrap" },
-    secTitle:  { fontSize:11, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
-    badge:     (c,bg,bc) => ({ padding:"2px 8px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
-    empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
-    // Overlay com blur mais pronunciado para foco no modal
-    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
-    // Modal — borda fina define a separação do overlay
-    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"16px 16px 0 0", border:`1px solid ${t.borda}`, borderBottom:"none", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
-  };
+  // auditarDesign — via useAuditDesign
+  const { auditarDesign } = useAuditDesign({ perfil, setAuditReport });
 
-  // ══════════════════════════════════════════════
-  //  AUDITORIA DE DESIGN
-  //  Detecta estilos fora do padrão DESIGN.*
-  //  Acessível via: Admin > Desenvolvimento > Auditar
-  //  Ou no console do navegador: auditarDesign()
-  // ══════════════════════════════════════════════
-  const auditarDesign = React.useCallback(() => {
-    const allowedRadii = new Set(Object.values(DESIGN.r));
-    const allowedFonts = new Set(Object.values(DESIGN.fnt));
-    const violations = [];
-
-    document.querySelectorAll('[style]').forEach(el => {
-      // ── Verificação 1: borderRadius fora de DESIGN.r ──
-      const br = el.style.borderRadius;
-      if (br && !/px\s+/.test(br)) { // ignora "X Y Z W" (canto individual)
-        const v = parseInt(br);
-        if (v && !allowedRadii.has(v)) {
-          const label = (el.textContent||"").trim().slice(0,28)||el.tagName.toLowerCase();
-          violations.push({ tipo:"borderRadius", valor:`${v}px`, sugestao:closest(allowedRadii,v), label });
-        }
-      }
-      // ── Verificação 2: fontFamily hardcoded fora de DESIGN.fnt ──
-      const ff = el.style.fontFamily;
-      if (ff && ff.trim()) {
-        const norm = ff.replace(/\s/g,"");
-        const inDesign = [...allowedFonts].some(f => norm.includes(f.replace(/\s/g,"").split(",")[0].replace(/'/g,"")));
-        if (!inDesign) {
-          violations.push({ tipo:"fontFamily", valor:ff.slice(0,40), sugestao:"DESIGN.fnt.h ou DESIGN.fnt.b", label:(el.textContent||"").trim().slice(0,28)||el.tagName.toLowerCase() });
-        }
-      }
-    });
-
-    // Auxiliar: raio mais próximo permitido
-    function closest(set, v) {
-      let best = null, diff = Infinity;
-      set.forEach(r => { if(Math.abs(r-v)<diff){diff=Math.abs(r-v);best=r;} });
-      const key = Object.entries(DESIGN.r).find(([,val])=>val===best)?.[0]||"?";
-      return `DESIGN.r.${key} (${best}px)`;
-    }
-
-    const tipos = {};
-    violations.forEach(v => { tipos[v.tipo] = (tipos[v.tipo]||0)+1; });
-    const report = {
-      timestamp: new Date().toLocaleString("pt-BR"),
-      total: violations.length,
-      tipos,
-      items: violations.slice(0, 30),
-    };
-    setAuditReport(report);
-    // Também acessível pelo console
-    if (typeof window !== "undefined") window.__auditReport = report;
-    return report;
-  }, []);
-
-  // Expor auditarDesign() no console do navegador (somente admin)
-  React.useEffect(() => {
-    if (perfil === "admin") {
-      window.auditarDesign = auditarDesign;
-      return () => { try { delete window.auditarDesign; } catch(_){} };
-    }
-  }, [perfil, auditarDesign]);
 
   // ══════════════════════════════════════════════
   //  TELA: AGUARDANDO APROVAÇÃO
