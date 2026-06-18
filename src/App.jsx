@@ -3423,7 +3423,7 @@ export default function App() {
                 className="co-sidebar__logout-btn"
                 onClick={e=>{e.stopPropagation();handleLogout();}}
                 title="Sair"
-                style={{background:"transparent",border:"none",cursor:"pointer",padding:4,borderRadius:6,flexShrink:0,display:"flex",alignItems:"center",opacity:.6}}
+                style={{background:"transparent",border:"none",cursor:"pointer",padding:4,borderRadius:6,flexShrink:0,alignItems:"center",opacity:.6}}
                 onMouseEnter={e=>e.currentTarget.style.opacity="1"}
                 onMouseLeave={e=>e.currentTarget.style.opacity=".6"}
               >
