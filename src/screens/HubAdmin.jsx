@@ -4,6 +4,8 @@ import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
 import { getSupaAuth } from "../supabaseAuth.js";
 
 const PERFIS = ["admin", "gerente", "operador", "visualizador"];
+// controle_op: o "role" (usado pela RLS) é derivado do Perfil — evita controle redundante
+const PERFIL_TO_ROLE = { admin:"admin", gerente:"editor", operador:"editor", visualizador:"viewer" };
 const PERM_KEYS = ["financeiro","editar","importar","dashboard","diarias","descarga","planilha","config_db","usuarios","ocorrencias"];
 const PERM_LABEL = {
   financeiro:"Financeiro", editar:"Editar", importar:"Importar", dashboard:"Dashboard",
@@ -37,11 +39,15 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   const sb = getSupaAuth();
 
   const concederModulo = async (userId, slug, role) => {
-    const config = slug === "controle_op"
-      ? { bases: [], perfil: role === "admin" ? "admin" : "operador", perms: PERMS_PADRAO[role === "admin" ? "admin" : "operador"] }
-      : {};
+    let finalRole = role || "viewer";
+    let config = {};
+    if (slug === "controle_op") {
+      const perfil = "operador";                 // padrão; ajusta depois no Perfil
+      finalRole = PERFIL_TO_ROLE[perfil];
+      config = { bases: [], perfil, perms: PERMS_PADRAO[perfil] };
+    }
     const { error } = await sb.from("hub_user_modulos").upsert(
-      { user_id: userId, modulo_slug: slug, role: role || "viewer", ativo: true, config },
+      { user_id: userId, modulo_slug: slug, role: finalRole, ativo: true, config },
       { onConflict: "user_id,modulo_slug" });
     if (error) showToast?.("Erro: " + error.message, "err");
     else { showToast?.("Acesso concedido", "ok"); carregar(); }
@@ -109,9 +115,11 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         <div key={a.id} style={{border:`1px solid ${a.ativo?t.borda2:hexRgb(t.danger,.3)}`,borderRadius:10,padding:"10px 12px",opacity:a.ativo?1:.65}}>
                           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                             <span style={{fontWeight:700,fontSize:12,color:t.txt,flex:1}}>{catalogo.find(c=>c.slug===a.modulo_slug)?.nome || a.modulo_slug}</span>
-                            <select value={a.role} onChange={e=>patch(a.id,{role:e.target.value})} style={sel}>
-                              {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
-                            </select>
+                            {!isCO && (
+                              <select value={a.role} onChange={e=>patch(a.id,{role:e.target.value})} style={sel}>
+                                {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
+                              </select>
+                            )}
                             <button onClick={()=>patch(a.id,{ativo:!a.ativo})} style={{...chip(a.ativo),color:a.ativo?t.verde:t.danger,borderColor:a.ativo?hexRgb(t.verde,.5):hexRgb(t.danger,.4),background:a.ativo?hexRgb(t.verde,.12):hexRgb(t.danger,.1)}}>{a.ativo?"Ativo":"Inativo"}</button>
                             <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover">✕</button>
                           </div>
@@ -120,7 +128,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                             <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:10}}>
                               <div>
                                 <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:".06em",color:t.txt2,marginBottom:5}}>Perfil</div>
-                                <select value={perfilCO} onChange={e=>{const pf=e.target.value; setConfig(a,{perfil:pf,perms:PERMS_PADRAO[pf]});}} style={sel}>
+                                <select value={perfilCO} onChange={e=>{const pf=e.target.value; patch(a.id,{role:PERFIL_TO_ROLE[pf]||"viewer",config:{...(a.config||{}),perfil:pf,perms:PERMS_PADRAO[pf]}});}} style={sel}>
                                   {PERFIS.map(pf=><option key={pf} value={pf}>{pf}</option>)}
                                 </select>
                               </div>
@@ -152,9 +160,11 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         <option value="">+ Conceder módulo…</option>
                         {catalogo.filter(c=>!usados.has(c.slug)).map(c=><option key={c.slug} value={c.slug}>{c.nome}</option>)}
                       </select>
-                      <select value={n.role} onChange={e=>setNovo(s=>({...s,[p.id]:{...n,role:e.target.value}}))} style={sel}>
-                        {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
-                      </select>
+                      {n.slug !== "controle_op" && (
+                        <select value={n.role} onChange={e=>setNovo(s=>({...s,[p.id]:{...n,role:e.target.value}}))} style={sel}>
+                          {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
+                        </select>
+                      )}
                       <button disabled={!n.slug} onClick={()=>{concederModulo(p.id,n.slug,n.role);setNovo(s=>({...s,[p.id]:{slug:"",role:"viewer"}}));}}
                         style={{background:n.slug?t.ouro:t.borda2,color:n.slug?t.onPrimary:t.txt2,border:"none",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:n.slug?"pointer":"not-allowed"}}>Conceder</button>
                     </div>
