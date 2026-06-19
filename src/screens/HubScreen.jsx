@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
 import { fetchMeusModulos, fetchMeuAcesso } from "../supabaseAuth.js";
@@ -27,7 +27,7 @@ export default function HubScreen({
 }) {
   const [mods, setMods] = useState(null);   // null = carregando
   const [showAdmin, setShowAdmin] = useState(false);
-  const [frotaIframe, setFrotaIframe] = useState(null); // ref do iframe
+  const frotaIframeRef = useRef(null);
   const [showFrotaModal, setShowFrotaModal] = useState(false);
 
   useEffect(() => {
@@ -69,13 +69,13 @@ export default function HubScreen({
           try {
             const _pay = JSON.parse(atob(_tk.access_token.split(".")[1]));
             if (_pay.exp && _pay.exp * 1000 < Date.now()) {
-              frotaIframe?.contentWindow?.postMessage({ type: "SUPA_TOKENS", expired: true }, e.origin);
+              frotaIframeRef.current?.contentWindow?.postMessage({ type: "SUPA_TOKENS", expired: true }, e.origin);
               return;
             }
           } catch {}
-          frotaIframe?.contentWindow?.postMessage({ type: "SUPA_TOKENS", access_token: _tk.access_token, refresh_token: _tk.refresh_token || "" }, e.origin);
+          frotaIframeRef.current?.contentWindow?.postMessage({ type: "SUPA_TOKENS", access_token: _tk.access_token, refresh_token: _tk.refresh_token || "" }, e.origin);
         } else {
-          frotaIframe?.contentWindow?.postMessage({ type: "SUPA_TOKENS", access_token: null }, e.origin);
+          frotaIframeRef.current?.contentWindow?.postMessage({ type: "SUPA_TOKENS", access_token: null }, e.origin);
         }
       } catch (err) { console.error("[SSO iframe] erro ao enviar tokens:", err); }
     };
@@ -88,7 +88,7 @@ export default function HubScreen({
 
   const fecharFrota = () => {
     setShowFrotaModal(false);
-    setFrotaIframe(null);
+    frotaIframeRef.current = null;
   };
 
   const abrir = (m) => {
@@ -110,7 +110,7 @@ export default function HubScreen({
           <div style={{flex:1,textAlign:"center",fontSize:"13px",color:t.txt,fontWeight:600}}>Frota Pro</div>
           <div style={{width:"48px"}}></div>
         </div>
-        <iframe ref={setFrotaIframe} src={`${frotaUrl}/auth/hub`} style={{flex:1,border:"none",width:"100%",height:"100%",margin:0,padding:0}}/>
+        <iframe ref={frotaIframeRef} src={`${frotaUrl}/auth/hub`} style={{flex:1,border:"none",width:"100%",height:"100%",margin:0,padding:0}}/>
       </div>
     );
   }
