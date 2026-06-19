@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { loadJSON, saveJSON, hashSenha, verificarSenha } from "../utils.js";
 import { supaFetch } from "../supabase.js";
 import { BASES, TABLE_CONFIG, ENV_SUPA_URL, ENV_SUPA_KEY, PERMS_PADRAO } from "../constants.js";
+import { logoutSupa } from "../supabaseAuth.js";
 
 export function useAuthHandlers({
   getConexao, showToast, registrarLog,
@@ -179,6 +180,7 @@ const handleLogout = () => {
   setHubScreen(null);
   sessionStorage.removeItem("co_supa_tokens");
   localStorage.removeItem("co_pending_user");
+  logoutSupa();
 };
 
 // Salvar nova senha no primeiro login (local + Supabase)

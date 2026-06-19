@@ -81,6 +81,7 @@ import OcorrModal from './components/OcorrModal.jsx';
 import AprovacaoScreen    from './screens/AprovacaoScreen.jsx';
 import LoginScreen        from './screens/LoginScreen.jsx';
 import HubScreen          from './screens/HubScreen.jsx';
+import { getSupaAuth } from './supabaseAuth.js';
 import BaseSelectorScreen from './screens/BaseSelectorScreen.jsx';
 import PrimeiroLoginScreen from './screens/PrimeiroLoginScreen.jsx';
 import AppSidebar from './components/AppSidebar.jsx';
@@ -485,98 +486,22 @@ export default function App() {
     return () => obs.disconnect();
   }, [authed]);
 
-  // ── Callback OAuth: detecta retorno do Google/Apple e loga automaticamente ──
+  // ── Bootstrap sessão Supabase Auth (Google). Loga e cai no Hub. ──
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash.includes("access_token")) return;
-
-    const params = new URLSearchParams(hash.replace(/^#/, ""));
-    const accessToken = params.get("access_token");
-    if (!accessToken) return;
-
-    // Limpa hash da URL (evita reprocessar no reload)
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-
-    // Guardar tokens Supabase Auth para SSO no hub (sessionStorage: morre com a aba)
-    const refreshTokenOAuth = params.get("refresh_token") || "";
-    try { sessionStorage.setItem("co_supa_tokens", JSON.stringify({ access_token: accessToken, refresh_token: refreshTokenOAuth })); } catch {}
-
-    const payload = decodeJWT(accessToken);
-    if (!payload?.email) { setAuthMsg({t:"err",m:"❌ Email não encontrado no token OAuth"}); return; }
-
-    const emailOAuth = payload.email.toLowerCase();
-    const nomeOAuth = payload.user_metadata?.full_name || payload.user_metadata?.name || emailOAuth;
-
-    // Admin via OAuth (email configurável — sem hardcode)
-    const adminEmailOAuth = loadJSON("co_admin_email","yvesfg@gmail.com").toLowerCase();
-    if (adminEmailOAuth && emailOAuth === adminEmailOAuth) {
-      const p = "admin"; const pm = {...PERMS_PADRAO.admin};
-      setPerfil(p); setPerms(pm); setAuthed(true);
-      setUsuarioLogado(nomeOAuth);
-      saveJSON("co_sessao", {perfil:p, nome:nomeOAuth, ts:Date.now()});
-      showToast(`✅ Login social realizado — bem-vindo, ${nomeOAuth}!`, "ok");
-      // Admin OAuth: acesso a todas as bases
-      const _todasOAdm = Object.values(BASES);
-      setBasesPermitidas(_todasOAdm);
-      setBaseAtual(_todasOAdm.length === 1 ? _todasOAdm[0] : null);
-      return;
-    }
-
-    // Busca usuário no Supabase via RPC (senha nunca trafega para o cliente)
-    if (ENV_SUPA_URL && ENV_SUPA_KEY) {
-      supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "POST",
-        `rpc/buscar_usuario_por_email`,
-        {p_email: payload.email})
-        .then(async data => {
-          if (Array.isArray(data) && data.length > 0) {
-            const u = data[0];
-            // Verifica se usuário ainda está aguardando aprovação
-            if (u.status === "pendente") {
-              const info = {email: emailOAuth, nome: nomeOAuth};
-              saveJSON("co_pending_user", info);
-              setPendingUserInfo(info);
-              setAguardandoAprovacao(true);
-              showToast("⏳ Aguardando aprovação do administrador", "warn");
-              return;
-            }
-            const p = u.perfil || "visualizador";
-            const pm = typeof u.perms === "string" ? JSON.parse(u.perms) : (u.perms || {...PERMS_PADRAO[p]});
-            setPerfil(p); setPerms(pm); setAuthed(true);
-            setUsuarioLogado(u.nome || u.email);
-            saveJSON("co_sessao", {perfil:p, nome:u.nome||u.email, ts:Date.now(), baseIds: (Array.isArray(u.bases_permitidas) ? u.bases_permitidas : (typeof u.bases_permitidas === "string" ? JSON.parse(u.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]))});
-            showToast(`✅ Login social realizado — bem-vindo, ${u.nome||u.email}!`, "ok");
-            // Carregar bases permitidas do usuario OAuth
-            const _idsOAuth = Array.isArray(u.bases_permitidas) ? u.bases_permitidas
-              : (typeof u.bases_permitidas === "string" ? JSON.parse(u.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]);
-            const _basesOAuth = _idsOAuth.map(id => BASES[id]).filter(Boolean);
-            const _permitidasOAuth = _basesOAuth.length ? _basesOAuth : [BASES.imperatriz_belem];
-            setBasesPermitidas(_permitidasOAuth);
-            setBaseAtual(_permitidasOAuth.length === 1 ? _permitidasOAuth[0] : null);
-            // Gera session token server-side para proteger escritas (M2/M3)
-            if (ENV_SUPA_URL && ENV_SUPA_KEY) {
-              supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "POST", "rpc/gerar_token_sessao", {p_email: u.email})
-                .then(tok => { if (typeof tok === "string") setSessionToken(tok); })
-                .catch(() => {});
-            }
-          } else {
-            // Usuário novo — registrar como pendente de aprovação
-            const info = {email: emailOAuth, nome: nomeOAuth};
-            saveJSON("co_pending_user", info);
-            setPendingUserInfo(info);
-            setAguardandoAprovacao(true);
-            showToast("✅ Solicitação registrada! Aguardando aprovação.", "ok");
-            // Persiste no Supabase para o admin visualizar
-            supaFetch(ENV_SUPA_URL, ENV_SUPA_KEY, "POST",
-              `${TABLE_USUARIOS}?on_conflict=email`,
-              [{email: emailOAuth, nome: nomeOAuth, perfil: "pendente", status: "pendente",
-                perms: JSON.stringify({}), solicitado_em: new Date().toISOString()}]
-            ).catch(() => {});
-          }
-        })
-        .catch(() => setAuthMsg({t:"err", m:"❌ Erro ao verificar conta no banco"}));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Roda uma única vez no mount — processa hash OAuth do redirect
+    const sb = getSupaAuth();
+    if (!sb) return;
+    const aplicar = (sess) => {
+      if (!sess?.access_token) return;
+      try { sessionStorage.setItem("co_supa_tokens", JSON.stringify({ access_token: sess.access_token, refresh_token: sess.refresh_token || "" })); } catch {}
+      const nome = sess.user?.user_metadata?.full_name || sess.user?.user_metadata?.name || sess.user?.email || "";
+      setUsuarioLogado(nome);
+      setAuthed(true);
+    };
+    sb.auth.getSession().then(({ data }) => aplicar(data?.session));
+    const { data: sub } = sb.auth.onAuthStateChange((_evt, sess) => aplicar(sess));
+    return () => { try { sub?.subscription?.unsubscribe(); } catch {} };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { registrarLog, gerarCorpoEmail, enviarEmailBoasVindas, carregarLogs } = useAdminHandlers({
     getConexao, showToast, emailTemplate, setLogsData, usuarioLogado, perfil,
@@ -1115,10 +1040,7 @@ export default function App() {
   if (!authed) {
     return <LoginScreen
       t={t} css={css} theme={theme} setTheme={setTheme}
-      authEmail={authEmail} setAuthEmail={setAuthEmail}
-      authSenha={authSenha} setAuthSenha={setAuthSenha}
       authMsg={authMsg}
-      handleLogin={handleLogin} iniciarOAuth={iniciarOAuth}
       toast={toast}
     />;
   }
@@ -1127,9 +1049,11 @@ export default function App() {
   if (authed && !hubScreen) {
     return <HubScreen
       t={t} css={css}
-      onSelectControleOp={() => setHubScreen("controle_op")}
+      setHubScreen={setHubScreen}
+      setPerfil={setPerfil} setPerms={setPerms}
+      setBasesPermitidas={setBasesPermitidas} setBaseAtual={setBaseAtual}
       frotaUrl={import.meta.env.VITE_FROTA_URL || "http://localhost:3000"}
-      handleLogout={handleLogout}
+      handleLogout={handleLogout} showToast={showToast}
       toast={toast}
     />;
   }
