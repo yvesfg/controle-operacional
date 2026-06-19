@@ -13,7 +13,7 @@ export function getSupaAuth() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      flowType: "implicit",
+      flowType: "pkce",
       storageKey: "co_supa_auth",
     },
   });
