@@ -104,13 +104,13 @@ export default function HubScreen({
 
   if (showFrotaModal) {
     return (
-      <div style={{display:"flex",flexDirection:"column",height:"100vh",background:t.bg}}>
-        <div style={{display:"flex",alignItems:"center",height:"48px",paddingLeft:"16px",borderBottom:`1px solid ${t.borda}`,background:t.card}}>
-          <button onClick={fecharFrota} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:"12px",color:t.txt2,fontWeight:600}}>← Voltar</button>
-          <div style={{flex:1,textAlign:"center",fontSize:"13px",color:t.txt,fontWeight:600}}>Frota Pro</div>
-          <div style={{width:"48px"}}></div>
-        </div>
-        <iframe ref={frotaIframeRef} src={`${frotaUrl}/auth/hub`} style={{flex:1,border:"none",width:"100%",height:"100%",margin:0,padding:0}}/>
+      <div style={{position:"relative",width:"100%",height:"100vh"}}>
+        <iframe ref={frotaIframeRef} src={`${frotaUrl}/auth/hub`} style={{width:"100%",height:"100%",border:"none",display:"block"}}/>
+        <button
+          onClick={fecharFrota}
+          title="Voltar ao Hub"
+          style={{position:"absolute",top:12,right:12,zIndex:10,background:"rgba(20,24,29,.85)",backdropFilter:"blur(6px)",border:`1px solid ${t.borda}`,borderRadius:8,padding:"6px 12px",fontSize:11,color:t.txt2,cursor:"pointer",fontWeight:600,lineHeight:1}}
+        >← Hub</button>
       </div>
     );
   }
