@@ -23,10 +23,10 @@
   --color-border-2    : #cdd1d6;
   --color-border-focus: rgba(59,130,246,.45);   /* foco azul (Binance) */
 
-  /* ── Texto — ink/muted Binance ──────────────────────────────── */
+  /* ── Texto — ink/muted Binance (light) — mais escuro p/ contrast ── */
   --color-text        : #181a20;
-  --color-text-2      : #5c6675;
-  --color-text-3      : #707a8a;
+  --color-text-2      : #424a5f;   /* escurecido de #5c6675 p/ WCAG AAA */
+  --color-text-3      : #5a6575;   /* escurecido de #707a8a p/ WCAG AAA */
   --color-text-disabled: #b7bdc6;
   --color-text-inverse: #ffffff;
 
