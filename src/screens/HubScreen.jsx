@@ -27,6 +27,8 @@ export default function HubScreen({
 }) {
   const [mods, setMods] = useState(null);   // null = carregando
   const [showAdmin, setShowAdmin] = useState(false);
+  const [frotaIframe, setFrotaIframe] = useState(null); // ref do iframe
+  const [showFrotaModal, setShowFrotaModal] = useState(false);
 
   useEffect(() => {
     let cancel = false;
@@ -52,14 +54,14 @@ export default function HubScreen({
     setHubScreen("controle_op");
   };
 
-  // ── SSO Frota: passa o token Supabase Auth (mesma sessão) ──
+  // ── SSO Frota: iframe + postMessage ──
   const entrarFrota = () => {
-    const _win = window.open(`${frotaUrl}/auth/hub`, "_blank");
-    if (!_win) return;
+    setShowFrotaModal(true);
+
     const _handler = (e) => {
       if (!frotaUrl.startsWith(e.origin)) return;
       if (e.data?.type !== "REQUEST_CO_TOKENS") return;
-      window.removeEventListener("message", _handler);
+
       try {
         const _raw = sessionStorage.getItem("co_supa_tokens");
         const _tk = _raw ? JSON.parse(_raw) : null;
@@ -67,17 +69,26 @@ export default function HubScreen({
           try {
             const _pay = JSON.parse(atob(_tk.access_token.split(".")[1]));
             if (_pay.exp && _pay.exp * 1000 < Date.now()) {
-              _win.postMessage({ type: "SUPA_TOKENS", expired: true }, e.origin); return;
+              frotaIframe?.contentWindow?.postMessage({ type: "SUPA_TOKENS", expired: true }, e.origin);
+              return;
             }
           } catch {}
-          _win.postMessage({ type: "SUPA_TOKENS", access_token: _tk.access_token, refresh_token: _tk.refresh_token || "" }, e.origin);
+          frotaIframe?.contentWindow?.postMessage({ type: "SUPA_TOKENS", access_token: _tk.access_token, refresh_token: _tk.refresh_token || "" }, e.origin);
         } else {
-          _win.postMessage({ type: "SUPA_TOKENS", access_token: null }, e.origin);
+          frotaIframe?.contentWindow?.postMessage({ type: "SUPA_TOKENS", access_token: null }, e.origin);
         }
-      } catch (err) { console.error("[SSO] erro ao enviar tokens:", err); }
+      } catch (err) { console.error("[SSO iframe] erro ao enviar tokens:", err); }
     };
+
     window.addEventListener("message", _handler);
-    const _poll = setInterval(() => { if (_win.closed) { clearInterval(_poll); window.removeEventListener("message", _handler); } }, 1000);
+
+    // Cleanup ao fechar modal
+    return () => window.removeEventListener("message", _handler);
+  };
+
+  const fecharFrota = () => {
+    setShowFrotaModal(false);
+    setFrotaIframe(null);
   };
 
   const abrir = (m) => {
@@ -89,6 +100,19 @@ export default function HubScreen({
 
   if (showAdmin) {
     return <HubAdmin t={t} css={css} showToast={showToast} toast={toast} onVoltar={() => setShowAdmin(false)} />;
+  }
+
+  if (showFrotaModal) {
+    return (
+      <div style={{display:"flex",flexDirection:"column",height:"100vh",background:t.bg}}>
+        <div style={{display:"flex",alignItems:"center",height:"48px",paddingLeft:"16px",borderBottom:`1px solid ${t.borda}`,background:t.card}}>
+          <button onClick={fecharFrota} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:"12px",color:t.txt2,fontWeight:600}}>← Voltar</button>
+          <div style={{flex:1,textAlign:"center",fontSize:"13px",color:t.txt,fontWeight:600}}>Frota Pro</div>
+          <div style={{width:"48px"}}></div>
+        </div>
+        <iframe ref={setFrotaIframe} src={`${frotaUrl}/auth/hub`} style={{flex:1,border:"none",width:"100%",height:"100%",margin:0,padding:0}}/>
+      </div>
+    );
   }
 
   return (
