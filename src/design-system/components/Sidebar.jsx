@@ -44,7 +44,7 @@ function SidebarLogo({ icon, text, className = '', children, ...rest }) {
   return (
     <div className={`ds-sidebar__logo ${className}`.trim()} {...rest}>
       {icon && (
-        <span style={{ flexShrink: 0, color: 'var(--color-primary)' }}>
+        <span className="ds-sidebar__logo-icon" style={{ color: 'var(--color-primary)' }}>
           {icon}
         </span>
       )}

@@ -568,12 +568,21 @@
 .ds-sidebar__logo {
   display     : flex;
   align-items : center;
-  gap         : var(--space-3);
-  padding     : var(--space-4) var(--space-4);
+  gap         : 0;
+  padding     : 0;
   height      : var(--header-h);
   border-bottom: 1px solid var(--color-border);
   flex-shrink : 0;
   overflow    : hidden;
+}
+/* Caixa fixa do ícone = largura do menu colapsado → centro do logo
+   permanece estático (não se move) entre aberto e colapsado */
+.ds-sidebar__logo-icon {
+  flex-shrink     : 0;
+  width           : var(--sidebar-collapsed-w);
+  display         : flex;
+  align-items     : center;
+  justify-content : center;
 }
 .ds-sidebar__logo-text {
   font-family   : var(--font-heading);
@@ -657,7 +666,6 @@
 .ds-sidebar--collapsed .ds-sidebar__logo-text,
 .ds-sidebar--collapsed .ds-sidebar__item-badge { display: none; }
 .ds-sidebar--collapsed .ds-sidebar__item { justify-content: center; padding: var(--space-2); }
-.ds-sidebar--collapsed .ds-sidebar__logo { justify-content: center; }
 
 /* ════════════════════════════════════════════════════════════════════
    UTILITÁRIOS GLOBAIS
