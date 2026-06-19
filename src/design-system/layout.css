@@ -927,10 +927,11 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 .pv-row-detail {
   display: none;
-  padding: 0 14px 10px 14px;
+  padding: 10px 14px 14px 14px;
   gap: 8px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: stretch;
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
 .pv-row-card.expanded .pv-row-detail { display: flex; }
 .pv-detail-chip {

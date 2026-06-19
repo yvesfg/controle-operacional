@@ -1,9 +1,4 @@
-import React from "react";
-const DashboardViewLazy = React.lazy(() => import("./DashboardView.jsx"));
-export default function DashboardViewWrapper(props) {
-  return (
-    <React.Suspense fallback={null}>
-      <DashboardViewLazy {...props} />
-    </React.Suspense>
-  );
-}
+// Dashboard é a tela inicial: carregamento eager evita corrida do gráfico
+// (o canvas precisa estar montado quando o useEffect do Chart roda no App.jsx).
+import DashboardView from "./DashboardView.jsx";
+export default DashboardView;

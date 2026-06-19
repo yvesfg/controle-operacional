@@ -13,6 +13,7 @@ import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
   loadJSON, saveJSON, decodeJWT, iniciarOAuth, clickable,
   validarPlaca, normalizarPlaca, normalizarTelefone, normalizarNome } from './utils.js';
 import { supaFetch, supaStorageUpload } from './supabase.js';
+import { apontToSupabase } from './utils/apontMappers.js';
 import { validarRegistroOperacional } from './validators.js';
 import { exportCSV, exportODS, exportPDF, ExportMenu,
   gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
