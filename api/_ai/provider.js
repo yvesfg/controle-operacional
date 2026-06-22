@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────
-//  Adaptador de IA — isola o provedor de análise de documentos.
-//  Hoje: Google Gemini (tier gratuito, lê imagens/PDF/texto).
-//  Trocar de provedor = implementar outra função e apontar AI_PROVIDER.
-//  A chave fica SÓ no servidor (env AI_API_KEY) — nunca vai pro front.
+//  PROVEDOR DE IA — a ÚNICA peça que muda ao trocar de IA.
+//  Hoje: Google Gemini. Para trocar (OpenAI, Claude, etc.), basta
+//  implementar geminiGenerate equivalente e apontar AI_PROVIDER.
+//  A chave fica SÓ no servidor (AI_API_KEY) — nunca vai pro front.
 // ─────────────────────────────────────────────────────────
 
 const PROVIDER = process.env.AI_PROVIDER || "gemini";
 
-// Analisa uma imagem (base64 sem prefixo) + instrução → objeto JSON.
+// Imagem (base64 sem prefixo) + instrução → objeto JSON.
 export async function analyzeImage({ base64, mimeType, instruction }) {
   if (PROVIDER === "gemini") {
     return geminiGenerate([
@@ -18,7 +18,7 @@ export async function analyzeImage({ base64, mimeType, instruction }) {
   throw new Error(`Provedor de IA não suportado: ${PROVIDER}`);
 }
 
-// Analisa só texto (ex.: mapear cabeçalhos de planilha) → objeto JSON.
+// Só texto (ex.: mapear cabeçalhos de planilha) → objeto JSON.
 export async function analyzeText({ instruction }) {
   if (PROVIDER === "gemini") {
     return geminiGenerate([{ text: instruction }]);
