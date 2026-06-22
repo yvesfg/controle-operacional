@@ -1,3 +1,11 @@
+## 2026-06-22 — Template do gateway standalone + guia de implementação nos outros apps
+
+**Solicitado:** Fazer o necessário e deixar claro como implementar nos outros dois apps (Frota e YFFinance).
+
+**Implementado:**
+- **`docs/gateway-template/`** (novo): cópia portátil do núcleo de IA, pronta para ser o repo `yf-ai-gateway`. Contém `api/_ai/{provider,profiles,engine}.js` + `api/extract.js` (endpoint único com CORS + auth) + `vercel.json` + `package.json` + `.env.example`.
+- **`docs/IMPLEMENTAR-NOS-OUTROS-APPS.md`** (novo): guia executivo completo — Etapa 1 (criar/publicar `yf-ai-gateway` na Vercel), Etapa 2 (integrar Frota), Etapa 3 (integrar YFFinance). Inclui código pronto para `api/ai-proxy.js`, `src/utils/aiExtract.js`, exemplo de uso em modal, como adicionar perfis novos, checklist e "o que NÃO muda".
+
 ## 2026-06-22 — Gateway de IA (referência) + endpoint único (fase 3)
 
 **Solicitado:** Globalizar o "adaptador" de IA para servir toda importação de documento dos 3 apps (Controle Operacional, Frota, YFFinance), de forma que trocar de IA mexa **só no adaptador** — respeitando o banco de cada app.
