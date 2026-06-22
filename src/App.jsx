@@ -14,6 +14,7 @@ import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
   validarPlaca, normalizarPlaca, normalizarTelefone, normalizarNome } from './utils.js';
 import { supaFetch, supaStorageUpload } from './supabase.js';
 import { apontToSupabase } from './utils/apontMappers.js';
+import { buildRodorricaRows, rodorricaAIRemap } from './utils/rodorricaParse.js';
 import { validarRegistroOperacional } from './validators.js';
 import { exportCSV, exportODS, exportPDF, ExportMenu,
   gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
@@ -1156,7 +1157,7 @@ export default function App() {
 
   function parseRodorricaXLSX(file) {
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const wb = XLSX.read(ev.target.result, { type:'array', cellDates:true });
         const targetName = wb.SheetNames.find(n => n === 'Aprovados') || wb.SheetNames.find(n => n === 'BASE') || wb.SheetNames[0];
@@ -1164,30 +1165,16 @@ export default function App() {
         setRodorricaSheetInfo({ read: targetName, others: othersRodo });
         const ws = wb.Sheets[targetName];
         const json = XLSX.utils.sheet_to_json(ws, { header:0, defval:'', raw:false });
-        const _xlsxDate = v => {
-          if (!v) return '';
-          if (v instanceof Date) return v.toISOString().split('T')[0];
-          if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
-          return String(v);
-        };
-        const rows = json.map(r => ({
-          dt:            String(r['DT CARREGAMENTO']||'').replace(/\u00a0/g,'').trim(),
-          nf:            String(r['NF CARREGAMENTO']||'').replace(/\u00a0/g,'').trim(),
-          transportadora:String(r['TRANSPORTADORA']||'').trim(),
-          tipo:          String(r['TIPO DO CUSTO']||'').trim().toUpperCase(),
-          valorAprovado: parseFloat(String(r['VALOR APROVADO']||'').replace(',','.')) || 0,
-          valorFinal:    parseFloat(String(r['VALOR FINAL']||'').replace(',','.')) || 0,
-          dtCarregamento:_xlsxDate(r['DATA DE FATURAMENTO']||r['DT CARREGAMENTO']||''),
-          mesAno:        String(r['MÊS/ANO']||r['MES/ANO']||'').trim(),
-          cliente:       String(r['NOME CLIENTE']||'').trim(),
-          centro:        String(r['Centro']||r['CENTRO']||'').trim(),
-          qtFardos:      parseFloat(r['QT FARDOS'])||0,
-          rsFardo:       parseFloat(r['R$/FARDO'])||0,
-          rsStrech:      parseFloat(r['R$/STRECH'])||0,
-          af:            String(r['AF']||'').trim(),
-          status:        String(r['Status']||'').trim(),
-          pagoOTM:       parseFloat(r['Pago OTM'])||0,
-        })).filter(r => r.dt && r.dt.length > 0 && r.dt !== 'undefined' && /^\d{6,}$/.test(r.dt));
+        let rows = buildRodorricaRows(json);
+        if (!rows.length && json.length) {
+          showToast('Planilha em layout diferente — mapeando com IA…', 'ok');
+          try {
+            const json2 = await rodorricaAIRemap(json);
+            rows = buildRodorricaRows(json2);
+            if (rows.length) showToast('✨ IA mapeou ' + rows.length + ' registros — confira', 'ok');
+            else showToast('IA não conseguiu mapear esta planilha', 'warn');
+          } catch (e) { showToast('⚠️ IA: ' + e.message, 'warn'); }
+        }
         if (rodorricaRows.length > 0 || rodorricaFileName) {
           setPrevRodorricaSnap({ rows: rodorricaRows, fileName: rodorricaFileName });
         }

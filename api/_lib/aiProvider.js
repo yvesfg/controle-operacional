@@ -1,31 +1,39 @@
 // ─────────────────────────────────────────────────────────
 //  Adaptador de IA — isola o provedor de análise de documentos.
-//  Hoje: Google Gemini (tier gratuito, lê imagens/PDF).
+//  Hoje: Google Gemini (tier gratuito, lê imagens/PDF/texto).
 //  Trocar de provedor = implementar outra função e apontar AI_PROVIDER.
 //  A chave fica SÓ no servidor (env AI_API_KEY) — nunca vai pro front.
 // ─────────────────────────────────────────────────────────
 
 const PROVIDER = process.env.AI_PROVIDER || "gemini";
 
-// Recebe uma imagem (base64 sem prefixo) + instrução e devolve um objeto JSON.
+// Analisa uma imagem (base64 sem prefixo) + instrução → objeto JSON.
 export async function analyzeImage({ base64, mimeType, instruction }) {
-  if (PROVIDER === "gemini") return geminiAnalyze({ base64, mimeType, instruction });
+  if (PROVIDER === "gemini") {
+    return geminiGenerate([
+      { text: instruction },
+      { inline_data: { mime_type: mimeType, data: base64 } },
+    ]);
+  }
   throw new Error(`Provedor de IA não suportado: ${PROVIDER}`);
 }
 
-async function geminiAnalyze({ base64, mimeType, instruction }) {
+// Analisa só texto (ex.: mapear cabeçalhos de planilha) → objeto JSON.
+export async function analyzeText({ instruction }) {
+  if (PROVIDER === "gemini") {
+    return geminiGenerate([{ text: instruction }]);
+  }
+  throw new Error(`Provedor de IA não suportado: ${PROVIDER}`);
+}
+
+async function geminiGenerate(parts) {
   const key = process.env.AI_API_KEY;
   if (!key) throw new Error("AI_API_KEY não configurada no servidor");
   const model = process.env.AI_MODEL || "gemini-2.0-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
   const body = {
-    contents: [{
-      parts: [
-        { text: instruction },
-        { inline_data: { mime_type: mimeType, data: base64 } },
-      ],
-    }],
+    contents: [{ parts }],
     generationConfig: { responseMimeType: "application/json", temperature: 0 },
   };
 

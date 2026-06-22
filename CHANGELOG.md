@@ -1,3 +1,17 @@
+## 2026-06-22 — IA como fallback do parser da Rodorrica (fase 2)
+
+**Solicitado:** Estender a camada de IA para a **planilha XLSX da Rodorrica**, como fallback do parser quando ele falha.
+
+**Problema:** `parseRodorricaXLSX` (App.jsx) casa **cabeçalhos exatos** (`DT CARREGAMENTO`, `NF CARREGAMENTO`…). Quando a planilha vem com nomes de coluna diferentes, ele retorna **0 linhas silenciosamente**.
+
+**Implementado (a IA só mapeia nomes de coluna — não transcreve as linhas):**
+- **`api/_lib/aiProvider.js`:** novo `analyzeText({ instruction })` (caminho texto do mesmo adaptador Gemini); refatorado p/ compartilhar `geminiGenerate(parts)` entre imagem e texto.
+- **`api/parse-rodorrica.js`** (novo): função serverless que recebe `{ headers, sample }` e devolve `{ mapping }` (campo canônico → cabeçalho real da planilha). O mapping é **sanitizado** no servidor (só aceita cabeçalhos que existem de fato).
+- **`src/utils/rodorricaParse.js`** (novo): `buildRodorricaRows(json)` (transform extraído verbatim do App.jsx, comportamento idêntico) + `rodorricaAIRemap(json)` (chama a API, renomeia as chaves e reaplica o mesmo transform a **todas** as linhas localmente — barato e confiável).
+- **`src/App.jsx`** (via Python, sem Edit/Write direto): `parseRodorricaXLSX` agora usa `buildRodorricaRows`; se der **0 linhas e houver dados**, dispara o fallback de IA automaticamente. Resultado cai na **tela de Conferência de sempre** → operador confere. `onload` virou `async`. Backup: `App.jsx.bak_20260622_124113`.
+
+**Reaproveita** a `AI_API_KEY` já configurada na Vercel (mesmo adaptador). Sem chave, o parser direto segue funcionando normal; só o fallback fica indisponível. Build ✓.
+
 ## 2026-06-22 — Camada de IA para análise de documentos (NFD, fase 1)
 
 **Solicitado:** Uma camada de IA confiável para analisar documentos no upload do app — além do que já está programado — trazendo dados mais confiáveis para o lugar certo. Decisões fechadas: começar pela **foto da NFD**; IA **só sugere, operador confirma**; provedor via **adaptador genérico** (Gemini primeiro, trocável).
