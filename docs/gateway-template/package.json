@@ -1,0 +1,8 @@
+{
+  "name": "yf-ai-gateway",
+  "version": "1.0.0",
+  "description": "Gateway central de IA — YFGroup",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" }
+}
