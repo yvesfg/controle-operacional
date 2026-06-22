@@ -1,3 +1,20 @@
+## 2026-06-22 — Gateway de IA (referência) + endpoint único (fase 3)
+
+**Solicitado:** Globalizar o "adaptador" de IA para servir toda importação de documento dos 3 apps (Controle Operacional, Frota, YFFinance), de forma que trocar de IA mexa **só no adaptador** — respeitando o banco de cada app.
+
+**Decisão:** Gateway central. Esta sessão só alcança o `controle-operacional`, então o CO vira a **implementação de referência** + contrato; os outros 2 adotam em sessões próprias.
+
+**Implementado (núcleo portátil em `api/_ai/`):**
+- **`api/_ai/provider.js`** — provedor de IA (única peça que muda ao trocar de IA). Movido de `api/_lib/aiProvider.js` (removido).
+- **`api/_ai/profiles.js`** — registro de **perfis de documento** (`nfd`, `rodorrica`): cada um define `buildInstruction` + `normalize` para um **formato neutro**, sem nada de banco. Adicionar um tipo de doc = adicionar um perfil.
+- **`api/_ai/engine.js`** — motor que orquestra perfil + provedor (image/table).
+- **`api/ai-extract.js`** — **endpoint único** `POST /api/ai-extract` que todos os apps chamam (`{ profile, image|headers+sample }` → JSON neutro). Auth opcional via `AI_GATEWAY_TOKEN` / header `x-ai-token`.
+- **`api/analyze-nfd.js` e `api/parse-rodorrica.js`** — viraram **cascas finas** sobre o motor: o front não muda e as respostas são idênticas (back-compat total).
+- **`docs/GATEWAY-IA.md`** — contrato compartilhado: endpoint, formatos por perfil, auth, como trocar de IA, como adicionar documento, e como extrair o núcleo num serviço dedicado (`yf-ai-gateway`) para centralizar de verdade.
+- **`.env.example`** — `AI_GATEWAY_TOKEN`.
+
+**Fronteira mantida:** o gateway devolve fatos extraídos num formato neutro; cada app traduz pro seu próprio Supabase. Build ✓, sem mudança de comportamento em produção.
+
 ## 2026-06-22 — IA como fallback do parser da Rodorrica (fase 2)
 
 **Solicitado:** Estender a camada de IA para a **planilha XLSX da Rodorrica**, como fallback do parser quando ele falha.
