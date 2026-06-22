@@ -1,3 +1,16 @@
+## 2026-06-22 — Camada de IA para análise de documentos (NFD, fase 1)
+
+**Solicitado:** Uma camada de IA confiável para analisar documentos no upload do app — além do que já está programado — trazendo dados mais confiáveis para o lugar certo. Decisões fechadas: começar pela **foto da NFD**; IA **só sugere, operador confirma**; provedor via **adaptador genérico** (Gemini primeiro, trocável).
+
+**Implementado:**
+- **`api/_lib/aiProvider.js`** (novo): adaptador que isola o provedor de IA. Hoje chama Google Gemini (`generativelanguage.googleapis.com`); trocar de provedor = adicionar um caso e apontar `AI_PROVIDER`. A chave fica **só no servidor** (`AI_API_KEY`).
+- **`api/analyze-nfd.js`** (novo): função serverless (Vercel) que recebe a foto em base64, monta o prompt da NFD e devolve JSON sanitizado — `{ numero, valor, tipo, confianca, observacao }`. `tipo` é validado contra a lista fixa de tipos de NFD.
+- **`src/utils/analyzeNfdFoto.js`** (novo): cliente do front — reduz a imagem via canvas (cabe no limite de body da Vercel) e chama `/api/analyze-nfd`.
+- **`src/modals/ModalNFD.jsx`:** botão "✨ Analisar foto com IA" (aparece quando há ≥1 foto). Pré-preenche nº/valor/tipo a partir da 1ª foto e mostra a confiança no toast. **O operador continua confirmando** no fluxo atual — a IA é uma camada extra, não a fonte única. Backup: `ModalNFD.jsx.bak_20260622_120846`.
+- **`.env.example`:** documentadas as envs server-side `AI_API_KEY` / `AI_PROVIDER` / `AI_MODEL` (sem prefixo `VITE_`, logo nunca expostas no front).
+
+**Para ativar:** definir `AI_API_KEY` (chave Gemini) nas Environment Variables do projeto na Vercel. CSP já permite o front chamar `/api/...` (mesma origem). Build ✓.
+
 ## 2026-06-16 — Nova aba global "Créditos Pendentes"
 
 **Solicitado:** Implementar o que foi combinado em 15/06 — tela global de créditos pendentes (verificar/identificar por filial e cobrar caso o crédito não venha). Decisões fechadas: (a) "Cobrar" = registrar + gerar texto de cobrança por filial; (b) filtrar por filial + cliente.

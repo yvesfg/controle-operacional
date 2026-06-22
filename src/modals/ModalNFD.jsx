@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { supaStorageUpload } from "../supabase.js";
+import { analyzeNfdFoto } from "../utils/analyzeNfdFoto.js";
 import Toggle from "../components/Toggle.jsx";
 
 export default function ModalNFD({ ctx }) {
+  const [iaLoading, setIaLoading] = useState(false);
   const {
     nfdAlertOpen, setNfdAlertOpen,
     nfdFotos, setNfdFotos,
@@ -120,6 +122,28 @@ export default function ModalNFD({ ctx }) {
                 </div>
               )}
             </div>
+            {/* ✨ Camada de IA — sugere campos a partir da 1ª foto (operador confirma) */}
+            {nfdFotos.length>0&&(
+              <button disabled={iaLoading} onClick={async()=>{
+                try{
+                  setIaLoading(true);
+                  const s=await analyzeNfdFoto(nfdFotos[0].preview);
+                  setNfdForm(p=>({...p,
+                    ...(s.numero?{numero:s.numero}:{}),
+                    ...(s.valor?{valor:s.valor}:{}),
+                    ...(s.tipo?{tipo:s.tipo}:{}),
+                  }));
+                  const pct=s.confianca!=null?` · ${Math.round(s.confianca*100)}% conf.`:"";
+                  showToast(`✨ IA sugeriu — confira os campos${pct}`,"ok");
+                }catch(e){showToast("⚠️ IA: "+e.message,"warn");}
+                finally{setIaLoading(false);}
+              }} style={{width:"100%",marginBottom:10,padding:"9px 10px",borderRadius:9,
+                border:`1.5px solid ${t.ouro}`,background:`rgba(240,185,11,.08)`,color:t.ouro,
+                fontWeight:700,fontSize:12,cursor:iaLoading?"wait":"pointer",fontFamily:"inherit",
+                display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:iaLoading?.6:1}}>
+                {iaLoading?"Analisando foto…":"✨ Analisar foto com IA"}
+              </button>
+            )}
             {/* Checkbox registrar outra */}
             <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(240,185,11,.04)`,cursor:"pointer",userSelect:"none"}}>
               <Toggle checked={nfdRegistrarOutra} color="#F3BA2F" onChange={setNfdRegistrarOutra} />
