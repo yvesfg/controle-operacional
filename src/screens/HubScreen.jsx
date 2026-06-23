@@ -94,7 +94,15 @@ export default function HubScreen({
   };
 
   const entrarExterno = (m) => {
-    setIframeUrl(m.url);
+    let url = m.url || '';
+    try {
+      const raw = sessionStorage.getItem("co_supa_tokens");
+      const tk  = raw ? JSON.parse(raw) : null;
+      if (tk?.access_token) {
+        url += (url.includes('?') ? '&' : '?') + 'hub_token=' + encodeURIComponent(tk.access_token);
+      }
+    } catch {}
+    setIframeUrl(url);
     setIframeTitle(m.nome || m.slug);
   };
   const fecharExterno = () => { setIframeUrl(null); setIframeTitle(""); };
@@ -158,7 +166,7 @@ export default function HubScreen({
         </div>
       ) : (
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:520,width:"100%",animation:"hubUp .38s ease-out",position:"relative",zIndex:1}}>
-          {mods.map(m => (
+          {mods.filter(m => m.slug !== 'financeiro').map(m => (
             <button key={m.slug} onClick={()=>abrir(m)}
               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,padding:"20px 10px 18px",background:t.card,
                 border:`1.5px solid ${t.borda2||t.borda}`,borderRadius:14,cursor:"pointer",
