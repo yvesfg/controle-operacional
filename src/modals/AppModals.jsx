@@ -16,6 +16,7 @@ import ModalBusca            from './ModalBusca.jsx';
 import ModalDashDrill        from './ModalDashDrill.jsx';
 import ModalOcorrChegada     from './ModalOcorrChegada.jsx';
 import OcorrModal            from '../components/OcorrModal.jsx';
+import ModalDocIntake        from '../components/ModalDocIntake.jsx';
 import Toast                 from '../components/Toast.jsx';
 
 export default function AppModals({ ctx }) {
@@ -79,6 +80,8 @@ export default function AppModals({ ctx }) {
     buscaInput, setBuscaInput, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
     buscaError, setBuscaError, historico, buscar, canEdit, connStatus,
     dtBase, saveJSON,
+    docIntakeOpen, setDocIntakeOpen, docIntakeTipo, docIntakeCallback, setDocIntakeCallback,
+    openDocIntake,
     toast,
   } = ctx;
 
@@ -296,6 +299,18 @@ export default function AppModals({ ctx }) {
   abrirWppPagModal, abrirOcorrModal,
   dtBase, parseData, saveJSON, t, css, hIco, DESIGN,
 }} />
+
+<ModalDocIntake
+  open={!!docIntakeOpen}
+  tipo={docIntakeTipo || "crlv"}
+  onClose={() => { setDocIntakeOpen(false); setDocIntakeCallback(null); }}
+  onConfirm={(data) => {
+    docIntakeCallback?.(data);
+    setDocIntakeOpen(false);
+    setDocIntakeCallback(null);
+  }}
+  ctx={{ t, css, hIco, showToast }}
+/>
 
 <Toast {...toast} />
     </>

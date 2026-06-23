@@ -49,6 +49,11 @@ export function useModalState() {
   const [acompTexto, setAcompTexto] = useState("");
   const [acompImagens, setAcompImagens] = useState([]);
 
+  // ModalDocIntake — modal genérico de documentos via IA (CRLV, CNH, etc.)
+  const [docIntakeOpen, setDocIntakeOpen] = useState(false);
+  const [docIntakeTipo, setDocIntakeTipo] = useState("crlv");
+  const [docIntakeCallback, setDocIntakeCallback] = useState(null);
+
   return {
     modalOpen, setModalOpen, editIdx, setEditIdx, editStep, setEditStep,
     formData, setFormData, excluirConfirm, setExcluirConfirm, excluirTexto, setExcluirTexto,
@@ -64,5 +69,6 @@ export function useModalState() {
     nfdAlertOpen, setNfdAlertOpen, nfdForm, setNfdForm, nfdFotos, setNfdFotos,
     nfdUploadando, setNfdUploadando, nfdRegistrarOutra, setNfdRegistrarOutra, ocorrChegadaAlert, setOcorrChegadaAlert,
     acompDias, setAcompDias, acompDiaSel, setAcompDiaSel, acompTexto, setAcompTexto, acompImagens, setAcompImagens,
+    docIntakeOpen, setDocIntakeOpen, docIntakeTipo, setDocIntakeTipo, docIntakeCallback, setDocIntakeCallback,
   };
 }

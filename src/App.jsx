@@ -204,7 +204,15 @@ export default function App() {
     nfdAlertOpen, setNfdAlertOpen, nfdForm, setNfdForm, nfdFotos, setNfdFotos,
     nfdUploadando, setNfdUploadando, nfdRegistrarOutra, setNfdRegistrarOutra, ocorrChegadaAlert, setOcorrChegadaAlert,
     acompDias, setAcompDias, acompDiaSel, setAcompDiaSel, acompTexto, setAcompTexto, acompImagens, setAcompImagens,
+    docIntakeOpen, setDocIntakeOpen, docIntakeTipo, setDocIntakeTipo, docIntakeCallback, setDocIntakeCallback,
   } = useModalState();
+
+  // Abre o ModalDocIntake de qualquer modal via ctx
+  const openDocIntake = React.useCallback((tipo, cb) => {
+    setDocIntakeTipo(tipo);
+    setDocIntakeCallback(() => cb);
+    setDocIntakeOpen(true);
+  }, [setDocIntakeTipo, setDocIntakeCallback, setDocIntakeOpen]);
 
   const {
     alertasOpen, setAlertasOpen, baseMenuOpen, setBaseMenuOpen,
@@ -1775,6 +1783,8 @@ export default function App() {
         buscaInput, setBuscaInput, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
         buscaError, setBuscaError, historico, buscar, canEdit, connStatus,
         dtBase, saveJSON,
+        docIntakeOpen, setDocIntakeOpen, docIntakeTipo, setDocIntakeTipo, docIntakeCallback, setDocIntakeCallback,
+        openDocIntake,
         toast,
       }} />
     </div>
