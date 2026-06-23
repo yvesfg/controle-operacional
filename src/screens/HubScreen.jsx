@@ -29,6 +29,8 @@ export default function HubScreen({
   const [showAdmin, setShowAdmin] = useState(false);
   const frotaIframeRef = useRef(null);
   const [showFrotaModal, setShowFrotaModal] = useState(false);
+  const [iframeUrl, setIframeUrl] = useState(null);
+  const [iframeTitle, setIframeTitle] = useState("");
 
   useEffect(() => {
     let cancel = false;
@@ -91,15 +93,35 @@ export default function HubScreen({
     frotaIframeRef.current = null;
   };
 
+  const entrarExterno = (m) => {
+    setIframeUrl(m.url);
+    setIframeTitle(m.nome || m.slug);
+  };
+  const fecharExterno = () => { setIframeUrl(null); setIframeTitle(""); };
+
   const abrir = (m) => {
     if (m.slug === "controle_op") entrarControleOp();
     else if (m.slug === "frota") entrarFrota();
+    else if (m.slug === "antt" || m.slug === "calculadora") entrarExterno(m);
     else if (m.url && /^https?:/.test(m.url)) window.open(m.url, "_blank");
     else showToast?.("⏳ Módulo em breve", "warn");
   };
 
   if (showAdmin) {
     return <HubAdmin t={t} css={css} showToast={showToast} toast={toast} onVoltar={() => setShowAdmin(false)} />;
+  }
+
+  if (iframeUrl) {
+    return (
+      <div style={{position:"relative",width:"100%",height:"100vh"}}>
+        <iframe src={iframeUrl} style={{width:"100%",height:"100%",border:"none",display:"block"}} title={iframeTitle} allow="camera" />
+        <button
+          onClick={fecharExterno}
+          title="Voltar ao Hub"
+          style={{position:"absolute",top:12,right:12,zIndex:10,background:"rgba(20,24,29,.85)",backdropFilter:"blur(6px)",border:`1px solid ${t.borda}`,borderRadius:8,padding:"6px 12px",fontSize:11,color:t.txt2,cursor:"pointer",fontWeight:600,lineHeight:1}}
+        >← Hub</button>
+      </div>
+    );
   }
 
   if (showFrotaModal) {

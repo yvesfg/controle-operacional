@@ -122,6 +122,7 @@ export default function AppModals({ ctx }) {
   setOcorrChegadaAlert,
   baseAtual,
   salvarRegistro, deletarRegistro,
+  openDocIntake, showToast,
 } })}
 
 <ModalMotoristasAdmin ctx={{

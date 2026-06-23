@@ -16,6 +16,7 @@ function ModalEditComponent({ ctx }) {
     setOcorrChegadaAlert,
     salvarRegistro, deletarRegistro,
     baseAtual,
+    openDocIntake, showToast,
   } = ctx;
 
   if (modalOpen !== "edit") return null;
@@ -229,6 +230,27 @@ function ModalEditComponent({ ctx }) {
           <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"8px 10px",fontSize:10,color:t.ouro,marginBottom:8}}>
             🔒 Campos financeiros visíveis apenas para Admin/Gerente. Contate o administrador para alterar.
           </div>
+        )}
+        {section.s==="Identificação" && openDocIntake && (
+          <button
+            onClick={() => openDocIntake("crlv", (data) => {
+              const updates = {};
+              if (data.placa)  updates.placa  = data.placa;
+              if (data.placa)  updates.placa2 = "";
+              setFormData(p => ({ ...p, ...updates }));
+              const pct = data.confianca != null ? ` · ${Math.round(data.confianca * 100)}% conf.` : "";
+              showToast?.(`✅ CRLV lido — Placa: ${data.placa || "—"}${pct}`, "ok");
+            })}
+            style={{
+              width:"100%", marginBottom:8, padding:"7px 10px", borderRadius:8, cursor:"pointer",
+              border:`1.5px solid ${t.azul}`, background:`rgba(8,145,178,.08)`,
+              color:t.azul, fontSize:11, fontWeight:700, fontFamily:"inherit",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+            }}
+          >
+            {hIco(<><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></>, t.azul, 13, 2)}
+            Ler CRLV com IA — preenche Placa automaticamente
+          </button>
         )}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
           {section.fields.map(f => renderField(f, section.s))}
