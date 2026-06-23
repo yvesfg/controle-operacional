@@ -48,6 +48,35 @@ Não invente dados. Não adicione texto fora do JSON.`;
     },
   },
 
+  // ── CRLV (documento do veículo) — base p/ fluxo RNTRC/CIOT ──
+  crlv: {
+    kind: "image",
+    buildInstruction() {
+      return `Você lê CRLV (Certificado de Registro e Licenciamento de Veículo) do Brasil, em foto ou PDF.
+Responda APENAS JSON:
+{ "placa": "<ABC1D23 ou vazio>", "renavam": "<só dígitos ou vazio>",
+  "cpf_cnpj": "<CPF/CNPJ do proprietário, só dígitos, ou vazio>",
+  "nome_proprietario": "<ou vazio>", "chassi": "<ou vazio>",
+  "marca_modelo": "<ou vazio>", "ano": "<ou vazio>",
+  "confianca": <0-1>, "observacao": "<vazio se ok>" }
+Não invente dados. Não adicione texto fora do JSON.`;
+    },
+    normalize(out) {
+      const soDigitos = (v) => String(v || "").replace(/\D/g, "");
+      return {
+        placa: String(out?.placa || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(),
+        renavam: soDigitos(out?.renavam),
+        cpf_cnpj: soDigitos(out?.cpf_cnpj),
+        nome_proprietario: String(out?.nome_proprietario || "").trim(),
+        chassi: String(out?.chassi || "").trim().toUpperCase(),
+        marca_modelo: String(out?.marca_modelo || "").trim(),
+        ano: String(out?.ano || "").trim(),
+        confianca: typeof out?.confianca === "number" ? out.confianca : null,
+        observacao: String(out?.observacao || "").trim(),
+      };
+    },
+  },
+
   // ── Rodorrica — mapeamento de cabeçalhos (Controle Operacional) ──
   rodorrica: {
     kind: "table",

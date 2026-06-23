@@ -302,19 +302,19 @@ export default function PlanilhaView({ ctx }) {
       {/* ── KPI strip ── */}
       <div className="pv-kpi-strip">
         <div className="pv-kpi-chip">
-          <span className="pv-kpi-value" style={{ color: "#a5b4fc" }}>{totalViagens}</span>
+          <span className="pv-kpi-value" style={{ color: "var(--color-info)" }}>{totalViagens}</span>
           <span className="pv-kpi-label">viagens</span>
         </div>
         <div className="pv-kpi-chip">
-          <span className="pv-kpi-value" style={{ color: totalMargem >= 0 ? "#86efac" : "#fca5a5" }}>{fmtR(totalMargem)}</span>
+          <span className="pv-kpi-value" style={{ color: totalMargem >= 0 ? "var(--green)" : "var(--red)" }}>{fmtR(totalMargem)}</span>
           <span className="pv-kpi-label">margem total</span>
         </div>
         <div className="pv-kpi-chip">
-          <span className="pv-kpi-value" style={{ color: pendentes > 0 ? "#fca5a5" : "#86efac" }}>{pendentes}</span>
+          <span className="pv-kpi-value" style={{ color: pendentes > 0 ? "var(--red)" : "var(--green)" }}>{pendentes}</span>
           <span className="pv-kpi-label">pendentes/atraso</span>
         </div>
         <div className="pv-kpi-chip">
-          <span className="pv-kpi-value" style={{ color: "#fde68a" }}>{dadosExibir.length}</span>
+          <span className="pv-kpi-value" style={{ color: "var(--accent)" }}>{dadosExibir.length}</span>
           <span className="pv-kpi-label">nesta página</span>
         </div>
         <span style={{ marginLeft: "auto", fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text2)", fontWeight: 600 }}>
@@ -344,18 +344,18 @@ export default function PlanilhaView({ ctx }) {
             const rowId = row.id || row.codigo || i;
             const isExp = pvExpanded.has(rowId);
             const margem = calcMargem(row);
-            const margemColor = margem == null ? "inherit" : margem >= 0 ? "#86efac" : "#fca5a5";
+            const margemColor = margem == null ? "inherit" : margem >= 0 ? "var(--green)" : "var(--red)";
             const rota = [row.origem, row.destino].filter(Boolean).join(" → ") || "—";
             return (
               <div key={rowId} className={`pv-row-card${isExp ? " expanded" : ""}`}>
                 <div className="pv-row-main" onClick={() => pvToggle(rowId)}>
-                  <div style={{ flex: "1.2", fontSize: 11, color: "#a5b4fc", fontFamily: "var(--font-mono)" }}>
+                  <div style={{ flex: "1.2", fontSize: 11, color: "var(--color-info)", fontFamily: "var(--font-mono)" }}>
                     {row.codigo || row.dt || row.id || `#${i+1}`}
                   </div>
-                  <div style={{ flex: 2, fontSize: 11, color: "rgba(255,255,255,0.75)" }}>
+                  <div style={{ flex: 2, fontSize: 11, color: "var(--text)" }}>
                     {row.nome || row.motorista || "—"}
                   </div>
-                  <div style={{ flex: 2, fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{rota}</div>
+                  <div style={{ flex: 2, fontSize: 10, color: "var(--text3)" }}>{rota}</div>
                   <div style={{ flex: "1.2" }}><PvBadge status={row.status} /></div>
                   <div style={{ flex: "1.2", fontSize: 11, fontWeight: 600, color: margemColor }}>
                     {margem != null ? fmtR(margem) : "—"}
@@ -383,7 +383,7 @@ export default function PlanilhaView({ ctx }) {
             );
           })}
           {dadosExibir.length === 0 && (
-            <div style={{ padding: "40px 14px", textAlign: "center", color: "rgba(255,255,255,0.2)", fontSize: 12 }}>
+            <div style={{ padding: "40px 14px", textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
               Nenhum registro encontrado
             </div>
           )}

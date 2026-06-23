@@ -107,8 +107,8 @@
   --border2 : #cdd1d6;
 
   --text    : #181a20;
-  --text2   : #5c6675;
-  --text3   : #707a8a;
+  --text2   : #424a5f;   /* alinhado ao --color-text-2 (WCAG AAA) */
+  --text3   : #5a6575;   /* alinhado ao --color-text-3 (WCAG AAA) */
 
   --accent  : #a8810c;
   --accent2 : rgba(168,129,12,.10);
