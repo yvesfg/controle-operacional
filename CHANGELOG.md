@@ -1,3 +1,18 @@
+## 2026-06-23 — Diagnóstico geral + correção do tema claro + perfil CRLV
+
+**Solicitado:** Análise completa (IA atual, app Consulta ANTT no GitHub, viabilidade Gemini vs alternativa gratuita), correção da ilegibilidade do tema claro (img2), redesign do modal de detalhe (img1) e fluxo reutilizável de extração de documentos (CRLV).
+
+**Diagnóstico:**
+- **IA atual:** funcional. Núcleo em `api/_ai/{provider,profiles,engine}.js` + endpoint `api/ai-extract.js`. Gateway central `yf-ai-gateway` publicado e testado (retornou JSON correto). Provedor = Gemini, troca em 1 arquivo.
+- **Consulta ANTT:** **não existe neste repositório.** Aparece só como *tile* no Hub (`HubScreen.jsx`, slug `antt`, descrição "RNTRC · CIOT · Rastreio"); ao clicar cai em `showToast("⏳ Módulo em breve")`. Não é dessincronização de código — o app simplesmente ainda não foi criado.
+
+**Implementado:**
+- **`src/views/PlanilhaView.jsx`** — correção da ilegibilidade no tema claro: as linhas usavam cores hardcoded do tema escuro (`rgba(255,255,255,.75)` no nome, `rgba(255,255,255,.4)` na rota, pastéis `#86efac/#a5b4fc/...` nos KPIs) — invisíveis sobre fundo branco. Trocadas por tokens semânticos (`var(--text)`, `var(--text3)`, `var(--green)`, `var(--red)`, `var(--color-info)`, `var(--accent)`) que adaptam aos dois temas.
+- **`src/design-system/theme-light.css`** — `--text2`/`--text3` estavam dessincronizados do bloco `--color-text-*` (valores claros antigos). Alinhados aos valores WCAG AAA já aprovados (`#424a5f`/`#5a6575`).
+- **`api/_ai/profiles.js` + `docs/gateway-template/api/_ai/profiles.js`** — novo perfil **`crlv`** (kind image): extrai placa, renavam, cpf/cnpj do proprietário, chassi, marca/modelo, ano + confiança. Base para o fluxo CRLV→RNTRC→CIOT. Aditivo, sem tocar UI.
+
+**Build:** ✓ (exit 0). Perfis: `nfd, crlv, rodorrica`.
+
 ## 2026-06-22 — Template do gateway standalone + guia de implementação nos outros apps
 
 **Solicitado:** Fazer o necessário e deixar claro como implementar nos outros dois apps (Frota e YFFinance).

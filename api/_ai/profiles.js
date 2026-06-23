@@ -56,6 +56,41 @@ Não invente dados. Se um campo não estiver claramente legível, deixe vazio. N
     },
   },
 
+  // ── Foto/PDF de CRLV (documento do veículo) — base p/ fluxo RNTRC/CIOT ──
+  crlv: {
+    kind: "image",
+    buildInstruction() {
+      return `Você lê CRLV (Certificado de Registro e Licenciamento de Veículo) do Brasil, em foto ou PDF.
+Extraia os dados do documento. Responda APENAS com um JSON neste formato exato:
+{
+  "placa": "<placa no formato ABC1D23 ou ABC1234, somente letras e dígitos, ou string vazia>",
+  "renavam": "<código RENAVAM, somente dígitos, ou string vazia>",
+  "cpf_cnpj": "<CPF ou CNPJ do PROPRIETÁRIO, somente dígitos, ou string vazia>",
+  "nome_proprietario": "<nome do proprietário, ou string vazia>",
+  "chassi": "<número do chassi, ou string vazia>",
+  "marca_modelo": "<marca/modelo do veículo, ou string vazia>",
+  "ano": "<ano de fabricação/modelo, ou string vazia>",
+  "confianca": <número de 0 a 1 indicando o quão confiante você está na leitura>,
+  "observacao": "<curta nota se algo estiver ilegível, ou string vazia>"
+}
+Não invente dados. Se um campo não estiver claramente legível, deixe vazio. Não adicione texto fora do JSON.`;
+    },
+    normalize(out) {
+      const soDigitos = (v) => String(v || "").replace(/\D/g, "");
+      return {
+        placa: String(out?.placa || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(),
+        renavam: soDigitos(out?.renavam),
+        cpf_cnpj: soDigitos(out?.cpf_cnpj),
+        nome_proprietario: String(out?.nome_proprietario || "").trim(),
+        chassi: String(out?.chassi || "").trim().toUpperCase(),
+        marca_modelo: String(out?.marca_modelo || "").trim(),
+        ano: String(out?.ano || "").trim(),
+        confianca: typeof out?.confianca === "number" ? out.confianca : null,
+        observacao: String(out?.observacao || "").trim(),
+      };
+    },
+  },
+
   // ── Mapeamento de cabeçalhos da planilha Rodorrica (fallback do parser) ──
   rodorrica: {
     kind: "table",
