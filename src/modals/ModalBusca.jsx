@@ -12,7 +12,7 @@ export default function ModalBusca({ ctx }) {
     historico,
     buscar,
     DADOS, motoristas,
-    canEdit,
+    canEdit, canFin, fmtMoeda,
     connStatus,
     setFormData, setEditIdx, setEditStep, setModalOpen,
     setWppFatModal, setWppModal, setWppTel, setWppPgto,
