@@ -88,6 +88,7 @@ import BaseSelectorScreen from './screens/BaseSelectorScreen.jsx';
 import PrimeiroLoginScreen from './screens/PrimeiroLoginScreen.jsx';
 import AppSidebar from './components/AppSidebar.jsx';
 import BottomNav  from './components/BottomNav.jsx';
+import HubFab     from './components/HubFab.jsx';
 
 
 // ══════════════════════════════════════════════
@@ -1306,10 +1307,6 @@ export default function App() {
               )}
             </div>
             <div className="co-topbar__actions">
-              <button onClick={()=>setHubScreen(null)} title="Voltar ao Hub" style={{...css.hBtn,padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
-                {hIco(<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,t.txt2,14,2)}
-                <span style={{fontSize:11,fontWeight:700,color:t.txt2,fontFamily:"var(--font-mono)"}}>Hub</span>
-              </button>
               {alertas.length > 0 && (
                 <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
                   {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,14)}
@@ -1334,9 +1331,6 @@ export default function App() {
               <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
-              <button onClick={()=>setHubScreen(null)} title="Voltar ao Hub" style={{...css.hBtn,padding:"6px 7px"}}>
-                {hIco(<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,t.txt2,13,2)}
-              </button>
               <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
                 {connStatus==="syncing"
                   ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,13)
@@ -1718,6 +1712,9 @@ export default function App() {
           enviarEmailBoasVindas,
         }} />
       </div>
+
+      {/* ═══ HUB FAB — botão flutuante arrastável p/ voltar ao Hub ═══ */}
+      <HubFab t={t} hIco={hIco} onClick={()=>setHubScreen(null)} />
 
       {/* ═══ BOTTOM NAV — mobile only ═══ */}
       {!isWide && (
