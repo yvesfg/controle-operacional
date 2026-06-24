@@ -3,6 +3,7 @@ import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
 import { fetchMeusModulos, fetchMeuAcesso } from "../supabaseAuth.js";
 import HubAdmin from "./HubAdmin.jsx";
+import HubFab from "../components/HubFab.jsx";
 import loginLogo from "../../assets/images/logo-login.png";
 
 // SVG por slug (catálogo visual local; o que aparece vem de meus_modulos)
@@ -131,11 +132,7 @@ export default function HubScreen({
     return (
       <div style={{position:"relative",width:"100%",height:"100vh"}}>
         <iframe src={iframeUrl} style={{width:"100%",height:"100%",border:"none",display:"block"}} title={iframeTitle} allow="camera" />
-        <button
-          onClick={fecharExterno}
-          title="Voltar ao Hub"
-          style={{position:"absolute",top:12,right:12,zIndex:10,background:"rgba(20,24,29,.85)",backdropFilter:"blur(6px)",border:`1px solid ${t.borda}`,borderRadius:8,padding:"6px 12px",fontSize:11,color:t.txt2,cursor:"pointer",fontWeight:600,lineHeight:1}}
-        >← Hub</button>
+        <HubFab t={t} onClick={fecharExterno} />
       </div>
     );
   }
@@ -144,11 +141,7 @@ export default function HubScreen({
     return (
       <div style={{position:"relative",width:"100%",height:"100vh"}}>
         <iframe ref={frotaIframeRef} src={`${frotaUrl}/auth/hub`} style={{width:"100%",height:"100%",border:"none",display:"block"}}/>
-        <button
-          onClick={fecharFrota}
-          title="Voltar ao Hub"
-          style={{position:"absolute",top:12,right:12,zIndex:10,background:"rgba(20,24,29,.85)",backdropFilter:"blur(6px)",border:`1px solid ${t.borda}`,borderRadius:8,padding:"6px 12px",fontSize:11,color:t.txt2,cursor:"pointer",fontWeight:600,lineHeight:1}}
-        >← Hub</button>
+        <HubFab t={t} onClick={fecharFrota} />
       </div>
     );
   }

@@ -16,7 +16,7 @@ function loadPos() {
   return null;
 }
 
-export default function HubFab({ t, hIco, onClick }) {
+export default function HubFab({ t, onClick }) {
   const SIZE = 44;
   const [pos, setPos] = useState(() => loadPos());
   const [hover, setHover] = useState(false);
@@ -88,7 +88,9 @@ export default function HubFab({ t, hIco, onClick }) {
         color: t.txt2, fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
       }}
     >
-      {hIco(<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>, t.txt2, 17, 2)}
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
       {hover && <span style={{ whiteSpace: "nowrap" }}>Hub</span>}
     </button>
   );

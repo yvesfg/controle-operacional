@@ -1714,7 +1714,7 @@ export default function App() {
       </div>
 
       {/* ═══ HUB FAB — botão flutuante arrastável p/ voltar ao Hub ═══ */}
-      <HubFab t={t} hIco={hIco} onClick={()=>setHubScreen(null)} />
+      <HubFab t={t} onClick={()=>setHubScreen(null)} />
 
       {/* ═══ BOTTOM NAV — mobile only ═══ */}
       {!isWide && (
