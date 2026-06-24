@@ -301,39 +301,36 @@ select:focus {
    MOBILE (≤ 767px) — mini sidebar (48px) + content offset
    ════════════════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
-  .co-sidebar {
-    display:    flex !important; z-index: 200;
-    width:      48px !important;
-    transition: width 220ms ease;
+  /* Sidebar fica oculta por padrão no mobile — aparece só como drawer (mob-expanded) */
+  .co-sidebar:not(.co-sidebar--mob-expanded) { display: none !important; }
+  .co-sidebar--mob-expanded {
+    display:    flex !important; z-index: 200; position: fixed;
+    width:      220px !important; box-shadow: 4px 0 28px rgba(0,0,0,.55);
+    top: 0; left: 0; bottom: 0;
   }
-  .co-sidebar--mob-expanded { width: 220px !important; box-shadow: 4px 0 28px rgba(0,0,0,.55); }
-
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo       { justify-content: center !important; padding: 8px !important; gap: 0 !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo-name,
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logo-sub   { display: none !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__toggle     { display: none !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__item       { justify-content: center !important; padding: 8px !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__item-lbl   { display: none !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer     { align-items: center !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer-item{ justify-content: center !important; padding: 7px !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__footer-lbl { display: none !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user        { justify-content: center !important; padding: 6px !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__user-info   { display: none !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__logout-btn  { display: none !important; }
+  .co-sidebar--mob-expanded .co-sidebar__logo       { justify-content: flex-start !important; padding: 8px 12px 8px 14px !important; gap: 10px !important; }
+  .co-sidebar--mob-expanded .co-sidebar__logo-name,
+  .co-sidebar--mob-expanded .co-sidebar__logo-sub   { display: block !important; }
+  .co-sidebar--mob-expanded .co-sidebar__toggle     { display: flex !important; }
+  .co-sidebar--mob-expanded .co-sidebar__item       { justify-content: flex-start !important; padding: 8px 10px !important; }
+  .co-sidebar--mob-expanded .co-sidebar__item-lbl   { display: block !important; }
+  .co-sidebar--mob-expanded .co-sidebar__footer     { align-items: stretch !important; }
+  .co-sidebar--mob-expanded .co-sidebar__footer-item{ justify-content: flex-start !important; padding: 7px 10px !important; }
+  .co-sidebar--mob-expanded .co-sidebar__footer-lbl { display: block !important; }
   .co-sidebar--mob-expanded .co-sidebar__user       { justify-content: flex-start !important; padding: 8px 10px !important; }
   .co-sidebar--mob-expanded .co-sidebar__user-info  { display: flex !important; }
   .co-sidebar--mob-expanded .co-sidebar__logout-btn { display: flex !important; }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-lbl {
-    display:        block !important; text-align: center;
-    font-size:      6px; white-space: normal; word-break: keep-all;
-    padding:        4px 1px 2px; line-height: 1.2; letter-spacing: 0.02em; overflow: visible;
-  }
-  .co-sidebar:not(.co-sidebar--mob-expanded) .co-sidebar__section-line { display: none !important; }
+  .co-sidebar--mob-expanded .co-sidebar__section-lbl  { display: block !important; }
+  .co-sidebar--mob-expanded .co-sidebar__section-line { display: block !important; }
 
+  /* Main: sem offset de sidebar; bottom nav ocupa 62px + safe-area */
   .co-main         { margin-left: 0 !important; min-height: 100dvh; }
-  .co-main--mobile { margin-left: 48px !important; }
-  .co-mobile-nav   { display: none !important; }
+  .co-main--mobile { margin-left: 0 !important; }
+  .co-main--mobile .co-content { padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
   .co-app-wrap     { align-items: stretch; }
+
+  /* Bottom nav visível no mobile */
+  .co-mobile-nav { display: flex !important; }
 }
 
 /* ════════════════════════════════════════════════════════════════════

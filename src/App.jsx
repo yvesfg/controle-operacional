@@ -87,6 +87,7 @@ import { getSupaAuth } from './supabaseAuth.js';
 import BaseSelectorScreen from './screens/BaseSelectorScreen.jsx';
 import PrimeiroLoginScreen from './screens/PrimeiroLoginScreen.jsx';
 import AppSidebar from './components/AppSidebar.jsx';
+import BottomNav  from './components/BottomNav.jsx';
 
 
 // ══════════════════════════════════════════════
@@ -1710,6 +1711,16 @@ export default function App() {
           enviarEmailBoasVindas,
         }} />
       </div>
+
+      {/* ═══ BOTTOM NAV — mobile only ═══ */}
+      {!isWide && (
+        <BottomNav
+          tabs={tabs}
+          activeTab={activeTab}
+          onNavigate={(k) => { setActiveTab(k); }}
+          onMore={() => setMobileSidebarExpanded(true)}
+        />
+      )}
 
       {/* ═══ FAB — só mobile (desktop tem botão "Nova DT" no topbar) ═══ */}
       {canEdit && !isWide && (

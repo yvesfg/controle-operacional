@@ -1,50 +1,51 @@
-// src/components/BottomNav.jsx
 import React from "react";
 
-const TABS = [
-  { id: "dashboard",    label: "Home"        },
-  { id: "planilha",     label: "Planilha"    },
-  { id: "ocorrencias",  label: "Ocorrências" },
-  { id: "motoristas",   label: "Motoristas"  },
-  { id: "mais",         label: "Mais"        },
-];
+// Tabs fixadas no bottom bar (por prioridade); o resto fica no drawer "Mais"
+const PINNED = ["dashboard", "planilha", "ocorrencias", "motoristas"];
 
-export default function BottomNav({ activeTab, onNavigate }) {
+// Ícone SVG do "Mais" (grid 2x2)
+const IcoMais = ({ active }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+    stroke={active ? "var(--accent)" : "var(--text2)"} strokeWidth="1.8"
+    strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="8"  cy="8"  r="2"/><circle cx="16" cy="8"  r="2"/>
+    <circle cx="8"  cy="16" r="2"/><circle cx="16" cy="16" r="2"/>
+  </svg>
+);
+
+export default function BottomNav({ tabs, activeTab, onNavigate, onMore }) {
+  // Pega as tabs pinadas que existem (respeitando permissões)
+  const tabMap = Object.fromEntries((tabs || []).map(t => [t.k, t]));
+  const pinned = PINNED.map(k => tabMap[k]).filter(Boolean);
+
+  // Se alguma tab ativa não está nas pinadas, destaca "Mais"
+  const maisActive = !pinned.some(t => t.k === activeTab);
+
   return (
-    <nav className="co-bottom-nav">
-      {TABS.map(tab => {
-        const isActive = activeTab === tab.id;
+    <nav className="co-mobile-nav">
+      {pinned.map(tb => {
+        const isActive = activeTab === tb.k;
         return (
           <button
-            key={tab.id}
-            onClick={() => onNavigate(tab.id)}
-            style={{
-              display:        "flex",
-              flexDirection:  "column",
-              alignItems:     "center",
-              gap:            "4px",
-              background:     "transparent",
-              border:         "none",
-              cursor:         "pointer",
-              padding:        "8px 4px",
-              color:          isActive ? "var(--accent)" : "var(--text2)",
-              fontFamily:     "var(--font-body)",
-              fontSize:       "var(--text-2xs)",
-              fontWeight:     isActive ? "var(--fw-bold)" : "var(--fw-normal)",
-              flex:           1,
-            }}
+            key={tb.k}
+            className={`co-mobile-nav__item${isActive ? " co-mobile-nav__item--active" : ""}`}
+            onClick={() => onNavigate(tb.k)}
           >
-            <div style={{
-              width:        "20px",
-              height:       "20px",
-              background:   isActive ? "var(--accent2)" : "transparent",
-              borderRadius: "var(--radius-btn)",
-              transition:   "background var(--transition-fast)",
-            }} />
-            {tab.label}
+            {typeof tb.ico === "function"
+              ? tb.ico(isActive)
+              : <span style={{ fontSize: 18 }}>{tb.ico}</span>
+            }
+            <span className="co-mobile-nav__lbl">{tb.l}</span>
           </button>
         );
       })}
+      <button
+        className={`co-mobile-nav__item${maisActive ? " co-mobile-nav__item--active" : ""}`}
+        onClick={onMore}
+      >
+        <IcoMais active={maisActive} />
+        <span className="co-mobile-nav__lbl">Mais</span>
+      </button>
     </nav>
   );
 }
