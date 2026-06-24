@@ -31,10 +31,18 @@ export default function HubScreen({
   const [showFrotaModal, setShowFrotaModal] = useState(false);
   const [iframeUrl, setIframeUrl] = useState(null);
   const [iframeTitle, setIframeTitle] = useState("");
+  const acessoCORef = useRef(null);
 
   useEffect(() => {
     let cancel = false;
-    fetchMeusModulos().then(d => { if (!cancel) setMods(d || []); });
+    fetchMeusModulos().then(d => {
+      if (cancel) return;
+      setMods(d || []);
+      // Pré-carrega acesso ao CO em background para eliminar latência no clique
+      if ((d || []).some(m => m.slug === "controle_op")) {
+        fetchMeuAcesso("controle_op").then(a => { if (!cancel) acessoCORef.current = a; });
+      }
+    });
     return () => { cancel = true; };
   }, []);
 
@@ -42,7 +50,7 @@ export default function HubScreen({
 
   // ── Entrar no Controle Operacional: deriva perfil/perms/bases do hub ──
   const entrarControleOp = async () => {
-    const acesso = await fetchMeuAcesso("controle_op");
+    const acesso = acessoCORef.current ?? await fetchMeuAcesso("controle_op");
     const cfg = acesso?.config || {};
     const perfil = cfg.perfil || ROLE_TO_PERFIL[acesso?.role] || "visualizador";
     const perms = cfg.perms || PERMS_PADRAO[perfil] || PERMS_PADRAO.visualizador;
