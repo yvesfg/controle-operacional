@@ -153,6 +153,8 @@ export const DEV_CHANGELOG = [
       "CI · deploy.yml (GitHub Pages) atualizado para Node 24: checkout v6, setup-node v6 (node 22), configure-pages v6, upload-pages-artifact v5, deploy-pages v5. Remove o aviso de descontinuacao das actions em Node 20.",
       "UX · ESC fecha o modal aberto (global) — novo hook useModalEsc com pilha (fecha so o modal do topo quando ha modais empilhados). Aplicado a TODOS os modais: centrais do App (edicao, motorista, usuario, configdb, detalhe, busca, NFD, relatorios, controle financeiro, WhatsApp, dash drill, ocorrencia de chegada, aprovacao de acesso, periodo Rodorrica, preview de e-mail/import) e locais (Resultado: editar/duplicidade/selecao de abas; OcorrModal). ESC no campo de confirmacao EXCLUIR cancela so a confirmacao, sem fechar o modal.",
       "UX · Seletor de filial no topo: ao trocar de base agora MANTEM a tela atual (antes voltava sempre para o Dashboard). Ex.: em Resultado Imperatriz/Belem, ao trocar para Acailandia continua em Resultado.",
+      "FIX · Exclusao falhava no sync com 'Token de sessao ausente' (HTTP 400) apos recarregar a pagina: o session token fica so em memoria e o auto-login nao o regerava. Agora a sessao guarda o email e o restore regenera o token via gerar_token_sessao — exclusoes e demais RPCs autenticadas voltam a sincronizar.",
+      "UI · Icones dos modais padronizados no estilo de linha do sidebar: novo componente Icon (components/Icon.jsx) substitui os emojis-badge (chips de status, cabecalhos, botoes) nos 16 modais. Mantidos apenas onde tecnicamente nao cabe SVG: <option> de <select>, conteudo das mensagens de WhatsApp e textos de toast/alert.",
     ],
   },
   {

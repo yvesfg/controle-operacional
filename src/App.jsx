@@ -410,6 +410,16 @@ export default function App() {
           setBasesPermitidas(Object.values(BASES)); // sessao antiga sem baseIds: admin ve todas
         }
         setHubScreen("controle_op");
+        // Regenera session token (mantido só em memória; sem ele, RPCs como exclusão falham após reload)
+        const _email = s.email || (s.perfil === "admin" ? "admin@sistema" : null);
+        if (_email) {
+          const _conn = getConexao();
+          if (_conn) {
+            supaFetch(_conn.url, _conn.key, "POST", "rpc/gerar_token_sessao", {p_email: _email})
+              .then(tok => { if (typeof tok === "string") setSessionToken(tok); })
+              .catch(() => {});
+          }
+        }
         setAuthed(true);
         return; // sessão válida — não verifica pendentes
       }

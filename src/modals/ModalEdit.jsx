@@ -1,5 +1,6 @@
 import React from "react";
 import Toggle from "../components/Toggle.jsx";
+import Icon from "../components/Icon.jsx";
 
 function ModalEditComponent({ ctx }) {
   const {
@@ -112,14 +113,14 @@ function ModalEditComponent({ ctx }) {
     return (
       <div key={f.k} style={{gridColumn:f.span===2?"1/-1":"auto",display:"flex",flexDirection:"column",gap:3}}>
         <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
-          {f.l} {isLocked && <span style={{color:t.ouro,fontSize:9}}>🔒</span>}
+          {f.l} {isLocked && <Icon n="lock" s={10} c={t.ouro}/>}
         </label>
 
         {f.type==="checkbox" ? (
           <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${formData[f.k]==="sim"?t.ouro:t.borda}`,background:formData[f.k]==="sim"?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
             <Toggle checked={formData[f.k]==="sim"} color={t.ouro} onChange={checked=>setFormData(p=>({...p,[f.k]:checked?"sim":"", ...(checked?{data_desc:""}:{})}))} />
             <span style={{fontSize:11,color:formData[f.k]==="sim"?t.ouro:t.txt2,fontWeight:formData[f.k]==="sim"?700:400}}>
-              {formData[f.k]==="sim" ? "⏳ Aguardando descarga" : "Marcar como Aguardando"}
+              {formData[f.k]==="sim" ? <span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon n="clock" s={11} c="currentColor"/> Aguardando descarga</span> : "Marcar como Aguardando"}
             </span>
           </label>
 
@@ -155,9 +156,9 @@ function ModalEditComponent({ ctx }) {
                 <label style={{display:"flex",alignItems:"center",gap:7,cursor:isLocked?"not-allowed":"pointer",padding:"6px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${isOC?t.ouro:t.borda}`,background:isOC?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
                   <Toggle checked={isOC} disabled={isLocked} color={t.ouro} size={0.9} onChange={v=>setFormData(p=>({...p,[f.k]:v?"OC":""}))} />
                   <span style={{fontSize:10,color:isOC?t.ouro:t.txt2,fontWeight:isOC?700:400,letterSpacing:.3}}>
-                    {isOC ? "📋 OC – Ordem de Chegada" : "OC (sem data fixa)"}
+                    {isOC ? <span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon n="clipboard" s={11} c="currentColor"/> OC – Ordem de Chegada</span> : "OC (sem data fixa)"}
                   </span>
-                  {isLocked && <span style={{color:t.ouro,fontSize:9,marginLeft:"auto"}}>🔒</span>}
+                  {isLocked && <span style={{marginLeft:"auto",display:"inline-flex"}}><Icon n="lock" s={10} c={t.ouro}/></span>}
                 </label>
                 {!isOC && (
                   <input type="date" value={brToInput(formData[f.k])} readOnly={isLocked}
@@ -183,7 +184,7 @@ function ModalEditComponent({ ctx }) {
             const diasColor = diasCalc===null ? t.txt2 : diasCalc>3 ? t.danger : diasCalc>1 ? t.ouro : t.verde;
             return (
               <div style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:"default",color:diasColor,fontWeight:700,background:t.inputBg,display:"flex",alignItems:"center",gap:6}}>
-                📅 {diasCalc!==null ? diasCalc : "—"} {diasCalc!==null && (diasCalc===1?"dia":"dias")}
+                <Icon n="calendar" s={12} c={diasColor}/> {diasCalc!==null ? diasCalc : "—"} {diasCalc!==null && (diasCalc===1?"dia":"dias")}
                 <span style={{fontSize:9,color:t.txt2,fontWeight:400,marginLeft:4}}>auto</span>
               </div>
             );
@@ -227,8 +228,8 @@ function ModalEditComponent({ ctx }) {
           <span style={{flex:1,height:1,background:`rgba(22,119,255,.12)`}} />
         </div>
         {section.s==="Financeiro" && !canFin && (
-          <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"8px 10px",fontSize:10,color:t.ouro,marginBottom:8}}>
-            🔒 Campos financeiros visíveis apenas para Admin/Gerente. Contate o administrador para alterar.
+          <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"8px 10px",fontSize:10,color:t.ouro,marginBottom:8,display:"flex",alignItems:"flex-start",gap:6}}>
+            <Icon n="lock" s={12} c={t.ouro} style={{marginTop:1}}/><span>Campos financeiros visíveis apenas para Admin/Gerente. Contate o administrador para alterar.</span>
           </div>
         )}
         {section.s==="Identificação" && openDocIntake && (
@@ -280,7 +281,7 @@ function ModalEditComponent({ ctx }) {
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0 ? "EDITAR" : "NOVO REGISTRO"}</div>
             <div style={{fontSize:9,color:t.txt2}}>Preencha os dados</div>
           </div>
-          <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
         </div>
 
         {/* ── BODY ── */}
@@ -315,15 +316,15 @@ function ModalEditComponent({ ctx }) {
                 style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:t.danger,fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
               />
               <button onClick={()=>{if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt);}} disabled={excluirTexto!=="EXCLUIR"} style={{background:excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}>CONFIRMAR</button>
-              <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+              <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center"}}><Icon n="x" s={14} c={t.txt2} sw={2}/></button>
             </div>
           )}
           <div style={{display:"flex",gap:8,padding:"10px 16px 18px"}}>
             <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
             {editIdx>=0 && excluirConfirm!=="edit" && (
-              <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🗑️ EXCLUIR</button>
+              <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="trash" s={13} c={t.danger}/> EXCLUIR</button>
             )}
-            <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+            <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
           </div>
         </div>
 

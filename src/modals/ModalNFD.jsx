@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supaStorageUpload } from "../supabase.js";
 import { analyzeNfdFoto } from "../utils/analyzeNfdFoto.js";
 import Toggle from "../components/Toggle.jsx";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalNFD({ ctx }) {
   const [iaLoading, setIaLoading] = useState(false);
@@ -101,7 +102,7 @@ export default function ModalNFD({ ctx }) {
             {/* Fotos */}
             <div style={{marginBottom:16}}>
               <label style={{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:t.txt2,display:"flex",alignItems:"center",gap:5,marginBottom:5}}>
-                📷 Fotos do material
+                <Icon n="camera" s={12} c={t.txt2}/> Fotos do material
                 <span style={{fontWeight:400,textTransform:"none",letterSpacing:0,color:t.txt2}}>{nfdForm.tipo==="sobra"?"— recomendado":"— opcional"} · máx. 5</span>
               </label>
               <input type="file" accept="image/*" multiple onChange={e=>{
@@ -115,7 +116,7 @@ export default function ModalNFD({ ctx }) {
                   {nfdFotos.map((img,ii)=>(
                     <div key={ii} style={{position:"relative"}}>
                       <img src={img.preview} alt={img.nome} style={{width:68,height:68,objectFit:"cover",borderRadius:9,border:`1.5px solid ${t.borda}`}} />
-                      <button onClick={()=>setNfdFotos(p=>p.filter((_,j)=>j!==ii))} style={{position:"absolute",top:-5,right:-5,width:18,height:18,borderRadius:"50%",background:t.danger,border:"none",color:"#fff",fontSize:10,cursor:"pointer",lineHeight:"17px",fontWeight:700,padding:0}}>×</button>
+                      <button onClick={()=>setNfdFotos(p=>p.filter((_,j)=>j!==ii))} style={{position:"absolute",top:-5,right:-5,width:18,height:18,borderRadius:"50%",background:t.danger,border:"none",color:"#fff",cursor:"pointer",padding:0,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={11} c="#fff" sw={2.4}/></button>
                       <div style={{fontSize:8,color:t.txt2,textAlign:"center",marginTop:2,maxWidth:68,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{img.nome}</div>
                     </div>
                   ))}
@@ -141,7 +142,7 @@ export default function ModalNFD({ ctx }) {
                 border:`1.5px solid ${t.ouro}`,background:`rgba(240,185,11,.08)`,color:t.ouro,
                 fontWeight:700,fontSize:12,cursor:iaLoading?"wait":"pointer",fontFamily:"inherit",
                 display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:iaLoading?.6:1}}>
-                {iaLoading?"Analisando foto…":"✨ Analisar foto com IA"}
+                {iaLoading?"Analisando foto…":<><Icon n="sparkles" s={13} c={t.ouro}/> Analisar foto com IA</>}
               </button>
             )}
             {/* Checkbox registrar outra */}

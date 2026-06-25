@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalMotorista({ ctx }) {
   const {
@@ -20,7 +21,7 @@ export default function ModalMotorista({ ctx }) {
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
               <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,null,20,2)}</div>
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} MOTORISTA</div></div>
-              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
             </div>
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
 
@@ -45,7 +46,7 @@ export default function ModalMotorista({ ctx }) {
               </div>
 
               {/* ── Placas ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>🚛 Placas<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.azulLt,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}><Icon n="truck" s={11} c={t.azulLt}/> Placas<span style={{flex:1,height:1,background:"rgba(22,119,255,.12)"}} /></div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                 {[{k:"placa1",l:"Placa Cavalo",req:true},{k:"placa2",l:"Placa Carreta 1"},{k:"placa3",l:"Placa Carreta 2"},{k:"placa4",l:"Placa Carreta 3"}].map(f=>(
                   <div key={f.k}>
@@ -56,7 +57,7 @@ export default function ModalMotorista({ ctx }) {
               </div>
 
               {/* ── Dados Bancários ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}>💳 Dados Bancários<span style={{flex:1,height:1,background:`rgba(240,185,11,.15)`}} /></div>
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}><Icon n="credit-card" s={11} c={t.ouro}/> Dados Bancários<span style={{flex:1,height:1,background:`rgba(240,185,11,.15)`}} /></div>
               <div>
                 <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>BCO · Nome do Banco</label>
                 <input value={formData.banco||""} onChange={e=>setFormData(p=>({...p,banco:e.target.value}))} placeholder="Ex: Banco do Brasil, Bradesco, Nubank..." style={css.inp} />
@@ -108,12 +109,12 @@ export default function ModalMotorista({ ctx }) {
               {/* ── Aviso de duplicata ── */}
               {motDupSugest && editIdx<0 && (
                 <div style={{background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:9,padding:"10px 12px"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:t.danger,marginBottom:6}}>⚠️ Motorista similar já cadastrado</div>
+                  <div style={{fontSize:11,fontWeight:700,color:t.danger,marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon n="alert" s={12} c={t.danger}/> Motorista similar já cadastrado</div>
                   <div style={{fontSize:10,color:t.txt,marginBottom:4}}><b>{motDupSugest.nome}</b> · CPF: {motDupSugest.cpf||"—"} · Placa: {motDupSugest.placa1||"—"}</div>
                   <div style={{fontSize:9,color:t.txt2,marginBottom:8}}>Deseja ver o cadastro existente ou continuar salvando mesmo assim?</div>
                   <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>{setFormData({...motDupSugest});setEditIdx(motoristas.indexOf(motDupSugest));setMotDupSugest(null);}} style={{flex:1,background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.azulLt,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✏️ Editar existente</button>
-                    <button onClick={()=>setMotDupSugest(null)} style={{flex:1,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>⚠️ Salvar mesmo assim</button>
+                    <button onClick={()=>{setFormData({...motDupSugest});setEditIdx(motoristas.indexOf(motDupSugest));setMotDupSugest(null);}} style={{flex:1,background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.azulLt,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="edit" s={11} c={t.azulLt}/> Editar existente</button>
+                    <button onClick={()=>setMotDupSugest(null)} style={{flex:1,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="alert" s={11} c={t.danger}/> Salvar mesmo assim</button>
                   </div>
                 </div>
               )}
@@ -144,7 +145,7 @@ export default function ModalMotorista({ ctx }) {
                 registrarLog(editIdx>=0?"EDITAR_MOTORISTA":"NOVO_MOTORISTA",`${m.nome} · CPF ${m.cpf} · Vínculo: ${m.vinculo||"—"}`);
                 showToast(editIdx>=0?"✅ Atualizado!":"✅ Cadastrado!","ok");
                 setModalOpen(null);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+              }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
             </div>
           </div>
         </div>

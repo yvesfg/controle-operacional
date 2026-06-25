@@ -1,5 +1,6 @@
 import React from "react";
 import Toggle from "../components/Toggle.jsx";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalRelatorios({ ctx }) {
   const {
@@ -244,7 +245,7 @@ export default function ModalRelatorios({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelDiariaOpen(false)}>
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:560,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>🛏️</div>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="bed" s={20} c={t.ouro}/></div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Diárias</div>
                 <div style={{fontSize:10,color:t.txt2}}>Financeiro e status de diárias por período</div>
@@ -311,7 +312,7 @@ export default function ModalRelatorios({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelDescargaOpen(false)}>
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📦</div>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="package" s={20} c={t.ouro}/></div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Descargas</div>
                 <div style={{fontSize:10,color:t.txt2}}>Agenda, status e atrasos de descarga</div>
@@ -368,7 +369,7 @@ export default function ModalRelatorios({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelOperOpen(false)}>
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:500,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:20}}>📋</div>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="clipboard" s={20} c={t.ouro}/></div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Operacional</div>
                 <div style={{fontSize:10,color:t.txt2}}>SGS, Apontamentos e ID Diárias por período</div>

@@ -2,6 +2,7 @@ import React from "react";
 import { TABLE_USUARIOS, PERMS_PADRAO, PERMS_LISTA, BASES } from "../constants.js";
 import { hashSenha, saveJSON, clickable } from "../utils.js";
 import { supaFetch } from "../supabase.js";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalUsuario({ ctx }) {
   const {
@@ -25,12 +26,12 @@ export default function ModalUsuario({ ctx }) {
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
           <div style={css.modal}>
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>👤</div>
+              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="user" s={18} c="#fff"/></div>
               <div>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} USUÁRIO</div>
                 <div style={{fontSize:9,color:t.txt2}}>Preencha os dados do usuário</div>
               </div>
-              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
             </div>
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {/* Dados básicos */}
@@ -53,12 +54,12 @@ export default function ModalUsuario({ ctx }) {
                 <label style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:6}}>Perfil</label>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                   {[
-                    {k:"gerente",ico:"🏢",l:"Gerente",desc:"Financeiro + edita tudo"},
-                    {k:"operador",ico:"⚙️",l:"Operador",desc:"Edita operacional"},
-                    {k:"visualizador",ico:"👁️",l:"Visual.",desc:"Somente leitura"},
+                    {k:"gerente",ico:"building",l:"Gerente",desc:"Financeiro + edita tudo"},
+                    {k:"operador",ico:"settings",l:"Operador",desc:"Edita operacional"},
+                    {k:"visualizador",ico:"eye",l:"Visual.",desc:"Somente leitura"},
                   ].map(r => (
                     <div key={r.k} {...clickable(()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}})))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
-                      <span style={{fontSize:16}}>{r.ico}</span>
+                      <Icon n={r.ico} s={16} c={(formData.perfil||"operador")===r.k?t.ouro:t.txt2}/>
                       <span style={{fontSize:10,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
                       <span style={{fontSize:8,color:t.txt2,lineHeight:1.2}}>{r.desc}</span>
                     </div>
@@ -75,7 +76,7 @@ export default function ModalUsuario({ ctx }) {
                       <div key={p.key} {...clickable(()=>setFormData(prev=>({...prev,perms:{...(prev.perms||PERMS_PADRAO[prev.perfil||"operador"]),[p.key]:!val}})))}
                         style={{display:"flex",alignItems:"center",gap:8,padding:"14px 10px",borderRadius:8,border:`1px solid ${val?t.verde:t.borda}`,cursor:"pointer",background:val?`rgba(2,192,118,.06)`:"transparent"}}>
                         <div style={{width:16,height:16,borderRadius:4,background:val?t.verde:t.borda2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
-                          {val&&<span style={{fontSize:10,color:"#fff",fontWeight:700}}>✓</span>}
+                          {val&&<Icon n="check" s={11} c="#fff" sw={2.6}/>}
                         </div>
                         <span style={{fontSize:11,fontWeight:600,color:val?t.txt:t.txt2}}>{p.lbl}</span>
                       </div>
@@ -97,7 +98,7 @@ export default function ModalUsuario({ ctx }) {
                       }))}
                         style={{display:"flex",alignItems:"center",gap:10,padding:"12px 12px",borderRadius:8,border:`1px solid ${ativo?t.azul:t.borda}`,cursor:"pointer",background:ativo?`rgba(var(--color-info-rgb,33,150,243),.06)`:"transparent"}}>
                         <div style={{width:18,height:18,borderRadius:5,background:ativo?t.azul:t.borda2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
-                          {ativo&&<span style={{fontSize:11,color:"#fff",fontWeight:700}}>✓</span>}
+                          {ativo&&<Icon n="check" s={12} c="#fff" sw={2.6}/>}
                         </div>
                         <div>
                           <div style={{fontSize:11,fontWeight:700,color:ativo?t.txt:t.txt2}}>{base.label}</div>
@@ -108,7 +109,7 @@ export default function ModalUsuario({ ctx }) {
                   })}
                 </div>
                 {(!formData.bases_permitidas || formData.bases_permitidas.length === 0) && (
-                  <p style={{fontSize:9,color:t.danger,marginTop:6}}>⚠️ Nenhuma base selecionada — usuário não verá dados operacionais.</p>
+                  <p style={{fontSize:9,color:t.danger,marginTop:6,display:"flex",alignItems:"center",gap:5}}><Icon n="alert" s={11} c={t.danger}/> Nenhuma base selecionada — usuário não verá dados operacionais.</p>
                 )}
               </div>
             </div>
@@ -148,7 +149,7 @@ export default function ModalUsuario({ ctx }) {
                   showToast(editIdx>=0?"✅ Usuário atualizado!":"✅ Usuário criado!","ok");
                 }
                 setModalOpen(null);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 SALVAR</button>
+              }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
             </div>
           </div>
         </div>
@@ -159,15 +160,15 @@ export default function ModalUsuario({ ctx }) {
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setUsuarioEmailPreview(null)}>
           <div style={{...css.modal,maxWidth:420}}>
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>📧</div>
+              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="mail" s={18} c="#fff"/></div>
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>EMAIL DE BOAS-VINDAS</div><div style={{fontSize:9,color:t.txt2}}>Notificar o novo usuário?</div></div>
-              <button onClick={()=>setUsuarioEmailPreview(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2}}>✕</button>
+              <button onClick={()=>setUsuarioEmailPreview(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
             </div>
             <div style={{padding:16}}>
               <div style={{background:t.card2,borderRadius:10,padding:12,marginBottom:14,border:`1px solid ${t.borda}`}}>
                 <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:4}}>{usuarioEmailPreview.nome}</div>
-                <div style={{fontSize:10,color:t.txt2}}>📧 {usuarioEmailPreview.email}</div>
-                <div style={{fontSize:10,color:t.ouro}}>🔑 Perfil: {usuarioEmailPreview.perfil}</div>
+                <div style={{fontSize:10,color:t.txt2,display:"flex",alignItems:"center",gap:5}}><Icon n="mail" s={11} c={t.txt2}/> {usuarioEmailPreview.email}</div>
+                <div style={{fontSize:10,color:t.ouro,display:"flex",alignItems:"center",gap:5}}><Icon n="key" s={11} c={t.ouro}/> Perfil: {usuarioEmailPreview.perfil}</div>
               </div>
               <p style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:14}}>
                 O email será aberto no seu cliente de email (Mail, Outlook, Gmail) já preenchido com os dados de acesso. Basta clicar em <strong style={{color:t.txt}}>Enviar</strong>.
@@ -175,7 +176,7 @@ export default function ModalUsuario({ ctx }) {
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>setUsuarioEmailPreview(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Agora não</button>
                 <button onClick={()=>{enviarEmailBoasVindas(usuarioEmailPreview, usuarioEmailPreview._senhaRaw||"");setUsuarioEmailPreview(null);}} style={{...css.btnGold,flex:1,justifyContent:"center"}}>
-                  📧 Enviar Email de Boas-vindas
+                  <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="mail" s={14} c="currentColor"/> Enviar Email de Boas-vindas</span>
                 </button>
               </div>
             </div>

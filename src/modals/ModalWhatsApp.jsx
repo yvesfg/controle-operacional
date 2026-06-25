@@ -1,5 +1,6 @@
 import React from "react";
 import { clickable } from "../utils.js";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalWhatsApp({ ctx }) {
   const {
@@ -199,19 +200,19 @@ export default function ModalWhatsApp({ ctx }) {
 
         const inpStyle = {...css.inp, fontSize:12, padding:"7px 10px"};
         const labelStyle = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};
-        const pgtoOptions = [{k:"cheque",l:"📝 Cheque"},{k:"conta",l:"🏦 Conta"},{k:"ambos",l:"📝 + 🏦 Ambos"}];
+        const pgtoOptions = [{k:"cheque",ic:["edit"],l:"Cheque"},{k:"conta",ic:["bank"],l:"Conta"},{k:"ambos",ic:["edit","bank"],l:"Ambos"}];
 
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal(null)}>
             <div style={{...css.modal,maxHeight:"96vh"}}>
               {/* Header */}
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.06)"}}>
-                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>
                 <div style={{flex:1}}>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>WHATSAPP</div>
                   <div style={{fontSize:9,color:t.txt2}}>Revise os dados antes de enviar</div>
                 </div>
-                <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
 
               <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
@@ -232,7 +233,7 @@ export default function ModalWhatsApp({ ctx }) {
                 <div>
                   <label style={labelStyle}>Telefone <span style={{color:t.verde,fontSize:8}}>(editável)</span></label>
                   <input value={wppTel} onChange={e=>setWppTel(e.target.value)} placeholder="(XX) XXXXX-XXXX" style={inpStyle} />
-                  {!wppTel && <div style={{fontSize:9,color:t.warn,marginTop:3}}>⚠️ Motorista sem telefone cadastrado — o WhatsApp abrirá sem número</div>}
+                  {!wppTel && <div style={{fontSize:9,color:t.warn,marginTop:3,display:"flex",alignItems:"center",gap:5}}><Icon n="alert" s={11} c={t.warn}/> Motorista sem telefone cadastrado — o WhatsApp abrirá sem número</div>}
                 </div>
 
                 {/* Placas */}
@@ -270,8 +271,8 @@ export default function ModalWhatsApp({ ctx }) {
                   <label style={{...labelStyle,marginBottom:7}}>PGTO · Forma de Pagamento</label>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
                     {pgtoOptions.map(op=>(
-                      <button key={op.k} onClick={()=>setWppPgto(op.k)} style={{padding:"9px 6px",borderRadius:DESIGN.r.btn,border:`1.5px solid ${wppPgto===op.k?t.verde:t.borda}`,background:wppPgto===op.k?`rgba(2,192,118,.1)`:t.card2,color:wppPgto===op.k?t.verde:t.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,textAlign:"center",transition:"all .2s"}}>
-                        {op.l}
+                      <button key={op.k} onClick={()=>setWppPgto(op.k)} style={{padding:"9px 6px",borderRadius:DESIGN.r.btn,border:`1.5px solid ${wppPgto===op.k?t.verde:t.borda}`,background:wppPgto===op.k?`rgba(2,192,118,.1)`:t.card2,color:wppPgto===op.k?t.verde:t.txt2,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,textAlign:"center",transition:"all .2s",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                        {op.ic.map((nm,ix)=><Icon key={ix} n={nm} s={12} c="currentColor"/>)} {op.l}
                       </button>
                     ))}
                   </div>
@@ -282,7 +283,7 @@ export default function ModalWhatsApp({ ctx }) {
                   <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${temConta?t.verde:t.warn}`}}>
                     {temConta ? (
                       <>
-                        <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Conta bancária cadastrada</div>
+                        <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon n="check-circle" s={12} c={t.verde}/> Conta bancária cadastrada</div>
                         <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
                           <div>BCO: <strong style={{color:t.txt}}>{mot.banco||"—"}</strong></div>
                           <div>AGE: <strong style={{color:t.txt}}>{mot.agencia||"—"}</strong> · C/C: <strong style={{color:t.txt}}>{mot.conta||"—"}</strong></div>
@@ -291,7 +292,7 @@ export default function ModalWhatsApp({ ctx }) {
                         </div>
                       </>
                     ) : (
-                      <div style={{fontSize:10,color:t.warn}}>⚠️ Motorista sem conta bancária cadastrada. Cadastre na aba Motoristas antes de enviar.</div>
+                      <div style={{fontSize:10,color:t.warn,display:"flex",alignItems:"flex-start",gap:5}}><Icon n="alert" s={11} c={t.warn} style={{marginTop:1}}/><span>Motorista sem conta bancária cadastrada. Cadastre na aba Motoristas antes de enviar.</span></div>
                     )}
                   </div>
                 )}
@@ -309,12 +310,12 @@ export default function ModalWhatsApp({ ctx }) {
                     </div>
                     {somaExcede && (
                       <div style={{gridColumn:"1/-1",background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:8,padding:"8px 10px",fontSize:11,color:t.danger,fontWeight:600}}>
-                        ⚠️ Soma ({fmtMoeda((chequeNum+contaNum).toFixed(2))}) excede o ADT ({fmtMoeda(reg.adiant)})!
+                        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon n="alert" s={12} c={t.danger}/> Soma ({fmtMoeda((chequeNum+contaNum).toFixed(2))}) excede o ADT ({fmtMoeda(reg.adiant)})!</span>
                       </div>
                     )}
                     {!somaExcede && (chequeNum+contaNum)>0 && adtNum>0 && (
                       <div style={{gridColumn:"1/-1",background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:8,padding:"8px 10px",fontSize:11,color:t.verde}}>
-                        ✅ Total: {fmtMoeda((chequeNum+contaNum).toFixed(2))} de {fmtMoeda(reg.adiant)}
+                        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon n="check-circle" s={12} c={t.verde}/> Total: {fmtMoeda((chequeNum+contaNum).toFixed(2))} de {fmtMoeda(reg.adiant)}</span>
                       </div>
                     )}
                   </div>
@@ -332,7 +333,7 @@ export default function ModalWhatsApp({ ctx }) {
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
                 <button onClick={()=>setWppModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
                 <button onClick={enviar} disabled={somaExcede} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:somaExcede?"not-allowed":"pointer",background:somaExcede?`rgba(128,128,128,.2)`:`rgba(37,211,102,.15)`,border:`1.5px solid ${somaExcede?t.borda:"rgba(37,211,102,.4)"}`,color:somaExcede?t.txt2:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                  📲 ENVIAR NO WHATSAPP
+                  <Icon n="smartphone" s={15} c="currentColor"/> ENVIAR NO WHATSAPP
                 </button>
               </div>
             </div>
@@ -387,12 +388,12 @@ export default function ModalWhatsApp({ ctx }) {
             <div style={{...css.modal, maxHeight:"96vh"}}>
               {/* Header */}
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
-                <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📄</div>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="file-text" s={18} c={t.azulLt}/></div>
                 <div style={{flex:1}}>
                   <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>WHATSAPP DOC</div>
                   <div style={{fontSize:9,color:t.txt2}}>Mensagem documentária · RO obrigatório</div>
                 </div>
-                <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
 
               <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
@@ -401,7 +402,7 @@ export default function ModalWhatsApp({ ctx }) {
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                     <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700}}>Motorista</div>
-                    {telMot && <div style={{fontSize:9,color:t.txt2}}>📞 {telMot}</div>}
+                    {telMot && <div style={{fontSize:9,color:t.txt2,display:"flex",alignItems:"center",gap:4}}><Icon n="phone" s={10} c={t.txt2}/> {telMot}</div>}
                   </div>
                   <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3}}>{nomeMotorista||"—"}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
@@ -435,7 +436,7 @@ export default function ModalWhatsApp({ ctx }) {
                 <div>
                   <label style={{...lbl2,color:roOk?t.verde:t.danger}}>RO — Registro de Ocorrência <span style={{color:t.danger}}>*obrigatório</span></label>
                   <input value={wpp2Ro} onChange={e=>setWpp2Ro(e.target.value)} placeholder="Nº do Registro de Ocorrência" style={{...inpStyle2,border:`1.5px solid ${roOk?t.verde:t.danger}`,width:"100%",boxSizing:"border-box"}} />
-                  {!roOk && <div style={{fontSize:9,color:t.danger,marginTop:3}}>⚠️ Informe o número do RO para prosseguir</div>}
+                  {!roOk && <div style={{fontSize:9,color:t.danger,marginTop:3,display:"flex",alignItems:"center",gap:5}}><Icon n="alert" s={11} c={t.danger}/> Informe o número do RO para prosseguir</div>}
                 </div>
 
                 {/* OBS — opcional com memória */}
@@ -443,13 +444,13 @@ export default function ModalWhatsApp({ ctx }) {
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <label style={{...lbl2,margin:0,flex:1}}>OBS — Observação <span style={{color:t.txt2,fontSize:11}}>(opcional)</span></label>
                     <button onClick={()=>setWpp2IncluirObs(v=>!v)} style={{background:wpp2IncluirObs?`rgba(2,192,118,.12)`:`rgba(128,128,128,.08)`,border:`1.5px solid ${wpp2IncluirObs?t.verde:t.borda}`,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:9,fontWeight:700,color:wpp2IncluirObs?t.verde:t.txt2,fontFamily:"inherit"}}>
-                      {wpp2IncluirObs?"✅ Incluir":"⬜ Incluir"}
+                      <span style={{display:"inline-flex",alignItems:"center",gap:4}}>{wpp2IncluirObs?<Icon n="check-circle" s={11} c={t.verde}/>:<Icon n="square" s={11} c={t.txt2}/>} Incluir</span>
                     </button>
                   </div>
                   <textarea value={wpp2Obs} onChange={e=>setWpp2Obs(e.target.value)} rows={2} placeholder={wpp2Obs?"Última OBS salva — edite se necessário":"Digite uma observação..."}
                     style={{...inpStyle2,resize:"vertical",lineHeight:1.5,width:"100%",boxSizing:"border-box",opacity:wpp2IncluirObs?1:.55}} />
                   {!wpp2IncluirObs && wpp2Obs && (
-                    <div style={{fontSize:8,color:t.txt2,marginTop:3}}>💾 Última OBS salva — clique em "Incluir" para adicionar à mensagem</div>
+                    <div style={{fontSize:8,color:t.txt2,marginTop:3,display:"flex",alignItems:"center",gap:4}}><Icon n="save" s={10} c={t.txt2}/> Última OBS salva — clique em "Incluir" para adicionar à mensagem</div>
                   )}
                 </div>
 
@@ -467,7 +468,7 @@ export default function ModalWhatsApp({ ctx }) {
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
                 <button onClick={()=>setWppModal2(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
                 <button onClick={enviarDoc} disabled={!roOk} style={{flex:1,border:`1.5px solid ${roOk?"rgba(37,211,102,.4)":t.borda}`,borderRadius:10,padding:"12px 18px",cursor:roOk?"pointer":"not-allowed",background:roOk?`rgba(37,211,102,.15)`:`rgba(128,128,128,.08)`,color:roOk?"#25D366":t.txt2,fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                  📄 ENVIAR DOC NO WHATSAPP
+                  <Icon n="file-text" s={15} c="currentColor"/> ENVIAR DOC NO WHATSAPP
                 </button>
               </div>
             </div>
@@ -504,9 +505,9 @@ export default function ModalWhatsApp({ ctx }) {
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppFatModal(null)}>
             <div style={{...css.modal,maxHeight:"90vh"}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.05)"}}>
-                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>🧾</div>
+                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="receipt" s={18} c="#25D366"/></div>
                 <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>{isAvb ? "CTE · MDF · MAT · CODIGO · NF" : "CTE · MDF · MAT · DT · NF · ID"}</div></div>
-                <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
               <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
@@ -520,12 +521,12 @@ export default function ModalWhatsApp({ ctx }) {
                   if(!reg.nome)faltando.push("Motorista");if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.mat)faltando.push("MAT");if(!reg.nf)faltando.push("NF");if(isAvb){if(!reg.codigo)faltando.push("CODIGO");}else{if(!reg.dt)faltando.push("DT");}
                   return faltando.length>0?(
                     <div style={{background:`rgba(246,70,93,.07)`,border:`1.5px solid rgba(246,70,93,.3)`,borderRadius:8,padding:"10px 12px"}}>
-                      <div style={{fontSize:10,fontWeight:700,color:t.danger,marginBottom:5}}>⚠️ Campos obrigatórios vazios — edite o registro antes de enviar:</div>
+                      <div style={{fontSize:10,fontWeight:700,color:t.danger,marginBottom:5,display:"flex",alignItems:"center",gap:5}}><Icon n="alert" s={12} c={t.danger}/> Campos obrigatórios vazios — edite o registro antes de enviar:</div>
                       <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                         {faltando.map(f=><span key={f} style={{background:`rgba(246,70,93,.12)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:4,padding:"2px 8px",fontSize:10,fontWeight:700,color:t.danger}}>{f}</span>)}
                       </div>
                     </div>
-                  ):(<div style={{background:`rgba(2,192,118,.07)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.verde,fontWeight:700}}>✅ Todos os campos estão preenchidos!</div>);
+                  ):(<div style={{background:`rgba(2,192,118,.07)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.verde,fontWeight:700,display:"flex",alignItems:"center",gap:5}}><Icon n="check-circle" s={12} c={t.verde}/> Todos os campos estão preenchidos!</div>);
                 })()}
               </div>
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
@@ -540,7 +541,7 @@ export default function ModalWhatsApp({ ctx }) {
                   setWppFatModal(null);
                   setWppConfirmModal({url, displayText:rawMsg});
                 }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                  📲 PREPARAR MENSAGEM
+                  <Icon n="smartphone" s={15} c="currentColor"/> PREPARAR MENSAGEM
                 </button>
               </div>
             </div>
@@ -612,9 +613,9 @@ export default function ModalWhatsApp({ ctx }) {
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppPagModal(null)}>
             <div style={{...css.modal,maxHeight:"96vh"}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:headerBg}}>
-                <div style={{width:36,height:36,borderRadius:9,background:`${headerColor}22`,border:`1px solid ${headerColor}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>{isDiaria?"🛏️":"📦"}</div>
+                <div style={{width:36,height:36,borderRadius:9,background:`${headerColor}22`,border:`1px solid ${headerColor}44`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n={isDiaria?"bed":"package"} s={18} c={headerColor}/></div>
                 <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:headerColor}}>{nomeLabel}</div><div style={{fontSize:9,color:t.txt2}}>Solicitar pagamento · {reg.nome||"—"}</div></div>
-                <button onClick={()=>setWppPagModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                <button onClick={()=>setWppPagModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
 
               <div style={{flex:1,minHeight:0,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10}}>
@@ -641,7 +642,7 @@ export default function ModalWhatsApp({ ctx }) {
                 {/* Dados bancários */}
                 {mot?.banco ? (
                   <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.verde}33`}}>
-                    <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6}}>✅ Dados bancários</div>
+                    <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon n="check-circle" s={12} c={t.verde}/> Dados bancários</div>
                     <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
                       <div>BCO: <strong style={{color:t.txt}}>{mot.banco}</strong></div>
                       <div>FAV: <strong style={{color:t.txt}}>{mot.favorecido||mot.nome||reg.nome||"—"}</strong></div>
@@ -650,14 +651,14 @@ export default function ModalWhatsApp({ ctx }) {
                     </div>
                   </div>
                 ):(
-                  <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.ouro}}>⚠️ Motorista sem dados bancários. Cadastre na aba Motoristas.</div>
+                  <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.ouro,display:"flex",alignItems:"flex-start",gap:5}}><Icon n="alert" s={11} c={t.ouro} style={{marginTop:1}}/><span>Motorista sem dados bancários. Cadastre na aba Motoristas.</span></div>
                 )}
 
                 {/* ── Minutas (DCC para Diárias / MAM-MRM para Descarga) ── */}
                 <div style={{background:t.card2,borderRadius:10,border:`1px solid ${t.borda}`,overflow:"hidden"}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer"}} {...clickable(()=>setWppFortes(v=>!v))}>
                     <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${wppFortes?t.verde:t.borda}`,background:wppFortes?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .2s"}}>
-                      {wppFortes && <span style={{color:"#fff",fontSize:10,fontWeight:700}}>✓</span>}
+                      {wppFortes && <Icon n="check" s={11} c="#fff" sw={2.6}/>}
                     </div>
                     <span style={{fontSize:11,fontWeight:700,color:wppFortes?t.verde:t.txt2}}>{isDiaria?"Incluir Minuta DCC + CTE Complementar":"Incluir Minuta Descarga (MAM/MRM)"}</span>
                   </div>
@@ -669,7 +670,7 @@ export default function ModalWhatsApp({ ctx }) {
                           <div key={idx} style={{background:`rgba(240,185,11,.04)`,borderRadius:8,border:`1px solid rgba(240,185,11,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.ouro}}>{"MINUTA DCC "+(wppDccMinutas.length>1?"("+(idx+1)+")":"")}</span>
-                              {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                              {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
                             </div>
                             <div style={{display:"flex",gap:6,marginBottom:6}}>
                               {["D01-MAT","D05-MAR"].map(d=>(
@@ -700,7 +701,7 @@ export default function ModalWhatsApp({ ctx }) {
                           <div key={idx} style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.azulLt}}>{"MINUTA DESCARGA "+(wppDscMinutas.length>1?"("+(idx+1)+")":"")}</span>
-                              {wppDscMinutas.length>1 && <button onClick={()=>setWppDscMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                              {wppDscMinutas.length>1 && <button onClick={()=>setWppDscMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
                             </div>
                             <div style={{display:"flex",gap:6,marginBottom:6}}>
                               {["MAM","MRM"].map(tp=>(
@@ -736,7 +737,7 @@ export default function ModalWhatsApp({ ctx }) {
                   setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);
                   setWppConfirmModal({url, displayText:rawMsg});
                 }} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(37,211,102,.15)`,border:`1.5px solid rgba(37,211,102,.4)`,color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                  📲 PREPARAR MENSAGEM
+                  <Icon n="smartphone" s={15} c="currentColor"/> PREPARAR MENSAGEM
                 </button>
               </div>
             </div>
@@ -750,12 +751,12 @@ export default function ModalWhatsApp({ ctx }) {
           <div style={{background:"var(--card)",border:"1px solid var(--borda)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 32px 64px rgba(0,0,0,.5)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"96vh"}}>
             {/* Header */}
             <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--borda)",background:"rgba(37,211,102,.06)",flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19}}>📲</div>
+              <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>
               <div style={{flex:1}}>
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>MENSAGEM WHATSAPP</div>
                 <div style={{fontSize:9,color:"var(--text2)"}}>Copie o texto ou clique em Abrir no WhatsApp</div>
               </div>
-              <button onClick={()=>setWppConfirmModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:"var(--text2)",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button onClick={()=>setWppConfirmModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:"var(--text2)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c="var(--text2)" sw={2}/></button>
             </div>
             {/* Texto */}
             <div style={{flex:1,overflowY:"auto",padding:14}}>
@@ -764,8 +765,8 @@ export default function ModalWhatsApp({ ctx }) {
             </div>
             {/* Botões */}
             <div style={{padding:"10px 14px 18px",borderTop:"1px solid var(--borda)",display:"flex",gap:8,flexShrink:0}}>
-              <button onClick={()=>{navigator.clipboard.writeText(wppConfirmModal.displayText);showToast("✅ Texto copiado!","ok");}} style={{flex:"0 0 auto",background:"transparent",border:"1.5px solid var(--borda)",borderRadius:9,padding:"10px 14px",color:"var(--text2)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>📋 COPIAR</button>
-              <button onClick={()=>{window.open(wppConfirmModal.url,"_blank");setWppConfirmModal(null);}} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:"rgba(37,211,102,.15)",border:"1.5px solid rgba(37,211,102,.4)",color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>📲 ABRIR NO WHATSAPP</button>
+              <button onClick={()=>{navigator.clipboard.writeText(wppConfirmModal.displayText);showToast("✅ Texto copiado!","ok");}} style={{flex:"0 0 auto",background:"transparent",border:"1.5px solid var(--borda)",borderRadius:9,padding:"10px 14px",color:"var(--text2)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}><Icon n="clipboard" s={14} c="currentColor"/> COPIAR</button>
+              <button onClick={()=>{window.open(wppConfirmModal.url,"_blank");setWppConfirmModal(null);}} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:"rgba(37,211,102,.15)",border:"1.5px solid rgba(37,211,102,.4)",color:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}><Icon n="smartphone" s={15} c="currentColor"/> ABRIR NO WHATSAPP</button>
             </div>
           </div>
         </div>

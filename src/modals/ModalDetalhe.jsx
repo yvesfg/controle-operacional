@@ -1,5 +1,6 @@
 import React from "react";
 import OcorrModal from "../components/OcorrModal.jsx";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalDetalhe({ ctx }) {
   const {
@@ -51,13 +52,13 @@ export default function ModalDetalhe({ ctx }) {
   const canEditDetalhe = isAdmin || perms.editar;
   const canOcorr = isAdmin || perms.ocorrencias;
   const steps = [
-    {ico:"📦",lbl:"Carregamento",val:r.data_carr,  c:t.ouro,  done:!!r.data_carr},
-    {ico:"📍",lbl:"Em Trânsito",  val:r.origem&&r.destino?`${r.origem}→${r.destino}`:r.origem||r.destino||null, c:t.azulLt,done:!!r.data_carr},
-    {ico:"📅",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
-    {ico:"🏁",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
+    {ico:"package",lbl:"Carregamento",val:r.data_carr,  c:t.ouro,  done:!!r.data_carr},
+    {ico:"map-pin",lbl:"Em Trânsito",  val:r.origem&&r.destino?`${r.origem}→${r.destino}`:r.origem||r.destino||null, c:t.azulLt,done:!!r.data_carr},
+    {ico:"calendar",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
+    {ico:"flag",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
   ];
   const tipoColors = {info:"var(--cat-blue)", alerta:t.danger, status:t.verde, falta:"var(--cat-red)", avaria:"var(--cat-orange)", dev_total:"var(--cat-purple)", dev_parcial:"var(--cat-pink)", desacordo:"var(--cat-gold)", rod:"var(--cat-coral)", sobra:"var(--cat-mint)"};
-  const tipoIcos   = {info:"💬", alerta:"🚨", status:"✅"};
+  const tipoIcos   = {info:"message", alerta:"alert-octagon", status:"check-circle"};
   const ocorrSinteticas = [
     ...(r.obs_chegada  ? [{tipo:"info",   texto:r.obs_chegada,  _origem:"chegada",  usuario:"—", data_hora:r.data_obs_chegada||r.chegada||""}]  : []),
     ...(r.obs_descarga ? [{tipo:"status", texto:r.obs_descarga, _origem:"descarga", usuario:"—", data_hora:r.data_obs_descarga||r.data_desc||""}] : []),
@@ -70,7 +71,7 @@ export default function ModalDetalhe({ ctx }) {
               {/* Header */}
               <div style={{flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
                 <div style={{padding:"10px 14px 8px",display:"flex",alignItems:"center",gap:9,borderBottom:excluirConfirm==="detalhe"?`1px solid rgba(220,38,38,.25)`:`1px solid ${t.borda}`}}>
-                  <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🚛</div>
+                  <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="truck" s={18} c="#fff"/></div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
                     <div style={{fontSize:9,color:t.txt2,letterSpacing:.5}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}{r.data_criacao&&<span style={{opacity:.6}}> · {new Date(r.data_criacao).toLocaleDateString("pt-BR")}</span>}</div>
@@ -85,7 +86,7 @@ export default function ModalDetalhe({ ctx }) {
                     {canEditDetalhe && excluirConfirm!=="detalhe" && (
                       <button onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}} style={{background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.3)`,borderRadius:7,padding:"7px 10px",color:"var(--red)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>, "var(--red)", 14)}</button>
                     )}
-                    <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:34,height:34,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                    <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:34,height:34,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
                   </div>
                 </div>
                 {excluirConfirm==="detalhe" && (
@@ -104,7 +105,7 @@ export default function ModalDetalhe({ ctx }) {
                       disabled={excluirTexto!=="EXCLUIR"}
                       style={{background:excluirTexto==="EXCLUIR"?"var(--red)":"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}
                     >CONFIRMAR</button>
-                    <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>✕</button>
+                    <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center"}}><Icon n="x" s={14} c={t.txt2} sw={2}/></button>
                   </div>
                 )}
               </div>
@@ -124,7 +125,7 @@ export default function ModalDetalhe({ ctx }) {
                           <div style={{position:"absolute",top:14,left:"50%",width:"100%",height:2,background:steps[si+1].done?s.c:`${t.borda}`,zIndex:0,transition:"background .3s"}} />
                         )}
                         {/* Círculo */}
-                        <div style={{width:28,height:28,borderRadius:"50%",background:s.done?s.c:t.card2,border:`2px solid ${s.done?s.c:t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,zIndex:1,flexShrink:0,transition:"all .3s"}}>{s.done?<span style={{fontSize:11}}>✓</span>:<span style={{fontSize:12}}>{s.ico}</span>}</div>
+                        <div style={{width:28,height:28,borderRadius:"50%",background:s.done?s.c:t.card2,border:`2px solid ${s.done?s.c:t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",zIndex:1,flexShrink:0,transition:"all .3s"}}>{s.done?<Icon n="check" s={14} c="#fff" sw={2.4}/>:<Icon n={s.ico} s={13} c={t.txt2}/>}</div>
                         <div style={{fontSize:8,color:s.done?s.c:t.txt2,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginTop:4,textAlign:"center",lineHeight:1.3}}>{s.lbl}</div>
                         {s.val && <div style={{fontSize:8,color:t.txt2,marginTop:2,textAlign:"center",maxWidth:60,wordBreak:"break-word"}}>{s.val}</div>}
                       </div>
@@ -197,13 +198,13 @@ export default function ModalDetalhe({ ctx }) {
                               return(<button key={d} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}} style={{flexShrink:0,padding:"5px 7px",borderRadius:8,border:"1.5px solid "+(isSel?t.azul:ent?t.verde:t.borda),background:isSel?"rgba(22,119,255,.1)":ent?"rgba(2,192,118,.06)":"transparent",cursor:"pointer",minWidth:46,textAlign:"center"}}>
                                 <div style={{fontSize:8,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</div>
                                 {isHoje&&<div style={{fontSize:11,color:t.ouro,fontWeight:700}}>HOJE</div>}
-                                {ent&&<div style={{fontSize:9}}>{"\u2705"}</div>}
+                                {ent&&<div style={{display:"flex",justifyContent:"center",marginTop:1}}><Icon n="check" s={11} c={t.verde} sw={2.4}/></div>}
                               </button>);
                             })}
                           </div>
                           {acompDiaSel&&(
                             <div style={{background:t.card2,borderRadius:10,padding:12,border:"1px solid "+t.borda,marginBottom:6}}>
-                              <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>{"\U0001F4C5"} {new Date(acompDiaSel+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
+                              <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8,display:"flex",alignItems:"center",gap:5}}><Icon n="calendar" s={12} c={t.azulLt}/> {new Date(acompDiaSel+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
                               <textarea value={acompTexto} onChange={e=>setAcompTexto(e.target.value)} placeholder="Status, localização, ocorrências deste dia..." rows={3} style={{...css.inp,resize:"vertical",fontSize:12,lineHeight:1.5,marginBottom:8}} />
                               <label style={{fontSize:9,color:t.txt2,fontWeight:600,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:4}}>Anexar Fotos</label>
                               <input type="file" accept="image/*" multiple onChange={e=>{Array.from(e.target.files||[]).forEach(f=>{const rd=new FileReader();rd.onload=ev=>setAcompImagens(p=>[...p,{nome:f.name,base64:ev.target.result}]);rd.readAsDataURL(f);});e.target.value="";}} style={{...css.inp,padding:"7px 10px",fontSize:11,marginBottom:8}} />
@@ -217,7 +218,7 @@ export default function ModalDetalhe({ ctx }) {
                                   ))}
                                 </div>
                               )}
-                              <button onClick={()=>{salvarDia(acompDiaSel,acompTexto,acompImagens);showToast("{"+"\u2705"+"} Dia salvo!","ok");}} style={{...css.btnGreen,width:"100%",justifyContent:"center",fontSize:12}}>{"\U0001F4BE"} Salvar Dia</button>
+                              <button onClick={()=>{salvarDia(acompDiaSel,acompTexto,acompImagens);showToast("{"+"\u2705"+"} Dia salvo!","ok");}} style={{...css.btnGreen,width:"100%",justifyContent:"center",fontSize:12,gap:6}}><Icon n="save" s={14} c="currentColor"/> Salvar Dia</button>
                             </div>
                           )}
                         </div>
@@ -242,7 +243,7 @@ export default function ModalDetalhe({ ctx }) {
                       {(ocorrListExpanded ? ocorrAll : ocorrAll.slice(0,3)).map((o,oi,arr)=>(
                         <div key={oi} style={{display:"flex",gap:9,alignItems:"flex-start"}}>
                           <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
-                            <div style={{width:24,height:24,borderRadius:"50%",background:`${tipoColors[o.tipo]||t.azulLt}18`,border:`1.5px solid ${tipoColors[o.tipo]||t.azulLt}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11}}>{tipoIcos[o.tipo]||"💬"}</div>
+                            <div style={{width:24,height:24,borderRadius:"50%",background:`${tipoColors[o.tipo]||t.azulLt}18`,border:`1.5px solid ${tipoColors[o.tipo]||t.azulLt}`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n={tipoIcos[o.tipo]||"message"} s={12} c={tipoColors[o.tipo]||t.azulLt}/></div>
                             {oi < arr.length-1 && <div style={{width:1,flex:1,minHeight:12,background:t.borda,margin:"3px 0"}} />}
                           </div>
                           <div style={{flex:1,background:t.card2,borderRadius:8,padding:"8px 10px",border:`1px solid ${t.borda}`}}>
@@ -300,18 +301,18 @@ export default function ModalDetalhe({ ctx }) {
                     <div>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
-                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4}}>🛏️ DIÁRIA</span>}
-                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4}}>📦 DESCARGA</span>}
+                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="bed" s={10} c={t.ouro}/> DIÁRIA</span>}
+                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="package" s={10} c={t.azulLt}/> DESCARGA</span>}
                         <span style={{flex:1,height:1,background:t.borda}} />
                       </div>
 
                       {/* ─ Pergunta DCC ─ */}
                       <div style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:9,padding:"9px 12px",marginBottom:12}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                          <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>🟡 Existe DCC?</span>
+                          <span style={{fontSize:11,fontWeight:700,color:t.ouro,display:"inline-flex",alignItems:"center",gap:5}}><Icon n="dot" s={9} c={t.ouro}/> Existe DCC?</span>
                           <span style={{fontSize:9,color:t.txt2,flex:1}}>Documento de Cobrança Complementar</span>
                           {["sim","nao"].map(op=>(
-                            <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(240,185,11,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s"}}>{op==="sim"?"✅ Sim":"❌ Não"}</button>
+                            <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(240,185,11,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s",display:"inline-flex",alignItems:"center",gap:5}}>{op==="sim"?<><Icon n="check-circle" s={12} c="currentColor"/> Sim</>:<><Icon n="x-circle" s={12} c="currentColor"/> Não</>}</button>
                           ))}
                         </div>
                         {detalheTemDcc===null&&<div style={{fontSize:9,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
@@ -335,7 +336,7 @@ export default function ModalDetalhe({ ctx }) {
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
                                 </div>
-                                {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                                {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
                               </div>
                               <div className="co-min-g4">
                                 <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
@@ -384,7 +385,7 @@ export default function ModalDetalhe({ ctx }) {
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
                                 </div>
-                                {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",fontSize:12,padding:2}}>✕</button>}
+                                {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
                               </div>
                               <div className="co-min-g3">
                                 <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
@@ -400,7 +401,7 @@ export default function ModalDetalhe({ ctx }) {
                       {/* ─ Diárias & Descargas desta DT ─ */}
                       {(()=>{
                         const diariaItem = diariasData.items.find(it=>it.r.dt===r.dt);
-                        const tipoLabel = {ok:"✅ No Prazo",atraso:"⚠️ Perdeu Agenda",diaria:"🛏️ Com Diária",sem_diaria:"✓ Sem Diária",pendente:"⏳ Aguardando"};
+                        const tipoLabel = {ok:{i:"check-circle",l:"No Prazo"},atraso:{i:"alert",l:"Perdeu Agenda"},diaria:{i:"bed",l:"Com Diária"},sem_diaria:{i:"check",l:"Sem Diária"},pendente:{i:"clock",l:"Aguardando"}};
                         const tipoColor = {ok:t.verde,atraso:t.danger,diaria:t.danger,sem_diaria:t.verde,pendente:t.ouro};
                         const temDescarga = !!(r.data_agenda||r.data_desc);
                         const hoje = new Date().toISOString().slice(0,10);
@@ -408,10 +409,10 @@ export default function ModalDetalhe({ ctx }) {
                         const agendaISO = toISO(r.data_agenda);
                         const descISO = toISO(r.data_desc);
                         let descStatus = null, descColor = t.txt2;
-                        if(descISO){descStatus="✅ Descarregado";descColor=t.verde;}
-                        else if(agendaISO&&agendaISO<hoje){descStatus="🔴 Em Atraso";descColor=t.danger;}
-                        else if(agendaISO){descStatus="📅 Agendado";descColor=t.ouro;}
-                        else if(r.status==="CARREGADO"){descStatus="⏱️ Aguardando Agenda";descColor=t.ouro;}
+                        if(descISO){descStatus={i:"check-circle",l:"Descarregado"};descColor=t.verde;}
+                        else if(agendaISO&&agendaISO<hoje){descStatus={i:"dot",l:"Em Atraso"};descColor=t.danger;}
+                        else if(agendaISO){descStatus={i:"calendar",l:"Agendado"};descColor=t.ouro;}
+                        else if(r.status==="CARREGADO"){descStatus={i:"clock",l:"Aguardando Agenda"};descColor=t.ouro;}
                         if(!diariaItem && !temDescarga) return null;
                         return (
                           <div style={{background:`rgba(240,185,11,.04)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:9,padding:"10px 12px",marginBottom:10}}>
@@ -422,23 +423,23 @@ export default function ModalDetalhe({ ctx }) {
                               {diariaItem && (
                                 <div style={{background:t.bg,borderRadius:8,padding:"8px 10px",border:`1px solid ${tipoColor[diariaItem.tipo]||t.borda}33`}}>
                                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:4}}>Status Diária</div>
-                                  <div style={{fontSize:11,fontWeight:700,color:tipoColor[diariaItem.tipo]||t.txt}}>{tipoLabel[diariaItem.tipo]||diariaItem.tipo}</div>
+                                  <div style={{fontSize:11,fontWeight:700,color:tipoColor[diariaItem.tipo]||t.txt,display:"flex",alignItems:"center",gap:5}}>{tipoLabel[diariaItem.tipo]?<><Icon n={tipoLabel[diariaItem.tipo].i} s={12} c="currentColor"/> {tipoLabel[diariaItem.tipo].l}</>:diariaItem.tipo}</div>
                                   {diariaItem.dias!=null&&diariaItem.dias>0&&<div style={{fontSize:9,color:t.danger,marginTop:2}}>{diariaItem.dias} dia(s) de atraso</div>}
                                   {r.diaria_prev&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Devida: <strong style={{color:t.ouro}}>{fmtMoeda(r.diaria_prev)}</strong></div>}
                                   {r.diaria_pg&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Paga: <strong style={{color:t.verde}}>{fmtMoeda(r.diaria_pg)}</strong></div>}
                                   {r.diaria_prev&&r.diaria_pg&&(()=>{const saldo=(parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);return saldo!==0&&<div style={{fontSize:9,color:saldo<0?t.danger:t.verde,marginTop:2,fontWeight:700}}>Saldo: {fmtMoeda(Math.abs(saldo))} {saldo<0?"a pagar":"a favor"}</div>;})()}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.ouro}44`,background:`rgba(240,185,11,.08)`,color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3}}>📋 Ver Diárias →</button>
+                                  <button onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.ouro}44`,background:`rgba(240,185,11,.08)`,color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="clipboard" s={11} c="currentColor"/> Ver Diárias <Icon n="arrow-right" s={11} c="currentColor"/></button>
                                 </div>
                               )}
                               {temDescarga && (
                                 <div style={{background:t.bg,borderRadius:8,padding:"8px 10px",border:`1px solid ${descColor}33`}}>
                                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:600,marginBottom:4}}>Status Descarga</div>
-                                  {descStatus&&<div style={{fontSize:11,fontWeight:700,color:descColor}}>{descStatus}</div>}
+                                  {descStatus&&<div style={{fontSize:11,fontWeight:700,color:descColor,display:"flex",alignItems:"center",gap:5}}><Icon n={descStatus.i} s={12} c="currentColor"/> {descStatus.l}</div>}
                                   {r.data_agenda&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Agenda: <strong style={{color:t.txt}}>{r.data_agenda}</strong></div>}
                                   {r.data_desc&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></div>}
                                   {r.chegada&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Chegada: <strong style={{color:t.txt}}>{r.chegada}</strong></div>}
                                   {r.destino&&<div style={{fontSize:9,color:t.txt2,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Destino: <strong style={{color:t.txt}}>{r.destino}</strong></div>}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("descarga");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.azulLt}44`,background:`rgba(22,119,255,.08)`,color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3}}>📦 Ver Descargas →</button>
+                                  <button onClick={()=>{setModalOpen(null);setActiveTab("descarga");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.azulLt}44`,background:`rgba(22,119,255,.08)`,color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="package" s={11} c="currentColor"/> Ver Descargas <Icon n="arrow-right" s={11} c="currentColor"/></button>
                                 </div>
                               )}
                             </div>
@@ -448,7 +449,7 @@ export default function ModalDetalhe({ ctx }) {
 
                       {/* ─ Botão Salvar ─ */}
                       <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
-                        {salvandoMins?"⏳ Salvando...":"💾 SALVAR DOCUMENTOS"}
+                        <span style={{display:"inline-flex",alignItems:"center",gap:6}}>{salvandoMins?<><Icon n="clock" s={14} c="currentColor"/> Salvando...</>:<><Icon n="save" s={14} c="currentColor"/> SALVAR DOCUMENTOS</>}</span>
                       </button>
                     </div>
                   );
@@ -459,7 +460,7 @@ export default function ModalDetalhe({ ctx }) {
 
             {/* Botão fechar — sticky no fundo, visível no mobile */}
             <div style={{flexShrink:0,padding:"10px 16px",borderTop:`1px solid ${t.borda}`,background:t.modalBg,display:"none"}} className="co-dt-close-bar">
-              <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{width:"100%",padding:"13px",background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.btn,color:t.txt2,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,letterSpacing:.5}}>✕ FECHAR</button>
+              <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{width:"100%",padding:"13px",background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.btn,color:t.txt2,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon n="x" s={14} c="currentColor" sw={2}/> FECHAR</button>
             </div>
           </div>{/* fim co-dt-modal */}
         </div>

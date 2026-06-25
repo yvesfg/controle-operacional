@@ -1,3 +1,5 @@
+import Icon from "../components/Icon.jsx";
+
 export default function ModalMotoristasAdmin({ ctx }) {
   const {
     motExcluirTodosOpen, setMotExcluirTodosOpen,
@@ -51,8 +53,8 @@ export default function ModalMotoristasAdmin({ ctx }) {
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotSugestOpen(false)}>
           <div style={{...css.modal,maxWidth:480}}>
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.verde}}>🔗 SUGESTÕES DE VÍNCULO</div>
-              <button onClick={()=>setMotSugestOpen(false)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.verde,display:"flex",alignItems:"center",gap:7}}><Icon n="link" s={15} c={t.verde}/> SUGESTÕES DE VÍNCULO</div>
+              <button onClick={()=>setMotSugestOpen(false)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
             </div>
             <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:8,maxHeight:"calc(96vh - 120px)"}}>
               <div style={{fontSize:10,color:t.txt2,marginBottom:4}}>Placas dos motoristas cadastrados foram encontradas em registros de viagem com nomes diferentes. Aceite para atualizar o nome no registro.</div>
@@ -68,11 +70,11 @@ export default function ModalMotoristasAdmin({ ctx }) {
                   </div>
                   {s.aceito===null && (
                     <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:true};setMotSugestData(nd);}} style={{flex:1,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.verde,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✓ Aceitar</button>
-                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:false};setMotSugestData(nd);}} style={{flex:1,background:`rgba(128,128,128,.07)`,border:`1px solid ${t.borda}`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>✗ Ignorar</button>
+                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:true};setMotSugestData(nd);}} style={{flex:1,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.verde,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="check" s={12} c={t.verde} sw={2.2}/> Aceitar</button>
+                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:false};setMotSugestData(nd);}} style={{flex:1,background:`rgba(128,128,128,.07)`,border:`1px solid ${t.borda}`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="x" s={12} c={t.txt2} sw={2.2}/> Ignorar</button>
                     </div>
                   )}
-                  {s.aceito===true && <div style={{fontSize:10,color:t.verde,fontWeight:700}}>✓ Aceito — será aplicado ao salvar</div>}
+                  {s.aceito===true && <div style={{fontSize:10,color:t.verde,fontWeight:700,display:"flex",alignItems:"center",gap:5}}><Icon n="check" s={11} c={t.verde} sw={2.2}/> Aceito — será aplicado ao salvar</div>}
                   {s.aceito===false && <div style={{fontSize:10,color:t.txt2}}>Ignorado</div>}
                 </div>
               ))}
@@ -90,7 +92,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
                 setDadosBase(nd);
                 showToast(`✅ ${aceitos.length} registro(s) atualizado(s)!`,"ok");
                 setMotSugestOpen(false);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center"}}>💾 APLICAR ACEITOS</button>
+              }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> APLICAR ACEITOS</button>
             </div>
           </div>
         </div>
@@ -102,7 +104,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
           <div style={{...css.modal,maxWidth:360}}>
             <div style={{padding:"16px 16px 12px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid rgba(246,70,93,.25)`}}>
               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.danger,display:"flex",alignItems:"center",gap:7}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,16)} EXCLUIR EM LOTE</div>
-              <button onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
             </div>
             <div style={{padding:16}}>
               <div style={{fontSize:12,color:t.txt,marginBottom:8}}>Você está prestes a excluir <b style={{color:t.danger}}>{motSelecionados.size} motorista(s)</b>. Esta ação não pode ser desfeita.</div>

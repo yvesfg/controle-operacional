@@ -1,5 +1,6 @@
 import React from "react";
 import { clickable } from "../utils.js";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalDashDrill({ ctx }) {
   const { dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe } = ctx;
@@ -15,14 +16,14 @@ export default function ModalDashDrill({ ctx }) {
       <div style={{background:t.card,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:640,border:`1px solid ${t.borda}`,boxShadow:"0 -12px 48px rgba(0,0,0,.5)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-          <div style={{width:36,height:36,borderRadius:9,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
-            {dashDrillModal.type==="motorista"?"👨‍✈️":dashDrillModal.type==="destino"?"📍":"📊"}
+          <div style={{width:36,height:36,borderRadius:9,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Icon n={dashDrillModal.type==="motorista"?"user":dashDrillModal.type==="destino"?"map-pin":"chart"} s={18} c={t.ouro}/>
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
             <div style={{fontSize:9,color:t.txt2,marginTop:2}}>{dashDrillModal.regs.length} viagem{dashDrillModal.regs.length!==1?"s":""} · {dashDrillModal.type==="motorista"?"Histórico do motorista":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}</div>
           </div>
-          <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>✕</button>
+          <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
         </div>
         {/* Conteúdo */}
         <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"10px 14px 14px",maxHeight:"calc(96vh - 120px)"}}>
@@ -50,8 +51,8 @@ export default function ModalDashDrill({ ctx }) {
                     {dashDrillModal.type==="motorista"&&<span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</span>}
                     {r.status&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
                   </div>
-                  <div style={{fontSize:9,color:t.txt2,lineHeight:1.5}}>
-                    📍 {r.destino||"—"} · 📦 {r.data_carr||"—"} · {r.data_desc?`✅ ${r.data_desc}`:"⏳ Pendente"}
+                  <div style={{fontSize:9,color:t.txt2,lineHeight:1.5,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                    <Icon n="map-pin" s={10} c={t.txt2}/> {r.destino||"—"} · <Icon n="package" s={10} c={t.txt2}/> {r.data_carr||"—"} · {r.data_desc?<><Icon n="check-circle" s={10} c={t.verde}/> {r.data_desc}</>:<><Icon n="clock" s={10} c={t.txt2}/> Pendente</>}
                   </div>
                 </div>
                 <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>

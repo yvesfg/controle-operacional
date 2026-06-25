@@ -70,7 +70,7 @@ const handleLogin = async () => {
       const pm = {...PERMS_PADRAO.admin};
       setPerfil(p); setPerms(pm); setAuthed(true);
       setUsuarioLogado("Admin");
-      saveJSON("co_sessao",{perfil:p,nome:"Admin",ts:Date.now(),baseIds:Object.keys(BASES)});
+      saveJSON("co_sessao",{perfil:p,nome:"Admin",email:"admin@sistema",ts:Date.now(),baseIds:Object.keys(BASES)});
       registrarLog("LOGIN", `Admin logou no sistema (admin) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
       setAuthSenha(""); setAuthEmail("");
       // Admin tem acesso a todas as bases
@@ -145,7 +145,7 @@ const handleLogin = async () => {
     setUsuarioLogado(found.nome || found.email);
     // Salva session_token em memória (nunca em localStorage)
     if (found.session_token) setSessionToken(found.session_token);
-    saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,ts:Date.now(),baseIds:_idsUsr,perms:PERMS_PADRAO[p]||{}});
+    saveJSON("co_sessao",{perfil:p,nome:found.nome||found.email,email:found.email,ts:Date.now(),baseIds:_idsUsr,perms:PERMS_PADRAO[p]||{}});
     registrarLog("LOGIN", `${found.nome||found.email} logou no sistema (${p}) · ${new Date().toLocaleString("pt-BR")}`).catch(()=>{});
     setAuthSenha(""); setAuthEmail("");
     // Carregar bases permitidas do usuario

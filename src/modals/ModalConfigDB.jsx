@@ -1,5 +1,6 @@
 import React from "react";
 import { clickable } from "../utils.js";
+import Icon from "../components/Icon.jsx";
 
 export default function ModalConfigDB({ ctx }) {
   const {
@@ -27,16 +28,16 @@ export default function ModalConfigDB({ ctx }) {
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
           <div style={{...css.modal,maxWidth:480}}>
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <span style={{fontSize:19}}>🗄️</span>
+              <Icon n="database" s={19} c={t.txt}/>
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt}}>BANCO DE DADOS</div><div style={{fontSize:10,color:t.txt2}}>Conexões Supabase</div></div>
-              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
             </div>
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {conexoes.map((c,i) => (
                 <div key={i} style={{background:t.card2,borderRadius:9,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
-                  <span>🗄️</span>
+                  <Icon n="database" s={14} c={t.txt2}/>
                   <span style={{flex:1,fontSize:11,fontWeight:600,color:t.txt}}>{c.name||"Conexão"}</span>
-                  <span style={{fontSize:9,color:t.verde}}>✅</span>
+                  <Icon n="check-circle" s={13} c={t.verde}/>
                 </div>
               ))}
               <div style={{marginTop:12}}>
@@ -55,7 +56,7 @@ export default function ModalConfigDB({ ctx }) {
                     saveJSON("co_conexao_ativa",nc.length-1);
                     showToast("✅ Conexão adicionada!","ok");
                     setModalOpen(null);
-                  }} style={{...css.btnGreen,justifyContent:"center"}}>🗄️ CONECTAR</button>
+                  }} style={{...css.btnGreen,justifyContent:"center",gap:6}}><Icon n="database" s={14} c="currentColor"/> CONECTAR</button>
                 </div>
               </div>
             </div>
@@ -109,24 +110,24 @@ export default function ModalConfigDB({ ctx }) {
                   <div style={{fontSize:14,fontWeight:800,color:t.txt}}>Filtrar por Prefixo</div>
                   <div style={{fontSize:10,color:t.txt2,marginTop:1}}>{motImportRaw.length} contatos · {_allP.length} prefixos únicos</div>
                 </div>
-                <button onClick={()=>setMotImportPrefOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",fontSize:16,color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+                <button onClick={()=>setMotImportPrefOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
               <div style={{padding:"10px 14px",borderBottom:`1px solid ${t.borda}`,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",flexShrink:0}}>
                 <input value={motImportPrefBusca} onChange={e=>setMotImportPrefBusca(e.target.value)} placeholder="Buscar prefixo..." style={{...css.inp,flex:1,minWidth:120,fontSize:11}}/>
-                <button onClick={()=>setMotImportPrefSel(new Set(_allP))} style={{...css.hBtn,fontSize:10,padding:"5px 10px"}}>✅ Todos</button>
-                <button onClick={()=>setMotImportPrefSel(new Set())} style={{...css.hBtn,fontSize:10,padding:"5px 10px"}}>☐ Nenhum</button>
+                <button onClick={()=>setMotImportPrefSel(new Set(_allP))} style={{...css.hBtn,fontSize:10,padding:"5px 10px",display:"inline-flex",alignItems:"center",gap:4}}><Icon n="check-circle" s={12} c="currentColor"/> Todos</button>
+                <button onClick={()=>setMotImportPrefSel(new Set())} style={{...css.hBtn,fontSize:10,padding:"5px 10px",display:"inline-flex",alignItems:"center",gap:4}}><Icon n="square" s={12} c="currentColor"/> Nenhum</button>
               </div>
-              <div style={{padding:"8px 14px",background:`rgba(240,185,11,.05)`,borderBottom:`1px solid ${t.borda}`,fontSize:10,color:t.ouro,flexShrink:0}}>
-                ⚠️ Prefixos em <span style={{color:t.danger}}>vermelho</span> são comumente não-motoristas e foram pré-desmarcados. Ajuste conforme necessário.
+              <div style={{padding:"8px 14px",background:`rgba(240,185,11,.05)`,borderBottom:`1px solid ${t.borda}`,fontSize:10,color:t.ouro,flexShrink:0,display:"flex",alignItems:"flex-start",gap:6}}>
+                <Icon n="alert" s={13} c={t.ouro} style={{marginTop:1}}/><span>Prefixos em <span style={{color:t.danger}}>vermelho</span> são comumente não-motoristas e foram pré-desmarcados. Ajuste conforme necessário.</span>
               </div>
               <div style={{flex:1,overflowY:"auto",padding:"10px 14px"}}>
                 {_filtP.map(pref=>{
                   const sel=motImportPrefSel.has(pref),isAv=_PAVISO.has(pref),qt=_pm2.get(pref)||0;
                   return (
                     <div key={pref} {...clickable(()=>{const ns=new Set(motImportPrefSel);if(ns.has(pref))ns.delete(pref);else ns.add(pref);setMotImportPrefSel(ns);})} style={{display:"flex",alignItems:"center",gap:10,padding:"14px 10px",borderRadius:8,marginBottom:4,cursor:"pointer",background:sel?`rgba(2,192,118,.05)`:`rgba(246,70,93,.03)`,border:`1px solid ${sel?`rgba(2,192,118,.2)`:`rgba(246,70,93,.15)`}`}}>
-                      <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${sel?t.verde:t.danger}`,background:sel?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#000",fontWeight:700}}>{sel?"✓":""}</div>
+                      <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${sel?t.verde:t.danger}`,background:sel?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#000",fontWeight:700}}>{sel?<Icon n="check" s={11} c="#000" sw={2.6}/>:""}</div>
                       <span style={{flex:1,fontSize:12,fontWeight:700,color:isAv&&!sel?t.danger:t.txt}}>{pref}</span>
-                      {isAv && <span style={{fontSize:9,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 5px"}}>⚠️ não-motorista</span>}
+                      {isAv && <span style={{fontSize:9,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 5px",display:"inline-flex",alignItems:"center",gap:3}}><Icon n="alert" s={9} c={t.danger}/> não-motorista</span>}
                       <span style={{fontSize:10,color:t.txt2}}>{qt} contato{qt!==1?"s":""}</span>
                     </div>
                   );
@@ -135,7 +136,7 @@ export default function ModalConfigDB({ ctx }) {
               <div style={{padding:"12px 14px",borderTop:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
                 <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:t.verde}}>{_totalSel} selecionados</div><div style={{fontSize:9,color:t.txt2}}>{motImportRaw.length-_totalSel} ignorados</div></div>
                 <button onClick={()=>setMotImportPrefOpen(false)} style={{...css.btnOutline,padding:"9px 16px",fontSize:12}}>Cancelar</button>
-                <button onClick={_prosseguir} disabled={_totalSel===0} style={{...css.btnGold,padding:"9px 18px",fontSize:12,opacity:_totalSel===0?.5:1}}>Prosseguir ({_totalSel}) →</button>
+                <button onClick={_prosseguir} disabled={_totalSel===0} style={{...css.btnGold,padding:"9px 18px",fontSize:12,opacity:_totalSel===0?.5:1,display:"inline-flex",alignItems:"center",gap:5}}>Prosseguir ({_totalSel}) <Icon n="arrow-right" s={13} c="currentColor"/></button>
               </div>
             </div>
           </div>
