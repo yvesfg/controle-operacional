@@ -16,8 +16,13 @@ const pesoFmt = (n) => (n || 0).toLocaleString("pt-BR", { maximumFractionDigits:
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
 const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
 
+// Ícones dos badges de sinalização — mesma linguagem stroke/round do resto do app.
+const ICO_ALERTA = <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
+const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
+const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
+
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast } = ctx;
+  const { t, isMobile, showToast, hexRgb } = ctx;
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
@@ -134,8 +139,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
 
-  const badge = (texto, cor) => (
-    <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: `${cor}1a`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>{texto}</span>
+  const badge = (icon, texto, cor) => (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: hexRgb(cor, .12), border: `1px solid ${hexRgb(cor, .3)}`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
+      {texto}
+    </span>
   );
 
   const grupoDup = dupModal.open ? pendentes.filter(p => p.dup_grupo_chave === dupModal.chave) : [];
@@ -182,28 +190,46 @@ export default function ConferenciaFrete({ ctx, conn }) {
         })}
       </div>
 
-      {/* Resumo por cliente */}
+      {/* Resumo por cliente — tabela alinhada, clique filtra por esse cliente */}
       {Object.keys(resumoCli).length > 0 && (
         <div style={{ ...card, marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Por cliente · {mesLabel(periodoRef)}</div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
+            <span style={{ flex: 1, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Cliente</span>
+            <span style={{ width: 52, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>CTRCs</span>
+            {!isMobile && <span style={{ width: 84, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Peso</span>}
+            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
+            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
+            {!isMobile && <span style={{ width: 60, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Margem</span>}
+          </div>
+
           {Object.entries(resumoCli).map(([cliente, d]) => (
-            <div key={cliente} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${t.borda}55`, fontSize: 12 }}>
-              <span style={{ flex: 1, fontWeight: 600, color: t.txt }}>{cliente}</span>
-              <span style={{ color: t.txt2 }}>{d.registros} reg.</span>
-              <span style={{ color: t.txt2 }}>{pesoFmt(d.peso)}</span>
-              <span style={{ fontWeight: 700, color: t.txt }}>{money(d.fretePeso)}</span>
-              <span style={{ fontWeight: 700, color: t.ouro }}>saldo {money(d.saldo)}</span>
-              <span style={{ fontWeight: 700, color: d.margemMedia < 0 ? t.danger : d.margemMedia < 10 ? t.warn : t.verde }}>
-                margem {d.margemMedia.toFixed(1)}%
-              </span>
+            <div key={cliente} onClick={() => setClienteFiltro(clienteFiltro === cliente ? "" : cliente)}
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 6px", borderRadius: 7, cursor: "pointer",
+                background: clienteFiltro === cliente ? t.card2 : "transparent", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}
+              onMouseEnter={(e) => { if (clienteFiltro !== cliente) e.currentTarget.style.background = t.card2; }}
+              onMouseLeave={(e) => { if (clienteFiltro !== cliente) e.currentTarget.style.background = "transparent"; }}>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cliente}</span>
+              <span style={{ width: 52, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{d.registros}</span>
+              {!isMobile && <span style={{ width: 84, textAlign: "right", fontSize: 11, fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{pesoFmt(d.peso)}</span>}
+              <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(d.fretePeso)}</span>
+              <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(d.saldo)}</span>
+              {!isMobile && (
+                <span style={{ width: 60, textAlign: "right", fontSize: 11, fontWeight: 700, color: d.margemMedia < 0 ? t.danger : d.margemMedia < 10 ? t.warn : t.verde }}>
+                  {d.margemMedia.toFixed(1)}%
+                </span>
+              )}
             </div>
           ))}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 4px 2px", marginTop: 4, fontSize: 12 }}>
-            <span style={{ flex: 1, fontWeight: 800, color: t.txt, textTransform: "uppercase", fontSize: 10.5, letterSpacing: ".04em" }}>Total</span>
-            <span style={{ fontWeight: 700, color: t.txt }}>{totalMes.registros} reg.</span>
-            <span style={{ fontWeight: 700, color: t.txt }}>{pesoFmt(totalMes.peso)}</span>
-            <span style={{ fontWeight: 800, color: t.txt }}>{money(totalMes.fretePeso)}</span>
-            <span style={{ fontWeight: 800, color: t.ouro }}>saldo {money(totalMes.saldo)}</span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 6px 2px", marginTop: 2 }}>
+            <span style={{ flex: 1, fontWeight: 800, color: t.txt, textTransform: "uppercase", fontSize: 10, letterSpacing: ".04em" }}>Total</span>
+            <span style={{ width: 52, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{totalMes.registros}</span>
+            {!isMobile && <span style={{ width: 84, textAlign: "right", fontSize: 11, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: t.txt }}>{pesoFmt(totalMes.peso)}</span>}
+            <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(totalMes.fretePeso)}</span>
+            <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(totalMes.saldo)}</span>
+            {!isMobile && <span style={{ width: 60 }} />}
           </div>
         </div>
       )}
@@ -212,23 +238,31 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {resumoDia.length > 0 && (
         <div style={{ ...card, marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Evolução diária · {mesLabel(periodoRef)}</div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
+            <span style={{ width: 44, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
+            <span style={{ width: 66, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>CTRCs</span>
+            <span style={{ width: 40 }} />
+            {!isMobile && <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Peso</span>}
+            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
+            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
+          </div>
+
           {[...resumoDia].reverse().map((d, i, arr) => {
             const anterior = arr[i + 1]; // arr já está em ordem decrescente (mais recente primeiro)
             const delta = anterior ? d.registros - anterior.registros : null;
             return (
-              <div key={d.dia} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 4px", borderBottom: `1px solid ${t.borda}55`, fontSize: 12 }}>
-                <span style={{ width: 74, flexShrink: 0, color: t.txt2, fontFamily: "var(--font-mono)" }}>
+              <div key={d.dia} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+                <span style={{ width: 44, flexShrink: 0, fontSize: 12, color: t.txt2, fontFamily: "var(--font-mono)" }}>
                   {(() => { const p = d.dia.split("-"); return `${p[2]}/${p[1]}`; })()}
                 </span>
-                <span style={{ fontWeight: 700, color: t.txt, minWidth: 64 }}>{d.registros} CTRCs</span>
-                {delta !== null && (
-                  <span style={{ fontSize: 10.5, fontWeight: 700, color: delta > 0 ? t.verde : delta < 0 ? t.danger : t.txt2, minWidth: 40 }}>
-                    {delta > 0 ? "▲" : delta < 0 ? "▼" : "·"}{delta !== 0 ? Math.abs(delta) : ""}
-                  </span>
-                )}
-                <span style={{ color: t.txt2, marginLeft: "auto" }}>{pesoFmt(d.peso)}</span>
-                <span style={{ fontWeight: 700, color: t.txt }}>{money(d.fretePeso)}</span>
-                <span style={{ color: t.ouro }}>saldo {money(d.saldo)}</span>
+                <span style={{ width: 66, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{d.registros}</span>
+                <span style={{ width: 40, fontSize: 10.5, fontWeight: 700, color: delta > 0 ? t.verde : delta < 0 ? t.danger : t.txt2 }}>
+                  {delta !== null && delta !== 0 && <>{delta > 0 ? "▲" : "▼"}{Math.abs(delta)}</>}
+                </span>
+                {!isMobile && <span style={{ flex: 1, textAlign: "right", fontSize: 11, fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{pesoFmt(d.peso)}</span>}
+                <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(d.fretePeso)}</span>
+                <span style={{ width: 96, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(d.saldo)}</span>
               </div>
             );
           })}
@@ -254,7 +288,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Fila de revisão</span>
           {pendentesFiltrados.length > 0 && (
-            <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
+            <span style={{ background: hexRgb(t.danger, .1), color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
           )}
         </div>
         <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
@@ -268,28 +302,32 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
         {!loading && pendentesFiltrados.map((p) => (
           <div key={p.id} onClick={() => abrirRevisar(p)}
-            style={{ padding: "10px 6px", borderBottom: `1px solid ${t.borda}55`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", cursor: "pointer" }}>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600 }}>
-                {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria} · placa {p.placa || "—"}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, marginTop: 1 }}>
-                👤 {p.nome_usuario || "sem usuário na planilha"}
-              </div>
-              <div style={{ marginTop: 3 }}>
-                {p.flag_negativa && badge("MARGEM NEGATIVA", t.danger)}
-                {p.flag_baixa && !p.flag_negativa && badge("MARGEM < 10%", t.warn)}
-                {p.flag_ambigua && badge("DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
-                {p.flag_duplicidade && badge("POSSÍVEL DUPLICIDADE ⓘ", t.danger)}
-              </div>
-              <div style={{ fontSize: 10, color: t.txt2, marginTop: 2 }}>
-                margem {Number(p.margem_lucro).toFixed(2)}% · frete peso {money(p.frete_peso)} · saldo {money(p.saldo)}
-              </div>
+            style={{ padding: "9px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer", transition: "background .12s" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = t.card2)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
+              </span>
+              <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: p.margem_lucro < 0 ? t.danger : p.margem_lucro < 10 ? t.warn : t.verde }}>
+                {Number(p.margem_lucro).toFixed(1)}%
+              </span>
+              <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                {money(p.saldo)}
+              </span>
+              <button onClick={(e) => { e.stopPropagation(); abrirRevisar(p); }}
+                style={{ fontSize: 10.5, fontWeight: 700, padding: "6px 13px", borderRadius: 7, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff", flexShrink: 0 }}>
+                Revisar
+              </button>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); abrirRevisar(p); }}
-              style={{ fontSize: 10.5, fontWeight: 700, padding: "7px 14px", borderRadius: 7, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff", flexShrink: 0 }}>
-              Revisar
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 5 }}>
+              <span style={{ fontSize: 10.5, color: "var(--accent)", fontWeight: 700 }}>👤 {p.nome_usuario || "sem usuário"}</span>
+              {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
+              {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
+              {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
+              {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
+              {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
+            </div>
           </div>
         ))}
       </div>
@@ -299,18 +337,20 @@ export default function ConferenciaFrete({ ctx, conn }) {
         <div style={{ ...card, marginTop: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Sinalizados</span>
-            <span style={{ background: `${t.ouro}1a`, color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
+            <span style={{ background: hexRgb(t.ouro, .1), color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
           </div>
           <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
             Já saíram do alerta e continuam contando no total — aguardando correção na origem (exclusão/reimportação).
           </div>
           {sinalizadosFiltrados.map((p) => (
-            <div key={p.id} style={{ padding: "10px 6px", borderBottom: `1px solid ${t.borda}55` }}>
-              <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600 }}>
-                {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria} · placa {p.placa || "—"}
-              </div>
-              <div style={{ fontSize: 10, color: t.txt2, marginTop: 2 }}>
-                margem {Number(p.margem_lucro).toFixed(2)}% · saldo {money(p.saldo)}
+            <div key={p.id} style={{ padding: "9px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
+                </span>
+                <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                  {money(p.saldo)}
+                </span>
               </div>
               <div style={{ fontSize: 10.5, color: t.ouro, marginTop: 3 }}>
                 🏷 sinalizado {p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}
@@ -328,7 +368,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
             <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Confirmar importação</div>
             <div style={{ fontSize: 11, color: t.txt2, marginBottom: 14 }}>{preview.fileName}</div>
 
-            <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 12px", borderRadius: 9, background: "rgba(2,192,118,.08)", border: `1px solid ${t.verde}44`, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 12px", borderRadius: 9, background: "rgba(2,192,118,.08)", border: `1px solid ${hexRgb(t.verde, .27)}`, marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>{preview.cliente}</div>
               <div style={{ fontSize: 11, color: t.txt2, marginLeft: "auto" }}>competência {mesLabel(preview.periodoRef)}</div>
             </div>
@@ -337,7 +377,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               const d = preview.resumo[c];
               if (!d.registros) return null;
               return (
-                <div key={c} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${t.borda}33` }}>
+                <div key={c} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
                   <span style={{ color: t.txt }}>{CATEGORIA_LABEL[c]}</span>
                   <span style={{ color: t.txt2 }}>{d.registros} registros · {money(d.fretePeso)}</span>
                 </div>
@@ -345,7 +385,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
             })}
 
             {preview.naoClassificadas.length > 0 && (
-              <div style={{ marginTop: 10, fontSize: 11, color: t.warn, background: `${t.warn}1a`, border: `1px solid ${t.warn}55`, borderRadius: 8, padding: "8px 10px" }}>
+              <div style={{ marginTop: 10, fontSize: 11, color: t.warn, background: hexRgb(t.warn, .1), border: `1px solid ${hexRgb(t.warn, .33)}`, borderRadius: 8, padding: "8px 10px" }}>
                 ⚠ {preview.naoClassificadas.length} linha(s) com código de Empresa fora do mapeamento — não serão importadas.
               </div>
             )}
@@ -370,7 +410,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
         const fechar = () => setRevisarModal({ open: false, item: null });
         const decidirEFechar = async (decisao, obs) => { await onDecidir(p.id, decisao, obs); fechar(); };
         const campo = (l, v) => (
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${t.borda}33` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
             <span style={{ color: t.txt2 }}>{l}</span>
             <span style={{ color: t.txt, fontWeight: 600, textAlign: "right" }}>{v || "—"}</span>
           </div>
@@ -382,10 +422,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, marginBottom: 10 }}>👤 {p.nome_usuario || "sem usuário na planilha"}</div>
 
               <div style={{ marginBottom: 12 }}>
-                {p.flag_negativa && badge("MARGEM NEGATIVA", t.danger)}
-                {p.flag_baixa && !p.flag_negativa && badge("MARGEM < 10%", t.warn)}
-                {p.flag_ambigua && badge("DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
-                {p.flag_duplicidade && badge("POSSÍVEL DUPLICIDADE", t.danger)}
+                {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
+                {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
+                {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
+                {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
               </div>
 
               {campo("Categoria", CATEGORIA_LABEL[p.categoria] || p.categoria)}
@@ -468,7 +508,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               Mesma placa + valor NF + peso + trecho + total do frete em CTRCs diferentes — pode ser o mesmo transporte lançado 2x em categorias diferentes.
             </div>
             {grupoDup.map((d) => (
-              <div key={d.id} style={{ padding: "10px 8px", borderBottom: `1px solid ${t.borda}55`, fontSize: 12 }}>
+              <div key={d.id} style={{ padding: "10px 8px", borderBottom: `1px solid ${hexRgb(t.borda, .33)}`, fontSize: 12 }}>
                 <div style={{ fontWeight: 700, color: t.txt }}>CTRC {d.ctrc} · {CATEGORIA_LABEL[d.categoria]}</div>
                 <div style={{ fontSize: 10.5, color: "var(--accent)", fontWeight: 700, marginTop: 1 }}>👤 {d.nome_usuario || "sem usuário na planilha"}</div>
                 <div style={{ color: t.txt2, fontSize: 11, marginTop: 2 }}>

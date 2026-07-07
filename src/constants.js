@@ -136,6 +136,13 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-07", sessao: "Sessao 26b",
+    itens: [
+      "FIX · ConferenciaFrete.jsx: bug de cor achado durante o redesign — badges/bordas usavam concatenacao de string tipo `${t.borda}55` pra simular opacidade, mas t.* sao strings 'var(--x)', entao virava CSS invalido e o navegador simplesmente ignorava (bordas/backgrounds sumiam). Trocado por hexRgb(t.x, opacidade) em todo o arquivo, que ja resolve var() via color-mix.",
+      "REDESIGN · ConferenciaFrete.jsx: 'Por cliente' e 'Evolucao diaria' viraram tabelas alinhadas (cabecalho, colunas de largura fixa, tabular-nums, colunas escondidas no mobile); linhas de 'Por cliente' agora sao clicaveis e filtram pelo cliente. 'Fila de revisao' e 'Sinalizados' comprimidos de 4 linhas por item pra 2, com saldo alinhado a direita. Badges de sinalizacao (margem negativa/baixa/ambigua/duplicidade) ganharam icone (mesmo estilo stroke do resto do app) em vez de so texto colorido.",
+    ],
+  },
+  {
     data: "2026-07-07", sessao: "Sessao 26",
     itens: [
       "FEAT · Resultado: novo segmento \"Conferência de Faturamento\" (toggle no topo, ao lado de Operacional) — importa as planilhas BRUTAS de faturamento por cliente (TMS/ERP, Empresa=MAT/MAM/MAR/MRM/D01/D05), classifica por CNPJ Remetente (Suzano Imperatriz, Suzano Belem, AVB Acailandia, Couro — cadastro em src/freteConferencia.js:CLIENTES) e grava em tabela nova frete_conferencia (migration 003), ISOLADA de controle_operacional (fonte Google Sheets) — mesmo objetivo, pipelines independentes por enquanto.",
