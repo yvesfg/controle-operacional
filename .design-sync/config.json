@@ -1,0 +1,5 @@
+{
+  "projectId": "1ea69a64-517d-483e-8d0b-2847ab04487f",
+  "mode": "tokens-only",
+  "note": "Upload manual dos arquivos CSS de design tokens (src/design-system/*.css) para referencia visual no claude.ai/design. Nao e um sync completo de biblioteca de componentes (sem Storybook/pacote exportavel neste repo) - nao usar o fluxo automatico da skill /design-sync aqui."
+}
