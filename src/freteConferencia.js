@@ -167,6 +167,16 @@ export async function listarPendentesRevisao(conn, cliente) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
+// Itens sinalizados para correção manual (fora do fluxo do App) — ficam visíveis
+// com data + observação até alguém corrigir/excluir a linha de origem; não voltam
+// a alertar e já contam nos totais (listarTodosPeriodo ignora decisao_manual).
+export async function listarSinalizados(conn, cliente) {
+  const q = (s) => encodeURIComponent(s);
+  let path = `${TABELA}?decisao_manual=eq.sinalizar_correcao&order=revisado_em.desc`;
+  if (cliente) path += `&cliente=eq.${q(cliente)}`;
+  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+}
+
 export async function decidir(conn, id, decisao, obs) {
   const body = { decisao_manual: decisao, revisado_em: new Date().toISOString(), revisado_obs: obs || null, atualizado_em: new Date().toISOString() };
   const q = encodeURIComponent(id);

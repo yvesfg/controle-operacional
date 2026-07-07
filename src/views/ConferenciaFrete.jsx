@@ -1,7 +1,7 @@
 import React from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
-  parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao,
+  parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, gerarWorkbookXLSX,
 } from "../freteConferencia.js";
 import KpiCard from "../components/KpiCard.jsx";
@@ -23,27 +23,34 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
   const [linhasPeriodo, setLinhasPeriodo] = React.useState([]);
   const [pendentes, setPendentes] = React.useState([]);
+  const [sinalizados, setSinalizados] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const fileRef = React.useRef(null);
   const [preview, setPreview] = React.useState(null); // { cliente, periodoRef, linhas, naoClassificadas, resumo }
   const [dupModal, setDupModal] = React.useState({ open: false, chave: null });
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
+  const [sinalizando, setSinalizando] = React.useState(false);
+  const [sinalObs, setSinalObs] = React.useState("");
 
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null }));
   useModalEsc(revisarModal.open, () => setRevisarModal({ open: false, item: null }));
 
+  const abrirRevisar = (p) => { setSinalizando(false); setSinalObs(""); setRevisarModal({ open: true, item: p }); };
+
   const carregar = React.useCallback(async () => {
     if (!conn) return;
     setLoading(true);
     try {
-      const [linhas, pend] = await Promise.all([
+      const [linhas, pend, sinal] = await Promise.all([
         listarTodosPeriodo(conn, periodoRef),
         listarPendentesRevisao(conn),
+        listarSinalizados(conn),
       ]);
       setLinhasPeriodo(linhas);
       setPendentes(pend);
+      setSinalizados(sinal);
     } catch (e) { showToast?.("Erro ao carregar conferência: " + e.message, "erro"); }
     finally { setLoading(false); }
   }, [conn, periodoRef, showToast]);
@@ -85,8 +92,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   const onDecidir = async (id, decisao, obs) => {
     try {
-      await decidir(conn, id, decisao, obs);
+      const atualizado = await decidir(conn, id, decisao, obs);
       setPendentes((arr) => arr.filter((p) => p.id !== id));
+      if (decisao === "sinalizar_correcao" && atualizado) setSinalizados((arr) => [atualizado, ...arr]);
       showToast?.("Revisão registrada.", "ok");
     } catch (e) { showToast?.("Erro ao registrar decisão: " + e.message, "erro"); }
   };
@@ -101,6 +109,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const pendentesFiltrados = React.useMemo(
     () => clienteFiltro ? pendentes.filter(p => p.cliente === clienteFiltro) : pendentes,
     [pendentes, clienteFiltro]
+  );
+  const sinalizadosFiltrados = React.useMemo(
+    () => clienteFiltro ? sinalizados.filter(p => p.cliente === clienteFiltro) : sinalizados,
+    [sinalizados, clienteFiltro]
   );
 
   const resumoCat = React.useMemo(() => resumoPorCategoria(linhasFiltradas), [linhasFiltradas]);
@@ -216,7 +228,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
         )}
 
         {!loading && pendentesFiltrados.map((p) => (
-          <div key={p.id} onClick={() => setRevisarModal({ open: true, item: p })}
+          <div key={p.id} onClick={() => abrirRevisar(p)}
             style={{ padding: "10px 6px", borderBottom: `1px solid ${t.borda}55`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", cursor: "pointer" }}>
             <div style={{ flex: 1, minWidth: 220 }}>
               <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600 }}>
@@ -235,13 +247,40 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 margem {Number(p.margem_lucro).toFixed(2)}% · frete peso {money(p.frete_peso)} · saldo {money(p.saldo)}
               </div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); setRevisarModal({ open: true, item: p }); }}
+            <button onClick={(e) => { e.stopPropagation(); abrirRevisar(p); }}
               style={{ fontSize: 10.5, fontWeight: 700, padding: "7px 14px", borderRadius: 7, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff", flexShrink: 0 }}>
               Revisar
             </button>
           </div>
         ))}
       </div>
+
+      {/* Sinalizados para correção — saíram da fila de revisão, mas ficam visíveis até a origem ser corrigida */}
+      {sinalizadosFiltrados.length > 0 && (
+        <div style={{ ...card, marginTop: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Sinalizados</span>
+            <span style={{ background: `${t.ouro}1a`, color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
+          </div>
+          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
+            Já saíram do alerta e continuam contando no total — aguardando correção na origem (exclusão/reimportação).
+          </div>
+          {sinalizadosFiltrados.map((p) => (
+            <div key={p.id} style={{ padding: "10px 6px", borderBottom: `1px solid ${t.borda}55` }}>
+              <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600 }}>
+                {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria} · placa {p.placa || "—"}
+              </div>
+              <div style={{ fontSize: 10, color: t.txt2, marginTop: 2 }}>
+                margem {Number(p.margem_lucro).toFixed(2)}% · saldo {money(p.saldo)}
+              </div>
+              <div style={{ fontSize: 10.5, color: t.ouro, marginTop: 3 }}>
+                🏷 sinalizado {p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}
+                {p.revisado_obs && <span style={{ color: t.txt2 }}> · “{p.revisado_obs}”</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Modal: pré-visualização antes de gravar */}
       {preview && (
@@ -333,6 +372,21 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </button>
               )}
 
+              {sinalizando && (
+                <div style={{ marginTop: 12, display: "flex", gap: 6, alignItems: "center" }}>
+                  <input value={sinalObs} onChange={(e) => setSinalObs(e.target.value)} autoFocus
+                    placeholder="O que precisa ser corrigido? (ex.: linha duplicada, excluir a de menor valor)"
+                    onKeyDown={(e) => { if (e.key === "Enter") decidirEFechar("sinalizar_correcao", sinalObs.trim() || null); }}
+                    style={{ flex: 1, minWidth: 0, padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
+                  <button onClick={() => decidirEFechar("sinalizar_correcao", sinalObs.trim() || null)}
+                    style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.ouro, color: "#1a1a1a", whiteSpace: "nowrap" }}>
+                    Confirmar
+                  </button>
+                  <button onClick={() => { setSinalizando(false); setSinalObs(""); }}
+                    style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>✕</button>
+                </div>
+              )}
+
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", marginTop: 16 }}>
                 <button onClick={fechar}
                   style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
@@ -349,6 +403,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       É Local
                     </button>
                   </>
+                )}
+                {!sinalizando && (
+                  <button onClick={() => setSinalizando(true)}
+                    style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.ouro}`, background: "transparent", color: t.ouro }}>
+                    Sinalizar para correção
+                  </button>
                 )}
                 <button onClick={() => decidirEFechar("ok", "revisado — sem ação necessária")}
                   style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
