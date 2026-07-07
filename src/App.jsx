@@ -1627,7 +1627,7 @@ export default function App() {
         {activeTab === "financeiro" && (
           <FinanceiroView ctx={{
             activeTab, baseAtual, DADOS, getConexao,
-            t, css, DESIGN, isMobile, showToast, canFin,
+            t, css, DESIGN, isMobile, showToast, canFin, hexRgb,
           }} />
         )}
 
