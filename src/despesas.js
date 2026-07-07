@@ -191,6 +191,12 @@ export async function listarIndevidasPendentesGlobal(conn) {
   const path = `${TABELA}?indevida=eq.true&credito_match_id=is.null&order=dt_mov.asc,valor.desc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
+// Créditos de TODAS as filiais/meses — para vincular indevida a um crédito lançado
+// em outra base (ex.: indevida em Imperatriz, crédito creditado na aba de Açailândia).
+export async function listarCreditosGlobal(conn) {
+  const path = `${TABELA}?tipo=eq.credito&order=mes_ref.desc,dt_mov.desc`;
+  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+}
 // Marca/registra que a indevida foi cobrada (data + observação). Não vincula crédito.
 export async function marcarCobrado(conn, id, obs) {
   return await atualizarDespesa(conn, id, { cobrado_em: new Date().toISOString(), cobranca_obs: obs || null });

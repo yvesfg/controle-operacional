@@ -1,12 +1,14 @@
 import React from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
-import { listarIndevidasPendentesGlobal, marcarCobrado, desmarcarCobrado } from "../despesas.js";
+import { listarIndevidasPendentesGlobal, marcarCobrado, desmarcarCobrado, listarCreditosGlobal, vincularCredito } from "../despesas.js";
 
 // CreditosPendentes — visão GLOBAL de cobrança: todas as despesas indevidas ainda sem
 // crédito vinculado (indevida=true AND credito_match_id IS NULL), de TODAS as filiais.
-// Agrupa por filial, mede o aging (dias em aberto), e permite registrar a cobrança +
-// gerar um texto de cobrança por filial. Gated por permissão financeira (canFin).
-// O vínculo do crédito em si continua na aba Resultado (por base/mês).
+// Agrupa por filial, mede o aging (dias em aberto), permite registrar a cobrança + gerar
+// um texto de cobrança por filial, e vincular a indevida a um crédito de QUALQUER
+// filial/mês (ex.: indevida em Imperatriz, crédito lançado por engano na aba de Açailândia
+// — a aba Resultado só vincula dentro da mesma base/mês, então esse caso precisa daqui).
+// Gated por permissão financeira (canFin).
 
 const money = (n) => "R$ " + (Math.abs(n) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const moneyK = (n) => { const a = Math.abs(n); return a >= 1e6 ? `R$ ${(a / 1e6).toFixed(2)} mi` : a >= 1000 ? `R$ ${Math.round(a / 1000)}k` : `R$ ${Math.round(a)}`; };
@@ -38,12 +40,13 @@ export default function CreditosPendentes({ ctx }) {
   const conn = React.useMemo(() => (getConexao ? getConexao() : null), [getConexao]);
 
   const [items, setItems] = React.useState([]);
+  const [creditosGlobal, setCreditosGlobal] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const carregar = React.useCallback(() => {
-    if (!conn) { setItems([]); return; }
+    if (!conn) { setItems([]); setCreditosGlobal([]); return; }
     setLoading(true);
-    listarIndevidasPendentesGlobal(conn)
-      .then((d) => setItems(d || []))
+    Promise.all([listarIndevidasPendentesGlobal(conn), listarCreditosGlobal(conn)])
+      .then(([ind, cred]) => { setItems(ind || []); setCreditosGlobal(cred || []); })
       .catch((e) => showToast?.("Erro ao carregar pendências: " + e.message, "erro"))
       .finally(() => setLoading(false));
   }, [conn]);
@@ -57,6 +60,24 @@ export default function CreditosPendentes({ ctx }) {
   // Inline "cobrar"
   const [cobrandoId, setCobrandoId] = React.useState(null);
   const [obsText, setObsText] = React.useState("");
+  // Inline "vincular crédito" (busca cross-filial/mês)
+  const [vinculandoId, setVinculandoId] = React.useState(null);
+  const [buscaCred, setBuscaCred] = React.useState("");
+  const candidatosCredito = React.useMemo(() => {
+    if (!vinculandoId) return [];
+    const ind = items.find((i) => i.id === vinculandoId);
+    const alvo = ind ? Math.abs(Number(ind.valor || 0)) : null;
+    const qc = buscaCred.trim().toLowerCase();
+    return creditosGlobal
+      .filter((c) => {
+        if (!qc) return true;
+        const alvoTxt = `${c.natureza || ""} ${c.historico || ""} ${c.conta || ""}`.toLowerCase();
+        return alvoTxt.includes(qc);
+      })
+      .map((c) => ({ ...c, exato: alvo != null && Math.abs(Number(c.valor || 0)) === alvo }))
+      .sort((a, b) => (b.exato - a.exato) || new Date(b.dt_mov || 0) - new Date(a.dt_mov || 0))
+      .slice(0, 30);
+  }, [vinculandoId, buscaCred, creditosGlobal, items]);
   // Modal de pré-visualização da cobrança
   const [preview, setPreview] = React.useState(null); // { filialK, texto }
   useModalEsc(!!preview, () => setPreview(null));
@@ -112,6 +133,14 @@ export default function CreditosPendentes({ ctx }) {
     try { await desmarcarCobrado(conn, id); showToast?.("Cobrança desfeita.", "ok"); await carregar(); }
     catch (e) { showToast?.("Erro ao desfazer: " + e.message, "erro"); }
   };
+  const vincular = async (indId, credId) => {
+    try {
+      await vincularCredito(conn, indId, credId);
+      showToast?.("Crédito vinculado.", "ok");
+      setVinculandoId(null); setBuscaCred("");
+      await carregar();
+    } catch (e) { showToast?.("Erro ao vincular crédito: " + e.message, "erro"); }
+  };
 
   // Texto de cobrança por filial (decisão a: registrar + gerar cobrança)
   const gerarCobranca = (filialK, arr) => {
@@ -151,7 +180,8 @@ export default function CreditosPendentes({ ctx }) {
         <span style={{ fontSize: 17, fontWeight: 800, color: t.txt, letterSpacing: "-0.02em" }}>Créditos Pendentes</span>
       </div>
       <div style={{ fontSize: 11, color: t.txt2, marginBottom: 16 }}>
-        Despesas indevidas de todas as filiais ainda sem crédito vinculado. O vínculo do crédito é feito na aba <b>Resultado</b>.
+        Despesas indevidas de todas as filiais ainda sem crédito vinculado. Use <b>Vincular crédito</b> aqui quando o
+        crédito caiu em outra filial/mês (na aba Resultado o vínculo só busca dentro da mesma base/mês).
       </div>
 
       {/* KPIs */}
@@ -244,6 +274,11 @@ export default function CreditosPendentes({ ctx }) {
                               Desfazer
                             </button>
                           )}
+                          <button onClick={() => { setVinculandoId(vinculandoId === d.id ? null : d.id); setBuscaCred(""); }}
+                            style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer",
+                              border: `1px solid ${t.verde}`, background: vinculandoId === d.id ? t.verde : "transparent", color: vinculandoId === d.id ? "#fff" : t.verde, whiteSpace: "nowrap" }}>
+                            Vincular crédito
+                          </button>
                         </div>
                       </div>
                       {emCobranca && (
@@ -258,6 +293,28 @@ export default function CreditosPendentes({ ctx }) {
                           </button>
                           <button onClick={() => { setCobrandoId(null); setObsText(""); }}
                             style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>✕</button>
+                        </div>
+                      )}
+                      {vinculandoId === d.id && (
+                        <div style={{ marginTop: 8 }}>
+                          <input value={buscaCred} onChange={(e) => setBuscaCred(e.target.value)} autoFocus
+                            placeholder="Buscar crédito por natureza / histórico / conta (qualquer filial)..."
+                            style={{ width: "100%", boxSizing: "border-box", padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
+                          <div style={{ maxHeight: 220, overflowY: "auto", marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+                            {candidatosCredito.length === 0 ? (
+                              <div style={{ fontSize: 11, color: t.txt2, padding: 8 }}>Nenhum crédito encontrado.</div>
+                            ) : candidatosCredito.map((c) => (
+                              <button key={c.id} onClick={() => vincular(d.id, c.id)}
+                                style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", borderRadius: 7, cursor: "pointer",
+                                  border: `1px solid ${c.exato ? t.verde + "88" : t.borda}`, background: c.exato ? `${t.verde}14` : t.card2, color: t.txt, fontFamily: "inherit" }}>
+                                <span style={{ fontWeight: 700, color: t.verde, minWidth: 84, flexShrink: 0 }}>{money(Number(c.valor || 0))}</span>
+                                <span style={{ fontSize: 11, color: t.azulLt || t.txt2, minWidth: 66, flexShrink: 0 }}>{filialLabel(filialKey(c))}</span>
+                                <span style={{ fontSize: 11, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.natureza || c.historico || "—"}</span>
+                                <span style={{ fontSize: 10, color: t.txt2, flexShrink: 0 }}>{mesLabel(c.mes_ref)}</span>
+                                {c.exato && <span style={{ fontSize: 9, fontWeight: 700, color: t.verde, flexShrink: 0 }}>MATCH</span>}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
