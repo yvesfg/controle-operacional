@@ -4,6 +4,7 @@ import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao,
   decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, gerarWorkbookXLSX,
 } from "../freteConferencia.js";
+import KpiCard from "../components/KpiCard.jsx";
 
 // Conferência de Faturamento — planilhas BRUTAS de faturamento (TMS/ERP), fonte
 // DIFERENTE do operacional (Google Sheets). Segmento dentro de Resultado.jsx.
@@ -116,13 +117,6 @@ export default function ConferenciaFrete({ ctx, conn }) {
   }, [pendentesFiltrados]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
-  const kpi = (l, v, sub, cor) => (
-    <div style={{ ...card, padding: isMobile ? "12px 10px" : "14px 16px", textAlign: "center" }}>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text3)", marginBottom: 5 }}>{l}</div>
-      <div style={{ fontFamily: "var(--font-heading)", fontSize: isMobile ? 17 : 21, fontWeight: 800, letterSpacing: "-0.03em", color: cor || t.txt, lineHeight: 1 }}>{v}</div>
-      {sub && <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{sub}</div>}
-    </div>
-  );
 
   const badge = (texto, cor) => (
     <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, background: `${cor}1a`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>{texto}</span>
@@ -164,8 +158,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 10, marginBottom: 14 }}>
         {["frete", "descarga", "local", "diaria"].map((c) => {
           const d = resumoCat[c];
-          return kpi(CATEGORIA_LABEL[c], `${d.registros} reg.`, `${money(d.fretePeso)} · margem ${d.margemMedia.toFixed(1)}%`,
-            c === "frete" ? "var(--accent)" : t.txt);
+          return (
+            <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={`${d.registros} reg.`}
+              sub={`${money(d.fretePeso)} · margem ${d.margemMedia.toFixed(1)}%`}
+              color={c === "frete" ? "var(--accent)" : undefined} compact={isMobile} />
+          );
         })}
       </div>
 

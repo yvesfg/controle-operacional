@@ -2,6 +2,7 @@ import React from "react";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
 import Toggle from "../components/Toggle.jsx";
+import KpiCard from "../components/KpiCard.jsx";
 
 // PainelFinanceiro — visão financeira por base (faturamento → margem → despesas → resultado).
 // Escopado à base logada. Faturamento/margem vêm das viagens (DADOS); despesas da tabela
@@ -222,19 +223,6 @@ export default function PainelFinanceiro({ ctx }) {
   }, [serie, composicao, mesRef]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
-  const kpi = (l, v, sub, cor, destaque) => (
-    <div style={{ ...card, padding: isMobile ? "12px 10px" : "14px 16px", textAlign: "center", border: destaque ? `2px solid ${cor}` : card.border }}>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text3)", marginBottom: 5 }}>{l}</div>
-      <div style={{ fontFamily: "var(--font-heading)", fontSize: isMobile ? 17 : 22, fontWeight: 800, letterSpacing: "-0.03em", color: cor || t.txt, lineHeight: 1 }}>{v}</div>
-      {sub && <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{sub}</div>}
-    </div>
-  );
-  const mini = (l, v, cor) => (
-    <div style={{ padding: "10px 12px", border: `1px solid ${t.borda}`, borderRadius: 8, background: t.card }}>
-      <div style={{ fontSize: 10, color: t.txt2, marginBottom: 3 }}>{l}</div>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 700, color: cor || t.txt }}>{v}</div>
-    </div>
-  );
   const PAL = ["#1677ff", "#f0b90b", "#22c55e", "#a855f7", "#ec4899", "#06b6d4", "#ef4444"];
   const totalComp = composicao.reduce((s, [, v]) => s + v, 0) || 1;
   // Variação vs mês anterior (badge ▲/▼). higherIsGood=false p/ despesa.
@@ -292,18 +280,18 @@ export default function PainelFinanceiro({ ctx }) {
         <>
           {/* KPIs principais */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 10, marginBottom: 12 }}>
-            {kpi("Faturamento (CTE)", money(r.receita), <>{r.n} viagens{delta(r.receita, rp.receita)}</>, t.verde)}
-            {kpi("Margem bruta", money(r.margem), <>{margemPct.toFixed(1)}% do fat.{delta(r.margem, rp.margem)}</>, t.ouro)}
-            {kpi("Despesas", money(dp.deb), <>{dp.cred < 0 ? `créd. ${money(Math.abs(dp.cred))}` : "incluídas"}{delta(dp.deb, dpp.deb, false)}</>, t.danger)}
-            {kpi("Resultado", money(resultado), <>{resultPct.toFixed(1)}%{delta(resultado, prevResultado)}</>, resultado >= 0 ? t.verde : t.danger, true)}
+            <KpiCard label="Faturamento (CTE)" value={money(r.receita)} sub={<>{r.n} viagens{delta(r.receita, rp.receita)}</>} color={t.verde} compact={isMobile} />
+            <KpiCard label="Margem bruta" value={money(r.margem)} sub={<>{margemPct.toFixed(1)}% do fat.{delta(r.margem, rp.margem)}</>} color={t.ouro} compact={isMobile} />
+            <KpiCard label="Despesas" value={money(dp.deb)} sub={<>{dp.cred < 0 ? `créd. ${money(Math.abs(dp.cred))}` : "incluídas"}{delta(dp.deb, dpp.deb, false)}</>} color={t.danger} compact={isMobile} />
+            <KpiCard label="Resultado" value={money(resultado)} sub={<>{resultPct.toFixed(1)}%{delta(resultado, prevResultado)}</>} color={t.verde} danger={resultado < 0} compact={isMobile} />
           </div>
 
           {/* Indicadores derivados */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 10, marginBottom: 18 }}>
-            {mini("Receita / viagem", money(recPorVg))}
-            {mini("Despesa / viagem", money(despPorVg))}
-            {mini("Índice de despesa", idxDespesa.toFixed(1) + "%", idxDespesa > 100 ? t.danger : t.txt)}
-            {mini("Ponto de equilíbrio", breakeven > 0 ? moneyK(breakeven) : "—")}
+            <KpiCard label="Receita / viagem" value={money(recPorVg)} compact={isMobile} />
+            <KpiCard label="Despesa / viagem" value={money(despPorVg)} compact={isMobile} />
+            <KpiCard label="Índice de despesa" value={idxDespesa.toFixed(1) + "%"} color={idxDespesa > 100 ? t.danger : undefined} compact={isMobile} />
+            <KpiCard label="Ponto de equilíbrio" value={breakeven > 0 ? moneyK(breakeven) : "—"} compact={isMobile} />
           </div>
 
           {/* Gráficos */}

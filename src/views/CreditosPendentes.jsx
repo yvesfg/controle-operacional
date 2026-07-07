@@ -1,6 +1,7 @@
 import React from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
 import { listarIndevidasPendentesGlobal, marcarCobrado, desmarcarCobrado, listarCreditosGlobal, vincularCredito } from "../despesas.js";
+import KpiCard from "../components/KpiCard.jsx";
 
 // CreditosPendentes — visão GLOBAL de cobrança: todas as despesas indevidas ainda sem
 // crédito vinculado (indevida=true AND credito_match_id IS NULL), de TODAS as filiais.
@@ -116,13 +117,6 @@ export default function CreditosPendentes({ ctx }) {
   }, [filtrados]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
-  const kpi = (l, v, sub, cor, destaque) => (
-    <div style={{ ...card, padding: isMobile ? "12px 10px" : "14px 16px", textAlign: "center", border: destaque ? `2px solid ${cor}` : card.border }}>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text3)", marginBottom: 5 }}>{l}</div>
-      <div style={{ fontFamily: "var(--font-heading)", fontSize: isMobile ? 17 : 22, fontWeight: 800, letterSpacing: "-0.03em", color: cor || t.txt, lineHeight: 1 }}>{v}</div>
-      {sub && <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{sub}</div>}
-    </div>
-  );
 
   // ── Ações ──
   const confirmarCobranca = async (id) => {
@@ -186,10 +180,10 @@ export default function CreditosPendentes({ ctx }) {
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 10, marginBottom: 16 }}>
-        {kpi("Total pendente", money(totalPend), `${filtrados.length} ${filtrados.length === 1 ? "lançamento" : "lançamentos"}`, t.danger, true)}
-        {kpi("A cobrar", String(qtdACobrar), "ainda não cobrados", qtdACobrar > 0 ? t.ouro : t.verde)}
-        {kpi("Já cobrados", String(filtrados.length - qtdACobrar), "aguardando crédito", t.txt)}
-        {kpi("Mais antigo", maisAntigo > 0 ? `${maisAntigo} d` : "—", "em aberto", faixaCor(maisAntigo, t))}
+        <KpiCard label="Total pendente" value={money(totalPend)} sub={`${filtrados.length} ${filtrados.length === 1 ? "lançamento" : "lançamentos"}`} danger compact={isMobile} />
+        <KpiCard label="A cobrar" value={String(qtdACobrar)} sub="ainda não cobrados" color={qtdACobrar > 0 ? t.ouro : t.verde} compact={isMobile} />
+        <KpiCard label="Já cobrados" value={String(filtrados.length - qtdACobrar)} sub="aguardando crédito" compact={isMobile} />
+        <KpiCard label="Mais antigo" value={maisAntigo > 0 ? `${maisAntigo} d` : "—"} sub="em aberto" color={faixaCor(maisAntigo, t)} compact={isMobile} />
       </div>
 
       {/* Filtros */}

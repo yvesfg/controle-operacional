@@ -10,6 +10,7 @@ import {
   listarIndevidasPendentes, vincularCredito,
 } from "../despesas.js";
 import ConferenciaFrete from "./ConferenciaFrete.jsx";
+import KpiCard from "../components/KpiCard.jsx";
 
 // Resultado — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
 // despesas mensais persistidas (tabela despesas_filial). Aba por base (qualquer base),
@@ -278,13 +279,6 @@ export default function Resultado({ ctx }) {
   despesasFiltradas.forEach((d) => { (porGrupo[d.grupo || "—"] = porGrupo[d.grupo || "—"] || []).push(d); });
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
-  const kpi = (l, v, sub, cor) => (
-    <div style={{ ...card, padding: isMobile ? "12px 10px" : "14px 16px", textAlign: "center" }}>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text3)", marginBottom: 5 }}>{l}</div>
-      <div style={{ fontFamily: "var(--font-heading)", fontSize: isMobile ? 17 : 21, fontWeight: 800, letterSpacing: "-0.03em", color: cor || t.txt, lineHeight: 1 }}>{v}</div>
-      {sub && <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{sub}</div>}
-    </div>
-  );
 
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
@@ -509,12 +503,12 @@ export default function Resultado({ ctx }) {
 
       {/* KPIs do resultado */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>
-        {kpi("Faturamento (CTE)", money(fin.receita), `${fin.n} viagens`, t.verde)}
-        {kpi("Pago motorista", money(fin.custo), "vl. contrato", t.txt)}
-        {kpi("Margem bruta", money(fin.margem), pct(fin.margem), t.ouro)}
-        {kpi("Despesas (débito)", money(despDebInc), "incluídas", t.danger)}
-        {kpi("Créditos", money(Math.abs(credInc)), "abatem despesa", t.verde)}
-        {kpi("Resultado", money(resultado), pct(resultado), resultado >= 0 ? t.verde : t.danger)}
+        <KpiCard label="Faturamento (CTE)" value={money(fin.receita)} sub={`${fin.n} viagens`} color={t.verde} compact={isMobile} />
+        <KpiCard label="Pago motorista" value={money(fin.custo)} sub="vl. contrato" compact={isMobile} />
+        <KpiCard label="Margem bruta" value={money(fin.margem)} sub={pct(fin.margem)} color={t.ouro} compact={isMobile} />
+        <KpiCard label="Despesas (débito)" value={money(despDebInc)} sub="incluídas" color={t.danger} compact={isMobile} />
+        <KpiCard label="Créditos" value={money(Math.abs(credInc))} sub="abatem despesa" color={t.verde} compact={isMobile} />
+        <KpiCard label="Resultado" value={money(resultado)} sub={pct(resultado)} color={t.verde} danger={resultado < 0} compact={isMobile} />
       </div>
 
       {/* Conciliação de indevidas → crédito */}
@@ -534,10 +528,10 @@ export default function Resultado({ ctx }) {
             Ficam aqui até o crédito ser vinculado — aparecem em todos os meses até resolver.
           </div>
 
-          {/* Mini-cards de resumo — reusa o primitivo kpi() dos KPIs do topo (consistência global) */}
+          {/* Mini-cards de resumo — reusa o KpiCard compartilhado (consistência global) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-            {kpi("Total indevido", money(totalIndevido), `${indevidas.length} ${indevidas.length === 1 ? "lançamento" : "lançamentos"}`, t.danger)}
-            {kpi("Créditos disponíveis", String(creditos.length), `em ${mesLabel(mesRef)}`, creditos.length > 0 ? t.verde : t.txt2)}
+            <KpiCard label="Total indevido" value={money(totalIndevido)} sub={`${indevidas.length} ${indevidas.length === 1 ? "lançamento" : "lançamentos"}`} color={t.danger} compact={isMobile} />
+            <KpiCard label="Créditos disponíveis" value={String(creditos.length)} sub={`em ${mesLabel(mesRef)}`} color={creditos.length > 0 ? t.verde : t.txt2} compact={isMobile} />
           </div>
 
           {/* Linhas */}

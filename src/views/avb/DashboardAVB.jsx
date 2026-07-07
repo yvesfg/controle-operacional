@@ -1,5 +1,6 @@
 import React from "react";
 import { parseData, clickable } from "../../utils.js";
+import KpiCard from "../../components/KpiCard.jsx";
 
 // DashboardAVB — Dashboard exclusivo Açailândia AVB
 // Foco: Rastreamento Documental (CTE / MDF / NF) + KPIs operacionais AVB
@@ -131,20 +132,8 @@ export default function DashboardAVB({ ctx }) {
             icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
             click:()=>setAlertasOpen(!alertasOpen)},
         ].map((k,i)=>(
-          <div key={i} {...clickable(k.click)}
-            style={{position:"relative",background:t.card,borderRadius:12,border:`1px solid ${t.borda}`,
-              padding:isMobile?"14px":"16px 18px",cursor:k.click?"pointer":"default",transition:"border-color .15s"}}
-            onMouseEnter={e=>k.click&&(e.currentTarget.style.borderColor="var(--accent)")}
-            onMouseLeave={e=>k.click&&(e.currentTarget.style.borderColor=t.borda)}>
-            <div style={{position:"absolute",top:10,right:10,opacity:.45}}>
-              {hIco(k.icon,"var(--text3)",isMobile?9:11)}
-            </div>
-            <div style={{fontFamily:"var(--font-mono)",fontSize:isMobile?9:11,textTransform:"uppercase",
-              letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400,paddingRight:20,marginBottom:isMobile?3:8}}>{k.label}</div>
-            <div style={{fontFamily:"var(--font-heading)",fontSize:isMobile?18:28,fontWeight:700,
-              letterSpacing:"-0.04em",color:k.color,lineHeight:1,marginBottom:2}}>{k.value}</div>
-            <div style={{fontSize:isMobile?9:12,color:"var(--text2)"}}>{k.sub}</div>
-          </div>
+          <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} color={k.color}
+            icon={hIco(k.icon,"var(--text3)",isMobile?9:11)} onClick={k.click} compact={isMobile} />
         ))}
       </div>
 
@@ -178,15 +167,9 @@ export default function DashboardAVB({ ctx }) {
             {label:"Sem MDF", count:semMDF.length, list:semMDF},
             {label:"Sem NF",  count:semNF.length,  list:semNF},
           ].map(({label,count})=>(
-            <div key={label} style={{background:t.bg,border:`1px solid ${count>0?`rgba(246,70,93,.3)`:t.borda}`,
-              borderRadius:9,padding:"12px 14px",textAlign:"center"}}>
-              <div style={{fontFamily:"var(--font-heading)",fontSize:26,fontWeight:800,letterSpacing:"-0.04em",
-                color:count>0?t.danger:t.verde,lineHeight:1,marginBottom:4}}>{count}</div>
-              <div style={{fontFamily:"var(--font-mono)",fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em",
-                color:count>0?t.danger:"var(--text3)",fontWeight:600}}>{label}</div>
-              {count>0&&<div style={{fontSize:8,color:t.txt2,marginTop:3}}>cargas pendentes</div>}
-              {count===0&&<div style={{fontSize:8,color:t.verde,marginTop:3}}>✓ completo</div>}
-            </div>
+            <KpiCard key={label} label={label} value={count}
+              sub={count>0?"cargas pendentes":"✓ completo"}
+              color={count>0?undefined:t.verde} danger={count>0} compact />
           ))}
         </div>
 

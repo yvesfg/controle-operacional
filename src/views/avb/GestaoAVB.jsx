@@ -1,5 +1,6 @@
 import React from "react";
 import { clickable } from "../../utils.js";
+import KpiCard from "../../components/KpiCard.jsx";
 
 // GestaoAVB — Gestão operacional Açailândia AVB
 // Acompanha cada carga pelas etapas do fluxo real do embarcador:
@@ -98,10 +99,7 @@ export default function GestaoAVB({ ctx }) {
       {/* ── KPI Strip ── */}
       <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(4,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?5:8,marginBottom:18}}>
         {kpis.map((k,i)=>(
-          <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:isMobile?"10px 8px":"12px 14px",textAlign:"center"}}>
-            <div style={{fontFamily:"var(--font-heading)",fontSize:isMobile?20:26,fontWeight:800,letterSpacing:"-0.04em",color:k.c,lineHeight:1,marginBottom:3}}>{k.v}</div>
-            <div style={{fontFamily:"var(--font-mono)",fontSize:isMobile?8:9,textTransform:"uppercase",letterSpacing:"0.05em",color:"var(--text3)"}}>{k.l}</div>
-          </div>
+          <KpiCard key={i} label={k.l} value={k.v} color={k.c} compact={isMobile} />
         ))}
       </div>
 
