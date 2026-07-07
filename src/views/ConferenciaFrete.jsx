@@ -27,9 +27,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const fileRef = React.useRef(null);
   const [preview, setPreview] = React.useState(null); // { cliente, periodoRef, linhas, naoClassificadas, resumo }
   const [dupModal, setDupModal] = React.useState({ open: false, chave: null });
+  const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
 
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null }));
+  useModalEsc(revisarModal.open, () => setRevisarModal({ open: false, item: null }));
 
   const carregar = React.useCallback(async () => {
     if (!conn) return;
@@ -212,7 +214,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
         )}
 
         {!loading && pendentesFiltrados.map((p) => (
-          <div key={p.id} style={{ padding: "10px 6px", borderBottom: `1px solid ${t.borda}55`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div key={p.id} onClick={() => setRevisarModal({ open: true, item: p })}
+            style={{ padding: "10px 6px", borderBottom: `1px solid ${t.borda}55`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", cursor: "pointer" }}>
             <div style={{ flex: 1, minWidth: 220 }}>
               <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600 }}>
                 {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria} · placa {p.placa || "—"}
@@ -224,35 +227,16 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {p.flag_negativa && badge("MARGEM NEGATIVA", t.danger)}
                 {p.flag_baixa && !p.flag_negativa && badge("MARGEM < 10%", t.warn)}
                 {p.flag_ambigua && badge("DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
-                {p.flag_duplicidade && (
-                  <span onClick={() => setDupModal({ open: true, chave: p.dup_grupo_chave })}
-                    style={{ cursor: "pointer", textDecoration: "underline" }}>
-                    {badge("POSSÍVEL DUPLICIDADE ⓘ", t.danger)}
-                  </span>
-                )}
+                {p.flag_duplicidade && badge("POSSÍVEL DUPLICIDADE ⓘ", t.danger)}
               </div>
               <div style={{ fontSize: 10, color: t.txt2, marginTop: 2 }}>
                 margem {Number(p.margem_lucro).toFixed(2)}% · frete peso {money(p.frete_peso)} · saldo {money(p.saldo)}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              {p.flag_ambigua && (
-                <>
-                  <button onClick={() => onDecidir(p.id, "confirmar_descarga", "revisado manualmente")}
-                    style={{ fontSize: 10.5, fontWeight: 700, padding: "6px 10px", borderRadius: 7, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                    É Descarga
-                  </button>
-                  <button onClick={() => onDecidir(p.id, "confirmar_local", "revisado manualmente")}
-                    style={{ fontSize: 10.5, fontWeight: 700, padding: "6px 10px", borderRadius: 7, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                    É Local
-                  </button>
-                </>
-              )}
-              <button onClick={() => onDecidir(p.id, "ok", "revisado — sem ação necessária")}
-                style={{ fontSize: 10.5, fontWeight: 700, padding: "6px 10px", borderRadius: 7, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff" }}>
-                Marcar revisado
-              </button>
-            </div>
+            <button onClick={(e) => { e.stopPropagation(); setRevisarModal({ open: true, item: p }); }}
+              style={{ fontSize: 10.5, fontWeight: 700, padding: "7px 14px", borderRadius: 7, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff", flexShrink: 0 }}>
+              Revisar
+            </button>
           </div>
         ))}
       </div>
@@ -299,6 +283,80 @@ export default function ConferenciaFrete({ ctx, conn }) {
           </div>
         </div>
       )}
+
+      {/* Modal: revisar item pendente (registro completo antes de decidir) */}
+      {revisarModal.open && revisarModal.item && (() => {
+        const p = revisarModal.item;
+        const fechar = () => setRevisarModal({ open: false, item: null });
+        const decidirEFechar = async (decisao, obs) => { await onDecidir(p.id, decisao, obs); fechar(); };
+        const campo = (l, v) => (
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${t.borda}33` }}>
+            <span style={{ color: t.txt2 }}>{l}</span>
+            <span style={{ color: t.txt, fontWeight: 600, textAlign: "right" }}>{v || "—"}</span>
+          </div>
+        );
+        return (
+          <div onClick={fechar} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 560, width: "90vw", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+              <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 2 }}>{p.cliente} · CTRC {p.ctrc}</div>
+              <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, marginBottom: 10 }}>👤 {p.nome_usuario || "sem usuário na planilha"}</div>
+
+              <div style={{ marginBottom: 12 }}>
+                {p.flag_negativa && badge("MARGEM NEGATIVA", t.danger)}
+                {p.flag_baixa && !p.flag_negativa && badge("MARGEM < 10%", t.warn)}
+                {p.flag_ambigua && badge("DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
+                {p.flag_duplicidade && badge("POSSÍVEL DUPLICIDADE", t.danger)}
+              </div>
+
+              {campo("Categoria", CATEGORIA_LABEL[p.categoria] || p.categoria)}
+              {campo("Empresa (código)", p.empresa_cod)}
+              {campo("Placa", p.placa)}
+              {campo("Data emissão", p.data_emissao)}
+              {campo("Trecho", p.trecho)}
+              {campo("NFS", p.nfs)}
+              {campo("Nº Manifesto", p.numero_manifesto)}
+              {campo("Nº Contrato Frete", p.numero_contrato)}
+              {campo("Valor NF", money(p.valor_nf))}
+              {campo("Peso NF", pesoFmt(p.peso_nf))}
+              {campo("Frete Peso", money(p.frete_peso))}
+              {campo("Total do Frete", money(p.total_frete))}
+              {campo("Valor Contrato Frete", money(p.valor_contrato_frete))}
+              {campo("Saldo", money(p.saldo))}
+              {campo("Margem Lucro", Number(p.margem_lucro).toFixed(2) + "%")}
+
+              {p.flag_duplicidade && (
+                <button onClick={() => { setDupModal({ open: true, chave: p.dup_grupo_chave }); fechar(); }}
+                  style={{ marginTop: 12, width: "100%", fontSize: 11.5, fontWeight: 700, padding: "8px 10px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.danger}`, background: "transparent", color: t.danger }}>
+                  Ver grupo de duplicidade
+                </button>
+              )}
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", marginTop: 16 }}>
+                <button onClick={fechar}
+                  style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                  Fechar
+                </button>
+                {p.flag_ambigua && (
+                  <>
+                    <button onClick={() => decidirEFechar("confirmar_descarga", "revisado manualmente")}
+                      style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                      É Descarga
+                    </button>
+                    <button onClick={() => decidirEFechar("confirmar_local", "revisado manualmente")}
+                      style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                      É Local
+                    </button>
+                  </>
+                )}
+                <button onClick={() => decidirEFechar("ok", "revisado — sem ação necessária")}
+                  style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
+                  Marcar revisado
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal: grupo de duplicidade */}
       {dupModal.open && (
