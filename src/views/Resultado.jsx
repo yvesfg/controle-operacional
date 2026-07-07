@@ -9,6 +9,7 @@ import {
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
   listarIndevidasPendentes, vincularCredito,
 } from "../despesas.js";
+import ConferenciaFrete from "./ConferenciaFrete.jsx";
 
 // Resultado — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
 // despesas mensais persistidas (tabela despesas_filial). Aba por base (qualquer base),
@@ -39,6 +40,10 @@ export default function Resultado({ ctx }) {
   if (canFin === false) {
     return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Sem permissão financeira para visualizar o Resultado.</div>;
   }
+
+  // Segmentado: Operacional (Google Sheets, existente) vs Conferência de
+  // Faturamento (planilha bruta TMS/ERP, nova) — fontes diferentes, mesma tela.
+  const [segmento, setSegmento] = React.useState("operacional");
 
   // Meses disponíveis a partir dos dados operacionais
   const mesesOp = React.useMemo(() => {
@@ -283,6 +288,22 @@ export default function Resultado({ ctx }) {
 
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
+      {/* Segmentado: Operacional x Conferência de Faturamento */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, padding: 3, borderRadius: 10, background: t.card2, border: `1px solid ${t.borda}`, width: "fit-content" }}>
+        {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"]].map(([id, label]) => (
+          <button key={id} onClick={() => setSegmento(id)}
+            style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: "none",
+              background: segmento === id ? "var(--accent)" : "transparent",
+              color: segmento === id ? (t.onPrimary || "#181a20") : t.txt2 }}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {segmento === "faturamento" ? (
+        <ConferenciaFrete ctx={ctx} conn={conn} />
+      ) : (
+      <>
       {/* Controles */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
         <select value={mesRef} onChange={(e) => setMesRef(e.target.value)}
@@ -806,6 +827,8 @@ export default function Resultado({ ctx }) {
 
       <ModalDespesa open={modal.open} inicial={modal.inicial} t={t} isMobile={isMobile}
         onClose={() => setModal({ open: false, inicial: null })} onSave={salvar} onDelete={excluir} />
+      </>
+      )}
     </div>
   );
 }

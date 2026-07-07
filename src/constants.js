@@ -136,6 +136,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-07", sessao: "Sessao 26",
+    itens: [
+      "FEAT · Resultado: novo segmento \"Conferência de Faturamento\" (toggle no topo, ao lado de Operacional) — importa as planilhas BRUTAS de faturamento por cliente (TMS/ERP, Empresa=MAT/MAM/MAR/MRM/D01/D05), classifica por CNPJ Remetente (Suzano Imperatriz, Suzano Belem, AVB Acailandia, Couro — cadastro em src/freteConferencia.js:CLIENTES) e grava em tabela nova frete_conferencia (migration 003), ISOLADA de controle_operacional (fonte Google Sheets) — mesmo objetivo, pipelines independentes por enquanto.",
+      "FEAT · Conferência de Faturamento: Descarga x Local dentro do mesmo codigo (MAM/MRM) decidido por Margem Lucro (==0 -> Descarga, !=0 -> Local); fila de revisao com flags automaticas (margem negativa, margem <10%, classificacao ambigua perto do corte de margem) e deteccao de DUPLICIDADE DE VALOR (mesma Placa+Valor NF+Peso NF+Trecho+Total do Frete em CTRCs diferentes) — decisao sempre manual (decisao_manual na tabela, nunca sobrescrita em reimportacao).",
+      "FEAT · Conferência de Faturamento: filtro por cliente (Todos / Suzano Imperatriz / Suzano Belem / AVB Acailandia / Couro) e painel 'Pendencias por usuario' (nome_usuario da planilha) na fila de revisao, pra saber com quem falar em caso de erro.",
+      "DATA · processar_multi_cliente.py (fora do repo, entregue ao usuario): script standalone que gera o mesmo agrupamento em Excel (FRETES/DESCARGAS/LOCAIS/DIARIAS + aba DASHBOARD) para quem preferir nao usar o app — mesma logica de classificacao do freteConferencia.js.",
+    ],
+  },
+  {
     data: "2026-06-18", sessao: "Sessao 25",
     itens: [
       "FIX · Boot: corrigido ReferenceError que derrubava o app (useAuthHandlers recebia registrarLog antes do useAdminHandlers declara-lo — TDZ); reordenadas as chamadas. Tambem corrigido buscaRelacionados nao destruturado no AppModals e chave duplicada no ctx.",
@@ -399,4 +408,3 @@ export const DEV_CHANGELOG = [
 
 export const ENV_SUPA_URL = typeof import.meta !== "undefined" ? (import.meta.env?.VITE_SUPABASE_URL || "") : "";
 export const ENV_SUPA_KEY = typeof import.meta !== "undefined" ? (import.meta.env?.VITE_SUPABASE_KEY || "") : "";
-
