@@ -2,7 +2,7 @@ import React from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao,
-  decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente,
+  decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, gerarWorkbookXLSX,
 } from "../freteConferencia.js";
 
 // Conferência de Faturamento — planilhas BRUTAS de faturamento (TMS/ERP), fonte
@@ -141,7 +141,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
           <option value="">Todos os clientes</option>
           {clientesPresentes.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <div style={{ marginLeft: "auto" }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button onClick={() => gerarWorkbookXLSX(linhasFiltradas, periodoRef)} disabled={!linhasFiltradas.length}
+            style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+              border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, opacity: linhasFiltradas.length ? 1 : .5 }}>
+            ⬇ Baixar planilha
+          </button>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onEscolherArquivo} style={{ display: "none" }} />
           <button onClick={() => fileRef.current?.click()} disabled={importing}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",

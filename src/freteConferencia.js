@@ -204,13 +204,97 @@ export function resumoPorCategoria(linhas) {
 export function resumoPorCliente(linhas) {
   const out = {};
   linhas.forEach((l) => {
-    out[l.cliente] = out[l.cliente] || { registros: 0, peso: 0, fretePeso: 0, saldo: 0, _margens: [] };
+    out[l.cliente] = out[l.cliente] || { registros: 0, peso: 0, fretePeso: 0, saldo: 0, _margensFrete: [] };
     out[l.cliente].registros++;
     out[l.cliente].peso += num(l.peso_nf);
     out[l.cliente].fretePeso += num(l.frete_peso);
     out[l.cliente].saldo += num(l.saldo);
-    out[l.cliente]._margens.push(num(l.margem_lucro));
+    // Amostragem de margem = só Frete. Descarga tem margem 0 por definição (CTe=Contrato) e
+    // Diária é normalmente negativa (motorista pago na hora, CTe complementar entra depois) —
+    // misturar essas categorias distorceria o indicador de margem real por cliente.
+    if (l.categoria === "frete") out[l.cliente]._margensFrete.push(num(l.margem_lucro));
   });
-  Object.values(out).forEach((d) => { d.margemMedia = d._margens.length ? d._margens.reduce((s, v) => s + v, 0) / d._margens.length : 0; delete d._margens; });
+  Object.values(out).forEach((d) => { d.margemMedia = d._margensFrete.length ? d._margensFrete.reduce((s, v) => s + v, 0) / d._margensFrete.length : 0; delete d._margensFrete; });
   return out;
+}
+
+// ── Exportação: planilha formatada (mesmo modelo original FRETES/DESCARGAS/DIARIAS/LOCAL)
+// com indicadores por cliente/embarcadora + totais + aba RESUMO. Dispara download no navegador.
+export function gerarWorkbookXLSX(linhas, periodoRef) {
+  const wb = XLSX.utils.book_new();
+  const CAT_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
+  const COLS = ["Cliente", "CTRC", "Empresa", "Data Emissão", "Trecho", "NFS", "Placa", "Nome do Usuário",
+    "Nº Manifesto", "Nº Contrato Frete", "Valor NF", "Peso NF", "Frete Peso", "Total do Frete",
+    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)"];
+
+  const linhaArray = (l) => [
+    l.cliente, l.ctrc, l.empresa_cod, l.data_emissao, l.trecho, l.nfs, l.placa, l.nome_usuario,
+    l.numero_manifesto, l.numero_contrato, num(l.valor_nf), num(l.peso_nf), num(l.frete_peso),
+    num(l.total_frete), num(l.valor_contrato_frete), num(l.saldo), r2(num(l.margem_lucro)),
+  ];
+
+  const construirAba = (categoria, titulo) => {
+    const sub = linhas.filter((l) => l.categoria === categoria);
+    const porCliente = {};
+    sub.forEach((l) => { (porCliente[l.cliente] = porCliente[l.cliente] || []).push(l); });
+
+    const aoa = [COLS];
+    Object.keys(porCliente).sort().forEach((cli) => {
+      const rows = porCliente[cli];
+      rows.forEach((l) => aoa.push(linhaArray(l)));
+      const qtd = rows.length;
+      const somaPeso = rows.reduce((s, l) => s + num(l.peso_nf), 0);
+      const somaFretePeso = rows.reduce((s, l) => s + num(l.frete_peso), 0);
+      const somaSaldo = rows.reduce((s, l) => s + num(l.saldo), 0);
+      const mediaMargem = qtd ? rows.reduce((s, l) => s + num(l.margem_lucro), 0) / qtd : 0;
+      aoa.push([`Subtotal ${cli}`, `${qtd} reg.`, "", "", "", "", "", "", "", "", "", somaPeso, somaFretePeso, "", "", somaSaldo, r2(mediaMargem)]);
+      aoa.push([]);
+    });
+    const qtdTotal = sub.length;
+    const somaPesoTotal = sub.reduce((s, l) => s + num(l.peso_nf), 0);
+    const somaFretePesoTotal = sub.reduce((s, l) => s + num(l.frete_peso), 0);
+    const somaSaldoTotal = sub.reduce((s, l) => s + num(l.saldo), 0);
+    const mediaMargemTotal = qtdTotal ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / qtdTotal : 0;
+    aoa.push(["TOTAL GERAL", `${qtdTotal} reg.`, "", "", "", "", "", "", "", "", "", somaPesoTotal, somaFretePesoTotal, "", "", somaSaldoTotal, r2(mediaMargemTotal)]);
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    XLSX.utils.book_append_sheet(wb, ws, titulo);
+  };
+
+  construirAba("frete", "FRETES");
+  construirAba("descarga", "DESCARGAS");
+  construirAba("diaria", "DIARIAS");
+  construirAba("local", "LOCAL");
+
+  // RESUMO: indicadores por cliente/categoria + margem real (amostragem só de Frete)
+  const resumoAoa = [["Cliente", "Categoria", "Registros", "Peso (kg)", "Frete Peso (R$)", "Saldo (R$)", "Margem média (%)", "Obs"]];
+  const clientes = [...new Set(linhas.map((l) => l.cliente))].sort();
+  clientes.forEach((cli) => {
+    ["frete", "descarga", "local", "diaria"].forEach((cat) => {
+      const sub = linhas.filter((l) => l.cliente === cli && l.categoria === cat);
+      if (!sub.length) return;
+      const qtd = sub.length;
+      const peso = sub.reduce((s, l) => s + num(l.peso_nf), 0);
+      const fretePeso = sub.reduce((s, l) => s + num(l.frete_peso), 0);
+      const saldo = sub.reduce((s, l) => s + num(l.saldo), 0);
+      const margem = qtd ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / qtd : 0;
+      const obs = cat === "descarga" ? "margem 0 por definição (CTe = Contrato)"
+        : cat === "diaria" ? "margem negativa esperada (recebido via CTe complementar depois)" : "";
+      resumoAoa.push([cli, CAT_LABEL[cat], qtd, peso, fretePeso, saldo, r2(margem), obs]);
+    });
+  });
+  resumoAoa.push([]);
+  resumoAoa.push(["Margem real por cliente (amostragem só de Frete)"]);
+  resumoAoa.push(["Cliente", "Margem média Frete (%)"]);
+  clientes.forEach((cli) => {
+    const fretes = linhas.filter((l) => l.cliente === cli && l.categoria === "frete");
+    const margem = fretes.length ? fretes.reduce((s, l) => s + num(l.margem_lucro), 0) / fretes.length : 0;
+    resumoAoa.push([cli, r2(margem)]);
+  });
+
+  const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoa);
+  XLSX.utils.book_append_sheet(wb, wsResumo, "RESUMO");
+  wb.SheetNames.unshift(wb.SheetNames.pop()); // RESUMO primeiro
+
+  XLSX.writeFile(wb, `Conferencia_Faturamento_${periodoRef}.xlsx`);
 }
