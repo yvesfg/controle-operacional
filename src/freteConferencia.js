@@ -228,6 +228,22 @@ export function resumoPorCliente(linhas) {
   return out;
 }
 
+// Evolução dia a dia (data_emissao) do período — pra acompanhar quantos CTRCs
+// entraram de um dia pro outro, sem esperar o mês fechar.
+export function resumoPorDia(linhas) {
+  const out = {};
+  linhas.forEach((l) => {
+    const dia = l.data_emissao;
+    if (!dia) return;
+    out[dia] = out[dia] || { registros: 0, peso: 0, fretePeso: 0, saldo: 0 };
+    out[dia].registros++;
+    out[dia].peso += num(l.peso_nf);
+    out[dia].fretePeso += num(l.frete_peso);
+    out[dia].saldo += num(l.saldo);
+  });
+  return Object.entries(out).sort((a, b) => a[0].localeCompare(b[0])).map(([dia, d]) => ({ dia, ...d }));
+}
+
 // ── Exportação: planilha formatada (mesmo modelo original FRETES/DESCARGAS/DIARIAS/LOCAL)
 // com indicadores por cliente/embarcadora + totais + aba RESUMO. Dispara download no navegador.
 export function gerarWorkbookXLSX(linhas, periodoRef) {

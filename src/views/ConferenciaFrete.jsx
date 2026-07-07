@@ -2,7 +2,7 @@ import React from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
-  decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, gerarWorkbookXLSX,
+  decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
 } from "../freteConferencia.js";
 import KpiCard from "../components/KpiCard.jsx";
 
@@ -117,6 +117,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   const resumoCat = React.useMemo(() => resumoPorCategoria(linhasFiltradas), [linhasFiltradas]);
   const resumoCli = React.useMemo(() => resumoPorCliente(linhasFiltradas), [linhasFiltradas]);
+  const resumoDia = React.useMemo(() => resumoPorDia(linhasFiltradas), [linhasFiltradas]);
+  const totalMes = React.useMemo(() => Object.values(resumoCli).reduce((a, d) => ({
+    registros: a.registros + d.registros, peso: a.peso + d.peso, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo,
+  }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
 
   // Por usuário — quem lançou os registros hoje na fila de revisão, pra saber com quem falar.
   const resumoPorUsuario = React.useMemo(() => {
@@ -188,11 +192,46 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <span style={{ color: t.txt2 }}>{d.registros} reg.</span>
               <span style={{ color: t.txt2 }}>{pesoFmt(d.peso)}</span>
               <span style={{ fontWeight: 700, color: t.txt }}>{money(d.fretePeso)}</span>
+              <span style={{ fontWeight: 700, color: t.ouro }}>saldo {money(d.saldo)}</span>
               <span style={{ fontWeight: 700, color: d.margemMedia < 0 ? t.danger : d.margemMedia < 10 ? t.warn : t.verde }}>
                 margem {d.margemMedia.toFixed(1)}%
               </span>
             </div>
           ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 4px 2px", marginTop: 4, fontSize: 12 }}>
+            <span style={{ flex: 1, fontWeight: 800, color: t.txt, textTransform: "uppercase", fontSize: 10.5, letterSpacing: ".04em" }}>Total</span>
+            <span style={{ fontWeight: 700, color: t.txt }}>{totalMes.registros} reg.</span>
+            <span style={{ fontWeight: 700, color: t.txt }}>{pesoFmt(totalMes.peso)}</span>
+            <span style={{ fontWeight: 800, color: t.txt }}>{money(totalMes.fretePeso)}</span>
+            <span style={{ fontWeight: 800, color: t.ouro }}>saldo {money(totalMes.saldo)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Evolução diária — quantos CTRCs entraram por dia, pra acompanhar o mês sem esperar fechar */}
+      {resumoDia.length > 0 && (
+        <div style={{ ...card, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Evolução diária · {mesLabel(periodoRef)}</div>
+          {[...resumoDia].reverse().map((d, i, arr) => {
+            const anterior = arr[i + 1]; // arr já está em ordem decrescente (mais recente primeiro)
+            const delta = anterior ? d.registros - anterior.registros : null;
+            return (
+              <div key={d.dia} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 4px", borderBottom: `1px solid ${t.borda}55`, fontSize: 12 }}>
+                <span style={{ width: 74, flexShrink: 0, color: t.txt2, fontFamily: "var(--font-mono)" }}>
+                  {(() => { const p = d.dia.split("-"); return `${p[2]}/${p[1]}`; })()}
+                </span>
+                <span style={{ fontWeight: 700, color: t.txt, minWidth: 64 }}>{d.registros} CTRCs</span>
+                {delta !== null && (
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: delta > 0 ? t.verde : delta < 0 ? t.danger : t.txt2, minWidth: 40 }}>
+                    {delta > 0 ? "▲" : delta < 0 ? "▼" : "·"}{delta !== 0 ? Math.abs(delta) : ""}
+                  </span>
+                )}
+                <span style={{ color: t.txt2, marginLeft: "auto" }}>{pesoFmt(d.peso)}</span>
+                <span style={{ fontWeight: 700, color: t.txt }}>{money(d.fretePeso)}</span>
+                <span style={{ color: t.ouro }}>saldo {money(d.saldo)}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
