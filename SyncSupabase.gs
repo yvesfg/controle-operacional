@@ -119,11 +119,11 @@ function sincronizarComSupabase() {
         }
 
         // Valida origem — bloqueia valores fora do padrão
-        var ORIGENS_VALIDAS = ['IMPERATRIZ-MA', 'BELEM-PA', 'AÇAILÂNDIA-MA', 'ACAILANDIA-MA'];
+        var ORIGENS_VALIDAS = ['IMPERATRIZ-MA', 'BELEM-PA', 'AÇAILÂNDIA-MA', 'ACAILANDIA-MA', 'MARACANAU-CE'];
         if (reg.origem && ORIGENS_VALIDAS.indexOf(reg.origem) === -1) {
           statusGlobal.ignorados++;
           if (statusGlobal.motivos_ignorados.length < 20) {
-            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': origem invalida "' + reg.origem + '" — esperado: IMPERATRIZ-MA ou BELEM-PA');
+            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': origem invalida "' + reg.origem + '" — esperado: IMPERATRIZ-MA, BELEM-PA ou MARACANAU-CE');
           }
           continue;
         }

@@ -23,9 +23,11 @@ export function abaParaBase(nome) {
   return null; // aba desconhecida (ex.: Maracanaú) — ignorada
 }
 
+// SheetJS decodifica datas do Excel em UTC (cellDates: true) — usar getters locais
+// aqui deslocava o dia (ex.: 01/03 virava 28/02 em UTC-3). Getters UTC evitam o desvio.
 const dataISO = (d) => {
   if (d instanceof Date && !isNaN(d)) {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
   }
   return null;
 };

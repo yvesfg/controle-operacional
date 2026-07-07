@@ -193,13 +193,17 @@ export default function Resultado({ ctx }) {
         const porMes = {};
         foraMes.forEach((l) => { const m = mesDaLinha(l); porMes[m] = (porMes[m] || 0) + 1; });
         const det = Object.keys(porMes).sort().map((m) => `${mesLabel(m)}: ${porMes[m]}`).join(" · ");
+        const dataBR = (iso) => { const [y, mo, da] = iso.split("-"); return `${da}/${mo}/${y}`; };
+        const linhasDet = foraMes
+          .map((l) => `${dataBR(l.dt_mov)} · ${l.aba_origem} · R$ ${Number(l.valor).toFixed(2)} · ${l.natureza || l.historico || "-"}`)
+          .join("\n");
         const datadasNoMes = linhas.filter((l) => mesDaLinha(l)).length;
         if (datadasNoMes === 0) {
           showToast?.(`Nenhum lançamento datado de ${mesLabel(mesRef)} nas abas selecionadas (${foraMes.length} de outros meses: ${det}). Selecione o mês/abas corretos.`, "erro");
           return;
         }
         const msg = `As abas selecionadas têm ${foraMes.length} linha(s) de OUTRO mês (${det}) que serão IGNORADAS — `
-          + `só entram as de ${mesLabel(mesRef)}.\n\nContinuar?`;
+          + `só entram as de ${mesLabel(mesRef)}.\n\n${linhasDet}\n\nContinuar?`;
         if (!window.confirm(msg)) { showToast?.("Importação cancelada — selecione o mês correto.", "erro"); return; }
       }
       const porBase = {};
