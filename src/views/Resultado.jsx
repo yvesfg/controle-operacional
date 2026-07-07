@@ -81,6 +81,7 @@ export default function Resultado({ ctx }) {
   const [undoOpen, setUndoOpen] = React.useState(false);
   const [undoInput, setUndoInput] = React.useState("");
   const [sheetSel, setSheetSel] = React.useState({ open: false, sheetsMeta: [], checked: {}, pendingRows: [], fileName: "" });
+  const [foraMesSel, setForaMesSel] = React.useState({ open: false, linhas: [], foraMes: [], checked: {}, avisoVazio: false });
   const [busca, setBusca] = React.useState("");
   const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
   const [vincManual, setVincManual] = React.useState(null); // ind.id em modo de seleção manual
@@ -97,6 +98,7 @@ export default function Resultado({ ctx }) {
   useModalEsc(modal.open, () => setModal({ open: false, inicial: null }));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, registro: null }));
   useModalEsc(sheetSel.open, () => setSheetSel((s) => ({ ...s, open: false })));
+  useModalEsc(foraMesSel.open, () => setForaMesSel((s) => ({ ...s, open: false })));
 
   React.useEffect(() => {
     if (!buscaTodosMeses || !conn || !baseId) return;
@@ -163,51 +165,12 @@ export default function Resultado({ ctx }) {
     finally { setImporting(false); }
   };
 
-  const onConfirmSheets = async () => {
-    const { checked, pendingRows } = sheetSel;
-    // Filtra linhas das abas selecionadas e remove _sheetNome antes de gravar
-    // eslint-disable-next-line no-unused-vars
-    const selecionadas = pendingRows.filter(r => checked[r._sheetNome]).map(({ _sheetNome, ...rest }) => rest);
-    if (selecionadas.length === 0) { showToast?.("Nenhuma aba selecionada.", "warn"); return; }
-    setSheetSel(s => ({ ...s, open: false }));
+  // Grava as linhas definitivas (já com a decisão sobre as de outro mês tomada pelo usuário).
+  const finalizarImportacao = async (linhasParaImportar, ignoradasCount = 0) => {
     setImporting(true);
     try {
-      // Competência por DATA: só entram as linhas do mês selecionado (+ sem data); as datadas
-      // em outro mês são ignoradas — rede de segurança extra à seleção de abas, p/ evitar que
-      // lançamentos de outro mês caiam no mês errado (ex.: 03/2026 contaminado por 05/2026).
-      const mesDaLinha = (l) => (l.dt_mov ? String(l.dt_mov).slice(0, 7) : null);
-      const linhas = selecionadas.filter((l) => { const m = mesDaLinha(l); return !m || m === mesRef; });
-      const foraMes = selecionadas.filter((l) => { const m = mesDaLinha(l); return m && m !== mesRef; });
-      // Verifica filiais presentes após filtro
-      const presentes = new Set(linhas.map(l => l.aba_origem));
-      const ESPERADAS = [["AÇA", "Açailândia"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]];
-      const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
-      const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
-      if (faltando.length) {
-        const msg = `Filiais com lançamentos: ${achadas.join(", ") || "—"}.\n⚠ SEM lançamentos: ${faltando.join(", ")}.\nPode ser normal ou aba esquecida. Continuar?`;
-        if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
-      }
-      // Linhas de outro mês nas abas selecionadas: ignoradas. Se não sobrar nenhuma linha
-      // datada do mês selecionado, é o arquivo/aba errada → aborta (não importa só as sem data).
-      if (foraMes.length) {
-        const porMes = {};
-        foraMes.forEach((l) => { const m = mesDaLinha(l); porMes[m] = (porMes[m] || 0) + 1; });
-        const det = Object.keys(porMes).sort().map((m) => `${mesLabel(m)}: ${porMes[m]}`).join(" · ");
-        const dataBR = (iso) => { const [y, mo, da] = iso.split("-"); return `${da}/${mo}/${y}`; };
-        const linhasDet = foraMes
-          .map((l) => `${dataBR(l.dt_mov)} · ${l.aba_origem} · R$ ${Number(l.valor).toFixed(2)} · ${l.natureza || l.historico || "-"}`)
-          .join("\n");
-        const datadasNoMes = linhas.filter((l) => mesDaLinha(l)).length;
-        if (datadasNoMes === 0) {
-          showToast?.(`Nenhum lançamento datado de ${mesLabel(mesRef)} nas abas selecionadas (${foraMes.length} de outros meses: ${det}). Selecione o mês/abas corretos.`, "erro");
-          return;
-        }
-        const msg = `As abas selecionadas têm ${foraMes.length} linha(s) de OUTRO mês (${det}) que serão IGNORADAS — `
-          + `só entram as de ${mesLabel(mesRef)}.\n\n${linhasDet}\n\nContinuar?`;
-        if (!window.confirm(msg)) { showToast?.("Importação cancelada — selecione o mês correto.", "erro"); return; }
-      }
       const porBase = {};
-      linhas.forEach(l => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
+      linhasParaImportar.forEach(l => { (porBase[l.base_id] = porBase[l.base_id] || []).push(l); });
       let novasTodas = [], jaTotal = 0, existiaAlgum = false;
       const resumo = [];
       for (const b of Object.keys(porBase)) {
@@ -225,11 +188,50 @@ export default function Resultado({ ctx }) {
       const ids = (Array.isArray(inseridos) ? inseridos : []).map(r => r.id).filter(Boolean);
       setLastImportIds(ids);
       setUndoOpen(false);
-      showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)})${foraMes.length ? ` · ${foraMes.length} de outros meses ignoradas` : ""}.`, "ok");
+      showToast?.(`${novasTodas.length} novas despesas adicionadas (${mesLabel(mesRef)})${ignoradasCount ? ` · ${ignoradasCount} de outros meses deixadas de fora` : ""}.`, "ok");
       carregarMeses();
       await carregar();
     } catch (err) { showToast?.("Erro na importação: " + err.message, "erro"); }
     finally { setImporting(false); }
+  };
+
+  const onConfirmSheets = async () => {
+    const { checked, pendingRows } = sheetSel;
+    // Filtra linhas das abas selecionadas e remove _sheetNome antes de gravar
+    // eslint-disable-next-line no-unused-vars
+    const selecionadas = pendingRows.filter(r => checked[r._sheetNome]).map(({ _sheetNome, ...rest }) => rest);
+    if (selecionadas.length === 0) { showToast?.("Nenhuma aba selecionada.", "warn"); return; }
+    setSheetSel(s => ({ ...s, open: false }));
+    // Competência por DATA: linhas do mês selecionado (+ sem data) entram direto; as datadas
+    // em outro mês vão para conferência — a decisão de incluir cada uma (ex.: consolidação de
+    // pendentes de meses anteriores) é do usuário, linha a linha.
+    const mesDaLinha = (l) => (l.dt_mov ? String(l.dt_mov).slice(0, 7) : null);
+    const linhas = selecionadas.filter((l) => { const m = mesDaLinha(l); return !m || m === mesRef; });
+    const foraMes = selecionadas.filter((l) => { const m = mesDaLinha(l); return m && m !== mesRef; });
+    // Verifica filiais presentes após filtro
+    const presentes = new Set(linhas.map(l => l.aba_origem));
+    const ESPERADAS = [["AÇA", "Açailândia"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]];
+    const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
+    const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
+    if (faltando.length) {
+      const msg = `Filiais com lançamentos: ${achadas.join(", ") || "—"}.\n⚠ SEM lançamentos: ${faltando.join(", ")}.\nPode ser normal ou aba esquecida. Continuar?`;
+      if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
+    }
+    if (foraMes.length) {
+      const avisoVazio = linhas.filter((l) => mesDaLinha(l)).length === 0;
+      setForaMesSel({ open: true, linhas, foraMes, checked: {}, avisoVazio });
+      return;
+    }
+    await finalizarImportacao(linhas);
+  };
+
+  // Decisão do usuário sobre as linhas de outro mês: só as marcadas entram junto com as do mês.
+  const onConfirmForaMes = async () => {
+    const { linhas, foraMes, checked } = foraMesSel;
+    const incluidas = foraMes.filter((_, idx) => checked[String(idx)]);
+    const ignoradas = foraMes.length - incluidas.length;
+    setForaMesSel(s => ({ ...s, open: false }));
+    await finalizarImportacao([...linhas, ...incluidas], ignoradas);
   };
 
   const salvar = async (dados) => {
@@ -423,6 +425,61 @@ export default function Resultado({ ctx }) {
                   background: "var(--accent)", color: "#fff", border: "none",
                   opacity: Object.values(sheetSel.checked).every(v => !v) || importing ? .5 : 1 }}>
                 {importing ? "Importando..." : `Importar selecionadas`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal conferência de linhas de outro mês — decisão linha a linha do usuário */}
+      {foraMesSel.open && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setForaMesSel(s => ({ ...s, open: false }))}>
+          <div style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px",
+            minWidth: 340, maxWidth: 560, width: "90vw", boxShadow: "0 8px 40px rgba(0,0,0,.5)", maxHeight: "80vh", display: "flex", flexDirection: "column" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Linhas de outro mês</div>
+            <div style={{ fontSize: 11, color: t.txt2, marginBottom: 8 }}>
+              {foraMesSel.foraMes.length} linha(s) datada(s) fora de <b style={{ color: t.ouro }}>{mesLabel(mesRef)}</b>.
+              Marque as que devem entrar mesmo assim neste mês (ex.: consolidação de pendentes) — as demais ficam de fora.
+            </div>
+            {foraMesSel.avisoVazio && (
+              <div style={{ fontSize: 11, color: t.danger, background: `${t.danger}1a`, border: `1px solid ${t.danger}55`,
+                borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
+                ⚠ Nenhuma linha datada de {mesLabel(mesRef)} nas abas selecionadas — confira se é o arquivo/mês certo antes de marcar linhas abaixo.
+              </div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14, overflowY: "auto", flex: 1 }}>
+              {foraMesSel.foraMes.map((l, idx) => {
+                const k = String(idx);
+                const on = !!foraMesSel.checked[k];
+                const [y, mo, da] = String(l.dt_mov).split("-");
+                return (
+                  <label key={k} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8, cursor: "pointer",
+                    background: on ? `rgba(2,192,118,.08)` : t.card2, border: `1px solid ${on ? t.verde + "55" : t.borda}` }}>
+                    <input type="checkbox" checked={on}
+                      onChange={() => setForaMesSel(prev => ({ ...prev, checked: { ...prev.checked, [k]: !prev.checked[k] } }))}
+                      style={{ width: 15, height: 15, cursor: "pointer", accentColor: t.verde, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0, fontSize: 11, color: t.txt }}>
+                      <b>{da}/{mo}/{y}</b> · <span style={{ color: t.azulLt || t.txt2 }}>{l.aba_origem}</span> · {money(l.valor)} · {l.natureza || l.historico || "-"}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 10, color: t.txt2, marginBottom: 14 }}>
+              {Object.values(foraMesSel.checked).filter(Boolean).length} de {foraMesSel.foraMes.length} marcadas para entrar em {mesLabel(mesRef)}
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => { setForaMesSel(s => ({ ...s, open: false })); showToast?.("Importação cancelada.", "erro"); }}
+                style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
+                  background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                Cancelar
+              </button>
+              <button onClick={onConfirmForaMes} disabled={importing}
+                style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
+                  background: "var(--accent)", color: "#fff", border: "none", opacity: importing ? .5 : 1 }}>
+                {importing ? "Importando..." : "Confirmar importação"}
               </button>
             </div>
           </div>
