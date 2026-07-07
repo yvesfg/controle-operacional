@@ -106,8 +106,10 @@ export function parseFreteXLSX(file) {
         linhas.forEach((l) => { const k = chaveDuplicidade(l); (porChave[k] = porChave[k] || []).push(l); });
 
         linhas.forEach((l) => {
-          l.flag_negativa = l.margem_lucro < 0;
-          l.flag_baixa = l.margem_lucro >= 0 && l.margem_lucro < 10;
+          // Diária: motorista é pago na hora (débito) e o CTe complementar só entra na
+          // semana/mês seguinte — margem negativa aqui é o fluxo normal, não é alerta.
+          l.flag_negativa = l.categoria !== "diaria" && l.margem_lucro < 0;
+          l.flag_baixa = l.categoria !== "diaria" && l.margem_lucro >= 0 && l.margem_lucro < 10;
           l.flag_ambigua =
             (l.categoria === "descarga" || l.categoria === "local") &&
             ((l.margem_lucro > 0 && l.margem_lucro < 1) || (l.valor_contrato_frete === 0 && l.total_frete > 0));
