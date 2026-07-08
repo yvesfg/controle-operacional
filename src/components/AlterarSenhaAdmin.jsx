@@ -28,7 +28,7 @@ export default function AlterarSenhaAdmin({ t, css, showToast, onSalvar }) {
         <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
           <input type="password" placeholder="Nova senha (mín. 6 caracteres)" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)} style={{...css.inp,fontSize:12}} />
           <input type="password" placeholder="Confirmar nova senha" value={confirmar} onChange={e=>setConfirmar(e.target.value)} onKeyDown={e=>e.key==="Enter"&&salvar()} style={{...css.inp,fontSize:12}} />
-          <button onClick={salvar} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:8,padding:"10px 14px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+          <button onClick={salvar} style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.3)`,borderRadius:8,padding:"10px 14px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
             💾 Salvar Nova Senha
           </button>
         </div>

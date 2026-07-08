@@ -81,7 +81,7 @@ export default function ModalDetalhe({ ctx }) {
                       <button onClick={()=>{
                         const idx=DADOS.findIndex(x=>x.dt===r.dt);
                         setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
-                      }} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:7,padding:"7px 12px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,13)} Editar</button>
+                      }} style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:7,padding:"7px 12px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,13)} Editar</button>
                     )}
                     {canEditDetalhe && excluirConfirm!=="detalhe" && (
                       <button onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}} style={{background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.3)`,borderRadius:7,padding:"7px 10px",color:"var(--red)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>, "var(--red)", 14)}</button>
@@ -301,18 +301,18 @@ export default function ModalDetalhe({ ctx }) {
                     <div>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
-                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(240,185,11,.15)",border:"1px solid rgba(240,185,11,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="bed" s={10} c={t.ouro}/> DIÁRIA</span>}
+                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(217,98,43,.15)",border:"1px solid rgba(217,98,43,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="bed" s={10} c={t.ouro}/> DIÁRIA</span>}
                         {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="package" s={10} c={t.azulLt}/> DESCARGA</span>}
                         <span style={{flex:1,height:1,background:t.borda}} />
                       </div>
 
                       {/* ─ Pergunta DCC ─ */}
-                      <div style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:9,padding:"9px 12px",marginBottom:12}}>
+                      <div style={{background:`rgba(217,98,43,.05)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:9,padding:"9px 12px",marginBottom:12}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                           <span style={{fontSize:11,fontWeight:700,color:t.ouro,display:"inline-flex",alignItems:"center",gap:5}}><Icon n="dot" s={9} c={t.ouro}/> Existe DCC?</span>
                           <span style={{fontSize:9,color:t.txt2,flex:1}}>Documento de Cobrança Complementar</span>
                           {["sim","nao"].map(op=>(
-                            <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(240,185,11,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s",display:"inline-flex",alignItems:"center",gap:5}}>{op==="sim"?<><Icon n="check-circle" s={12} c="currentColor"/> Sim</>:<><Icon n="x-circle" s={12} c="currentColor"/> Não</>}</button>
+                            <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(217,98,43,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s",display:"inline-flex",alignItems:"center",gap:5}}>{op==="sim"?<><Icon n="check-circle" s={12} c="currentColor"/> Sim</>:<><Icon n="x-circle" s={12} c="currentColor"/> Não</>}</button>
                           ))}
                         </div>
                         {detalheTemDcc===null&&<div style={{fontSize:9,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
@@ -320,7 +320,7 @@ export default function ModalDetalhe({ ctx }) {
 
                       {/* ─ Minutas DCC — colapsável (aberto por padrão) ─ */}
                       {detalheTemDcc==="sim"&&<div style={{marginBottom:10}}>
-                        <button onClick={()=>setDetalheSecDcc(p=>!p)} style={{width:"100%",background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecDcc?6:0}}>
+                        <button onClick={()=>setDetalheSecDcc(p=>!p)} style={{width:"100%",background:`rgba(217,98,43,.07)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecDcc?6:0}}>
                           {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,13,2)}
                           <span style={{fontSize:10,fontWeight:700,color:t.ouro,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DCC</span>
                           <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDcc.length} minuta(s)</span>
@@ -328,11 +328,11 @@ export default function ModalDetalhe({ ctx }) {
                         </button>
                         {detalheSecDcc&&<div>
                           {detalheMinDcc.map((mn,idx)=>(
-                            <div key={idx} style={{background:`rgba(240,185,11,.05)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+                            <div key={idx} style={{background:`rgba(217,98,43,.05)`,border:`1px solid rgba(217,98,43,.18)`,borderRadius:8,padding:"8px 10px",marginBottom:6}}>
                               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                                 <div style={{display:"flex",gap:5}}>
                                   {["D01-MAT","D05-MAR"].map(tp=>(
-                                    <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(240,185,11,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                    <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(217,98,43,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
                                 </div>
@@ -346,7 +346,7 @@ export default function ModalDetalhe({ ctx }) {
                               </div>
                             </div>
                           ))}
-                          <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.06)`,border:`1px dashed rgba(240,185,11,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                          <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(217,98,43,.06)`,border:`1px dashed rgba(217,98,43,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
                         </div>}
                       </div>}
 
@@ -415,7 +415,7 @@ export default function ModalDetalhe({ ctx }) {
                         else if(r.status==="CARREGADO"){descStatus={i:"clock",l:"Aguardando Agenda"};descColor=t.ouro;}
                         if(!diariaItem && !temDescarga) return null;
                         return (
-                          <div style={{background:`rgba(240,185,11,.04)`,border:`1px solid rgba(240,185,11,.18)`,borderRadius:9,padding:"10px 12px",marginBottom:10}}>
+                          <div style={{background:`rgba(217,98,43,.04)`,border:`1px solid rgba(217,98,43,.18)`,borderRadius:9,padding:"10px 12px",marginBottom:10}}>
                             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:.5,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
                               {hIco(<><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></>,t.ouro,12)} Diárias & Descargas
                             </div>
@@ -428,7 +428,7 @@ export default function ModalDetalhe({ ctx }) {
                                   {r.diaria_prev&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Devida: <strong style={{color:t.ouro}}>{fmtMoeda(r.diaria_prev)}</strong></div>}
                                   {r.diaria_pg&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Paga: <strong style={{color:t.verde}}>{fmtMoeda(r.diaria_pg)}</strong></div>}
                                   {r.diaria_prev&&r.diaria_pg&&(()=>{const saldo=(parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);return saldo!==0&&<div style={{fontSize:9,color:saldo<0?t.danger:t.verde,marginTop:2,fontWeight:700}}>Saldo: {fmtMoeda(Math.abs(saldo))} {saldo<0?"a pagar":"a favor"}</div>;})()}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.ouro}44`,background:`rgba(240,185,11,.08)`,color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="clipboard" s={11} c="currentColor"/> Ver Diárias <Icon n="arrow-right" s={11} c="currentColor"/></button>
+                                  <button onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.ouro}44`,background:`rgba(217,98,43,.08)`,color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="clipboard" s={11} c="currentColor"/> Ver Diárias <Icon n="arrow-right" s={11} c="currentColor"/></button>
                                 </div>
                               )}
                               {temDescarga && (

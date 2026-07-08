@@ -238,7 +238,7 @@ export default function GestaoAVB({ ctx }) {
               )}
               {r.data_carr&&(
                 <span style={{fontSize:9,color:t.ouro,fontFamily:"var(--font-mono)",
-                  background:"rgba(240,185,11,.07)",borderRadius:4,padding:"2px 6px"}}>
+                  background:"rgba(217,98,43,.07)",borderRadius:4,padding:"2px 6px"}}>
                   ↑ {r.data_carr.slice(0,5)}
                 </span>
               )}

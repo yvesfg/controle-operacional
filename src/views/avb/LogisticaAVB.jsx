@@ -55,7 +55,7 @@ export default function LogisticaAVB({ ctx }) {
   const TILES = [
     { k:"transito", l:"Em Trânsito",      ct:emTransito.length,    cor:"var(--accent)", corLt:"var(--accent)", bg:"rgba(255,107,53,.07)", list:emTransito,
       svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></> },
-    { k:"prevHoje", l:"Prev. Hoje",        ct:prevHoje.length,      cor:t.ouro,          corLt:"#ffe57a",       bg:"rgba(240,185,11,.07)", list:prevHoje,
+    { k:"prevHoje", l:"Prev. Hoje",        ct:prevHoje.length,      cor:t.ouro,          corLt:"#ffe57a",       bg:"rgba(217,98,43,.07)", list:prevHoje,
       svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></> },
     { k:"pendente", l:"Pendentes",         ct:pendentes.length,     cor:"var(--orange)",        corLt:"#fde68a",       bg:"rgba(245,158,11,.07)", list:pendentes,
       svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></> },

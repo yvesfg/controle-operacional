@@ -113,9 +113,9 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
         <div style={{display:"flex",gap:8,flexWrap:"wrap",borderTop:"1px solid var(--border)",paddingTop:8}}>
           {r.ro&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(249,115,22,.1)",border:"1px solid rgba(249,115,22,.3)",borderRadius:5,padding:"2px 8px",color:"#f97316",fontWeight:700}}>RO {r.ro}</span>)}
           {r.ro_status&&<span style={{padding:'2px 6px',borderRadius:4,fontSize:9,fontWeight:700,
-            background:r.ro_status==='FINALIZADO'?'rgba(2,192,118,.1)':'rgba(240,185,11,.1)',
+            background:r.ro_status==='FINALIZADO'?'rgba(2,192,118,.1)':'rgba(217,98,43,.1)',
             color:r.ro_status==='FINALIZADO'?'var(--cat-green)':'var(--cat-gold)',
-            border:`1px solid ${r.ro_status==='FINALIZADO'?'rgba(2,192,118,.3)':'rgba(240,185,11,.3)'}`}}>
+            border:`1px solid ${r.ro_status==='FINALIZADO'?'rgba(2,192,118,.3)':'rgba(217,98,43,.3)'}`}}>
             {r.ro_status}
           </span>}
           {r.nfd?.numero&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,padding:"2px 8px",color:"var(--red)",fontWeight:700}}>NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</span>)}

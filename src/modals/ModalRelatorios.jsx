@@ -33,7 +33,7 @@ export default function ModalRelatorios({ ctx }) {
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:600,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             {/* Cabeçalho */}
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></>,t.ouro,20,1.8)}
               </div>
               <div>
@@ -177,7 +177,7 @@ export default function ModalRelatorios({ ctx }) {
                     {k:"sgs",l:"SGS"},
                     {k:"obs",l:"Observação"},
                   ].map(({k,l})=>(
-                    <label key={k} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 6px",borderRadius:6,border:`1px solid ${relGeralColunas[k]?t.ouro+"44":t.borda}`,cursor:"pointer",fontSize:10,background:relGeralColunas[k]?"rgba(240,185,11,.05)":"transparent",transition:"all .12s"}}>
+                    <label key={k} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 6px",borderRadius:6,border:`1px solid ${relGeralColunas[k]?t.ouro+"44":t.borda}`,cursor:"pointer",fontSize:10,background:relGeralColunas[k]?"rgba(217,98,43,.05)":"transparent",transition:"all .12s"}}>
                       <Toggle checked={!!relGeralColunas[k]} color={t.ouro} size={0.72} onChange={v=>setRelGeralColunas(p=>({...p,[k]:v}))} />
                       <span style={{color:relGeralColunas[k]?t.txt:t.txt2}}>{l}</span>
                     </label>
@@ -186,7 +186,7 @@ export default function ModalRelatorios({ ctx }) {
               </details>
             )}
             {/* Aviso */}
-            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18}}>
+            <div style={{background:`rgba(217,98,43,.06)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18}}>
               {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
               <span style={{marginLeft:6}}>Deixe datas em branco para incluir <strong style={{color:t.ouro}}>todos os registros</strong>. Filtros podem ser combinados.</span>
             </div>
@@ -229,7 +229,7 @@ export default function ModalRelatorios({ ctx }) {
                   });
                   if(relGeralSecoes.apontamentos) setTimeout(()=>gerarRelatorioOperacional(relGeralFrom,relGeralTo,{sgs:false,apontamentos:true}),800);
                 }}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:relGeralLoading?`rgba(240,185,11,.06)`:`rgba(240,185,11,.13)`,color:t.ouro,cursor:relGeralLoading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s",opacity:relGeralLoading?.6:1}}>
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:relGeralLoading?`rgba(217,98,43,.06)`:`rgba(217,98,43,.13)`,color:t.ouro,cursor:relGeralLoading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s",opacity:relGeralLoading?.6:1}}>
                 {relGeralLoading
                   ? <><span style={{fontSize:14,animation:"spin 1s linear infinite",display:"inline-block"}}>⏳</span> Buscando ocorrências...</>
                   : <>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}Gerar Relatório PDF</>
@@ -245,7 +245,7 @@ export default function ModalRelatorios({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelDiariaOpen(false)}>
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:560,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="bed" s={20} c={t.ouro}/></div>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="bed" s={20} c={t.ouro}/></div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Diárias</div>
                 <div style={{fontSize:10,color:t.txt2}}>Financeiro e status de diárias por período</div>
@@ -291,14 +291,14 @@ export default function ModalRelatorios({ ctx }) {
                 </select>
               </div>
             </div>
-            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
+            <div style={{background:`rgba(217,98,43,.06)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
               {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
               <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
             </div>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setRelDiariaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
               <button onClick={()=>{setRelDiariaOpen(false);gerarRelatorioDiarias(relDiariaFrom,relDiariaTo,{motorista:relDiariaMotorista,vinculo:relDiariaVinculo,status:relDiariaStatus});}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
               </button>
@@ -312,7 +312,7 @@ export default function ModalRelatorios({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelDescargaOpen(false)}>
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="package" s={20} c={t.ouro}/></div>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="package" s={20} c={t.ouro}/></div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Descargas</div>
                 <div style={{fontSize:10,color:t.txt2}}>Agenda, status e atrasos de descarga</div>
@@ -348,14 +348,14 @@ export default function ModalRelatorios({ ctx }) {
                 </select>
               </div>
             </div>
-            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
+            <div style={{background:`rgba(217,98,43,.06)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"center",gap:6}}>
               {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
               <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
             </div>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setRelDescargaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
               <button onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
               </button>
@@ -369,7 +369,7 @@ export default function ModalRelatorios({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelOperOpen(false)}>
           <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:500,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
-              <div style={{width:42,height:42,borderRadius:11,background:`rgba(240,185,11,.12)`,border:`1.5px solid rgba(240,185,11,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="clipboard" s={20} c={t.ouro}/></div>
+              <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="clipboard" s={20} c={t.ouro}/></div>
               <div>
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Operacional</div>
                 <div style={{fontSize:10,color:t.txt2}}>SGS, Apontamentos e ID Diárias por período</div>
@@ -404,7 +404,7 @@ export default function ModalRelatorios({ ctx }) {
               ))}
             </div>
             {/* Info */}
-            <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"flex-start",gap:6}}>
+            <div style={{background:`rgba(217,98,43,.06)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:8,padding:"8px 12px",fontSize:10,color:t.txt2,marginBottom:18,display:"flex",alignItems:"flex-start",gap:6}}>
               {hIco(<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,t.ouro,13,1.8)}
               <span>Deixe datas em branco para incluir <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
             </div>
@@ -415,7 +415,7 @@ export default function ModalRelatorios({ ctx }) {
                 Cancelar
               </button>
               <button onClick={()=>{setRelOperOpen(false);gerarRelatorioOperacional(relOperFrom,relOperTo,relOperSecoes);}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(240,185,11,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
               </button>

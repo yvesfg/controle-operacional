@@ -76,7 +76,7 @@ export default function DescargaView({ ctx }) {
     const TILES = [
       {k:"transito", l:"Em Trânsito", ct:emTransito.length,   cor:t.azul,   corLt:t.azulLt, bg:"rgba(22,119,255,.07)",  list:emTransito,
        svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>},
-      {k:"prevHoje", l:"Prev. Hoje",  ct:prevHoje.length,     cor:t.ouro,   corLt:"#ffe57a", bg:"rgba(240,185,11,.07)", list:prevHoje,
+      {k:"prevHoje", l:"Prev. Hoje",  ct:prevHoje.length,     cor:t.ouro,   corLt:"#ffe57a", bg:"rgba(217,98,43,.07)", list:prevHoje,
        svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>},
       {k:"pendente", l:"Pendentes",   ct:pendentes.length,    cor:"var(--orange)", corLt:"#fde68a", bg:"rgba(245,158,11,.07)", list:pendentes,
        svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>},
@@ -231,7 +231,7 @@ export default function DescargaView({ ctx }) {
               {[
                 {k:"hoje",svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,l:"Descarrega Hoje",ct:descargaData.hoje.length,cor:t.azul,corLt:t.azulLt,bg:"rgba(22,119,255,.07)"},
                 {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length,cor:t.danger,corLt:"var(--cat-red)",bg:"rgba(246,70,93,.07)"},
-                {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"var(--cat-gold)",corLt:"#ffe57a",bg:"rgba(240,185,11,.07)"},
+                {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"var(--cat-gold)",corLt:"#ffe57a",bg:"rgba(217,98,43,.07)"},
                 {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"var(--cat-purple)",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"},
                 {k:"carrega",svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,l:"Carrega Hoje",ct:descargaData.carregaHoje?.length||0,cor:t.verde,corLt:"var(--cat-mint)",bg:"rgba(2,192,118,.07)"},
                 {k:"semMotorista",svg:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></>,l:"Sem Motorista",ct:descargaData.semMotorista?.length||0,cor:"var(--cat-purple)",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
@@ -262,17 +262,17 @@ export default function DescargaView({ ctx }) {
                 <div className="co-filter-bar">
                   <span className="co-filter-bar__label">Filtrar:</span>
                   <select value={dscFiltroAno} onChange={e=>{setDscFiltroAno(e.target.value);setDscFiltroMes("");}}
-                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroAno?t.ouro:t.borda}`,background:dscFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroAno?t.ouro:t.borda}`,background:dscFiltroAno?`rgba(217,98,43,.08)`:t.bg,color:dscFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                     <option value="">Todos os Anos</option>
                     {anosD.map(a=><option key={a} value={a}>{a}</option>)}
                   </select>
                   <select value={dscFiltroMes} onChange={e=>setDscFiltroMes(e.target.value)}
-                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroMes?t.ouro:t.borda}`,background:dscFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroMes?t.ouro:t.borda}`,background:dscFiltroMes?`rgba(217,98,43,.08)`:t.bg,color:dscFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                     <option value="">Todos os Meses</option>
                     {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
                   </select>
                   <select value={dscFiltroOrigem} onChange={e=>setDscFiltroOrigem(e.target.value)}
-                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dscFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:dscFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dscFiltroOrigem!=="todas"?`rgba(217,98,43,.08)`:t.bg,color:dscFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
                     <option value="todas">Todas as Origens</option>
                     {origensD.map(o=><option key={o} value={o}>{o}</option>)}
                   </select>
@@ -350,7 +350,7 @@ export default function DescargaView({ ctx }) {
               // ── MODO BLOCOS (Opção C com avatar) ──
               <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(descargaCols,2):descargaCols},minmax(0,1fr))`,gap:isMobile?8:10,width:"100%"}}>
                 {/* Banner truncamento descarga */}
-                {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:dscTab==="carrega"?descargaData.carregaHoje:dscTab==="semMotorista"?descargaData.semMotorista:descargaData.atrasados;const _iniB=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimB=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _fb=_db.filter(r=>{const ym=_pymB(r.data_carr||r.data_agenda||"");if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniB||_fimB){const d=ym?.full||null;if(!d)return false;if(_iniB&&d<_iniB)return false;if(_fimB&&d>_fimB)return false;}return true;});return _fb.length>80?(<div style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(240,185,11,.08)",border:"1px solid rgba(240,185,11,.25)",fontSize:11,color:t.ouro}}>Mostrando 80 de {_fb.length} — refine os filtros para ver todos</div>):null;})()}
+                {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:dscTab==="carrega"?descargaData.carregaHoje:dscTab==="semMotorista"?descargaData.semMotorista:descargaData.atrasados;const _iniB=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimB=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _fb=_db.filter(r=>{const ym=_pymB(r.data_carr||r.data_agenda||"");if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniB||_fimB){const d=ym?.full||null;if(!d)return false;if(_iniB&&d<_iniB)return false;if(_fimB&&d>_fimB)return false;}return true;});return _fb.length>80?(<div style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(217,98,43,.08)",border:"1px solid rgba(217,98,43,.25)",fontSize:11,color:t.ouro}}>Mostrando 80 de {_fb.length} — refine os filtros para ver todos</div>):null;})()}
                 {(()=>{const _db=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:dscTab==="carrega"?descargaData.carregaHoje:dscTab==="semMotorista"?descargaData.semMotorista:descargaData.atrasados;const _iniB=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimB=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _fb=_db.filter(r=>{const ym=_pymB(r.data_carr||r.data_agenda||"");if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniB||_fimB){const d=ym?.full||null;if(!d)return false;if(_iniB&&d<_iniB)return false;if(_fimB&&d>_fimB)return false;}return true;});return descargaNavDT?[..._fb].sort((a,b)=>a.dt===descargaNavDT?-1:b.dt===descargaNavDT?1:0):_fb;})().slice(0,80).map((r,i) => {
                   const da = parseData(r.data_agenda);
                   const dias = da ? diffDias(da, new Date(dscData+"T00:00:00")) : null;
@@ -358,7 +358,7 @@ export default function DescargaView({ ctx }) {
                   const isAguardando = dscTab === "aguardando";
                   const _isDHL3 = descargaNavDT && r.dt === descargaNavDT;
                   const accentC = _isDHL3?t.azulLt:isAtrasado ? t.danger : isAguardando ? "var(--cat-gold)" : t.azul;
-                  const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : isAguardando ? `rgba(240,185,11,.1)` : `rgba(22,119,255,.1)`;
+                  const avatarBg = isAtrasado ? `rgba(246,70,93,.1)` : isAguardando ? `rgba(217,98,43,.1)` : `rgba(22,119,255,.1)`;
                   const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
                   const saldoPg = parseFloat(r.saldo), vl = parseFloat(r.vl_contrato);
                   const pgStatus = !isNaN(saldoPg)&&saldoPg===0&&!isNaN(vl)&&vl>0 ? "pago" : !isNaN(saldoPg)&&saldoPg>0 ? "pendente" : null;
@@ -539,7 +539,7 @@ export default function DescargaView({ ctx }) {
                       const KPIS = [
                         {k:"BATE",l:"Bate",c:"var(--cat-green)",bg:"rgba(2,192,118,.08)",v:totais.bate},
                         {k:"MAIOR",l:"Planilha Maior",c:"var(--cat-red)",bg:"rgba(246,70,93,.08)",v:totais.maior},
-                        {k:"MENOR",l:"Planilha Menor",c:"var(--cat-gold)",bg:"rgba(240,185,11,.08)",v:totais.menor},
+                        {k:"MENOR",l:"Planilha Menor",c:"var(--cat-gold)",bg:"rgba(217,98,43,.08)",v:totais.menor},
                         {k:"SEM_APP",l:"Sem Pag.App",c:"var(--cat-orange)",bg:"rgba(255,152,0,.08)",v:totais.semApp},
                         {k:"SEM_DADOS",l:"Sem DT",c:"var(--cat-gray)",bg:t.card2,v:totais.semDados},
                       ];
@@ -568,7 +568,7 @@ export default function DescargaView({ ctx }) {
                           {/* Alertas de tipo */}
                           {(totais.semStrech>0||totais.semDescarga>0)&&(<div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
                             {totais.semStrech>0&&<span style={{fontSize:10,background:"rgba(246,70,93,.1)",border:"1px solid #f6465d44",borderRadius:6,padding:"3px 10px",color:"var(--cat-red)"}}>⚠ {totais.semStrech} NFs com Descarga sem Stretch</span>}
-                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(240,185,11,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"var(--cat-gold)"}}>⚠ {totais.semDescarga} NFs com Stretch sem Descarga</span>}
+                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(217,98,43,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"var(--cat-gold)"}}>⚠ {totais.semDescarga} NFs com Stretch sem Descarga</span>}
                           </div>)}
                           {/* Totais */}
                           <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"7px 12px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10}}>

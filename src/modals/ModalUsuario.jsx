@@ -58,7 +58,7 @@ export default function ModalUsuario({ ctx }) {
                     {k:"operador",ico:"settings",l:"Operador",desc:"Edita operacional"},
                     {k:"visualizador",ico:"eye",l:"Visual.",desc:"Somente leitura"},
                   ].map(r => (
-                    <div key={r.k} {...clickable(()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}})))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(240,185,11,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
+                    <div key={r.k} {...clickable(()=>setFormData(p=>({...p,perfil:r.k,perms:{...PERMS_PADRAO[r.k]}})))} style={{border:`1.5px solid ${(formData.perfil||"operador")===r.k?t.ouro:t.borda}`,borderRadius:8,padding:"8px 4px",cursor:"pointer",background:(formData.perfil||"operador")===r.k?`rgba(217,98,43,.08)`:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all .2s",textAlign:"center"}}>
                       <Icon n={r.ico} s={16} c={(formData.perfil||"operador")===r.k?t.ouro:t.txt2}/>
                       <span style={{fontSize:10,fontWeight:700,color:(formData.perfil||"operador")===r.k?t.ouro:t.txt2}}>{r.l}</span>
                       <span style={{fontSize:8,color:t.txt2,lineHeight:1.2}}>{r.desc}</span>

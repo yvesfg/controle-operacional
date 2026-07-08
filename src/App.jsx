@@ -890,7 +890,7 @@ export default function App() {
     const isDark = theme === "dark";
     const gridC = isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.06)";
     const tickC = isDark ? "#848e9c" : "#6b7280";
-    const PIE_COLORS = ["rgba(240,185,11,.8)","rgba(2,192,118,.8)","rgba(22,119,255,.8)","rgba(246,70,93,.8)","rgba(156,39,176,.8)","rgba(255,152,0,.8)","rgba(0,188,212,.8)","rgba(96,125,139,.8)"];
+    const PIE_COLORS = ["rgba(217,98,43,.8)","rgba(2,192,118,.8)","rgba(22,119,255,.8)","rgba(246,70,93,.8)","rgba(156,39,176,.8)","rgba(255,152,0,.8)","rgba(0,188,212,.8)","rgba(96,125,139,.8)"];
 
     if (chartInstances.current.c) chartInstances.current.c.destroy();
     if (chartInstances.current.f) chartInstances.current.f.destroy();
@@ -937,7 +937,7 @@ export default function App() {
 
     if (dashChartType === "bar" && chartCarregRef.current) {
       chartInstances.current.c = new Chart(chartCarregRef.current, {
-        type:"bar", data:{labels:labelsC, datasets:[{label:"Carregamentos",data:dataC,backgroundColor:"rgba(240,185,11,.65)",borderColor:"rgba(240,185,11,1)",borderWidth:1.5,borderRadius:6}]},
+        type:"bar", data:{labels:labelsC, datasets:[{label:"Carregamentos",data:dataC,backgroundColor:"rgba(217,98,43,.65)",borderColor:"rgba(217,98,43,1)",borderWidth:1.5,borderRadius:6}]},
         options:{responsive:true,maintainAspectRatio:false,onClick:onChartClick,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>dashGroupBy!=="mes"?`${ctx.raw} viagens · toque para detalhes`:`${ctx.raw}`}}},scales:{y:{ticks:{color:tickC},grid:{color:gridC}},x:{ticks:{color:tickC,maxRotation:45},grid:{display:false}}}}
       });
       if (dashGroupBy !== "mes" && chartCarregRef.current) chartCarregRef.current.style.cursor = "pointer";
@@ -1111,7 +1111,7 @@ export default function App() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
       stroke={a ? t.ouro : t.txt2} strokeWidth="1.8"
       strokeLinecap="round" strokeLinejoin="round"
-      style={{display:"block",transition:"stroke .18s",filter:a?"drop-shadow(0 0 5px rgba(240,185,11,.55))":"none"}}
+      style={{display:"block",transition:"stroke .18s",filter:a?"drop-shadow(0 0 5px rgba(217,98,43,.55))":"none"}}
       {...extra}>
       {paths}
     </svg>
@@ -1740,7 +1740,7 @@ export default function App() {
       {/* ═══ FAB — só mobile (desktop tem botão "Nova DT" no topbar) ═══ */}
       {canEdit && !isWide && (
         <div style={{position:"fixed",bottom:74,right:14,zIndex:200}}>
-          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:50,height:50,background:t.ouro,borderRadius:14,border:"none",boxShadow:"0 5px 20px rgba(240,185,11,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
+          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:50,height:50,background:t.ouro,borderRadius:14,border:"none",boxShadow:"0 5px 20px rgba(217,98,43,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
             <span style={{fontSize:18,color:"#000"}}>＋</span>
             <span style={{fontSize:11,fontWeight:700,color:t.txt,letterSpacing:.8,textTransform:"uppercase"}}>NOVO</span>
           </button>

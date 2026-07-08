@@ -117,7 +117,7 @@ function ModalEditComponent({ ctx }) {
         </label>
 
         {f.type==="checkbox" ? (
-          <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${formData[f.k]==="sim"?t.ouro:t.borda}`,background:formData[f.k]==="sim"?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
+          <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"8px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${formData[f.k]==="sim"?t.ouro:t.borda}`,background:formData[f.k]==="sim"?`rgba(217,98,43,.07)`:t.inputBg,transition:"border-color .15s"}}>
             <Toggle checked={formData[f.k]==="sim"} color={t.ouro} onChange={checked=>setFormData(p=>({...p,[f.k]:checked?"sim":"", ...(checked?{data_desc:""}:{})}))} />
             <span style={{fontSize:11,color:formData[f.k]==="sim"?t.ouro:t.txt2,fontWeight:formData[f.k]==="sim"?700:400}}>
               {formData[f.k]==="sim" ? <span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon n="clock" s={11} c="currentColor"/> Aguardando descarga</span> : "Marcar como Aguardando"}
@@ -153,7 +153,7 @@ function ModalEditComponent({ ctx }) {
             const isOC = (formData[f.k]||"").toUpperCase().trim() === "OC";
             return (
               <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                <label style={{display:"flex",alignItems:"center",gap:7,cursor:isLocked?"not-allowed":"pointer",padding:"6px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${isOC?t.ouro:t.borda}`,background:isOC?`rgba(240,185,11,.07)`:t.inputBg,transition:"border-color .15s"}}>
+                <label style={{display:"flex",alignItems:"center",gap:7,cursor:isLocked?"not-allowed":"pointer",padding:"6px 10px",borderRadius:DESIGN.r.inp,border:`1.5px solid ${isOC?t.ouro:t.borda}`,background:isOC?`rgba(217,98,43,.07)`:t.inputBg,transition:"border-color .15s"}}>
                   <Toggle checked={isOC} disabled={isLocked} color={t.ouro} size={0.9} onChange={v=>setFormData(p=>({...p,[f.k]:v?"OC":""}))} />
                   <span style={{fontSize:10,color:isOC?t.ouro:t.txt2,fontWeight:isOC?700:400,letterSpacing:.3}}>
                     {isOC ? <span style={{display:"inline-flex",alignItems:"center",gap:5}}><Icon n="clipboard" s={11} c="currentColor"/> OC – Ordem de Chegada</span> : "OC (sem data fixa)"}
@@ -212,7 +212,7 @@ function ModalEditComponent({ ctx }) {
               }
               if (f.k==="chegada" && v) setOcorrChegadaAlert(true);
             }}
-            style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:(isLocked||isDescAguardando)?"not-allowed":"text",opacity:(isLocked||isDescAguardando)?0.5:1,background:isDescAguardando?`rgba(240,185,11,.04)`:t.inputBg}}
+            style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:(isLocked||isDescAguardando)?"not-allowed":"text",opacity:(isLocked||isDescAguardando)?0.5:1,background:isDescAguardando?`rgba(217,98,43,.04)`:t.inputBg}}
           />
         )}
       </div>
@@ -228,7 +228,7 @@ function ModalEditComponent({ ctx }) {
           <span style={{flex:1,height:1,background:`rgba(22,119,255,.12)`}} />
         </div>
         {section.s==="Financeiro" && !canFin && (
-          <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:8,padding:"8px 10px",fontSize:10,color:t.ouro,marginBottom:8,display:"flex",alignItems:"flex-start",gap:6}}>
+          <div style={{background:`rgba(217,98,43,.07)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:8,padding:"8px 10px",fontSize:10,color:t.ouro,marginBottom:8,display:"flex",alignItems:"flex-start",gap:6}}>
             <Icon n="lock" s={12} c={t.ouro} style={{marginTop:1}}/><span>Campos financeiros visíveis apenas para Admin/Gerente. Contate o administrador para alterar.</span>
           </div>
         )}

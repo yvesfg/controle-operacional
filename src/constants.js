@@ -139,6 +139,12 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 32",
+    itens: [
+      "FIX · Rebrand incompleto: 144 literais rgba(240,185,11,...) / rgba(252,213,53,...) -- o amarelo Binance antigo em formato rgba() -- ainda hardcoded em 24 arquivos (graficos Chart.js, glows, sombras, botoes de filtro ativo). O script de substituicao da Sessao 28 so casava #hex exato, nunca tocou rgba(). Substituido por rgba(217,98,43,...) preservando o alpha de cada ocorrencia -- app inteiro agora consistente no terracota, incluindo os graficos do Dashboard.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 31",
     itens: [
       "STYLE · Badges de status genuinos convertidos pra solido + texto branco: contador 'pendentes' e 'sinalizados' (ConferenciaFrete.jsx), badge 'ATR' de atraso (DashboardView.jsx).",

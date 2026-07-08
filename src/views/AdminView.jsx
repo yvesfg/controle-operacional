@@ -138,7 +138,7 @@ export default function AdminView({ ctx }) {
                         </div>
                       </div>
                       {syncStatus.motivos_ignorados?.length>0&&(
-                        <div style={{background:`rgba(240,185,11,.06)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:7,padding:"8px 10px"}}>
+                        <div style={{background:`rgba(217,98,43,.06)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:7,padding:"8px 10px"}}>
                           <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:4}}>⚠️ Linhas ignoradas (sem DT preenchida):</div>
                           {syncStatus.motivos_ignorados.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
                         </div>
@@ -565,7 +565,7 @@ function mapearColuna(n){
                 {/* Sub-abas */}
                 <div style={{display:"flex",gap:5,marginBottom:12}}>
                   {[{k:"dev",l:"🧑‍💻 Desenvolvimento"},{k:"op",l:"⚙️ Operacional"}].map(st=>(
-                    <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.badge,cursor:"pointer",background:logsSubTab===st.k?`rgba(240,185,11,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{st.l}</button>
+                    <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.badge,cursor:"pointer",background:logsSubTab===st.k?`rgba(217,98,43,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{st.l}</button>
                   ))}
                   {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}>↺ Atualizar</button>}
                 </div>
@@ -607,7 +607,7 @@ function mapearColuna(n){
                             <>
                               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
                                 {Object.entries(auditReport.tipos).map(([tipo,count])=>(
-                                  <span key={tipo} style={{...css.badge(t.ouro,`rgba(240,185,11,.08)`,`rgba(240,185,11,.25)`)}}>{tipo}: {count}</span>
+                                  <span key={tipo} style={{...css.badge(t.ouro,`rgba(217,98,43,.08)`,`rgba(217,98,43,.25)`)}}>{tipo}: {count}</span>
                                 ))}
                               </div>
                               <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>

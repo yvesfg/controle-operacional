@@ -206,7 +206,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                         style={{
                           padding: "3px 9px", borderRadius: 5,
                           border: `1.5px solid ${sel ? "var(--cat-gold)" : t.borda}`,
-                          background: sel ? "rgba(240,185,11,0.13)" : "transparent",
+                          background: sel ? "rgba(217,98,43,0.13)" : "transparent",
                           color: sel ? "var(--cat-gold)" : t.txt2,
                           fontSize: 10, fontWeight: sel ? 700 : 400,
                           cursor: "pointer", fontFamily: "inherit",
@@ -221,7 +221,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                         display: "inline-flex", alignItems: "center", gap: 4,
                         padding: "3px 6px 3px 9px", borderRadius: 5,
                         border: "1.5px solid var(--cat-gold)",
-                        background: "rgba(240,185,11,0.13)",
+                        background: "rgba(217,98,43,0.13)",
                         color: "var(--cat-gold)", fontSize: 10, fontWeight: 700,
                       }}
                     >

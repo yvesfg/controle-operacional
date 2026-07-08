@@ -71,7 +71,7 @@ export default function ModalNFD({ ctx }) {
                           const sel=cur.includes(nf);
                           return(<button key={nf} onClick={()=>{const next=sel?cur.filter(x=>x!==nf):[...cur,nf];setNfdForm(p=>({...p,nfs:next.join(', ')}));}}
                             style={{padding:'4px 10px',borderRadius:6,border:`1.5px solid ${sel?'var(--cat-gold)':t.borda}`,
-                              background:sel?'rgba(240,185,11,.1)':t.bg,color:sel?'var(--cat-gold)':t.txt2,
+                              background:sel?'rgba(217,98,43,.1)':t.bg,color:sel?'var(--cat-gold)':t.txt2,
                               fontSize:10,fontWeight:sel?700:400,cursor:'pointer'}}>
                             {nf}
                           </button>);
@@ -139,14 +139,14 @@ export default function ModalNFD({ ctx }) {
                 }catch(e){showToast("⚠️ IA: "+e.message,"warn");}
                 finally{setIaLoading(false);}
               }} style={{width:"100%",marginBottom:10,padding:"9px 10px",borderRadius:9,
-                border:`1.5px solid ${t.ouro}`,background:`rgba(240,185,11,.08)`,color:t.ouro,
+                border:`1.5px solid ${t.ouro}`,background:`rgba(217,98,43,.08)`,color:t.ouro,
                 fontWeight:700,fontSize:12,cursor:iaLoading?"wait":"pointer",fontFamily:"inherit",
                 display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:iaLoading?.6:1}}>
                 {iaLoading?"Analisando foto…":<><Icon n="sparkles" s={13} c={t.ouro}/> Analisar foto com IA</>}
               </button>
             )}
             {/* Checkbox registrar outra */}
-            <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(240,185,11,.04)`,cursor:"pointer",userSelect:"none"}}>
+            <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(217,98,43,.04)`,cursor:"pointer",userSelect:"none"}}>
               <Toggle checked={nfdRegistrarOutra} color="#F3BA2F" onChange={setNfdRegistrarOutra} />
               <span style={{fontSize:11,color:nfdRegistrarOutra?"#F3BA2F":t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
             </label>

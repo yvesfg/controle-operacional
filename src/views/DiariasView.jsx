@@ -41,11 +41,11 @@ export default function DiariasView({ ctx }) {
   return (
           <div>
             {diariaNavDT && (
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(240,185,11,.08)`,border:`1px solid rgba(240,185,11,.3)`}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(217,98,43,.08)`,border:`1px solid rgba(217,98,43,.3)`}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13)}
                 <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>DT {diariaNavDT}</span>
                 <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
-                <button onClick={()=>setDiariaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(240,185,11,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✕ Limpar</button>
+                <button onClick={()=>setDiariaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(217,98,43,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✕ Limpar</button>
               </div>
             )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
@@ -74,7 +74,7 @@ export default function DiariasView({ ctx }) {
               {[
                 {k:"ok",       svg:<><polyline points="20 6 9 17 4 12"/></>,           l:"No Prazo",      ct:diariasData.ok,    cor:t.verde,   corLt:"var(--cat-mint)", bg:"rgba(2,192,118,.07)"},
                 {k:"atraso",   svg:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>, l:"Perdeu Agenda",ct:diariasData.atraso,cor:t.danger, corLt:"var(--cat-red)", bg:"rgba(246,70,93,.07)"},
-                {k:"pendente", svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Sem Descarga",ct:diariasData.pend,  cor:t.ouro,    corLt:"#ffe57a", bg:"rgba(240,185,11,.07)"},
+                {k:"pendente", svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Sem Descarga",ct:diariasData.pend,  cor:t.ouro,    corLt:"#ffe57a", bg:"rgba(217,98,43,.07)"},
               ].map(tb => (
                 <div key={tb.k} {...clickable(()=>setDFiltro(dFiltro===tb.k?"todos":tb.k))} style={{border:`1.5px solid ${dFiltro===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dFiltro===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dFiltro===tb.k?tb.corLt:t.txt2,22)}
@@ -101,15 +101,15 @@ export default function DiariasView({ ctx }) {
                   return (
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 10px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,flexWrap:"wrap"}}>
                       <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-                      <select value={dPlanFiltroAno} onChange={e=>{setDPlanFiltroAno(e.target.value);setDPlanFiltroMes("");}} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      <select value={dPlanFiltroAno} onChange={e=>{setDPlanFiltroAno(e.target.value);setDPlanFiltroMes("");}} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                         <option value="">Todos os Anos</option>
                         {anosR.map(a=><option key={a} value={a}>{a}</option>)}
                       </select>
-                      <select value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      <select value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                         <option value="">Todos os Meses</option>
                         {mesesR.map(m=><option key={m} value={m}>{MESES_PTR[m]||m}</option>)}
                       </select>
-                      <select value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                      <select value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
                         <option value="todas">Todas as Origens</option>
                         {origensR.map(o=><option key={o} value={o}>{o}</option>)}
                       </select>
@@ -126,7 +126,7 @@ export default function DiariasView({ ctx }) {
                 {/* Filtro + toolbar de view */}
                 <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
                   {[{k:"todos",l:"Todos"},{k:"diaria",l:"Com Diária"},{k:"atraso",l:"Perdeu Agenda"},{k:"sem_diaria",l:"Sem Diária"},{k:"pendente",l:"Aguardando"}].map(f => (
-                    <button key={f.k} onClick={()=>setDFiltro(f.k)} style={{padding:"10px 14px",fontSize:11,fontWeight:700,minHeight:44,border:`1.5px solid ${dFiltro===f.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dFiltro===f.k?`rgba(240,185,11,.07)`:t.card2,color:dFiltro===f.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{f.l}</button>
+                    <button key={f.k} onClick={()=>setDFiltro(f.k)} style={{padding:"10px 14px",fontSize:11,fontWeight:700,minHeight:44,border:`1.5px solid ${dFiltro===f.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dFiltro===f.k?`rgba(217,98,43,.07)`:t.card2,color:dFiltro===f.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{f.l}</button>
                   ))}
                 </div>
                 {/* Toolbar view */}
@@ -165,7 +165,7 @@ export default function DiariasView({ ctx }) {
                       if(_iRL||_fRL){const d=ym?.full||null;if(!d)return false;if(_iRL&&d<_iRL)return false;if(_fRL&&d>_fRL)return false;}
                       return true;
                     });
-                    const _sorted=diariaNavDT ? [..._dAll].sort((a,b)=>a.r.dt===diariaNavDT?-1:b.r.dt===diariaNavDT?1:0) : _dAll;const _banner=_sorted.length>80?<div key="__banner_rl" style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(240,185,11,.08)",border:"1px solid rgba(240,185,11,.25)",fontSize:11,color:t.ouro}}>Mostrando 80 de {_sorted.length} — refine os filtros para ver todos</div>:null;const _items=_sorted.slice(0,80).map((item,idx) => {
+                    const _sorted=diariaNavDT ? [..._dAll].sort((a,b)=>a.r.dt===diariaNavDT?-1:b.r.dt===diariaNavDT?1:0) : _dAll;const _banner=_sorted.length>80?<div key="__banner_rl" style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(217,98,43,.08)",border:"1px solid rgba(217,98,43,.25)",fontSize:11,color:t.ouro}}>Mostrando 80 de {_sorted.length} — refine os filtros para ver todos</div>:null;const _items=_sorted.slice(0,80).map((item,idx) => {
                     const {r,tipo,dias,temDiaria} = item;
                     const _isDHL = diariaNavDT && r.dt === diariaNavDT;
                     const borderC = _isDHL?t.ouro:tipo==="diaria"?t.danger:tipo==="atraso"?t.ouro:tipo==="sem_diaria"?t.verde:tipo==="ok"?t.verde:t.txt2;
@@ -176,9 +176,9 @@ export default function DiariasView({ ctx }) {
                       :tipo==="sem_diaria"?"✅ Sem diária"
                       :tipo==="ok"?"✅ No prazo"
                       :"⏳ Aguardando";
-                    const tipoColor = tipo==="diaria"?`rgba(246,70,93,.08)`:tipo==="atraso"?`rgba(240,185,11,.08)`:tipo==="sem_diaria"?`rgba(2,192,118,.08)`:tipo==="ok"?`rgba(2,192,118,.08)`:`rgba(240,185,11,.06)`;
+                    const tipoColor = tipo==="diaria"?`rgba(246,70,93,.08)`:tipo==="atraso"?`rgba(217,98,43,.08)`:tipo==="sem_diaria"?`rgba(2,192,118,.08)`:tipo==="ok"?`rgba(2,192,118,.08)`:`rgba(217,98,43,.06)`;
                     return (
-                      <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:_isDHL?`rgba(240,185,11,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:hexRgb(borderC,.5)}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(240,185,11,.22)`:"none"}}>
+                      <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:_isDHL?`rgba(217,98,43,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:hexRgb(borderC,.5)}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(217,98,43,.22)`:"none"}}>
                         <div style={{fontSize:16,fontWeight:700,color:t.txt,marginBottom:5,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           {r.nome||"—"}
                           <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:tipoColor,color:borderC,border:`1px solid ${borderC}33`}}>
@@ -201,11 +201,11 @@ export default function DiariasView({ ctx }) {
                   // ── MODO BLOCOS (Opção C com avatar) ──
                   <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(diariaCols,2):diariaCols},minmax(0,1fr))`,gap:isMobile?8:10,width:"100%"}}>
                     {/* Banner truncamento diárias blocos */}
-                    {(()=>{const _pRB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _iRB=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;const _fRB=dPlanFiltroFim?new Date(dPlanFiltroFim+"T23:59:59"):null;const total=diariasData.items.filter(i=>{if(dFiltro!=="todos"&&i.tipo!==i.tipo&&!(dFiltro==="pendente"&&i.tipo==="pendente"))return false;const{r}=i;const ym=_pRB(r.data_carr||r.data_agenda||"");if(dPlanFiltroAno&&ym?.ano!==dPlanFiltroAno)return false;if(dPlanFiltroMes&&ym?.mes!==dPlanFiltroMes)return false;if(dPlanFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dPlanFiltroOrigem)return false;if(_iRB||_fRB){const d=ym?.full||null;if(!d)return false;if(_iRB&&d<_iRB)return false;if(_fRB&&d>_fRB)return false;}return true;}).length;return total>80?(<div style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(240,185,11,.08)",border:"1px solid rgba(240,185,11,.25)",fontSize:11,color:t.ouro,gridColumn:"1/-1"}}>Mostrando 80 de {total} — refine os filtros para ver todos</div>):null;})()}
+                    {(()=>{const _pRB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _iRB=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;const _fRB=dPlanFiltroFim?new Date(dPlanFiltroFim+"T23:59:59"):null;const total=diariasData.items.filter(i=>{if(dFiltro!=="todos"&&i.tipo!==i.tipo&&!(dFiltro==="pendente"&&i.tipo==="pendente"))return false;const{r}=i;const ym=_pRB(r.data_carr||r.data_agenda||"");if(dPlanFiltroAno&&ym?.ano!==dPlanFiltroAno)return false;if(dPlanFiltroMes&&ym?.mes!==dPlanFiltroMes)return false;if(dPlanFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dPlanFiltroOrigem)return false;if(_iRB||_fRB){const d=ym?.full||null;if(!d)return false;if(_iRB&&d<_iRB)return false;if(_fRB&&d>_fRB)return false;}return true;}).length;return total>80?(<div style={{padding:"8px 12px",marginBottom:8,borderRadius:8,background:"rgba(217,98,43,.08)",border:"1px solid rgba(217,98,43,.25)",fontSize:11,color:t.ouro,gridColumn:"1/-1"}}>Mostrando 80 de {total} — refine os filtros para ver todos</div>):null;})()}
                     {(()=>{const _pRB=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};const _iRB=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;const _fRB=dPlanFiltroFim?new Date(dPlanFiltroFim+"T23:59:59"):null;return diariasData.items.filter(i=>{if(dFiltro!=="todos"&&i.tipo!==dFiltro&&!(dFiltro==="pendente"&&i.tipo==="pendente"))return false;const{r}=i;const ym=_pRB(r.data_carr||r.data_agenda||"");if(dPlanFiltroAno&&ym?.ano!==dPlanFiltroAno)return false;if(dPlanFiltroMes&&ym?.mes!==dPlanFiltroMes)return false;if(dPlanFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dPlanFiltroOrigem)return false;if(_iRB||_fRB){const d=ym?.full||null;if(!d)return false;if(_iRB&&d<_iRB)return false;if(_fRB&&d>_fRB)return false;}return true;});})().slice(0,80).map((item,idx) => {
                       const {r,tipo,dias} = item;
                       const borderC = tipo==="ok"?t.verde:tipo==="atraso"?t.danger:t.ouro;
-                      const avatarBg = tipo==="ok"?`rgba(2,192,118,.12)`:tipo==="atraso"?`rgba(246,70,93,.1)`:`rgba(240,185,11,.1)`;
+                      const avatarBg = tipo==="ok"?`rgba(2,192,118,.12)`:tipo==="atraso"?`rgba(246,70,93,.1)`:`rgba(217,98,43,.1)`;
                       const initials = (r.nome||"?").split(" ").filter(Boolean).slice(0,2).map(p=>p[0].toUpperCase()).join("");
                       const saldoPg = parseFloat(r.diaria_pg), saldoPrev = parseFloat(r.diaria_prev);
                       const pgStatus = !isNaN(saldoPg)&&saldoPg>0 ? "pago" : !isNaN(saldoPrev)&&saldoPrev>0 ? "pendente" : null;
@@ -230,7 +230,7 @@ export default function DiariasView({ ctx }) {
                                 {r.ro && <span style={{fontSize:9,color:t.laranja,fontWeight:600}}>RO: {r.ro}</span>}
                               </div>
                               <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
-                                <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(240,185,11,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
+                                <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:tipo==="ok"?`rgba(2,192,118,.08)`:tipo==="atraso"?`rgba(246,70,93,.06)`:`rgba(217,98,43,.06)`,color:borderC,border:`1px solid ${borderC}33`}}>
                                   {tipo==="ok"?hIco(<><polyline points="20 6 9 17 4 12"/></>,t.verde,9):tipo==="atraso"?hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9):hIco(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,t.ouro,9)}
                                   {tipo==="ok"?"No prazo":tipo==="atraso"?`${dias>0?dias+"d":"Atrasado"}`:"Aguardando"}
                                 </span>
@@ -293,17 +293,17 @@ export default function DiariasView({ ctx }) {
                     border:`1px solid ${t.borda}`,borderRadius:"10px 10px 0 0",flexWrap:"wrap",margin:"0 -16px"}}>
                     <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
                     <select value={dPlanFiltroAno} onChange={e=>setDPlanFiltroAno(e.target.value)}
-                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                       <option value="">Todos os Anos</option>
                       {anosD.map(a=><option key={a} value={a}>{a}</option>)}
                     </select>
                     <select value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)}
-                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
                       <option value="">Todos os Meses</option>
                       {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
                     </select>
                     <select value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)}
-                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(240,185,11,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
                       <option value="todas">Todas as Origens</option>
                       {origensD.map(o=><option key={o} value={o}>{o}</option>)}
                     </select>
@@ -537,7 +537,7 @@ export default function DiariasView({ ctx }) {
                               <button key={f.k} onClick={()=>setExtratoFiltro(f.k)}
                                 style={{padding:"4px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
                                   border:`1.5px solid ${extratoFiltro===f.k?t.ouro:t.borda}`,borderRadius:6,
-                                  background:extratoFiltro===f.k?`rgba(240,185,11,.08)`:t.card2,
+                                  background:extratoFiltro===f.k?`rgba(217,98,43,.08)`:t.card2,
                                   color:extratoFiltro===f.k?t.ouro:t.txt2}}>{f.l}</button>
                             ))}
                             <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{filtrado.length} reg.</span>

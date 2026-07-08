@@ -117,7 +117,7 @@ export default function ModalConfigDB({ ctx }) {
                 <button onClick={()=>setMotImportPrefSel(new Set(_allP))} style={{...css.hBtn,fontSize:10,padding:"5px 10px",display:"inline-flex",alignItems:"center",gap:4}}><Icon n="check-circle" s={12} c="currentColor"/> Todos</button>
                 <button onClick={()=>setMotImportPrefSel(new Set())} style={{...css.hBtn,fontSize:10,padding:"5px 10px",display:"inline-flex",alignItems:"center",gap:4}}><Icon n="square" s={12} c="currentColor"/> Nenhum</button>
               </div>
-              <div style={{padding:"8px 14px",background:`rgba(240,185,11,.05)`,borderBottom:`1px solid ${t.borda}`,fontSize:10,color:t.ouro,flexShrink:0,display:"flex",alignItems:"flex-start",gap:6}}>
+              <div style={{padding:"8px 14px",background:`rgba(217,98,43,.05)`,borderBottom:`1px solid ${t.borda}`,fontSize:10,color:t.ouro,flexShrink:0,display:"flex",alignItems:"flex-start",gap:6}}>
                 <Icon n="alert" s={13} c={t.ouro} style={{marginTop:1}}/><span>Prefixos em <span style={{color:t.danger}}>vermelho</span> são comumente não-motoristas e foram pré-desmarcados. Ajuste conforme necessário.</span>
               </div>
               <div style={{flex:1,overflowY:"auto",padding:"10px 14px"}}>

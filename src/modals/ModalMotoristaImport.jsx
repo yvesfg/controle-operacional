@@ -97,7 +97,7 @@ export default function ModalMotoristaImport({ ctx }) {
                       <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:3}}>{v.contato.nome}</div>
                       <div style={{fontSize:9,color:t.txt2,display:"flex",gap:8,flexWrap:"wrap"}}>
                         {v.contato.tel&&<span style={{display:"inline-flex",alignItems:"center",gap:3}}><Icon n="phone" s={10} c={t.txt2}/> {v.contato.tel}</span>}
-                        <span style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="truck" s={10} c={t.ouro}/> {v.placa}</span>
+                        <span style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="truck" s={10} c={t.ouro}/> {v.placa}</span>
                       </div>
                       <div style={{fontSize:9,color:t.txt2,marginTop:5,paddingTop:5,borderTop:`1px solid ${t.borda}`}}>
                         <span style={{color:t.azulLt,fontWeight:700}}>DT {v.reg.dt}</span>
@@ -175,7 +175,7 @@ export default function ModalMotoristaImport({ ctx }) {
 
           {/* Confirmação para operações grandes */}
           {motImportStep===1 && needsConfirm && (
-            <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.2)`,borderRadius:10,padding:"10px 12px"}}>
+            <div style={{background:`rgba(217,98,43,.07)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:10,padding:"10px 12px"}}>
               <div style={{fontSize:10,fontWeight:700,color:t.warn,marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon n="lock" s={12} c={t.warn}/> Operação com {totalOps} contato{totalOps!==1?"s":""} — confirmação obrigatória</div>
               <div style={{marginBottom:6}}>
                 <label style={lblS}>Digite <strong style={{color:t.ouro}}>ESTOU DE ACORDO</strong> para prosseguir</label>

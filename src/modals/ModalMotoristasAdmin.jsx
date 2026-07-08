@@ -59,7 +59,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
             <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:8,maxHeight:"calc(96vh - 120px)"}}>
               <div style={{fontSize:10,color:t.txt2,marginBottom:4}}>Placas dos motoristas cadastrados foram encontradas em registros de viagem com nomes diferentes. Aceite para atualizar o nome no registro.</div>
               {motSugestData.map((s,i)=>(
-                <div key={i} style={{background:s.aceito===true?`rgba(2,192,118,.07)`:s.aceito===false?`rgba(128,128,128,.04)`:`rgba(240,185,11,.04)`,border:`1px solid ${s.aceito===true?`rgba(2,192,118,.25)`:s.aceito===false?t.borda:`rgba(240,185,11,.2)`}`,borderRadius:9,padding:"10px 12px"}}>
+                <div key={i} style={{background:s.aceito===true?`rgba(2,192,118,.07)`:s.aceito===false?`rgba(128,128,128,.04)`:`rgba(217,98,43,.04)`,border:`1px solid ${s.aceito===true?`rgba(2,192,118,.25)`:s.aceito===false?t.borda:`rgba(217,98,43,.2)`}`,borderRadius:9,padding:"10px 12px"}}>
                   <div style={{fontSize:10,fontWeight:700,color:t.txt,marginBottom:4}}>
                     <span style={{color:t.ouro,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}>{s.placa}</span>
                     {" · DT "}<span style={{color:t.azulLt}}>{s.reg.dt}</span>

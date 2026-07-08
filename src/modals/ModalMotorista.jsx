@@ -57,7 +57,7 @@ export default function ModalMotorista({ ctx }) {
               </div>
 
               {/* ── Dados Bancários ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}><Icon n="credit-card" s={11} c={t.ouro}/> Dados Bancários<span style={{flex:1,height:1,background:`rgba(240,185,11,.15)`}} /></div>
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:2,color:t.ouro,fontWeight:700,display:"flex",alignItems:"center",gap:6,marginTop:4}}><Icon n="credit-card" s={11} c={t.ouro}/> Dados Bancários<span style={{flex:1,height:1,background:`rgba(217,98,43,.15)`}} /></div>
               <div>
                 <label style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3}}>BCO · Nome do Banco</label>
                 <input value={formData.banco||""} onChange={e=>setFormData(p=>({...p,banco:e.target.value}))} placeholder="Ex: Banco do Brasil, Bradesco, Nubank..." style={css.inp} />

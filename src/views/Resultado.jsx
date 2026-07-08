@@ -393,7 +393,7 @@ export default function Resultado({ ctx }) {
                 const temMesDivergente = s.recognized && s.meses.length > 0 && !s.meses.includes(mesRefMM);
                 return (
                   <div key={s.nome} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
-                    borderRadius: 8, background: s.recognized ? (temMesDivergente ? `rgba(240,185,11,.08)` : `rgba(2,192,118,.06)`) : t.card2,
+                    borderRadius: 8, background: s.recognized ? (temMesDivergente ? `rgba(217,98,43,.08)` : `rgba(2,192,118,.06)`) : t.card2,
                     border: `1px solid ${s.recognized ? (temMesDivergente ? t.ouro + "55" : t.verde + "44") : t.borda}`,
                     opacity: s.recognized ? 1 : 0.5 }}>
                     {s.recognized ? (
@@ -416,7 +416,7 @@ export default function Resultado({ ctx }) {
                       )}
                     </div>
                     {temMesDivergente && (
-                      <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `rgba(240,185,11,.15)`, color: t.ouro, fontWeight: 700, whiteSpace: "nowrap" }}>
+                      <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `rgba(217,98,43,.15)`, color: t.ouro, fontWeight: 700, whiteSpace: "nowrap" }}>
                         mês diferente
                       </span>
                     )}

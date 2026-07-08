@@ -84,7 +84,7 @@ export default function MotoristasView({ ctx }) {
           setMotSugestData(uniq.map(s=>({...s,aceito:null})));
           setMotSugestOpen(true);
         }} title="Cruzar placas dos motoristas com registros de viagem e sugerir vínculos" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,color:t.verde}}>🔗 Sugerir Compatíveis</button>
-        <button onClick={()=>setRelGeralOpen(true)} title="Gerar relatório geral de operações em PDF" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(240,185,11,.12)`,border:`1px solid rgba(240,185,11,.3)`,color:t.ouro}}>📊 Rel. Geral</button>
+        <button onClick={()=>setRelGeralOpen(true)} title="Gerar relatório geral de operações em PDF" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(217,98,43,.12)`,border:`1px solid rgba(217,98,43,.3)`,color:t.ouro}}>📊 Rel. Geral</button>
         {canEdit && <button onClick={()=>{setFormData({});setEditIdx(-1);setMotDupSugest(null);setModalOpen("motorista")}} style={{...css.btnGold,whiteSpace:"nowrap"}}>＋ NOVO</button>}
         {perfil==="admin" && motoristas.length>0 && (
           <button onClick={()=>{setMotExcluirTodosTexto("");setMotExcluirTodosOpen(true);}} title="Excluir TODOS os motoristas salvos" style={{...css.hBtn,whiteSpace:"nowrap",fontSize:11,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.3)`,color:t.danger}}>
@@ -96,7 +96,7 @@ export default function MotoristasView({ ctx }) {
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,background:`rgba(246,70,93,.07)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:9,padding:"8px 12px"}}>
           <span style={{fontSize:11,fontWeight:700,color:t.danger,flex:1}}>{motSelecionados.size} selecionado(s)</span>
           {motSelecionados.size >= 2 && motSelecionados.size < motoristas.length && (
-            <button onClick={()=>setMotSelecionados(new Set(motFiltrados.map(m=>motoristas.indexOf(m))))} style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.3)`,borderRadius:6,padding:"4px 12px",fontSize:10,color:t.ouro,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Selecionar Todos ({motFiltrados.length})</button>
+            <button onClick={()=>setMotSelecionados(new Set(motFiltrados.map(m=>motoristas.indexOf(m))))} style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.3)`,borderRadius:6,padding:"4px 12px",fontSize:10,color:t.ouro,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Selecionar Todos ({motFiltrados.length})</button>
           )}
           <button onClick={()=>setMotSelecionados(new Set())} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"4px 10px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>Desmarcar</button>
           <button onClick={()=>{setMotExcluirLoteTexto("");setMotExcluirLoteOpen(true);}} style={{background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.3)`,borderRadius:6,padding:"4px 12px",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,12)} Excluir selecionados</button>
@@ -117,7 +117,7 @@ export default function MotoristasView({ ctx }) {
         const idxReal = motoristas.indexOf(m);
         const selecionado = motSelecionados.has(idxReal);
         const vincBadgeC = m.vinculo==="Frota"?t.azulLt:m.vinculo==="Agregado"?t.ouro:m.vinculo==="Terceiro"?t.verde:t.txt2;
-        const vincBadgeBg = m.vinculo==="Frota"?`rgba(22,119,255,.08)`:m.vinculo==="Agregado"?`rgba(240,185,11,.08)`:m.vinculo==="Terceiro"?`rgba(2,192,118,.08)`:`rgba(128,128,128,.06)`;
+        const vincBadgeBg = m.vinculo==="Frota"?`rgba(22,119,255,.08)`:m.vinculo==="Agregado"?`rgba(217,98,43,.08)`:m.vinculo==="Terceiro"?`rgba(2,192,118,.08)`:`rgba(128,128,128,.06)`;
         return (
           <div key={i} className="co-card" style={{background:t.card,borderRadius:12,border:`1px solid ${selecionado?t.danger:vincBadgeC}`,padding:12,marginBottom:10,transition:"border .15s"}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
@@ -136,7 +136,7 @@ export default function MotoristasView({ ctx }) {
                   {m.vinculo && <span style={{background:vincBadgeBg,border:`1px solid ${vincBadgeC}33`,borderRadius:4,padding:"1px 6px",color:vincBadgeC,fontWeight:700,fontSize:9,textTransform:"uppercase"}}>{m.vinculo}</span>}
                 </div>
               </div>
-              <button onClick={()=>gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista" style={{background:`rgba(240,185,11,.1)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:6,width:36,height:36,minWidth:36,minHeight:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,14)}</button>
+              <button onClick={()=>gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista" style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:6,width:36,height:36,minWidth:36,minHeight:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,14)}</button>
               {canEdit && <>
                 <button onClick={()=>{setFormData({...m});setEditIdx(idxReal);setMotDupSugest(null);setModalOpen("motorista")}} style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:6,width:36,height:36,minWidth:36,minHeight:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.azulLt,14)}</button>
                 <button onClick={()=>{if(window.confirm(`Excluir "${m.nome}"?`)){const nm=[...motoristas];nm.splice(idxReal,1);saveMotoristasLS(nm);showToast("🗑️ Removido");}}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:6,width:36,height:36,minWidth:36,minHeight:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,14)}</button>
@@ -144,7 +144,7 @@ export default function MotoristasView({ ctx }) {
             </div>
             <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:m.tel||m.banco?6:0}}>
               {[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).map((p,j) => (
-                <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:4,padding:"2px 7px"}}>{p}</span>
+                <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(217,98,43,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(217,98,43,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:4,padding:"2px 7px"}}>{p}</span>
               ))}
             </div>
             <div style={{display:"flex",flexWrap:"wrap",gap:10,fontSize:10,color:t.txt2}}>

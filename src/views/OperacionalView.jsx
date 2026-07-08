@@ -269,7 +269,7 @@ export default function OperacionalView({ ctx }) {
                           <div style={{ fontSize: 11, color: t.txt2, marginTop: 3, lineHeight: 1.5 }}>
                             📅 Chamado: <strong style={{ color: t.txt }}>{s.data_chamado ? new Date(s.data_chamado + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</strong>
                             {dataUltimoRet && <> · 🔄 Último retorno: <strong style={{ color: t.txt }}>{new Date(dataUltimoRet + "T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
-                            {retornos.length > 0 && <span style={{ marginLeft: 6, fontSize: 9, background: `rgba(240,185,11,.1)`, color: t.ouro, borderRadius: 4, padding: "1px 5px" }}>{retornos.length} retorno{retornos.length > 1 ? "s" : ""}</span>}
+                            {retornos.length > 0 && <span style={{ marginLeft: 6, fontSize: 9, background: `rgba(217,98,43,.1)`, color: t.ouro, borderRadius: 4, padding: "1px 5px" }}>{retornos.length} retorno{retornos.length > 1 ? "s" : ""}</span>}
                           </div>
                           {s.descricao && <div style={{ fontSize: 11, color: t.txt, marginTop: 4, lineHeight: 1.4 }}>{s.descricao}</div>}
                         </div>

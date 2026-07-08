@@ -241,7 +241,7 @@ export default function ModalWhatsApp({ ctx }) {
                   <label style={labelStyle}>Placas</label>
                   <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                     {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
-                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2.5,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"3px 9px"}}>{p}</span>
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,letterSpacing:2.5,color:j===0?t.ouro:t.verde,background:j===0?`rgba(217,98,43,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(217,98,43,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"3px 9px"}}>{p}</span>
                     ))}
                   </div>
                 </div>
@@ -407,7 +407,7 @@ export default function ModalWhatsApp({ ctx }) {
                   <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:3}}>{nomeMotorista||"—"}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:4}}>
                     {[mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).map((p,j)=>(
-                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(240,185,11,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(240,185,11,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"2px 8px"}}>{p}</span>
+                      <span key={j} style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:j===0?t.ouro:t.verde,background:j===0?`rgba(217,98,43,.07)`:`rgba(2,192,118,.07)`,border:`1px solid ${j===0?`rgba(217,98,43,.2)`:`rgba(2,192,118,.15)`}`,borderRadius:DESIGN.r.badge,padding:"2px 8px"}}>{p}</span>
                     ))}
                   </div>
                 </div>
@@ -651,7 +651,7 @@ export default function ModalWhatsApp({ ctx }) {
                     </div>
                   </div>
                 ):(
-                  <div style={{background:`rgba(240,185,11,.07)`,border:`1px solid rgba(240,185,11,.25)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.ouro,display:"flex",alignItems:"flex-start",gap:5}}><Icon n="alert" s={11} c={t.ouro} style={{marginTop:1}}/><span>Motorista sem dados bancários. Cadastre na aba Motoristas.</span></div>
+                  <div style={{background:`rgba(217,98,43,.07)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:10,padding:"10px 12px",fontSize:10,color:t.ouro,display:"flex",alignItems:"flex-start",gap:5}}><Icon n="alert" s={11} c={t.ouro} style={{marginTop:1}}/><span>Motorista sem dados bancários. Cadastre na aba Motoristas.</span></div>
                 )}
 
                 {/* ── Minutas (DCC para Diárias / MAM-MRM para Descarga) ── */}
@@ -667,14 +667,14 @@ export default function ModalWhatsApp({ ctx }) {
                       {isDiaria ? (<>
                         {/* Minutas DCC */}
                         {wppDccMinutas.map((mn,idx)=>(
-                          <div key={idx} style={{background:`rgba(240,185,11,.04)`,borderRadius:8,border:`1px solid rgba(240,185,11,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
+                          <div key={idx} style={{background:`rgba(217,98,43,.04)`,borderRadius:8,border:`1px solid rgba(217,98,43,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.ouro}}>{"MINUTA DCC "+(wppDccMinutas.length>1?"("+(idx+1)+")":"")}</span>
                               {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
                             </div>
                             <div style={{display:"flex",gap:6,marginBottom:6}}>
                               {["D01-MAT","D05-MAR"].map(d=>(
-                                <button key={d} onClick={()=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:d}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===d?t.ouro:t.borda}`,background:mn.tipo===d?`rgba(240,185,11,.12)`:t.card,color:mn.tipo===d?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{d}</button>
+                                <button key={d} onClick={()=>setWppDccMinutas(p=>p.map((m,i)=>i===idx?{...m,tipo:d}:m))} style={{flex:1,padding:"6px",borderRadius:7,border:`1.5px solid ${mn.tipo===d?t.ouro:t.borda}`,background:mn.tipo===d?`rgba(217,98,43,.12)`:t.card,color:mn.tipo===d?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:12}}>{d}</button>
                               ))}
                             </div>
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
@@ -685,7 +685,7 @@ export default function ModalWhatsApp({ ctx }) {
                             </div>
                           </div>
                         ))}
-                        <button onClick={()=>setWppDccMinutas(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(240,185,11,.07)`,border:`1px dashed rgba(240,185,11,.4)`,borderRadius:8,padding:"7px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta DCC</button>
+                        <button onClick={()=>setWppDccMinutas(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(217,98,43,.07)`,border:`1px dashed rgba(217,98,43,.4)`,borderRadius:8,padding:"7px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>＋ Outra Minuta DCC</button>
                         {/* CTE Complementar */}
                         <div style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px"}}>
                           <div style={{fontSize:10,fontWeight:700,color:t.azulLt,marginBottom:8}}>CTE COMPLEMENTAR DE DIÁRIAS</div>
