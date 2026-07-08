@@ -183,6 +183,7 @@ export default function App() {
     prevRodorricaSnap, setPrevRodorricaSnap, rodorricaSheetInfo, setRodorricaSheetInfo,
     rodorricaFiltro, setRodorricaFiltro, rodorricaPeriodoIni, setRodorricaPeriodoIni,
     rodorricaPeriodoFim, setRodorricaPeriodoFim, rodorricaPeriodoModal, setRodorricaPeriodoModal,
+    dscMostrarAntigos, setDscMostrarAntigos,
   } = useDescargaState();
 
   const {
@@ -1585,6 +1586,7 @@ export default function App() {
           descargaView, setDescargaView,
           dscTab, setDscTab,
           dscData, setDscData,
+          dscMostrarAntigos, setDscMostrarAntigos,
           dscFiltroAno, setDscFiltroAno,
           dscFiltroMes, setDscFiltroMes,
           dscFiltroIni, setDscFiltroIni,

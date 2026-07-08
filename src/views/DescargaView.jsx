@@ -1,17 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { ExportMenu } from "../exportHelpers.jsx";
 import { saveJSON, parseData, diffDias, clickable } from "../utils.js";
 import { calcAgendaAvb, fmtDataAvb } from "../utils_avb.js";
+import Toggle from "../components/Toggle.jsx";
+
+const CORTE_ANTIGOS = "2026-05-01"; // registros com data_carr anterior a isso ficam ocultos por padrao (lixo acumulado/orfaos de meses ja fechados)
 
 export default function DescargaView({ ctx }) {
   const {
     activeTab,
-    descargaData,
+    descargaData: descargaDataBruta,
     descargaNavDT, setDescargaNavDT,
     descargaCols, setDescargaCols,
     descargaView, setDescargaView,
     dscTab, setDscTab,
     dscData, setDscData,
+    dscMostrarAntigos, setDscMostrarAntigos,
     dscFiltroAno, setDscFiltroAno,
     dscFiltroMes, setDscFiltroMes,
     dscFiltroIni, setDscFiltroIni,
@@ -42,6 +46,22 @@ export default function DescargaView({ ctx }) {
 
   const [rodoUndoConfirm, setRodoUndoConfirm] = useState(false);
   const [rodoUndoInput, setRodoUndoInput] = useState("");
+
+  // Registros com data_carr anterior a CORTE_ANTIGOS somem por padrao de Atrasados/Aguardando/Sem Motorista
+  // (backlog de meses ja fechados que nunca mais e atualizado) — toggle "Mostrar antigos" reexibe.
+  const isAntigo = r => {
+    const dc = parseData(r.data_carr);
+    return !!dc && dc.toISOString().slice(0,10) < CORTE_ANTIGOS;
+  };
+  const descargaData = useMemo(() => {
+    if (dscMostrarAntigos) return descargaDataBruta;
+    return {
+      ...descargaDataBruta,
+      atrasados: descargaDataBruta.atrasados.filter(r => !isAntigo(r)),
+      aguardando: descargaDataBruta.aguardando.filter(r => !isAntigo(r)),
+      semMotorista: descargaDataBruta.semMotorista.filter(r => !isAntigo(r)),
+    };
+  }, [descargaDataBruta, dscMostrarAntigos]);
 
   if (activeTab !== "descarga") return null;
 
@@ -287,6 +307,10 @@ export default function DescargaView({ ctx }) {
                       style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
                       &#10005; Limpar
                     </button>
+                  )}
+                  {["atrasado","aguardando","semMotorista"].includes(dscTab) && (
+                    <Toggle checked={dscMostrarAntigos} onChange={setDscMostrarAntigos} size={0.8}
+                      label={<span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>Mostrar antigos (antes de 05/2026)</span>} />
                   )}
                   <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>
                     {_cnt} de {_tabAll.length}

@@ -146,6 +146,13 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 37",
+    itens: [
+      "FEAT · Descarga (Imperatriz/Belem): confirmado no banco que a flag fora_planilha funciona (23446522/23474110 = false, tocados pelo sync; 0023446522/23379306/23471067 = true, orfaos). Dos 150 registros marcados fora_planilha, 140 tem data_carr anterior a 05/2026 -- backlog de meses ja fechados que nunca mais sera atualizado.",
+      "FEAT · Toggle 'Mostrar antigos (antes de 05/2026)' nas abas Atrasados/Aguardando/Sem Motorista de DescargaView.jsx, desligado por padrao -- oculta registros com data_carr anterior a esse corte (useDescargaState.js: novo estado dscMostrarAntigos). Nao mexe em Descarrega Hoje/Carrega Hoje (ja sao filtrados pela data selecionada). KPIs do topo refletem a lista ja filtrada.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 36",
     itens: [
       "FEAT · Investigado relato de DTs aparecendo como pendentes sem achar na planilha (base Imperatriz/Belem). Achados: (1) maioria eram DTs reais na planilha so sem motorista/placa preenchidos ainda -- comportamento correto; (2) achado bug real: SyncSupabase.gs so valida origem invalida quando a celula NAO esta vazia (`if (reg.origem && ...)`), entao linha com origem em branco passa direto e derruba o LOTE inteiro (ate 50 linhas) no Supabase com HTTP 400 'origem_valida' -- limitado as abas ja fechadas 12/2025, 02/2026, 03/2026 no log atual, correcao ainda NAO aplicada (pendente decisao); (3) achado registro fantasma real: DT '0023446522' e duplicata com 2 zeros a mais do DT correto '23446522' (que sincroniza normal) -- criado uma vez em 24/06 e nunca mais tocado.",

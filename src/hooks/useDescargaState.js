@@ -16,6 +16,7 @@ export function useDescargaState() {
   const [dscFiltroIni, setDscFiltroIni]             = useState("");
   const [dscFiltroFim, setDscFiltroFim]             = useState("");
   const [dscData, setDscData]                       = useState(new Date().toISOString().slice(0,10));
+  const [dscMostrarAntigos, setDscMostrarAntigos]   = useState(false);
 
   const [rodorricaRows, setRodorricaRows]             = useState([]);
   const [rodorricaFileName, setRodorricaFileName]     = useState(null);
@@ -32,7 +33,7 @@ export function useDescargaState() {
     extratoFiltro, setExtratoFiltro, extratoDataIni, setExtratoDataIni, extratoDataFim, setExtratoDataFim,
     dscTab, setDscTab, dscFiltroAno, setDscFiltroAno, dscFiltroMes, setDscFiltroMes,
     dscFiltroOrigem, setDscFiltroOrigem, dscFiltroIni, setDscFiltroIni, dscFiltroFim, setDscFiltroFim,
-    dscData, setDscData,
+    dscData, setDscData, dscMostrarAntigos, setDscMostrarAntigos,
     rodorricaRows, setRodorricaRows, rodorricaFileName, setRodorricaFileName,
     prevRodorricaSnap, setPrevRodorricaSnap, rodorricaSheetInfo, setRodorricaSheetInfo,
     rodorricaFiltro, setRodorricaFiltro, rodorricaPeriodoIni, setRodorricaPeriodoIni,
