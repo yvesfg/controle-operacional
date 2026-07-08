@@ -665,7 +665,7 @@ export default function Resultado({ ctx }) {
                 const zebra = i % 2 ? t.card2 : "transparent";
                 const badges = (
                   <>
-                    {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
+                    {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "var(--cat-violet)", fontWeight: 700 }}>MANUAL</span>}
                     {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
                     {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
                     {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
@@ -796,7 +796,7 @@ export default function Resultado({ ctx }) {
                     <div style={{ fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.natureza || d.historico || "—"}
                       {d.aba_origem && <span style={{ marginLeft: 6, fontSize: 9, color: t.txt2, fontWeight: 700 }}>{d.aba_origem}</span>}
-                      {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "#a855f7", fontWeight: 700 }}>MANUAL</span>}
+                      {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "var(--cat-violet)", fontWeight: 700 }}>MANUAL</span>}
                     </div>
                     {d.historico && d.natureza && (
                       <div style={{ fontSize: 10.5, color: t.txt2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{d.historico}</div>

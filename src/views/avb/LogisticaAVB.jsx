@@ -61,7 +61,7 @@ export default function LogisticaAVB({ ctx }) {
       svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></> },
     { k:"docInc",   l:"Doc. Incompleta",   ct:docIncompleta.length, cor:t.danger,         corLt:"var(--cat-red)",       bg:"rgba(246,70,93,.07)",  list:docIncompleta,
       svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9.01" y2="13"/><line x1="9" y1="17" x2="9.01" y2="17"/></> },
-    { k:"finPend",  l:"Fin. Pendente",     ct:finPendente.length,   cor:"#a855f7",        corLt:"#c084fc",       bg:"rgba(168,85,247,.07)", list:finPendente,
+    { k:"finPend",  l:"Fin. Pendente",     ct:finPendente.length,   cor:"var(--cat-violet)",        corLt:"#c084fc",       bg:"rgba(168,85,247,.07)", list:finPendente,
       svg:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></> },
   ];
 
@@ -197,7 +197,7 @@ export default function LogisticaAVB({ ctx }) {
                 fontSize:10,display:"flex",gap:5,alignItems:"center"}}>
                 <span style={{color:"var(--text3)",fontSize:9}}>Docs </span>
                 {[["CTE",hasCte],["MDF",hasMdf],["NF",hasNf]].map(([lbl,ok])=>(
-                  <span key={lbl} style={{color:ok?"var(--green,#22c55e)":"var(--red,#ef4444)",fontWeight:700,fontSize:9}}>
+                  <span key={lbl} style={{color:ok?"var(--green)":"var(--red)",fontWeight:700,fontSize:9}}>
                     {lbl}{ok?"✓":"✗"}
                   </span>
                 ))}

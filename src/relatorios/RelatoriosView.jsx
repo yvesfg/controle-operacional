@@ -53,7 +53,7 @@ function KpiCard({ label, value, sub, color = "var(--text2)", delta }) {
           {delta && (
             <span style={{
               fontSize: 11, fontFamily: "var(--font-mono)",
-              color: isPos ? "var(--green, #22c55e)" : "var(--red, #ef4444)",
+              color: isPos ? "var(--green)" : "var(--red)",
             }}>
               {isPos ? "+" : ""}{delta}
             </span>

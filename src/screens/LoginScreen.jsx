@@ -93,7 +93,7 @@ export default function LoginScreen({
         )}
 
         <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
-          <span style={{width:6,height:6,borderRadius:"50%",background:"#22c55e",display:"inline-block",flexShrink:0}}/>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"var(--cat-emerald)",display:"inline-block",flexShrink:0}}/>
           <span style={{fontSize:9,color:t.txt2,letterSpacing:".08em",textTransform:"uppercase"}}>Sistema Online — {ano}</span>
         </div>
       </div>

@@ -433,7 +433,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
               {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
               {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
-              {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
+              {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
               {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
             </div>
           </div>
@@ -532,7 +532,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <div style={{ marginBottom: 12 }}>
                 {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
-                {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul || "#3b82f6")}
+                {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
                 {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
               </div>
 

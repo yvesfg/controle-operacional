@@ -8,9 +8,9 @@ import KpiCard from "../../components/KpiCard.jsx";
 
 const ETAPAS = [
   { k:"homerico",  l:"Homérico",    check: r => !!(r.codigo&&r.codigo.trim()),                             cor:"var(--cyan)"  },
-  { k:"gerenc",    l:"Gerenciadora",check: r => !!(r.gerenc&&r.gerenc.trim()),                              cor:"#a855f7"  },
+  { k:"gerenc",    l:"Gerenciadora",check: r => !!(r.gerenc&&r.gerenc.trim()),                              cor:"var(--cat-violet)"  },
   { k:"fortes",    l:"Fortes",      check: r => !!(r.cte&&r.mdf),                                          cor:"var(--accent)" },
-  { k:"nf",        l:"NF Recebida", check: r => !!(r.nf&&r.nf.trim()),                                     cor:"#22c55e"  },
+  { k:"nf",        l:"NF Recebida", check: r => !!(r.nf&&r.nf.trim()),                                     cor:"var(--cat-emerald)"  },
   { k:"adt",       l:"ADT Pago",    check: r => { const n=parseFloat(String(r.adiant||"").replace(/[R$\s]/g,"").replace(",",".")); return !isNaN(n)&&n>0; }, cor:"var(--orange)" },
   { k:"viagem",    l:"Em Viagem",   check: r => (r.status||"").toUpperCase()==="CARREGADO",                 cor:"var(--green)"  },
 ];
@@ -90,7 +90,7 @@ export default function GestaoAVB({ ctx }) {
     { l:"Doc Completa",   v:regs.filter(r=>r.cte&&r.mdf&&r.nf).length,       c:t.verde  },
     { l:"Sem Doc",        v:regs.filter(r=>!r.cte||!r.mdf||!r.nf).length,    c:t.danger },
     { l:"Aguard. ADT",    v:regs.filter(r=>r.nf&&!(parseMoeda(r.adiant)||0)).length, c:t.laranja},
-    { l:"CTE Compl.",     v:regs.filter(r=>r.cte_comp&&r.cte_comp.trim()).length, c:"#a855f7"},
+    { l:"CTE Compl.",     v:regs.filter(r=>r.cte_comp&&r.cte_comp.trim()).length, c:"var(--cat-violet)"},
   ];
 
   return (
@@ -256,7 +256,7 @@ export default function GestaoAVB({ ctx }) {
                 </span>
               )}
               {temCteComp&&(
-                <span style={{fontSize:9,fontWeight:700,color:"#a855f7",
+                <span style={{fontSize:9,fontWeight:700,color:"var(--cat-violet)",
                   background:"rgba(168,85,247,.08)",border:"1px solid rgba(168,85,247,.2)",
                   borderRadius:4,padding:"2px 6px",fontFamily:"var(--font-mono)"}}>
                   CTE COMPL.

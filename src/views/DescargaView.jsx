@@ -82,7 +82,7 @@ export default function DescargaView({ ctx }) {
        svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>},
       {k:"docInc",   l:"Doc. Incompleta", ct:docIncompleta.length, cor:t.danger, corLt:"var(--cat-red)", bg:"rgba(246,70,93,.07)", list:docIncompleta,
        svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9.01" y2="13"/><line x1="9" y1="17" x2="9.01" y2="17"/></>},
-      {k:"finPend",  l:"Fin. Pendente", ct:finPendente.length, cor:"#a855f7", corLt:"#c084fc", bg:"rgba(168,85,247,.07)", list:finPendente,
+      {k:"finPend",  l:"Fin. Pendente", ct:finPendente.length, cor:"var(--cat-violet)", corLt:"#c084fc", bg:"rgba(168,85,247,.07)", list:finPendente,
        svg:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>},
     ];
 
@@ -195,9 +195,9 @@ export default function DescargaView({ ctx }) {
                 {/* Status documental */}
                 <div style={{background:t.card2,borderRadius:6,padding:"4px 8px",fontSize:10,display:"flex",gap:5}}>
                   <span style={{color:t.txt2,fontSize:9}}>Docs </span>
-                  <span style={{color:hasCte?"var(--green,#22c55e)":"var(--red,#ef4444)",fontWeight:600}}>CTE{hasCte?"✓":"✗"}</span>
-                  <span style={{color:hasMdf?"var(--green,#22c55e)":"var(--red,#ef4444)",fontWeight:600}}>MDF{hasMdf?"✓":"✗"}</span>
-                  <span style={{color:hasNf?"var(--green,#22c55e)":"var(--red,#ef4444)",fontWeight:600}}>NF{hasNf?"✓":"✗"}</span>
+                  <span style={{color:hasCte?"var(--green)":"var(--red)",fontWeight:600}}>CTE{hasCte?"✓":"✗"}</span>
+                  <span style={{color:hasMdf?"var(--green)":"var(--red)",fontWeight:600}}>MDF{hasMdf?"✓":"✗"}</span>
+                  <span style={{color:hasNf?"var(--green)":"var(--red)",fontWeight:600}}>NF{hasNf?"✓":"✗"}</span>
                 </div>
                 {saldo!==null&&saldo>0&&chip("Saldo", fmtMoedaAvb(saldo), t.danger)}
               </div>
@@ -232,9 +232,9 @@ export default function DescargaView({ ctx }) {
                 {k:"hoje",svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,l:"Descarrega Hoje",ct:descargaData.hoje.length,cor:t.azul,corLt:t.azulLt,bg:"rgba(22,119,255,.07)"},
                 {k:"atrasado",svg:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,l:"Em Atraso",ct:descargaData.atrasados.length,cor:t.danger,corLt:"var(--cat-red)",bg:"rgba(246,70,93,.07)"},
                 {k:"aguardando",svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Aguardando Agenda",ct:descargaData.aguardando.length,cor:"var(--cat-gold)",corLt:"#ffe57a",bg:"rgba(217,98,43,.07)"},
-                {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"var(--cat-purple)",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"},
+                {k:"conferencia",svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></>,l:"Conferência",ct:rodorricaRows.length,cor:"var(--cat-purple)",corLt:"var(--cat-purple-lt)",bg:"rgba(156,39,176,.07)"},
                 {k:"carrega",svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,l:"Carrega Hoje",ct:descargaData.carregaHoje?.length||0,cor:t.verde,corLt:"var(--cat-mint)",bg:"rgba(2,192,118,.07)"},
-                {k:"semMotorista",svg:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></>,l:"Sem Motorista",ct:descargaData.semMotorista?.length||0,cor:"var(--cat-purple)",corLt:"#ce93d8",bg:"rgba(156,39,176,.07)"}
+                {k:"semMotorista",svg:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></>,l:"Sem Motorista",ct:descargaData.semMotorista?.length||0,cor:"var(--cat-purple)",corLt:"var(--cat-purple-lt)",bg:"rgba(156,39,176,.07)"}
               ].map(tb => (
                 <div key={tb.k} {...clickable(()=>setDscTab(tb.k))} style={{border:`1.5px solid ${dscTab===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dscTab===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
                   {hIco(tb.svg,dscTab===tb.k?tb.corLt:t.txt2,22)}

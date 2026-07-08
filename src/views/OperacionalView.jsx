@@ -137,9 +137,9 @@ export default function OperacionalView({ ctx }) {
   const inp  = { ...css.inp, fontSize: 12, padding: "8px 10px" };
   const lbl  = { fontSize: 8, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text2)", fontWeight: 600, display: "block", marginBottom: 3 };
   const MODULE_COLORS = {
-    sgs:          "var(--yellow, #eab308)",
-    diarias_id:   "var(--cyan, #06b6d4)",
-    apontamentos: "var(--green, #22c55e)",
+    sgs:          "var(--yellow)",
+    diarias_id:   "var(--cyan)",
+    apontamentos: "var(--green)",
   };
 
   // ── Sub-módulos (sem Ocorrências — movida para sidebar) ──────────────────
@@ -260,7 +260,7 @@ export default function OperacionalView({ ctx }) {
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--yellow, #eab308)" }}>{s.numero || "—"}</span>
+                            <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--yellow)" }}>{s.numero || "—"}</span>
                             <span style={{ fontSize: 9, fontWeight: 700, color: statusC, background: `${statusC}18`, border: `1px solid ${statusC}33`, borderRadius: 4, padding: "2px 7px", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}>{statusIco} {s.status?.toUpperCase() || "ABERTO"}</span>
                             {s.dt_rel && <span style={{ fontSize: 9, color: t.txt2 }}>DT: {s.dt_rel}</span>}
                             {alertaRetorno && <span style={{ fontSize: 9, color: t.danger, fontWeight: 700, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}>⚠️ {diasSemRetorno}d sem retorno</span>}
@@ -354,7 +354,7 @@ export default function OperacionalView({ ctx }) {
                   <div style={{ background: `rgba(255,152,0,.07)`, border: `1px solid rgba(255,152,0,.28)`, borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                     <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
                     <div>
-                      <div style={{ fontSize: 11, color: "#f57c00", fontWeight: 700 }}>{semRo.length} DT{semRo.length > 1 ? "s" : ""} com diária sem RO preenchido</div>
+                      <div style={{ fontSize: 11, color: "var(--cat-amber2)", fontWeight: 700 }}>{semRo.length} DT{semRo.length > 1 ? "s" : ""} com diária sem RO preenchido</div>
                       <div style={{ fontSize: 9, color: t.txt2, marginTop: 2 }}>DTs: {semRo.map(i => i.r.dt).join(", ")}</div>
                     </div>
                   </div>
@@ -369,7 +369,7 @@ export default function OperacionalView({ ctx }) {
                     <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       {r.nome || "—"}
                       <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(246,70,93,.08)`, color: tipoColor, border: `1px solid ${tipoColor}33` }}>{tipoLabel}</span>
-                      {semRo && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(255,152,0,.07)`, color: "#f57c00", border: `1px solid rgba(255,152,0,.3)` }}>⚠️ RO vazio</span>}
+                      {semRo && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(255,152,0,.07)`, color: "var(--cat-amber2)", border: `1px solid rgba(255,152,0,.3)` }}>⚠️ RO vazio</span>}
                       <span style={{ marginLeft: "auto", fontSize: 10, color: t.txt2 }}>›</span>
                     </div>
                     <div style={{ fontSize: 11, color: t.txt2 }}>
@@ -498,7 +498,7 @@ export default function OperacionalView({ ctx }) {
                 return (
                   <div key={a.id || i} style={{ background: t.card, borderRadius: 11, border: `1px solid ${bordaC}`, padding: 12 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-                      <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, letterSpacing: "-0.01em", color: "var(--yellow, #eab308)" }}>{a.numero || a.apontamento || "—"}</span>
+                      <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, letterSpacing: "-0.01em", color: "var(--yellow)" }}>{a.numero || a.apontamento || "—"}</span>
                       {(a.item || a.linha) && <span style={{ fontSize: 9, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 6px" }}>It.{a.item || "?"} / Ln.{a.linha || "?"}</span>}
                       <span style={{ fontSize: 9, fontWeight: 700, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 7px" }}>{a.tipo === "stretch" ? "📏 Stretch" : a.tipo === "deslocamento" ? "🚗 Deslocamento" : a.tipo === "outros" ? "📋 Outros" : "📦 Descarga"}</span>
                       {semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.danger, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}>⚠️ FRS vazio</span>}

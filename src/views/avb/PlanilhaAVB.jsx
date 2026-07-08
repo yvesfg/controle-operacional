@@ -322,11 +322,11 @@ export default function PlanilhaAVB({ ctx }) {
                   const hasVal    = val&&val!=="—"&&val!=="";
 
                   const cellColor = c.k==="codigo"       ? "var(--accent)"
-                    : c.k==="placa"         ? "var(--green,#22c55e)"
-                    : c.k==="data_carr"     ? "var(--yellow,#eab308)"
+                    : c.k==="placa"         ? "var(--green)"
+                    : c.k==="data_carr"     ? "var(--yellow)"
                     : c.k==="contratante"   ? "var(--text)"
-                    : isDocCol              ? (hasVal?"var(--green,#22c55e)":"var(--red,#ef4444)")
-                    : isStatus              ? (isPend?"var(--yellow,#eab308)":isCarreg?"var(--green,#22c55e)":"var(--text2)")
+                    : isDocCol              ? (hasVal?"var(--green)":"var(--red)")
+                    : isStatus              ? (isPend?"var(--yellow)":isCarreg?"var(--green)":"var(--text2)")
                     : "var(--text2)";
 
                   const isMono = ["codigo","placa","data_carr","data_agenda","cte","mdf","nf","adiant","saldo","vl_contrato"].includes(c.k);

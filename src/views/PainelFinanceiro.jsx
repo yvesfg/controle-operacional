@@ -172,7 +172,7 @@ export default function PainelFinanceiro({ ctx }) {
   const wfRef = React.useRef(null);
   const instRef = React.useRef({});
   React.useEffect(() => {
-    const verde = cssVar("--green", "#22c55e"), red = cssVar("--red", "var(--red)"), azul = cssVar("--color-info-lt", "var(--cat-blue)");
+    const verde = cssVar("--green", "var(--cat-emerald)"), red = cssVar("--red", "var(--red)"), azul = cssVar("--color-info-lt", "var(--cat-blue)");
     const grid = cssVar("--border", "#26324a"), txt2 = cssVar("--text2", "#94a3b8");
     if (trendRef.current && serie.length) {
       instRef.current.trend?.destroy();
@@ -194,7 +194,7 @@ export default function PainelFinanceiro({ ctx }) {
     }
     if (donutRef.current && composicao.length) {
       instRef.current.donut?.destroy();
-      const pal = ["var(--cat-blue)", "var(--cat-gold)", "#22c55e", "#a855f7", "#ec4899", "var(--cyan)", "var(--red)"];
+      const pal = ["var(--cat-blue)", "var(--cat-gold)", "var(--cat-emerald)", "var(--cat-violet)", "var(--cat-rose)", "var(--cyan)", "var(--red)"];
       instRef.current.donut = new Chart(donutRef.current, {
         type: "doughnut",
         data: { labels: composicao.map(([k]) => k), datasets: [{ data: composicao.map(([, v]) => v), backgroundColor: pal, borderWidth: 0 }] },
@@ -223,7 +223,7 @@ export default function PainelFinanceiro({ ctx }) {
   }, [serie, composicao, mesRef]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
-  const PAL = ["var(--cat-blue)", "var(--cat-gold)", "#22c55e", "#a855f7", "#ec4899", "var(--cyan)", "var(--red)"];
+  const PAL = ["var(--cat-blue)", "var(--cat-gold)", "var(--cat-emerald)", "var(--cat-violet)", "var(--cat-rose)", "var(--cyan)", "var(--red)"];
   const totalComp = composicao.reduce((s, [, v]) => s + v, 0) || 1;
   // Variação vs mês anterior (badge ▲/▼). higherIsGood=false p/ despesa.
   const delta = (cur, prev, higherIsGood = true) => {

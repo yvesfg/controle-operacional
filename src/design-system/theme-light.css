@@ -83,6 +83,14 @@
   --cat-indigo : #4338ca;
   --cat-indigo-lt: #4f46e5;
   --cat-indigo-text: #4338ca;
+  --cat-emerald: #15803d;
+  --cat-violet : #7e22ce;
+  --cat-tangerine: #c2410c;
+  --cat-rose   : #be185d;
+  --cat-purple-lt: #9c27b0;
+  --cat-amber2 : #c2560a;
+  --rank-silver: #64748b;
+  --rank-bronze: #a3653a;
 
   /* ── Overlays / Sombras (light usa shadow real) ─────────────── */
   --color-shadow      : rgba(15,24,37,.08);

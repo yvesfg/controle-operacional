@@ -51,7 +51,7 @@ export default function DashboardAVB({ ctx }) {
   const statusArr = Object.entries(statusMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const totalStatus = statusArr.reduce((a,[,v])=>a+v,0);
   const STATUS_COLORS = { Carregado:t.ouro, CARREGADO:t.ouro, Pendente:t.warn, PENDENTE:t.warn };
-  const FALLBACK_COLORS = ["#a855f7","#ec4899","var(--red)","#22c55e","var(--cyan)"];
+  const FALLBACK_COLORS = ["var(--cat-violet)","var(--cat-rose)","var(--red)","var(--cat-emerald)","var(--cyan)"];
 
   // ── Contratante Leaderboard ───────────────────────────────
   const cMap = {};
@@ -66,7 +66,7 @@ export default function DashboardAVB({ ctx }) {
   const topContrat = Object.entries(cMap).sort((a,b)=>b[1].viagens-a[1].viagens);
   const maxVg = topContrat[0]?.[1]?.viagens||1;
   const medalhas = ["🥇","🥈","🥉"];
-  const podColors = ["var(--accent)","#94a3b8","#cd7c32"];
+  const podColors = ["var(--accent)","var(--rank-silver)","var(--rank-bronze)"];
 
   // ── Top Rotas ────────────────────────────────────────────
   const destMap = {};

@@ -968,7 +968,7 @@ export default function App() {
         : meses.map(m=>grupos[m].regs.length);
       chartInstances.current.a = new Chart(chartAreaRef.current, {
         type:"line",
-        data:{labels:areaLabels,datasets:[{data:areaData,borderColor:"#a855f7",borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#a855f7",tension:.4,fill:true,
+        data:{labels:areaLabels,datasets:[{data:areaData,borderColor:"var(--cat-violet)",borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"var(--cat-violet)",tension:.4,fill:true,
           backgroundColor:(ctx)=>{
             const c=ctx.chart.ctx, h=ctx.chart.height||200;
             const g=c.createLinearGradient(0,0,0,h);
@@ -992,7 +992,7 @@ export default function App() {
       const stMap={};
       dashData.filtrado.forEach(r=>{const s=(r.status||"Sem Status");stMap[s]=(stMap[s]||0)+1;});
       const sortedSt=Object.entries(stMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
-      const DONUT_C=["#a855f7","#ec4899","var(--red)","#22c55e"];
+      const DONUT_C=["var(--cat-violet)","var(--cat-rose)","var(--red)","var(--cat-emerald)"];
       chartInstances.current.d = new Chart(chartDonutRef.current, {
         type:"doughnut",
         data:{labels:sortedSt.map(([k])=>k),datasets:[{data:sortedSt.map(([,v])=>v),backgroundColor:DONUT_C,borderColor:isDark?"#111119":"#fff",borderWidth:3}]},

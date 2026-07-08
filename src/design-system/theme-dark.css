@@ -81,6 +81,14 @@
   --cat-indigo : #4f46e5;   /* categoria "em trânsito" (PlanilhaView) */
   --cat-indigo-lt: #7c3aed;
   --cat-indigo-text: #a5b4fc;
+  --cat-emerald: #22c55e;   /* verde ad-hoc usado em 12 arquivos (OcorrenciasView, DescargaView, AVB...) */
+  --cat-violet : #a855f7;   /* roxo ad-hoc usado em 8 arquivos */
+  --cat-tangerine: #f97316; /* laranja ad-hoc (distinto de --orange e --cat-orange) */
+  --cat-rose   : #ec4899;
+  --cat-purple-lt: #ce93d8; /* variante clara de --cat-purple */
+  --cat-amber2 : #f57c00;   /* quase-duplicata de --cat-amber, valor preservado */
+  --rank-silver: #94a3b8;   /* pódio/ranking 2º lugar */
+  --rank-bronze: #cd7c32;   /* pódio/ranking 3º lugar */
 
   /* ── Chips de status — bg sutil + borda semântica ───────────── */
   /* border + bg sutil comunica status melhor que fundo sólido     */

@@ -146,6 +146,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 34",
+    itens: [
+      "STYLE · Tokenizadas as cores 'inventadas' de maior frequencia: --cat-emerald (#22c55e, 21 usos/12 arquivos), --cat-violet (#a855f7, 14 usos/8 arquivos), --cat-tangerine (#f97316), --cat-rose (#ec4899), --cat-purple-lt (#ce93d8), --cat-amber2 (#f57c00), --rank-silver/--rank-bronze (podio AVB). Mesmo valor exato preservado -- zero mudanca visual, so passam a ter nome e local unico pra mudar no futuro.",
+      "FIX · Removidos 52 fallbacks MORTOS do tipo var(--token, #hex) espalhados em 7 arquivos (maior parte OcorrenciasView.jsx, 30). Como --green/--red/--yellow/--cyan/--accent/--orange/--border2 SEMPRE existem (definidos no escopo [data-theme]), o fallback nunca disparava -- e pior, varios estavam desatualizados (var(--accent,#7c3aed) quando --accent e #D9622B; var(--green,#22c55e) quando --green e #10b981), sobrando como hex morto e confuso no meio do codigo. Confirmado via getComputedStyle que nada mudou visualmente.",
+      "FIX · t.azul || \"#3b82f6\" (ConferenciaFrete.jsx, 2x) e cssVar podColors com hex solto (DashboardAVB.jsx) tambem tokenizados/simplificados.",
+      "NOTA · Toda cor de UI agora esta atrelada a um token nomeado (exceto fallbacks legitimos de resiliencia tipo cssVar(x, default) e a cor oficial do WhatsApp #25D366, que e marca externa, nao token de design).",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 33",
     itens: [
       "STYLE · Dropdowns de filtro padronizados: DiariasView.jsx (2 blocos) e DescargaView.jsx reinventavam o visual de 'pill de filtro ativo/inativo' com estilo inline duplicado (copy-paste), em vez de usar a classe .pv-filter-pill que a Planilha ja usava (token-driven desde a Sessao 28). Trocado pra reusar a classe existente -- 8 <select> agora vem do mesmo lugar.",

@@ -17,7 +17,7 @@ export default function Toggle({ checked, onChange, label, color, disabled, size
       onKeyDown={(e) => { if (disabled) return; if (e.key === " " || e.key === "Enter") { e.preventDefault(); onChange?.(!checked); } }}
       style={{
         position: "relative", display: "inline-block", width: W, height: H, flexShrink: 0,
-        borderRadius: H, background: checked ? on : "var(--border2, #3a4759)",
+        borderRadius: H, background: checked ? on : "var(--border2)",
         cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.5 : 1,
         transition: "background .2s ease", verticalAlign: "middle",
       }}
