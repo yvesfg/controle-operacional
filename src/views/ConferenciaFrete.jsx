@@ -22,10 +22,11 @@ const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 
 const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
 
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado } = ctx;
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
+  const [usuarioFiltro, setUsuarioFiltro] = React.useState(""); // "" = todos os usuários (nome_usuario da planilha)
   const [linhasPeriodo, setLinhasPeriodo] = React.useState([]);
   const [pendentes, setPendentes] = React.useState([]);
   const [sinalizados, setSinalizados] = React.useState([]);
@@ -97,9 +98,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   const onDecidir = async (id, decisao, obs) => {
     try {
-      const atualizado = await decidir(conn, id, decisao, obs);
+      const atualizado = await decidir(conn, id, decisao, obs, usuarioLogado);
       setPendentes((arr) => arr.filter((p) => p.id !== id));
       if (decisao === "sinalizar_correcao" && atualizado) setSinalizados((arr) => [atualizado, ...arr]);
+      // Reflete a decisão nas linhas do período já carregadas — alimenta o ranking de revisão sem refetch.
+      setLinhasPeriodo((arr) => arr.map((l) => l.id === id
+        ? { ...l, decisao_manual: decisao, revisado_por: usuarioLogado, revisado_em: atualizado?.revisado_em || new Date().toISOString() }
+        : l));
       showToast?.("Revisão registrada.", "ok");
     } catch (e) { showToast?.("Erro ao registrar decisão: " + e.message, "erro"); }
   };
@@ -111,13 +116,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
     () => clienteFiltro ? linhasPeriodo.filter(l => l.cliente === clienteFiltro) : linhasPeriodo,
     [linhasPeriodo, clienteFiltro]
   );
-  const pendentesFiltrados = React.useMemo(
-    () => clienteFiltro ? pendentes.filter(p => p.cliente === clienteFiltro) : pendentes,
-    [pendentes, clienteFiltro]
+  const pendentesFiltrados = React.useMemo(() => pendentes
+    .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
+    .filter(p => !usuarioFiltro || (p.nome_usuario || "(sem usuário na planilha)") === usuarioFiltro),
+    [pendentes, clienteFiltro, usuarioFiltro]
   );
-  const sinalizadosFiltrados = React.useMemo(
-    () => clienteFiltro ? sinalizados.filter(p => p.cliente === clienteFiltro) : sinalizados,
-    [sinalizados, clienteFiltro]
+  const sinalizadosFiltrados = React.useMemo(() => sinalizados
+    .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
+    .filter(p => !usuarioFiltro || (p.nome_usuario || "(sem usuário na planilha)") === usuarioFiltro),
+    [sinalizados, clienteFiltro, usuarioFiltro]
   );
 
   const resumoCat = React.useMemo(() => resumoPorCategoria(linhasFiltradas), [linhasFiltradas]);
@@ -128,21 +135,58 @@ export default function ConferenciaFrete({ ctx, conn }) {
   }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
 
   // Por usuário — quem lançou os registros hoje na fila de revisão, pra saber com quem falar.
+  // Clicável: filtra a Fila de revisão/Sinalizados por esse usuário (usuarioFiltro).
   const resumoPorUsuario = React.useMemo(() => {
     const out = {};
-    pendentesFiltrados.forEach((p) => {
-      const nome = p.nome_usuario || "(sem usuário na planilha)";
+    pendentes
+      .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
+      .forEach((p) => {
+        const nome = p.nome_usuario || "(sem usuário na planilha)";
+        out[nome] = (out[nome] || 0) + 1;
+      });
+    return Object.entries(out).sort((a, b) => b[1] - a[1]);
+  }, [pendentes, clienteFiltro]);
+
+  // Ranking de revisão — quem (usuário logado) decidiu os itens da fila neste período/cliente.
+  const rankingRevisao = React.useMemo(() => {
+    const out = {};
+    linhasFiltradas.forEach((l) => {
+      if (!l.decisao_manual) return;
+      const nome = l.revisado_por || "(sem registro)";
       out[nome] = (out[nome] || 0) + 1;
     });
     return Object.entries(out).sort((a, b) => b[1] - a[1]);
-  }, [pendentesFiltrados]);
+  }, [linhasFiltradas]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
+  // Grade lado a lado (2 colunas) que colapsa para 1 coluna quando não há espaço — mesmo espírito do resto do app.
+  const gridPar = { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(400px, 1fr))", gap: 16, marginBottom: 16, alignItems: "start" };
 
   const badge = (icon, texto, cor) => (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: hexRgb(cor, .12), border: `1px solid ${hexRgb(cor, .3)}`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
       {texto}
+    </span>
+  );
+
+  // Avatar de usuário — mesmo modelo do círculo com iniciais do rodapé da sidebar
+  // (co-sidebar__user), usado em qualquer lugar da tela que identifique uma pessoa.
+  const iniciaisNome = (nome) => (nome || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  const avatar = (nome, size = 18) => (
+    <span style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: "linear-gradient(135deg, var(--accent), var(--cyan))",
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      fontSize: Math.round(size * 0.42), fontWeight: 700, color: "#fff",
+      fontFamily: "var(--font-heading)", letterSpacing: "-0.01em",
+    }}>
+      {iniciaisNome(nome)}
+    </span>
+  );
+  const userChip = (nome, size = 18) => (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      {avatar(nome, size)}
+      <span>{nome}</span>
     </span>
   );
 
@@ -190,9 +234,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
         })}
       </div>
 
+      {/* Resumo por cliente + Evolução diária — lado a lado, mantendo leitura em telas estreitas */}
+      <div style={gridPar}>
       {/* Resumo por cliente — tabela alinhada, clique filtra por esse cliente */}
       {Object.keys(resumoCli).length > 0 && (
-        <div style={{ ...card, marginBottom: 16 }}>
+        <div style={{ ...card }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Por cliente · {mesLabel(periodoRef)}</div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
@@ -236,7 +282,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
       {/* Evolução diária — quantos CTRCs entraram por dia, pra acompanhar o mês sem esperar fechar */}
       {resumoDia.length > 0 && (
-        <div style={{ ...card, marginBottom: 16 }}>
+        <div style={{ ...card }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Evolução diária · {mesLabel(periodoRef)}</div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
@@ -268,27 +314,63 @@ export default function ConferenciaFrete({ ctx, conn }) {
           })}
         </div>
       )}
+      </div>
 
-      {/* Por usuário — quem lançou os registros pendentes, pra direcionar a correção */}
+      {/* Pendências por usuário (clicável — filtra a Fila/Sinalizados abaixo) + Ranking de revisão — lado a lado */}
+      <div style={gridPar}>
       {resumoPorUsuario.length > 0 && (
-        <div style={{ ...card, marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Pendências por usuário</div>
+        <div style={{ ...card }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4 }}>Pendências por usuário</div>
+          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>Clique num usuário para filtrar os casos dele na fila de revisão.</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {resumoPorUsuario.map(([nome, qtd]) => (
-              <span key={nome} style={{ fontSize: 11.5, padding: "6px 12px", borderRadius: 20, background: t.card2, border: `1px solid ${t.borda}`, color: t.txt }}>
-                <b>{nome}</b> <span style={{ color: t.danger, fontWeight: 700 }}>{qtd}</span>
-              </span>
-            ))}
+            {resumoPorUsuario.map(([nome, qtd]) => {
+              const ativo = usuarioFiltro === nome;
+              return (
+                <button key={nome} onClick={() => setUsuarioFiltro(ativo ? "" : nome)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11.5, fontWeight: 600, padding: "5px 12px 5px 5px", borderRadius: 20, cursor: "pointer",
+                    background: ativo ? hexRgb(t.ouro, .12) : t.card2, border: `1px solid ${ativo ? t.ouro : t.borda}`, color: t.txt, fontFamily: "inherit" }}>
+                  {avatar(nome, 20)}
+                  <b>{nome}</b> <span style={{ color: t.danger, fontWeight: 700 }}>{qtd}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
+      {/* Ranking de revisão — quem já decidiu quantos itens da fila neste período/cliente */}
+      {rankingRevisao.length > 0 && (
+        <div style={{ ...card }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Ranking de revisão · {mesLabel(periodoRef)}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {rankingRevisao.map(([nome, qtd], i) => (
+              <div key={nome} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 4px", borderBottom: i < rankingRevisao.length - 1 ? `1px solid ${hexRgb(t.borda, .2)}` : "none" }}>
+                <span style={{ width: 18, textAlign: "center", fontSize: 11, fontWeight: 800, color: i === 0 ? t.ouro : t.txt2, flexShrink: 0 }}>{i + 1}º</span>
+                {avatar(nome, 22)}
+                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nome}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: t.verde, fontFamily: "var(--font-mono)" }}>{qtd}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      </div>
+
+      {/* Fila de revisão + Sinalizados — lado a lado quando ambos existem */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile || !sinalizadosFiltrados.length ? "1fr" : "repeat(auto-fit, minmax(400px, 1fr))", gap: 16, alignItems: "start" }}>
       {/* Fila de revisão */}
       <div style={{ ...card }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Fila de revisão</span>
           {pendentesFiltrados.length > 0 && (
             <span style={{ background: hexRgb(t.danger, .1), color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
+          )}
+          {usuarioFiltro && (
+            <button onClick={() => setUsuarioFiltro("")}
+              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 20, cursor: "pointer",
+                background: hexRgb(t.ouro, .12), border: `1px solid ${t.ouro}`, color: t.ouro, fontFamily: "inherit" }}>
+              {usuarioFiltro} ✕
+            </button>
           )}
         </div>
         <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
@@ -321,7 +403,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               </button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 5 }}>
-              <span style={{ fontSize: 10.5, color: "var(--accent)", fontWeight: 700 }}>👤 {p.nome_usuario || "sem usuário"}</span>
+              <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.nome_usuario || "sem usuário", 15)}</span>
               {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
               {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
               {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
@@ -334,7 +416,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
       {/* Sinalizados para correção — saíram da fila de revisão, mas ficam visíveis até a origem ser corrigida */}
       {sinalizadosFiltrados.length > 0 && (
-        <div style={{ ...card, marginTop: 16 }}>
+        <div style={{ ...card }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Sinalizados</span>
             <span style={{ background: hexRgb(t.ouro, .1), color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
@@ -360,6 +442,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           ))}
         </div>
       )}
+      </div>
 
       {/* Modal: pré-visualização antes de gravar */}
       {preview && (
@@ -419,7 +502,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           <div onClick={fechar} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 560, width: "90vw", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
               <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 2 }}>{p.cliente} · CTRC {p.ctrc}</div>
-              <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 700, marginBottom: 10 }}>👤 {p.nome_usuario || "sem usuário na planilha"}</div>
+              <div style={{ fontSize: 11, color: t.txt, fontWeight: 700, marginBottom: 10 }}>{userChip(p.nome_usuario || "sem usuário na planilha", 16)}</div>
 
               <div style={{ marginBottom: 12 }}>
                 {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
@@ -510,7 +593,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
             {grupoDup.map((d) => (
               <div key={d.id} style={{ padding: "10px 8px", borderBottom: `1px solid ${hexRgb(t.borda, .33)}`, fontSize: 12 }}>
                 <div style={{ fontWeight: 700, color: t.txt }}>CTRC {d.ctrc} · {CATEGORIA_LABEL[d.categoria]}</div>
-                <div style={{ fontSize: 10.5, color: "var(--accent)", fontWeight: 700, marginTop: 1 }}>👤 {d.nome_usuario || "sem usuário na planilha"}</div>
+                <div style={{ fontSize: 10.5, color: t.txt, fontWeight: 700, marginTop: 1 }}>{userChip(d.nome_usuario || "sem usuário na planilha", 15)}</div>
                 <div style={{ color: t.txt2, fontSize: 11, marginTop: 2 }}>
                   contrato {money(d.valor_contrato_frete)} · saldo {money(d.saldo)} · margem {Number(d.margem_lucro).toFixed(2)}%
                 </div>

@@ -177,8 +177,8 @@ export async function listarSinalizados(conn, cliente) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
-export async function decidir(conn, id, decisao, obs) {
-  const body = { decisao_manual: decisao, revisado_em: new Date().toISOString(), revisado_obs: obs || null, atualizado_em: new Date().toISOString() };
+export async function decidir(conn, id, decisao, obs, revisadoPor) {
+  const body = { decisao_manual: decisao, revisado_em: new Date().toISOString(), revisado_obs: obs || null, revisado_por: revisadoPor || null, atualizado_em: new Date().toISOString() };
   const q = encodeURIComponent(id);
   const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, body);
   return Array.isArray(res) ? res[0] : res;
