@@ -429,24 +429,24 @@
   border-color: var(--color-primary);
 }
 .ds-badge--success {
-  background  : var(--color-success-bg);
-  color       : var(--color-success);
-  border-color: var(--color-success-border);
+  background  : #047857;
+  color       : #ffffff;
+  border-color: #047857;
 }
 .ds-badge--danger {
-  background  : var(--color-danger-bg);
-  color       : var(--color-danger);
-  border-color: var(--color-danger-border);
+  background  : var(--color-danger-dk);
+  color       : #ffffff;
+  border-color: var(--color-danger-dk);
 }
 .ds-badge--warning {
-  background  : var(--color-warning-bg);
-  color       : var(--color-warning);
-  border-color: var(--color-warning-border);
+  background  : #b45309;
+  color       : #ffffff;
+  border-color: #b45309;
 }
 .ds-badge--info {
-  background  : var(--color-info-bg);
-  color       : var(--color-info);
-  border-color: var(--color-info-border);
+  background  : #0e7490;
+  color       : #ffffff;
+  border-color: #0e7490;
 }
 
 /* Dot indicator */

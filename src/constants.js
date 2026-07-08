@@ -139,6 +139,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 29",
+    itens: [
+      "STYLE · Rebrand: amarelo Binance -> terracota (#D9622B dark / #B24E1E light) em todos os tokens (theme-dark/light/tokens.css). AVB mantem laranja #FF6B35, com --on-primary proprio (texto escuro nos 2 temas). Fontes trocadas: Satoshi -> Manrope (titulos) + Inter (corpo), Plex Mono mantida nos dados; um CDN a menos (so Google Fonts).",
+      "STYLE · Glass/blur removido: sidebar, overlays e paineis de modal deixaram de usar backdrop-filter. Bloco de CSS legado 'nova UI 2026-06' que pintava a sidebar dark em roxo/indigo hardcoded (#4f46e5, sem token) foi recolorido pro accent oficial; indigo legitimo (badge 'em transito') virou token --cat-indigo.",
+      "STYLE · Badges/chips ficaram solidos (fundo forte + texto branco) em vez do fundo translucido antigo: Badge.jsx (design-system, variantes success/danger/warning/info), StatusBadge.jsx (usado em Dashboard e Ocorrencias) e os .pv-badge-* da Planilha. Cores calculadas p/ manter contraste WCAG AA com texto branco.",
+      "NOTA · Fase 2 do plano de UI (badges soltos direto no JSX via hexRgb(), fora dos componentes compartilhados) ainda tem ocorrencias espalhadas por outras views/modais -- nao cobertas nesta sessao por orcamento. Fases 3 (dropdown unico) e 4 (limpeza dos ~260 hex restantes) tambem seguem pendentes.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 28",
     itens: [
       "CHORE · Removidos 102 arquivos .bak_* (2,6MB) espalhados em src/ e assets/ — o projeto ja usa Git, entao duplicar arquivo antes de editar era redundante com o historico. CLAUDE.md atualizado: instrucao de criar backup trocada por 'sugerir commit antes de alteracao arriscada'.",
