@@ -139,6 +139,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 31",
+    itens: [
+      "STYLE · Badges de status genuinos convertidos pra solido + texto branco: contador 'pendentes' e 'sinalizados' (ConferenciaFrete.jsx), badge 'ATR' de atraso (DashboardView.jsx).",
+      "FIX · 3 paineis de aviso (DescargaView.jsx, DiariasView.jsx x2) usavam rgba(240,185,11,...) -- o AMARELO ANTIGO hardcoded, nao um token, entao nao acompanhou o rebrand da Sessao 29. Corrigido pra rgba(217,98,43,...) (terracota). Esses eram literais rgba() que o script de substituicao exata da Sessao 28 nao pegou (so casava #hex, nao rgba()).",
+      "NOTA · Restante do hexRgb() nas telas (glows decorativos, hover, tiles de icone, tabs, pills de filtro) foram revisados e mantidos de proposito -- sao padroes de UI legitimos (feedback de interacao, nao 'badge de status parado'), diferentes do que a Sessao 29 corrigiu.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 30",
     itens: [
       "STYLE · HubAdmin.jsx: badges de modulo (nome do modulo, Ativo/Inativo, TESTE) trocados de fundo translucido pra solido + texto branco, mesmo padrao das Sessoes 28-29.",

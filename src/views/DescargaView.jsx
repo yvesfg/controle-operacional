@@ -431,7 +431,7 @@ export default function DescargaView({ ctx }) {
                     {/* Banner de abas detectadas */}
                     {rodorricaSheetInfo && rodorricaSheetInfo.others.length > 0 && (
                       <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:10,padding:"8px 12px",
-                        borderRadius:10,background:`rgba(240,185,11,.08)`,border:`1px solid ${hexRgb(t.ouro,.35)}`}}>
+                        borderRadius:10,background:`rgba(217,98,43,.08)`,border:`1px solid ${hexRgb(t.ouro,.35)}`}}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2"
                           strokeLinecap="round" strokeLinejoin="round" style={{marginTop:2,flexShrink:0}}>
                           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>

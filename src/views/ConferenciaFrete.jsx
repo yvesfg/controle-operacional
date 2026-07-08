@@ -388,7 +388,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
         {sectionHead("Fila de revisão", (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {pendentesFiltrados.length > 0 && (
-              <span style={{ background: hexRgb(t.danger, .1), color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
+              <span style={{ background: "#dc2626", color: "#ffffff", fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
             )}
             {usuarioFiltro && (
               <button onClick={() => setUsuarioFiltro("")}
@@ -444,7 +444,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {sinalizadosFiltrados.length > 0 && (
         <div style={{ ...tile }}>
           {sectionHead("Sinalizados", (
-            <span style={{ background: hexRgb(t.ouro, .1), color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
+            <span style={{ background: "#B84F1F", color: "#ffffff", fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
           ))}
           <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 12 }}>
             Já saíram do alerta e continuam contando no total — aguardando correção na origem (exclusão/reimportação).
