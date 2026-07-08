@@ -21,8 +21,16 @@ const ICO_ALERTA = <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0
 const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
 const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
 
+// Ícones dos KPIs por categoria — mesma linguagem do Dashboard (hIco, 24x24 stroke).
+const ICO_CATEGORIA = {
+  frete:   <><rect x="1" y="3" width="15" height="13" rx="2" /><path d="m16 8 4 2 3 3v4h-7" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></>,
+  descarga:<><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></>,
+  local:   <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>,
+  diaria:  <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
+};
+
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb, usuarioLogado } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado, css, hIco } = ctx;
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
@@ -158,12 +166,22 @@ export default function ConferenciaFrete({ ctx, conn }) {
     return Object.entries(out).sort((a, b) => b[1] - a[1]);
   }, [linhasFiltradas]);
 
-  const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
+  // Mesmo card do Dashboard (css.card) — reskin pra bater com o resto do app.
+  const card = { ...css.card, padding: isMobile ? 14 : 18 };
   // Mosaico (CSS columns) em vez de grid pareado — cards de altura desigual (ex.: Por
   // cliente curto ao lado de Evolução diária longa) não deixam mais espaço morto na
   // linha, porque cada coluna flui independente em vez de esticar pra bater com a maior.
   const masonry = { columnCount: isMobile ? 1 : 2, columnGap: 16 };
   const tile = { ...card, breakInside: "avoid", WebkitColumnBreakInside: "avoid", display: "inline-block", width: "100%", marginBottom: 16 };
+
+  // Cabeçalho de seção — mesmo estilo mono/uppercase/text3 do Dashboard (ver DashboardView.jsx),
+  // com um slot opcional à direita (badge de contagem, botão "Ver X ›" etc).
+  const sectionHead = (label, right) => (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 12 }}>
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text3)", fontWeight: 400 }}>{label}</span>
+      {right}
+    </div>
+  );
 
   const badge = (icon, texto, cor) => (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: hexRgb(cor, .12), border: `1px solid ${hexRgb(cor, .3)}`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>
@@ -232,6 +250,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           return (
             <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={`${d.registros} reg.`}
               sub={`${money(d.fretePeso)} · margem ${d.margemMedia.toFixed(1)}%`}
+              icon={hIco(ICO_CATEGORIA[c], "var(--text3)", isMobile ? 10 : 11)}
               color={c === "frete" ? "var(--accent)" : undefined} compact={isMobile} />
           );
         })}
@@ -242,7 +261,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Resumo por cliente — tabela alinhada, clique filtra por esse cliente */}
       {Object.keys(resumoCli).length > 0 && (
         <div style={{ ...tile }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Por cliente · {mesLabel(periodoRef)}</div>
+          {sectionHead(`Por cliente · ${mesLabel(periodoRef)}`)}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
             <span style={{ flex: 1, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Cliente</span>
@@ -286,7 +305,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Evolução diária — quantos CTRCs entraram por dia, pra acompanhar o mês sem esperar fechar */}
       {resumoDia.length > 0 && (
         <div style={{ ...tile }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Evolução diária · {mesLabel(periodoRef)}</div>
+          {sectionHead(`Evolução diária · ${mesLabel(periodoRef)}`)}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
             <span style={{ width: 44, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
@@ -321,8 +340,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Pendências por usuário — clicável, filtra a Fila/Sinalizados abaixo */}
       {resumoPorUsuario.length > 0 && (
         <div style={{ ...tile }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4 }}>Pendências por usuário</div>
-          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>Clique num usuário para filtrar os casos dele na fila de revisão.</div>
+          {sectionHead("Pendências por usuário")}
+          <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 10 }}>Clique num usuário para filtrar os casos dele na fila de revisão.</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {resumoPorUsuario.map(([nome, qtd]) => {
               const ativo = usuarioFiltro === nome;
@@ -339,39 +358,48 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
       )}
 
-      {/* Ranking de revisão — quem já decidiu quantos itens da fila neste período/cliente */}
-      {rankingRevisao.length > 0 && (
+      {/* Ranking de revisão — quem já decidiu quantos itens da fila neste período/cliente (barra estilo Top Motoristas) */}
+      {rankingRevisao.length > 0 && (() => {
+        const maxRank = rankingRevisao[0]?.[1] || 1;
+        return (
         <div style={{ ...tile }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Ranking de revisão · {mesLabel(periodoRef)}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {sectionHead(`Ranking de revisão · ${mesLabel(periodoRef)}`)}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {rankingRevisao.map(([nome, qtd], i) => (
-              <div key={nome} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 4px", borderBottom: i < rankingRevisao.length - 1 ? `1px solid ${hexRgb(t.borda, .2)}` : "none" }}>
-                <span style={{ width: 18, textAlign: "center", fontSize: 11, fontWeight: 800, color: i === 0 ? t.ouro : t.txt2, flexShrink: 0 }}>{i + 1}º</span>
-                {avatar(nome, 22)}
-                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nome}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: t.verde, fontFamily: "var(--font-mono)" }}>{qtd}</span>
+              <div key={nome}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                  <span style={{ width: 16, textAlign: "center", fontSize: 10.5, fontWeight: 800, color: i === 0 ? t.ouro : t.txt2, flexShrink: 0 }}>{i + 1}º</span>
+                  {avatar(nome, 22)}
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nome}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: t.txt, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{qtd}</span>
+                </div>
+                <div style={{ height: 3, borderRadius: 2, background: t.card2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.round(qtd / maxRank * 100)}%`, background: t.ouro, borderRadius: 2 }} />
+                </div>
               </div>
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Fila de revisão */}
       <div style={{ ...tile }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Fila de revisão</span>
-          {pendentesFiltrados.length > 0 && (
-            <span style={{ background: hexRgb(t.danger, .1), color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
-          )}
-          {usuarioFiltro && (
-            <button onClick={() => setUsuarioFiltro("")}
-              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 20, cursor: "pointer",
-                background: hexRgb(t.ouro, .12), border: `1px solid ${t.ouro}`, color: t.ouro, fontFamily: "inherit" }}>
-              {usuarioFiltro} ✕
-            </button>
-          )}
-        </div>
-        <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
+        {sectionHead("Fila de revisão", (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {pendentesFiltrados.length > 0 && (
+              <span style={{ background: hexRgb(t.danger, .1), color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
+            )}
+            {usuarioFiltro && (
+              <button onClick={() => setUsuarioFiltro("")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 20, cursor: "pointer",
+                  background: hexRgb(t.ouro, .12), border: `1px solid ${t.ouro}`, color: t.ouro, fontFamily: "inherit" }}>
+                {usuarioFiltro} ✕
+              </button>
+            )}
+          </div>
+        ))}
+        <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 12 }}>
           Margem negativa, margem abaixo de 10%, classificação Descarga/Local ambígua, ou mesmo valor lançado em CTRCs diferentes (duplicidade). Fica até você decidir — nunca é resolvido sozinho.
         </div>
 
@@ -415,11 +443,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Sinalizados para correção — saíram da fila de revisão, mas ficam visíveis até a origem ser corrigida */}
       {sinalizadosFiltrados.length > 0 && (
         <div style={{ ...tile }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Sinalizados</span>
+          {sectionHead("Sinalizados", (
             <span style={{ background: hexRgb(t.ouro, .1), color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
-          </div>
-          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
+          ))}
+          <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 12 }}>
             Já saíram do alerta e continuam contando no total — aguardando correção na origem (exclusão/reimportação).
           </div>
           {sinalizadosFiltrados.map((p) => (
