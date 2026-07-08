@@ -836,7 +836,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 11px;
-  color: #ffffff;
+  color: var(--color-text-inverse);
   cursor: pointer;
   font-weight: 600;
   font-family: var(--font-body);
@@ -970,7 +970,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 .pv-btn-action.primary {
   background: var(--cat-indigo);
   border-color: var(--cat-indigo);
-  color: #ffffff;
+  color: var(--color-text-inverse);
 }
 .pv-btn-action.primary:hover { background: var(--cat-indigo-lt); }
 
@@ -981,13 +981,13 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   padding: 2px 8px;
   font-family: var(--font-body);
   white-space: nowrap;
-  color: #ffffff;
+  color: var(--color-text-inverse);
 }
-.pv-badge-ok      { background:#047857; border:1px solid #047857; }
-.pv-badge-pend    { background:#b45309; border:1px solid #b45309; }
-.pv-badge-atraso  { background:#dc2626; border:1px solid #dc2626; }
-.pv-badge-transito{ background:var(--cat-indigo); border:1px solid var(--cat-indigo); }
-.pv-badge-default { background:#3a424c; color:#eaecef; border:1px solid #3a424c; }
+.pv-badge-ok      { background:var(--chip-solid-success); border:1px solid var(--chip-solid-success); }
+.pv-badge-pend    { background:var(--chip-solid-warning); border:1px solid var(--chip-solid-warning); }
+.pv-badge-atraso  { background:var(--chip-solid-danger);  border:1px solid var(--chip-solid-danger); }
+.pv-badge-transito{ background:var(--chip-solid-indigo);  border:1px solid var(--chip-solid-indigo); }
+.pv-badge-default { background:var(--chip-solid-neutral); color:var(--color-text); border:1px solid var(--chip-solid-neutral); }
 
 .pv-toggle { font-size: 10px; color: rgba(255,255,255,0.25); user-select: none; }
 

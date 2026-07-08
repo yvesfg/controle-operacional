@@ -324,7 +324,7 @@ export default function DashboardView({ ctx }) {
               <div>
                 {descargaData.atrasados.slice(0,3).map((r,i)=>(
                   <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderTop:i>0?`1px solid ${hexRgb(t.borda,.4)}`:"none"}}>
-                    <span style={{background:"#dc2626",border:"1px solid #dc2626",borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:"#ffffff",whiteSpace:"nowrap",flexShrink:0}}>ATR</span>
+                    <span style={{background:"var(--chip-solid-danger)",border:"1px solid var(--chip-solid-danger)",borderRadius:4,padding:"1px 4px",fontSize:9,fontWeight:700,color:"var(--color-text-inverse)",whiteSpace:"nowrap",flexShrink:0}}>ATR</span>
                     <span style={{fontSize:10,color:t.txt,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{(r.nome||"—").split(" ").slice(0,2).join(" ").toLowerCase()}</span>
                     <span style={{fontSize:10,color:t.txt2,whiteSpace:"nowrap",flexShrink:0}}>{(r.destino||"—").split(/[-–]/)[0].trim()}</span>
                   </div>

@@ -100,6 +100,15 @@
   --chip-info-border   : rgba(6,182,212,.20);
   --chip-info-text     : #22d3ee;
 
+  /* ── Chips solidos — fundo forte + texto branco (pedido Yves: sem glass) ── */
+  /* Mesmo valor nos 2 temas -- o badge tem cor propria, nao depende do fundo da pagina */
+  --chip-solid-success : #047857;
+  --chip-solid-warning : #b45309;
+  --chip-solid-danger  : #dc2626;
+  --chip-solid-info    : #0e7490;
+  --chip-solid-indigo  : #4f46e5;
+  --chip-solid-neutral : #3a424c;
+
   --chip-neutral-bg    : rgba(255,255,255,.05);
   --chip-neutral-border: rgba(255,255,255,.10);
   --chip-neutral-text  : #8892a8;

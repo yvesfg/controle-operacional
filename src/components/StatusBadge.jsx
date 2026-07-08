@@ -2,20 +2,20 @@
 import React from "react";
 
 const STATUS_MAP = {
-  "no-prazo":    { label: "No prazo",    bg: "#047857", color: "#ffffff", border: "#047857" },
-  "aguardando":  { label: "Aguardando",  bg: "#b45309", color: "#ffffff", border: "#b45309" },
-  "ro-pendente": { label: "RO Pendente", bg: "#dc2626", color: "#ffffff", border: "#dc2626" },
-  "em-transito": { label: "Em trânsito", bg: "#4f46e5", color: "#ffffff", border: "#4f46e5" },
-  "encerrado":   { label: "Encerrado",   bg: "#3a424c", color: "#eaecef", border: "#3a424c" },
-  "no-cliente":  { label: "No cliente",  bg: "#b45309", color: "#ffffff", border: "#b45309" },
+  "no-prazo":    { label: "No prazo",    bg: "var(--chip-solid-success)", color: "var(--color-text-inverse)", border: "var(--chip-solid-success)" },
+  "aguardando":  { label: "Aguardando",  bg: "var(--chip-solid-warning)", color: "var(--color-text-inverse)", border: "var(--chip-solid-warning)" },
+  "ro-pendente": { label: "RO Pendente", bg: "var(--chip-solid-danger)",  color: "var(--color-text-inverse)", border: "var(--chip-solid-danger)" },
+  "em-transito": { label: "Em trânsito", bg: "var(--chip-solid-indigo)",  color: "var(--color-text-inverse)", border: "var(--chip-solid-indigo)" },
+  "encerrado":   { label: "Encerrado",   bg: "var(--chip-solid-neutral)", color: "var(--color-text)", border: "var(--chip-solid-neutral)" },
+  "no-cliente":  { label: "No cliente",  bg: "var(--chip-solid-warning)", color: "var(--color-text-inverse)", border: "var(--chip-solid-warning)" },
 };
 
 export default function StatusBadge({ status }) {
   const s = STATUS_MAP[status] ?? {
     label: status,
-    bg: "#3a424c",
-    color: "#eaecef",
-    border: "#3a424c",
+    bg: "var(--chip-solid-neutral)",
+    color: "var(--color-text)",
+    border: "var(--chip-solid-neutral)",
   };
   return (
     <span style={{

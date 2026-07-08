@@ -60,6 +60,14 @@
   --color-info-bg     : rgba(8,145,178,.10);
   --color-info-border : rgba(8,145,178,.28);
 
+  /* ── Chips solidos — mesmo valor do dark (fundo forte + texto branco) ── */
+  --chip-solid-success : #047857;
+  --chip-solid-warning : #b45309;
+  --chip-solid-danger  : #dc2626;
+  --chip-solid-info    : #0e7490;
+  --chip-solid-indigo  : #4f46e5;
+  --chip-solid-neutral : #3a424c;
+
   /* ── Paleta categórica (light) — variantes mais escuras p/ contraste em branco ── */
   --cat-blue   : #1565c0;
   --cat-red    : #d32f2f;
