@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
-   theme-light.css — BINANCE LIGHT · Controle Operacional YFGroup
-   ► Canvas branco neutro. Accent = dourado legível (#a8810c) p/ texto/borda
-   ►   sobre branco; amarelo puro fica ilegível como texto no claro.
+   theme-light.css — TERRACOTA LIGHT · Controle Operacional YFGroup
+   ► Canvas branco neutro. Accent = terracota escurecido (#B24E1E) p/
+   ►   contraste em fundo branco (mesma logica do antigo dourado).
    ► Ativação: data-theme="light" no <html>
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -30,14 +30,14 @@
   --color-text-disabled: #b7bdc6;
   --color-text-inverse: #ffffff;
 
-  /* ── Acento — dourado legível sobre branco (família Binance) ── */
-  --color-primary     : #a8810c;
-  --color-primary-dk  : #8a6a08;
-  --color-primary-lt  : #c79a1a;
-  --color-primary-text : #8a6a08;
-  --color-primary-bg  : rgba(168,129,12,.10);
-  --color-primary-border: rgba(168,129,12,.30);
-  --color-primary-disabled: #e6dcc0;
+  /* ── Acento — terracota escurecido, legível sobre branco ─────── */
+  --color-primary     : #B24E1E;
+  --color-primary-dk  : #8F3D16;
+  --color-primary-lt  : #D9622B;
+  --color-primary-text : #B24E1E;
+  --color-primary-bg  : rgba(178,78,30,.12);
+  --color-primary-border: rgba(178,78,30,.32);
+  --color-primary-disabled: #e8d4c8;
 
   /* ── Status semânticos ──────────────────────────────────────── */
   --color-success     : #059669;
@@ -72,6 +72,9 @@
   --cat-green  : #059669;
   --cat-mint   : #047857;
   --cat-gray   : #5f6f88;
+  --cat-indigo : #4338ca;
+  --cat-indigo-lt: #4f46e5;
+  --cat-indigo-text: #4338ca;
 
   /* ── Overlays / Sombras (light usa shadow real) ─────────────── */
   --color-shadow      : rgba(15,24,37,.08);
@@ -84,15 +87,15 @@
   --shadow-lg         : 0 8px 24px rgba(15,24,37,.10);
   --shadow-xl         : 0 16px 40px rgba(15,24,37,.14);
   --shadow-card       : 0 1px 3px rgba(15,24,37,.04);
-  --shadow-primary    : 0 4px 16px rgba(168,129,12,.20);
+  --shadow-primary    : 0 4px 16px rgba(178,78,30,.22);
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
   --color-sidebar-bg        : #ffffff;
   --color-sidebar-item      : transparent;
-  --color-sidebar-item-hover: rgba(168,129,12,.08);
-  --color-sidebar-item-active: rgba(168,129,12,.14);
+  --color-sidebar-item-hover: rgba(178,78,30,.10);
+  --color-sidebar-item-active: rgba(178,78,30,.16);
   --color-sidebar-text      : #5c6675;
-  --color-sidebar-text-active: #8a6a08;
+  --color-sidebar-text-active: #B24E1E;
 
   /* ── Scrollbar ───────────────────────────────────────────────── */
   color-scheme: light;
@@ -110,9 +113,9 @@
   --text2   : #424a5f;   /* alinhado ao --color-text-2 (WCAG AAA) */
   --text3   : #5a6575;   /* alinhado ao --color-text-3 (WCAG AAA) */
 
-  --accent  : #a8810c;
-  --accent2 : rgba(168,129,12,.10);
-  --on-primary: #181a20;
+  --accent  : #B24E1E;
+  --accent2 : rgba(178,78,30,.12);
+  --on-primary: #ffffff;   /* terracota escuro precisa texto branco (dark falha AA) */
 
   --cyan    : #0891b2;
   --green   : #059669;

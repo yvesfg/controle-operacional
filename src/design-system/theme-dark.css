@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════
-   theme-dark.css — BINANCE YELLOW · Controle Operacional YFGroup
-   ► Identidade Binance: amarelo #FCD535 sobre near-black #0b0e11.
-   ► Accent único; foco azul (info). AVB mantém laranja por filial.
-   ► Backup do anterior (Steel Blue): theme-dark.css.bak_*
+   theme-dark.css — TERRACOTA · Controle Operacional YFGroup
+   ► Identidade: terracota #D9622B sobre near-black #0b0e11.
+   ► Accent único; foco azul (info). AVB mantém laranja #FF6B35 por filial
+   ►   (tom mais vivo, ainda contrasta com o terracota padrão).
    ═══════════════════════════════════════════════════════════════════ */
 
 [data-theme="dark"],
@@ -33,15 +33,15 @@
   --color-text-disabled : #3a424c;
   --color-text-inverse  : #ffffff;
 
-  /* ── Accent — Binance Yellow #FCD535 (único accent de marca) ── */
-  --color-primary          : #fcd535;
-  --color-primary-dk       : #f0b90b;   /* press/hover (Binance active)  */
-  --color-primary-lt       : #fde047;
-  --color-primary-text     : #fcd535;   /* texto/ícone accent sobre dark */
-  --color-primary-bg       : rgba(252,213,53,.08);
-  --color-primary-bg-hover : rgba(252,213,53,.13);
-  --color-primary-border   : rgba(252,213,53,.24);
-  --color-primary-disabled : #3a3a1f;   /* yellow dessaturado (Binance)  */
+  /* ── Accent — Terracota #D9622B (único accent de marca) ── */
+  --color-primary          : #D9622B;
+  --color-primary-dk       : #B84F1F;   /* press/hover, tambem base de badge solido */
+  --color-primary-lt       : #E8845A;
+  --color-primary-text     : #D9622B;   /* texto/ícone accent sobre dark */
+  --color-primary-bg       : rgba(217,98,43,.14);
+  --color-primary-bg-hover : rgba(217,98,43,.20);
+  --color-primary-border   : rgba(217,98,43,.34);
+  --color-primary-disabled : #3a2a1f;   /* terracota dessaturado         */
 
   /* ── Status ─────────────────────────────────────────────────── */
   --color-success        : #10b981;
@@ -78,6 +78,9 @@
   --cat-green  : #02c076;
   --cat-mint   : #00e096;
   --cat-gray   : #848e9c;
+  --cat-indigo : #4f46e5;   /* categoria "em trânsito" (PlanilhaView) */
+  --cat-indigo-lt: #7c3aed;
+  --cat-indigo-text: #a5b4fc;
 
   /* ── Chips de status — bg sutil + borda semântica ───────────── */
   /* border + bg sutil comunica status melhor que fundo sólido     */
@@ -106,14 +109,14 @@
   --color-sidebar-border      : rgba(255,255,255,.05);
   --color-sidebar-item        : transparent;
   --color-sidebar-item-hover  : rgba(255,255,255,.05);   /* neutro, não azul */
-  --color-sidebar-item-active : rgba(252,213,53,.10);    /* amarelo muito sutil */
+  --color-sidebar-item-active : rgba(217,98,43,.14);     /* terracota sutil */
   --color-sidebar-text        : #707a8a;
   --color-sidebar-text-hover  : #b7bdc6;
-  --color-sidebar-text-active : #eaecef;   /* quase branco — não amarelo */
+  --color-sidebar-text-active : #eaecef;   /* quase branco — não colorido */
   --color-sidebar-icon        : #5d6673;
   --color-sidebar-icon-hover  : #929aa5;
-  --color-sidebar-icon-active : #fcd535;   /* ícone ativo fica amarelo */
-  --color-sidebar-accent      : #fcd535;   /* borda esquerda do ativo */
+  --color-sidebar-icon-active : #D9622B;   /* ícone ativo fica terracota */
+  --color-sidebar-accent      : #D9622B;   /* borda esquerda do ativo */
 
   /* ── Sombras — contidas, sem glow excessivo ─────────────────── */
   --shadow-xs         : none;
@@ -122,7 +125,7 @@
   --shadow-lg         : 0 8px 32px rgba(0,0,0,.60);
   --shadow-xl         : 0 16px 48px rgba(0,0,0,.70);
   --shadow-card       : none;
-  --shadow-primary    : 0 2px 10px rgba(252,213,53,.18);   /* glow amarelo reduzido */
+  --shadow-primary    : 0 2px 10px rgba(217,98,43,.22);   /* glow terracota */
 
   /* ── Focus / Overlay ────────────────────────────────────────── */
   --focus-ring        : 0 0 0 2px rgba(59,130,246,.55);    /* foco azul (Binance info) */
@@ -139,8 +142,8 @@
   --text    : #eaecef;
   --text2   : #929aa5;
   --text3   : #848e9c;
-  --accent  : #fcd535;
-  --accent2 : rgba(252,213,53,.08);
+  --accent  : #D9622B;
+  --accent2 : rgba(217,98,43,.14);
   --on-primary: #181a20;
   --cyan    : #06b6d4;
   --green   : #10b981;
@@ -156,6 +159,7 @@
 [data-base="avb"] {
   --accent               : #FF6B35;
   --accent2              : rgba(255,107,53,.08);
+  --on-primary           : #181a20;   /* laranja AVB precisa de texto escuro nos 2 temas */
   --color-primary        : #FF6B35;
   --color-primary-dk     : #e55a24;
   --color-primary-lt     : #ff8c5a;

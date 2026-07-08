@@ -17,8 +17,8 @@
   --text    : #eaecef;
   --text2   : #929aa5;
   --text3   : #848e9c;
-  --accent  : #fcd535;
-  --accent2 : rgba(252,213,53,.08);
+  --accent  : #D9622B;
+  --accent2 : rgba(217,98,43,.14);
   --on-primary: #181a20;
   --green   : #10b981;
   --red     : #ef4444;
@@ -28,7 +28,7 @@
   --roxo    : #06b6d4;
   --color-bg         : #0b0e11;
   --color-text       : #eaecef;
-  --color-primary    : #fcd535;
+  --color-primary    : #D9622B;
   --color-border     : #2b3139;
   --color-card       : #1e2329;
   --color-modal-bg   : #1e2329;
@@ -43,14 +43,17 @@
   --color-border-subtle : rgba(255,255,255,.04);
   --color-border-strong : #2e4060;
   --color-border-focus  : rgba(59,130,246,.55);
-  --color-primary-bg    : rgba(252,213,53,.08);
-  --color-primary-border: rgba(252,213,53,.24);
-  --color-primary-text  : #fcd535;
+  --color-primary-bg    : rgba(217,98,43,.14);
+  --color-primary-border: rgba(217,98,43,.34);
+  --color-primary-text  : #D9622B;
   --color-sidebar-text-active: #eaecef;
-  --color-sidebar-icon-active: #fcd535;
-  --color-sidebar-accent     : #fcd535;
+  --color-sidebar-icon-active: #D9622B;
+  --color-sidebar-accent     : #D9622B;
   --color-sidebar-item-hover : rgba(255,255,255,.05);
-  --color-sidebar-item-active: rgba(252,213,53,.10);
+  --color-sidebar-item-active: rgba(217,98,43,.14);
+  --cat-indigo          : #4f46e5;
+  --cat-indigo-lt        : #7c3aed;
+  --cat-indigo-text      : #a5b4fc;
   --chip-success-bg    : rgba(16,185,129,.08);
   --chip-success-border: rgba(16,185,129,.20);
   --chip-success-text  : #34d399;
@@ -67,12 +70,12 @@
   --chip-neutral-border: rgba(255,255,255,.10);
   --chip-neutral-text  : #8892a8;
   --focus-ring         : 0 0 0 2px rgba(59,130,246,.55);
-  --shadow-primary     : 0 2px 10px rgba(252,213,53,.18);
+  --shadow-primary     : 0 2px 10px rgba(217,98,43,.22);
 
-  /* ── Tipografia — Satoshi (display + body) / IBM Plex Mono (data) ── */
-  --font-heading : 'Satoshi', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-display : 'Satoshi', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-body    : 'Satoshi', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  /* ── Tipografia — Manrope (display + body) / IBM Plex Mono (data) ── */
+  --font-heading : 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-display : 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body    : 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
   --font-mono    : 'IBM Plex Mono', 'JetBrains Mono', 'SF Mono', monospace;
 
   /* Tamanhos de texto — escala Binance */
@@ -223,25 +226,25 @@
   --sidebar-item-gap   : 10px;
   --sidebar-accent-w   : 2px;
 
-  /* ── Glass UI (nova UI 2026-06) ────────────────────────────────── */
-  --glass-bg          : rgba(255,255,255,0.04);
+  /* ── Sidebar hover-rail + superficies (opaco -- sem blur, mais fluido) ── */
+  --glass-bg          : #0e1218;
   --glass-border      : rgba(255,255,255,0.07);
-  --glass-blur        : blur(12px);
+  --glass-blur        : none;
   --app-gradient      : linear-gradient(135deg,#0b0e11 0%,#161a20 60%,#0b0e11 100%);
-  --blob-1            : rgba(252,213,53,0.12);   /* glow amarelo Binance */
+  --blob-1            : rgba(217,98,43,0.12);   /* glow terracota */
   --blob-2            : rgba(255,255,255,0.04);
-  --blob-3            : rgba(252,213,53,0.05);
+  --blob-3            : rgba(217,98,43,0.05);
   --sidebar-glass-w   : 56px;
-  --row-card-expanded-bg    : rgba(252,213,53,0.10);
-  --row-card-expanded-border: #fcd535;
+  --row-card-expanded-bg    : rgba(217,98,43,0.10);
+  --row-card-expanded-border: #D9622B;
   --row-card-hover-bg       : rgba(255,255,255,0.03);
   --kpi-chip-bg             : rgba(255,255,255,0.03);
   --kpi-chip-border         : rgba(255,255,255,0.07);
   --filter-pill-bg          : rgba(255,255,255,0.06);
   --filter-pill-border      : rgba(255,255,255,0.10);
-  --filter-pill-active-bg   : rgba(252,213,53,0.15);
-  --filter-pill-active-border: rgba(252,213,53,0.38);
-  --filter-pill-active-text : #fcd535;
-  --accent-indigo     : #fcd535;
-  --accent-indigo-glow: rgba(252,213,53,0.25);
+  --filter-pill-active-bg   : rgba(217,98,43,0.18);
+  --filter-pill-active-border: rgba(217,98,43,0.42);
+  --filter-pill-active-text : #D9622B;
+  --accent-indigo     : #D9622B;
+  --accent-indigo-glow: rgba(217,98,43,0.25);
 }

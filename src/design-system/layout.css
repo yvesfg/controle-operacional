@@ -374,7 +374,7 @@ select:focus {
    ════════════════════════════════════════════════════════════════════ */
 .co-dt-overlay {
   position:        fixed; inset: 0; z-index: var(--z-modal);
-  background:      rgba(0,0,0,.82); backdrop-filter: blur(14px);
+  background:      rgba(0,0,0,.88);
   display:         flex; align-items: flex-end; justify-content: center;
 }
 .co-dt-modal {
@@ -594,8 +594,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   position:        fixed;
   inset:           0;
   z-index:         var(--z-modal);
-  background:      rgba(0,0,0,.72);
-  backdrop-filter: blur(14px);
+  background:      rgba(0,0,0,.84);
   display:         flex;
   align-items:     flex-end;
   justify-content: center;
@@ -719,7 +718,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 [data-theme="dark"] .co-sidebar__logo-ico {
   width: 30px; height: 30px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+  background: var(--color-primary) !important;
   border-radius: 8px !important;
   border: none !important;
 }
@@ -729,14 +728,14 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   border-radius: 8px;
 }
 [data-theme="dark"] .co-sidebar .co-sidebar__item--active {
-  background: rgba(79,70,229,0.30) !important;
-  border: 1px solid rgba(79,70,229,0.45) !important;
+  background: var(--color-primary-bg) !important;
+  border: 1px solid var(--color-primary-border) !important;
 }
 [data-theme="dark"] .co-sidebar .co-sidebar__item--active::before {
   display: none;
 }
 [data-theme="dark"] .co-sidebar .co-sidebar__item--active .co-sidebar__ico svg {
-  stroke: #a5b4fc !important;
+  stroke: var(--color-primary) !important;
   opacity: 1 !important;
 }
 [data-theme="dark"] .co-sidebar .co-sidebar__ico svg {
@@ -832,18 +831,18 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   color: var(--filter-pill-active-text);
 }
 .pv-btn-new {
-  background: rgba(79,70,229,0.25);
-  border: 1px solid rgba(79,70,229,0.5);
+  background: var(--cat-indigo);
+  border: 1px solid var(--cat-indigo);
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 11px;
-  color: #a5b4fc;
+  color: #ffffff;
   cursor: pointer;
   font-weight: 600;
   font-family: var(--font-body);
   transition: all 150ms ease;
 }
-.pv-btn-new:hover { background: rgba(79,70,229,0.4); }
+.pv-btn-new:hover { background: var(--cat-indigo-lt); }
 .pv-spacer { flex: 1; }
 
 .pv-kpi-strip {
@@ -969,11 +968,11 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 .pv-btn-action:hover { background: rgba(255,255,255,0.10); color: var(--text); }
 .pv-btn-action.primary {
-  background: rgba(79,70,229,0.20);
-  border-color: rgba(79,70,229,0.40);
-  color: #a5b4fc;
+  background: var(--cat-indigo);
+  border-color: var(--cat-indigo);
+  color: #ffffff;
 }
-.pv-btn-action.primary:hover { background: rgba(79,70,229,0.35); }
+.pv-btn-action.primary:hover { background: var(--cat-indigo-lt); }
 
 .pv-badge {
   display: inline-flex; align-items: center; gap: 4px;
@@ -982,12 +981,13 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   padding: 2px 8px;
   font-family: var(--font-body);
   white-space: nowrap;
+  color: #ffffff;
 }
-.pv-badge-ok      { background:rgba(34,197,94,0.12);  color:#86efac;  border:1px solid rgba(34,197,94,0.20); }
-.pv-badge-pend    { background:rgba(234,179,8,0.12);  color:#fde68a;  border:1px solid rgba(234,179,8,0.20); }
-.pv-badge-atraso  { background:rgba(239,68,68,0.12);  color:#fca5a5;  border:1px solid rgba(239,68,68,0.20); }
-.pv-badge-transito{ background:rgba(79,70,229,0.12);  color:#a5b4fc;  border:1px solid rgba(79,70,229,0.20); }
-.pv-badge-default { background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.10); }
+.pv-badge-ok      { background:#047857; border:1px solid #047857; }
+.pv-badge-pend    { background:#b45309; border:1px solid #b45309; }
+.pv-badge-atraso  { background:#dc2626; border:1px solid #dc2626; }
+.pv-badge-transito{ background:var(--cat-indigo); border:1px solid var(--cat-indigo); }
+.pv-badge-default { background:#3a424c; color:#eaecef; border:1px solid #3a424c; }
 
 .pv-toggle { font-size: 10px; color: rgba(255,255,255,0.25); user-select: none; }
 
@@ -1078,8 +1078,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
    ════════════════════════════════════════════════════════════════════ */
 [data-theme="dark"] .co-modal-overlay > div,
 [data-theme="dark"] .co-modal-panel {
-  background: rgba(12, 20, 32, 0.90) !important;
-  backdrop-filter: blur(20px) !important;
+  background: var(--color-modal-bg) !important;
   border: 1px solid var(--glass-border) !important;
   box-shadow: 0 24px 64px rgba(0,0,0,0.55) !important;
 }
