@@ -139,6 +139,13 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 30",
+    itens: [
+      "STYLE · HubAdmin.jsx: badges de modulo (nome do modulo, Ativo/Inativo, TESTE) trocados de fundo translucido pra solido + texto branco, mesmo padrao das Sessoes 28-29.",
+      "NOTA · Componente <Select> unico ja existe (src/design-system/components/Input.jsx, consome .ds-select token-driven) -- a task 'padronizar dropdowns' nao precisa criar nada novo, so falta ADOTAR ele nos <select> com estilo inline espalhados pelas views/modais (HubAdmin.jsx ja usa um estilo local consistente internamente, mas nao o componente compartilhado). Isso e o real escopo pendente.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 29",
     itens: [
       "STYLE · Rebrand: amarelo Binance -> terracota (#D9622B dark / #B24E1E light) em todos os tokens (theme-dark/light/tokens.css). AVB mantem laranja #FF6B35, com --on-primary proprio (texto escuro nos 2 temas). Fontes trocadas: Satoshi -> Manrope (titulos) + Inter (corpo), Plex Mono mantida nos dados; um CDN a menos (so Google Fonts).",

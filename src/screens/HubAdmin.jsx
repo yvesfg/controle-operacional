@@ -122,13 +122,13 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:700,fontSize:13,color:t.txt,display:"flex",alignItems:"center",gap:6}}>
               {p.nome}
-              {ehTeste && <span style={{fontSize:8.5,padding:"1px 6px",borderRadius:5,fontWeight:800,letterSpacing:".04em",background:hexRgb(t.roxo,.15),color:t.roxo}}>TESTE</span>}
+              {ehTeste && <span style={{fontSize:8.5,padding:"1px 6px",borderRadius:5,fontWeight:800,letterSpacing:".04em",background:"#4338ca",color:"#ffffff"}}>TESTE</span>}
             </div>
             <div style={{fontSize:11,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.email}</div>
           </div>
           <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
             {p.acessos.length === 0 ? <span style={{fontSize:10,color:t.txt2,fontStyle:"italic"}}>sem acesso</span>
-              : p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?hexRgb(t.verde,.14):hexRgb(t.danger,.12),color:a.ativo?t.verde:t.danger}}>{catalogo.find(c=>c.slug===a.modulo_slug)?.nome || a.modulo_slug}</span>)}
+              : p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?"#047857":"#dc2626",color:"#ffffff"}}>{catalogo.find(c=>c.slug===a.modulo_slug)?.nome || a.modulo_slug}</span>)}
           </div>
           <span style={{color:t.txt2,fontSize:12}}>{exp?"▲":"▼"}</span>
         </button>
@@ -150,7 +150,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
                       </select>
                     )}
-                    <button onClick={()=>patch(a.id,{ativo:!a.ativo})} style={{...chip(a.ativo),color:a.ativo?t.verde:t.danger,borderColor:a.ativo?hexRgb(t.verde,.5):hexRgb(t.danger,.4),background:a.ativo?hexRgb(t.verde,.12):hexRgb(t.danger,.1)}}>{a.ativo?"Ativo":"Inativo"}</button>
+                    <button onClick={()=>patch(a.id,{ativo:!a.ativo})} style={{...chip(a.ativo),color:"#ffffff",borderColor:a.ativo?"#047857":"#dc2626",background:a.ativo?"#047857":"#dc2626"}}>{a.ativo?"Ativo":"Inativo"}</button>
                     <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover">✕</button>
                   </div>
 
