@@ -334,6 +334,7 @@ export default function DescargaView({ ctx }) {
                         {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
                         {r.nome||"—"}
                         {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.08)`,color:t.laranja,border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
+                        {r.fora_planilha && <span title="Não foi encontrado na planilha na última sincronização" style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:t.danger,color:"#fff"}}>⚠ Fora da planilha</span>}
                         <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
                       <div style={{fontSize:12,color:t.txt2,lineHeight:1.8}}>
@@ -384,6 +385,11 @@ export default function DescargaView({ ctx }) {
                             {r.ro && <span style={{fontSize:9,color:t.laranja,fontWeight:600}}>RO: {r.ro}</span>}
                           </div>
                           <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:3}}>
+                            {r.fora_planilha && (
+                              <span title="Não foi encontrado na planilha na última sincronização" style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:t.danger,color:"#fff"}}>
+                                {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,"#fff",9)} Fora da planilha
+                              </span>
+                            )}
                             {isAtrasado && dias !== null && (
                               <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9)} {dias}d atraso</span>
                             )}

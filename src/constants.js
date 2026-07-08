@@ -146,6 +146,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 36",
+    itens: [
+      "FEAT · Investigado relato de DTs aparecendo como pendentes sem achar na planilha (base Imperatriz/Belem). Achados: (1) maioria eram DTs reais na planilha so sem motorista/placa preenchidos ainda -- comportamento correto; (2) achado bug real: SyncSupabase.gs so valida origem invalida quando a celula NAO esta vazia (`if (reg.origem && ...)`), entao linha com origem em branco passa direto e derruba o LOTE inteiro (ate 50 linhas) no Supabase com HTTP 400 'origem_valida' -- limitado as abas ja fechadas 12/2025, 02/2026, 03/2026 no log atual, correcao ainda NAO aplicada (pendente decisao); (3) achado registro fantasma real: DT '0023446522' e duplicata com 2 zeros a mais do DT correto '23446522' (que sincroniza normal) -- criado uma vez em 24/06 e nunca mais tocado.",
+      "FEAT · Nova coluna `fora_planilha` (default true) em controle_operacional + funcao `marcar_fora_planilha(p_dts text[])` no Supabase: a cada sync, marca false pra todo DT visto em qualquer aba na rodada e true pro resto (so roda se a varredura das abas terminar sem excecao, pra nao sinalizar errado numa rodada parcial). SyncSupabase.gs chama essa funcao uma vez ao final -- precisa colar a versao atualizada no editor do Apps Script pra entrar em vigor.",
+      "FEAT · DescargaView.jsx: badge vermelho '⚠ Fora da planilha' nos cards (modo linhas e blocos) quando `fora_planilha=true` -- sinaliza sem esconder o registro, que continua contando normalmente nos KPIs.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 35",
     itens: [
       "FIX · ModalNFD.jsx: toggle 'Registrar outra NF' usava #F3BA2F (um dourado avulso, sem token) em vez do accent padrao -- trocado por t.ouro, coerente com o fundo terracota sutil que ja envolvia o campo.",

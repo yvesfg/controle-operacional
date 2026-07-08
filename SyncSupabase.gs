@@ -33,6 +33,8 @@ function sincronizarComSupabase() {
     ok: false
   };
 
+  var todosDts = []; // todo DT visto em qualquer aba nesta rodada — usado p/ marcar_fora_planilha
+
   try {
     var ss     = SpreadsheetApp.getActiveSpreadsheet();
     var sheets = ss.getSheets();
@@ -136,6 +138,12 @@ function sincronizarComSupabase() {
       registros.forEach(function(reg) { vistosDT[reg.dt] = reg; });
       registros = Object.values(vistosDT);
 
+      // Marca cada linha como "veio da planilha nesta rodada" + acumula pro marcar_fora_planilha global
+      registros.forEach(function(reg) {
+        reg.fora_planilha = false;
+        todosDts.push(reg.dt);
+      });
+
       // Enviar para Supabase em lotes de 50
       var totalLotes = Math.ceil(registros.length / 50);
       for (var i = 0; i < registros.length; i += 50) {
@@ -174,6 +182,29 @@ function sincronizarComSupabase() {
         }
       }
     } // fim loop abas
+
+    // Marca fora_planilha=true pra tudo que NAO apareceu em nenhuma aba nesta rodada
+    // (rodou sem excecao ate aqui = varredura completa das abas, lista confiavel)
+    if (todosDts.length > 0) {
+      try {
+        var respFlag = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/marcar_fora_planilha', {
+          method: 'POST',
+          headers: {
+            apikey: SUPA_KEY,
+            Authorization: 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json',
+          },
+          payload: JSON.stringify({ p_dts: todosDts }),
+          muteHttpExceptions: true
+        });
+        var codeFlag = respFlag.getResponseCode();
+        if (codeFlag < 200 || codeFlag >= 300) {
+          statusGlobal.erros_detalhes.push('marcar_fora_planilha: HTTP ' + codeFlag + ' - ' + respFlag.getContentText());
+        }
+      } catch (flagErr) {
+        statusGlobal.erros_detalhes.push('marcar_fora_planilha: ' + flagErr.message);
+      }
+    }
 
     statusGlobal.ok = (statusGlobal.erros_http === 0 && statusGlobal.total_planilha > 0);
 
