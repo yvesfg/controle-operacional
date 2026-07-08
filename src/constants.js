@@ -139,6 +139,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 33",
+    itens: [
+      "STYLE · Dropdowns de filtro padronizados: DiariasView.jsx (2 blocos) e DescargaView.jsx reinventavam o visual de 'pill de filtro ativo/inativo' com estilo inline duplicado (copy-paste), em vez de usar a classe .pv-filter-pill que a Planilha ja usava (token-driven desde a Sessao 28). Trocado pra reusar a classe existente -- 8 <select> agora vem do mesmo lugar.",
+      "STYLE · Alinhado .ds-input/.ds-select/.ds-textarea (design-system) pra usar --color-border-2 em vez de --color-border, batendo com o preset css.inp ja usado na maioria dos formularios do app -- os dois caminhos agora rendem a mesma borda.",
+      "NOTA · Restante dos <select> auditado: form-dropdowns comuns (ModalRelatorios, OperacionalView etc.) ja usam css.inp/.ds-select, sem mudanca necessaria. O que parecia 'select duplicado' em ModalDetalhe/ModalEdit/ModalWhatsApp sao na verdade botoes de toggle (tipo radio), padrao correto, mantidos.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 32",
     itens: [
       "FIX · Rebrand incompleto: 144 literais rgba(240,185,11,...) / rgba(252,213,53,...) -- o amarelo Binance antigo em formato rgba() -- ainda hardcoded em 24 arquivos (graficos Chart.js, glows, sombras, botoes de filtro ativo). O script de substituicao da Sessao 28 so casava #hex exato, nunca tocou rgba(). Substituido por rgba(217,98,43,...) preservando o alpha de cada ocorrencia -- app inteiro agora consistente no terracota, incluindo os graficos do Dashboard.",

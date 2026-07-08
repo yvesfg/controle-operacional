@@ -261,18 +261,18 @@ export default function DescargaView({ ctx }) {
               return (
                 <div className="co-filter-bar">
                   <span className="co-filter-bar__label">Filtrar:</span>
-                  <select value={dscFiltroAno} onChange={e=>{setDscFiltroAno(e.target.value);setDscFiltroMes("");}}
-                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroAno?t.ouro:t.borda}`,background:dscFiltroAno?`rgba(217,98,43,.08)`:t.bg,color:dscFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                  <select className={`pv-filter-pill${dscFiltroAno?" active":""}`} value={dscFiltroAno} onChange={e=>{setDscFiltroAno(e.target.value);setDscFiltroMes("");}}
+                    style={{fontWeight:700,appearance:"none"}}>
                     <option value="">Todos os Anos</option>
                     {anosD.map(a=><option key={a} value={a}>{a}</option>)}
                   </select>
-                  <select value={dscFiltroMes} onChange={e=>setDscFiltroMes(e.target.value)}
-                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroMes?t.ouro:t.borda}`,background:dscFiltroMes?`rgba(217,98,43,.08)`:t.bg,color:dscFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                  <select className={`pv-filter-pill${dscFiltroMes?" active":""}`} value={dscFiltroMes} onChange={e=>setDscFiltroMes(e.target.value)}
+                    style={{fontWeight:700,appearance:"none"}}>
                     <option value="">Todos os Meses</option>
                     {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
                   </select>
-                  <select value={dscFiltroOrigem} onChange={e=>setDscFiltroOrigem(e.target.value)}
-                    style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dscFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dscFiltroOrigem!=="todas"?`rgba(217,98,43,.08)`:t.bg,color:dscFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                  <select className={`pv-filter-pill${dscFiltroOrigem!=="todas"?" active":""}`} value={dscFiltroOrigem} onChange={e=>setDscFiltroOrigem(e.target.value)}
+                    style={{fontWeight:700,appearance:"none",maxWidth:180}}>
                     <option value="todas">Todas as Origens</option>
                     {origensD.map(o=><option key={o} value={o}>{o}</option>)}
                   </select>

@@ -101,15 +101,15 @@ export default function DiariasView({ ctx }) {
                   return (
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 10px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,flexWrap:"wrap"}}>
                       <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-                      <select value={dPlanFiltroAno} onChange={e=>{setDPlanFiltroAno(e.target.value);setDPlanFiltroMes("");}} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      <select className={`pv-filter-pill${dPlanFiltroAno?" active":""}`} value={dPlanFiltroAno} onChange={e=>{setDPlanFiltroAno(e.target.value);setDPlanFiltroMes("");}} style={{fontWeight:700,appearance:"none"}}>
                         <option value="">Todos os Anos</option>
                         {anosR.map(a=><option key={a} value={a}>{a}</option>)}
                       </select>
-                      <select value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                      <select className={`pv-filter-pill${dPlanFiltroMes?" active":""}`} value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)} style={{fontWeight:700,appearance:"none"}}>
                         <option value="">Todos os Meses</option>
                         {mesesR.map(m=><option key={m} value={m}>{MESES_PTR[m]||m}</option>)}
                       </select>
-                      <select value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)} style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                      <select className={`pv-filter-pill${dPlanFiltroOrigem!=="todas"?" active":""}`} value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)} style={{fontWeight:700,appearance:"none",maxWidth:180}}>
                         <option value="todas">Todas as Origens</option>
                         {origensR.map(o=><option key={o} value={o}>{o}</option>)}
                       </select>
@@ -292,18 +292,18 @@ export default function DiariasView({ ctx }) {
                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card,
                     border:`1px solid ${t.borda}`,borderRadius:"10px 10px 0 0",flexWrap:"wrap",margin:"0 -16px"}}>
                     <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-                    <select value={dPlanFiltroAno} onChange={e=>setDPlanFiltroAno(e.target.value)}
-                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroAno?t.ouro:t.borda}`,background:dPlanFiltroAno?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroAno?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                    <select className={`pv-filter-pill${dPlanFiltroAno?" active":""}`} value={dPlanFiltroAno} onChange={e=>setDPlanFiltroAno(e.target.value)}
+                      style={{fontWeight:700,appearance:"none"}}>
                       <option value="">Todos os Anos</option>
                       {anosD.map(a=><option key={a} value={a}>{a}</option>)}
                     </select>
-                    <select value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)}
-                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroMes?t.ouro:t.borda}`,background:dPlanFiltroMes?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroMes?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit"}}>
+                    <select className={`pv-filter-pill${dPlanFiltroMes?" active":""}`} value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)}
+                      style={{fontWeight:700,appearance:"none"}}>
                       <option value="">Todos os Meses</option>
                       {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
                     </select>
-                    <select value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)}
-                      style={{fontSize:11,fontWeight:700,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${dPlanFiltroOrigem!=="todas"?t.ouro:t.borda}`,background:dPlanFiltroOrigem!=="todas"?`rgba(217,98,43,.08)`:t.bg,color:dPlanFiltroOrigem!=="todas"?t.ouro:t.txt,cursor:"pointer",fontFamily:"inherit",maxWidth:180}}>
+                    <select className={`pv-filter-pill${dPlanFiltroOrigem!=="todas"?" active":""}`} value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)}
+                      style={{fontWeight:700,appearance:"none",maxWidth:180}}>
                       <option value="todas">Todas as Origens</option>
                       {origensD.map(o=><option key={o} value={o}>{o}</option>)}
                     </select>
