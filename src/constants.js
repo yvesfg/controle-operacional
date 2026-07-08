@@ -146,6 +146,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 39",
+    itens: [
+      "FEAT · Cadastro de embarcadoras/clientes da Conferencia de Faturamento migrado de hardcoded (freteConferencia.js:CLIENTES) para tabela Supabase `frete_clientes` (migration 005, seed com os 4 clientes que ja existiam). Editavel pela tela agora, sem precisar mexer em codigo pra reconhecer CNPJ novo.",
+      "FEAT · parseFreteXLSX classifica por LINHA a partir do proprio CNPJ Remetente, nao exige mais um CNPJ unico por arquivo -- um export completo do TMS com varias embarcadoras misturadas importa numa tacada so. CNPJ que nao esta cadastrado nao trava a importacao: volta em `desconhecidos`, e a tela mostra pra cada um os codigos de 'Empresa' encontrados (com contagem) pra classificar como Frete/Descarga-Local/Diaria/Ignorar, dar um nome e (opcional) vincular a uma base -- cadastra e ja importa as linhas dele, ou soh ignora, tudo na hora sem sair do modal. 'Confirmar e gravar' fica bloqueado ate todo CNPJ desconhecido ser resolvido.",
+      "TESTE · Validado ao vivo (login operador) com planilha sintetica de 3 CNPJs (2 conhecidos + 1 novo, 2 codigos de Empresa diferentes): classificacao correta pros conhecidos, formulario do desconhecido cadastrou 'Cliente Teste XYZ' e reclassificou as 2 linhas dele (MAT->frete, MAM c/ margem 0->descarga) sem reler o arquivo; import final gravou os 4 registros certinho. Dados de teste removidos do banco depois.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 38",
     itens: [
       "FIX · freteConferencia.js: parseFreteXLSX calculava UM periodo_ref pro arquivo inteiro (mes predominante), nao por linha. Um upload cobrindo varios meses (ex.: relatorio 01/2026 a 07/2026) carimbava TODAS as linhas com o mesmo mes errado, quebrando os filtros por periodo de todas as telas de Conferencia de Faturamento. Corrigido pra calcular por linha a partir da propria data_emissao; periodoRef de exibicao agora e o mes mais recente encontrado. diffImportFrete/listarPorPeriodos ajustados pra buscar existentes em varios periodo_ref de uma vez (arquivo multi-mes). Dado atual no banco (so 07/2026) nao foi afetado, correcao e preventiva pro proximo upload grande.",

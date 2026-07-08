@@ -3,8 +3,10 @@ import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
+  listarClientes, criarCliente, mapaClientes, classificarLinhasCliente, recalcularFlagsEPeriodo,
 } from "../freteConferencia.js";
 import KpiCard from "../components/KpiCard.jsx";
+import { BASES } from "../constants.js";
 
 // Conferência de Faturamento — planilhas BRUTAS de faturamento (TMS/ERP), fonte
 // DIFERENTE do operacional (Google Sheets). Segmento dentro de Resultado.jsx.
@@ -48,7 +50,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const fileRef = React.useRef(null);
-  const [preview, setPreview] = React.useState(null); // { cliente, periodoRef, linhas, naoClassificadas, resumo }
+  const [preview, setPreview] = React.useState(null); // { periodoRef, periodosEncontrados, linhas, naoClassificadas, desconhecidos, resumo }
+  const [clientes, setClientes] = React.useState([]); // cadastro de embarcadoras (frete_clientes)
+  const [formsDesconhecidos, setFormsDesconhecidos] = React.useState({}); // { [cnpj]: { nome, base_id, mapEmpresa: {codigo: categoria} } }
+  const [cadastrando, setCadastrando] = React.useState(null); // cnpj em processo de cadastro (spinner do botão)
   const [dupModal, setDupModal] = React.useState({ open: false, chave: null });
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
@@ -83,32 +88,83 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   React.useEffect(() => { carregar(); }, [carregar]);
 
+  const carregarClientes = React.useCallback(async () => {
+    if (!conn) return;
+    try { setClientes(await listarClientes(conn)); }
+    catch (e) { showToast?.("Erro ao carregar cadastro de clientes: " + e.message, "erro"); }
+  }, [conn, showToast]);
+  React.useEffect(() => { carregarClientes(); }, [carregarClientes]);
+  const clientesMap = React.useMemo(() => mapaClientes(clientes), [clientes]);
+
   const onEscolherArquivo = async (e) => {
     const file = e.target.files?.[0];
     if (fileRef.current) fileRef.current.value = "";
     if (!file) return;
     setImporting(true);
     try {
-      const r = await parseFreteXLSX(file);
+      const r = await parseFreteXLSX(file, clientesMap);
       if (r.erro) { showToast?.(r.erro, "erro"); return; }
-      if (!r.linhas.length) { showToast?.("Nenhuma linha classificada nessa planilha.", "erro"); return; }
+      if (!r.linhas.length && !Object.keys(r.desconhecidos).length) { showToast?.("Nenhuma linha classificada nessa planilha.", "erro"); return; }
       const resumo = resumoPorCategoria(r.linhas);
       setPreview({ ...r, fileName: file.name, resumo });
+      // Formulário inicial de cada CNPJ desconhecido: nome vazio, sem base, toda Empresa "ignorar"
+      const forms = {};
+      Object.values(r.desconhecidos).forEach((d) => {
+        forms[d.cnpj] = { nome: "", base_id: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
+      });
+      setFormsDesconhecidos(forms);
     } catch (err) { showToast?.("Erro ao ler arquivo: " + err.message, "erro"); }
     finally { setImporting(false); }
+  };
+
+  // CNPJ desconhecido: cadastra o cliente na hora (frete_clientes) e reclassifica só as
+  // linhas dele, juntando ao preview já carregado — sem precisar reler o arquivo.
+  const cadastrarClienteDesconhecido = async (cnpj) => {
+    const form = formsDesconhecidos[cnpj];
+    const d = preview.desconhecidos[cnpj];
+    if (!form.nome.trim()) { showToast?.("Dê um nome pra essa embarcadora antes de cadastrar.", "erro"); return; }
+    const entradas = Object.entries(form.mapEmpresa).filter(([, cat]) => cat !== "ignorar");
+    const freteCod = entradas.find(([, cat]) => cat === "frete")?.[0];
+    if (!freteCod) { showToast?.("Marque pelo menos um código de Empresa como Frete — é obrigatório pra classificar qualquer coisa.", "erro"); return; }
+    const descLocalCod = entradas.find(([, cat]) => cat === "descarga_local")?.[0] || null;
+    const diariaCod = entradas.find(([, cat]) => cat === "diaria")?.[0] || null;
+    setCadastrando(cnpj);
+    try {
+      const cli = await criarCliente(conn, {
+        cnpj, nome: form.nome.trim(), base_id: form.base_id || null,
+        frete_cod: freteCod, desc_local_cod: descLocalCod, diaria_cod: diariaCod,
+        criado_por: usuarioLogado || null,
+      });
+      const { classificadas, naoClassificadas: ignoradas } = classificarLinhasCliente(d.linhasRaw, cli, cnpj);
+      const novasLinhas = [...preview.linhas, ...classificadas];
+      const novasNaoClass = [...preview.naoClassificadas, ...ignoradas];
+      const { periodoRef: novoPeriodoRef, periodosEncontrados } = recalcularFlagsEPeriodo(novasLinhas, novasNaoClass);
+      const { [cnpj]: _omit, ...restoDesconhecidos } = preview.desconhecidos;
+      setPreview({ ...preview, linhas: novasLinhas, naoClassificadas: novasNaoClass, periodoRef: novoPeriodoRef, periodosEncontrados, desconhecidos: restoDesconhecidos, resumo: resumoPorCategoria(novasLinhas) });
+      setClientes((arr) => [...arr, cli]);
+      showToast?.(`"${cli.nome}" cadastrado — ${classificadas.length} linha(s) já incluída(s) na importação.`, "ok");
+    } catch (e) { showToast?.("Erro ao cadastrar cliente: " + e.message, "erro"); }
+    finally { setCadastrando(null); }
+  };
+
+  const ignorarCnpjDesconhecido = (cnpj) => {
+    const { [cnpj]: _omit, ...resto } = preview.desconhecidos;
+    setPreview({ ...preview, desconhecidos: resto });
+    showToast?.("CNPJ ignorado — as linhas dele não serão importadas.", "ok");
   };
 
   const confirmarImportacao = async () => {
     if (!preview) return;
     setImporting(true);
     try {
-      const { novas, jaExistem } = await diffImportFrete(conn, preview.cliente, preview.linhas);
+      const { novas, jaExistem } = await diffImportFrete(conn, preview.linhas);
       if (novas.length === 0) {
         showToast?.("Nada novo — todos os CTRCs desse período já estavam importados.", "ok");
         setPreview(null); return;
       }
       await inserirFrete(conn, novas);
-      showToast?.(`${novas.length} registro(s) novo(s) de ${preview.cliente} importado(s)${jaExistem ? ` (${jaExistem} já existiam)` : ""}.`, "ok");
+      const nomesClientes = [...new Set(novas.map(l => l.cliente))];
+      showToast?.(`${novas.length} registro(s) novo(s) importado(s) (${nomesClientes.join(", ")})${jaExistem ? ` — ${jaExistem} já existiam` : ""}.`, "ok");
       setPreview(null);
       setPeriodoRef(preview.periodoRef);
       await carregar();
@@ -552,20 +608,36 @@ export default function ConferenciaFrete({ ctx, conn }) {
       </div>
 
       {/* Modal: pré-visualização antes de gravar */}
-      {preview && (
+      {preview && (() => {
+        const cnpjsDesconhecidos = Object.values(preview.desconhecidos || {});
+        const clientesNoArquivo = Object.entries(resumoPorCliente(preview.linhas));
+        const opcoesEmpresa = [
+          { v: "ignorar", l: "Ignorar" },
+          { v: "frete", l: "Frete" },
+          { v: "descarga_local", l: "Descarga/Local" },
+          { v: "diaria", l: "Diária" },
+        ];
+        return (
         <div onClick={() => setPreview(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 520, width: "90vw", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 600, width: "90vw", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
             <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Confirmar importação</div>
             <div style={{ fontSize: 11, color: t.txt2, marginBottom: 14 }}>{preview.fileName}</div>
 
-            <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 12px", borderRadius: 9, background: "rgba(2,192,118,.08)", border: `1px solid ${hexRgb(t.verde, .27)}`, marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>{preview.cliente}</div>
-              <div style={{ fontSize: 11, color: t.txt2, marginLeft: "auto" }}>
-                {preview.periodosEncontrados?.length > 1
-                  ? `${preview.periodosEncontrados.length} meses: ${mesLabel(preview.periodosEncontrados[0])} até ${mesLabel(preview.periodoRef)}`
-                  : `competência ${mesLabel(preview.periodoRef)}`}
+            {clientesNoArquivo.length > 0 && (
+              <div style={{ borderRadius: 9, background: "rgba(2,192,118,.08)", border: `1px solid ${hexRgb(t.verde, .27)}`, marginBottom: 12, padding: "8px 12px" }}>
+                <div style={{ fontSize: 11, color: t.txt2, marginBottom: 6 }}>
+                  {preview.periodosEncontrados?.length > 1
+                    ? `${preview.periodosEncontrados.length} meses: ${mesLabel(preview.periodosEncontrados[0])} até ${mesLabel(preview.periodoRef)}`
+                    : `competência ${mesLabel(preview.periodoRef)}`}
+                </div>
+                {clientesNoArquivo.map(([nome, d]) => (
+                  <div key={nome} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, padding: "3px 0" }}>
+                    <span style={{ fontWeight: 700, color: t.txt }}>{nome}</span>
+                    <span style={{ color: t.txt2 }}>{d.registros} registros · {money(d.fretePeso)}</span>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
             {["frete", "descarga", "local", "diaria"].map((c) => {
               const d = preview.resumo[c];
@@ -580,8 +652,57 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
             {preview.naoClassificadas.length > 0 && (
               <div style={{ marginTop: 10, fontSize: 11, color: t.warn, background: hexRgb(t.warn, .1), border: `1px solid ${hexRgb(t.warn, .33)}`, borderRadius: 8, padding: "8px 10px" }}>
-                ⚠ {preview.naoClassificadas.length} linha(s) com código de Empresa fora do mapeamento — não serão importadas.
+                ⚠ {preview.naoClassificadas.length} linha(s) com código de Empresa fora do mapeamento (cliente conhecido, mas o código não bate com Frete/Descarga/Local/Diária cadastrados) — não serão importadas.
               </div>
+            )}
+
+            {cnpjsDesconhecidos.map((d) => {
+              const form = formsDesconhecidos[d.cnpj] || { nome: "", base_id: "", mapEmpresa: {} };
+              return (
+                <div key={d.cnpj} style={{ marginTop: 12, borderRadius: 10, border: `1.5px solid ${hexRgb(t.warn, .4)}`, background: hexRgb(t.warn, .06), padding: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, marginBottom: 2 }}>CNPJ não cadastrado: {d.cnpj}</div>
+                  <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 10 }}>{d.qtd} linha(s) neste arquivo — cadastre a embarcadora ou ignore essas linhas.</div>
+
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                    <input value={form.nome} placeholder="Nome da embarcadora"
+                      onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], nome: e.target.value } }))}
+                      style={{ flex: "1 1 180px", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit" }} />
+                    <select value={form.base_id}
+                      onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], base_id: e.target.value } }))}
+                      style={{ flex: "1 1 140px", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt }}>
+                      <option value="">Sem base vinculada</option>
+                      {Object.values(BASES).map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+                    </select>
+                  </div>
+
+                  <div style={{ fontSize: 10, color: t.txt2, marginBottom: 4 }}>O que cada código de "Empresa" encontrado nas linhas significa:</div>
+                  {Object.entries(d.empresas).map(([cod, qtd]) => (
+                    <div key={cod} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                      <span style={{ flex: 1, fontSize: 11.5, fontFamily: "var(--font-mono)", color: t.txt }}>{cod} <span style={{ color: t.txt2 }}>({qtd}x)</span></span>
+                      <select value={form.mapEmpresa[cod] || "ignorar"}
+                        onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], mapEmpresa: { ...f[d.cnpj].mapEmpresa, [cod]: e.target.value } } }))}
+                        style={{ fontSize: 11.5, padding: "4px 8px", borderRadius: 6, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt }}>
+                        {opcoesEmpresa.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                      </select>
+                    </div>
+                  ))}
+
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <button onClick={() => ignorarCnpjDesconhecido(d.cnpj)}
+                      style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                      Ignorar este CNPJ
+                    </button>
+                    <button onClick={() => cadastrarClienteDesconhecido(d.cnpj)} disabled={cadastrando === d.cnpj}
+                      style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none", opacity: cadastrando === d.cnpj ? .6 : 1 }}>
+                      {cadastrando === d.cnpj ? "Cadastrando..." : "Cadastrar e importar"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {cnpjsDesconhecidos.length > 0 && (
+              <div style={{ marginTop: 10, fontSize: 10.5, color: t.txt2 }}>Resolva os CNPJs acima (cadastre ou ignore) pra liberar a importação.</div>
             )}
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
@@ -589,14 +710,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
                 Cancelar
               </button>
-              <button onClick={confirmarImportacao} disabled={importing}
-                style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: importing ? .5 : 1 }}>
+              <button onClick={confirmarImportacao} disabled={importing || cnpjsDesconhecidos.length > 0}
+                style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: (importing || cnpjsDesconhecidos.length > 0) ? .5 : 1 }}>
                 {importing ? "Importando..." : "Confirmar e gravar"}
               </button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Modal: revisar item pendente (registro completo antes de decidir) */}
       {revisarModal.open && revisarModal.item && (() => {

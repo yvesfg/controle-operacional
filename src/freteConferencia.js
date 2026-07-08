@@ -10,15 +10,27 @@ import * as XLSX from "xlsx";
 import { supaFetch } from "./supabase.js";
 
 const TABELA = "frete_conferencia";
+const TABELA_CLIENTES = "frete_clientes";
 
-// CNPJ (só dígitos, 14 posições) -> regra do cliente.
-// Cadastro de clientes: adicionar aqui = suportar cliente novo, sem mexer no resto.
-export const CLIENTES = {
-  "16404287022205": { nome: "Suzano Imperatriz", baseId: "imperatriz_belem", frete: "MAT", descLocal: "MAM", diaria: "D01" },
-  "16404287069864": { nome: "Suzano Belem",       baseId: "imperatriz_belem", frete: "MAR", descLocal: "MRM", diaria: "D05" },
-  "07636657000270": { nome: "AVB Acailandia",     baseId: "acailandia_avb",  frete: "MAT", descLocal: null,  diaria: null },
-  "10481071000107": { nome: "Couro",              baseId: null,              frete: "MAT", descLocal: null,  diaria: null },
-};
+// Cadastro de clientes/embarcadoras — vive no Supabase (tabela frete_clientes),
+// editável pela tela (ver ConferenciaFrete.jsx: CNPJ desconhecido na importação
+// oferece cadastrar na hora). Antes era hardcoded aqui; migrado na migration 005.
+export async function listarClientes(conn) {
+  return (await supaFetch(conn.url, conn.key, "GET", `${TABELA_CLIENTES}?order=nome.asc`)) || [];
+}
+
+// dados: { cnpj, nome, base_id, frete_cod, desc_local_cod, diaria_cod, criado_por }
+export async function criarCliente(conn, dados) {
+  const res = await supaFetch(conn.url, conn.key, "POST", TABELA_CLIENTES, [dados]);
+  return Array.isArray(res) ? res[0] : res;
+}
+
+// [{cnpj, nome, ...}] -> { [cnpjDigitos]: {cnpj, nome, ...} } — formato usado por parseFreteXLSX.
+export function mapaClientes(lista) {
+  const out = {};
+  lista.forEach((c) => { out[soDigitos(c.cnpj)] = c; });
+  return out;
+}
 
 const soDigitos = (v) => String(v ?? "").replace(/\D/g, "").padStart(14, "0");
 const num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
@@ -38,9 +50,99 @@ export function chaveDuplicidade(l) {
   return [l.placa, r2(l.valor_nf), r2(l.peso_nf), l.trecho, r2(l.total_frete)].join("||");
 }
 
-// Lê o .xls/.xlsx bruto (1 aba, CNPJ Remetente único) e devolve as linhas já
-// classificadas por categoria + flags. Não grava nada — isso é decisão de quem chama.
-export function parseFreteXLSX(file) {
+const campoBase = (r, cli, cnpj, categoria, empresaCod) => ({
+  cliente: cli.nome,
+  base_id: cli.base_id,
+  cnpj_remetente: cnpj,
+  categoria,
+  empresa_cod: empresaCod,
+  ctrc: String(r["CTRC"] ?? "").trim(),
+  data_emissao: excelDateToISO(r["Data Emissão"]),
+  trecho: String(r["Trecho"] ?? "").trim(),
+  nfs: String(r["NFS"] ?? "").trim(),
+  placa: String(r["Placa Veículo Coleta"] ?? "").trim(),
+  nome_usuario: String(r["Nome do Usuário"] ?? "").trim(),
+  numero_manifesto: String(r["Número Manifesto"] ?? "").trim(),
+  numero_contrato: String(r["Número Contrato Frete"] ?? "").trim(),
+  valor_nf: num(r["Valor NF"]),
+  peso_nf: num(r["Peso NF"]),
+  frete_peso: num(r["Frete Peso"]),
+  total_frete: num(r["Total do Frete"]),
+  valor_contrato_frete: num(r["Valor Contrato Frete"]),
+  saldo: num(r["Saldo"]),
+  margem_lucro: num(r["Margem Lucro"]),
+});
+
+// Classifica as linhas RAW de UM cnpj (já sabendo o cliente) por categoria, a partir
+// da coluna Empresa. Exportada porque ConferenciaFrete.jsx reusa isso ao cadastrar um
+// CNPJ desconhecido na hora da importação (sem precisar reler o arquivo inteiro).
+export function classificarLinhasCliente(rows, cli, cnpj) {
+  const classificadas = [];
+  const naoClassificadas = [];
+  rows.forEach((r) => {
+    const emp = String(r["Empresa"] ?? "").trim().toUpperCase();
+    if (emp === cli.frete_cod) {
+      classificadas.push(campoBase(r, cli, cnpj, "frete", emp));
+    } else if (cli.desc_local_cod && emp === cli.desc_local_cod) {
+      const margem = num(r["Margem Lucro"]);
+      classificadas.push(campoBase(r, cli, cnpj, margem === 0 ? "descarga" : "local", emp));
+    } else if (cli.diaria_cod && emp === cli.diaria_cod) {
+      classificadas.push(campoBase(r, cli, cnpj, "diaria", emp));
+    } else {
+      naoClassificadas.push(campoBase(r, cli, cnpj, "nao_classificado", emp));
+    }
+  });
+  return { classificadas, naoClassificadas };
+}
+
+// Recalcula flags de revisão + periodo_ref sobre um conjunto de linhas já classificadas.
+// Roda de novo (idempotente) toda vez que o conjunto de linhas muda — ex.: depois de
+// cadastrar um CNPJ novo e juntar as linhas dele às já conhecidas.
+export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
+  const porChave = {};
+  linhas.forEach((l) => { const k = chaveDuplicidade(l); (porChave[k] = porChave[k] || []).push(l); });
+
+  linhas.forEach((l) => {
+    // Diária: motorista é pago na hora (débito) e o CTe complementar só entra na
+    // semana/mês seguinte — margem negativa aqui é o fluxo normal, não é alerta.
+    // Descarga: CTe e Contrato têm o mesmo valor por definição (margem 0) — recebido
+    // via NFSe na semana/mês seguinte e conciliado depois; margem 0 não é alerta aqui.
+    const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga";
+    l.flag_negativa = !margemFlexivel && l.margem_lucro < 0;
+    l.flag_baixa = !margemFlexivel && l.margem_lucro >= 0 && l.margem_lucro < 10;
+    l.flag_ambigua =
+      (l.categoria === "descarga" || l.categoria === "local") &&
+      ((l.margem_lucro > 0 && l.margem_lucro < 1) || (l.valor_contrato_frete === 0 && l.total_frete > 0));
+    const grupo = porChave[chaveDuplicidade(l)];
+    l.flag_duplicidade = grupo.length > 1;
+    l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;
+  });
+
+  // Período de referência: por LINHA, a partir da própria data_emissao — não do arquivo
+  // inteiro. Um arquivo pode cobrir vários meses (ex.: relatório 01/2026 a 07/2026);
+  // cada CTRC tem que cair no mês certo, senão os filtros por período ficam todos errados.
+  // Fallback (linha sem data_emissao, raro): mês mais comum no arquivo, senão mês corrente.
+  const meses = linhas.map(l => l.data_emissao).filter(Boolean).map(d => d.slice(0, 7));
+  const contagem = {};
+  meses.forEach(m => { contagem[m] = (contagem[m] || 0) + 1; });
+  const fallback = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0]
+    || new Date().toISOString().slice(0, 7);
+  linhas.forEach(l => { l.periodo_ref = l.data_emissao ? l.data_emissao.slice(0, 7) : fallback; });
+  naoClassificadas.forEach(l => { l.periodo_ref = l.data_emissao ? l.data_emissao.slice(0, 7) : fallback; });
+
+  const periodosEncontrados = [...new Set(linhas.map(l => l.periodo_ref))].sort();
+  // periodoRef "de exibição" = mês mais recente encontrado (pra onde a tela pula após importar)
+  const periodoRef = periodosEncontrados[periodosEncontrados.length - 1] || fallback;
+  return { periodoRef, periodosEncontrados };
+}
+
+// Lê o .xls/.xlsx bruto e devolve as linhas já classificadas por categoria + flags,
+// agrupando por CNPJ Remetente DENTRO do arquivo — um único arquivo pode conter várias
+// embarcadoras misturadas (export completo do TMS), não precisa mais separar antes.
+// `clientesMap` = mapaClientes(await listarClientes(conn)), carregado por quem chama.
+// CNPJs que não estão no cadastro voltam em `desconhecidos` (não em erro) — a tela
+// oferece cadastrar na hora ou ignorar essas linhas.
+export function parseFreteXLSX(file, clientesMap) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Falha ao ler o arquivo"));
@@ -49,95 +151,34 @@ export function parseFreteXLSX(file) {
         const wb = XLSX.read(e.target.result, { type: "array", cellDates: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { header: 0, defval: null, raw: true });
-        if (!json.length) return resolve({ cliente: null, linhas: [], naoClassificadas: [], erro: "Planilha vazia" });
+        if (!json.length) return resolve({ linhas: [], naoClassificadas: [], desconhecidos: {}, periodoRef: null, periodosEncontrados: [], erro: "Planilha vazia" });
 
-        const cnpjs = [...new Set(json.map(r => soDigitos(r["CNPJ Remetente"])))];
-        if (cnpjs.length !== 1) {
-          return resolve({ cliente: null, linhas: [], naoClassificadas: [], erro: `Mais de um CNPJ Remetente no arquivo (${cnpjs.join(", ")}) — separe por cliente antes de importar.` });
-        }
-        const cli = CLIENTES[cnpjs[0]];
-        if (!cli) {
-          return resolve({ cliente: null, linhas: [], naoClassificadas: [], erro: `CNPJ ${cnpjs[0]} não está no cadastro de clientes conhecidos. Adicione em freteConferencia.js:CLIENTES antes de importar — não vou adivinhar.` });
-        }
-
-        const base = (r, categoria, empresaCod) => ({
-          cliente: cli.nome,
-          base_id: cli.baseId,
-          cnpj_remetente: cnpjs[0],
-          categoria,
-          empresa_cod: empresaCod,
-          ctrc: String(r["CTRC"] ?? "").trim(),
-          data_emissao: excelDateToISO(r["Data Emissão"]),
-          trecho: String(r["Trecho"] ?? "").trim(),
-          nfs: String(r["NFS"] ?? "").trim(),
-          placa: String(r["Placa Veículo Coleta"] ?? "").trim(),
-          nome_usuario: String(r["Nome do Usuário"] ?? "").trim(),
-          numero_manifesto: String(r["Número Manifesto"] ?? "").trim(),
-          numero_contrato: String(r["Número Contrato Frete"] ?? "").trim(),
-          valor_nf: num(r["Valor NF"]),
-          peso_nf: num(r["Peso NF"]),
-          frete_peso: num(r["Frete Peso"]),
-          total_frete: num(r["Total do Frete"]),
-          valor_contrato_frete: num(r["Valor Contrato Frete"]),
-          saldo: num(r["Saldo"]),
-          margem_lucro: num(r["Margem Lucro"]),
+        const porCnpj = {};
+        json.forEach((r) => {
+          const cnpj = soDigitos(r["CNPJ Remetente"]);
+          (porCnpj[cnpj] = porCnpj[cnpj] || []).push(r);
         });
 
         const linhas = [];
         const naoClassificadas = [];
-        const usados = new Set([cli.frete, cli.descLocal, cli.diaria].filter(Boolean));
+        const desconhecidos = {};
 
-        json.forEach((r) => {
-          const emp = String(r["Empresa"] ?? "").trim().toUpperCase();
-          if (emp === cli.frete) {
-            linhas.push(base(r, "frete", emp));
-          } else if (cli.descLocal && emp === cli.descLocal) {
-            const margem = num(r["Margem Lucro"]);
-            linhas.push(base(r, margem === 0 ? "descarga" : "local", emp));
-          } else if (cli.diaria && emp === cli.diaria) {
-            linhas.push(base(r, "diaria", emp));
-          } else {
-            naoClassificadas.push(base(r, "nao_classificado", emp));
+        Object.entries(porCnpj).forEach(([cnpj, rows]) => {
+          const cli = clientesMap[cnpj];
+          if (!cli) {
+            const empresas = {};
+            rows.forEach((r) => { const e = String(r["Empresa"] ?? "").trim().toUpperCase(); empresas[e] = (empresas[e] || 0) + 1; });
+            desconhecidos[cnpj] = { cnpj, linhasRaw: rows, empresas, qtd: rows.length };
+            return;
           }
+          const { classificadas, naoClassificadas: ignoradas } = classificarLinhasCliente(rows, cli, cnpj);
+          linhas.push(...classificadas);
+          naoClassificadas.push(...ignoradas);
         });
 
-        // Flags de revisão
-        const porChave = {};
-        linhas.forEach((l) => { const k = chaveDuplicidade(l); (porChave[k] = porChave[k] || []).push(l); });
+        const { periodoRef, periodosEncontrados } = recalcularFlagsEPeriodo(linhas, naoClassificadas);
 
-        linhas.forEach((l) => {
-          // Diária: motorista é pago na hora (débito) e o CTe complementar só entra na
-          // semana/mês seguinte — margem negativa aqui é o fluxo normal, não é alerta.
-          // Descarga: CTe e Contrato têm o mesmo valor por definição (margem 0) — recebido
-          // via NFSe na semana/mês seguinte e conciliado depois; margem 0 não é alerta aqui.
-          const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga";
-          l.flag_negativa = !margemFlexivel && l.margem_lucro < 0;
-          l.flag_baixa = !margemFlexivel && l.margem_lucro >= 0 && l.margem_lucro < 10;
-          l.flag_ambigua =
-            (l.categoria === "descarga" || l.categoria === "local") &&
-            ((l.margem_lucro > 0 && l.margem_lucro < 1) || (l.valor_contrato_frete === 0 && l.total_frete > 0));
-          const grupo = porChave[chaveDuplicidade(l)];
-          l.flag_duplicidade = grupo.length > 1;
-          l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;
-        });
-
-        // Período de referência: por LINHA, a partir da própria data_emissao — não do arquivo
-        // inteiro. Um arquivo pode cobrir vários meses (ex.: relatório 01/2026 a 07/2026);
-        // cada CTRC tem que cair no mês certo, senão os filtros por período ficam todos errados.
-        // Fallback (linha sem data_emissao, raro): mês mais comum no arquivo, senão mês corrente.
-        const meses = linhas.map(l => l.data_emissao).filter(Boolean).map(d => d.slice(0, 7));
-        const contagem = {};
-        meses.forEach(m => { contagem[m] = (contagem[m] || 0) + 1; });
-        const fallback = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0]
-          || new Date().toISOString().slice(0, 7);
-        linhas.forEach(l => { l.periodo_ref = l.data_emissao ? l.data_emissao.slice(0, 7) : fallback; });
-        naoClassificadas.forEach(l => { l.periodo_ref = l.data_emissao ? l.data_emissao.slice(0, 7) : fallback; });
-
-        const periodosEncontrados = [...new Set(linhas.map(l => l.periodo_ref))].sort();
-        // periodoRef "de exibição" = mês mais recente encontrado (pra onde a tela pula após importar)
-        const periodoRef = periodosEncontrados[periodosEncontrados.length - 1] || fallback;
-
-        resolve({ cliente: cli.nome, baseId: cli.baseId, periodoRef, periodosEncontrados, linhas, naoClassificadas, erro: null });
+        resolve({ periodoRef, periodosEncontrados, linhas, naoClassificadas, desconhecidos, erro: null });
       } catch (err) { reject(err); }
     };
     reader.readAsArrayBuffer(file);
@@ -164,9 +205,12 @@ export async function listarPorPeriodos(conn, periodoRefs, cliente) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
-export async function diffImportFrete(conn, cliente, linhas) {
+// Sem filtro de cliente: um arquivo pode trazer varias embarcadoras juntas agora
+// (ver parseFreteXLSX), entao o diff busca os periodos inteiros e a propria chave
+// (que ja inclui l.cliente) separa quem e quem.
+export async function diffImportFrete(conn, linhas) {
   const periodos = [...new Set(linhas.map(l => l.periodo_ref))];
-  const existentes = periodos.length ? await listarPorPeriodos(conn, periodos, cliente) : [];
+  const existentes = periodos.length ? await listarPorPeriodos(conn, periodos) : [];
   const existKeys = new Set(existentes.map(chaveLinha));
   const novas = linhas.filter(l => !existKeys.has(chaveLinha(l)));
   return { novas, jaExistem: linhas.length - novas.length, existentesTotal: existentes.length };
