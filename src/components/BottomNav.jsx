@@ -1,7 +1,5 @@
 import React from "react";
-
-// Tabs fixadas no bottom bar (por prioridade); o resto fica no drawer "Mais"
-const PINNED = ["dashboard", "planilha", "ocorrencias", "motoristas"];
+import { MOBILE_NAV_PINNED as PINNED } from "../constants.js";
 
 // Ícone SVG do "Mais" (grid 2x2)
 const IcoMais = ({ active }) => (

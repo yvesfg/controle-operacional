@@ -1,5 +1,5 @@
 import React from "react";
-import { DESIGN } from "../constants.js";
+import { DESIGN, MOBILE_NAV_PINNED } from "../constants.js";
 import { clickable } from "../utils.js";
 
 export default function AppSidebar({
@@ -42,9 +42,10 @@ export default function AppSidebar({
         <nav className="co-sidebar__nav">
           {(()=>{
             const posCarga = new Set(["diarias","descarga","ocorrencias"]);
-            const hidden   = new Set(["busca"]);
+            // No drawer mobile ("Mais"), oculta as tabs que já são fixas no bottom bar
+            const hidden   = new Set(isWide ? ["busca"] : ["busca", ...MOBILE_NAV_PINNED]);
             const mainTabs = tabs.filter(tb=>!posCarga.has(tb.k)&&!hidden.has(tb.k));
-            const pcTabs   = tabs.filter(tb=>posCarga.has(tb.k));
+            const pcTabs   = tabs.filter(tb=>posCarga.has(tb.k)&&!hidden.has(tb.k));
             const renderItem = (tb) => {
               const ativo = activeTab===tb.k;
               return (

@@ -1726,8 +1726,8 @@ export default function App() {
       {/* ═══ HUB FAB — botão flutuante arrastável p/ voltar ao Hub ═══ */}
       <HubFab t={t} onClick={()=>setHubScreen(null)} />
 
-      {/* ═══ BOTTOM NAV — mobile only ═══ */}
-      {!isWide && (
+      {/* ═══ BOTTOM NAV — mobile only; some enquanto o drawer "Mais" estiver aberto p/ não duplicar navegação ═══ */}
+      {!isWide && !mobileSidebarExpanded && (
         <BottomNav
           tabs={tabs}
           activeTab={activeTab}

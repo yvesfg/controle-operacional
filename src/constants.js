@@ -56,6 +56,9 @@ export const TABLE_OCORR    = "co_ocorrencias";
 export const TABLE_LOGS     = "co_logs_alteracoes";
 export const TABLE_APOINTS  = "co_apontamentos";
 export const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+// Tabs fixadas no bottom bar mobile (compartilhado entre BottomNav e AppSidebar,
+// para o drawer "Mais" não duplicar o que já está fixado embaixo).
+export const MOBILE_NAV_PINNED = ["dashboard", "financeiro", "planilha", "descarga"];
 export const PERMS_PADRAO = {
   // ── Admin: acesso total ──
   admin:      {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:true,  usuarios:true,  ocorrencias:true },
@@ -135,6 +138,13 @@ export const hexRgb = (colorOrVar, a) => {
 };
 
 export const DEV_CHANGELOG = [
+  {
+    data: "2026-07-08", sessao: "Sessao 27",
+    itens: [
+      "FIX · Mobile: bottom bar + drawer \"Mais\" ficavam visiveis ao mesmo tempo (duas barras de navegacao sobrepostas) — BottomNav agora some enquanto o drawer esta aberto (App.jsx).",
+      "FIX · Mobile: drawer \"Mais\" (reaproveita o AppSidebar) duplicava as 4 tabs ja fixas no bottom bar (Dashboard/Planilha/Ocorrencias/Motoristas); tocar nelas so fechava o drawer sem mudar nada, dando impressao de bug (\"nao abre nada\"). Extraida constante MOBILE_NAV_PINNED (constants.js) compartilhada entre BottomNav e AppSidebar; o drawer agora so lista o que NAO esta no bottom bar (Financeiro, Diarias, Carga/Descarga, Operac./Gestao, Relatorios).",
+    ],
+  },
   {
     data: "2026-07-07", sessao: "Sessao 26b",
     itens: [
