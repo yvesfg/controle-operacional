@@ -159,8 +159,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
   }, [linhasFiltradas]);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
-  // Grade lado a lado (2 colunas) que colapsa para 1 coluna quando não há espaço — mesmo espírito do resto do app.
-  const gridPar = { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(400px, 1fr))", gap: 16, marginBottom: 16, alignItems: "start" };
+  // Mosaico (CSS columns) em vez de grid pareado — cards de altura desigual (ex.: Por
+  // cliente curto ao lado de Evolução diária longa) não deixam mais espaço morto na
+  // linha, porque cada coluna flui independente em vez de esticar pra bater com a maior.
+  const masonry = { columnCount: isMobile ? 1 : 2, columnGap: 16 };
+  const tile = { ...card, breakInside: "avoid", WebkitColumnBreakInside: "avoid", display: "inline-block", width: "100%", marginBottom: 16 };
 
   const badge = (icon, texto, cor) => (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: hexRgb(cor, .12), border: `1px solid ${hexRgb(cor, .3)}`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>
@@ -234,11 +237,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
         })}
       </div>
 
-      {/* Resumo por cliente + Evolução diária — lado a lado, mantendo leitura em telas estreitas */}
-      <div style={gridPar}>
+      {/* Mosaico: todos os cards de resumo/revisão fluem em 2 colunas sem espaço morto */}
+      <div style={masonry}>
       {/* Resumo por cliente — tabela alinhada, clique filtra por esse cliente */}
       {Object.keys(resumoCli).length > 0 && (
-        <div style={{ ...card }}>
+        <div style={{ ...tile }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Por cliente · {mesLabel(periodoRef)}</div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
@@ -282,7 +285,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
       {/* Evolução diária — quantos CTRCs entraram por dia, pra acompanhar o mês sem esperar fechar */}
       {resumoDia.length > 0 && (
-        <div style={{ ...card }}>
+        <div style={{ ...tile }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Evolução diária · {mesLabel(periodoRef)}</div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
@@ -314,12 +317,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
           })}
         </div>
       )}
-      </div>
 
-      {/* Pendências por usuário (clicável — filtra a Fila/Sinalizados abaixo) + Ranking de revisão — lado a lado */}
-      <div style={gridPar}>
+      {/* Pendências por usuário — clicável, filtra a Fila/Sinalizados abaixo */}
       {resumoPorUsuario.length > 0 && (
-        <div style={{ ...card }}>
+        <div style={{ ...tile }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4 }}>Pendências por usuário</div>
           <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>Clique num usuário para filtrar os casos dele na fila de revisão.</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -340,7 +341,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
       {/* Ranking de revisão — quem já decidiu quantos itens da fila neste período/cliente */}
       {rankingRevisao.length > 0 && (
-        <div style={{ ...card }}>
+        <div style={{ ...tile }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>Ranking de revisão · {mesLabel(periodoRef)}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {rankingRevisao.map(([nome, qtd], i) => (
@@ -354,12 +355,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
           </div>
         </div>
       )}
-      </div>
 
-      {/* Fila de revisão + Sinalizados — lado a lado quando ambos existem */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile || !sinalizadosFiltrados.length ? "1fr" : "repeat(auto-fit, minmax(400px, 1fr))", gap: 16, alignItems: "start" }}>
       {/* Fila de revisão */}
-      <div style={{ ...card }}>
+      <div style={{ ...tile }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Fila de revisão</span>
           {pendentesFiltrados.length > 0 && (
@@ -416,7 +414,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
       {/* Sinalizados para correção — saíram da fila de revisão, mas ficam visíveis até a origem ser corrigida */}
       {sinalizadosFiltrados.length > 0 && (
-        <div style={{ ...card }}>
+        <div style={{ ...tile }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Sinalizados</span>
             <span style={{ background: hexRgb(t.ouro, .1), color: t.ouro, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{sinalizadosFiltrados.length}</span>
