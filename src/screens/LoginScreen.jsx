@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Toast from "../components/Toast.jsx";
 import { DESIGN, hexRgb } from "../constants.js";
-import { loginGoogle } from "../supabaseAuth.js";
+import { loginGoogle, loginTestUser } from "../supabaseAuth.js";
 import loginLogo from "../../assets/images/logo-login.png";
 
 export default function LoginScreen({
@@ -9,10 +9,22 @@ export default function LoginScreen({
   authMsg,
   toast,
 }) {
+  const [modoTeste, setModoTeste] = useState(false);
+  const [testUser, setTestUser] = useState("");
+  const [testPass, setTestPass] = useState("");
+  const [testMsg, setTestMsg] = useState(null);
+  const [entrando, setEntrando] = useState(false);
   const ano = new Date().toLocaleDateString("pt-BR",{month:"short",year:"numeric"}).toUpperCase().replace(". ","/" );
   const entrar = async () => {
     try { await loginGoogle(); }
     catch (e) { console.error("[login] google:", e); }
+  };
+  const entrarTeste = async () => {
+    if (!testUser.trim() || !testPass) { setTestMsg({t:"err",m:"Preencha usuário e senha"}); return; }
+    setEntrando(true); setTestMsg(null);
+    const r = await loginTestUser(testUser.trim(), testPass);
+    setEntrando(false);
+    if (!r.ok) setTestMsg({t:"err",m:"Usuário ou senha incorretos"});
   };
   return (
     <div className="co-login-screen" style={{...css.app, background:t.bg, display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px",minHeight:"100vh",position:"relative",overflow:"hidden"}}>
@@ -56,6 +68,29 @@ export default function LoginScreen({
           <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
           Continuar com Google
         </button>
+
+        {!modoTeste ? (
+          <button onClick={()=>setModoTeste(true)} style={{background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,marginBottom:16,alignSelf:"center"}}>
+            Entrar com usuário de teste
+          </button>
+        ) : (
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+            {testMsg && (
+              <div style={{padding:"8px 10px",borderRadius:DESIGN.r.inp,fontSize:11,fontWeight:600,textAlign:"center",background:hexRgb(t.danger,.08),color:t.danger,border:`1px solid ${hexRgb(t.danger,.2)}`}}>{testMsg.m}</div>
+            )}
+            <input value={testUser} onChange={e=>setTestUser(e.target.value)} placeholder="usuário" autoCapitalize="off"
+              style={{background:t.inputBg,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"9px 11px",color:t.txt,fontSize:12}} />
+            <input value={testPass} onChange={e=>setTestPass(e.target.value)} placeholder="senha" type="password"
+              onKeyDown={e=>{if(e.key==="Enter") entrarTeste();}}
+              style={{background:t.inputBg,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"9px 11px",color:t.txt,fontSize:12}} />
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>{setModoTeste(false);setTestMsg(null);}} style={{flex:1,...css.hBtn,fontSize:11,padding:"8px"}}>Cancelar</button>
+              <button disabled={entrando} onClick={entrarTeste} style={{flex:2,background:t.ouro,color:t.onPrimary,border:"none",borderRadius:DESIGN.r.inp,padding:"8px",fontSize:12,fontWeight:700,cursor:entrando?"default":"pointer",opacity:entrando?.6:1}}>
+                {entrando ? "Entrando…" : "Entrar"}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
           <span style={{width:6,height:6,borderRadius:"50%",background:"#22c55e",display:"inline-block",flexShrink:0}}/>
