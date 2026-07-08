@@ -139,6 +139,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 28",
+    itens: [
+      "CHORE · Removidos 102 arquivos .bak_* (2,6MB) espalhados em src/ e assets/ — o projeto ja usa Git, entao duplicar arquivo antes de editar era redundante com o historico. CLAUDE.md atualizado: instrucao de criar backup trocada por 'sugerir commit antes de alteracao arriscada'.",
+      "REFAC · Leak de cor hardcoded (documentado em DESIGN.md): 49 literais #hex que coincidiam exatamente com um token existente (status/categoria/accent) trocados por var(--token) em 13 arquivos (App.jsx, PainelFinanceiro, Resultado, DiariasView, DescargaView, avb/LogisticaAVB, avb/DashboardAVB, ReportBuilder, ModalBusca, ModalDetalhe, ModalOcorrChegada, OcorrModal, exportHelpers, OcorrenciasView). Zero mudanca visual no tema dark (mesmo valor), mas agora reagem corretamente ao tema light e ao accent por filial (AVB). Build (vite build) validado sem erros novos.",
+      "NOTA · Restam ~260 literais de cor que NAO batem com nenhum token existente (ex.: #22c55e, #7c3aed, #f97316, #a855f7 em OcorrenciasView e outros) — sao cores inventadas ad hoc por tela, nao um simples typo de valor. Corrigir exige decisao de design (mapear pro --cat-* mais proximo ou criar token novo), fora do escopo de uma troca mecanica; deixado como backlog.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 27",
     itens: [
       "FIX · Mobile: bottom bar + drawer \"Mais\" ficavam visiveis ao mesmo tempo (duas barras de navegacao sobrepostas) — BottomNav agora some enquanto o drawer esta aberto (App.jsx).",

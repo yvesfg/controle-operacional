@@ -222,8 +222,8 @@ export default function ModalBusca({ ctx }) {
                     onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
                     onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(232,130,12,.3)";}}
                     onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
-                    style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"#E8820C",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
-                    {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`#E8820C`,16,2)} Ocorrências
+                    style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"var(--cat-amber)",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
+                    {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`var(--cat-amber)`,16,2)} Ocorrências
                   </button>
                 </div>
               </div>

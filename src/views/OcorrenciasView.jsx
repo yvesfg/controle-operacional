@@ -114,11 +114,11 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
           {r.ro&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(249,115,22,.1)",border:"1px solid rgba(249,115,22,.3)",borderRadius:5,padding:"2px 8px",color:"#f97316",fontWeight:700}}>RO {r.ro}</span>)}
           {r.ro_status&&<span style={{padding:'2px 6px',borderRadius:4,fontSize:9,fontWeight:700,
             background:r.ro_status==='FINALIZADO'?'rgba(2,192,118,.1)':'rgba(240,185,11,.1)',
-            color:r.ro_status==='FINALIZADO'?'#02c076':'#f0b90b',
+            color:r.ro_status==='FINALIZADO'?'var(--cat-green)':'var(--cat-gold)',
             border:`1px solid ${r.ro_status==='FINALIZADO'?'rgba(2,192,118,.3)':'rgba(240,185,11,.3)'}`}}>
             {r.ro_status}
           </span>}
-          {r.nfd?.numero&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,padding:"2px 8px",color:"#ef4444",fontWeight:700}}>NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</span>)}
+          {r.nfd?.numero&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,padding:"2px 8px",color:"var(--red)",fontWeight:700}}>NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</span>)}
         </div>
       )}
       {/* Row 4: datas */}
@@ -239,7 +239,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
   const FILTROS=[
     {k:null,               l:"Todos",          color:"var(--text2)"},
     {k:"RO",               l:"RO",             color:"#f97316"},
-    {k:"NFD",              l:"NFD",            color:"#ef4444"},
+    {k:"NFD",              l:"NFD",            color:"var(--red)"},
     {k:"Sobra",            l:"Sobra",          color:"#a855f7"},
     {k:"SGS",              l:"SGS",            color:"var(--yellow,#eab308)"},
     {k:"Ocorrência",  l:"Ocorrência",color:"var(--orange,#f97316)"},

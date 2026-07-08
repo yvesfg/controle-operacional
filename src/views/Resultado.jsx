@@ -315,8 +315,8 @@ export default function Resultado({ ctx }) {
           {lastImportIds.length > 0 && (
             <button onClick={() => { setUndoOpen(o => !o); setUndoInput(""); }}
               style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-                border: `1px solid ${t.danger||"#f6465d"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
-                color: t.danger||"#f6465d" }}>
+                border: `1px solid ${t.danger||"var(--cat-red)"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
+                color: t.danger||"var(--cat-red)" }}>
               ↩ Desfazer ({lastImportIds.length})
             </button>
           )}
@@ -333,8 +333,8 @@ export default function Resultado({ ctx }) {
       {/* Painel de confirmação Desfazer importação */}
       {undoOpen && lastImportIds.length > 0 && (
         <div style={{ marginBottom: 14, padding: "14px 16px", borderRadius: 10,
-          background: `rgba(246,70,93,.07)`, border: `1px solid ${t.danger||"#f6465d"}` }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: t.danger||"#f6465d", marginBottom: 6 }}>
+          background: `rgba(246,70,93,.07)`, border: `1px solid ${t.danger||"var(--cat-red)"}` }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.danger||"var(--cat-red)", marginBottom: 6 }}>
             Desfazer a última importação? Isso removerá {lastImportIds.length} registro(s) adicionados agora.
           </div>
           <div style={{ fontSize: 11, color: t.txt2, marginBottom: 10 }}>
@@ -345,7 +345,7 @@ export default function Resultado({ ctx }) {
             <input value={undoInput} onChange={e => setUndoInput(e.target.value)}
               placeholder="sim" autoFocus
               style={{ fontSize: 12, padding: "5px 10px", borderRadius: 7,
-                border: `1.5px solid ${undoInput === "sim" ? (t.danger||"#f6465d") : t.borda}`,
+                border: `1.5px solid ${undoInput === "sim" ? (t.danger||"var(--cat-red)") : t.borda}`,
                 background: t.bg, color: t.txt, width: 90, fontFamily: "inherit" }} />
             <button disabled={undoInput !== "sim" || importing}
               onClick={async () => {
@@ -361,9 +361,9 @@ export default function Resultado({ ctx }) {
                 finally { setImporting(false); }
               }}
               style={{ fontSize: 12, padding: "5px 14px", borderRadius: 7, fontFamily: "inherit", cursor: "pointer",
-                background: undoInput === "sim" ? (t.danger||"#f6465d") : "transparent",
+                background: undoInput === "sim" ? (t.danger||"var(--cat-red)") : "transparent",
                 color: undoInput === "sim" ? "#fff" : (t.txt2||"#888"),
-                border: `1px solid ${undoInput === "sim" ? (t.danger||"#f6465d") : t.borda}`,
+                border: `1px solid ${undoInput === "sim" ? (t.danger||"var(--cat-red)") : t.borda}`,
                 opacity: importing ? .6 : 1 }}>
               Confirmar desfazer
             </button>

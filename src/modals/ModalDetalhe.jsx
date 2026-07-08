@@ -257,7 +257,7 @@ export default function ModalDetalhe({ ctx }) {
                         </div>
                       ))}
                       {ocorrAll.length > 3 && (
-                        <button onClick={()=>setOcorrListExpanded(v=>!v)} style={{fontSize:11,color:"#E8820C",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
+                        <button onClick={()=>setOcorrListExpanded(v=>!v)} style={{fontSize:11,color:"var(--cat-amber)",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
                           {ocorrListExpanded ? "▲ Ver menos" : `▼ Ver mais (${ocorrAll.length - 3} ocultas)`}
                         </button>
                       )}

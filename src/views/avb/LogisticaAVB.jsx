@@ -57,9 +57,9 @@ export default function LogisticaAVB({ ctx }) {
       svg:<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></> },
     { k:"prevHoje", l:"Prev. Hoje",        ct:prevHoje.length,      cor:t.ouro,          corLt:"#ffe57a",       bg:"rgba(240,185,11,.07)", list:prevHoje,
       svg:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></> },
-    { k:"pendente", l:"Pendentes",         ct:pendentes.length,     cor:"#f59e0b",        corLt:"#fde68a",       bg:"rgba(245,158,11,.07)", list:pendentes,
+    { k:"pendente", l:"Pendentes",         ct:pendentes.length,     cor:"var(--orange)",        corLt:"#fde68a",       bg:"rgba(245,158,11,.07)", list:pendentes,
       svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></> },
-    { k:"docInc",   l:"Doc. Incompleta",   ct:docIncompleta.length, cor:t.danger,         corLt:"#f6465d",       bg:"rgba(246,70,93,.07)",  list:docIncompleta,
+    { k:"docInc",   l:"Doc. Incompleta",   ct:docIncompleta.length, cor:t.danger,         corLt:"var(--cat-red)",       bg:"rgba(246,70,93,.07)",  list:docIncompleta,
       svg:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="9.01" y2="13"/><line x1="9" y1="17" x2="9.01" y2="17"/></> },
     { k:"finPend",  l:"Fin. Pendente",     ct:finPendente.length,   cor:"#a855f7",        corLt:"#c084fc",       bg:"rgba(168,85,247,.07)", list:finPendente,
       svg:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></> },
@@ -188,7 +188,7 @@ export default function LogisticaAVB({ ctx }) {
                 if (r.data_agenda) return chip("Prev. Chegada", r.data_agenda, t.ouro);
                 const ag = calcAgendaAvb(r.data_carr, r.destino);
                 if (!ag) return null;
-                return chip(`Prev. (${ag.dias}d)`, fmtDataAvb(ag.data), "#f59e0b");
+                return chip(`Prev. (${ag.dias}d)`, fmtDataAvb(ag.data), "var(--orange)");
               })()}
               {r.data_final&&chip("Descarregado", r.data_final, t.verde)}
 

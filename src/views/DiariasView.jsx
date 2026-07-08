@@ -72,8 +72,8 @@ export default function DiariasView({ ctx }) {
             {/* KPI clicáveis — estilo flat igual Descarga */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isMobile?4:6,marginBottom:14}}>
               {[
-                {k:"ok",       svg:<><polyline points="20 6 9 17 4 12"/></>,           l:"No Prazo",      ct:diariasData.ok,    cor:t.verde,   corLt:"#00e096", bg:"rgba(2,192,118,.07)"},
-                {k:"atraso",   svg:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>, l:"Perdeu Agenda",ct:diariasData.atraso,cor:t.danger, corLt:"#f6465d", bg:"rgba(246,70,93,.07)"},
+                {k:"ok",       svg:<><polyline points="20 6 9 17 4 12"/></>,           l:"No Prazo",      ct:diariasData.ok,    cor:t.verde,   corLt:"var(--cat-mint)", bg:"rgba(2,192,118,.07)"},
+                {k:"atraso",   svg:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>, l:"Perdeu Agenda",ct:diariasData.atraso,cor:t.danger, corLt:"var(--cat-red)", bg:"rgba(246,70,93,.07)"},
                 {k:"pendente", svg:<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,l:"Sem Descarga",ct:diariasData.pend,  cor:t.ouro,    corLt:"#ffe57a", bg:"rgba(240,185,11,.07)"},
               ].map(tb => (
                 <div key={tb.k} {...clickable(()=>setDFiltro(dFiltro===tb.k?"todos":tb.k))} style={{border:`1.5px solid ${dFiltro===tb.k?tb.cor:t.borda}`,borderRadius:8,padding:isMobile?"10px 5px":"18px 10px",cursor:"pointer",background:dFiltro===tb.k?tb.bg:t.card2,display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all .2s",minWidth:0}}>
@@ -403,8 +403,8 @@ export default function DiariasView({ ctx }) {
                       <span style={{fontSize:10,color:t.txt2}}>{extratoRows.length} registros</span>
                       {prevExtratoSnap && (
                         <button onClick={()=>{setExtratoUndoConfirm(true);setExtratoUndoInput("");}}
-                          style={{background:"transparent",border:`1px solid ${t.danger||"#f6465d"}`,borderRadius:6,
-                            padding:"2px 8px",fontSize:10,color:t.danger||"#f6465d",cursor:"pointer",fontFamily:"inherit"}}>
+                          style={{background:"transparent",border:`1px solid ${t.danger||"var(--cat-red)"}`,borderRadius:6,
+                            padding:"2px 8px",fontSize:10,color:t.danger||"var(--cat-red)",cursor:"pointer",fontFamily:"inherit"}}>
                           &#8617; Desfazer
                         </button>
                       )}
@@ -417,8 +417,8 @@ export default function DiariasView({ ctx }) {
                     {/* Modal confirmação desfazer */}
                     {extratoUndoConfirm && (
                       <div style={{marginBottom:12,padding:"12px 14px",borderRadius:10,
-                        background:`rgba(246,70,93,.07)`,border:`1px solid ${t.danger||"#f6465d"}`}}>
-                        <div style={{fontSize:11,fontWeight:700,color:t.danger||"#f6465d",marginBottom:8}}>
+                        background:`rgba(246,70,93,.07)`,border:`1px solid ${t.danger||"var(--cat-red)"}`}}>
+                        <div style={{fontSize:11,fontWeight:700,color:t.danger||"var(--cat-red)",marginBottom:8}}>
                           Desfazer importação — restaurar "{prevExtratoSnap.fileName || 'vazio'}" ({prevExtratoSnap.rows.length} registros)?
                         </div>
                         <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>
@@ -427,7 +427,7 @@ export default function DiariasView({ ctx }) {
                         <div style={{display:"flex",gap:8,alignItems:"center"}}>
                           <input value={extratoUndoInput} onChange={e=>setExtratoUndoInput(e.target.value)}
                             placeholder="sim" autoFocus
-                            style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${extratoUndoInput==="sim"?t.danger||"#f6465d":t.borda}`,
+                            style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${extratoUndoInput==="sim"?t.danger||"var(--cat-red)":t.borda}`,
                               background:t.bg,color:t.txt,width:80,fontFamily:"inherit"}}/>
                           <button disabled={extratoUndoInput!=="sim"}
                             onClick={()=>{
@@ -439,9 +439,9 @@ export default function DiariasView({ ctx }) {
                               setExtratoUndoInput("");
                             }}
                             style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
-                              background:extratoUndoInput==="sim"?(t.danger||"#f6465d"):"transparent",
+                              background:extratoUndoInput==="sim"?(t.danger||"var(--cat-red)"):"transparent",
                               color:extratoUndoInput==="sim"?"#fff":(t.txt2||"#888"),
-                              border:`1px solid ${extratoUndoInput==="sim"?(t.danger||"#f6465d"):t.borda}`}}>
+                              border:`1px solid ${extratoUndoInput==="sim"?(t.danger||"var(--cat-red)"):t.borda}`}}>
                             Confirmar
                           </button>
                           <button onClick={()=>{setExtratoUndoConfirm(false);setExtratoUndoInput("");}}

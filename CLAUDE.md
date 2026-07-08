@@ -1,7 +1,7 @@
 This project uses a design system documented in `DESIGN.md` (single source of truth — read it before any styling work).
 The runtime values live in `src/design-system/` (`tokens.css`, `theme-dark.css`, `theme-light.css`) and are mirrored in JS by `src/constants.js` (`t` / `DESIGN` / `css`). Change colors/type/spacing **only** via those tokens — never hardcode hex in JSX. Old design docs (Mercury, Binance-yellow) are archived in `docs/design-archive/`; ignore them.
 
-- Criar **backup** antes de qualquer alteração (`arquivo.bak_YYYYMMDD_HHMMSS`).
+- **Não criar arquivos `.bak_*`** — o projeto já usa Git (histórico cobre qualquer reversão; `*.bak_*` está no `.gitignore`). Antes de uma alteração arriscada, sugerir um commit do estado atual em vez de duplicar o arquivo.
 - Registrar **changelog curto**: o que foi solicitado e o que foi implementado.
 - Priorizar **Python via bash** para editar arquivos grandes (ex: App.jsx 8500+ linhas) — evita truncamento.
 - Nunca usar `Edit`/`Write` tools diretamente no `App.jsx` — risco de truncamento.

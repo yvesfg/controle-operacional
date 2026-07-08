@@ -384,12 +384,12 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
     },
     statusPill: (s) => {
       const map = {
-        "CARREGADO":   ["#02C076","#02C07622"],
+        "CARREGADO":   ["var(--cat-green)","#02C07622"],
         "PENDENTE":    ["#F3BA2F","#F3BA2F22"],
-        "NO-SHOW":     ["#F6465D","#F6465D22"],
-        "NÃO ACEITE":  ["#F6465D","#F6465D22"],
+        "NO-SHOW":     ["var(--cat-red)","#F6465D22"],
+        "NÃO ACEITE":  ["var(--cat-red)","#F6465D22"],
         "EM ABERTO":   ["#848E9C","#848E9C22"],
-        "CANCELADO":   ["#F6465D","#F6465D22"],
+        "CANCELADO":   ["var(--cat-red)","#F6465D22"],
       };
       const [c, bg] = map[s] || [t.txt2, t.borda + "44"];
       return {

@@ -220,7 +220,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                       style={{
                         display: "inline-flex", alignItems: "center", gap: 4,
                         padding: "3px 6px 3px 9px", borderRadius: 5,
-                        border: "1.5px solid #f0b90b",
+                        border: "1.5px solid var(--cat-gold)",
                         background: "rgba(240,185,11,0.13)",
                         color: "var(--cat-gold)", fontSize: 10, fontWeight: 700,
                       }}

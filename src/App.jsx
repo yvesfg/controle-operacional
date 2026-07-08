@@ -992,7 +992,7 @@ export default function App() {
       const stMap={};
       dashData.filtrado.forEach(r=>{const s=(r.status||"Sem Status");stMap[s]=(stMap[s]||0)+1;});
       const sortedSt=Object.entries(stMap).sort((a,b)=>b[1]-a[1]).slice(0,4);
-      const DONUT_C=["#a855f7","#ec4899","#ef4444","#22c55e"];
+      const DONUT_C=["#a855f7","#ec4899","var(--red)","#22c55e"];
       chartInstances.current.d = new Chart(chartDonutRef.current, {
         type:"doughnut",
         data:{labels:sortedSt.map(([k])=>k),datasets:[{data:sortedSt.map(([,v])=>v),backgroundColor:DONUT_C,borderColor:isDark?"#111119":"#fff",borderWidth:3}]},

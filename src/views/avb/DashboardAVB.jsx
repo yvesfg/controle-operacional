@@ -51,7 +51,7 @@ export default function DashboardAVB({ ctx }) {
   const statusArr = Object.entries(statusMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const totalStatus = statusArr.reduce((a,[,v])=>a+v,0);
   const STATUS_COLORS = { Carregado:t.ouro, CARREGADO:t.ouro, Pendente:t.warn, PENDENTE:t.warn };
-  const FALLBACK_COLORS = ["#a855f7","#ec4899","#ef4444","#22c55e","#06b6d4"];
+  const FALLBACK_COLORS = ["#a855f7","#ec4899","var(--red)","#22c55e","var(--cyan)"];
 
   // ── Contratante Leaderboard ───────────────────────────────
   const cMap = {};
