@@ -147,8 +147,8 @@ export default function ModalNFD({ ctx }) {
             )}
             {/* Checkbox registrar outra */}
             <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(217,98,43,.04)`,cursor:"pointer",userSelect:"none"}}>
-              <Toggle checked={nfdRegistrarOutra} color="#F3BA2F" onChange={setNfdRegistrarOutra} />
-              <span style={{fontSize:11,color:nfdRegistrarOutra?"#F3BA2F":t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
+              <Toggle checked={nfdRegistrarOutra} color={t.ouro} onChange={setNfdRegistrarOutra} />
+              <span style={{fontSize:11,color:nfdRegistrarOutra?t.ouro:t.txt2,fontWeight:nfdRegistrarOutra?700:400}}>Registrar outra NF após salvar</span>
             </label>
             {/* Ações */}
             <div style={{display:"flex",gap:8}}>

@@ -146,6 +146,13 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-08", sessao: "Sessao 35",
+    itens: [
+      "FIX · ModalNFD.jsx: toggle 'Registrar outra NF' usava #F3BA2F (um dourado avulso, sem token) em vez do accent padrao -- trocado por t.ouro, coerente com o fundo terracota sutil que ja envolvia o campo.",
+      "NOTA · Tarefa 'toda cor atrelada a um token' encerrada. O que ficou de fora, de proposito: (1) cores de marca externa (WhatsApp #25D366, logo Google no botao de login) -- nao sao paleta nossa; (2) HTML/CSS gerado pra impressao/PDF (ReportBuilder.jsx, exportHelpers.jsx) -- precisa de hex literal porque roda fora do DOM vivo do app, mesma excecao ja documentada no DESIGN.md pra Arial; (3) cores de dataset do Chart.js (PIE_COLORS etc.) -- canvas nao entende var(--token) do CSS, exigiria resolver a cor em JS antes de passar pro Chart.js (mudanca maior, nao feita agora).",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 34",
     itens: [
       "STYLE · Tokenizadas as cores 'inventadas' de maior frequencia: --cat-emerald (#22c55e, 21 usos/12 arquivos), --cat-violet (#a855f7, 14 usos/8 arquivos), --cat-tangerine (#f97316), --cat-rose (#ec4899), --cat-purple-lt (#ce93d8), --cat-amber2 (#f57c00), --rank-silver/--rank-bronze (podio AVB). Mesmo valor exato preservado -- zero mudanca visual, so passam a ter nome e local unico pra mudar no futuro.",
