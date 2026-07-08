@@ -14,6 +14,12 @@ import KpiCard from "../components/KpiCard.jsx";
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pesoFmt = (n) => (n || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " kg";
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
+// Desloca um "YYYY-MM" por N meses (negativo = pro passado) — usado no comparativo com meses anteriores.
+const shiftMes = (m, delta) => {
+  const [y, mo] = m.split("-").map(Number);
+  const d = new Date(y, mo - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
 const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
 
 // Ícones dos badges de sinalização — mesma linguagem stroke/round do resto do app.
@@ -36,6 +42,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
   const [usuarioFiltro, setUsuarioFiltro] = React.useState(""); // "" = todos os usuários (nome_usuario da planilha)
   const [linhasPeriodo, setLinhasPeriodo] = React.useState([]);
+  const [linhasComparativo, setLinhasComparativo] = React.useState({}); // { "2026-06": [...], "2026-05": [...] }
   const [pendentes, setPendentes] = React.useState([]);
   const [sinalizados, setSinalizados] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -56,15 +63,20 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const carregar = React.useCallback(async () => {
     if (!conn) return;
     setLoading(true);
+    const mesAnt1 = shiftMes(periodoRef, -1);
+    const mesAnt2 = shiftMes(periodoRef, -2);
     try {
-      const [linhas, pend, sinal] = await Promise.all([
+      const [linhas, pend, sinal, lAnt1, lAnt2] = await Promise.all([
         listarTodosPeriodo(conn, periodoRef),
         listarPendentesRevisao(conn),
         listarSinalizados(conn),
+        listarTodosPeriodo(conn, mesAnt1),
+        listarTodosPeriodo(conn, mesAnt2),
       ]);
       setLinhasPeriodo(linhas);
       setPendentes(pend);
       setSinalizados(sinal);
+      setLinhasComparativo({ [mesAnt1]: lAnt1, [mesAnt2]: lAnt2 });
     } catch (e) { showToast?.("Erro ao carregar conferência: " + e.message, "erro"); }
     finally { setLoading(false); }
   }, [conn, periodoRef, showToast]);
@@ -90,7 +102,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     if (!preview) return;
     setImporting(true);
     try {
-      const { novas, jaExistem } = await diffImportFrete(conn, preview.periodoRef, preview.cliente, preview.linhas);
+      const { novas, jaExistem } = await diffImportFrete(conn, preview.cliente, preview.linhas);
       if (novas.length === 0) {
         showToast?.("Nada novo — todos os CTRCs desse período já estavam importados.", "ok");
         setPreview(null); return;
@@ -138,6 +150,37 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const resumoCat = React.useMemo(() => resumoPorCategoria(linhasFiltradas), [linhasFiltradas]);
   const resumoCli = React.useMemo(() => resumoPorCliente(linhasFiltradas), [linhasFiltradas]);
   const resumoDia = React.useMemo(() => resumoPorDia(linhasFiltradas), [linhasFiltradas]);
+
+  // Comparativo com meses anteriores — mesmo intervalo de dias (01 até o dia de corte)
+  // nos 2 meses anteriores ao periodoRef selecionado. Dia de corte = hoje, se periodoRef
+  // for o mês corrente; senão, o último dia com dado no próprio período (mês fechado).
+  const mesAnt1 = React.useMemo(() => shiftMes(periodoRef, -1), [periodoRef]);
+  const mesAnt2 = React.useMemo(() => shiftMes(periodoRef, -2), [periodoRef]);
+  const comparativo = React.useMemo(() => {
+    const filtrarCli = (arr) => clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
+    const resumoAnt1 = resumoPorDia(filtrarCli(linhasComparativo[mesAnt1] || []));
+    const resumoAnt2 = resumoPorDia(filtrarCli(linhasComparativo[mesAnt2] || []));
+
+    const hojeStr = new Date().toISOString().slice(0, 10);
+    const mesAtualReal = hojeStr.slice(0, 7);
+    const diaCorte = periodoRef === mesAtualReal
+      ? Number(hojeStr.slice(8, 10))
+      : (resumoDia.length ? Number(resumoDia[resumoDia.length - 1].dia.slice(8, 10)) : 0);
+
+    const porDiaDoMes = (resumo) => { const m = {}; resumo.forEach(d => { m[d.dia.slice(8, 10)] = d; }); return m; };
+    const mapaAtual = porDiaDoMes(resumoDia), mapa1 = porDiaDoMes(resumoAnt1), mapa2 = porDiaDoMes(resumoAnt2);
+
+    const dias = Array.from({ length: diaCorte }, (_, i) => String(i + 1).padStart(2, "0"));
+    const linhas = dias.map(dd => ({ dia: dd, atual: mapaAtual[dd] || null, ant1: mapa1[dd] || null, ant2: mapa2[dd] || null }));
+
+    const somar = (mapa) => dias.reduce((a, dd) => {
+      const d = mapa[dd]; if (!d) return a;
+      return { registros: a.registros + d.registros, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo };
+    }, { registros: 0, fretePeso: 0, saldo: 0 });
+    const totalAtual = somar(mapaAtual), total1 = somar(mapa1), total2 = somar(mapa2);
+
+    return { diaCorte, linhas, totalAtual, total1, total2 };
+  }, [linhasComparativo, mesAnt1, mesAnt2, periodoRef, resumoDia, clienteFiltro]);
   const totalMes = React.useMemo(() => Object.values(resumoCli).reduce((a, d) => ({
     registros: a.registros + d.registros, peso: a.peso + d.peso, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo,
   }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
@@ -337,6 +380,45 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
       )}
 
+      {/* Comparativo com meses anteriores — mesmo intervalo de dias (01 até o dia de corte) nos 2 meses antes do selecionado */}
+      {comparativo.diaCorte > 0 && (
+        <div style={{ ...tile }}>
+          {sectionHead(`Comparativo com meses anteriores · até dia ${comparativo.diaCorte}`)}
+
+          {/* Totais acumulados no período — 3 meses lado a lado */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+            {[
+              { label: mesLabel(mesAnt2), d: comparativo.total2 },
+              { label: mesLabel(mesAnt1), d: comparativo.total1 },
+              { label: mesLabel(periodoRef), d: comparativo.totalAtual, destaque: true },
+            ].map(({ label, d, destaque }) => (
+              <div key={label} style={{ padding: "10px 10px", borderRadius: 9, background: destaque ? hexRgb(t.ouro, .08) : t.card2, border: `1px solid ${destaque ? hexRgb(t.ouro, .35) : t.borda}` }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2, marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 17, fontWeight: 800, fontFamily: "var(--font-heading)", color: t.txt, lineHeight: 1 }}>{d.registros}<span style={{ fontSize: 10, fontWeight: 600, color: t.txt2 }}> CTRCs</span></div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: t.txt, marginTop: 4 }}>{money(d.fretePeso)}</div>
+                <div style={{ fontSize: 10.5, color: t.ouro }}>saldo {money(d.saldo)}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Dia a dia — quantidade de CTRCs, mesmo dia-do-mês nos 3 períodos */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
+            <span style={{ width: 40, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
+            {!isMobile && <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>{mesLabel(mesAnt2)}</span>}
+            <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>{mesLabel(mesAnt1)}</span>
+            <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.ouro }}>{mesLabel(periodoRef)}</span>
+          </div>
+          {[...comparativo.linhas].reverse().map((l) => (
+            <div key={l.dia} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+              <span style={{ width: 40, flexShrink: 0, fontSize: 12, color: t.txt2, fontFamily: "var(--font-mono)" }}>{l.dia}</span>
+              {!isMobile && <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{l.ant2 ? l.ant2.registros : "—"}</span>}
+              <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{l.ant1 ? l.ant1.registros : "—"}</span>
+              <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{l.atual ? l.atual.registros : "—"}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Pendências por usuário — clicável, filtra a Fila/Sinalizados abaixo */}
       {resumoPorUsuario.length > 0 && (
         <div style={{ ...tile }}>
@@ -478,7 +560,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
             <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 12px", borderRadius: 9, background: "rgba(2,192,118,.08)", border: `1px solid ${hexRgb(t.verde, .27)}`, marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>{preview.cliente}</div>
-              <div style={{ fontSize: 11, color: t.txt2, marginLeft: "auto" }}>competência {mesLabel(preview.periodoRef)}</div>
+              <div style={{ fontSize: 11, color: t.txt2, marginLeft: "auto" }}>
+                {preview.periodosEncontrados?.length > 1
+                  ? `${preview.periodosEncontrados.length} meses: ${mesLabel(preview.periodosEncontrados[0])} até ${mesLabel(preview.periodoRef)}`
+                  : `competência ${mesLabel(preview.periodoRef)}`}
+              </div>
             </div>
 
             {["frete", "descarga", "local", "diaria"].map((c) => {

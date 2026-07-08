@@ -146,8 +146,10 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
-    data: "2026-07-08", sessao: "Sessao 37",
+    data: "2026-07-08", sessao: "Sessao 38",
     itens: [
+      "FIX · freteConferencia.js: parseFreteXLSX calculava UM periodo_ref pro arquivo inteiro (mes predominante), nao por linha. Um upload cobrindo varios meses (ex.: relatorio 01/2026 a 07/2026) carimbava TODAS as linhas com o mesmo mes errado, quebrando os filtros por periodo de todas as telas de Conferencia de Faturamento. Corrigido pra calcular por linha a partir da propria data_emissao; periodoRef de exibicao agora e o mes mais recente encontrado. diffImportFrete/listarPorPeriodos ajustados pra buscar existentes em varios periodo_ref de uma vez (arquivo multi-mes). Dado atual no banco (so 07/2026) nao foi afetado, correcao e preventiva pro proximo upload grande.",
+      "FEAT · ConferenciaFrete.jsx: nova secao 'Comparativo com meses anteriores' -- mesmo intervalo de dias (01 ate o dia de corte: hoje, se o mes selecionado for o corrente, ou ultimo dia com dado, se for mes fechado) nos 2 meses antes do periodo selecionado. Totais acumulados (CTRCs/frete/saldo) lado a lado + tabela dia a dia de CTRCs nos 3 meses. Fica junto da Evolucao diaria existente (que continua mostrando so o mes atual), sem substituir nada.",
       "FEAT · Descarga (Imperatriz/Belem): confirmado no banco que a flag fora_planilha funciona (23446522/23474110 = false, tocados pelo sync; 0023446522/23379306/23471067 = true, orfaos). Dos 150 registros marcados fora_planilha, 140 tem data_carr anterior a 05/2026 -- backlog de meses ja fechados que nunca mais sera atualizado.",
       "FEAT · Toggle 'Mostrar antigos (antes de 05/2026)' nas abas Atrasados/Aguardando/Sem Motorista de DescargaView.jsx, desligado por padrao -- oculta registros com data_carr anterior a esse corte (useDescargaState.js: novo estado dscMostrarAntigos). Nao mexe em Descarrega Hoje/Carrega Hoje (ja sao filtrados pela data selecionada). KPIs do topo refletem a lista ja filtrada.",
     ],

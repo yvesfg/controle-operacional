@@ -121,16 +121,23 @@ export function parseFreteXLSX(file) {
           l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;
         });
 
-        // Período de referência: mês/ano predominante nas datas de emissão (fallback: mês corrente)
+        // Período de referência: por LINHA, a partir da própria data_emissao — não do arquivo
+        // inteiro. Um arquivo pode cobrir vários meses (ex.: relatório 01/2026 a 07/2026);
+        // cada CTRC tem que cair no mês certo, senão os filtros por período ficam todos errados.
+        // Fallback (linha sem data_emissao, raro): mês mais comum no arquivo, senão mês corrente.
         const meses = linhas.map(l => l.data_emissao).filter(Boolean).map(d => d.slice(0, 7));
         const contagem = {};
         meses.forEach(m => { contagem[m] = (contagem[m] || 0) + 1; });
-        const periodoRef = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0]
+        const fallback = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a])[0]
           || new Date().toISOString().slice(0, 7);
-        linhas.forEach(l => { l.periodo_ref = periodoRef; });
-        naoClassificadas.forEach(l => { l.periodo_ref = periodoRef; });
+        linhas.forEach(l => { l.periodo_ref = l.data_emissao ? l.data_emissao.slice(0, 7) : fallback; });
+        naoClassificadas.forEach(l => { l.periodo_ref = l.data_emissao ? l.data_emissao.slice(0, 7) : fallback; });
 
-        resolve({ cliente: cli.nome, baseId: cli.baseId, periodoRef, linhas, naoClassificadas, erro: null });
+        const periodosEncontrados = [...new Set(linhas.map(l => l.periodo_ref))].sort();
+        // periodoRef "de exibição" = mês mais recente encontrado (pra onde a tela pula após importar)
+        const periodoRef = periodosEncontrados[periodosEncontrados.length - 1] || fallback;
+
+        resolve({ cliente: cli.nome, baseId: cli.baseId, periodoRef, periodosEncontrados, linhas, naoClassificadas, erro: null });
       } catch (err) { reject(err); }
     };
     reader.readAsArrayBuffer(file);
@@ -148,8 +155,18 @@ export async function listarPorPeriodo(conn, periodoRef, cliente) {
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
-export async function diffImportFrete(conn, periodoRef, cliente, linhas) {
-  const existentes = await listarPorPeriodo(conn, periodoRef, cliente);
+// Igual listarPorPeriodo, mas pra varios meses de uma vez — necessario porque um
+// arquivo importado pode cobrir varios periodo_ref (ver parseFreteXLSX).
+export async function listarPorPeriodos(conn, periodoRefs, cliente) {
+  const q = (s) => encodeURIComponent(s);
+  let path = `${TABELA}?periodo_ref=in.(${periodoRefs.map(q).join(",")})`;
+  if (cliente) path += `&cliente=eq.${q(cliente)}`;
+  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+}
+
+export async function diffImportFrete(conn, cliente, linhas) {
+  const periodos = [...new Set(linhas.map(l => l.periodo_ref))];
+  const existentes = periodos.length ? await listarPorPeriodos(conn, periodos, cliente) : [];
   const existKeys = new Set(existentes.map(chaveLinha));
   const novas = linhas.filter(l => !existKeys.has(chaveLinha(l)));
   return { novas, jaExistem: linhas.length - novas.length, existentesTotal: existentes.length };
