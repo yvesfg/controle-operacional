@@ -248,7 +248,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
         {["frete", "descarga", "local", "diaria"].map((c) => {
           const d = resumoCat[c];
           return (
-            <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={`${d.registros} reg.`}
+            <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={String(d.registros)}
               sub={`${money(d.fretePeso)} · margem ${d.margemMedia.toFixed(1)}%`}
               icon={hIco(ICO_CATEGORIA[c], "var(--text3)", isMobile ? 10 : 11)}
               color={c === "frete" ? "var(--accent)" : undefined} compact={isMobile} />
