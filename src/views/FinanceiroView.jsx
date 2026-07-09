@@ -6,12 +6,28 @@ import CreditosPendentes from "./CreditosPendentes.jsx";
 const LS_TAB  = "co_fin_tab";
 
 export default function FinanceiroView({ ctx }) {
-  const { activeTab, t, DESIGN, css } = ctx;
+  const { activeTab, t, DESIGN, css, baseAtual } = ctx;
   if (activeTab !== "financeiro") return null;
 
   const [finTab, setFinTabRaw] = React.useState(() => localStorage.getItem(LS_TAB) || "painel");
 
   const setFinTab = (v) => { setFinTabRaw(v); localStorage.setItem(LS_TAB, v); };
+
+  // Mês de referência e "incluir complementar" compartilhados entre Painel Financeiro e
+  // Resultado — antes cada aba tinha seu próprio estado e trocar de aba resetava a seleção,
+  // podendo mostrar números "diferentes" pro mesmo período (achado de auditoria).
+  const [mesRefFin, setMesRefFin] = React.useState("");
+  const baseId = baseAtual?.id;
+  const [incluirCompFin, setIncluirCompFin] = React.useState(baseId === "imperatriz_belem");
+  React.useEffect(() => { setIncluirCompFin(baseId === "imperatriz_belem"); }, [baseId]);
+
+  // Navegação Resultado → Créditos Pendentes (achado de auditoria: "indevidas aguardando
+  // crédito" existia duplicado nas duas telas; agora Resultado só resume e linka pra cá,
+  // com filtro de filial pré-selecionado quando dá pra mapear 1:1 a partir da base atual).
+  const [filtroFilialInicial, setFiltroFilialInicial] = React.useState(null);
+  const irParaCreditos = (filial) => { setFiltroFilialInicial(filial || null); setFinTab("creditos"); };
+
+  const finCtx = { ...ctx, mesRefFin, setMesRefFin, incluirCompFin, setIncluirCompFin, irParaCreditos };
 
   const tabBtn = (key, label) => {
     const active = finTab === key;
@@ -56,13 +72,13 @@ export default function FinanceiroView({ ctx }) {
       {/* ── Conteúdo ── */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {finTab === "painel" && (
-          <PainelFinanceiro ctx={{ ...ctx, activeTab: "painel_financeiro" }} />
+          <PainelFinanceiro ctx={{ ...finCtx, activeTab: "painel_financeiro" }} />
         )}
         {finTab === "resultado" && (
-          <Resultado ctx={{ ...ctx, activeTab: "resultado" }} />
+          <Resultado ctx={{ ...finCtx, activeTab: "resultado" }} />
         )}
         {finTab === "creditos" && (
-          <CreditosPendentes ctx={{ ...ctx, activeTab: "creditos_pendentes" }} />
+          <CreditosPendentes ctx={{ ...ctx, activeTab: "creditos_pendentes", filtroFilialInicial }} />
         )}
       </div>
     </div>

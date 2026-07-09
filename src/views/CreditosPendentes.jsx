@@ -32,7 +32,7 @@ const faixaCor = (dias, t) => dias == null ? t.txt2 : dias > 60 ? t.danger : dia
 const hoje = () => new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 export default function CreditosPendentes({ ctx }) {
-  const { activeTab, getConexao, t, isMobile, showToast, canFin } = ctx;
+  const { activeTab, getConexao, t, isMobile, showToast, canFin, filtroFilialInicial } = ctx;
   if (activeTab !== "creditos_pendentes") return null;
   if (canFin === false) {
     return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Sem permissão financeira para visualizar os Créditos Pendentes.</div>;
@@ -53,8 +53,9 @@ export default function CreditosPendentes({ ctx }) {
   }, [conn]);
   React.useEffect(() => { carregar(); }, [carregar]);
 
-  // Filtros
-  const [filtroFilial, setFiltroFilial] = React.useState("todos");
+  // Filtros — filtroFilialInicial vem de Resultado.jsx (botão "Ver e vincular →"), quando dá
+  // pra mapear a base atual pra uma única filial (ex.: acailandia_avb → AÇA).
+  const [filtroFilial, setFiltroFilial] = React.useState(() => filtroFilialInicial || "todos");
   const [filtroStatus, setFiltroStatus] = React.useState("todos"); // todos | a_cobrar | cobrados
   const [busca, setBusca] = React.useState("");
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
+import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
 import Toggle from "../components/Toggle.jsx";
 import KpiCard from "../components/KpiCard.jsx";
 
@@ -8,16 +9,6 @@ import KpiCard from "../components/KpiCard.jsx";
 // Escopado à base logada. Faturamento/margem vêm das viagens (DADOS); despesas da tabela
 // despesas_filial (importada por base). Gated por permissão financeira.
 
-// Parsers numéricos — espelham o App e o parseMoedaAvb:
-// vl_cte/vl_cte_comp já vêm decimais; vl_contrato só trata ponto como milhar quando há vírgula.
-const nCte = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
-const nContrato = (v) => {
-  if (v == null || v === "") return 0;
-  let s = String(v).replace(/[R$\s]/g, "");
-  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
-};
 const mesDe = (s) => { if (!s) return null; const p = String(s).split("/"); return p.length >= 3 ? `${p[2]}-${p[1].padStart(2, "0")}` : null; };
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const moneyK = (n) => { const a = Math.abs(n); const s = n < 0 ? "−" : ""; return a >= 1e6 ? `${s}R$ ${(a / 1e6).toFixed(2)} mi` : a >= 1000 ? `${s}R$ ${Math.round(a / 1000)}k` : `${s}R$ ${Math.round(a)}`; };
@@ -34,7 +25,10 @@ const origemBate = (origem, filial) => {
 };
 
 export default function PainelFinanceiro({ ctx }) {
-  const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
+  const {
+    activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin,
+    mesRefFin: mesRef, setMesRefFin: setMesRef, incluirCompFin: incluirComp, setIncluirCompFin: setIncluirComp,
+  } = ctx;
   if (activeTab !== "painel_financeiro") return null;
   const baseId = baseAtual?.id;
   if (canFin === false) {
@@ -50,11 +44,9 @@ export default function PainelFinanceiro({ ctx }) {
     return [...s].sort().reverse();
   }, [DADOS]);
 
-  const [mesRef, setMesRef] = React.useState("");
+  // mesRef/incluirComp vêm compartilhados de FinanceiroView (ver finCtx) — só o default
+  // de mês (quando ainda vazio) continua local, pois cada aba computa mesesDisp diferente.
   React.useEffect(() => { if (!mesRef && mesesDisp.length) setMesRef(mesesDisp[0]); }, [mesesDisp, mesRef]);
-
-  const [incluirComp, setIncluirComp] = React.useState(baseId === "imperatriz_belem");
-  React.useEffect(() => { setIncluirComp(baseId === "imperatriz_belem"); }, [baseId]);
 
   // Filtro por origem (só imperatriz_belem): despesas vêm tagueadas IMP/BELÉM na planilha.
   const temFilial = baseId === "imperatriz_belem";
@@ -88,11 +80,8 @@ export default function PainelFinanceiro({ ctx }) {
     });
     Object.keys(acc).forEach((m) => {
       const a = acc[m];
-      if (incluirComp) {
-        if (baseId === "acailandia_avb") { a.receita += a.comp; a.custo += a.comp; } // repasse: margem zero
-        else { a.receita += a.comp; } // margem cheia
-      }
-      a.margem = a.receita - a.custo;
+      const { receita, custo, margem } = aplicarComplementar(a, { incluirComp, baseId });
+      a.receita = receita; a.custo = custo; a.margem = margem;
     });
     return acc;
   }, [DADOS, incluirComp, baseId, temFilial, filial]);

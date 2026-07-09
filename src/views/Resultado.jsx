@@ -7,25 +7,16 @@ import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas, listarDespesasBase,
   listarMesesComDespesas,
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
-  listarIndevidasPendentes, vincularCredito,
+  listarIndevidasPendentes,
 } from "../despesas.js";
 import ConferenciaFrete from "./ConferenciaFrete.jsx";
 import KpiCard from "../components/KpiCard.jsx";
+import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
 
 // Resultado — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
 // despesas mensais persistidas (tabela despesas_filial). Aba por base (qualquer base),
 // gated por permissão financeira (canFin).
 
-// parsers numéricos espelhando o App: vl_cte/vl_cte_comp já vêm decimais; vl_contrato pode vir pt-BR.
-const nCte = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
-const nContrato = (v) => {
-  if (v == null || v === "") return 0;
-  let s = String(v).replace(/[R$\s]/g, "");
-  // pt-BR (tem vírgula): ponto=milhar, vírgula=decimal. Sem vírgula: já é decimal — NÃO remove pontos.
-  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
-};
 const mesDe = (s) => { if (!s) return null; const p = String(s).split("/"); return p.length >= 3 ? `${p[2]}-${p[1].padStart(2, "0")}` : null; };
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
@@ -35,7 +26,11 @@ const normTxt = (s) => (s || "").toUpperCase().replace(/\s+/g, " ").trim();
 const dupKeyOf = (d) => `${Math.round((Number(d.valor) + Number.EPSILON) * 100) / 100}||${normTxt(d.natureza)}||${normTxt(d.historico)}`;
 
 export default function Resultado({ ctx }) {
-  const { activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin } = ctx;
+  const {
+    activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin,
+    mesRefFin: mesRef, setMesRefFin: setMesRef, incluirCompFin: incluirComp, setIncluirCompFin: setIncluirComp,
+    irParaCreditos,
+  } = ctx;
   if (activeTab !== "resultado") return null;
   const baseId = baseAtual?.id;
   if (canFin === false) {
@@ -69,12 +64,9 @@ export default function Resultado({ ctx }) {
     return [...s].sort().reverse();
   }, [mesesOp, mesesDespesas]);
 
-  const [mesRef, setMesRef] = React.useState("");
+  // mesRef/incluirComp vêm compartilhados de FinanceiroView (ver finCtx) — só o default
+  // de mês (quando ainda vazio) continua local, pois mesesDisp aqui inclui despesas gravadas.
   React.useEffect(() => { if (!mesRef && mesesDisp.length) setMesRef(mesesDisp[0]); }, [mesesDisp, mesRef]);
-
-  // Complementar: default ON para Suzano (imperatriz_belem), OFF para AVB
-  const [incluirComp, setIncluirComp] = React.useState(baseId === "imperatriz_belem");
-  React.useEffect(() => { setIncluirComp(baseId === "imperatriz_belem"); }, [baseId]);
 
   const [despesas, setDespesas] = React.useState([]);
   const [indevidas, setIndevidas] = React.useState([]);
@@ -90,7 +82,6 @@ export default function Resultado({ ctx }) {
   const [foraMesSel, setForaMesSel] = React.useState({ open: false, linhas: [], foraMes: [], checked: {}, avisoVazio: false });
   const [busca, setBusca] = React.useState("");
   const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
-  const [vincManual, setVincManual] = React.useState(null); // ind.id em modo de seleção manual
   const [despesasTodas, setDespesasTodas] = React.useState([]);
   const [loadingTodas, setLoadingTodas] = React.useState(false);
 
@@ -136,12 +127,8 @@ export default function Resultado({ ctx }) {
     const regs = (DADOS || []).filter((r) => mesDe(r.data_carr) === mesRef && (r.status || "").toUpperCase() !== "PENDENTE");
     let receita = 0, custo = 0, comp = 0;
     regs.forEach((r) => { receita += nCte(r.vl_cte); custo += nContrato(r.vl_contrato); comp += nCte(r.vl_cte_comp); });
-    if (incluirComp) {
-      if (baseId === "acailandia_avb") { receita += comp; custo += comp; } // margem zero (repasse)
-      else { receita += comp; } // Suzano: margem cheia
-    }
-    const margem = receita - custo;
-    return { receita, custo, comp, margem, n: regs.length };
+    const { receita: receitaF, custo: custoF, margem } = aplicarComplementar({ receita, custo, comp }, { incluirComp, baseId });
+    return { receita: receitaF, custo: custoF, comp, margem, n: regs.length };
   }, [DADOS, mesRef, incluirComp, baseId]);
 
   const creditos = despesas.filter((d) => d.tipo === "credito");
@@ -258,11 +245,6 @@ export default function Resultado({ ctx }) {
       await atualizarDespesa(conn, d.id, { incluir: !d.incluir });
     } catch (e) { showToast?.("Erro: " + e.message, "erro"); carregar(); }
   };
-  const vincular = async (indId, credId) => {
-    try { await vincularCredito(conn, indId, credId); showToast?.("Crédito vinculado à indevida.", "ok"); await carregar(); }
-    catch (e) { showToast?.("Erro ao vincular: " + e.message, "erro"); }
-  };
-
   // Agrupa despesas por grupo p/ exibição (com filtro de busca)
   const buscaQ = busca.trim().toLowerCase();
   const pool = buscaTodosMeses ? despesasTodas : despesas;
@@ -313,12 +295,16 @@ export default function Resultado({ ctx }) {
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
           {lastImportIds.length > 0 && (
-            <button onClick={() => { setUndoOpen(o => !o); setUndoInput(""); }}
-              style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-                border: `1px solid ${t.danger||"var(--cat-red)"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
-                color: t.danger||"var(--cat-red)" }}>
-              ↩ Desfazer ({lastImportIds.length})
-            </button>
+            <>
+              <button onClick={() => { setUndoOpen(o => !o); setUndoInput(""); }}
+                style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+                  border: `1px solid ${t.danger||"var(--cat-red)"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
+                  color: t.danger||"var(--cat-red)" }}>
+                ↩ Desfazer ({lastImportIds.length})
+              </button>
+              {/* separa a ação destrutiva das demais — evita clique acidental por proximidade */}
+              <div style={{ width: 1, alignSelf: "stretch", background: t.borda, margin: "0 4px" }} />
+            </>
           )}
           <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
@@ -511,90 +497,32 @@ export default function Resultado({ ctx }) {
         <KpiCard label="Resultado" value={money(resultado)} sub={pct(resultado)} color={t.verde} danger={resultado < 0} compact={isMobile} />
       </div>
 
-      {/* Conciliação de indevidas → crédito */}
+      {/* Indevidas aguardando crédito — resumo. O vínculo (incl. cross-filial/mês) é feito
+          só em Créditos Pendentes agora, evitando duas telas com fluxos incompletos entre si. */}
       {indevidas.length > 0 && (() => {
         const totalIndevido = indevidas.reduce((s, i) => s + Math.abs(Number(i.valor || 0)), 0);
+        const filialParaCreditos = baseId === "acailandia_avb" ? "AÇA" : null;
         return (
-        <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55` }}>
-          {/* Cabeçalho */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55`,
+            display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
-            <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Indevidas aguardando crédito</span>
-            <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{indevidas.length}</span>
-          </div>
-          <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
-            Ficam aqui até o crédito ser vinculado — aparecem em todos os meses até resolver.
-          </div>
-
-          {/* Mini-cards de resumo — reusa o KpiCard compartilhado (consistência global) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-            <KpiCard label="Total indevido" value={money(totalIndevido)} sub={`${indevidas.length} ${indevidas.length === 1 ? "lançamento" : "lançamentos"}`} color={t.danger} compact={isMobile} />
-            <KpiCard label="Créditos disponíveis" value={String(creditos.length)} sub={`em ${mesLabel(mesRef)}`} color={creditos.length > 0 ? t.verde : t.txt2} compact={isMobile} />
-          </div>
-
-          {/* Linhas */}
-          {indevidas.map((ind, i) => {
-            const cand = creditos.find((c) => Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)));
-            const emPickMode = vincManual === ind.id;
-            return (
-              <div key={ind.id} style={{ padding: "11px 4px", borderBottom: i < indevidas.length - 1 ? `1px solid ${t.borda}55` : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "6px 10px", borderRadius: 8, minWidth: 84, textAlign: "center", flexShrink: 0 }}>{money(Math.abs(Number(ind.valor || 0)))}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ind.natureza || ind.historico || "—"}</div>
-                    <div style={{ fontSize: 10, marginTop: 1, color: cand ? t.verde : t.txt2 }}>
-                      {cand ? "→ crédito de valor igual encontrado" : creditos.length > 0 ? "sem crédito de valor igual" : `sem créditos em ${mesLabel(mesRef)}`}
-                      <span style={{ color: t.txt2 }}> · {mesLabel(ind.mes_ref)}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
-                    {!emPickMode && cand && (
-                      <button onClick={() => vincular(ind.id, cand.id)}
-                        style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
-                        Vincular
-                      </button>
-                    )}
-                    {!emPickMode && creditos.length > 0 && (
-                      <button onClick={() => setVincManual(ind.id)}
-                        style={{ fontSize: 11, padding: "7px 12px", borderRadius: 8, cursor: "pointer",
-                          border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, whiteSpace: "nowrap" }}>
-                        {cand ? "outro..." : "Escolher"}
-                      </button>
-                    )}
-                    {emPickMode && (
-                      <button onClick={() => setVincManual(null)}
-                        style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer",
-                          border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {emPickMode && (
-                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ fontSize: 10, color: t.txt2, marginBottom: 2 }}>Escolha o crédito de {mesLabel(mesRef)}:</div>
-                    {creditos.map((c) => (
-                      <button key={c.id}
-                        onClick={() => { vincular(ind.id, c.id); setVincManual(null); }}
-                        style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer", textAlign: "left",
-                          border: `1px solid ${Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)) ? t.verde : t.borda}`,
-                          background: Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)) ? `rgba(2,192,118,.08)` : t.card2,
-                          color: t.txt }}>
-                        <span style={{ fontWeight: 600 }}>{money(Math.abs(Number(c.valor || 0)))}</span>
-                        {" — "}{c.natureza || c.historico || "—"}
-                        {Math.abs(Number(c.valor)) === Math.abs(Number(ind.valor)) && (
-                          <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>✓ valor igual</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Indevidas aguardando crédito</span>
+                <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{indevidas.length}</span>
               </div>
-            );
-          })}
-        </div>
+              <div style={{ fontSize: 11, color: t.txt2 }}>
+                {money(totalIndevido)} nesta base, em todos os meses até resolver.
+              </div>
+            </div>
+            <button onClick={() => irParaCreditos?.(filialParaCreditos)}
+              style={{ fontSize: 12, fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer",
+                border: "none", background: t.danger, color: "#fff", whiteSpace: "nowrap" }}>
+              Ver e vincular →
+            </button>
+          </div>
         );
       })()}
 
