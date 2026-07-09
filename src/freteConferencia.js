@@ -221,9 +221,20 @@ export async function inserirFrete(conn, linhas) {
   return await supaFetch(conn.url, conn.key, "POST", TABELA, linhas);
 }
 
+// Mês anterior ao corrente (data real da máquina, não o periodoRef selecionado na tela),
+// em "YYYY-MM" — corte da fila de revisão (ver listarPendentesRevisao).
+function mesAnteriorAoCorrente() {
+  const hoje = new Date();
+  const d = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// Fila de revisão: só entram itens do mês anterior ao corrente pra cá (ex.: em julho,
+// só junho e julho aparecem). Meses mais antigos já foram fechados/tratados e não voltam
+// a poluir a fila — quem quiser vê-los ainda pode acessar via listarTodosPeriodo/exportação.
 export async function listarPendentesRevisao(conn, cliente) {
   const q = (s) => encodeURIComponent(s);
-  let path = `${TABELA}?decisao_manual=is.null&or=(flag_negativa.eq.true,flag_baixa.eq.true,flag_ambigua.eq.true,flag_duplicidade.eq.true)&order=periodo_ref.desc,margem_lucro.asc`;
+  let path = `${TABELA}?decisao_manual=is.null&periodo_ref=gte.${q(mesAnteriorAoCorrente())}&or=(flag_negativa.eq.true,flag_baixa.eq.true,flag_ambigua.eq.true,flag_duplicidade.eq.true)&order=periodo_ref.desc,margem_lucro.asc`;
   if (cliente) path += `&cliente=eq.${q(cliente)}`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
