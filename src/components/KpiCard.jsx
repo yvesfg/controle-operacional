@@ -11,6 +11,7 @@ export default function KpiCard({
   color,
   danger = false,
   icon,
+  iconTint,   // cor do sistema p/ realçar o ícone num badge (opt-in; sem ela, ícone flutua discreto)
   onClick,
   compact = false,
 }) {
@@ -29,11 +30,22 @@ export default function KpiCard({
       onMouseEnter={e => onClick && (e.currentTarget.style.borderColor = danger ? "var(--red)" : "var(--border2)")}
       onMouseLeave={e => onClick && (e.currentTarget.style.borderColor = danger ? "color-mix(in srgb, var(--red) 45%, transparent)" : "var(--border)")}
     >
-      {icon && (
+      {icon && (iconTint ? (
+        <div style={{
+          position: "absolute", top: 10, right: 10,
+          width: compact ? 26 : 30, height: compact ? 26 : 30,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          borderRadius: 8,
+          background: `color-mix(in srgb, ${iconTint} 14%, transparent)`,
+          border: `1px solid color-mix(in srgb, ${iconTint} 32%, transparent)`,
+        }}>
+          {icon}
+        </div>
+      ) : (
         <div style={{ position: "absolute", top: 10, right: 10, opacity: 0.5 }}>
           {icon}
         </div>
-      )}
+      ))}
       <div style={{
         fontFamily:    "var(--font-mono)",
         fontSize:      compact ? 10 : 11,
@@ -42,7 +54,7 @@ export default function KpiCard({
         color:         "var(--text3)",
         fontWeight:    400,
         lineHeight:    1.4,
-        paddingRight:  icon ? 20 : 0,
+        paddingRight:  icon ? (iconTint ? 38 : 20) : 0,
         marginBottom:  compact ? 3 : 8,
       }}>
         {label}

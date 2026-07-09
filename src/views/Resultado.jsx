@@ -29,7 +29,7 @@ export default function Resultado({ ctx }) {
   const {
     activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin,
     mesRefFin: mesRef, setMesRefFin: setMesRef, incluirCompFin: incluirComp, setIncluirCompFin: setIncluirComp,
-    irParaCreditos,
+    irParaCreditos, segmento,
   } = ctx;
   if (activeTab !== "resultado") return null;
   const baseId = baseAtual?.id;
@@ -37,9 +37,8 @@ export default function Resultado({ ctx }) {
     return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Sem permissão financeira para visualizar o Resultado.</div>;
   }
 
-  // Segmentado: Operacional (Google Sheets, existente) vs Conferência de
-  // Faturamento (planilha bruta TMS/ERP, nova) — fontes diferentes, mesma tela.
-  const [segmento, setSegmento] = React.useState("operacional");
+  // Segmentado Operacional/Faturamento agora mora na faixa única do FinanceiroView (ctx.segmento);
+  // aqui só consumimos o valor pra decidir qual sub-tela renderizar.
 
   // Meses disponíveis a partir dos dados operacionais
   const mesesOp = React.useMemo(() => {
@@ -264,18 +263,6 @@ export default function Resultado({ ctx }) {
 
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
-      {/* Segmentado: Operacional x Conferência de Faturamento */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, padding: 3, borderRadius: 10, background: t.card2, border: `1px solid ${t.borda}`, width: "fit-content" }}>
-        {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"]].map(([id, label]) => (
-          <button key={id} onClick={() => setSegmento(id)}
-            style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: "none",
-              background: segmento === id ? "var(--accent)" : "transparent",
-              color: segmento === id ? (t.onPrimary || "#181a20") : t.txt2 }}>
-            {label}
-          </button>
-        ))}
-      </div>
-
       {segmento === "faturamento" ? (
         <ConferenciaFrete ctx={ctx} conn={conn} />
       ) : (

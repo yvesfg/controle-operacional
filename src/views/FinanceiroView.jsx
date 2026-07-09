@@ -27,7 +27,12 @@ export default function FinanceiroView({ ctx }) {
   const [filtroFilialInicial, setFiltroFilialInicial] = React.useState(null);
   const irParaCreditos = (filial) => { setFiltroFilialInicial(filial || null); setFinTab("creditos"); };
 
-  const finCtx = { ...ctx, mesRefFin, setMesRefFin, incluirCompFin, setIncluirCompFin, irParaCreditos };
+  // Faixa única: o segmentado Operacional/Faturamento (antes dentro do Resultado) sobe pra
+  // cá, e os filtros da sub-tela são portalizados pro slot — tudo na mesma linha da nav.
+  const [segmento, setSegmento] = React.useState("operacional");
+  const [toolbarEl, setToolbarEl] = React.useState(null);
+
+  const finCtx = { ...ctx, mesRefFin, setMesRefFin, incluirCompFin, setIncluirCompFin, irParaCreditos, segmento, setSegmento, filaSlot: toolbarEl };
 
   const tabBtn = (key, label) => {
     const active = finTab === key;
@@ -67,6 +72,23 @@ export default function FinanceiroView({ ctx }) {
         {tabBtn("painel", "Painel Financeiro")}
         {tabBtn("resultado", "Resultado")}
         {tabBtn("creditos", "Créditos Pendentes")}
+
+        {/* Segmentado Operacional/Faturamento — só na aba Resultado, na mesma faixa */}
+        {finTab === "resultado" && (
+          <div style={{ display: "flex", gap: 4, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}` }}>
+            {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"]].map(([id, label]) => (
+              <button key={id} onClick={() => setSegmento(id)}
+                style={{ fontSize: 11.5, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", border: "none",
+                  background: segmento === id ? "var(--accent)" : "transparent",
+                  color: segmento === id ? (t.onPrimary || "#181a20") : t.txt2 }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Slot pros filtros da sub-tela (portalizados) — display:contents faz virarem itens da faixa */}
+        <div ref={setToolbarEl} style={{ display: "contents" }} />
       </div>
 
       {/* ── Conteúdo ── */}

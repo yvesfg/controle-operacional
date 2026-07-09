@@ -1,4 +1,5 @@
 import React from "react";
+import ReactDOM from "react-dom";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
@@ -23,6 +24,8 @@ const shiftMes = (m, delta) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
+// Cor de sistema por categoria — realça o badge do ícone no KPI (frete = accent, e cores distintas nas demais).
+const CATEGORIA_COR = { frete: "var(--accent)", descarga: "var(--color-info)", local: "var(--cyan)", diaria: "var(--yellow)" };
 // Rótulo humano de cada decisão possível na fila (exceto sinalizar_correcao, que tem seção própria).
 const DECISAO_LABEL = {
   ok: "sem ação necessária",
@@ -46,7 +49,7 @@ const ICO_CATEGORIA = {
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb, usuarioLogado, css, hIco } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado, css, hIco, filaSlot } = ctx;
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
@@ -350,10 +353,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   const grupoDup = dupModal.open ? pendentes.filter(p => p.dup_grupo_chave === dupModal.chave) : [];
 
-  return (
-    <div>
-      {/* Controles */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
+  // Controles (mês + filial + ações) — vão pra faixa única do FinanceiroView via portal.
+  const controles = (
+    <>
         <input type="month" value={periodoRef} onChange={(e) => setPeriodoRef(e.target.value)}
           style={{ fontSize: 13, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.card, color: t.txt }} />
         {/* Dropdown custom — o <select> nativo abre um menu branco no tema escuro; este
@@ -407,7 +409,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
             {importing ? "Lendo..." : "⬆ Importar planilha bruta"}
           </button>
         </div>
-      </div>
+    </>
+  );
+
+  return (
+    <div>
+      {/* Controles: faixa única (FinanceiroView) via portal; fallback inline se o slot não existir */}
+      {filaSlot
+        ? ReactDOM.createPortal(controles, filaSlot)
+        : <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>{controles}</div>}
 
       <div style={{ fontSize: 11, color: t.txt2, marginBottom: 14 }}>
         Fonte: planilhas brutas de faturamento (CTRC/TMS) por cliente — <b style={{ color: t.txt }}>não é o mesmo dado</b> do Operacional (Google Sheets). Os valores deveriam bater, mas ainda são conferidos separadamente.
@@ -420,7 +430,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
           return (
             <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={String(d.registros)}
               sub={`${money(d.fretePeso)} · margem ${d.margemMedia.toFixed(1)}%`}
-              icon={hIco(ICO_CATEGORIA[c], "var(--text3)", isMobile ? 10 : 11)}
+              icon={hIco(ICO_CATEGORIA[c], CATEGORIA_COR[c], isMobile ? 14 : 16, 2)}
+              iconTint={CATEGORIA_COR[c]}
               color={c === "frete" ? "var(--accent)" : undefined} compact={isMobile} />
           );
         })}

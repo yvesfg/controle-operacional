@@ -154,6 +154,8 @@ export const DEV_CHANGELOG = [
       "STYLE · 'Ranking de revisao' virou placar de 'Produtividade': cruza quanto cada um ja revisou (verde) com quanto ainda tem pendente (chip vermelho).",
       "STYLE · Dropdown de cliente trocado de <select> nativo (menu branco no tema escuro) por dropdown custom no estilo do app, pareado com o input de mes.",
       "FEAT · Nova secao 'Revisados' na Conferencia de Faturamento: rastro de auditoria dos itens ja decididos (fora sinalizar_correcao, que tem secao propria) com a decisao tomada, quem revisou (revisado_por) e quando -- antes o item sumia da fila sem deixar registro visivel de quem revisou.",
+      "STYLE · KpiCard ganhou prop opt-in `iconTint`: quando passada, o icone do canto vira um badge maior e realcado com a cor do sistema (fundo/borda color-mix). Aplicado nos KPIs da Conferencia (frete=accent, descarga=info, local=cyan, diaria=yellow); demais dashboards inalterados (sem iconTint = icone discreto de antes).",
+      "STYLE · Faixa unica de controles no Financeiro: o segmentado Operacional/Faturamento subiu do Resultado pra faixa da nav (FinanceiroView), e os filtros da Conferencia (mes + filial + acoes) sao portalizados (react-dom, slot com display:contents) pra mesma linha. Nav + segmentado + filtros lado a lado, quebrando no mobile/tablet via flex-wrap.",
     ],
   },
   {
