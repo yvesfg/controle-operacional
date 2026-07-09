@@ -43,6 +43,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
   const [usuarioFiltro, setUsuarioFiltro] = React.useState(""); // "" = todos os usuários (nome_usuario da planilha)
+  const [filaMes, setFilaMes] = React.useState("todos"); // "todos" | "atual" | "anterior" — recorte de mês da fila de revisão
+  const [cliOpen, setCliOpen] = React.useState(false);   // dropdown custom de cliente aberto
   const [linhasPeriodo, setLinhasPeriodo] = React.useState([]);
   const [linhasComparativo, setLinhasComparativo] = React.useState({}); // { "2026-06": [...], "2026-05": [...] }
   const [pendentes, setPendentes] = React.useState([]);
@@ -192,10 +194,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
     () => clienteFiltro ? linhasPeriodo.filter(l => l.cliente === clienteFiltro) : linhasPeriodo,
     [linhasPeriodo, clienteFiltro]
   );
+  // Recorte de mês da fila de revisão — relativo ao mês real corrente (não ao periodoRef,
+  // que controla os resumos). A fila já vem limitada a mês anterior + corrente do backend.
+  const mesCorrenteReal = React.useMemo(() => new Date().toISOString().slice(0, 7), []);
+  const mesAnteriorReal = React.useMemo(() => shiftMes(mesCorrenteReal, -1), [mesCorrenteReal]);
+  const filaMesRef = filaMes === "atual" ? mesCorrenteReal : filaMes === "anterior" ? mesAnteriorReal : null;
+
   const pendentesFiltrados = React.useMemo(() => pendentes
     .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
-    .filter(p => !usuarioFiltro || (p.nome_usuario || "(sem usuário na planilha)") === usuarioFiltro),
-    [pendentes, clienteFiltro, usuarioFiltro]
+    .filter(p => !usuarioFiltro || (p.nome_usuario || "(sem usuário na planilha)") === usuarioFiltro)
+    .filter(p => !filaMesRef || p.periodo_ref === filaMesRef),
+    [pendentes, clienteFiltro, usuarioFiltro, filaMesRef]
   );
   const sinalizadosFiltrados = React.useMemo(() => sinalizados
     .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
@@ -227,7 +236,6 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const mapaAtual = porDiaDoMes(resumoDia), mapa1 = porDiaDoMes(resumoAnt1), mapa2 = porDiaDoMes(resumoAnt2);
 
     const dias = Array.from({ length: diaCorte }, (_, i) => String(i + 1).padStart(2, "0"));
-    const linhas = dias.map(dd => ({ dia: dd, atual: mapaAtual[dd] || null, ant1: mapa1[dd] || null, ant2: mapa2[dd] || null }));
 
     const somar = (mapa) => dias.reduce((a, dd) => {
       const d = mapa[dd]; if (!d) return a;
@@ -235,11 +243,20 @@ export default function ConferenciaFrete({ ctx, conn }) {
     }, { registros: 0, fretePeso: 0, saldo: 0 });
     const totalAtual = somar(mapaAtual), total1 = somar(mapa1), total2 = somar(mapa2);
 
-    return { diaCorte, linhas, totalAtual, total1, total2 };
+    return { diaCorte, totalAtual, total1, total2 };
   }, [linhasComparativo, mesAnt1, mesAnt2, periodoRef, resumoDia, clienteFiltro]);
   const totalMes = React.useMemo(() => Object.values(resumoCli).reduce((a, d) => ({
     registros: a.registros + d.registros, peso: a.peso + d.peso, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo,
   }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
+
+  // Curva de saldo acumulado ao longo do mês — pontos para o mini-gráfico de área da Evolução diária.
+  const chartEvo = React.useMemo(() => {
+    if (!resumoDia.length) return null;
+    let acc = 0;
+    const pts = resumoDia.map((d) => { acc += d.saldo; return { dia: d.dia, v: acc }; });
+    const vs = pts.map((p) => p.v);
+    return { pts, max: Math.max(...vs, 0), min: Math.min(...vs, 0), total: acc };
+  }, [resumoDia]);
 
   // Por usuário — quem lançou os registros hoje na fila de revisão, pra saber com quem falar.
   // Clicável: filtra a Fila de revisão/Sinalizados por esse usuário (usuarioFiltro).
@@ -247,23 +264,29 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const out = {};
     pendentes
       .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
+      .filter(p => !filaMesRef || p.periodo_ref === filaMesRef)
       .forEach((p) => {
         const nome = p.nome_usuario || "(sem usuário na planilha)";
         out[nome] = (out[nome] || 0) + 1;
       });
     return Object.entries(out).sort((a, b) => b[1] - a[1]);
-  }, [pendentes, clienteFiltro]);
+  }, [pendentes, clienteFiltro, filaMesRef]);
 
-  // Ranking de revisão — quem (usuário logado) decidiu os itens da fila neste período/cliente.
-  const rankingRevisao = React.useMemo(() => {
-    const out = {};
+  // Produtividade — cruza quem já revisou (revisado_por nas linhas do período) com quem
+  // ainda tem pendências (nome_usuario na fila). Placar único: revisou × ainda pendente.
+  const produtividade = React.useMemo(() => {
+    const revisou = {};
     linhasFiltradas.forEach((l) => {
       if (!l.decisao_manual) return;
       const nome = l.revisado_por || "(sem registro)";
-      out[nome] = (out[nome] || 0) + 1;
+      revisou[nome] = (revisou[nome] || 0) + 1;
     });
-    return Object.entries(out).sort((a, b) => b[1] - a[1]);
-  }, [linhasFiltradas]);
+    const pend = Object.fromEntries(resumoPorUsuario); // já filtrado por cliente + mês
+    const nomes = new Set([...Object.keys(revisou), ...Object.keys(pend)]);
+    return [...nomes]
+      .map((nome) => ({ nome, revisou: revisou[nome] || 0, pendentes: pend[nome] || 0 }))
+      .sort((a, b) => (b.revisou - a.revisou) || (b.pendentes - a.pendentes));
+  }, [linhasFiltradas, resumoPorUsuario]);
 
   // Mesmo card do Dashboard (css.card) — reskin pra bater com o resto do app.
   const card = { ...css.card, padding: isMobile ? 14 : 18 };
@@ -318,11 +341,42 @@ export default function ConferenciaFrete({ ctx, conn }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
         <input type="month" value={periodoRef} onChange={(e) => setPeriodoRef(e.target.value)}
           style={{ fontSize: 13, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.card, color: t.txt }} />
-        <select value={clienteFiltro} onChange={(e) => setClienteFiltro(e.target.value)}
-          style={{ fontSize: 13, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.card, color: t.txt }}>
-          <option value="">Todos os clientes</option>
-          {clientesPresentes.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+        {/* Dropdown custom — o <select> nativo abre um menu branco no tema escuro; este
+            casa com o box do input de mês (mesma borda/raio/padding) e vira par visual. */}
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setCliOpen((o) => !o)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "space-between", minWidth: 180,
+              fontSize: 13, padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+              border: `1.5px solid ${cliOpen ? t.ouro : t.borda}`, background: t.card, color: t.txt }}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{clienteFiltro || "Todos os clientes"}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ color: t.txt2, transform: cliOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {cliOpen && (
+            <>
+              <div onClick={() => setCliOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, minWidth: "100%", zIndex: 41,
+                background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 10, padding: 4, boxShadow: "0 8px 28px rgba(0,0,0,.4)", maxHeight: 300, overflowY: "auto" }}>
+                {[["", "Todos os clientes"], ...clientesPresentes.map((c) => [c, c])].map(([v, label]) => {
+                  const ativo = clienteFiltro === v;
+                  return (
+                    <button key={v || "__all"} onClick={() => { setClienteFiltro(v); setCliOpen(false); }}
+                      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", fontSize: 12.5, fontWeight: ativo ? 700 : 500,
+                        padding: "8px 10px", borderRadius: 7, cursor: "pointer", border: "none", fontFamily: "inherit", whiteSpace: "nowrap",
+                        background: ativo ? hexRgb(t.ouro, .12) : "transparent", color: ativo ? t.ouro : t.txt }}
+                      onMouseEnter={(e) => { if (!ativo) e.currentTarget.style.background = t.card2; }}
+                      onMouseLeave={(e) => { if (!ativo) e.currentTarget.style.background = "transparent"; }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: ativo ? 1 : 0 }}><polyline points="20 6 9 17 4 12" /></svg>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <button onClick={() => gerarWorkbookXLSX(linhasFiltradas, periodoRef)} disabled={!linhasFiltradas.length}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
@@ -330,9 +384,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
             ⬇ Baixar planilha
           </button>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onEscolherArquivo} style={{ display: "none" }} />
+          {/* Cor azul (t.azul) em vez do accent amarelo do import de despesas (Resultado/Operacional) —
+              reforça visualmente que este import é de outra fonte (faturamento bruto), evitando troca. */}
           <button onClick={() => fileRef.current?.click()} disabled={importing}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-              border: `1px solid var(--accent)`, background: "transparent", color: "var(--accent)", opacity: importing ? .6 : 1 }}>
+              border: `1px solid ${t.azul}`, background: "transparent", color: t.azul, opacity: importing ? .6 : 1 }}>
             {importing ? "Lendo..." : "⬆ Importar planilha bruta"}
           </button>
         </div>
@@ -401,17 +457,40 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
       )}
 
-      {/* Evolução diária — quantos CTRCs entraram por dia, pra acompanhar o mês sem esperar fechar */}
-      {resumoDia.length > 0 && (
+      {/* Evolução diária — mini-gráfico de saldo acumulado no mês + lista enxuta por dia */}
+      {resumoDia.length > 0 && chartEvo && (
         <div style={{ ...tile }}>
           {sectionHead(`Evolução diária · ${mesLabel(periodoRef)}`)}
 
+          {/* Área: curva do saldo acumulado ao longo do mês */}
+          {(() => {
+            const W = 320, H = 60, pad = 4;
+            const n = chartEvo.pts.length;
+            const range = (chartEvo.max - chartEvo.min) || 1;
+            const X = (i) => n === 1 ? W / 2 : pad + (i / (n - 1)) * (W - 2 * pad);
+            const Y = (v) => H - pad - ((v - chartEvo.min) / range) * (H - 2 * pad);
+            const line = chartEvo.pts.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(" ");
+            const area = `${line} L${X(n - 1).toFixed(1)} ${H} L${X(0).toFixed(1)} ${H} Z`;
+            const last = chartEvo.pts[n - 1];
+            return (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 4px 6px" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo acumulado</span>
+                  <span style={{ fontSize: 15, fontWeight: 800, fontFamily: "var(--font-heading)", color: t.ouro }}>{money(chartEvo.total)}</span>
+                </div>
+                <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" width="100%" height="60" style={{ display: "block", overflow: "visible" }}>
+                  <path d={area} fill={hexRgb(t.ouro, .13)} />
+                  <path d={line} fill="none" stroke={t.ouro} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+                  <circle cx={X(n - 1)} cy={Y(last.v)} r="3" fill={t.ouro} />
+                </svg>
+              </div>
+            );
+          })()}
+
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
-            <span style={{ width: 44, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
-            <span style={{ width: 66, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>CTRCs</span>
-            <span style={{ width: 40 }} />
-            {!isMobile && <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Peso</span>}
-            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
+            <span style={{ width: 46, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
+            <span style={{ width: 74, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>CTRCs</span>
+            <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
             <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
           </div>
 
@@ -420,15 +499,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
             const delta = anterior ? d.registros - anterior.registros : null;
             return (
               <div key={d.dia} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
-                <span style={{ width: 44, flexShrink: 0, fontSize: 12, color: t.txt2, fontFamily: "var(--font-mono)" }}>
+                <span style={{ width: 46, flexShrink: 0, fontSize: 12, color: t.txt2, fontFamily: "var(--font-mono)" }}>
                   {(() => { const p = d.dia.split("-"); return `${p[2]}/${p[1]}`; })()}
                 </span>
-                <span style={{ width: 66, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{d.registros}</span>
-                <span style={{ width: 40, fontSize: 10.5, fontWeight: 700, color: delta > 0 ? t.verde : delta < 0 ? t.danger : t.txt2 }}>
-                  {delta !== null && delta !== 0 && <>{delta > 0 ? "▲" : "▼"}{Math.abs(delta)}</>}
+                <span style={{ width: 74, display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 5 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{d.registros}</span>
+                  {delta !== null && delta !== 0 && <span style={{ fontSize: 10, fontWeight: 700, color: delta > 0 ? t.verde : t.danger }}>{delta > 0 ? "▲" : "▼"}{Math.abs(delta)}</span>}
                 </span>
-                {!isMobile && <span style={{ flex: 1, textAlign: "right", fontSize: 11, fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{pesoFmt(d.peso)}</span>}
-                <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(d.fretePeso)}</span>
+                <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(d.fretePeso)}</span>
                 <span style={{ width: 96, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(d.saldo)}</span>
               </div>
             );
@@ -456,22 +534,6 @@ export default function ConferenciaFrete({ ctx, conn }) {
               </div>
             ))}
           </div>
-
-          {/* Dia a dia — quantidade de CTRCs, mesmo dia-do-mês nos 3 períodos */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
-            <span style={{ width: 40, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
-            {!isMobile && <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>{mesLabel(mesAnt2)}</span>}
-            <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>{mesLabel(mesAnt1)}</span>
-            <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.ouro }}>{mesLabel(periodoRef)}</span>
-          </div>
-          {[...comparativo.linhas].reverse().map((l) => (
-            <div key={l.dia} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
-              <span style={{ width: 40, flexShrink: 0, fontSize: 12, color: t.txt2, fontFamily: "var(--font-mono)" }}>{l.dia}</span>
-              {!isMobile && <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{l.ant2 ? l.ant2.registros : "—"}</span>}
-              <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{l.ant1 ? l.ant1.registros : "—"}</span>
-              <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{l.atual ? l.atual.registros : "—"}</span>
-            </div>
-          ))}
         </div>
       )}
 
@@ -496,23 +558,32 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
       )}
 
-      {/* Ranking de revisão — quem já decidiu quantos itens da fila neste período/cliente (barra estilo Top Motoristas) */}
-      {rankingRevisao.length > 0 && (() => {
-        const maxRank = rankingRevisao[0]?.[1] || 1;
+      {/* Produtividade — cruza revisões feitas no período (verde) com o que ainda está pendente (vermelho) */}
+      {produtividade.length > 0 && (() => {
+        const maxRev = Math.max(...produtividade.map((p) => p.revisou), 1);
         return (
         <div style={{ ...tile }}>
-          {sectionHead(`Ranking de revisão · ${mesLabel(periodoRef)}`)}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {rankingRevisao.map(([nome, qtd], i) => (
-              <div key={nome}>
+          {sectionHead(`Produtividade · ${mesLabel(periodoRef)}`, (
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>revisou × pendente</span>
+          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+            {produtividade.map((p, i) => (
+              <div key={p.nome}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                  <span style={{ width: 16, textAlign: "center", fontSize: 10.5, fontWeight: 800, color: i === 0 ? t.ouro : t.txt2, flexShrink: 0 }}>{i + 1}º</span>
-                  {avatar(nome, 22)}
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nome}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: t.txt, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{qtd}</span>
+                  <span style={{ width: 16, textAlign: "center", fontSize: 10.5, fontWeight: 800, color: i === 0 && p.revisou > 0 ? t.ouro : t.txt2, flexShrink: 0 }}>{i + 1}º</span>
+                  {avatar(p.nome, 22)}
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</span>
+                  <span title="revisados" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11.5, fontWeight: 700, color: t.verde, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    {p.revisou}
+                  </span>
+                  <span title="ainda pendentes" style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, flexShrink: 0, whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums",
+                    background: p.pendentes ? hexRgb(t.danger, .12) : t.card2, border: `1px solid ${p.pendentes ? hexRgb(t.danger, .3) : t.borda}`, color: p.pendentes ? t.danger : t.txt2 }}>
+                    {p.pendentes} pend.
+                  </span>
                 </div>
                 <div style={{ height: 3, borderRadius: 2, background: t.card2, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${Math.round(qtd / maxRank * 100)}%`, background: t.ouro, borderRadius: 2 }} />
+                  <div style={{ height: "100%", width: `${Math.round(p.revisou / maxRev * 100)}%`, background: t.verde, borderRadius: 2 }} />
                 </div>
               </div>
             ))}
@@ -524,7 +595,20 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Fila de revisão */}
       <div style={{ ...tile }}>
         {sectionHead("Fila de revisão", (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {/* Recorte de mês — a fila já vem só do mês anterior + corrente; aqui você isola um deles */}
+            <div style={{ display: "flex", gap: 3, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}` }}>
+              {[["atual", "Atual", mesLabel(mesCorrenteReal)], ["anterior", "Anterior", mesLabel(mesAnteriorReal)], ["todos", "Todos", null]].map(([id, label, mes]) => (
+                <button key={id} onClick={() => setFilaMes(id)}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1, fontFamily: "inherit",
+                    fontSize: 10.5, fontWeight: 700, padding: "4px 9px", borderRadius: 7, cursor: "pointer", border: "none",
+                    background: filaMes === id ? "var(--accent)" : "transparent",
+                    color: filaMes === id ? (t.onPrimary || "#181a20") : t.txt2 }}>
+                  {label}
+                  {mes && <span style={{ fontSize: 8.5, fontWeight: 600, opacity: .8, fontFamily: "var(--font-mono)", marginTop: 1 }}>{mes}</span>}
+                </button>
+              ))}
+            </div>
             {pendentesFiltrados.length > 0 && (
               <span style={{ background: "var(--chip-solid-danger)", color: "var(--color-text-inverse)", fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{pendentesFiltrados.length}</span>
             )}
@@ -567,6 +651,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               </button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 5 }}>
+              <span style={{ fontSize: 9.5, fontWeight: 700, fontFamily: "var(--font-mono)", padding: "2px 7px", borderRadius: 20, background: t.card2, border: `1px solid ${t.borda}`, color: t.txt2 }}>{mesLabel(p.periodo_ref)}</span>
               <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.nome_usuario || "sem usuário", 15)}</span>
               {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
               {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}

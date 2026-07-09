@@ -146,6 +146,16 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-09", sessao: "Sessao 40",
+    itens: [
+      "STYLE · ConferenciaFrete.jsx: Fila de revisao ganhou seletor de mes segmentado (Atual/Anterior/Todos, com o mes YYYY-MM em cada botao) ao lado do contador; cada pendencia agora mostra um chip com o mes de competencia. Filtro de mes tambem se aplica a 'Pendencias por usuario'.",
+      "STYLE · Evolucao diaria trocou a tabela esparsa por mini-grafico de area (saldo acumulado no mes) + lista enxuta por dia (Dia/CTRCs+delta/Frete/Saldo, sem a coluna Peso que abria o vazio).",
+      "STYLE · Comparativo com meses anteriores: removida a tabela dia-a-dia de CTRCs; ficam so os 3 blocos de totais.",
+      "STYLE · 'Ranking de revisao' virou placar de 'Produtividade': cruza quanto cada um ja revisou (verde) com quanto ainda tem pendente (chip vermelho).",
+      "STYLE · Dropdown de cliente trocado de <select> nativo (menu branco no tema escuro) por dropdown custom no estilo do app, pareado com o input de mes.",
+    ],
+  },
+  {
     data: "2026-07-08", sessao: "Sessao 39",
     itens: [
       "FEAT · Cadastro de embarcadoras/clientes da Conferencia de Faturamento migrado de hardcoded (freteConferencia.js:CLIENTES) para tabela Supabase `frete_clientes` (migration 005, seed com os 4 clientes que ja existiam). Editavel pela tela agora, sem precisar mexer em codigo pra reconhecer CNPJ novo.",
