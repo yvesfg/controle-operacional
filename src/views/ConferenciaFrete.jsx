@@ -23,6 +23,14 @@ const shiftMes = (m, delta) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
+// Rótulo humano de cada decisão possível na fila (exceto sinalizar_correcao, que tem seção própria).
+const DECISAO_LABEL = {
+  ok: "sem ação necessária",
+  confirmar_descarga: "confirmado: Descarga",
+  confirmar_local: "confirmado: Local",
+  confirmar_ambas: "2 lançamentos reais",
+  ignorar_duplicidade: "duplicidade ignorada",
+};
 
 // Ícones dos badges de sinalização — mesma linguagem stroke/round do resto do app.
 const ICO_ALERTA = <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
@@ -287,6 +295,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
       .map((nome) => ({ nome, revisou: revisou[nome] || 0, pendentes: pend[nome] || 0 }))
       .sort((a, b) => (b.revisou - a.revisou) || (b.pendentes - a.pendentes));
   }, [linhasFiltradas, resumoPorUsuario]);
+
+  // Revisados — itens que já saíram da fila com uma decisão (menos sinalizar_correcao, que tem
+  // seção própria). Fica registrado quem decidiu e quando; mais recentes primeiro.
+  const revisados = React.useMemo(() => linhasFiltradas
+    .filter((l) => l.decisao_manual && l.decisao_manual !== "sinalizar_correcao")
+    .sort((a, b) => String(b.revisado_em || "").localeCompare(String(a.revisado_em || ""))),
+    [linhasFiltradas]);
 
   // Mesmo card do Dashboard (css.card) — reskin pra bater com o resto do app.
   const card = { ...css.card, padding: isMobile ? 14 : 18 };
@@ -685,6 +700,38 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <div style={{ fontSize: 10.5, color: t.ouro, marginTop: 3 }}>
                 🏷 sinalizado {p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}
                 {p.revisado_obs && <span style={{ color: t.txt2 }}> · “{p.revisado_obs}”</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Revisados — rastro de auditoria: itens já decididos, com quem revisou, qual decisão e quando */}
+      {revisados.length > 0 && (
+        <div style={{ ...tile }}>
+          {sectionHead("Revisados", (
+            <span style={{ background: hexRgb(t.verde, .15), color: t.verde, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20, border: `1px solid ${hexRgb(t.verde, .3)}` }}>{revisados.length}</span>
+          ))}
+          <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 12 }}>
+            Já saíram da fila com uma decisão — fica registrado quem revisou e quando.
+          </div>
+          {revisados.map((p) => (
+            <div key={p.id} style={{ padding: "9px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
+                </span>
+                <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                  {money(p.saldo)}
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: t.verde }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  {DECISAO_LABEL[p.decisao_manual] || p.decisao_manual}
+                </span>
+                <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.revisado_por || "sem registro", 15)}</span>
+                <span style={{ fontSize: 10, color: t.txt2 }}>{p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}</span>
               </div>
             </div>
           ))}

@@ -153,6 +153,7 @@ export const DEV_CHANGELOG = [
       "STYLE · Comparativo com meses anteriores: removida a tabela dia-a-dia de CTRCs; ficam so os 3 blocos de totais.",
       "STYLE · 'Ranking de revisao' virou placar de 'Produtividade': cruza quanto cada um ja revisou (verde) com quanto ainda tem pendente (chip vermelho).",
       "STYLE · Dropdown de cliente trocado de <select> nativo (menu branco no tema escuro) por dropdown custom no estilo do app, pareado com o input de mes.",
+      "FEAT · Nova secao 'Revisados' na Conferencia de Faturamento: rastro de auditoria dos itens ja decididos (fora sinalizar_correcao, que tem secao propria) com a decisao tomada, quem revisou (revisado_por) e quando -- antes o item sumia da fila sem deixar registro visivel de quem revisou.",
     ],
   },
   {
