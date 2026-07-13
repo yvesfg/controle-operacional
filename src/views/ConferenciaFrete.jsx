@@ -33,6 +33,7 @@ const DECISAO_LABEL = {
   confirmar_local: "confirmado: Local",
   confirmar_ambas: "2 lançamentos reais",
   ignorar_duplicidade: "duplicidade ignorada",
+  correcao_feita: "correção feita",
 };
 
 // Ícones dos badges de sinalização — mesma linguagem stroke/round do resto do app.
@@ -189,7 +190,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
     try {
       const atualizado = await decidir(conn, id, decisao, obs, usuarioLogado);
       setPendentes((arr) => arr.filter((p) => p.id !== id));
-      if (decisao === "sinalizar_correcao" && atualizado) setSinalizados((arr) => [atualizado, ...arr]);
+      // sinalizar_correcao entra em Sinalizados; qualquer outra decisão (ex.: correcao_feita) tira de lá.
+      setSinalizados((arr) => decisao === "sinalizar_correcao" && atualizado
+        ? [atualizado, ...arr.filter((s) => s.id !== id)]
+        : arr.filter((s) => s.id !== id));
       // Reflete a decisão nas linhas do período já carregadas — alimenta o ranking de revisão sem refetch.
       setLinhasPeriodo((arr) => arr.map((l) => l.id === id
         ? { ...l, decisao_manual: decisao, revisado_por: usuarioLogado, revisado_em: atualizado?.revisado_em || new Date().toISOString() }
@@ -707,6 +711,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
                   {money(p.saldo)}
                 </span>
+                <button onClick={() => onDecidir(p.id, "correcao_feita", "correção confirmada")}
+                  title="A correção na origem foi feita — sai de Sinalizados e vai para Revisados"
+                  style={{ fontSize: 10.5, fontWeight: 700, padding: "6px 13px", borderRadius: 7, cursor: "pointer", border: "none", background: t.verde, color: "#fff", flexShrink: 0 }}>
+                  Resolução feita
+                </button>
               </div>
               <div style={{ fontSize: 10.5, color: t.ouro, marginTop: 3 }}>
                 🏷 sinalizado {p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}

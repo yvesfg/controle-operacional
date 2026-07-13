@@ -148,6 +148,7 @@ export const DEV_CHANGELOG = [
   {
     data: "2026-07-09", sessao: "Sessao 40",
     itens: [
+      "FEAT · Sinalizados na Conferencia de Faturamento deixou de ser beco sem saida: cada item ganhou botao 'Resolucao feita' (decisao_manual=correcao_feita) que confirma a correcao na origem, tira o item de Sinalizados e o move para Revisados com quem confirmou e quando. Antes o item ficava preso na secao ate reimportacao.",
       "STYLE · ConferenciaFrete.jsx: Fila de revisao ganhou seletor de mes segmentado (Atual/Anterior/Todos, com o mes YYYY-MM em cada botao) ao lado do contador; cada pendencia agora mostra um chip com o mes de competencia. Filtro de mes tambem se aplica a 'Pendencias por usuario'.",
       "STYLE · Evolucao diaria trocou a tabela esparsa por mini-grafico de area (saldo acumulado no mes) + lista enxuta por dia (Dia/CTRCs+delta/Frete/Saldo, sem a coluna Peso que abria o vazio).",
       "STYLE · Comparativo com meses anteriores: removida a tabela dia-a-dia de CTRCs; ficam so os 3 blocos de totais.",
