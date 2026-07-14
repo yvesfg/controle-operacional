@@ -5,7 +5,6 @@ export function useCoreState() {
   // Dados base
   const [dadosBase, setDadosBase] = useState([]);
   const [dadosExtras, setDadosExtras] = useState(() => loadJSON("dados_extras", []));
-  const [motoristas, setMotoristas] = useState(() => loadJSON("co_motoristas", []));
   const [conexoes, setConexoes] = useState(() => loadJSON("co_conexoes", []));
 
   // Navegação e status
@@ -16,7 +15,7 @@ export function useCoreState() {
 
   return {
     dadosBase, setDadosBase, dadosExtras, setDadosExtras,
-    motoristas, setMotoristas, conexoes, setConexoes,
+    conexoes, setConexoes,
     activeTab, setActiveTab, toast, setToast,
     connStatus, setConnStatus, ultimaSync, setUltimaSync,
   };

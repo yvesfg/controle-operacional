@@ -58,6 +58,7 @@ import { useBuscaState } from './hooks/useBuscaState.js';
 import { useViewPrefsState } from './hooks/useViewPrefsState.js';
 import { useAuthState } from './hooks/useAuthState.js';
 import { useCoreState } from './hooks/useCoreState.js';
+import useMotoristas from './hooks/useMotoristas.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -139,7 +140,7 @@ export default function App() {
 
   const {
     dadosBase, setDadosBase, dadosExtras, setDadosExtras,
-    motoristas, setMotoristas, conexoes, setConexoes,
+    conexoes, setConexoes,
     activeTab, setActiveTab, toast, setToast,
     connStatus, setConnStatus, ultimaSync, setUltimaSync,
   } = useCoreState();
@@ -383,6 +384,11 @@ export default function App() {
     const ativa = loadJSON("co_conexao_ativa",0);
     return conexoes[ativa] || conexoes[0] || null;
   }, [conexoes]);
+
+  // Motoristas — Supabase (tabelas `motoristas`+`veiculos`, migrations 007/008),
+  // não mais localStorage. Mesma assinatura de sempre (array + saveMotoristasLS).
+  const motoristasOnErro = useCallback((msg) => showToast(msg, "erro"), [showToast]);
+  const { motoristas, saveMotoristasLS } = useMotoristas(getConexao(), { onErro: motoristasOnErro });
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
     getConexao, showToast, tblRef, sessionToken, baseAtual,
@@ -1010,9 +1016,6 @@ export default function App() {
       if (chartInstances.current.d) chartInstances.current.d.destroy();
     };
   }, [activeTab, dashData, theme, perms.financeiro, dashChartType, dashGroupBy, dashHeroTab]);
-
-  // Save motoristas
-  const saveMotoristasLS = (m) => { setMotoristas(m); saveJSON("co_motoristas",m); };
 
   // Save conexoes
   const saveConexoesLS = (c) => { setConexoes(c); saveJSON("co_conexoes",c); };
