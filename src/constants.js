@@ -146,6 +146,16 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-14", sessao: "Sessao 43",
+    itens: [
+      "FIX PERF · Hub 'demorado' apos a sessao 42: App.jsx chamava useMotoristas(getConexao()) incondicional, disparando 2 fetches (motoristas: 848 linhas + veiculos: 727 linhas) assim que a sessao autenticava -- AINDA no Hub/login, antes do usuario escolher modulo, competindo por rede bem na hora de abrir a tela do Google ou clicar em Gerenciar acessos. Agora so busca depois de entrar de fato no Controle Operacional (hubScreen===\"controle_op\").",
+      "DIAGNOSTICO · Medido ao vivo (fetch direto do navegador, nao so codigo): consulta trivial (limit=1) em motoristas/embarcadoras/hub_user_modulos levou 14-39s via REST, mas o EXPLAIN ANALYZE da mesma query no banco rodou em <10ms -- gargalo 100% na camada PostgREST/pooler, nao no codigo nem nos dados. Bateu com o Supabase Performance Advisor: 2 policies (hub_profiles_own, hub_modulos_read) com auth.uid()/auth.role() reavaliado LINHA A LINHA por nao estar em subquery -- padrao documentado (docs: row-level-security#call-functions-with-select).",
+      "FIX · Migration 011: ALTER POLICY em hub_profiles_own/hub_modulos_read/hub_user_modulos_own envolvendo auth.uid()/auth.role() em (select ...). hub_user_modulos foi de ~15.7s pra 878ms na mesma consulta depois do fix.",
+      "PENDENTE · Nao achei uma causa unica definitiva pro pico de 14-39s (RLS ineficiente + cache de schema do PostgREST reconstruindo apos 5 migrations seguidas nesta sessao sao os dois suspeitos, ambos endereçados). Advisor tambem acusou 95 ocorrencias de 'Multiple Permissive Policies' espalhadas pelo projeto inteiro -- padrao pre-existente mais amplo, fora do escopo de hoje, vale um passe dedicado depois.",
+      "TESTE · Validado com credencial de teste fornecida (claudecodeyfg): login + Hub carregando sem travar. Troca de sessao (logout/relogin) no navegador automatizado nao cooperou pra revalidar a senha resetada especifica -- nao bloqueante, a melhoria de performance foi medida direto (fetch timing antes/depois do fix de RLS).",
+    ],
+  },
+  {
     data: "2026-07-14", sessao: "Sessao 42",
     itens: [
       "FIX · Gerenciar acessos (HubAdmin.jsx): status do usuario (pendente/aprovado/negado) era DERIVADO de existir linha em hub_user_modulos -- remover o ultimo acesso apagava a linha e jogava o usuario de volta pra 'aguardando aprovacao' sem jeito de tirar de la. Migration 010 add campo `status` proprio em hub_profiles + RPC hub_admin_set_status (SECURITY DEFINER, so admin do hub) que ao negar DESATIVA os modulos (nao apaga mais) -- historico fica pra reaprovar rapido depois. Confirmado com dado real: os 3 usuarios de teste claudecodeyfg* estavam presos nesse estado.",

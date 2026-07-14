@@ -387,8 +387,13 @@ export default function App() {
 
   // Motoristas — Supabase (tabelas `motoristas`+`veiculos`, migrations 007/008),
   // não mais localStorage. Mesma assinatura de sempre (array + saveMotoristasLS).
+  // conn só existe DEPOIS de entrar no Controle Operacional (hubScreen==="controle_op")
+  // -- senão o hook disparava 2 fetches (848+727 linhas) assim que a sessão autenticava,
+  // ainda no Hub/tela de login, competindo com o resto e deixando tudo mais lento
+  // pra quem só ia abrir outro módulo (Frota/ANTT/Calculadora).
   const motoristasOnErro = useCallback((msg) => showToast(msg, "erro"), [showToast]);
-  const { motoristas, saveMotoristasLS } = useMotoristas(getConexao(), { onErro: motoristasOnErro });
+  const motoristasConn = hubScreen === "controle_op" ? getConexao() : null;
+  const { motoristas, saveMotoristasLS } = useMotoristas(motoristasConn, { onErro: motoristasOnErro });
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
     getConexao, showToast, tblRef, sessionToken, baseAtual,
