@@ -1,13 +1,16 @@
 import React from "react";
 import PageHeader from "../components/PageHeader.jsx";
 import EmbarcadorasCad from "./cadastros/EmbarcadorasCad.jsx";
+import MotoristasCad from "./cadastros/MotoristasCad.jsx";
+import VeiculosCad from "./cadastros/VeiculosCad.jsx";
 
 // Cadastros — casa dos cadastros GLOBAIS do app (dados que várias telas consomem,
-// não dados de um módulo só). Hoje só Embarcadoras; Motoristas/Placas entram aqui
-// como nova seção, sem mexer no menu nem nas permissões de novo.
+// não dados de um módulo só).
 
 const SECOES = [
   { k: "embarcadoras", l: "Embarcadoras", Comp: EmbarcadorasCad },
+  { k: "motoristas", l: "Motoristas", Comp: MotoristasCad },
+  { k: "veiculos", l: "Veículos", Comp: VeiculosCad },
 ];
 
 export default function CadastrosView({ ctx }) {
