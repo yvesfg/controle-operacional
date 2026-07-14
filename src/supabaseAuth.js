@@ -51,6 +51,13 @@ export async function getSessao() {
 }
 
 export async function logoutSupa() {
+  // Limpa a sessão local PRIMEIRO, sem esperar a rede. signOut() é uma request:
+  // se ela demora (rede lenta) ou falha, a sessão ficava no localStorage e o
+  // bootstrap (App.jsx, sb.auth.getSession()) re-logava o usuário no próximo
+  // render/reload — era por isso que "Sair e trocar conta" parecia não funcionar.
+  // A revogação server-side vai junto, mas em background: o logout local vale
+  // mesmo com a rede fora.
+  try { localStorage.removeItem("co_supa_auth"); } catch {}
   const sb = getSupaAuth();
   if (sb) { try { await sb.auth.signOut(); } catch {} }
 }

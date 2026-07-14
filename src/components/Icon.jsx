@@ -81,5 +81,5 @@ export const EMOJI_ICON = {
   "🔗":"link","📞":"phone","📧":"mail","💬":"message","📥":"download","📲":"smartphone","✈":"plane",
   "📷":"camera","✨":"sparkles","🗄":"database","🔍":"search","👤":"user","👨":"user","🏢":"building","🏦":"bank",
   "⚙":"settings","👁":"eye","🔑":"key","🔒":"lock","🔐":"lock","🔓":"unlock","💳":"credit-card","🪪":"id","📊":"chart",
-  "⏳":"clock","⏱":"clock","⏱️":"clock","💬":"message",
+  "⏳":"clock","⏱":"clock","⏱️":"clock",
 };

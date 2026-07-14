@@ -146,6 +146,18 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-14", sessao: "Sessao 44",
+    itens: [
+      "FIX · Logout nao funcionava: logoutSupa() so removia a sessao DEPOIS de esperar signOut() (uma request de rede) e, se ela falhasse, o catch engolia o erro em silencio -- a sessao continuava no localStorage e o bootstrap (App.jsx getSession()) re-logava no proximo render/reload. Agora limpa a chave `co_supa_auth` PRIMEIRO, sem esperar a rede; a revogacao server-side vai em background. Validado no navegador: logout limpa sessao+tokens, volta pro login e CONTINUA deslogado apos reload.",
+      "CORRECAO DO DIAGNOSTICO DA SESSAO 43 · Os picos de 14-40s NAO eram culpa do RLS (atribuicao anterior estava errada). Causa real: CADA migration (DDL) invalida o cache de schema do PostgREST, e a PRIMEIRA request depois fica pendurada esperando a reconstrucao. Eu apliquei 7 migrations enquanto o Yves usava o app -- a lentidao era auto-infligida e transitoria. Medido sem DDL no meio: 526ms > 324ms > 210ms. Baseline limpo atual: hub_profiles 107ms, hub_user_modulos 152ms, hub_modulos 256ms, motoristas(848 linhas) 592ms, veiculos(727) 609ms.",
+      "PERF · Migration 012: consolidadas as policies do Hub (hub_profiles e hub_user_modulos tinham 2 policies PERMISSIVAS por SELECT -- Postgres avalia TODAS e faz OR; a segunda chamava is_hub_admin() sem subquery, reavaliado por linha). Agora 1 policy por comando, com o mesmo OR explicito (semanticamente identico). Tambem: indice na FK hub_user_modulos.modulo_slug (o JOIN de meus_modulos() roda a CADA login e varria a tabela) e drop de idx_config_chave (duplicata exata da PK co_config_pkey).",
+      "SEGURANCA · Consolidacao de policies validada com JWT simulado nos 3 cenarios: usuario comum ve so o proprio perfil (0 de outros), admin ve todos (7 perfis/9 acessos/5 modulos), usuario comum BLOQUEADO de se auto-conceder modulo (insert indevido = 0). Comportamento identico ao de antes.",
+      "CLEANUP · Removidos 3 wrappers lazy orfaos (ResultadoWrapper/PainelFinanceiroWrapper/CreditosPendentesWrapper) -- FinanceiroView importa os componentes direto, nunca foram usados. Removida chave duplicada '💬' em Icon.jsx (gerava warning em TODA build).",
+      "ESCOPO · 85 dos 95 avisos de 'multiple permissive policies' e 26 dos 27 FKs sem indice do Advisor sao do schema `frota` (app frota-pro, tabelas vazias, projeto separado) -- NAO mexidos de proposito: risco sem ganho pra este app.",
+      "PENDENTE · 2 tabelas de backup orfas no banco (_backup_avb_orfaos_20260611: 4 linhas, _backup_avb_dups_20260611: 75 linhas), sobra de uma limpeza de 11/06. Tem dado real -- nao apagadas sem confirmacao do Yves.",
+    ],
+  },
+  {
     data: "2026-07-14", sessao: "Sessao 43",
     itens: [
       "FIX PERF · Hub 'demorado' apos a sessao 42: App.jsx chamava useMotoristas(getConexao()) incondicional, disparando 2 fetches (motoristas: 848 linhas + veiculos: 727 linhas) assim que a sessao autenticava -- AINDA no Hub/login, antes do usuario escolher modulo, competindo por rede bem na hora de abrir a tela do Google ou clicar em Gerenciar acessos. Agora so busca depois de entrar de fato no Controle Operacional (hubScreen===\"controle_op\").",
