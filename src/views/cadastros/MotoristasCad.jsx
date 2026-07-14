@@ -46,7 +46,12 @@ export default function MotoristasCad({ ctx, conn }) {
       const atualizado = form.__novo
         ? [...motoristas, dados]
         : motoristas.map((m) => (m.id === form.id ? { ...m, ...dados } : m));
-      await saveMotoristasLS(atualizado);
+      const r = await saveMotoristasLS(atualizado);
+      // Placa que já pertencia a outro motorista foi reatribuída — avisa, senão o
+      // vínculo do outro sumia em silêncio.
+      (r?.reatribuidas || []).forEach(({ placa, deMotorista }) => {
+        showToast?.(`Placa ${placa} estava com "${deMotorista}" e passou para "${dados.nome}".`, "warn");
+      });
       showToast?.(`"${dados.nome}" ${form.__novo ? "cadastrado" : "atualizado"}.`, "ok");
       setForm(null);
     } catch (e) { showToast?.("Erro ao salvar: " + e.message, "erro"); }

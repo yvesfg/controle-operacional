@@ -1,48 +1,64 @@
 // Hook do cadastro de embarcadoras — carrega a lista uma vez e expõe as operações.
 // É o ponto de entrada pra QUALQUER tela que precise de embarcadora (não só a
 // Conferência de Faturamento): `const { lista, mapa, criar } = useEmbarcadoras(conn)`.
+//
+// Busca SEMPRE todas (inclusive inativas) e filtra no cliente: são poucas dezenas,
+// e assim o cache (dataCache.js) tem uma chave só — a Conferência e a tela de
+// Cadastros compartilham o mesmo fetch em vez de fazer um cada.
 import React from "react";
 import {
   listarEmbarcadoras, criarEmbarcadora, atualizarEmbarcadora, setAtivoEmbarcadora, mapaEmbarcadoras,
 } from "../embarcadoras.js";
+import { getCached, invalidar, inscrever, CHAVES } from "../dataCache.js";
 
 export default function useEmbarcadoras(conn, { incluirInativas = false, onErro } = {}) {
-  const [lista, setLista] = React.useState([]);
+  const [todas, setTodas] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
 
-  const recarregar = React.useCallback(async () => {
-    if (!conn) return;
+  // Deps primitivas: getConexao() devolve objeto novo a cada chamada, e usar `conn`
+  // como dep refazia o fetch a cada render de quem chama.
+  const url = conn?.url, key = conn?.key;
+  const connRef = React.useRef(conn);
+  connRef.current = conn;
+  const onErroRef = React.useRef(onErro);
+  onErroRef.current = onErro;
+
+  const recarregar = React.useCallback(async (forcar = false) => {
+    const c = connRef.current;
+    if (!c) return;
+    if (forcar) invalidar(CHAVES.embarcadoras);
     setLoading(true);
-    try { setLista(await listarEmbarcadoras(conn, { incluirInativas })); }
-    catch (e) { onErro?.("Erro ao carregar embarcadoras: " + e.message); }
+    try { setTodas(await getCached(CHAVES.embarcadoras, () => listarEmbarcadoras(c, { incluirInativas: true }))); }
+    catch (e) { onErroRef.current?.("Erro ao carregar embarcadoras: " + e.message); }
     finally { setLoading(false); }
-  }, [conn, incluirInativas, onErro]);
+  }, [url, key]);
 
   React.useEffect(() => { recarregar(); }, [recarregar]);
+  React.useEffect(() => inscrever(CHAVES.embarcadoras, () => recarregar()), [recarregar]);
 
+  const lista = React.useMemo(
+    () => (incluirInativas ? todas : todas.filter((e) => e.ativo)),
+    [todas, incluirInativas],
+  );
   const mapa = React.useMemo(() => mapaEmbarcadoras(lista), [lista]);
 
-  // Atualizam o estado local no lugar de refetchar — a tela reflete na hora.
   const criar = React.useCallback(async (dados) => {
-    const nova = await criarEmbarcadora(conn, dados);
-    setLista((arr) => [...arr, nova].sort((a, b) => a.nome.localeCompare(b.nome)));
+    const nova = await criarEmbarcadora(connRef.current, dados);
+    invalidar(CHAVES.embarcadoras);
     return nova;
-  }, [conn]);
+  }, []);
 
   const atualizar = React.useCallback(async (cnpj, patch) => {
-    const upd = await atualizarEmbarcadora(conn, cnpj, patch);
-    setLista((arr) => arr.map((e) => (e.cnpj === upd.cnpj ? upd : e)).sort((a, b) => a.nome.localeCompare(b.nome)));
+    const upd = await atualizarEmbarcadora(connRef.current, cnpj, patch);
+    invalidar(CHAVES.embarcadoras);
     return upd;
-  }, [conn]);
+  }, []);
 
   const setAtivo = React.useCallback(async (cnpj, ativo) => {
-    const upd = await setAtivoEmbarcadora(conn, cnpj, ativo);
-    // incluirInativas=false: a desativada some da lista; =true: fica, só muda o toggle.
-    setLista((arr) => (!incluirInativas && !ativo
-      ? arr.filter((e) => e.cnpj !== cnpj)
-      : arr.map((e) => (e.cnpj === upd.cnpj ? upd : e))));
+    const upd = await setAtivoEmbarcadora(connRef.current, cnpj, ativo);
+    invalidar(CHAVES.embarcadoras);
     return upd;
-  }, [conn, incluirInativas]);
+  }, []);
 
   return { lista, mapa, loading, recarregar, criar, atualizar, setAtivo };
 }

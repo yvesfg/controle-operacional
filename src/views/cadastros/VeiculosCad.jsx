@@ -8,10 +8,22 @@ import { soDigitosPlaca } from "../../veiculos.js";
 // config_eixos/carroceria/capacidade_m3 só fazem sentido pra tipo=carreta
 // (ver migration 008); ficam desabilitados no form quando tipo=cavalo.
 
-const VAZIO = { placa: "", tipo: "cavalo", config_eixos: "", carroceria: "", capacidade_m3: "", motorista_id: "", ativo: true };
+const VAZIO = { placa: "", tipo: "cavalo", num_eixos: "", config_eixos: "", carroceria: "", capacidade_m3: "", motorista_id: "", ativo: true };
+
+// Categoria = SOMA dos eixos do cavalo + da(s) carreta(s) do mesmo motorista.
+// (cavalo 2 + carreta 3 = 5 -> SIMPLES; 3+3 = 6 -> LS; 3+4 = 7 -> LS4EIXO;
+//  BITREM = 7 com duas carretas; RODOTREM = 9.)
+const categoriaPorEixos = (total, qtdCarretas) => {
+  if (!total) return null;
+  if (total >= 9) return "RODOTREM (9 eixos)";
+  if (total === 7) return qtdCarretas >= 2 ? "BITREM (7 eixos, 2 carretas)" : "LS4EIXO (7 eixos)";
+  if (total === 6) return "LS (6 eixos)";
+  if (total === 5) return "SIMPLES (5 eixos)";
+  return `${total} eixos`;
+};
 
 export default function VeiculosCad({ ctx, conn }) {
-  const { t, showToast } = ctx;
+  const { t, showToast, hexRgb } = ctx;
   const onErro = React.useCallback((msg) => showToast?.(msg, "erro"), [showToast]);
   const { lista, loading, criar, atualizar } = useVeiculos(conn, { onErro });
   const { motoristas } = useMotoristas(conn, { onErro });
@@ -34,11 +46,30 @@ export default function VeiculosCad({ ctx, conn }) {
   const novo = () => setForm({ ...VAZIO, __novo: true });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Peças do motorista selecionado no form + a que está sendo editada agora (com os
+  // valores ainda não salvos), pra somar os eixos do conjunto em tempo real.
+  const conjunto = React.useMemo(() => {
+    if (!form?.motorista_id) return null;
+    const motorista = motoristaPorId.get(form.motorista_id);
+    if (!motorista) return null;
+    const placaAtual = soDigitosPlaca(form.placa);
+    const outras = lista.filter((v) => v.motorista_id === form.motorista_id && v.placa !== placaAtual);
+    const emEdicao = placaAtual
+      ? [{ placa: placaAtual, tipo: form.tipo, num_eixos: form.num_eixos ? parseInt(form.num_eixos, 10) : null }]
+      : [];
+    const pecas = [...emEdicao, ...outras].sort((a, b) => (a.tipo === b.tipo ? 0 : a.tipo === "cavalo" ? -1 : 1));
+    const total = pecas.reduce((s, p) => s + (Number(p.num_eixos) || 0), 0);
+    return { motorista, pecas, total, qtdCarretas: pecas.filter((p) => p.tipo === "carreta").length };
+  }, [form?.motorista_id, form?.placa, form?.tipo, form?.num_eixos, lista, motoristaPorId]);
+
   const salvar = async () => {
     const placa = soDigitosPlaca(form.placa);
     if (!placa) { showToast?.("Informe a placa.", "erro"); return; }
     const dados = {
       tipo: form.tipo,
+      // num_eixos vale pros DOIS tipos (cavalo 2-3, carreta 3-4) — migration 014.
+      num_eixos: form.num_eixos ? parseInt(form.num_eixos, 10) : null,
+      // Já carroceria/capacidade/rótulo do conjunto só fazem sentido na carreta.
       config_eixos: form.tipo === "carreta" ? (form.config_eixos || null) : null,
       carroceria: form.tipo === "carreta" ? (form.carroceria || null) : null,
       capacidade_m3: form.tipo === "carreta" && form.capacidade_m3 ? parseFloat(form.capacidade_m3) : null,
@@ -95,8 +126,20 @@ export default function VeiculosCad({ ctx, conn }) {
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {/* Eixos DESTA peça — vale pros dois tipos (cavalo 2-3, carreta 3-4). */}
+            <div style={{ flex: "1 1 120px" }}>
+              <label style={lbl}>Eixos {form.tipo === "cavalo" ? "do cavalo" : "da carreta"}</label>
+              <select value={form.num_eixos ?? ""} onChange={(e) => set("num_eixos", e.target.value)} style={inp}>
+                <option value="">—</option>
+                {(form.tipo === "cavalo" ? [2, 3] : [2, 3, 4]).map((n) => (
+                  <option key={n} value={n}>{n} eixos</option>
+                ))}
+              </select>
+            </div>
+            {/* Rótulo do CONJUNTO (soma cavalo+carreta) — só na carreta, que é onde
+                a agenda/TMS registra. O total real aparece embaixo pra conferência. */}
             <div style={{ flex: "1 1 140px" }}>
-              <label style={lbl}>Eixos</label>
+              <label style={lbl}>Categoria do conjunto</label>
               <select value={form.config_eixos || ""} disabled={form.tipo !== "carreta"} onChange={(e) => set("config_eixos", e.target.value)} style={{ ...inp, opacity: form.tipo !== "carreta" ? .5 : 1 }}>
                 <option value="">—</option>
                 <option value="SIMPLES">Simples (5 eixos)</option>
@@ -122,6 +165,30 @@ export default function VeiculosCad({ ctx, conn }) {
               <input value={form.capacidade_m3 || ""} disabled={form.tipo !== "carreta"} onChange={(e) => set("capacidade_m3", e.target.value)} style={{ ...inp, opacity: form.tipo !== "carreta" ? .5 : 1 }} />
             </div>
           </div>
+
+          {/* Conjunto do motorista escolhido: mostra as outras peças dele e a SOMA
+              dos eixos (é o que define SIMPLES/LS/LS4EIXO). Sem isso não dava pra
+              saber, ao vincular, o que o motorista já tem atrelado. */}
+          {conjunto && (
+            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 8, background: t.card2, border: `1px solid ${t.borda}` }}>
+              <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 5 }}>Conjunto de {conjunto.motorista.nome}</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                {conjunto.pecas.map((p) => (
+                  <span key={p.placa} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, fontFamily: "var(--font-mono)",
+                    background: p.placa === soDigitosPlaca(form.placa) ? hexRgb(t.ouro, .16) : "transparent",
+                    border: `1px solid ${p.placa === soDigitosPlaca(form.placa) ? t.ouro : t.borda}`, color: t.txt }}>
+                    {p.placa} · {p.tipo}{p.num_eixos ? ` · ${p.num_eixos}e` : ""}
+                  </span>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: conjunto.total ? t.txt : t.txt2, marginTop: 6 }}>
+                {conjunto.total
+                  ? <>Total: <b>{conjunto.total} eixos</b> → {categoriaPorEixos(conjunto.total, conjunto.qtdCarretas)}</>
+                  : "Preencha os eixos das peças pra calcular a categoria."}
+              </div>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
             <button onClick={() => setForm(null)} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Cancelar</button>
             <button onClick={salvar} disabled={salvando} style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvando ? .5 : 1 }}>
@@ -144,7 +211,7 @@ export default function VeiculosCad({ ctx, conn }) {
               {motoristaPorId.get(v.motorista_id)?.nome || <span style={{ color: t.txt2 }}>sem vínculo</span>}
             </div>
             <div style={{ flex: "1 1 160px", fontSize: 10.5, color: t.txt2 }}>
-              {[v.config_eixos, v.carroceria, v.capacidade_m3 && v.capacidade_m3 + "m³"].filter(Boolean).join(" · ")}
+              {[v.num_eixos && `${v.num_eixos} eixos`, v.config_eixos, v.carroceria, v.capacidade_m3 && v.capacidade_m3 + "m³"].filter(Boolean).join(" · ")}
             </div>
             <button onClick={() => editar(v)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Editar</button>
           </div>

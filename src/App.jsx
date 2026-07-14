@@ -392,7 +392,15 @@ export default function App() {
   // ainda no Hub/tela de login, competindo com o resto e deixando tudo mais lento
   // pra quem só ia abrir outro módulo (Frota/ANTT/Calculadora).
   const motoristasOnErro = useCallback((msg) => showToast(msg, "erro"), [showToast]);
-  const motoristasConn = hubScreen === "controle_op" ? getConexao() : null;
+  // useMemo obrigatorio: getConexao() devolve um OBJETO NOVO a cada chamada. Chamar
+  // direto no corpo do render dava uma referencia nova a cada render, e o efeito do
+  // useMotoristas (que dependia do objeto) refazia o fetch das duas tabelas a cada
+  // render do App -- refetch em loop, que saturava a rede e deixava TODAS as telas
+  // lentas (Cadastros, Conferencia...).
+  const motoristasConn = useMemo(
+    () => (hubScreen === "controle_op" ? getConexao() : null),
+    [hubScreen, getConexao],
+  );
   const { motoristas, saveMotoristasLS } = useMotoristas(motoristasConn, { onErro: motoristasOnErro });
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
