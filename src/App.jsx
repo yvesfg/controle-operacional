@@ -1243,8 +1243,8 @@ export default function App() {
     .filter(tb => !tb.hideAvb || baseAtual?.id !== "acailandia_avb");
 
   // RELATÓRIOS PDF — via criarMotoresRelatorio (src/relatorios/relatorioEngine.js)
-  const { relHtmlBase, gerarRelatorioGeral, gerarRelatorioDiarias, gerarRelatorioDescargas, gerarRelatorioOperacional } =
-    criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual });
+  const { relHtmlBase, gerarRelatorioMotorista, gerarRelatorioGeral, gerarRelatorioDiarias, gerarRelatorioDescargas, gerarRelatorioOperacional } =
+    criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual, diariasData, sgsItems });
 
   // Classe do co-main muda conforme largura + collapse state
   const coMainCls = `co-main${isWide?(sidebarCollapsed?" co-main--collapsed":""):""}${!isWide?" co-main--mobile":""}`;

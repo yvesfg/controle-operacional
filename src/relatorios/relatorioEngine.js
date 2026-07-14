@@ -4,7 +4,7 @@ import { fmtMoeda, parseData, diffDias, brToInput } from '../utils.js';
  * Factory que recebe os dados de contexto e retorna as funções de geração de relatório.
  * Chamado no render do App.jsx para que as funções sempre tenham acesso aos dados atuais.
  */
-export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual }) {
+export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual, diariasData, sgsItems }) {
   const relHtmlBase = (titulo, subtitulo, corpo) => {
     const now = new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
     const logoBlock = customLogo
@@ -834,6 +834,7 @@ export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual
 
   return {
     relHtmlBase,
+    gerarRelatorioMotorista,
     gerarRelatorioGeral,
     gerarRelatorioDiarias,
     gerarRelatorioDescargas,
