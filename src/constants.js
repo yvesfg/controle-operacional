@@ -146,6 +146,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-14", sessao: "Sessao 45",
+    itens: [
+      "CAUSA DO ALERTA DE DISK IO DO SUPABASE · O e-mail 'depleting its Disk IO Budget' foi consequencia do refetch em loop (getConexao() devolvia objeto novo a cada render -> useEffect do useMotoristas refazia o fetch a CADA render do App). Medido no pg_stat_statements: SELECT em `motoristas` com 81.261 chamadas e 45 MINUTOS de CPU acumulados, e `veiculos` com 55.550 -- em tabelas criadas no MESMO DIA (~5 req/s ininterruptos). Nao era volume de dado (banco inteiro tem 21 MB, cabe em RAM) nem limite do plano free.",
+      "VALIDADO · Stats zeradas (pg_stat_statements_reset) e app exercitado com o codigo corrigido: navegacao por 7 telas + alternancia entre as 3 abas de Cadastros 5x resultou em 1 chamada de motoristas, 1 de veiculos, 1 de embarcadoras. Zero leitura de disco. De 81.261 -> 1.",
+      "NAO E PROBLEMA · Os ~140 mil INSERTs em controle_operacional no pg_stat_statements sao o acumulado HISTORICO de meses (as stats nunca tinham sido zeradas); o sync do Sheets ja envia em lotes de 50 (SyncSupabase.gs). Nao ha o que otimizar ali.",
+      "DECISAO · Nao vale pagar upgrade de compute (o consumo era artificial, nao demanda real) nem migrar pra PocketBase/outro backend -- o gargalo nunca foi o Supabase. Revisar o Disk IO no painel nos proximos dias: o budget se recompoe sozinho com o consumo normalizado.",
+    ],
+  },
+  {
     data: "2026-07-14", sessao: "Sessao 44",
     itens: [
       "FIX · Logout nao funcionava: logoutSupa() so removia a sessao DEPOIS de esperar signOut() (uma request de rede) e, se ela falhasse, o catch engolia o erro em silencio -- a sessao continuava no localStorage e o bootstrap (App.jsx getSession()) re-logava no proximo render/reload. Agora limpa a chave `co_supa_auth` PRIMEIRO, sem esperar a rede; a revogacao server-side vai em background. Validado no navegador: logout limpa sessao+tokens, volta pro login e CONTINUA deslogado apos reload.",
