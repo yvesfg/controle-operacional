@@ -27,6 +27,8 @@ export default function HubScreen({
   frotaUrl, handleLogout, showToast, toast,
 }) {
   const [mods, setMods] = useState(null);   // null = carregando
+  const [erroMods, setErroMods] = useState(null); // mensagem de erro, se a carga falhar/travar
+  const [tentativa, setTentativa] = useState(0); // incrementa pra forçar novo useEffect (retry manual)
   const [showAdmin, setShowAdmin] = useState(false);
   const frotaIframeRef = useRef(null);
   const [showFrotaModal, setShowFrotaModal] = useState(false);
@@ -36,16 +38,27 @@ export default function HubScreen({
 
   useEffect(() => {
     let cancel = false;
-    fetchMeusModulos().then(d => {
+    setMods(null); setErroMods(null);
+    // Sem timeout aqui, uma falha de rede deixava a tela presa em "Carregando
+    // módulos…" pra sempre — fetchMeusModulos só trata erro que o Supabase
+    // devolve como {error}, não uma promise que nunca resolve.
+    const comTimeout = Promise.race([
+      fetchMeusModulos(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 12000)),
+    ]);
+    comTimeout.then(d => {
       if (cancel) return;
       setMods(d || []);
       // Pré-carrega acesso ao CO em background para eliminar latência no clique
       if ((d || []).some(m => m.slug === "controle_op")) {
         fetchMeuAcesso("controle_op").then(a => { if (!cancel) acessoCORef.current = a; });
       }
+    }).catch(e => {
+      if (cancel) return;
+      setErroMods(e?.message === "timeout" ? "Demorou demais pra responder." : "Não foi possível carregar seus módulos.");
     });
     return () => { cancel = true; };
-  }, []);
+  }, [tentativa]);
 
   const ehAdmin = (mods || []).some(m => m.slug === "controle_op" && m.role === "admin");
 
@@ -158,7 +171,13 @@ export default function HubScreen({
         <div style={{fontSize:9,color:t.txt2,letterSpacing:".14em",textTransform:"uppercase"}}>Selecione o módulo</div>
       </div>
 
-      {mods === null ? (
+      {erroMods ? (
+        <div style={{maxWidth:380,textAlign:"center",position:"relative",zIndex:1,background:t.card,border:`1px solid ${hexRgb(t.danger,.35)}`,borderRadius:14,padding:"28px 24px"}}>
+          <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:6}}>{erroMods}</div>
+          <div style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:14}}>Verifique sua conexão e tente de novo.</div>
+          <button onClick={()=>setTentativa(n=>n+1)} style={{background:t.ouro,color:t.onPrimary,border:"none",borderRadius:8,padding:"8px 16px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Tentar novamente</button>
+        </div>
+      ) : mods === null ? (
         <div style={{fontSize:12,color:t.txt2,position:"relative",zIndex:1}}>Carregando módulos…</div>
       ) : mods.length === 0 ? (
         <div style={{maxWidth:380,textAlign:"center",position:"relative",zIndex:1,background:t.card,border:`1px solid ${t.borda}`,borderRadius:14,padding:"28px 24px"}}>

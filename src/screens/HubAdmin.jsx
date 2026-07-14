@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
-import { getSupaAuth, createTestViewer, gerarSenhaAleatoria, isTestUserEmail } from "../supabaseAuth.js";
+import {
+  getSupaAuth, createTestViewer, gerarSenhaAleatoria, isTestUserEmail,
+  hubAdminSetStatus, resetTestUserPassword, deleteTestUser,
+} from "../supabaseAuth.js";
 
 const PERFIS = ["admin", "gerente", "operador", "visualizador"];
 // controle_op: o "role" (usado pela RLS) é derivado do Perfil — evita controle redundante
@@ -13,6 +16,7 @@ const PERM_LABEL = {
   usuarios:"Usuários", ocorrencias:"Ocorrências",
 };
 const BASE_LIST = Object.values(BASES);
+const NEGADOS_PREVIA = 5; // "breve histórico" — o resto fica atrás de "ver todos"
 
 function normalizarUsername(v) {
   return (v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
@@ -20,7 +24,7 @@ function normalizarUsername(v) {
 }
 
 export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
-  const [perfis, setPerfis] = useState(null);   // [{id,nome,email, acessos:[]}]
+  const [perfis, setPerfis] = useState(null);   // [{id,nome,email,status, acessos:[]}]
   const [catalogo, setCatalogo] = useState([]); // hub_modulos ativos
   const [aberto, setAberto] = useState(null);
   const [novo, setNovo] = useState({});         // por user: {slug, role}
@@ -29,6 +33,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   const [formTeste, setFormTeste] = useState({ username:"", password: gerarSenhaAleatoria(), slug:"controle_op", bases:[] });
   const [salvandoTeste, setSalvandoTeste] = useState(false);
   const [credenciaisCriadas, setCredenciaisCriadas] = useState(null); // {username,password,email} — mostrado 1x
+  const [verTodosNegados, setVerTodosNegados] = useState(false);
+  const [resetSenha, setResetSenha] = useState(null); // {userId, senha} — quando a caixa de reset está aberta pra um usuário
+  const [processando, setProcessando] = useState(null); // id do que está em request (approve/deny/reset), pra desabilitar botão
 
   const carregar = useCallback(async () => {
     const sb = getSupaAuth();
@@ -59,8 +66,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     const { error } = await sb.from("hub_user_modulos").upsert(
       { user_id: userId, modulo_slug: slug, role: finalRole, ativo: true, config },
       { onConflict: "user_id,modulo_slug" });
-    if (error) showToast?.("Erro: " + error.message, "err");
-    else { showToast?.("Acesso concedido", "ok"); carregar(); }
+    if (error) { showToast?.("Erro: " + error.message, "err"); return; }
+    // Conceder um módulo É a aprovação (login Google: só isso basta).
+    await hubAdminSetStatus(userId, "aprovado");
+    showToast?.("Acesso concedido", "ok"); carregar();
   };
 
   const patch = async (id, campos) => {
@@ -68,12 +77,59 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     if (error) showToast?.("Erro: " + error.message, "err"); else carregar();
   };
   const remover = async (id) => {
-    if (!window.confirm("Remover este acesso?")) return;
+    if (!window.confirm("Remover este registro de módulo? (isso não muda o status geral do usuário — pra negar acesso, use o botão \"Negar\" no card dele)")) return;
     const { error } = await sb.from("hub_user_modulos").delete().eq("id", id);
     if (error) showToast?.("Erro: " + error.message, "err"); else { showToast?.("Removido", "ok"); carregar(); }
   };
 
   const setConfig = (acesso, novoConfig) => patch(acesso.id, { config: { ...(acesso.config||{}), ...novoConfig } });
+
+  // ── Aprovar / Negar / Reativar (status do perfil, não de um módulo) ──
+  const aprovar = async (p) => {
+    setProcessando(p.id);
+    const r = await hubAdminSetStatus(p.id, "aprovado");
+    setProcessando(null);
+    if (!r.ok) { showToast?.("Erro: " + r.error, "err"); return; }
+    showToast?.(`"${p.nome}" aprovado`, "ok");
+    setAberto(p.id); // já abre pra admin conceder o módulo
+    carregar();
+  };
+  const negar = async (p) => {
+    if (!window.confirm(`Negar acesso a "${p.nome}"? Os módulos que ele tinha ficam desativados (não apagados — dá pra reativar depois).`)) return;
+    setProcessando(p.id);
+    const r = await hubAdminSetStatus(p.id, "negado");
+    setProcessando(null);
+    if (!r.ok) { showToast?.("Erro: " + r.error, "err"); return; }
+    showToast?.(`Acesso de "${p.nome}" negado`, "ok");
+    carregar();
+  };
+  const marcarPendente = async (p) => {
+    setProcessando(p.id);
+    const r = await hubAdminSetStatus(p.id, "pendente");
+    setProcessando(null);
+    if (!r.ok) { showToast?.("Erro: " + r.error, "err"); return; }
+    showToast?.(`"${p.nome}" voltou pra aguardando aprovação`, "ok");
+    carregar();
+  };
+
+  const abrirResetSenha = (userId) => setResetSenha({ userId, senha: gerarSenhaAleatoria() });
+  const confirmarResetSenha = async () => {
+    if (!resetSenha) return;
+    setProcessando(resetSenha.userId);
+    const r = await resetTestUserPassword(resetSenha.userId, resetSenha.senha);
+    setProcessando(null);
+    if (!r.ok) { showToast?.("Erro ao resetar senha: " + r.error, "err"); return; }
+    showToast?.("Senha resetada — anote antes de fechar", "ok");
+  };
+  const excluirTeste = async (p) => {
+    if (!window.confirm(`Excluir DE VEZ a conta de teste "${p.nome}"? Não dá pra desfazer.`)) return;
+    setProcessando(p.id);
+    const r = await deleteTestUser(p.id);
+    setProcessando(null);
+    if (!r.ok) { showToast?.("Erro ao excluir: " + r.error, "err"); return; }
+    showToast?.("Usuário de teste excluído", "ok");
+    carregar();
+  };
 
   const criarUsuarioTeste = async () => {
     const username = normalizarUsername(formTeste.username);
@@ -99,6 +155,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     border:`1px solid ${on?hexRgb(t.ouro,.5):t.borda2}`, background:on?hexRgb(t.ouro,.14):"transparent", color:on?t.ouro:t.txt2 });
   const sel = { background:t.inputBg, border:`1px solid ${t.borda2}`, borderRadius:8, padding:"4px 8px", color:t.txt, fontSize:11 };
   const inp = { ...sel, padding:"7px 10px", fontSize:12, width:"100%" };
+  const btnAcao = (cor) => ({ fontSize:11, fontWeight:700, padding:"6px 12px", borderRadius:8, cursor:"pointer", border:`1.5px solid ${cor}`, background:hexRgb(cor,.12), color:cor, whiteSpace:"nowrap" });
 
   const filtrados = useMemo(() => {
     if (!perfis) return null;
@@ -107,34 +164,76 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     return perfis.filter(p => (p.nome||"").toLowerCase().includes(q) || (p.email||"").toLowerCase().includes(q));
   }, [perfis, busca]);
 
-  const pendentes = (filtrados || []).filter(p => p.acessos.length === 0);
-  const comAcesso = (filtrados || []).filter(p => p.acessos.length > 0);
+  // Status é campo PRÓPRIO agora (migration 010) — não deriva mais de acessos.length.
+  const pendentes  = (filtrados || []).filter(p => p.status === "pendente");
+  const comAcesso  = (filtrados || []).filter(p => p.status === "aprovado");
+  const negadosTd  = (filtrados || []).filter(p => p.status === "negado");
+  const negados    = verTodosNegados ? negadosTd : negadosTd.slice(0, NEGADOS_PREVIA);
 
   const renderUserCard = (p) => {
     const exp = aberto === p.id;
     const usados = new Set(p.acessos.map(a => a.modulo_slug));
     const n = novo[p.id] || { slug:"", role:"viewer" };
     const ehTeste = isTestUserEmail(p.email);
+    const buscando = processando === p.id;
     return (
       <div key={p.id} style={card}>
-        <button onClick={()=>setAberto(exp?null:p.id)} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:"transparent",border:"none",cursor:"pointer",textAlign:"left"}}>
-          <div style={{width:34,height:34,borderRadius:"50%",background:hexRgb(t.ouro,.18),color:t.ouro,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,flexShrink:0}}>{(p.nome||p.email||"?").charAt(0).toUpperCase()}</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:700,fontSize:13,color:t.txt,display:"flex",alignItems:"center",gap:6}}>
-              {p.nome}
-              {ehTeste && <span style={{fontSize:8.5,padding:"1px 6px",borderRadius:5,fontWeight:800,letterSpacing:".04em",background:"var(--chip-solid-indigo)",color:"var(--color-text-inverse)"}}>TESTE</span>}
+        <div style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px"}}>
+          <button onClick={()=>setAberto(exp?null:p.id)} style={{display:"flex",alignItems:"center",gap:10,background:"transparent",border:"none",cursor:"pointer",textAlign:"left",flex:1,minWidth:0,padding:0}}>
+            <div style={{width:34,height:34,borderRadius:"50%",background:hexRgb(t.ouro,.18),color:t.ouro,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,flexShrink:0}}>{(p.nome||p.email||"?").charAt(0).toUpperCase()}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:700,fontSize:13,color:t.txt,display:"flex",alignItems:"center",gap:6}}>
+                {p.nome}
+                {ehTeste && <span style={{fontSize:8.5,padding:"1px 6px",borderRadius:5,fontWeight:800,letterSpacing:".04em",background:"var(--chip-solid-indigo)",color:"var(--color-text-inverse)"}}>TESTE</span>}
+              </div>
+              <div style={{fontSize:11,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.email}</div>
             </div>
-            <div style={{fontSize:11,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.email}</div>
+          </button>
+
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:260}}>
+            {p.status === "aprovado" && (p.acessos.length === 0
+              ? <span style={{fontSize:10,color:t.txt2,fontStyle:"italic"}}>sem módulo concedido</span>
+              : p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",color:"var(--color-text-inverse)"}}>{catalogo.find(c=>c.slug===a.modulo_slug)?.nome || a.modulo_slug}</span>))}
           </div>
-          <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end"}}>
-            {p.acessos.length === 0 ? <span style={{fontSize:10,color:t.txt2,fontStyle:"italic"}}>sem acesso</span>
-              : p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",color:"var(--color-text-inverse)"}}>{catalogo.find(c=>c.slug===a.modulo_slug)?.nome || a.modulo_slug}</span>)}
+
+          {/* Ações rápidas por status — sem precisar expandir o card */}
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
+            {p.status === "pendente" && <>
+              <button disabled={buscando} onClick={()=>aprovar(p)} style={btnAcao(t.verde)}>Aprovar</button>
+              <button disabled={buscando} onClick={()=>negar(p)} style={btnAcao(t.danger)}>Negar</button>
+            </>}
+            {p.status === "aprovado" && (
+              <button disabled={buscando} onClick={()=>negar(p)} style={btnAcao(t.danger)}>Negar acesso</button>
+            )}
+            {p.status === "negado" && (
+              <button disabled={buscando} onClick={()=>marcarPendente(p)} style={btnAcao(t.laranja)}>Reabrir</button>
+            )}
           </div>
-          <span style={{color:t.txt2,fontSize:12}}>{exp?"▲":"▼"}</span>
-        </button>
+
+          <button onClick={()=>setAberto(exp?null:p.id)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:12,cursor:"pointer",padding:"4px"}}>{exp?"▲":"▼"}</button>
+        </div>
 
         {exp && (
           <div style={{borderTop:`1px solid ${t.borda}`,padding:"14px",display:"flex",flexDirection:"column",gap:14}}>
+            {ehTeste && (
+              <div style={{border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{fontWeight:700,fontSize:11.5,color:t.txt,flex:1}}>Credenciais de teste</span>
+                  <button disabled={buscando} onClick={()=>abrirResetSenha(p.id)} style={{...css.hBtn,fontSize:11,padding:"5px 10px"}}>🔑 Resetar senha</button>
+                  <button disabled={buscando} onClick={()=>excluirTeste(p)} style={{...css.hBtn,fontSize:11,padding:"5px 10px",color:t.danger}}>🗑 Excluir conta</button>
+                </div>
+                {resetSenha?.userId === p.id && (
+                  <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",background:hexRgb(t.ouro,.06),border:`1px solid ${hexRgb(t.ouro,.3)}`,borderRadius:8,padding:"8px 10px"}}>
+                    <span style={{fontSize:10.5,color:t.txt2}}>Nova senha:</span>
+                    <input value={resetSenha.senha} onChange={e=>setResetSenha(s=>({...s,senha:e.target.value}))} style={{...inp,width:140,fontFamily:"var(--font-mono)"}} />
+                    <button onClick={()=>setResetSenha(s=>({...s,senha:gerarSenhaAleatoria()}))} title="Gerar outra" style={{...css.hBtn,padding:"0 8px",fontSize:11}}>↻</button>
+                    <button disabled={buscando} onClick={confirmarResetSenha} style={{...btnAcao(t.verde)}}>Salvar nova senha</button>
+                    <button onClick={()=>setResetSenha(null)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer"}}>Cancelar</button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {p.acessos.map(a => {
               const cfg = a.config || {};
               const isCO = a.modulo_slug === "controle_op";
@@ -151,7 +250,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                       </select>
                     )}
                     <button onClick={()=>patch(a.id,{ativo:!a.ativo})} style={{...chip(a.ativo),color:"var(--color-text-inverse)",borderColor:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)"}}>{a.ativo?"Ativo":"Inativo"}</button>
-                    <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover">✕</button>
+                    <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover este registro de módulo">✕</button>
                   </div>
 
                   {isCO && (
@@ -206,7 +305,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
   return (
     <div style={{...css.app,background:t.bg,minHeight:"100vh",padding:"24px 18px"}}>
-      <div style={{maxWidth:640,margin:"0 auto"}}>
+      <div style={{maxWidth:960,margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
           <button onClick={onVoltar} style={{...css.hBtn,padding:"7px 12px",fontSize:12}}>← Voltar</button>
           <div>
@@ -265,7 +364,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
         {credenciaisCriadas && (
           <div style={{...card,padding:"14px",marginBottom:16,border:`1px solid ${hexRgb(t.verde,.4)}`,background:hexRgb(t.verde,.06)}}>
-            <div style={{fontSize:12,fontWeight:700,color:t.verde,marginBottom:6}}>✓ Usuário de teste criado — anote a senha, ela não aparece de novo</div>
+            <div style={{fontSize:12,fontWeight:700,color:t.verde,marginBottom:6}}>✓ Usuário de teste criado — anote a senha, ela não aparece de novo (a menos que você resete depois)</div>
             <div style={{fontFamily:"var(--font-mono)",fontSize:12,color:t.txt,display:"flex",flexDirection:"column",gap:2}}>
               <div>usuário: <b>{credenciaisCriadas.username}</b></div>
               <div>senha: <b>{credenciaisCriadas.password}</b></div>
@@ -291,8 +390,25 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           )}
           {comAcesso.length > 0 && (
             <div>
-              {pendentes.length > 0 && <div style={{fontSize:11,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Com acesso ({comAcesso.length})</div>}
+              <div style={{fontSize:11,fontWeight:700,color:t.verde,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:7,height:7,borderRadius:"50%",background:t.verde,display:"inline-block"}}/>
+                Com acesso ({comAcesso.length})
+              </div>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{comAcesso.map(renderUserCard)}</div>
+            </div>
+          )}
+          {negadosTd.length > 0 && (
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:7,height:7,borderRadius:"50%",background:t.danger,display:"inline-block"}}/>
+                Acesso negado ({negadosTd.length})
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>{negados.map(renderUserCard)}</div>
+              {negadosTd.length > NEGADOS_PREVIA && (
+                <button onClick={()=>setVerTodosNegados(v=>!v)} style={{marginTop:8,background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>
+                  {verTodosNegados ? "Mostrar só os últimos" : `Ver todos (${negadosTd.length})`}
+                </button>
+              )}
             </div>
           )}
         </div>}

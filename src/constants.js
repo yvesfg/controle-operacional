@@ -146,6 +146,16 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-14", sessao: "Sessao 42",
+    itens: [
+      "FIX · Gerenciar acessos (HubAdmin.jsx): status do usuario (pendente/aprovado/negado) era DERIVADO de existir linha em hub_user_modulos -- remover o ultimo acesso apagava a linha e jogava o usuario de volta pra 'aguardando aprovacao' sem jeito de tirar de la. Migration 010 add campo `status` proprio em hub_profiles + RPC hub_admin_set_status (SECURITY DEFINER, so admin do hub) que ao negar DESATIVA os modulos (nao apaga mais) -- historico fica pra reaprovar rapido depois. Confirmado com dado real: os 3 usuarios de teste claudecodeyfg* estavam presos nesse estado.",
+      "FEAT · HubAdmin.jsx: 3 blocos explicitos (Aguardando aprovacao / Com acesso / Acesso negado), com Aprovar/Negar/Reabrir direto no card sem precisar expandir. Negados mostra so os ultimos 5 por padrao ('breve historico'), com 'Ver todos' pra lista completa. Layout desktop alargado (640px -> 960px).",
+      "FEAT · Reset de senha de usuario de teste, visivel pro admin: novo endpoint api/hub-admin.js (Admin API do Supabase via service_role, mesmo padrao do api/ai-extract.js) com verificacao server-side de is_hub_admin() antes de qualquer coisa. PENDENTE DE CONFIGURACAO: precisa da env SUPABASE_SERVICE_ROLE_KEY (Supabase > Settings > API > service_role) no Vercel + .env.local -- sem ela o endpoint responde erro claro em vez de falhar silencioso. Tambem: excluir conta de teste definitivamente (auth.admin.deleteUser).",
+      "FIX · HubScreen.jsx: fetchMeusModulos() sem .catch() e sem timeout deixava a tela travada em 'Carregando modulos...' pra sempre se a rede falhasse (bug reportado: login trava e da timeout). Adicionado Promise.race com timeout de 12s + estado de erro com botao 'Tentar novamente'.",
+      "TESTE · Validado ao vivo: resetei a senha de claudecodeyfg via SQL direto (pgcrypto, simulando o que o novo endpoint faz), logei como esse usuario no navegador -- Hub carregou 'Nenhum modulo liberado ainda' sem travar (fix do timeout confirmado). Senha invalidada de novo depois do teste. Tela 'Gerenciar acessos' em si NAO foi verificada visualmente -- so admin (login Google do Yves) enxerga essa tela, e login Google nao pode ser automatizado aqui.",
+    ],
+  },
+  {
     data: "2026-07-14", sessao: "Sessao 41",
     itens: [
       "FEAT · Cadastro de embarcadoras virou GLOBAL: tabela `frete_clientes` renomeada pra `embarcadoras` (migration 006) + campos novos razao_social, cidade, uf e ativo. Deixou de ser cadastro exclusivo do modulo de frete pra poder ser consumido por qualquer tela. Os codigos do TMS (frete_cod/desc_local_cod/diaria_cod) continuam na tabela, lidos so pela Conferencia de Faturamento.",

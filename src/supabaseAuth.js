@@ -120,3 +120,46 @@ export async function loginTestUser(username, password) {
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
+
+// Status do perfil no Hub (aprova/nega) — RPC privilegiada (ver migration
+// 010): decide o acesso por um campo PRÓPRIO em hub_profiles, não pela
+// existência de linha em hub_user_modulos (era a causa do usuário ficar
+// preso em "aguardando aprovação" depois de ter o acesso removido).
+export async function hubAdminSetStatus(userId, status) {
+  const sb = getSupaAuth();
+  if (!sb) return { ok: false, error: "Supabase nao configurado" };
+  const { error } = await sb.rpc("hub_admin_set_status", { p_user_id: userId, p_status: status });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// Ações que exigem a Admin API do Supabase (service role) — via api/hub-admin.js,
+// que confirma que quem chama é admin do hub antes de fazer qualquer coisa.
+async function chamarHubAdminApi(body) {
+  const sb = getSupaAuth();
+  if (!sb) return { ok: false, error: "Supabase nao configurado" };
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.access_token) return { ok: false, error: "Sem sessão" };
+  const r = await fetch("/api/hub-admin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) return { ok: false, error: data.error || `Erro ${r.status}` };
+  return { ok: true, ...data };
+}
+
+// Reseta a senha de um usuário de teste — a senha nova fica visível pro admin
+// (é ele quem escolhe/gera), diferente do fluxo de recuperação por email
+// (que não existe pra esses usuários, o email é fictício).
+export function resetTestUserPassword(userId, newPassword) {
+  return chamarHubAdminApi({ action: "reset_password", userId, newPassword });
+}
+
+// Apaga de vez a conta de um usuário de teste (auth.users) — diferente de
+// "negar acesso" (que só desativa os módulos, mantém a conta pra reativar
+// depois). Usar quando o usuário de teste não serve mais pra nada.
+export function deleteTestUser(userId) {
+  return chamarHubAdminApi({ action: "delete_test_user", userId });
+}
