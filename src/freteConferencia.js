@@ -10,27 +10,11 @@ import * as XLSX from "xlsx";
 import { supaFetch } from "./supabase.js";
 
 const TABELA = "frete_conferencia";
-const TABELA_CLIENTES = "frete_clientes";
 
-// Cadastro de clientes/embarcadoras — vive no Supabase (tabela frete_clientes),
-// editável pela tela (ver ConferenciaFrete.jsx: CNPJ desconhecido na importação
-// oferece cadastrar na hora). Antes era hardcoded aqui; migrado na migration 005.
-export async function listarClientes(conn) {
-  return (await supaFetch(conn.url, conn.key, "GET", `${TABELA_CLIENTES}?order=nome.asc`)) || [];
-}
-
-// dados: { cnpj, nome, base_id, frete_cod, desc_local_cod, diaria_cod, criado_por }
-export async function criarCliente(conn, dados) {
-  const res = await supaFetch(conn.url, conn.key, "POST", TABELA_CLIENTES, [dados]);
-  return Array.isArray(res) ? res[0] : res;
-}
-
-// [{cnpj, nome, ...}] -> { [cnpjDigitos]: {cnpj, nome, ...} } — formato usado por parseFreteXLSX.
-export function mapaClientes(lista) {
-  const out = {};
-  lista.forEach((c) => { out[soDigitos(c.cnpj)] = c; });
-  return out;
-}
+// O cadastro de embarcadoras (CNPJ -> nome/base/códigos do TMS) saiu daqui na migration
+// 006: virou tabela `embarcadoras` + `src/embarcadoras.js` + hook `useEmbarcadoras`,
+// porque é global (outras telas usam) e não mais só do módulo de frete. Este arquivo
+// apenas CONSOME o cadastro: parseFreteXLSX recebe o mapa pronto por parâmetro.
 
 const soDigitos = (v) => String(v ?? "").replace(/\D/g, "").padStart(14, "0");
 const num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };

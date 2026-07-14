@@ -65,6 +65,7 @@ import PlanilhaAVB  from './views/avb/PlanilhaAVBWrapper.jsx';
 import LogisticaAVB from './views/avb/LogisticaAVBWrapper.jsx';
 import GestaoAVB    from './views/avb/GestaoAVBWrapper.jsx';
 import FinanceiroView from './views/FinanceiroViewWrapper.jsx';
+import CadastrosView from './views/CadastrosViewWrapper.jsx';
 import _ModalEditImpl  from './modals/ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
 import ModalMotorista  from './modals/ModalMotorista.jsx';
@@ -1234,6 +1235,8 @@ export default function App() {
       ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
     {k:"relatorios", l:"Relatórios",
       ico:(a)=>svgIco(a,<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>)},
+    {k:"cadastros", l:"Cadastros", perm:"cadastros",
+      ico:(a)=>svgIco(a,<><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></>)},
   ].filter(tb => !tb.perm || perms[tb.perm] !== false)
     .filter(tb => !(tb.k === "diarias" && baseAtual?.noDiarias))
     .filter(tb => !tb.avbOnly || baseAtual?.id === "acailandia_avb")
@@ -1622,6 +1625,14 @@ export default function App() {
             activeTab, DADOS,
             t, css, DESIGN, hexRgb, hIco, isMobile,
             abrirDetalhe,
+          }} />
+        )}
+
+        {/* ═══ CADASTROS (globais: embarcadoras, ...) ═══ */}
+        {activeTab === "cadastros" && (
+          <CadastrosView ctx={{
+            t, css, DESIGN, isMobile, hexRgb, hIco,
+            showToast, usuarioLogado, getConexao,
           }} />
         )}
 

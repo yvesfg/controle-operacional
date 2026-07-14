@@ -68,18 +68,18 @@ export const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set
 export const MOBILE_NAV_PINNED = ["dashboard", "financeiro", "planilha", "descarga"];
 export const PERMS_PADRAO = {
   // ── Admin: acesso total ──
-  admin:      {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:true,  usuarios:true,  ocorrencias:true },
+  admin:      {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:true,  usuarios:true,  ocorrencias:true,  cadastros:true },
   // ── Gerente: vê financeiro, edita tudo operacional, sem config de sistema ──
-  gerente:    {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true },
+  gerente:    {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true,  cadastros:true },
   // ── Operador: edita tudo operacional incluindo financeiro, sem config de sistema ──
-  operador:   {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true },
+  operador:   {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true,  cadastros:true },
   // ── Visualizador: somente leitura ──
-  visualizador:{financeiro:false,editar:false,importar:false,dashboard:true,diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:false},
+  visualizador:{financeiro:false,editar:false,importar:false,dashboard:true,diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:false, cadastros:false},
 };
 export const PERMS_LISTA = [
   {key:"financeiro",lbl:"Financeiro"},{key:"editar",lbl:"Editar"},{key:"importar",lbl:"Importar"},
   {key:"dashboard",lbl:"Dashboard"},{key:"diarias",lbl:"Diárias"},{key:"descarga",lbl:"Descarga"},
-  {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
+  {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"cadastros",lbl:"Cadastros"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
 ];
 
 // ════════════════════════════════════════════════════════════
@@ -145,6 +145,15 @@ export const hexRgb = (colorOrVar, a) => {
 };
 
 export const DEV_CHANGELOG = [
+  {
+    data: "2026-07-14", sessao: "Sessao 41",
+    itens: [
+      "FEAT · Cadastro de embarcadoras virou GLOBAL: tabela `frete_clientes` renomeada pra `embarcadoras` (migration 006) + campos novos razao_social, cidade, uf e ativo. Deixou de ser cadastro exclusivo do modulo de frete pra poder ser consumido por qualquer tela. Os codigos do TMS (frete_cod/desc_local_cod/diaria_cod) continuam na tabela, lidos so pela Conferencia de Faturamento.",
+      "REFACTOR · CRUD do cadastro saiu de freteConferencia.js pra src/embarcadoras.js (listar/criar/atualizar/setAtivo/mapa + formatCNPJ) + hook src/hooks/useEmbarcadoras.js. ConferenciaFrete.jsx passou a consumir o hook; o formulario de CNPJ desconhecido na importacao ganhou cidade/UF.",
+      "FEAT · Nova aba 'Cadastros' no menu (perm `cadastros`: admin/gerente/operador sim, visualizador nao) — casa dos cadastros compartilhados. Primeira secao: Embarcadoras (busca por nome/CNPJ/cidade, novo/editar, toggle ativo). CNPJ e chave e nao e editavel depois: pra corrigir, desativa e cadastra outra, senao o historico de frete_conferencia fica orfao. Desativa em vez de excluir, pelo mesmo motivo.",
+      "PENDENTE · Nao validado em navegador logado (login exige credencial). Build passa e a migration 006 foi verificada no banco.",
+    ],
+  },
   {
     data: "2026-07-09", sessao: "Sessao 40",
     itens: [

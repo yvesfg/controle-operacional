@@ -4,8 +4,9 @@ import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
-  listarClientes, criarCliente, mapaClientes, classificarLinhasCliente, recalcularFlagsEPeriodo,
+  classificarLinhasCliente, recalcularFlagsEPeriodo,
 } from "../freteConferencia.js";
+import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
 import KpiCard from "../components/KpiCard.jsx";
 import { BASES } from "../constants.js";
 
@@ -65,7 +66,6 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [importing, setImporting] = React.useState(false);
   const fileRef = React.useRef(null);
   const [preview, setPreview] = React.useState(null); // { periodoRef, periodosEncontrados, linhas, naoClassificadas, desconhecidos, resumo }
-  const [clientes, setClientes] = React.useState([]); // cadastro de embarcadoras (frete_clientes)
   const [formsDesconhecidos, setFormsDesconhecidos] = React.useState({}); // { [cnpj]: { nome, base_id, mapEmpresa: {codigo: categoria} } }
   const [cadastrando, setCadastrando] = React.useState(null); // cnpj em processo de cadastro (spinner do botão)
   const [dupModal, setDupModal] = React.useState({ open: false, chave: null });
@@ -102,13 +102,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   React.useEffect(() => { carregar(); }, [carregar]);
 
-  const carregarClientes = React.useCallback(async () => {
-    if (!conn) return;
-    try { setClientes(await listarClientes(conn)); }
-    catch (e) { showToast?.("Erro ao carregar cadastro de clientes: " + e.message, "erro"); }
-  }, [conn, showToast]);
-  React.useEffect(() => { carregarClientes(); }, [carregarClientes]);
-  const clientesMap = React.useMemo(() => mapaClientes(clientes), [clientes]);
+  // Cadastro de embarcadoras (tabela `embarcadoras`) — compartilhado com as outras telas.
+  const onErroEmb = React.useCallback((msg) => showToast?.(msg, "erro"), [showToast]);
+  const { mapa: clientesMap, criar: criarEmbarcadora } = useEmbarcadoras(conn, { onErro: onErroEmb });
 
   const onEscolherArquivo = async (e) => {
     const file = e.target.files?.[0];
@@ -124,14 +120,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
       // Formulário inicial de cada CNPJ desconhecido: nome vazio, sem base, toda Empresa "ignorar"
       const forms = {};
       Object.values(r.desconhecidos).forEach((d) => {
-        forms[d.cnpj] = { nome: "", base_id: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
+        forms[d.cnpj] = { nome: "", base_id: "", cidade: "", uf: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
       });
       setFormsDesconhecidos(forms);
     } catch (err) { showToast?.("Erro ao ler arquivo: " + err.message, "erro"); }
     finally { setImporting(false); }
   };
 
-  // CNPJ desconhecido: cadastra o cliente na hora (frete_clientes) e reclassifica só as
+  // CNPJ desconhecido: cadastra a embarcadora na hora e reclassifica só as
   // linhas dele, juntando ao preview já carregado — sem precisar reler o arquivo.
   const cadastrarClienteDesconhecido = async (cnpj) => {
     const form = formsDesconhecidos[cnpj];
@@ -144,8 +140,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const diariaCod = entradas.find(([, cat]) => cat === "diaria")?.[0] || null;
     setCadastrando(cnpj);
     try {
-      const cli = await criarCliente(conn, {
+      const cli = await criarEmbarcadora({
         cnpj, nome: form.nome.trim(), base_id: form.base_id || null,
+        cidade: form.cidade?.trim() || null, uf: form.uf?.trim().toUpperCase() || null,
         frete_cod: freteCod, desc_local_cod: descLocalCod, diaria_cod: diariaCod,
         criado_por: usuarioLogado || null,
       });
@@ -155,9 +152,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       const { periodoRef: novoPeriodoRef, periodosEncontrados } = recalcularFlagsEPeriodo(novasLinhas, novasNaoClass);
       const { [cnpj]: _omit, ...restoDesconhecidos } = preview.desconhecidos;
       setPreview({ ...preview, linhas: novasLinhas, naoClassificadas: novasNaoClass, periodoRef: novoPeriodoRef, periodosEncontrados, desconhecidos: restoDesconhecidos, resumo: resumoPorCategoria(novasLinhas) });
-      setClientes((arr) => [...arr, cli]);
       showToast?.(`"${cli.nome}" cadastrado — ${classificadas.length} linha(s) já incluída(s) na importação.`, "ok");
-    } catch (e) { showToast?.("Erro ao cadastrar cliente: " + e.message, "erro"); }
+    } catch (e) { showToast?.("Erro ao cadastrar embarcadora: " + e.message, "erro"); }
     finally { setCadastrando(null); }
   };
 
@@ -809,7 +805,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
             )}
 
             {cnpjsDesconhecidos.map((d) => {
-              const form = formsDesconhecidos[d.cnpj] || { nome: "", base_id: "", mapEmpresa: {} };
+              const form = formsDesconhecidos[d.cnpj] || { nome: "", base_id: "", cidade: "", uf: "", mapEmpresa: {} };
               return (
                 <div key={d.cnpj} style={{ marginTop: 12, borderRadius: 10, border: `1.5px solid ${hexRgb(t.warn, .4)}`, background: hexRgb(t.warn, .06), padding: 12 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, marginBottom: 2 }}>CNPJ não cadastrado: {d.cnpj}</div>
@@ -825,6 +821,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       <option value="">Sem base vinculada</option>
                       {Object.values(BASES).map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
                     </select>
+                    <input value={form.cidade || ""} placeholder="Cidade de origem"
+                      onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], cidade: e.target.value } }))}
+                      style={{ flex: "1 1 140px", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit" }} />
+                    <input value={form.uf || ""} placeholder="UF" maxLength={2}
+                      onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], uf: e.target.value.toUpperCase() } }))}
+                      style={{ flex: "0 0 56px", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", textTransform: "uppercase" }} />
                   </div>
 
                   <div style={{ fontSize: 10, color: t.txt2, marginBottom: 4 }}>O que cada código de "Empresa" encontrado nas linhas significa:</div>
