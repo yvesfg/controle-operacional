@@ -27,7 +27,6 @@ import ReportBuilder from './relatorios/ReportBuilderWrapper.jsx';
 import OcorrenciasView from './views/OcorrenciasViewWrapper.jsx';
 import OperacionalView from './views/OperacionalViewWrapper.jsx';
 import PlanilhaView    from './views/PlanilhaViewWrapper.jsx';
-import MotoristasView  from './views/MotoristasViewWrapper.jsx';
 import DashboardView   from './views/DashboardViewWrapper.jsx';
 import DiariasView     from './views/DiariasViewWrapper.jsx';
 import DescargaView    from './views/DescargaViewWrapper.jsx';
@@ -1247,8 +1246,6 @@ export default function App() {
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>)},
     {k:"gestao", l:"Gestão", avbOnly:true,
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></>)},
-    {k:"motoristas", l:"Motori.",
-      ico:(a)=>svgIco(a,<><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>)},
     {k:"relatorios", l:"Relatórios",
       ico:(a)=>svgIco(a,<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>)},
     {k:"cadastros", l:"Cadastros", perm:"cadastros",
@@ -1649,6 +1646,12 @@ export default function App() {
           <CadastrosView ctx={{
             t, css, DESIGN, isMobile, hexRgb, hIco,
             showToast, usuarioLogado, getConexao,
+            // Motoristas absorveu as funcoes da aba antiga do sidebar (removida):
+            // "Sugerir vinculos" cruza as placas com as viagens (DADOS) e o
+            // relatorio PDF por motorista precisa do motor de relatorios.
+            DADOS, setDadosBase, dadosExtras, registrarLog,
+            gerarRelatorioMotorista,
+            motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
           }} />
         )}
 
@@ -1696,27 +1699,6 @@ export default function App() {
             onSalvarOcorrencia={salvarOcorrenciaExterna}
             css={css}
           />
-        )}
-        {/* ═══ MOTORISTAS ═══ */}
-        {activeTab === "motoristas" && (
-          <MotoristasView ctx={{
-            motoristas,
-            motBusca, setMotBusca,
-            motPagina, setMotPagina,
-            motSelecionados, setMotSelecionados,
-            motSugestOpen, setMotSugestOpen,
-            motSugestData, setMotSugestData,
-            motExcluirLoteTexto, setMotExcluirLoteTexto,
-            motExcluirLoteOpen, setMotExcluirLoteOpen,
-            motExcluirTodosOpen, setMotExcluirTodosOpen,
-            motExcluirTodosTexto, setMotExcluirTodosTexto,
-            motDupSugest, setMotDupSugest,
-            relGeralOpen, setRelGeralOpen,
-            DADOS, canEdit, hIco,
-            gerarRelatorioMotorista, saveMotoristasLS, showToast,
-            setFormData, setEditIdx, setModalOpen,
-            t, css, DESIGN, perfil,
-          }} />
         )}
         {/* ═══ ADMIN ═══ */}
         <AdminView ctx={{

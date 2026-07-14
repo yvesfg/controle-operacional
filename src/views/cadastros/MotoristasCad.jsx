@@ -3,10 +3,17 @@ import useMotoristas from "../../hooks/useMotoristas.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
 import EmptyState from "../../components/EmptyState.jsx";
 
-// Motoristas — lista/edição do cadastro (useMotoristas, mesmo hook que o resto do
-// app usa) + importação da agenda de contatos (Google Contacts CSV) por cima,
-// enriquecendo quem já existe (veio do Sheets, ver migration 009) e propondo os
-// que sobraram como novos numa fila de revisão em lote.
+// Motoristas — tela ÚNICA do cadastro de motorista (a aba do sidebar foi removida:
+// era redundante, tratava vínculo num segundo lugar). Reúne tudo:
+//   * lista/busca/edição (useMotoristas, mesmo hook e cache do resto do app)
+//   * ciclo da agenda do Google: IMPORTAR csv (enriquece quem veio do Sheets, ver
+//     migration 009) e EXPORTAR vCard de volta pros contatos
+//   * "Sugerir vínculos": cruza as placas do cadastro com as viagens reais (DADOS,
+//     que vem do Sheets) e preenche o motorista nas DTs que estão sem nome
+//   * relatório PDF por motorista e exclusão em lote (vieram da tela antiga)
+//
+// Fluxo completo: Sheets (fonte automática) -> Supabase (fonte real) -> app (entrada
+// manual) -> agenda do Google (enriquecimento e volta).
 
 const STATUS_LABEL = { bom: "Bom", vermelho: "Vermelho", bloqueado: "Bloqueado", golpe: "Golpe" };
 const STATUS_COR = { bom: "var(--color-info)", vermelho: "var(--warn)", bloqueado: "var(--red, #e5484d)", golpe: "var(--red, #e5484d)" };
@@ -14,7 +21,13 @@ const STATUS_COR = { bom: "var(--color-info)", vermelho: "var(--warn)", bloquead
 const VAZIO = { nome: "", cpf: "", tel: "", vinculo: "", banco: "", agencia: "", conta: "", favorecido: "", status_risco: "", observacao: "", placa1: "", placa2: "", placa3: "", placa4: "" };
 
 export default function MotoristasCad({ ctx, conn }) {
-  const { t, showToast, usuarioLogado } = ctx;
+  const {
+    t, showToast, usuarioLogado,
+    // Vindos do App: necessários pro "Sugerir vínculos" (cruza com as viagens) e
+    // pro relatório PDF por motorista — as duas funções que existiam só na tela antiga.
+    DADOS, setDadosBase, dadosExtras, gerarRelatorioMotorista, registrarLog,
+    motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
+  } = ctx;
   const onErro = React.useCallback((msg) => showToast?.(msg, "erro"), [showToast]);
   const { motoristas, saveMotoristasLS, loading, recarregar } = useMotoristas(conn, { onErro });
 
@@ -22,6 +35,8 @@ export default function MotoristasCad({ ctx, conn }) {
   const [form, setForm] = React.useState(null);
   const [salvando, setSalvando] = React.useState(false);
   const [importAberto, setImportAberto] = React.useState(false);
+  const [selecionados, setSelecionados] = React.useState(new Set()); // ids p/ exclusão em lote
+  const [excluindoLote, setExcluindoLote] = React.useState(false);
 
   const filtrados = React.useMemo(() => {
     const q = busca.trim().toUpperCase();
@@ -64,6 +79,65 @@ export default function MotoristasCad({ ctx, conn }) {
     catch (e) { showToast?.("Erro ao excluir: " + e.message, "erro"); }
   };
 
+  const excluirSelecionados = async () => {
+    if (!selecionados.size) return;
+    if (!window.confirm(`Excluir ${selecionados.size} motorista(s)? Os veículos deles ficam sem vínculo.`)) return;
+    setExcluindoLote(true);
+    try {
+      await saveMotoristasLS(motoristas.filter((m) => !selecionados.has(m.id)));
+      showToast?.(`${selecionados.size} motorista(s) excluído(s).`, "ok");
+      setSelecionados(new Set());
+    } catch (e) { showToast?.("Erro ao excluir: " + e.message, "erro"); }
+    finally { setExcluindoLote(false); }
+  };
+
+  // Exporta o cadastro como vCard (.vcf) — é o caminho de VOLTA pro Google Contacts,
+  // fechando o ciclo com a importação da agenda.
+  const exportarVCard = () => {
+    const vcf = motoristas.map((m) => {
+      const tel = (m.tel || "").replace(/\D/g, "");
+      const partes = (m.nome || "").split(" ");
+      const sobrenome = partes.pop() || "";
+      const primeiro = partes.join(" ");
+      const placas = [m.placa1, m.placa2, m.placa3, m.placa4].filter(Boolean).join(" | ");
+      return [
+        "BEGIN:VCARD", "VERSION:3.0",
+        `FN:${m.nome || ""}`, `N:${sobrenome};${primeiro};;;`,
+        tel ? `TEL;TYPE=CELL:+55${tel}` : "",
+        m.cpf ? `X-CPF:${m.cpf}` : "",
+        placas ? `NOTE:Placa: ${placas} | Vínculo: ${m.vinculo || "—"}${m.status_risco ? " | Status: " + STATUS_LABEL[m.status_risco] : ""}` : "",
+        "END:VCARD",
+      ].filter(Boolean).join("\r\n");
+    }).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([vcf], { type: "text/vcard;charset=utf-8" }));
+    a.download = "motoristas_yfgroup.vcf";
+    a.click();
+    showToast?.(`${motoristas.length} contatos exportados (.vcf).`, "ok");
+  };
+
+  // Cruza as placas do cadastro com as VIAGENS reais (DADOS, vindo do Sheets) e
+  // sugere preencher o motorista nas DTs que estão sem nome ou com nome divergente.
+  const sugerirVinculos = () => {
+    const sugs = [];
+    motoristas.forEach((mot) => {
+      const placas = [mot.placa1, mot.placa2, mot.placa3, mot.placa4]
+        .filter(Boolean).map((p) => p.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+      if (!placas.length) return;
+      (DADOS || []).forEach((reg) => {
+        const placaReg = (reg.placa || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (!placaReg || !placas.includes(placaReg)) return;
+        const nomeReg = (reg.nome || "").toUpperCase().trim();
+        if (nomeReg && nomeReg === (mot.nome || "").toUpperCase().trim()) return; // já bate
+        sugs.push({ mot, reg, placa: placaReg, aceito: null });
+      });
+    });
+    const unicas = sugs.filter((s, i) => sugs.findIndex((x) => x.reg.dt === s.reg.dt && x.mot.nome === s.mot.nome) === i);
+    if (!unicas.length) { showToast?.("Nenhuma nova sugestão de vínculo encontrada.", "ok"); return; }
+    setMotSugestData?.(unicas);
+    setMotSugestOpen?.(true);
+  };
+
   const inp = { fontSize: 12.5, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", width: "100%" };
   const lbl = { fontSize: 10.5, color: t.txt2, marginBottom: 3, display: "block" };
   const campo = (label, k, extra = {}) => (
@@ -78,15 +152,34 @@ export default function MotoristasCad({ ctx, conn }) {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CPF ou placa"
           style={{ ...inp, flex: "1 1 220px", width: "auto" }} />
-        <button onClick={() => setImportAberto(true)}
+        <button onClick={sugerirVinculos} title="Cruza as placas do cadastro com as viagens e sugere preencher o motorista nas DTs sem nome"
+          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.verde, border: `1.5px solid ${t.verde}` }}>
+          🔗 Sugerir vínculos
+        </button>
+        <button onClick={() => setImportAberto(true)} title="Google Contacts → cadastro (enriquece quem já existe)"
           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}` }}>
           📥 Importar agenda (CSV)
+        </button>
+        <button onClick={exportarVCard} title="Cadastro → Google Contacts (.vcf)"
+          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}` }}>
+          📤 Exportar vCard
         </button>
         <button onClick={novo}
           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none" }}>
           + Novo motorista
         </button>
       </div>
+
+      {selecionados.size > 0 && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: t.card2, border: `1px solid ${t.borda}` }}>
+          <span style={{ fontSize: 11.5, color: t.txt, flex: 1 }}>{selecionados.size} selecionado(s)</span>
+          <button onClick={() => setSelecionados(new Set())} style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Desmarcar</button>
+          <button onClick={excluirSelecionados} disabled={excluindoLote}
+            style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.danger, border: `1.5px solid ${t.danger}`, opacity: excluindoLote ? .5 : 1 }}>
+            {excluindoLote ? "Excluindo…" : "Excluir selecionados"}
+          </button>
+        </div>
+      )}
 
       {importAberto && (
         <ImportarAgenda ctx={ctx} conn={conn} motoristas={motoristas} usuarioLogado={usuarioLogado}
@@ -139,7 +232,10 @@ export default function MotoristasCad({ ctx, conn }) {
       <div style={{ fontSize: 11, color: t.txt2, marginBottom: 6 }}>{filtrados.length} de {motoristas.length} motorista(s)</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 560, overflowY: "auto" }}>
         {filtrados.slice(0, 200).map((m) => (
-          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 12px", borderRadius: 10, background: t.card, border: `1px solid ${t.borda}` }}>
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 12px", borderRadius: 10, background: t.card, border: `1px solid ${selecionados.has(m.id) ? t.ouro : t.borda}` }}>
+            <input type="checkbox" checked={selecionados.has(m.id)}
+              onChange={(e) => setSelecionados((s) => { const n = new Set(s); e.target.checked ? n.add(m.id) : n.delete(m.id); return n; })}
+              style={{ flexShrink: 0, cursor: "pointer" }} />
             <div style={{ flex: "1 1 200px", minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.nome}</div>
               <div style={{ fontSize: 10.5, color: t.txt2 }}>{[m.cpf, m.tel].filter(Boolean).join(" · ") || "—"}</div>
@@ -151,6 +247,10 @@ export default function MotoristasCad({ ctx, conn }) {
               <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, color: STATUS_COR[m.status_risco], border: `1px solid ${STATUS_COR[m.status_risco]}` }}>
                 {STATUS_LABEL[m.status_risco]}
               </span>
+            )}
+            {gerarRelatorioMotorista && (
+              <button onClick={() => gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista"
+                style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.ouro, border: `1px solid ${t.borda}` }}>📄</button>
             )}
             <button onClick={() => editar(m)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Editar</button>
             <button onClick={() => excluir(m)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Excluir</button>
