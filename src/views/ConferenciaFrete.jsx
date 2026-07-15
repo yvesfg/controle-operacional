@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
-  decidir, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
+  decidir, estornarRevisao, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo,
 } from "../freteConferencia.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -196,6 +196,23 @@ export default function ConferenciaFrete({ ctx, conn }) {
         : l));
       showToast?.("Revisão registrada.", "ok");
     } catch (e) { showToast?.("Erro ao registrar decisão: " + e.message, "erro"); }
+  };
+
+  // Estorna uma decisão dos Revisados (ex.: "correção feita" clicada sem querer).
+  // Limpa a decisão no banco e devolve à fila localmente se a linha ainda tiver flag.
+  const onEstornar = async (p) => {
+    if (!window.confirm(`Estornar a revisão do CTRC ${p.ctrc}? A decisão "${DECISAO_LABEL[p.decisao_manual] || p.decisao_manual}" será removida e o item volta para a fila (se ainda estiver marcado).`)) return;
+    try {
+      await estornarRevisao(conn, p.id);
+      const voltou = { ...p, decisao_manual: null, revisado_por: null, revisado_em: null, revisado_obs: null };
+      setLinhasPeriodo((arr) => arr.map((l) => (l.id === p.id ? voltou : l)));
+      setPendentes((arr) => {
+        if (arr.some((x) => x.id === p.id)) return arr;
+        const temFlag = voltou.flag_negativa || voltou.flag_baixa || voltou.flag_ambigua || voltou.flag_duplicidade;
+        return temFlag ? [voltou, ...arr] : arr;
+      });
+      showToast?.("Revisão estornada.", "ok");
+    } catch (e) { showToast?.("Erro ao estornar: " + e.message, "erro"); }
   };
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
@@ -748,6 +765,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </span>
                 <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.revisado_por || "sem registro", 15)}</span>
                 <span style={{ fontSize: 10, color: t.txt2 }}>{p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}</span>
+                <button onClick={() => onEstornar(p)} title="Estornar esta decisão e devolver à fila"
+                  style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, background: hexRgb(t.danger, .08), border: `1px solid ${hexRgb(t.danger, .18)}`, borderRadius: 6, padding: "2px 9px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: t.danger, fontFamily: "inherit" }}>
+                  ↩ Estornar
+                </button>
               </div>
             </div>
           ))}

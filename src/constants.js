@@ -146,6 +146,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-15", sessao: "Sessao 46",
+    itens: [
+      "FIX · Conferencia de Faturamento: a fila de revisao mostrava muitos itens como 'margem < 10%' que na verdade estavam ok. A coluna 'Margem Lucro' da planilha bruta divide o Saldo pelo TOTAL DO FRETE (Frete Peso + pedagio/gris/etc.), o que subestima a margem (ex.: CTRC 34681 dava 9,0% quando a margem real sobre o Frete Peso e 10,2%). Agora a margem e calculada no app como Saldo / Frete Peso (freteConferencia.js:margemBruta); flags, modal, lista, indicadores e exportacao usam esse valor.",
+      "NOTA · Usa-se o Saldo (sobra que o sistema ja calcula) e nao (frete_peso - contrato) porque o Contrato da planilha e inconsistente em ~665 linhas de Frete (0, inflado, ou = frete_peso no Local, o que zeraria margens reais). No Frete o Saldo E justamente frete_peso - contrato, entao o resultado bate com o pedido. Descarga (margem 0) e Diaria (negativa esperada) seguem com regra flexivel, sem flag.",
+      "DATA · migration 015_frete_margem_bruta_recalc.sql: backfill que recalculou margem_lucro + flags nas 3.020 linhas ja importadas (167->fila muda so em 27 itens abertos: 25 saem, 3 entram). Nao toca decisao_manual. Aplicado no Supabase.",
+      "FEAT · Conferencia de Faturamento: botao 'Estornar' em cada item da secao Revisados (ConferenciaFrete.jsx + freteConferencia.js:estornarRevisao) — desfaz uma decisao clicada sem querer (ex.: 'correcao feita'), limpa decisao_manual/revisado_* e devolve a linha a fila se ainda tiver flag ativa.",
+    ],
+  },
+  {
     data: "2026-07-14", sessao: "Sessao 45",
     itens: [
       "CAUSA DO ALERTA DE DISK IO DO SUPABASE · O e-mail 'depleting its Disk IO Budget' foi consequencia do refetch em loop (getConexao() devolvia objeto novo a cada render -> useEffect do useMotoristas refazia o fetch a CADA render do App). Medido no pg_stat_statements: SELECT em `motoristas` com 81.261 chamadas e 45 MINUTOS de CPU acumulados, e `veiculos` com 55.550 -- em tabelas criadas no MESMO DIA (~5 req/s ininterruptos). Nao era volume de dado (banco inteiro tem 21 MB, cabe em RAM) nem limite do plano free.",

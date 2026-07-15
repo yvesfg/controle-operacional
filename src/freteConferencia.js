@@ -20,6 +20,18 @@ const soDigitos = (v) => String(v ?? "").replace(/\D/g, "").padStart(14, "0");
 const num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
+// Margem BRUTA calculada no app — NÃO a coluna "Margem Lucro" da planilha, que divide
+// pelo Total do Frete (Frete Peso + pedágio/gris/etc.) e subestima a margem, jogando
+// itens ok pra fila de revisão. Base = Saldo / Frete Peso. No Frete o Saldo é a diferença
+// Frete Peso − Contrato (ex.: 15123,30 − 13576,18 = 1547,12 → 10,2%; a planilha dava 9,0%
+// sobre o Total do Frete). Usa-se o Saldo em vez de (frete_peso − contrato) porque o
+// Contrato da planilha é inconsistente (0, inflado, ou = frete_peso no Local, o que zeraria
+// margens reais); o Saldo já é a sobra correta que o sistema calcula em toda categoria.
+const margemBruta = (saldo, fretePeso) => {
+  const fp = num(fretePeso);
+  return fp > 0 ? r2((num(saldo) / fp) * 100) : 0;
+};
+
 function excelDateToISO(v) {
   if (v instanceof Date && !isNaN(v)) {
     return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, "0")}-${String(v.getUTCDate()).padStart(2, "0")}`;
@@ -92,6 +104,8 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
     // Descarga: CTe e Contrato têm o mesmo valor por definição (margem 0) — recebido
     // via NFSe na semana/mês seguinte e conciliado depois; margem 0 não é alerta aqui.
     const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga";
+    // Ignora a "Margem Lucro" da planilha e recalcula no app (ver margemBruta).
+    l.margem_lucro = margemBruta(l.saldo, l.frete_peso);
     l.flag_negativa = !margemFlexivel && l.margem_lucro < 0;
     l.flag_baixa = !margemFlexivel && l.margem_lucro >= 0 && l.margem_lucro < 10;
     l.flag_ambigua =
@@ -235,6 +249,15 @@ export async function listarSinalizados(conn, cliente) {
 
 export async function decidir(conn, id, decisao, obs, revisadoPor) {
   const body = { decisao_manual: decisao, revisado_em: new Date().toISOString(), revisado_obs: obs || null, revisado_por: revisadoPor || null, atualizado_em: new Date().toISOString() };
+  const q = encodeURIComponent(id);
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, body);
+  return Array.isArray(res) ? res[0] : res;
+}
+
+// Estorna uma decisão de revisão (ex.: "correção feita" clicada sem querer): limpa
+// decisao_manual + campos de revisão, devolvendo a linha à fila se ainda tiver flag.
+export async function estornarRevisao(conn, id) {
+  const body = { decisao_manual: null, revisado_em: null, revisado_obs: null, revisado_por: null, atualizado_em: new Date().toISOString() };
   const q = encodeURIComponent(id);
   const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, body);
   return Array.isArray(res) ? res[0] : res;
