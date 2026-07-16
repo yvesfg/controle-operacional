@@ -45,6 +45,37 @@ function downscaleImage(dataUrl, maxPx = 1600, quality = 0.82) {
   });
 }
 
+// Renderiza a 1ª página do PDF num canvas e devolve como JPEG — assim
+// qualquer provedor de IA lê (nem toda IA processa PDF nativo, e mesmo a
+// que processa fica lenta demais com documento real). Import dinâmico:
+// pdfjs-dist é pesado e só entra no bundle de quem realmente importa PDF.
+//
+// O worker do pdfjs-dist NÃO pode ser importado via `?url` do Vite — isso
+// trava page.render() indefinidamente (bug confirmado na prática, ver
+// frota-pro/src/lib/aiIntake.js). Por isso é servido como arquivo estático
+// em /public com nome fixo.
+async function pdfParaImagem(file, maxPx = 1600, quality = 0.82) {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({
+    data: buf,
+    standardFontDataUrl: "/pdf-standard-fonts/",
+  }).promise;
+  const page = await pdf.getPage(1);
+  const viewportBase = page.getViewport({ scale: 1 });
+  const escala = Math.min(2, maxPx / Math.max(viewportBase.width, viewportBase.height));
+  const viewport = page.getViewport({ scale: escala });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(viewport.width);
+  canvas.height = Math.round(viewport.height);
+  await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 // ─── Componente ───────────────────────────────────────────────────
 // Props:
 //   open      boolean
@@ -96,7 +127,7 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
     if (!file) return;
     setStep("extracting");
     try {
-      const imageData = isPdf ? await toBase64(file) : await downscaleImage(previewUrl);
+      const imageData = isPdf ? await pdfParaImagem(file) : await downscaleImage(previewUrl);
       const r = await fetch("/api/ai-extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
