@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/ai-extract.js": { "maxDuration": 60 },
+    "api/analyze-nfd.js": { "maxDuration": 60 },
+    "api/parse-rodorrica.js": { "maxDuration": 60 }
+  },
   "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
   "build": {
     "env": {
