@@ -32,6 +32,13 @@ const margemBruta = (saldo, fretePeso) => {
   return fp > 0 ? r2((num(saldo) / fp) * 100) : 0;
 };
 
+// Frota Rodorrica: por regra o Contrato é o CTe menos R$ 300 fixos, então a margem fica
+// baixa por construção e não é erro de lançamento. A planilha bruta não diz de quem é a
+// frota — o app só aponta o CANDIDATO (Frete com Saldo de exatamente R$ 300) e quem revisa
+// confirma na fila. Não vira flag/decisão automática por isso.
+export const ehCandidatoFrotaRodorrica = (l) =>
+  l?.categoria === "frete" && r2(num(l?.saldo)) === 300;
+
 function excelDateToISO(v) {
   if (v instanceof Date && !isNaN(v)) {
     return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, "0")}-${String(v.getUTCDate()).padStart(2, "0")}`;

@@ -4,7 +4,7 @@ import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, estornarRevisao, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
-  classificarLinhasCliente, recalcularFlagsEPeriodo,
+  classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica,
 } from "../freteConferencia.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
 import KpiCard from "../components/KpiCard.jsx";
@@ -35,12 +35,22 @@ const DECISAO_LABEL = {
   confirmar_ambas: "2 lançamentos reais",
   ignorar_duplicidade: "duplicidade ignorada",
   correcao_feita: "correção feita",
+  frota_rodorrica: "frota Rodorrica (contrato = CTe − R$ 300)",
 };
+
+// Justificativas prontas do "Marcar revisado" — os motivos que mais se repetem na fila.
+// A de frota só aparece quando a linha é candidata (ver ehCandidatoFrotaRodorrica).
+const OBS_ATALHOS = [
+  "Valor conferido com o contrato",
+  "Margem baixa aprovada pela gestão",
+  "Preço fechado com o cliente nesse trecho",
+];
 
 // Ícones dos badges de sinalização — mesma linguagem stroke/round do resto do app.
 const ICO_ALERTA = <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
 const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
 const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
+const ICO_FROTA = <><rect x="1" y="3" width="15" height="13" rx="2" /><path d="m16 8 4 2 3 3v4h-7" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></>;
 
 // Ícones dos KPIs por categoria — mesma linguagem do Dashboard (hIco, 24x24 stroke).
 const ICO_CATEGORIA = {
@@ -72,12 +82,18 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
   const [sinalObs, setSinalObs] = React.useState("");
+  const [revisando, setRevisando] = React.useState(false);   // "Marcar revisado" clicado: campo de justificativa aberto
+  const [revisObs, setRevisObs] = React.useState("");
 
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null }));
   useModalEsc(revisarModal.open, () => setRevisarModal({ open: false, item: null }));
 
-  const abrirRevisar = (p) => { setSinalizando(false); setSinalObs(""); setRevisarModal({ open: true, item: p }); };
+  const abrirRevisar = (p) => {
+    setSinalizando(false); setSinalObs("");
+    setRevisando(false); setRevisObs("");
+    setRevisarModal({ open: true, item: p });
+  };
 
   const carregar = React.useCallback(async () => {
     if (!conn) return;
@@ -900,6 +916,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
         const p = revisarModal.item;
         const fechar = () => setRevisarModal({ open: false, item: null });
         const decidirEFechar = async (decisao, obs) => { await onDecidir(p.id, decisao, obs); fechar(); };
+        const candidatoFrota = ehCandidatoFrotaRodorrica(p);
+        const atalhos = candidatoFrota ? ["Frota Rodorrica — desconto padrão de R$ 300", ...OBS_ATALHOS] : OBS_ATALHOS;
         const campo = (l, v) => (
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
             <span style={{ color: t.txt2 }}>{l}</span>
@@ -917,6 +935,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
                 {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
+                {candidatoFrota && badge(ICO_FROTA, "POSSÍVEL FROTA RODORRICA", t.azul)}
               </div>
 
               {campo("Categoria", CATEGORIA_LABEL[p.categoria] || p.categoria)}
@@ -940,6 +959,54 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   style={{ marginTop: 12, width: "100%", fontSize: 11.5, fontWeight: 700, padding: "8px 10px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.danger}`, background: "transparent", color: t.danger }}>
                   Ver grupo de duplicidade
                 </button>
+              )}
+
+              {/* Regra da frota Rodorrica: contrato = CTe − R$ 300 fixos, então margem baixa é
+                  esperada. A planilha não diz de quem é a frota — quem revisa confirma aqui. */}
+              {candidatoFrota && !revisando && !sinalizando && (
+                <div style={{ marginTop: 12, borderRadius: 10, border: `1px solid ${hexRgb(t.azul, .35)}`, background: hexRgb(t.azul, .08), padding: "10px 12px" }}>
+                  <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5 }}>
+                    Saldo de exatamente <b>R$ 300,00</b>. Pela regra da frota Rodorrica o Contrato é o CTe menos R$ 300 — nesse caso a margem baixa é esperada, não é erro. Este CTRC é frota?
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    <button onClick={() => decidirEFechar("frota_rodorrica", "frota Rodorrica — contrato = CTe − R$ 300 (regra padrão)")}
+                      style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.azul, color: "#fff", fontFamily: "inherit" }}>
+                      Sim, é frota Rodorrica
+                    </button>
+                    <button onClick={() => setRevisando(true)}
+                      style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, fontFamily: "inherit" }}>
+                      Não é frota — revisar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {revisando && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 11, color: t.txt2, marginBottom: 6 }}>Justifique o que foi verificado/feito (obrigatório):</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {atalhos.map((a) => (
+                      <button key={a} onClick={() => setRevisObs(a)}
+                        style={{ fontSize: 10.5, fontWeight: 600, padding: "5px 9px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
+                          border: `1px solid ${revisObs === a ? t.azul : t.borda}`, background: revisObs === a ? hexRgb(t.azul, .12) : "transparent", color: revisObs === a ? t.txt : t.txt2 }}>
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input value={revisObs} onChange={(e) => setRevisObs(e.target.value)} autoFocus
+                      placeholder="O que foi verificado? (ex.: conferido com o contrato do cliente)"
+                      onKeyDown={(e) => { if (e.key === "Enter" && revisObs.trim()) decidirEFechar("ok", revisObs.trim()); }}
+                      style={{ flex: 1, minWidth: 0, padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
+                    <button onClick={() => decidirEFechar("ok", revisObs.trim())} disabled={!revisObs.trim()}
+                      style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", whiteSpace: "nowrap", fontFamily: "inherit",
+                        cursor: revisObs.trim() ? "pointer" : "not-allowed", opacity: revisObs.trim() ? 1 : .45 }}>
+                      Confirmar
+                    </button>
+                    <button onClick={() => { setRevisando(false); setRevisObs(""); }}
+                      style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>✕</button>
+                  </div>
+                </div>
               )}
 
               {sinalizando && (
@@ -974,16 +1041,18 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     </button>
                   </>
                 )}
-                {!sinalizando && (
+                {!sinalizando && !revisando && (
                   <button onClick={() => setSinalizando(true)}
                     style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.ouro}`, background: "transparent", color: t.ouro }}>
                     Sinalizar para correção
                   </button>
                 )}
-                <button onClick={() => decidirEFechar("ok", "revisado — sem ação necessária")}
-                  style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
-                  Marcar revisado
-                </button>
+                {!revisando && (
+                  <button onClick={() => { setSinalizando(false); setRevisando(true); }}
+                    style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
+                    Marcar revisado
+                  </button>
+                )}
               </div>
             </div>
           </div>

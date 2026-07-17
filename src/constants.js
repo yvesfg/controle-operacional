@@ -146,6 +146,13 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-17", sessao: "Sessao 47",
+    itens: [
+      "FEAT · Conferencia de Faturamento: 'Marcar revisado' nao decide mais direto -- agora abre campo de justificativa OBRIGATORIA (o que foi verificado/feito), com atalhos de um clique para os motivos recorrentes. Antes toda revisao gravava o texto fixo 'revisado -- sem acao necessaria', sem rastro do porque.",
+      "FEAT · Regra da frota Rodorrica: Frete com Saldo de exatamente R$ 300,00 (contrato = CTe - 300 por regra) ganha badge 'POSSIVEL FROTA RODORRICA' no modal + pergunta 'Este CTRC e frota?' com 'Sim, e frota Rodorrica' (decisao_manual=frota_rodorrica, justificativa automatica) e 'Nao e frota - revisar' (cai na justificativa livre). Detecta o candidato, nao decide sozinho: a planilha bruta nao diz de quem e a frota (freteConferencia.js:ehCandidatoFrotaRodorrica).",
+    ],
+  },
+  {
     data: "2026-07-15", sessao: "Sessao 46",
     itens: [
       "FIX · Conferencia de Faturamento: a fila de revisao mostrava muitos itens como 'margem < 10%' que na verdade estavam ok. A coluna 'Margem Lucro' da planilha bruta divide o Saldo pelo TOTAL DO FRETE (Frete Peso + pedagio/gris/etc.), o que subestima a margem (ex.: CTRC 34681 dava 9,0% quando a margem real sobre o Frete Peso e 10,2%). Agora a margem e calculada no app como Saldo / Frete Peso (freteConferencia.js:margemBruta); flags, modal, lista, indicadores e exportacao usam esse valor.",
