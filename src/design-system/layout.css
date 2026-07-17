@@ -814,7 +814,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 11px;
-  color: rgba(255,255,255,0.65);
+  color: var(--text2);
   cursor: pointer;
   white-space: nowrap;
   display: inline-flex; align-items: center; gap: 4px;
@@ -822,7 +822,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   transition: all 150ms ease;
 }
 .pv-filter-pill:hover {
-  background: rgba(255,255,255,0.09);
+  background: var(--card2);
   color: var(--text);
 }
 .pv-filter-pill.active {
@@ -868,14 +868,14 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 .pv-kpi-label {
   font-size: 10px;
-  color: rgba(255,255,255,0.3);
+  color: var(--text3);
   font-family: var(--font-body);
 }
 
 .pv-table-wrap {
   flex: 1;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
@@ -885,12 +885,12 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 .pv-table-header {
   display: flex;
   padding: 8px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .pv-th {
   font-size: 10px;
-  color: rgba(255,255,255,0.25);
+  color: var(--text3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: var(--font-mono);
@@ -903,9 +903,9 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 .pv-rows::-webkit-scrollbar { width: 4px; }
 .pv-rows::-webkit-scrollbar-track { background: transparent; }
-.pv-rows::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 2px; }
+.pv-rows::-webkit-scrollbar-thumb { background: var(--card2); border-radius: 2px; }
 
-.pv-row-card { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.pv-row-card { border-bottom: 1px solid var(--border); }
 .pv-row-main {
   display: flex;
   align-items: center;
@@ -927,18 +927,18 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   gap: 8px;
   flex-wrap: wrap;
   align-items: stretch;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--border);
 }
 .pv-row-card.expanded .pv-row-detail { display: flex; }
 .pv-detail-chip {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--card2);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 5px 10px;
 }
 .pv-detail-chip .dc-label {
   font-size: 9px;
-  color: rgba(255,255,255,0.3);
+  color: var(--text3);
   margin-bottom: 2px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -946,7 +946,7 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 .pv-detail-chip .dc-val {
   font-size: 11px;
-  color: rgba(255,255,255,0.8);
+  color: var(--text);
   font-family: var(--font-body);
 }
 .pv-detail-actions {
@@ -956,17 +956,17 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   align-items: center;
 }
 .pv-btn-action {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--card2);
+  border: 1px solid var(--border2);
   border-radius: 6px;
   padding: 5px 10px;
   font-size: 10px;
-  color: rgba(255,255,255,0.6);
+  color: var(--text2);
   cursor: pointer;
   font-family: var(--font-body);
   transition: all 120ms ease;
 }
-.pv-btn-action:hover { background: rgba(255,255,255,0.10); color: var(--text); }
+.pv-btn-action:hover { background: var(--card2); color: var(--text); }
 .pv-btn-action.primary {
   background: var(--cat-indigo);
   border-color: var(--cat-indigo);
@@ -989,26 +989,26 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 .pv-badge-transito{ background:var(--chip-solid-indigo);  border:1px solid var(--chip-solid-indigo); }
 .pv-badge-default { background:var(--chip-solid-neutral); color:var(--color-text); border:1px solid var(--chip-solid-neutral); }
 
-.pv-toggle { font-size: 10px; color: rgba(255,255,255,0.25); user-select: none; }
+.pv-toggle { font-size: 10px; color: var(--text3); user-select: none; }
 
 .pv-pagination {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
   font-size: 11px;
-  color: rgba(255,255,255,0.35);
+  color: var(--text3);
   font-family: var(--font-body);
 }
 .pv-page-btn {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--card2);
+  border: 1px solid var(--border2);
   border-radius: 5px;
   padding: 3px 8px;
   font-size: 10px;
-  color: rgba(255,255,255,0.6);
+  color: var(--text2);
   cursor: pointer;
   font-family: var(--font-body);
 }

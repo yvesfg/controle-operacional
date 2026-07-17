@@ -30,10 +30,12 @@ function sincronizarComSupabase() {
     motivos_ignorados: [],
     erros_detalhes: [],
     info: [],
+    sem_dt: 0,
     ok: false
   };
 
   var todosDts = []; // todo DT visto em qualquer aba nesta rodada — usado p/ marcar_fora_planilha
+  var todosSemDt = []; // cargas SEM DT (com placa) capturadas p/ a fila de revisao 'sem_dt'
 
   try {
     var ss     = SpreadsheetApp.getActiveSpreadsheet();
@@ -107,20 +109,12 @@ function sincronizarComSupabase() {
 
         if (linhaVazia) continue;
 
-        if (!temDT) {
-          statusGlobal.ignorados++;
-          if (statusGlobal.motivos_ignorados.length < 20) {
-            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': DT vazio');
-          }
-          continue;
-        }
-
-        // Separa o PRODUTO da origem e normaliza. A base Imperatriz agora tem dois tipos
-        // de carga: papel (maioria) e celulose (poucas). Você marca a celulose anexando na
-        // origem — "IMPERATRIZ-MA, CELULOSE" — então aqui a gente tira esse sufixo, grava
-        // tipo_carga='celulose' e devolve a origem limpa ("IMPERATRIZ-MA"), senão ela
-        // reprovaria na validação de origem logo abaixo e a linha seria descartada.
-        // Papel é o padrão: quem não marcar nada cai em papel.
+        // Separa o PRODUTO da origem e normaliza — ANTES do check de DT, porque as linhas
+        // SEM DT tambem precisam do tipo_carga e da origem limpa pra ir pra fila de revisao.
+        // A base Imperatriz tem dois tipos de carga: papel (maioria) e celulose (poucas).
+        // Voce marca a celulose anexando na origem — "IMPERATRIZ-MA, CELULOSE" — entao aqui
+        // a gente tira esse sufixo, grava tipo_carga='celulose' e devolve a origem limpa.
+        // Papel e o padrao: quem nao marcar nada cai em papel.
         reg.tipo_carga = 'papel';
         if (reg.origem) {
           var origemUp = reg.origem.toString().toUpperCase();
@@ -133,12 +127,35 @@ function sincronizarComSupabase() {
             .trim();
         }
 
-        // Valida origem — bloqueia valores fora do padrão
+        // Valida origem — bloqueia valores fora do padrao (vale p/ linha com e sem DT)
         var ORIGENS_VALIDAS = ['IMPERATRIZ-MA', 'BELEM-PA', 'AÇAILÂNDIA-MA', 'ACAILANDIA-MA', 'MARACANAU-CE'];
         if (reg.origem && ORIGENS_VALIDAS.indexOf(reg.origem) === -1) {
           statusGlobal.ignorados++;
           if (statusGlobal.motivos_ignorados.length < 20) {
             statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': origem invalida "' + reg.origem + '" — esperado: IMPERATRIZ-MA, BELEM-PA ou MARACANAU-CE');
+          }
+          continue;
+        }
+
+        // SEM DT: nao descarta se a linha tem identidade de carga real (placa) — a Suzano as
+        // vezes carrega sem DT (raro). Vai pra fila 'sem_dt' (controle_operacional_sem_dt), onde
+        // um humano confirma ou marca erro; quando o DT verdadeiro chegar na planilha, o gatilho
+        // conciliar_sem_dt_trg concilia por placa+data_carr+origem. Linha sem placa = template: ignora.
+        if (!temDT) {
+          if (reg.placa && reg.placa.toString().trim()) {
+            todosSemDt.push({
+              chave_natural: [reg.placa, reg.data_carr || '', reg.origem || '', reg.cpf || ''].join('|').toUpperCase(),
+              nome: reg.nome || '', cpf: reg.cpf || '', placa: reg.placa,
+              origem: reg.origem || '', destino: reg.destino || '',
+              data_carr: reg.data_carr || '', data_agenda: reg.data_agenda || '',
+              vl_cte: reg.vl_cte || '', vl_contrato: reg.vl_contrato || '',
+              adiant: reg.adiant || '', saldo: reg.saldo || '', tipo_carga: reg.tipo_carga
+            });
+          } else {
+            statusGlobal.ignorados++;
+            if (statusGlobal.motivos_ignorados.length < 20) {
+              statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': DT vazio (sem placa, ignorada)');
+            }
           }
           continue;
         }
@@ -216,6 +233,39 @@ function sincronizarComSupabase() {
         }
       } catch (flagErr) {
         statusGlobal.erros_detalhes.push('marcar_fora_planilha: ' + flagErr.message);
+      }
+    }
+
+    // Envia as cargas SEM DT capturadas pra fila de revisao. resolution=ignore-duplicates:
+    // se a pendencia (chave_natural) ja existe, NAO sobrescreve — preserva status/decisao que
+    // um humano ja tenha dado ('confirmado'/'erro'/'conciliado'). So insere as novas.
+    if (todosSemDt.length > 0) {
+      var vistosSemDt = {};
+      todosSemDt.forEach(function(x) { vistosSemDt[x.chave_natural] = x; });
+      var listaSemDt = Object.values(vistosSemDt); // dedupe por chave dentro da rodada
+      for (var j = 0; j < listaSemDt.length; j += 50) {
+        var loteSD = listaSemDt.slice(j, j + 50);
+        try {
+          var respSD = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/controle_operacional_sem_dt?on_conflict=chave_natural', {
+            method: 'POST',
+            headers: {
+              apikey: SUPA_KEY,
+              Authorization: 'Bearer ' + SUPA_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal,resolution=ignore-duplicates'
+            },
+            payload: JSON.stringify(loteSD),
+            muteHttpExceptions: true
+          });
+          var codeSD = respSD.getResponseCode();
+          if (codeSD >= 200 && codeSD < 300) {
+            statusGlobal.sem_dt += loteSD.length;
+          } else {
+            statusGlobal.erros_detalhes.push('sem_dt lote: HTTP ' + codeSD + ' - ' + respSD.getContentText());
+          }
+        } catch (sdErr) {
+          statusGlobal.erros_detalhes.push('sem_dt lote: ' + sdErr.message);
+        }
       }
     }
 

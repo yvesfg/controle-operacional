@@ -116,6 +116,8 @@ export default function App() {
   // Session token — mantido SÓ em memória (M2/M3: nunca persiste em localStorage)
   const [sessionToken, setSessionToken] = useState(null);
   const [basesPermitidas, setBasesPermitidas] = useState([]);
+  // Filtro global de tipo de carga (base Imperatriz: papel x celulose). "todos" = sem filtro.
+  const [filtroTipoCarga, setFiltroTipoCarga] = useState("todos");
   // Helper: persiste no localStorage ao mesmo tempo que seta o estado
   const setBaseAtual = (base) => {
     if (base) localStorage.setItem("co_base_atual", JSON.stringify(base));
@@ -135,6 +137,7 @@ export default function App() {
     setPlanilhaFiltroStatus("");
     setPlanilhaBusca("");
     setPlanilhaPagina(1);
+    setFiltroTipoCarga("todos");
   }, [baseAtual?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const {
@@ -336,8 +339,14 @@ export default function App() {
     const merged = base.map(r => overrides.has(r.dt) ? overrides.get(r.dt) : r);
     const baseDTs = new Set(merged.map(r => r.dt));
     const additions = extras.filter(x => !x._override && !baseDTs.has(x.dt));
-    return [...merged, ...additions];
-  }, [dadosBase, dadosExtras]);
+    const todas = [...merged, ...additions];
+    // Filtro global por tipo de carga — só na base Imperatriz/Belém (papel + celulose).
+    // Default "todos" = sem alteração. tipo_carga ausente (linha criada no app) conta como papel.
+    if (baseAtual?.id === "imperatriz_belem" && filtroTipoCarga !== "todos") {
+      return todas.filter(r => (r.tipo_carga || "papel") === filtroTipoCarga);
+    }
+    return todas;
+  }, [dadosBase, dadosExtras, baseAtual, filtroTipoCarga]);
 
   // Alertas calculation
   const alertas = useMemo(() => {
@@ -1330,6 +1339,16 @@ export default function App() {
                       </div>
                     </>
                   )}
+                </div>
+              )}
+              {baseAtual?.id === "imperatriz_belem" && (
+                <div title="Filtrar por tipo de carga" style={{display:"flex",alignItems:"center",borderRadius:6,overflow:"hidden",border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
+                  {[["todos","Todos"],["papel","Papel"],["celulose","Celulose"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setFiltroTipoCarga(v)}
+                      style={{fontSize:9,fontFamily:"var(--font-mono)",letterSpacing:".06em",textTransform:"uppercase",padding:"4px 9px",border:"none",cursor:"pointer",background:filtroTipoCarga===v?hexRgb(t.ouro,.18):"transparent",color:filtroTipoCarga===v?t.ouro:t.txt2}}>
+                      {l}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

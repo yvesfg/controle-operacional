@@ -355,7 +355,12 @@ export default function PlanilhaView({ ctx }) {
                   <div style={{ flex: 2, fontSize: 11, color: "var(--text)" }}>
                     {row.nome || row.motorista || "—"}
                   </div>
-                  <div style={{ flex: 2, fontSize: 10, color: "var(--text3)" }}>{rota}</div>
+                  <div style={{ flex: 2, fontSize: 10, color: "var(--text3)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span>{rota}</span>
+                    {row.tipo_carga === "celulose" && (
+                      <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--color-info)", background: "color-mix(in srgb, var(--color-info) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--color-info) 30%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Celulose</span>
+                    )}
+                  </div>
                   <div style={{ flex: "1.2" }}><PvBadge status={row.status} /></div>
                   <div style={{ flex: "1.2", fontSize: 11, fontWeight: 600, color: margemColor }}>
                     {margem != null ? fmtR(margem) : "—"}
