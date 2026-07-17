@@ -1,5 +1,6 @@
 import React from "react";
 import useModalEsc from "../hooks/useModalEsc.js";
+import { parseValorBR } from "../utils.js";
 import {
   listarSemDt, contarSemDtPorStatus, decidirSemDt, reabrirSemDt, atualizarSemDt, excluirSemDt,
 } from "../cargasSemDt.js";
@@ -9,7 +10,10 @@ import {
 // a conciliação (quando o DT verdadeiro chega) é automática no banco. Cada card abre um modal
 // com o registro completo pra editar/corrigir/excluir, além de confirmar ou marcar erro.
 
-const num = (v) => { const n = parseFloat(String(v ?? "").replace(/\./g, "").replace(",", ".")); return isNaN(n) ? 0 : n; };
+// parseValorBR (utils.js) reconhece BR ("12.341,85") E "americano" ("12341.85") — a mesma
+// tabela é alimentada pelo SyncSupabase.gs, que tinha o bug de gravar número cru do Sheets
+// sem reformatar (ver PlanilhaView.jsx pro detalhe completo).
+const num = parseValorBR;
 const money = (v) => "R$ " + num(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const ABAS = [

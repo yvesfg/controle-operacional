@@ -15,6 +15,16 @@ var TABELA    = 'controle_operacional';
 var TAB_CFG   = 'co_config';
 var ABA_BASE  = '0032026';            // aba referencia para estrutura de colunas
 
+// Campos financeiros: quando a celula do Sheets e um NUMERO de verdade (nao texto
+// formatado), getValues() devolve um JS number e '.toString()' nele usa ponto decimal
+// sem separador de milhar (ex.: 12341.85 -> "12341.85"), diferente do formato BR
+// ("12.341,85") que o app usa em toda a planilha pra strings vindas de celula-texto.
+// Descoberto em 2026-07-17: ~489 linhas no banco ja vieram assim, e o parser do app
+// (que assume BR e remove TODO ponto como milhar) inflava esses valores em ~100x-1000x
+// (um saldo de R$3.702,56 virava R$37 quatrilhoes na tela). Ver controle_operacional_sem_dt
+// nao afetada por isso porque so recebe campos derivados, mas o cadastro principal sim.
+var CAMPOS_FINANCEIROS = ['vl_cte', 'vl_contrato', 'adiant', 'saldo', 'diaria_prev', 'diaria_pg'];
+
 // ============================================================
 // FUNCAO PRINCIPAL - chamada automaticamente a cada 15 min
 // Percorre TODAS as abas da planilha que tiverem coluna DT
@@ -97,6 +107,11 @@ function sincronizarComSupabase() {
           var v = dados[r][i];
           if (v instanceof Date) {
             v = Utilities.formatDate(v, 'America/Sao_Paulo', 'dd/MM/yyyy');
+          } else if (typeof v === 'number' && CAMPOS_FINANCEIROS.indexOf(mapa[i]) >= 0) {
+            // Celula-numero (nao texto) num campo financeiro: formata em BR explicitamente
+            // (vírgula decimal, ponto de milhar) em vez de '.toString()' (ponto decimal
+            // americano) — mantém o mesmo formato que o resto do pipeline sempre usou.
+            v = v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
           }
           var vs = v ? v.toString().trim() : '';
           // Não sobrescreve valor existente com string vazia

@@ -7,6 +7,7 @@
  *                t, isMobile, ExportMenu }
  */
 import React from "react";
+import { parseValorBR } from "../utils.js";
 
 const MESES_PT = { "01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez" };
 const REGISTROS_POR_PAGINA = 200;
@@ -90,15 +91,20 @@ function PvBadge({ status }) {
   return <span className={cls}>● {status || "—"}</span>;
 }
 
+// Antes assumia formato BR sempre (stripava TODO ponto como milhar); ~489 linhas no banco
+// vieram do Sheets como número "cru" (célula não-texto), gravadas pelo sync com ponto
+// decimal americano ("12341.85") em vez de vírgula — stripar aquele ponto único inflava o
+// valor ~100x-1000x (ex.: saldo "3702.5599999999995" virava 37 quatrilhões). parseValorBR
+// (utils.js) reconhece as duas grafias. Ver SyncSupabase.gs pro fix na origem.
 function fmtR(v) {
-  const n = parseFloat(String(v || "0").replace(/\./g,"").replace(",","."));
-  if (isNaN(n)) return "—";
+  const n = parseValorBR(v);
+  if (!v && n === 0) return "—";
   return "R$" + n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 function calcMargem(row) {
-  const cte = parseFloat(String(row.vl_cte || row.cte || 0).replace(/\./g,"").replace(",",".")) || 0;
-  const cont = parseFloat(String(row.vl_contrato || row.contrato || 0).replace(/\./g,"").replace(",",".")) || 0;
+  const cte = parseValorBR(row.vl_cte || row.cte);
+  const cont = parseValorBR(row.vl_contrato || row.contrato);
   if (!cte && !cont) return null;
   return cte - cont;
 }

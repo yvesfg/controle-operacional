@@ -14,7 +14,41 @@ export function parseData(d) {
   return null;
 }
 export function diffDias(d1, d2) { return d1 && d2 ? Math.round((d2-d1)/(864e5)) : null; }
-export function fmtMoeda(v) { const n = parseFloat(v); return !v || isNaN(n) ? "—" : "R$ "+n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+// Parser de valor monetário tolerante a formato — a base tem strings em 3 pelagens
+// diferentes, todas vindas do mesmo pipeline (Google Sheets → SyncSupabase.gs):
+// 1) BR texto: "12.341,85" (célula formatada como texto/moeda na planilha)
+// 2) "americano": "12341.85" ou "3702.5599999999995" — quando a célula do Sheets é um
+//    NÚMERO de verdade (não texto), Apps Script devolve o valor via getValues() e
+//    `.toString()` nele usa ponto decimal, sem separador de milhar (bug de origem,
+//    corrigido no SyncSupabase.gs a partir de 2026-07-17, mas ~489 linhas antigas no
+//    banco ainda estão assim — por isso o parser tem que reconhecer as duas formas).
+// 3) inteiro puro: "15600" — ambíguo mas idêntico nas duas leituras, sem risco.
+// Vírgula presente = decimal é a vírgula (regra BR), ponto(s) = milhar, sempre.
+// Só ponto, sem vírgula = decimal é o próprio ponto (não mexe — já é o formato nativo
+// do JS). Múltiplos pontos sem vírgula = milhar BR sem centavos ("1.234.567").
+// Após montar a string normalizada, valida com regex — se sobrar lixo (célula quebrada
+// tipo "#VALUE!" ou "13,045,90" com dupla vírgula), trata como sem valor em vez de
+// adivinhar um número errado.
+export function parseValorBR(v) {
+  let s = String(v ?? "").trim();
+  if (!s) return 0;
+  s = s.replace(/^R\$\s*/i, "").trim();
+  if (!s || s === "-") return 0;
+  const temVirgula = s.includes(",");
+  const pontos = (s.match(/\./g) || []).length;
+  let normalizado = s;
+  if (temVirgula) normalizado = s.replace(/\./g, "").replace(",", ".");
+  else if (pontos > 1) normalizado = s.replace(/\./g, "");
+  if (!/^-?\d+(\.\d+)?$/.test(normalizado)) return 0;
+  const n = parseFloat(normalizado);
+  return isNaN(n) ? 0 : n;
+}
+export function fmtMoeda(v) {
+  if (!v) return "—"; // vazio/null/undefined — mesma regra de sempre
+  const n = parseValorBR(v);
+  if (n === 0 && !/^-?0([.,]0+)?$/.test(String(v).trim())) return "—"; // célula quebrada (ex.: "#VALUE!"), não é zero de verdade
+  return "R$ " + n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 export function brToInput(d) { if (!d) return ""; d = String(d).trim(); if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10); const m=d.match(/^(\d{2})\/(\d{2})\/(\d{4})/); return m?`${m[3]}-${m[2]}-${m[1]}`:""; }
 export function inputToBr(v) { if (!v) return ""; const p = v.split("-"); return p.length===3 ? `${p[2].slice(0,2)}/${p[1]}/${p[0]}` : ""; }
 // Helpers para campo datetime-local (data + hora)

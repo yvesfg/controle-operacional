@@ -1044,7 +1044,7 @@ export default function App() {
 
   // supaUpsert / salvarRegistro / deletarRegistro / salvarMinutasDetalhe — via useDTHandlers
   const { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe } = useDTHandlers({
-    getConexao, showToast, sessionToken, baseAtual, registrarLog,
+    getConexao, showToast, sessionToken, setSessionToken, baseAtual, registrarLog,
     DADOS, formData, editIdx, dadosBase, dadosExtras,
     setDadosBase, setDadosExtras, setModalOpen,
     setDetalheDT, setExcluirConfirm, setExcluirTexto,

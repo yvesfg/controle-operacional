@@ -1,5 +1,5 @@
 import { supaFetch } from "../supabase.js";
-import { saveJSON } from "../utils.js";
+import { saveJSON, loadJSON } from "../utils.js";
 import { validarRegistroOperacional } from "../validators.js";
 
 const SUPA_KNOWN_COLS = [
@@ -17,23 +17,43 @@ const SUPA_KNOWN_COLS = [
 ];
 
 export function useDTHandlers({
-  getConexao, showToast, sessionToken, baseAtual, registrarLog,
+  getConexao, showToast, sessionToken, setSessionToken, baseAtual, registrarLog,
   DADOS, formData, editIdx, dadosBase, dadosExtras,
   setDadosBase, setDadosExtras, setModalOpen,
   setDetalheDT, setExcluirConfirm, setExcluirTexto,
   detalheDT, detalheMinDcc, detalheCteComp, detalheMinDsc,
   setSalvandoMins,
 }) {
+  // sessionToken vive só em memória (nunca em localStorage) — some ao recarregar a página.
+  // App.jsx tenta regenerá-lo no boot via co_sessao.email, mas aquela chamada é
+  // fire-and-forget (.catch(() => {})): se falhar (rede, RPC fora do ar, corrida com
+  // getConexao ainda não pronto), o token fica null pra sempre e toda gravação passa a
+  // cair em "Salvo local" sem nunca sincronizar, sem qualquer sinal de erro visível até
+  // a pessoa tentar editar algo. Aqui, antes de desistir, tenta regenerar UMA vez usando
+  // o e-mail já salvo na sessão — evita depender de logout/login pra voltar a funcionar.
+  const garantirSessionToken = async (conn) => {
+    if (sessionToken) return sessionToken;
+    const s = loadJSON("co_sessao", null);
+    const email = s?.email || (s?.perfil === "admin" ? "admin@sistema" : null);
+    if (!email) return null;
+    try {
+      const tok = await supaFetch(conn.url, conn.key, "POST", "rpc/gerar_token_sessao", { p_email: email });
+      if (typeof tok === "string" && tok) { setSessionToken?.(tok); return tok; }
+    } catch { /* segue pro erro padrão abaixo */ }
+    return null;
+  };
+
   const supaUpsert = async (reg) => {
     const conn = getConexao();
     if (!conn) throw new Error("Sem conexão");
-    if (!sessionToken) throw new Error("Sessão não autenticada");
+    const tok = await garantirSessionToken(conn);
+    if (!tok) throw new Error("Sessão não autenticada — saia e entre novamente para continuar sincronizando.");
     const clean = {...reg}; delete clean._override; delete clean._overrideDT;
     for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
     // AVB: âncora = codigo (coluna H); grava via upsert por codigo. Sem dt obrigatório.
     if (baseAtual?.id === "acailandia_avb") {
       await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional_cod", {
-        p_token: sessionToken,
+        p_token: tok,
         p_base:  baseAtual.id,
         p_dados: clean,
       });
@@ -44,7 +64,7 @@ export function useDTHandlers({
     if (!validOk) throw new Error("Dados inválidos: " + validErros.join("; "));
     // M2/M3: escrita via RPC que valida token + base no servidor
     await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional", {
-      p_token: sessionToken,
+      p_token: tok,
       p_base:  baseAtual?.id ?? "imperatriz_belem",
       p_dados: clean,
     });
@@ -132,9 +152,11 @@ export function useDTHandlers({
     const conn = getConexao();
     if (conn) {
       try {
+        const tok = await garantirSessionToken(conn);
+        if (!tok) throw new Error("Sessão não autenticada — saia e entre novamente para continuar sincronizando.");
         // M2/M3: deleção via RPC que valida token + base no servidor
         await supaFetch(conn.url, conn.key, "POST", "rpc/delete_operacional", {
-          p_token: sessionToken,
+          p_token: tok,
           p_base:  baseAtual?.id ?? "imperatriz_belem",
           p_dt:    dt,
         });
@@ -153,6 +175,8 @@ export function useDTHandlers({
     if (!conn) { showToast("⚠️ Sem conexão","warn"); return; }
     setSalvandoMins(true);
     try {
+      const tok = await garantirSessionToken(conn);
+      if (!tok) throw new Error("Sessão não autenticada — saia e entre novamente para continuar sincronizando.");
       const payload = {
         minutas_dcc: JSON.stringify(detalheMinDcc),
         cte_comp:  detalheCteComp.cte||null,
@@ -162,7 +186,7 @@ export function useDTHandlers({
       };
       // M2/M3: patch via RPC que valida token + base no servidor
       await supaFetch(conn.url, conn.key, "POST", "rpc/patch_operacional", {
-        p_token: sessionToken,
+        p_token: tok,
         p_base:  baseAtual?.id ?? "imperatriz_belem",
         p_dt:    detalheDT.dt,
         p_dados: payload,
