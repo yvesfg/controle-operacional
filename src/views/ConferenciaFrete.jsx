@@ -6,6 +6,7 @@ import {
   decidir, estornarRevisao, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica,
 } from "../freteConferencia.js";
+import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
 import KpiCard from "../components/KpiCard.jsx";
 import { BASES } from "../constants.js";
@@ -122,6 +123,29 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const onErroEmb = React.useCallback((msg) => showToast?.(msg, "erro"), [showToast]);
   const { mapa: clientesMap, criar: criarEmbarcadora } = useEmbarcadoras(conn, { onErro: onErroEmb });
 
+  // Pré-preenche os formulários de CNPJ desconhecido com os dados oficiais (receitaCnpj.js).
+  // Best-effort e em paralelo: se a consulta falhar, o formulário só fica em branco pra
+  // digitar na mão — nada aqui bloqueia a importação. O "nome" (apelido curto de exibição)
+  // é só sugestão; cidade/UF já digitados não são sobrescritos.
+  const preencherDadosReceita = React.useCallback(async (cnpjs) => {
+    await Promise.all(cnpjs.map(async (cnpj) => {
+      try {
+        const d = await consultarCNPJ(cnpj);
+        setFormsDesconhecidos((f) => (f[cnpj] ? {
+          ...f,
+          [cnpj]: {
+            ...f[cnpj],
+            nome: f[cnpj].nome?.trim() ? f[cnpj].nome : nomeSugerido(d),
+            razao_social: d.razao_social || "",
+            cidade: f[cnpj].cidade || d.cidade,
+            uf: f[cnpj].uf || d.uf,
+            receitaInfo: `${d.fonte} · situação: ${d.situacao || "não informada"}`,
+          },
+        } : f));
+      } catch { /* sem dados da Receita: o cadastro manual segue disponível */ }
+    }));
+  }, []);
+
   const onEscolherArquivo = async (e) => {
     const file = e.target.files?.[0];
     if (fileRef.current) fileRef.current.value = "";
@@ -136,9 +160,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
       // Formulário inicial de cada CNPJ desconhecido: nome vazio, sem base, toda Empresa "ignorar"
       const forms = {};
       Object.values(r.desconhecidos).forEach((d) => {
-        forms[d.cnpj] = { nome: "", base_id: "", cidade: "", uf: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
+        forms[d.cnpj] = { nome: "", razao_social: "", base_id: "", cidade: "", uf: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
       });
       setFormsDesconhecidos(forms);
+      preencherDadosReceita(Object.keys(forms));
     } catch (err) { showToast?.("Erro ao ler arquivo: " + err.message, "erro"); }
     finally { setImporting(false); }
   };
@@ -158,6 +183,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     try {
       const cli = await criarEmbarcadora({
         cnpj, nome: form.nome.trim(), base_id: form.base_id || null,
+        razao_social: form.razao_social?.trim() || null,
         cidade: form.cidade?.trim() || null, uf: form.uf?.trim().toUpperCase() || null,
         frete_cod: freteCod, desc_local_cod: descLocalCod, diaria_cod: diariaCod,
         criado_por: usuarioLogado || null,
@@ -842,11 +868,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
             )}
 
             {cnpjsDesconhecidos.map((d) => {
-              const form = formsDesconhecidos[d.cnpj] || { nome: "", base_id: "", cidade: "", uf: "", mapEmpresa: {} };
+              const form = formsDesconhecidos[d.cnpj] || { nome: "", razao_social: "", base_id: "", cidade: "", uf: "", mapEmpresa: {} };
               return (
                 <div key={d.cnpj} style={{ marginTop: 12, borderRadius: 10, border: `1.5px solid ${hexRgb(t.warn, .4)}`, background: hexRgb(t.warn, .06), padding: 12 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, marginBottom: 2 }}>CNPJ não cadastrado: {d.cnpj}</div>
                   <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 10 }}>{d.qtd} linha(s) neste arquivo — cadastre a embarcadora ou ignore essas linhas.</div>
+
+                  {form.receitaInfo && (
+                    <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 8 }}>
+                      Pré-preenchido com os dados oficiais ({form.receitaInfo}){form.razao_social ? ` · ${form.razao_social}` : ""}. Ajuste o que quiser.
+                    </div>
+                  )}
 
                   <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
                     <input value={form.nome} placeholder="Nome da embarcadora"

@@ -1,6 +1,7 @@
 import React from "react";
 import useEmbarcadoras from "../../hooks/useEmbarcadoras.js";
 import { formatCNPJ, soDigitosCNPJ } from "../../embarcadoras.js";
+import { consultarCNPJ, nomeSugerido } from "../../receitaCnpj.js";
 import Toggle from "../../components/Toggle.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
 import { BASES } from "../../constants.js";
@@ -29,9 +30,41 @@ export default function EmbarcadorasCad({ ctx, conn }) {
   const [form, setForm] = React.useState(null);   // null = form fechado; {...} = editando/criando
   const [salvando, setSalvando] = React.useState(false);
 
-  const novo = () => setForm({ ...VAZIO, __novo: true });
-  const editar = (e) => setForm({ ...VAZIO, ...e, base_id: e.base_id || "", __novo: false });
+  const [cnpjBusca, setCnpjBusca] = React.useState({ estado: "idle", msg: "" }); // idle | buscando | ok | erro
+
+  const novo = () => { setCnpjBusca({ estado: "idle", msg: "" }); setForm({ ...VAZIO, __novo: true }); };
+  const editar = (e) => { setCnpjBusca({ estado: "idle", msg: "" }); setForm({ ...VAZIO, ...e, base_id: e.base_id || "", __novo: false }); };
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Consulta os dados oficiais assim que os 14 dígitos do CNPJ estão completos (só em
+  // cadastro NOVO — na edição o CNPJ é imutável). Como o CNPJ é o primeiro campo do
+  // formulário, os demais ainda estão vazios; ainda assim o "nome" só é sugerido se
+  // estiver em branco, porque o apelido curto usado nas telas é escolha humana.
+  // Debounce de 400ms + abort: evita disparar a cada tecla digitada.
+  React.useEffect(() => {
+    if (!form?.__novo) return;
+    const digitos = soDigitosCNPJ(form.cnpj);
+    if (String(form.cnpj || "").replace(/\D/g, "").length !== 14) { setCnpjBusca({ estado: "idle", msg: "" }); return; }
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      setCnpjBusca({ estado: "buscando", msg: "" });
+      try {
+        const d = await consultarCNPJ(digitos, { signal: ctrl.signal });
+        setForm((f) => (f && soDigitosCNPJ(f.cnpj) === digitos ? {
+          ...f,
+          razao_social: d.razao_social || f.razao_social,
+          cidade: d.cidade || f.cidade,
+          uf: d.uf || f.uf,
+          nome: f.nome?.trim() ? f.nome : nomeSugerido(d),
+        } : f));
+        setCnpjBusca({ estado: "ok", msg: `${d.fonte} · situação: ${d.situacao || "não informada"}` });
+      } catch (e) {
+        if (e.name === "AbortError") return;
+        setCnpjBusca({ estado: "erro", msg: e.message });
+      }
+    }, 400);
+    return () => { clearTimeout(timer); ctrl.abort(); };
+  }, [form?.cnpj, form?.__novo]);
 
   const filtradas = React.useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -111,6 +144,14 @@ export default function EmbarcadorasCad({ ctx, conn }) {
             {campo("Nome (exibição)", "nome", { flex: "1 1 200px", placeholder: "Suzano Imperatriz" })}
             {campo("Razão social", "razao_social", { flex: "1 1 220px", placeholder: "opcional" })}
           </div>
+
+          {form.__novo && cnpjBusca.estado !== "idle" && (
+            <div style={{ fontSize: 10.5, marginTop: -4, marginBottom: 10, color: cnpjBusca.estado === "erro" ? t.warn : t.txt2 }}>
+              {cnpjBusca.estado === "buscando" ? "Consultando os dados oficiais do CNPJ…"
+                : cnpjBusca.estado === "ok" ? `Preenchido com os dados oficiais (${cnpjBusca.msg}). Ajuste o que quiser.`
+                : `${cnpjBusca.msg} Preencha na mão.`}
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
             {campo("Cidade de origem", "cidade", { flex: "1 1 180px" })}
