@@ -115,9 +115,22 @@ function sincronizarComSupabase() {
           continue;
         }
 
-        // Normaliza origem (ex: "IMPERATRIZ - MA" → "IMPERATRIZ-MA")
+        // Separa o PRODUTO da origem e normaliza. A base Imperatriz agora tem dois tipos
+        // de carga: papel (maioria) e celulose (poucas). Você marca a celulose anexando na
+        // origem — "IMPERATRIZ-MA, CELULOSE" — então aqui a gente tira esse sufixo, grava
+        // tipo_carga='celulose' e devolve a origem limpa ("IMPERATRIZ-MA"), senão ela
+        // reprovaria na validação de origem logo abaixo e a linha seria descartada.
+        // Papel é o padrão: quem não marcar nada cai em papel.
+        reg.tipo_carga = 'papel';
         if (reg.origem) {
-          reg.origem = reg.origem.replace(/\s*-\s*/g, '-').trim().toUpperCase();
+          var origemUp = reg.origem.toString().toUpperCase();
+          if (/CELULOSE/.test(origemUp)) reg.tipo_carga = 'celulose';
+          reg.origem = origemUp
+            .replace(/,?\s*CELULOSE\s*/g, '')   // remove o sufixo de produto…
+            .replace(/,?\s*PAPEL\s*/g, '')       // …e também "PAPEL" se alguém marcar explícito
+            .replace(/\s*-\s*/g, '-')            // "IMPERATRIZ - MA" → "IMPERATRIZ-MA"
+            .replace(/,\s*$/, '')                // vírgula solta no fim
+            .trim();
         }
 
         // Valida origem — bloqueia valores fora do padrão
