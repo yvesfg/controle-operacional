@@ -41,3 +41,18 @@ export async function decidirSemDt(conn, id, status, obs, revisadoPor) {
 export async function reabrirSemDt(conn, id) {
   return decidirSemDt(conn, id, "pendente", null, null);
 }
+
+// Correção manual dos campos da carga (placa/data/origem/valores/tipo_carga) direto na fila —
+// ex.: a linha veio com placa ou valor errado da planilha e a pessoa arruma antes de confirmar.
+export async function atualizarSemDt(conn, id, patch) {
+  const body = { ...patch, atualizado_em: new Date().toISOString() };
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${encodeURIComponent(id)}`, body);
+  return Array.isArray(res) ? res[0] : res;
+}
+
+// Exclusão DEFINITIVA da pendência. Atenção: se a linha ainda estiver na planilha (com placa e
+// sem DT), o próximo sync a captura de novo. Para descartar de vez o que é lixo recorrente, use
+// "Marcar erro" (status='erro'), que o sync preserva (ignore-duplicates) e não recaptura.
+export async function excluirSemDt(conn, id) {
+  return supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${encodeURIComponent(id)}`);
+}
