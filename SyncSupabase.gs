@@ -31,6 +31,7 @@ function sincronizarComSupabase() {
     erros_detalhes: [],
     info: [],
     sem_dt: 0,
+    sem_dt_conciliadas: 0,
     ok: false
   };
 
@@ -267,6 +268,26 @@ function sincronizarComSupabase() {
           statusGlobal.erros_detalhes.push('sem_dt lote: ' + sdErr.message);
         }
       }
+    }
+
+    // Concilia pendencias 'sem_dt' contra DTs que JA existem (linha-espelho sem DT cuja carga
+    // ja entrou com DT em outra linha da planilha). O gatilho so fecha quando um DT NOVO entra;
+    // isto fecha as que casam com DTs antigos, evitando a fila encher de duplicata (ex.: 133 de 142).
+    try {
+      var respConc = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/conciliar_sem_dt_existentes', {
+        method: 'POST',
+        headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+        payload: '{}',
+        muteHttpExceptions: true
+      });
+      var codeConc = respConc.getResponseCode();
+      if (codeConc >= 200 && codeConc < 300) {
+        statusGlobal.sem_dt_conciliadas = JSON.parse(respConc.getContentText() || '0');
+      } else {
+        statusGlobal.erros_detalhes.push('conciliar_sem_dt_existentes: HTTP ' + codeConc + ' - ' + respConc.getContentText());
+      }
+    } catch (concErr) {
+      statusGlobal.erros_detalhes.push('conciliar_sem_dt_existentes: ' + concErr.message);
     }
 
     statusGlobal.ok = (statusGlobal.erros_http === 0 && statusGlobal.total_planilha > 0);
