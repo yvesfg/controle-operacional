@@ -27,6 +27,7 @@ import ReportBuilder from './relatorios/ReportBuilderWrapper.jsx';
 import OcorrenciasView from './views/OcorrenciasViewWrapper.jsx';
 import OperacionalView from './views/OperacionalViewWrapper.jsx';
 import PlanilhaView    from './views/PlanilhaViewWrapper.jsx';
+import CargasSemDt    from './views/CargasSemDt.jsx';
 import DashboardView   from './views/DashboardViewWrapper.jsx';
 import DiariasView     from './views/DiariasViewWrapper.jsx';
 import DescargaView    from './views/DescargaViewWrapper.jsx';
@@ -1504,6 +1505,9 @@ export default function App() {
         )}
 
         {/* ═══ PLANILHA ═══ */}
+        {activeTab === "planilha" && baseAtual?.id === "imperatriz_belem" && (
+          <CargasSemDt conn={motoristasConn} ctx={{ t, hexRgb, showToast, usuarioLogado }} />
+        )}
         {activeTab === "planilha" && (
           baseAtual?.id === "acailandia_avb"
             ? <PlanilhaAVB ctx={{
