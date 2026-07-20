@@ -10,6 +10,7 @@ export function usePlanilhaState() {
   const [planilhaFiltroDataDe, setPlanilhaFiltroDataDe]     = useState("");
   const [planilhaFiltroDataAte, setPlanilhaFiltroDataAte]   = useState("");
   const [planilhaFiltroStatus, setPlanilhaFiltroStatus]     = useState("");
+  const [planilhaFiltroDestino, setPlanilhaFiltroDestino]   = useState("");
   const [planilhaFiltroContratante, setPlanilhaFiltroContratante] = useState("");
   const [planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora] = useState("");
   const [planilhaBusca, setPlanilhaBusca]                   = useState("");
@@ -24,6 +25,7 @@ export function usePlanilhaState() {
     planilhaFiltroDataDe, setPlanilhaFiltroDataDe,
     planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
     planilhaFiltroStatus, setPlanilhaFiltroStatus,
+    planilhaFiltroDestino, setPlanilhaFiltroDestino,
     planilhaFiltroContratante, setPlanilhaFiltroContratante,
     planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
     planilhaBusca, setPlanilhaBusca,

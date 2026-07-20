@@ -154,6 +154,7 @@ export default function App() {
     planilhaFiltroDataDe, setPlanilhaFiltroDataDe, planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
     planilhaFiltroStatus, setPlanilhaFiltroStatus, planilhaFiltroContratante, setPlanilhaFiltroContratante,
     planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora, planilhaBusca, setPlanilhaBusca,
+    planilhaFiltroDestino, setPlanilhaFiltroDestino,
   } = usePlanilhaState();
   // toast/connStatus/ultimaSync — via useCoreState (above)
 
@@ -1478,6 +1479,7 @@ export default function App() {
             setDetalheDT, setModalOpen,
             descargaData,
             setPlanilhaFiltroStatus,
+            setPlanilhaFiltroContratante,
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             baseAtual,
           }} />
@@ -1499,6 +1501,7 @@ export default function App() {
             setDetalheDT, setModalOpen,
             descargaData,
             setPlanilhaFiltroStatus,
+            setPlanilhaFiltroDestino,
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             baseAtual,
           }} />
@@ -1543,6 +1546,7 @@ export default function App() {
             planilhaFiltroStatus, setPlanilhaFiltroStatus,
             planilhaFiltroContratante, setPlanilhaFiltroContratante,
             planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
+            planilhaFiltroDestino, setPlanilhaFiltroDestino,
             t, isMobile, ExportMenu,
             baseAtual,
           }} />

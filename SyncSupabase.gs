@@ -120,10 +120,15 @@ function sincronizarComSupabase() {
             reg[mapa[i]] = vs;
           }
           if (vs) linhaVazia = false;
-          if (mapa[i] === 'dt' && vs) temDT = true;
         });
 
         if (linhaVazia) continue;
+
+        // "x"/"X" (ou vazio) na coluna DT = ainda NAO saiu DT p/ este carregamento.
+        // Trata como SEM DT: a carga vai pra fila de revisao (controle_operacional_sem_dt),
+        // nao pra tabela principal. Quando o DT real entrar na planilha, concilia sozinha.
+        var dtNorm = (reg.dt || '').toString().trim();
+        temDT = dtNorm !== '' && dtNorm.toUpperCase() !== 'X';
 
         // Separa o PRODUTO da origem e normaliza — ANTES do check de DT, porque as linhas
         // SEM DT tambem precisam do tipo_carga e da origem limpa pra ir pra fila de revisao.
@@ -252,9 +257,11 @@ function sincronizarComSupabase() {
       }
     }
 
-    // Envia as cargas SEM DT capturadas pra fila de revisao. resolution=ignore-duplicates:
-    // se a pendencia (chave_natural) ja existe, NAO sobrescreve — preserva status/decisao que
-    // um humano ja tenha dado ('confirmado'/'erro'/'conciliado'). So insere as novas.
+    // Envia as cargas SEM DT pra fila de revisao via RPC upsert_sem_dt: ATUALIZA os
+    // valores (nome/data/CTe/contrato/etc.) enquanto a pendencia esta 'pendente' e
+    // CONGELA depois que um humano decidiu (confirmado/erro/conciliado). Casa pela
+    // identidade estavel placa+cpf+origem — entao preencher data/CTe no Sheets DEPOIS
+    // da captura passa a refletir na fila (antes ficava congelado desde a 1a captura).
     if (todosSemDt.length > 0) {
       var vistosSemDt = {};
       todosSemDt.forEach(function(x) { vistosSemDt[x.chave_natural] = x; });
@@ -262,15 +269,14 @@ function sincronizarComSupabase() {
       for (var j = 0; j < listaSemDt.length; j += 50) {
         var loteSD = listaSemDt.slice(j, j + 50);
         try {
-          var respSD = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/controle_operacional_sem_dt?on_conflict=chave_natural', {
+          var respSD = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_sem_dt', {
             method: 'POST',
             headers: {
               apikey: SUPA_KEY,
               Authorization: 'Bearer ' + SUPA_KEY,
-              'Content-Type': 'application/json',
-              Prefer: 'return=minimal,resolution=ignore-duplicates'
+              'Content-Type': 'application/json'
             },
-            payload: JSON.stringify(loteSD),
+            payload: JSON.stringify({ p_rows: loteSD }),
             muteHttpExceptions: true
           });
           var codeSD = respSD.getResponseCode();

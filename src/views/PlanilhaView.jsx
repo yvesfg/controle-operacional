@@ -123,6 +123,7 @@ export default function PlanilhaView({ ctx }) {
     planilhaFiltroDataAte, setPlanilhaFiltroDataAte,
     planilhaBusca, setPlanilhaBusca,
     planilhaFiltroStatus, setPlanilhaFiltroStatus,
+    planilhaFiltroDestino, setPlanilhaFiltroDestino,
     t, isMobile,
     ExportMenu,
     baseAtual,
@@ -183,6 +184,7 @@ export default function PlanilhaView({ ctx }) {
       const s = (r.status||"Sem Status");
       if (s !== planilhaFiltroStatus) return false;
     }
+    if (planilhaFiltroDestino && (r.destino||"").trim().toUpperCase() !== planilhaFiltroDestino) return false;
     return true;
   });
 
@@ -220,7 +222,7 @@ export default function PlanilhaView({ ctx }) {
     }
   };
 
-  const temFiltro = planilhaFiltroAno || planilhaFiltroMes || planilhaFiltroOrigem !== "todas" || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca || planilhaFiltroStatus;
+  const temFiltro = planilhaFiltroAno || planilhaFiltroMes || planilhaFiltroOrigem !== "todas" || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca || planilhaFiltroStatus || planilhaFiltroDestino;
 
   return (
     <div className="pv-shell">
@@ -284,8 +286,14 @@ export default function PlanilhaView({ ctx }) {
             <button onClick={() => { setPlanilhaFiltroStatus(""); setPlanilhaPagina(1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 11, padding: 0, marginLeft: 2 }}>×</button>
           </span>
         )}
+        {planilhaFiltroDestino && (
+          <span className="pv-filter-pill active" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            Destino: {planilhaFiltroDestino}
+            <button onClick={() => { setPlanilhaFiltroDestino(""); setPlanilhaPagina(1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 11, padding: 0, marginLeft: 2 }}>×</button>
+          </span>
+        )}
         {temFiltro && (
-          <button className="pv-filter-pill" onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); if(setPlanilhaFiltroContratante)setPlanilhaFiltroContratante(""); if(setPlanilhaFiltroGerenciadora)setPlanilhaFiltroGerenciadora(""); setPlanilhaPagina(1); }}>
+          <button className="pv-filter-pill" onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); setPlanilhaFiltroDestino(""); if(setPlanilhaFiltroContratante)setPlanilhaFiltroContratante(""); if(setPlanilhaFiltroGerenciadora)setPlanilhaFiltroGerenciadora(""); setPlanilhaPagina(1); }}>
             ✕ Limpar
           </button>
         )}

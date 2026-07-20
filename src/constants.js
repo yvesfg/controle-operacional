@@ -146,6 +146,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-20", sessao: "Sessao 48",
+    itens: [
+      "FIX · Fila 'Cargas sem DT' nao puxava CTe/valores mesmo com o Sheets preenchido. CAUSA: o SyncSupabase.gs gravava a pendencia com resolution=ignore-duplicates (pra nao apagar decisao humana), entao a linha ficava CONGELADA no estado da 1a captura -- o que voce preenchesse depois (data/CTe/contrato) nunca descia pra fila. Confirmado no banco: pendencia do WILSON (id 995) capturada em 17/07 com tudo vazio, atualizado_em=criado_em; os valores reais (CTe R$9.880) estavam na tabela principal sob DT='x'.",
+      "FIX (backend) · Migration upsert_sem_dt_atualiza_enquanto_pendente: nova funcao upsert_sem_dt(jsonb) que ATUALIZA os valores enquanto status='pendente' e CONGELA depois que um humano decidiu (confirmado/erro/conciliado). Casa pela identidade estavel placa+cpf+origem (nao depende de data_carr/valores, que chegam depois). SyncSupabase.gs passou a enviar a fila via essa RPC no lugar do POST ignore-duplicates.",
+      "FIX · SyncSupabase.gs: 'x'/'X' (ou vazio) na coluna DT agora e tratado como SEM DT (ainda nao saiu DT pro carregamento) -> vai pra fila de revisao, nao pra tabela principal. Antes, qualquer texto no DT (inclusive 'x' placeholder) entrava na principal e criava linha-lixo (ex.: WILSON com DT='x', ADALBERTO com DT='X').",
+      "FALTA (Yves): colar o SyncSupabase.gs atualizado no Apps Script e rodar 1 sync. DEPOIS: limpeza das linhas-fantasma DT='x'/'X' na tabela principal (nao sao DT real) -- faco via SQL apos o 1o sync confirmar a captura pra fila.",
+    ],
+  },
+  {
     data: "2026-07-17", sessao: "Sessao 47",
     itens: [
       "FIX CRITICO · Margem/saldo mostrando valores astronomicos na Planilha (ex.: DT 23468978 com CTE R$15.600 e Contrato R$12.341,85 mostrava margem de R$32 quatrilhoes). CAUSA RAIZ: quando a celula do Sheets e um NUMERO de verdade (nao texto), o SyncSupabase.gs fazia v.toString() nela, que usa ponto decimal americano sem milhar (ex.: 12341.85 -> \"12341.85\"), diferente do formato BR (\"12.341,85\") que o resto do pipeline sempre usou. O parser do app (PlanilhaView.jsx calcMargem/fmtR) assumia SEMPRE formato BR e removia TODO ponto como separador de milhar -- num valor americano isso stripa o ponto decimal, inflando o numero ~100x-1000x (com float garbage tipo \"3702.5599999999995\" vira um inteiro de 17 digitos = ~37 quatrilhoes). CONFIRMADO: 489 linhas (quase metade da base) afetadas.",

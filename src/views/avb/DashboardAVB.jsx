@@ -22,6 +22,7 @@ export default function DashboardAVB({ ctx }) {
     fmtMoeda, isMobile,
     setDetalheDT, setModalOpen,
     setPlanilhaFiltroStatus,
+    setPlanilhaFiltroContratante,
   } = ctx;
 
   // ── Helpers ────────────────────────────────────────────────
@@ -56,8 +57,9 @@ export default function DashboardAVB({ ctx }) {
   // ── Contratante Leaderboard ───────────────────────────────
   const cMap = {};
   dashData.filtrado.filter(r=>(r.status||"").toUpperCase()!=="PENDENTE").forEach(r=>{
-    const c = normC(r.contratante); if(!c) return;
-    if(!cMap[c]) cMap[c]={viagens:0,comDoc:0,vlr:0};
+    const raw = (r.contratante||"").trim();
+    const c = normC(raw); if(!c) return;
+    if(!cMap[c]) cMap[c]={viagens:0,comDoc:0,vlr:0,raw};
     cMap[c].viagens++;
     if(r.cte&&r.mdf&&r.nf) cMap[c].comDoc++;
     const v = parseFloat(String(r.vl_contrato||"").replace(/[R$\s]/g,"").replace(",","."));
@@ -403,11 +405,15 @@ export default function DashboardAVB({ ctx }) {
             </div>
             {/* Pódio top 3 */}
             <div style={{display:"grid",gridTemplateColumns:`repeat(${Math.min(topContrat.length,3)},1fr)`,gap:8,marginBottom:topContrat.length>3?14:0}}>
-              {topContrat.slice(0,3).map(([nome,{viagens,comDoc,vlr}],i)=>{
+              {topContrat.slice(0,3).map(([nome,{viagens,comDoc,vlr,raw}],i)=>{
                 const ef=viagens>0?Math.round(comDoc/viagens*100):0;
+                const handleClick=()=>{ setPlanilhaFiltroContratante(raw); setActiveTab("planilha"); };
                 return (
-                  <div key={nome} style={{background:t.bg,border:`2px solid ${i===0?"var(--accent)":t.borda}`,
-                    borderRadius:10,padding:"12px 8px",textAlign:"center"}}>
+                  <div key={nome} {...clickable(handleClick)} title={`Ver cargas de ${raw}`}
+                    style={{background:t.bg,border:`2px solid ${i===0?"var(--accent)":t.borda}`,
+                    borderRadius:10,padding:"12px 8px",textAlign:"center",cursor:"pointer",transition:"background .15s"}}
+                    onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
+                    onMouseLeave={e=>e.currentTarget.style.background=t.bg}>
                     <div style={{fontSize:20,marginBottom:4,lineHeight:1}}>{medalhas[i]}</div>
                     <div style={{fontFamily:"var(--font-heading)",fontSize:i===0?13:11,fontWeight:700,
                       color:podColors[i],letterSpacing:"-0.02em",lineHeight:1.2,marginBottom:6,
@@ -423,11 +429,15 @@ export default function DashboardAVB({ ctx }) {
                 );
               })}
             </div>
-            {topContrat.slice(3).map(([nome,{viagens,comDoc}],i,arr)=>{
+            {topContrat.slice(3).map(([nome,{viagens,comDoc,raw}],i,arr)=>{
               const pct=Math.round(viagens/maxVg*100);
               const ef=viagens>0?Math.round(comDoc/viagens*100):0;
+              const handleClick=()=>{ setPlanilhaFiltroContratante(raw); setActiveTab("planilha"); };
               return (
-                <div key={nome} style={{marginBottom:i<arr.length-1?8:0}}>
+                <div key={nome} {...clickable(handleClick)} title={`Ver cargas de ${raw}`}
+                  style={{marginBottom:i<arr.length-1?8:0,cursor:"pointer",borderRadius:6,padding:"3px 6px",margin:i<arr.length-1?"0 -6px 5px -6px":"0 -6px",transition:"background .15s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
+                  onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
                     <span style={{fontSize:10,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",
                       whiteSpace:"nowrap",flex:1,paddingRight:6,textTransform:"capitalize"}}>{nome.toLowerCase()}</span>

@@ -25,6 +25,7 @@ export default function DashboardView({ ctx }) {
     setDetalheDT, setModalOpen,
     descargaData,
     setPlanilhaFiltroStatus,
+    setPlanilhaFiltroDestino,
     setBuscaInput, setBuscaTipo, setBuscaModalOpen,
   } = ctx;
 
@@ -332,6 +333,51 @@ export default function DashboardView({ ctx }) {
               </div>
             )}
           </div>
+
+          {/* Top Destinos */}
+          {(()=>{
+            const destMap={};
+            dashData.filtrado.forEach(r=>{
+              if(!r.destino) return;
+              const d=r.destino.trim().toUpperCase();
+              destMap[d]=(destMap[d]||0)+1;
+            });
+            const topDestinos=Object.entries(destMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            if(!topDestinos.length) return null;
+            const maxDest=topDestinos[0][1]||1;
+            return (
+              <div style={{...css.card,padding:18}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Destinos</span>
+                  <span style={{fontSize:10,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topDestinos.length} destinos</span>
+                </div>
+                {topDestinos.map(([dest,ct],i)=>{
+                  const pct=Math.round(ct/maxDest*100);
+                  const partes=dest.split(/\s*[-–,]\s*/);
+                  const destCurto=partes[0].trim();
+                  const uf=partes[1]?.trim()||"";
+                  const handleClick=()=>{ setPlanilhaFiltroDestino(dest); setActiveTab("planilha"); };
+                  return (
+                    <div key={dest} {...clickable(handleClick)} title={`Ver cargas para ${destCurto}`}
+                      style={{marginBottom:i<topDestinos.length-1?10:0,cursor:"pointer",borderRadius:6,padding:"4px 6px",margin:i<topDestinos.length-1?"0 -6px 4px -6px":"0 -6px",transition:"background .15s"}}
+                      onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
+                          <span style={{fontFamily:"var(--font-mono)",fontSize:10,fontWeight:800,color:t.ouro,minWidth:14}}>{i+1}</span>
+                          <span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{destCurto}{uf?` - ${uf}`:""}</span>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:600,color:t.txt,fontFamily:"var(--font-mono)",flexShrink:0}}>{ct}</span>
+                      </div>
+                      <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${pct}%`,background:t.ouro,borderRadius:2}}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Top Diárias Pendentes */}
           {canFin&&(()=>{
