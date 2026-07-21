@@ -55,6 +55,9 @@ function sincronizarComSupabase() {
     for (var si = 0; si < sheets.length; si++) {
       var sheet = sheets[si];
       var nomAba = sheet.getName();
+      // Aba dedicada de celulose (ex.: "07/2026 CELULOSE") — fonte PRINCIPAL da celulose.
+      // Nas abas gerais, celulose é cópia temporária (verificação) e é ignorada (ver abaixo).
+      var abaEhCelulose = nomAba.toUpperCase().indexOf('CELULOSE') >= 0;
 
       // Pula abas de controle/configuracao (nao sao abas de dados mensais)
       if (nomAba.toLowerCase().indexOf('config') >= 0 ||
@@ -146,6 +149,18 @@ function sincronizarComSupabase() {
             .replace(/\s*-\s*/g, '-')            // "IMPERATRIZ - MA" → "IMPERATRIZ-MA"
             .replace(/,\s*$/, '')                // vírgula solta no fim
             .trim();
+        }
+
+        // Celulose tem aba dedicada ('… CELULOSE'), que é a fonte principal. Nas abas GERAIS,
+        // linha de celulose é cópia temporária (verificação, será deletada) — pula pra não
+        // duplicar na fila/planilha. Celulose só entra da aba dedicada. Hoje celulose é
+        // exclusiva de Imperatriz; se outra base passar a ter, trocar por regra por base/período.
+        if (reg.tipo_carga === 'celulose' && !abaEhCelulose) {
+          statusGlobal.ignorados++;
+          if (statusGlobal.motivos_ignorados.length < 20) {
+            statusGlobal.motivos_ignorados.push('Aba ' + nomAba + ' Linha ' + (r + 1) + ': celulose fora da aba dedicada — ignorada (evita duplicidade com a aba "… CELULOSE")');
+          }
+          continue;
         }
 
         // Valida origem — bloqueia valores fora do padrao (vale p/ linha com e sem DT)

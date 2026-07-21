@@ -153,6 +153,7 @@ export const DEV_CHANGELOG = [
       "DB · Migration 020 (RODADA no Supabase): embarcadoras + tipo/devolucao_de_cnpj; frete_conferencia + is_devolucao/modalidade (CIF|FOB), tudo aditivo com default.",
       "FEAT (fase 2, visibilidade FOB) · Badge 'DEVOLUCAO · FOB' (azul) nos cards da fila de revisao e no modal de revisar quando is_devolucao. Na planilha exportada (gerarWorkbookXLSX): coluna 'Modalidade' (CIF / FOB (devolucao)) nas abas por categoria + secao 'Devolucoes (FOB)' no RESUMO (registros/frete/saldo por cliente).",
       "PENDENTE · Nao validado em navegador logado (login exige credencial). Build passa.",
+      "FIX (SyncSupabase.gs) · Celulose duplicada: a carga existia na aba geral '07/2026' (financeiro VAZIO, so verificacao) e na dedicada '07/2026 CELULOSE' (valores reais). Como upsert_sem_dt atualiza a pendencia enquanto pendente casando por placa+cpf+origem, a aba processada por ultimo sobrescrevia -- a geral (vazia) apagava CTe/contrato/data_carr da dedicada (por isso pendentes apareciam sem valores). Fix: linha de celulose em aba NAO-dedicada (nome sem 'CELULOSE') e ignorada; celulose so entra da aba dedicada. Auto-corretivo: proxima sync reescreve as pendentes com os valores reais (mesma chave natural, status ainda pendente) -- sem limpeza SQL. Celulose hoje e exclusiva de Imperatriz; se outra base passar a ter, trocar por regra por base/periodo. FALTA (Yves): colar o .gs e rodar 1 sync.",
     ],
   },
   {
