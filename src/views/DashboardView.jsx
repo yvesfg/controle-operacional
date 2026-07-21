@@ -5,6 +5,7 @@ import DataRow     from '../components/DataRow.jsx';
 import SectionCard from '../components/SectionCard.jsx';
 import PageHeader  from '../components/PageHeader.jsx';
 import { parseData, clickable } from "../utils.js";
+import { contarSemDtAguardando } from "../cargasSemDt.js";
 
 export default function DashboardView({ ctx }) {
   const {
@@ -27,7 +28,22 @@ export default function DashboardView({ ctx }) {
     setPlanilhaFiltroStatus,
     setPlanilhaFiltroDestino,
     setBuscaInput, setBuscaTipo, setBuscaModalOpen,
+    baseAtual, filtroTipoCarga, getConexao,
   } = ctx;
+
+  // Indicador "Sem DT" — cargas reais que ficaram sem DT (ex.: sistema Suzano fora do ar).
+  // Lê a fila controle_operacional_sem_dt (pendente+confirmado) SEM tocar no DADOS global.
+  // Só na base Imperatriz/Belém (única com a fila); segue o filtro de tipo de carga do topo.
+  const [semDtAguardando, setSemDtAguardando] = React.useState(0);
+  React.useEffect(() => {
+    if (baseAtual?.id !== "imperatriz_belem" || !getConexao) { setSemDtAguardando(0); return; }
+    const conn = getConexao();
+    if (!conn) return;
+    let cancel = false;
+    const tipo = filtroTipoCarga && filtroTipoCarga !== "todos" ? filtroTipoCarga : null;
+    contarSemDtAguardando(conn, tipo).then(n => { if (!cancel) setSemDtAguardando(n); }).catch(() => {});
+    return () => { cancel = true; };
+  }, [baseAtual, filtroTipoCarga, getConexao]);
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
   const carregadosN = dashData.filtrado.length;
@@ -96,6 +112,8 @@ export default function DashboardView({ ctx }) {
           {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",icon:<><path d="M1 3h15v13H1z"/><path d="M16 8l4 2v5h-4V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
           {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,icon:<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>},
           {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,click:()=>setActiveTab("planilha")},
+          // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
+          ...(baseAtual?.id==="imperatriz_belem" && semDtAguardando>0 ? [{label:"Sem DT",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"aguardando validação",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:()=>setActiveTab("planilha")}]:[]),
           {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,icon:<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,click:()=>setActiveTab("motoristas")},
           ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",icon:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}]:[]),
           ...(canFin?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),

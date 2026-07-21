@@ -24,6 +24,17 @@ export async function contarSemDtPorStatus(conn) {
   return linhas.reduce((acc, l) => { acc[l.status] = (acc[l.status] || 0) + 1; return acc; }, {});
 }
 
+// Conta as cargas que AINDA aguardam DT (pendente + confirmado — exclui 'conciliado', que já
+// virou DT real na principal, e 'erro', descartado), opcionalmente por tipo_carga. Alimenta o
+// indicador "Sem DT" do Dashboard, que lê a fila SEM tocar no DADOS global.
+export async function contarSemDtAguardando(conn, tipoCarga) {
+  const q = (s) => encodeURIComponent(s);
+  let path = `${TABELA}?select=id&status=in.(pendente,confirmado)`;
+  if (tipoCarga) path += `&tipo_carga=eq.${q(tipoCarga)}`;
+  const linhas = (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+  return linhas.length;
+}
+
 export async function decidirSemDt(conn, id, status, obs, revisadoPor) {
   const body = {
     status,

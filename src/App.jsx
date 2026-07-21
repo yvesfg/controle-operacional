@@ -1503,7 +1503,7 @@ export default function App() {
             setPlanilhaFiltroStatus,
             setPlanilhaFiltroDestino,
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
-            baseAtual,
+            baseAtual, filtroTipoCarga, getConexao,
           }} />
         )}
 
