@@ -52,6 +52,7 @@ const ICO_ALERTA = <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0
 const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>;
 const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
 const ICO_FROTA = <><rect x="1" y="3" width="15" height="13" rx="2" /><path d="m16 8 4 2 3 3v4h-7" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></>;
+const ICO_DEVOLUCAO = <><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></>;
 
 // Ícones dos KPIs por categoria — mesma linguagem do Dashboard (hIco, 24x24 stroke).
 const ICO_CATEGORIA = {
@@ -775,6 +776,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <span style={{ fontSize: 9.5, fontWeight: 700, fontFamily: "var(--font-mono)", padding: "2px 7px", borderRadius: 20, background: t.card2, border: `1px solid ${t.borda}`, color: t.txt2 }}>{mesLabel(p.periodo_ref)}</span>
               <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.nome_usuario || "sem usuário", 15)}</span>
               {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
+              {p.is_devolucao && badge(ICO_DEVOLUCAO, "DEVOLUÇÃO · FOB", t.azul)}
               {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
               {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
               {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
@@ -1034,6 +1036,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <div style={{ fontSize: 11, color: t.txt, fontWeight: 700, marginBottom: 10 }}>{userChip(p.nome_usuario || "sem usuário na planilha", 16)}</div>
 
               <div style={{ marginBottom: 12 }}>
+                {p.is_devolucao && badge(ICO_DEVOLUCAO, "DEVOLUÇÃO · FOB", t.azul)}
                 {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}

@@ -350,14 +350,17 @@ export function resumoPorDia(linhas) {
 export function gerarWorkbookXLSX(linhas, periodoRef) {
   const wb = XLSX.utils.book_new();
   const CAT_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
+  // "Modalidade" no fim (CIF/FOB) — appendada pra não deslocar os índices posicionais das
+  // linhas de subtotal/total abaixo (que ficam mais curtas, com a célula final vazia).
   const COLS = ["Cliente", "CTRC", "Empresa", "Data Emissão", "Trecho", "NFS", "Placa", "Nome do Usuário",
     "Nº Manifesto", "Nº Contrato Frete", "Valor NF", "Peso NF", "Frete Peso", "Total do Frete",
-    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)"];
+    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)", "Modalidade"];
 
   const linhaArray = (l) => [
     l.cliente, l.ctrc, l.empresa_cod, l.data_emissao, l.trecho, l.nfs, l.placa, l.nome_usuario,
     l.numero_manifesto, l.numero_contrato, num(l.valor_nf), num(l.peso_nf), num(l.frete_peso),
     num(l.total_frete), num(l.valor_contrato_frete), num(l.saldo), r2(num(l.margem_lucro)),
+    l.is_devolucao ? "FOB (devolução)" : "CIF",
   ];
 
   const construirAba = (categoria, titulo) => {
@@ -418,6 +421,19 @@ export function gerarWorkbookXLSX(linhas, periodoRef) {
     const margem = fretes.length ? fretes.reduce((s, l) => s + num(l.margem_lucro), 0) / fretes.length : 0;
     resumoAoa.push([cli, r2(margem)]);
   });
+
+  // Devoluções (FOB) — quanto do faturamento de cada cliente veio de carga que voltou.
+  const devolucoes = linhas.filter((l) => l.is_devolucao);
+  if (devolucoes.length) {
+    resumoAoa.push([]);
+    resumoAoa.push([`Devoluções (FOB) — ${devolucoes.length} linha(s) de carga que voltou, lançadas no cliente de destino`]);
+    resumoAoa.push(["Cliente", "Registros", "Frete Peso (R$)", "Saldo (R$)"]);
+    clientes.forEach((cli) => {
+      const sub = devolucoes.filter((l) => l.cliente === cli);
+      if (!sub.length) return;
+      resumoAoa.push([cli, sub.length, sub.reduce((s, l) => s + num(l.frete_peso), 0), sub.reduce((s, l) => s + num(l.saldo), 0)]);
+    });
+  }
 
   const wsResumo = XLSX.utils.aoa_to_sheet(resumoAoa);
   XLSX.utils.book_append_sheet(wb, wsResumo, "RESUMO");
