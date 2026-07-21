@@ -28,6 +28,7 @@ import OcorrenciasView from './views/OcorrenciasViewWrapper.jsx';
 import OperacionalView from './views/OperacionalViewWrapper.jsx';
 import PlanilhaView    from './views/PlanilhaViewWrapper.jsx';
 import CargasSemDt    from './views/CargasSemDt.jsx';
+import { listarSemDt } from './cargasSemDt.js';
 import DashboardView   from './views/DashboardViewWrapper.jsx';
 import DiariasView     from './views/DiariasViewWrapper.jsx';
 import DescargaView    from './views/DescargaViewWrapper.jsx';
@@ -119,6 +120,10 @@ export default function App() {
   const [basesPermitidas, setBasesPermitidas] = useState([]);
   // Filtro global de tipo de carga (base Imperatriz: papel x celulose). "todos" = sem filtro.
   const [filtroTipoCarga, setFiltroTipoCarga] = useState("todos");
+  // Cargas SEM DT CONFIRMADAS (fila) injetadas no DADOS como linhas normais com flag
+  // _semDt — "constam em todos os locais" (Planilha/Dashboard/Financeiro) com badge e
+  // seguem o filtro de tipo de carga. Some sozinha ao ganhar DT (vira conciliado).
+  const [semDtRows, setSemDtRows] = useState([]);
   // Helper: persiste no localStorage ao mesmo tempo que seta o estado
   const setBaseAtual = (base) => {
     if (base) localStorage.setItem("co_base_atual", JSON.stringify(base));
@@ -341,14 +346,14 @@ export default function App() {
     const merged = base.map(r => overrides.has(r.dt) ? overrides.get(r.dt) : r);
     const baseDTs = new Set(merged.map(r => r.dt));
     const additions = extras.filter(x => !x._override && !baseDTs.has(x.dt));
-    const todas = [...merged, ...additions];
+    const todas = [...merged, ...additions, ...semDtRows];
     // Filtro global por tipo de carga — só na base Imperatriz/Belém (papel + celulose).
     // Default "todos" = sem alteração. tipo_carga ausente (linha criada no app) conta como papel.
     if (baseAtual?.id === "imperatriz_belem" && filtroTipoCarga !== "todos") {
       return todas.filter(r => (r.tipo_carga || "papel") === filtroTipoCarga);
     }
     return todas;
-  }, [dadosBase, dadosExtras, baseAtual, filtroTipoCarga]);
+  }, [dadosBase, dadosExtras, baseAtual, filtroTipoCarga, semDtRows]);
 
   // Alertas calculation
   const alertas = useMemo(() => {
@@ -411,6 +416,17 @@ export default function App() {
     () => (hubScreen === "controle_op" ? getConexao() : null),
     [hubScreen, getConexao],
   );
+  useEffect(() => {
+    if (!motoristasConn || baseAtual?.id !== "imperatriz_belem") { setSemDtRows([]); return; }
+    let cancel = false;
+    listarSemDt(motoristasConn, "confirmado")
+      .then((linhas) => { if (cancel) return; setSemDtRows((linhas || []).map((l) => {
+        const o = {}; Object.keys(l).forEach((k) => { o[k] = l[k] == null ? "" : String(l[k]); });
+        return { ...o, id: "semdt-" + l.id, codigo: "SEM DT", dt: "SEMDT-" + l.id, status: "Carregado", _semDt: true };
+      })); })
+      .catch(() => { if (!cancel) setSemDtRows([]); });
+    return () => { cancel = true; };
+  }, [motoristasConn, baseAtual]);
   const { motoristas, saveMotoristasLS } = useMotoristas(motoristasConn, { onErro: motoristasOnErro });
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
@@ -637,7 +653,7 @@ export default function App() {
     let filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
     if (dashOrigem !== "todos") filtrado = filtrado.filter(r => normOrigem(r.origem) === dashOrigem);
 
-    const dtsU = new Set(filtrado.map(r=>dtBase(r.dt)));
+    const dtsU = new Set(filtrado.filter(r=>!r._semDt).map(r=>dtBase(r.dt)));
     let cteT = 0; filtrado.forEach(r=>{ const v=parseFloat(r.vl_cte); if(!isNaN(v)) cteT+=v; });
     // ── Financeiro AVB — excluir PENDENTES das somas ──
     let avbContratoT=0, avbAdtT=0, avbSaldoT=0;

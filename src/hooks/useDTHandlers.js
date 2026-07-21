@@ -44,11 +44,16 @@ export function useDTHandlers({
   };
 
   const supaUpsert = async (reg) => {
+    // Guarda: linhas SEM DT (injetadas no DADOS a partir da fila 'Cargas sem DT', dt sintético
+    // "SEMDT-...") NÃO vão pra tabela principal — editar/decidir é na fila, não na Planilha.
+    if (reg?._semDt || String(reg?.dt || "").startsWith("SEMDT-")) {
+      throw new Error('Carga sem DT — edite ou decida na fila "Cargas sem DT", não na Planilha.');
+    }
     const conn = getConexao();
     if (!conn) throw new Error("Sem conexão");
     const tok = await garantirSessionToken(conn);
     if (!tok) throw new Error("Sessão não autenticada — saia e entre novamente para continuar sincronizando.");
-    const clean = {...reg}; delete clean._override; delete clean._overrideDT;
+    const clean = {...reg}; delete clean._override; delete clean._overrideDT; delete clean._semDt;
     for (const k of Object.keys(clean)) { if (clean[k] === "") clean[k] = null; }
     // AVB: âncora = codigo (coluna H); grava via upsert por codigo. Sem dt obrigatório.
     if (baseAtual?.id === "acailandia_avb") {

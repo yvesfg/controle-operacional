@@ -374,6 +374,9 @@ export default function PlanilhaView({ ctx }) {
                     {row.tipo_carga === "celulose" && (
                       <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--color-info)", background: "color-mix(in srgb, var(--color-info) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--color-info) 30%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Celulose</span>
                     )}
+                    {row._semDt && (
+                      <span title="Carga carregada sem DT (aguardando o DT da Suzano) — confirmada e contando nos totais" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--accent)", background: "color-mix(in srgb, var(--accent) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Sem DT</span>
+                    )}
                   </div>
                   <div style={{ flex: "1.2" }}><PvBadge status={row.status} /></div>
                   <div style={{ flex: "1.2", fontSize: 11, fontWeight: 600, color: margemColor }}>
@@ -393,7 +396,11 @@ export default function PlanilhaView({ ctx }) {
                   {row.gerenciadora && <div className="pv-detail-chip"><div className="dc-label">Gerenc.</div><div className="dc-val">{row.gerenciadora}</div></div>}
                   {row.mdf && <div className="pv-detail-chip"><div className="dc-label">MDF</div><div className="dc-val">{row.mdf}</div></div>}
                   <div className="pv-detail-actions">
-                    {abrirDetalhe && (
+                    {row._semDt ? (
+                      <span style={{ fontSize: 10.5, color: "var(--text3)", fontStyle: "italic" }}>
+                        Carga sem DT — edite ou decida na fila “Cargas sem DT” no topo desta tela.
+                      </span>
+                    ) : abrirDetalhe && (
                       <button className="pv-btn-action primary" onClick={e => handleEditar(row, e)}>Editar</button>
                     )}
                   </div>

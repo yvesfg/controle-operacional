@@ -38,9 +38,10 @@ function mesDeDataCarr(dc) {
 // (mesRef = "MM/YYYY"; "todos"/vazio = sem filtro de mês). Alimenta o indicador "Sem DT" do
 // Dashboard, que lê a fila SEM tocar no DADOS global. Linha sem data_carr fica de fora quando
 // um mês específico está selecionado (igual ao "Carregamentos", que também ignora sem-data).
-export async function contarSemDtAguardando(conn, tipoCarga, mesRef) {
+export async function contarSemDtAguardando(conn, tipoCarga, mesRef, statuses) {
   const q = (s) => encodeURIComponent(s);
-  let path = `${TABELA}?select=data_carr&status=in.(pendente,confirmado)`;
+  const st = (statuses && statuses.length ? statuses : ["pendente", "confirmado"]).map(q).join(",");
+  let path = `${TABELA}?select=data_carr&status=in.(${st})`;
   if (tipoCarga) path += `&tipo_carga=eq.${q(tipoCarga)}`;
   const linhas = (await supaFetch(conn.url, conn.key, "GET", path)) || [];
   if (!mesRef || mesRef === "todos") return linhas.length;
