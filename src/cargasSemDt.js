@@ -24,15 +24,27 @@ export async function contarSemDtPorStatus(conn) {
   return linhas.reduce((acc, l) => { acc[l.status] = (acc[l.status] || 0) + 1; return acc; }, {});
 }
 
+// Extrai "MM/YYYY" do data_carr — mesma lógica do agrupamento por mês do Dashboard
+// (App.jsx dashData), pra o indicador "Sem DT" seguir o mesmo mês do "Carregamentos".
+function mesDeDataCarr(dc) {
+  const s = String(dc || "");
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) { const p = s.split("/"); return p[1] + "/" + p[2]; }
+  if (/^\d{4}-\d{2}/.test(s))         { const p = s.split("-"); return p[1] + "/" + p[0]; }
+  return "";
+}
+
 // Conta as cargas que AINDA aguardam DT (pendente + confirmado — exclui 'conciliado', que já
-// virou DT real na principal, e 'erro', descartado), opcionalmente por tipo_carga. Alimenta o
-// indicador "Sem DT" do Dashboard, que lê a fila SEM tocar no DADOS global.
-export async function contarSemDtAguardando(conn, tipoCarga) {
+// virou DT real na principal, e 'erro', descartado), opcionalmente por tipo_carga e por mês
+// (mesRef = "MM/YYYY"; "todos"/vazio = sem filtro de mês). Alimenta o indicador "Sem DT" do
+// Dashboard, que lê a fila SEM tocar no DADOS global. Linha sem data_carr fica de fora quando
+// um mês específico está selecionado (igual ao "Carregamentos", que também ignora sem-data).
+export async function contarSemDtAguardando(conn, tipoCarga, mesRef) {
   const q = (s) => encodeURIComponent(s);
-  let path = `${TABELA}?select=id&status=in.(pendente,confirmado)`;
+  let path = `${TABELA}?select=data_carr&status=in.(pendente,confirmado)`;
   if (tipoCarga) path += `&tipo_carga=eq.${q(tipoCarga)}`;
   const linhas = (await supaFetch(conn.url, conn.key, "GET", path)) || [];
-  return linhas.length;
+  if (!mesRef || mesRef === "todos") return linhas.length;
+  return linhas.filter((l) => mesDeDataCarr(l.data_carr) === mesRef).length;
 }
 
 export async function decidirSemDt(conn, id, status, obs, revisadoPor) {

@@ -41,9 +41,9 @@ export default function DashboardView({ ctx }) {
     if (!conn) return;
     let cancel = false;
     const tipo = filtroTipoCarga && filtroTipoCarga !== "todos" ? filtroTipoCarga : null;
-    contarSemDtAguardando(conn, tipo).then(n => { if (!cancel) setSemDtAguardando(n); }).catch(() => {});
+    contarSemDtAguardando(conn, tipo, dashMes).then(n => { if (!cancel) setSemDtAguardando(n); }).catch(() => {});
     return () => { cancel = true; };
-  }, [baseAtual, filtroTipoCarga, getConexao]);
+  }, [baseAtual, filtroTipoCarga, getConexao, dashMes]);
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
   const carregadosN = dashData.filtrado.length;
