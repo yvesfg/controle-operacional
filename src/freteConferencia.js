@@ -57,6 +57,10 @@ const campoBase = (r, cli, cnpj, categoria, empresaCod) => ({
   cliente: cli.nome,
   base_id: cli.base_id,
   cnpj_remetente: cnpj,
+  // Devolução (FOB): a linha entra no faturamento do cliente-alvo (cli.nome), mas guarda
+  // o cnpj_remetente REAL (quem devolveu) e fica marcada pra dar pra filtrar/relatar.
+  is_devolucao: !!cli.is_devolucao,
+  modalidade: cli.is_devolucao ? "FOB" : "CIF",
   categoria,
   empresa_cod: empresaCod,
   ctrc: String(r["CTRC"] ?? "").trim(),
@@ -75,6 +79,17 @@ const campoBase = (r, cli, cnpj, categoria, empresaCod) => ({
   saldo: num(r["Saldo"]),
   margem_lucro: num(r["Margem Lucro"]),
 });
+
+// Resolve o registro de embarcadora (do mapaEmbarcadoras) no "cliente efetivo" que
+// classifica as linhas. Cliente normal (tipo 'cliente'/legado): ele mesmo. Devolução
+// (tipo='devolucao'): as linhas entram no NOME/BASE do cliente-alvo (devolucao_de_cnpj),
+// mas usam os códigos de Empresa da PRÓPRIA devolução e ficam marcadas is_devolucao (FOB).
+// Se o alvo não existir mais no cadastro, cai no nome da própria devolução — não perde a receita.
+export function clienteEfetivo(rec, mapa) {
+  if (rec?.tipo !== "devolucao") return rec;
+  const alvo = mapa[soDigitos(rec.devolucao_de_cnpj)];
+  return { ...rec, nome: alvo?.nome || rec.nome, base_id: alvo?.base_id ?? rec.base_id, is_devolucao: true };
+}
 
 // Classifica as linhas RAW de UM cnpj (já sabendo o cliente) por categoria, a partir
 // da coluna Empresa. Exportada porque ConferenciaFrete.jsx reusa isso ao cadastrar um
@@ -176,7 +191,7 @@ export function parseFreteXLSX(file, clientesMap) {
             desconhecidos[cnpj] = { cnpj, linhasRaw: rows, empresas, qtd: rows.length };
             return;
           }
-          const { classificadas, naoClassificadas: ignoradas } = classificarLinhasCliente(rows, cli, cnpj);
+          const { classificadas, naoClassificadas: ignoradas } = classificarLinhasCliente(rows, clienteEfetivo(cli, clientesMap), cnpj);
           linhas.push(...classificadas);
           naoClassificadas.push(...ignoradas);
         });

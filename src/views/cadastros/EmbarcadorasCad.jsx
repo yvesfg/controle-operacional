@@ -67,10 +67,13 @@ export default function EmbarcadorasCad({ ctx, conn }) {
   }, [form?.cnpj, form?.__novo]);
 
   const filtradas = React.useMemo(() => {
+    // Regras de devolução (tipo='devolucao') moram na mesma tabela, mas são roteamento
+    // FOB da Conferência — não são embarcadoras/clientes, então não aparecem neste cadastro.
+    const base = lista.filter((e) => e.tipo !== "devolucao");
     const q = busca.trim().toLowerCase();
-    if (!q) return lista;
+    if (!q) return base;
     const qd = q.replace(/\D/g, "");
-    return lista.filter((e) =>
+    return base.filter((e) =>
       e.nome?.toLowerCase().includes(q) ||
       e.razao_social?.toLowerCase().includes(q) ||
       e.cidade?.toLowerCase().includes(q) ||

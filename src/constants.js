@@ -146,6 +146,15 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-07-21", sessao: "Sessao 49",
+    itens: [
+      "FEAT · Conferencia de Faturamento: tratamento de DEVOLUCAO (FOB) no CNPJ nao cadastrado. Algumas cargas voltam e o CNPJ Remetente da planilha nao e o cliente -- e quem devolveu (frete FOB, nao CIF). Antes so dava pra 'Cadastrar' (criava embarcadora fantasma, rachava o faturamento) ou 'Ignorar' (sumia com a receita). Agora o bloco de CNPJ nao cadastrado tem um 3o caminho: modo 'E devolucao' -> escolhe o cliente-alvo + mapeia os codigos de Empresa -> as linhas entram no faturamento DESSE cliente, marcadas is_devolucao/FOB, guardando o cnpj_remetente real.",
+      "FEAT · A regra fica SALVA: o CNPJ de devolucao vira registro em `embarcadoras` (tipo='devolucao', devolucao_de_cnpj aponta pro cliente-alvo; frete_cod/desc_local_cod/diaria_cod = codigos das linhas da devolucao). Nas proximas importacoes esse CNPJ reclassifica sozinho via clienteEfetivo() no parseFreteXLSX. EmbarcadorasCad filtra tipo!='devolucao' -- essas regras nao poluem o cadastro de clientes.",
+      "DB · Migration 020: embarcadoras + tipo/devolucao_de_cnpj; frete_conferencia + is_devolucao/modalidade (CIF|FOB), tudo aditivo com default. FALTA (Yves): rodar a migration 020 no Supabase.",
+      "PENDENTE · Nao validado em navegador logado (login exige credencial). Build passa. Proxima fase sugerida: badge FOB/devolucao nos cards de revisao e coluna de devolucao na planilha exportada (gerarWorkbookXLSX).",
+    ],
+  },
+  {
     data: "2026-07-20", sessao: "Sessao 48",
     itens: [
       "FIX · Fila 'Cargas sem DT' nao puxava CTe/valores mesmo com o Sheets preenchido. CAUSA: o SyncSupabase.gs gravava a pendencia com resolution=ignore-duplicates (pra nao apagar decisao humana), entao a linha ficava CONGELADA no estado da 1a captura -- o que voce preenchesse depois (data/CTe/contrato) nunca descia pra fila. Confirmado no banco: pendencia do WILSON (id 995) capturada em 17/07 com tudo vazio, atualizado_em=criado_em; os valores reais (CTe R$9.880) estavam na tabela principal sob DT='x'.",

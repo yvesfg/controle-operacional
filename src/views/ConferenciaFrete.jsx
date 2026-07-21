@@ -4,7 +4,7 @@ import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, estornarRevisao, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
-  classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica,
+  classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -160,7 +160,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       // Formulário inicial de cada CNPJ desconhecido: nome vazio, sem base, toda Empresa "ignorar"
       const forms = {};
       Object.values(r.desconhecidos).forEach((d) => {
-        forms[d.cnpj] = { nome: "", razao_social: "", base_id: "", cidade: "", uf: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
+        forms[d.cnpj] = { modo: "cadastro", devolucaoAlvo: "", nome: "", razao_social: "", base_id: "", cidade: "", uf: "", mapEmpresa: Object.fromEntries(Object.keys(d.empresas).map(e => [e, "ignorar"])) };
       });
       setFormsDesconhecidos(forms);
       preencherDadosReceita(Object.keys(forms));
@@ -196,6 +196,42 @@ export default function ConferenciaFrete({ ctx, conn }) {
       setPreview({ ...preview, linhas: novasLinhas, naoClassificadas: novasNaoClass, periodoRef: novoPeriodoRef, periodosEncontrados, desconhecidos: restoDesconhecidos, resumo: resumoPorCategoria(novasLinhas) });
       showToast?.(`"${cli.nome}" cadastrado — ${classificadas.length} linha(s) já incluída(s) na importação.`, "ok");
     } catch (e) { showToast?.("Erro ao cadastrar embarcadora: " + e.message, "erro"); }
+    finally { setCadastrando(null); }
+  };
+
+  // Devolução (FOB): o CNPJ da planilha não é o cliente — é quem devolveu a carga. Grava
+  // uma regra em `embarcadoras` (tipo='devolucao' apontando pro cliente-alvo) e já joga as
+  // linhas no faturamento desse cliente, marcadas FOB. A regra fica salva: nas próximas
+  // importações esse CNPJ reclassifica sozinho (via clienteEfetivo no parseFreteXLSX).
+  const salvarDevolucao = async (cnpj) => {
+    const form = formsDesconhecidos[cnpj];
+    const d = preview.desconhecidos[cnpj];
+    if (!form.devolucaoAlvo) { showToast?.("Escolha o cliente-alvo dessa devolução.", "erro"); return; }
+    const entradas = Object.entries(form.mapEmpresa).filter(([, cat]) => cat !== "ignorar");
+    const freteCod = entradas.find(([, cat]) => cat === "frete")?.[0];
+    if (!freteCod) { showToast?.("Marque pelo menos um código de Empresa como Frete — é obrigatório pra classificar qualquer coisa.", "erro"); return; }
+    const descLocalCod = entradas.find(([, cat]) => cat === "descarga_local")?.[0] || null;
+    const diariaCod = entradas.find(([, cat]) => cat === "diaria")?.[0] || null;
+    const alvo = clientesMap[form.devolucaoAlvo];
+    setCadastrando(cnpj);
+    try {
+      const rec = await criarEmbarcadora({
+        cnpj, nome: form.nome.trim() || `Devolução — ${alvo?.nome || form.devolucaoAlvo}`,
+        tipo: "devolucao", devolucao_de_cnpj: form.devolucaoAlvo, base_id: null,
+        razao_social: form.razao_social?.trim() || null,
+        cidade: form.cidade?.trim() || null, uf: form.uf?.trim().toUpperCase() || null,
+        frete_cod: freteCod, desc_local_cod: descLocalCod, diaria_cod: diariaCod,
+        criado_por: usuarioLogado || null,
+      });
+      const efetivo = clienteEfetivo(rec, clientesMap);
+      const { classificadas, naoClassificadas: ignoradas } = classificarLinhasCliente(d.linhasRaw, efetivo, cnpj);
+      const novasLinhas = [...preview.linhas, ...classificadas];
+      const novasNaoClass = [...preview.naoClassificadas, ...ignoradas];
+      const { periodoRef: novoPeriodoRef, periodosEncontrados } = recalcularFlagsEPeriodo(novasLinhas, novasNaoClass);
+      const { [cnpj]: _omit, ...restoDesconhecidos } = preview.desconhecidos;
+      setPreview({ ...preview, linhas: novasLinhas, naoClassificadas: novasNaoClass, periodoRef: novoPeriodoRef, periodosEncontrados, desconhecidos: restoDesconhecidos, resumo: resumoPorCategoria(novasLinhas) });
+      showToast?.(`Devolução vinculada a "${efetivo.nome}" — ${classificadas.length} linha(s) FOB incluída(s) na importação.`, "ok");
+    } catch (e) { showToast?.("Erro ao salvar devolução: " + e.message, "erro"); }
     finally { setCadastrando(null); }
   };
 
@@ -821,6 +857,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Modal: pré-visualização antes de gravar */}
       {preview && (() => {
         const cnpjsDesconhecidos = Object.values(preview.desconhecidos || {});
+        // Clientes-alvo elegíveis pra receber uma devolução (exclui as próprias regras de devolução).
+        const clientesAlvo = Object.values(clientesMap).filter((c) => c.tipo !== "devolucao").sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
         const clientesNoArquivo = Object.entries(resumoPorCliente(preview.linhas));
         const opcoesEmpresa = [
           { v: "ignorar", l: "Ignorar" },
@@ -872,7 +910,31 @@ export default function ConferenciaFrete({ ctx, conn }) {
               return (
                 <div key={d.cnpj} style={{ marginTop: 12, borderRadius: 10, border: `1.5px solid ${hexRgb(t.warn, .4)}`, background: hexRgb(t.warn, .06), padding: 12 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, marginBottom: 2 }}>CNPJ não cadastrado: {d.cnpj}</div>
-                  <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 10 }}>{d.qtd} linha(s) neste arquivo — cadastre a embarcadora ou ignore essas linhas.</div>
+                  <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 10 }}>{d.qtd} linha(s) neste arquivo — cadastre a embarcadora, marque como devolução (FOB) de um cliente, ou ignore essas linhas.</div>
+
+                  {/* Modo: embarcadora nova (CIF, cliente próprio) × devolução (FOB, fatura no cliente-alvo) */}
+                  <div style={{ display: "flex", gap: 3, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}`, marginBottom: 10, width: "fit-content" }}>
+                    {[["cadastro", "Nova embarcadora"], ["devolucao", "É devolução"]].map(([id, label]) => (
+                      <button key={id} onClick={() => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], modo: id } }))}
+                        style={{ fontSize: 11, fontWeight: 700, padding: "5px 11px", borderRadius: 7, cursor: "pointer", fontFamily: "inherit", border: "none",
+                          background: form.modo === id ? (id === "devolucao" ? t.azul : t.ouro) : "transparent",
+                          color: form.modo === id ? (id === "devolucao" ? "#fff" : "#1a1a1a") : t.txt2 }}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {form.modo === "devolucao" && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 5 }}>Essas linhas são devolução (FOB) — lançar no faturamento de qual cliente?</div>
+                      <select value={form.devolucaoAlvo}
+                        onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], devolucaoAlvo: e.target.value } }))}
+                        style={{ width: "100%", fontSize: 12, padding: "7px 9px", borderRadius: 7, border: `1.5px solid ${form.devolucaoAlvo ? t.azul : t.borda}`, background: t.bg, color: t.txt }}>
+                        <option value="">Escolha o cliente…</option>
+                        {clientesAlvo.map((c) => <option key={c.cnpj} value={c.cnpj}>{c.nome}</option>)}
+                      </select>
+                    </div>
+                  )}
 
                   {form.receitaInfo && (
                     <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 8 }}>
@@ -880,6 +942,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     </div>
                   )}
 
+                  {form.modo === "cadastro" && (
                   <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
                     <input value={form.nome} placeholder="Nome da embarcadora"
                       onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], nome: e.target.value } }))}
@@ -897,6 +960,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       onChange={(e) => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], uf: e.target.value.toUpperCase() } }))}
                       style={{ flex: "0 0 56px", fontSize: 12, padding: "6px 9px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", textTransform: "uppercase" }} />
                   </div>
+                  )}
 
                   <div style={{ fontSize: 10, color: t.txt2, marginBottom: 4 }}>O que cada código de "Empresa" encontrado nas linhas significa:</div>
                   {Object.entries(d.empresas).map(([cod, qtd]) => (
@@ -915,10 +979,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
                       Ignorar este CNPJ
                     </button>
-                    <button onClick={() => cadastrarClienteDesconhecido(d.cnpj)} disabled={cadastrando === d.cnpj}
-                      style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none", opacity: cadastrando === d.cnpj ? .6 : 1 }}>
-                      {cadastrando === d.cnpj ? "Cadastrando..." : "Cadastrar e importar"}
-                    </button>
+                    {form.modo === "devolucao" ? (
+                      <button onClick={() => salvarDevolucao(d.cnpj)} disabled={cadastrando === d.cnpj}
+                        style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: t.azul, color: "#fff", border: "none", opacity: cadastrando === d.cnpj ? .6 : 1 }}>
+                        {cadastrando === d.cnpj ? "Salvando..." : "Salvar devolução e importar"}
+                      </button>
+                    ) : (
+                      <button onClick={() => cadastrarClienteDesconhecido(d.cnpj)} disabled={cadastrando === d.cnpj}
+                        style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none", opacity: cadastrando === d.cnpj ? .6 : 1 }}>
+                        {cadastrando === d.cnpj ? "Cadastrando..." : "Cadastrar e importar"}
+                      </button>
+                    )}
                   </div>
                 </div>
               );
