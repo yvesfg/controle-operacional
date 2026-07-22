@@ -60,6 +60,7 @@ import { useViewPrefsState } from './hooks/useViewPrefsState.js';
 import { useAuthState } from './hooks/useAuthState.js';
 import { useCoreState } from './hooks/useCoreState.js';
 import useMotoristas from './hooks/useMotoristas.js';
+import { setMotoristasToken } from './motoristas.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -427,7 +428,16 @@ export default function App() {
       .catch(() => { if (!cancel) setSemDtRows([]); });
     return () => { cancel = true; };
   }, [motoristasConn, baseAtual]);
-  const { motoristas, saveMotoristasLS } = useMotoristas(motoristasConn, { onErro: motoristasOnErro });
+  const { motoristas, saveMotoristasLS, recarregar: recarregarMotoristas } = useMotoristas(motoristasConn, { onErro: motoristasOnErro });
+
+  // Injeta o token de sessão na camada de dados de motoristas (dual-path RPC/anon).
+  // Quando o token chega (login/auto-login é assíncrono), recarrega pela RPC —
+  // necessário pós-lockdown, quando o path anon deixa de retornar dados.
+  useEffect(() => {
+    setMotoristasToken(sessionToken);
+    if (sessionToken) recarregarMotoristas(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionToken]);
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
     getConexao, showToast, tblRef, sessionToken, baseAtual,
