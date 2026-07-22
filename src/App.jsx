@@ -61,6 +61,7 @@ import { useAuthState } from './hooks/useAuthState.js';
 import { useCoreState } from './hooks/useCoreState.js';
 import useMotoristas from './hooks/useMotoristas.js';
 import { setMotoristasToken } from './motoristas.js';
+import { setVeiculosToken } from './veiculos.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
 import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
@@ -435,6 +436,7 @@ export default function App() {
   // necessário pós-lockdown, quando o path anon deixa de retornar dados.
   useEffect(() => {
     setMotoristasToken(sessionToken);
+    setVeiculosToken(sessionToken);
     if (sessionToken) recarregarMotoristas(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionToken]);
