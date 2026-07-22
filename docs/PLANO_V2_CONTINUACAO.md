@@ -26,8 +26,22 @@ RPCs SECURITY DEFINER que já existem e ajudam: `listar_operacional`, `upsert_op
 
 ---
 
-## Fase A — `controle_operacional` READ-lockdown (RECOMENDADO como próximo passo)
+## Fase A — `controle_operacional` READ-lockdown  ⚠️ TENTADA E REVERTIDA (028→029)
 **Fecha o CPF/financeiro do core sem tocar no `.gs`** (o .gs só ESCREVE, não lê).
+
+> POST-MORTEM (2026-07-22): a 028 derrubou o SELECT anon e o dashboard ficou VAZIO.
+> Causa: no front o sync roda em `[authed]` e o `sessionToken` é assíncrono → no 1º
+> sync o token é null → GET anon → que a trava zerou. No banco a RPC funciona
+> (listar_operacional retornou 1066 com token de admin). O fix de re-sync
+> `[authed, sessionToken]` (ebf2138) resolve, mas não estava deployado quando a 028
+> já valia. **Revertido pela 029.**
+>
+> COMO REFAZER COM SEGURANÇA:
+> 1. Garantir que ebf2138 (re-sync) esteja DEPLOYADO e, idealmente, fazer o sync
+>    AGUARDAR o token (não sincronizar sem token) em vez de cair no GET.
+> 2. Com a policy AINDA aberta, logar no app e confirmar que o dashboard carrega
+>    (o path RPC é usado quando há token) — só então derrubar o SELECT.
+> 3. Reaplicar o DROP das 3 policies de leitura.
 
 1. **Wiring (front):** garantir re-sync quando o token chega, senão o 1º load pode vir vazio.
    Em `App.jsx`, no efeito que já roda em `[sessionToken]` (o mesmo que chama
