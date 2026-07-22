@@ -1,5 +1,5 @@
 import React from "react";
-import { TABLE_USUARIOS, PERMS_PADRAO, PERMS_LISTA, BASES } from "../constants.js";
+import { PERMS_PADRAO, PERMS_LISTA, BASES } from "../constants.js";
 import { hashSenha, saveJSON, clickable } from "../utils.js";
 import { supaFetch } from "../supabase.js";
 import Icon from "../components/Icon.jsx";
@@ -13,7 +13,7 @@ export default function ModalUsuario({ ctx }) {
     usuarioEmailPreview, setUsuarioEmailPreview,
     showToast,
     registrarLog,
-    getConexao,
+    getConexao, sessionToken,
     enviarEmailBoasVindas,
     css, t,
   } = ctx;
@@ -136,9 +136,13 @@ export default function ModalUsuario({ ctx }) {
                 // Salvar no Supabase com upsert real
                 const conn = getConexao();
                 if (conn) {
+                  if (!sessionToken) { showToast("⚠️ Sessão admin expirada — refaça login para gerenciar usuários","warn"); return; }
                   try {
+                    // Escrita via RPC (admin_upsert_usuario): a policy anon de escrita em
+                    // co_usuarios foi removida (migration 023); a RPC confirma no servidor,
+                    // pelo token de sessão, que o chamador é admin antes de gravar.
                     await supaFetch(conn.url, conn.key, "POST",
-                      `${TABLE_USUARIOS}?on_conflict=email`, [uParaSupa]);
+                      "rpc/admin_upsert_usuario", { p_token: sessionToken, p_dados: uParaSupa });
                     await registrarLog(editIdx>=0?"EDITAR_USUARIO":"NOVO_USUARIO", `${u.nome} (${u.email}) - perfil: ${u.perfil}`);
                     if (editIdx < 0) { setUsuarioEmailPreview({...u, _senhaRaw: formData._senhaPlain||""}); }
                     showToast(editIdx>=0?"✅ Usuário atualizado e sincronizado!":"✅ Usuário criado! Envie o email de boas-vindas.","ok");

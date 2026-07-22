@@ -1829,7 +1829,7 @@ export default function App() {
         detalheSecMinDsc, setDetalheSecMinDsc, detalheTemDcc, setDetalheTemDcc,
         salvandoMins, setSalvandoMins, isAdmin, theme, perms, setEditStep,
         diariasData, salvarMinutasDetalhe, acompDias, setAcompDias,
-        usuarioLogado, getConexao, supaFetch, ocorrLoading, adicionarOcorrencia, abrirOcorrModal,
+        usuarioLogado, getConexao, supaFetch, sessionToken, ocorrLoading, adicionarOcorrencia, abrirOcorrModal,
         usuarios, setUsuarios, usuarioEmailPreview, setUsuarioEmailPreview, enviarEmailBoasVindas,
         wppTipoOpen, setWppTipoOpen, wppSearchTxt, setWppSearchTxt, wppSearchReg, setWppSearchReg,
         buscaResult, wppModal, setWppModal, wppTel, setWppTel, wppPgto, setWppPgto,

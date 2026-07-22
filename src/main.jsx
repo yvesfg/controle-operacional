@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './design-system/tokens.css'
 import './design-system/theme-dark.css'
 import './design-system/theme-light.css'
@@ -21,6 +22,8 @@ window.addEventListener("load", () => setTimeout(() => sessionStorage.removeItem
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 )
