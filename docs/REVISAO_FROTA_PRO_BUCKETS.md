@@ -37,6 +37,8 @@ indevida de documento (potencial LGPD, dependendo do que aparece nos comprovante
    Abastecimento, Manutenção e Pneus (exibição via signed URL) + um upload novo.
 
 ## Também no dashboard (Auth) — vale para todo o projeto Supabase
-- **Leaked Password Protection Disabled** (advisor): ligar em
-  Authentication → Policies (check HIBP de senha vazada). 1 clique, grátis.
-  Baixo impacto no controle-operacional (auth próprio), mas protege o fluxo OAuth do hub.
+- **Leaked Password Protection Disabled** (advisor): ❌ NÃO DISPONÍVEL — o check HIBP
+  é exclusivo de **Pro Plan e acima** (tentado em 2026-07-22: "available on Pro Plans
+  and up"; org YFGroup está no Free). O advisor vai continuar aparecendo — ignorar.
+  Impacto real baixo: login principal do hub é Google OAuth (sem senha) e o
+  controle-operacional usa auth próprio com hash via RPC.
