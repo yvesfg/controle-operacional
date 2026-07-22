@@ -500,14 +500,16 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  // Sync on auth
+  // Sync on auth — também re-dispara quando o sessionToken chega (auto-login gera o
+  // token de forma assíncrona). Necessário após o read-lockdown de controle_operacional:
+  // sem token, listar_operacional não retorna, então re-sincronizamos ao obtê-lo.
   useEffect(() => {
     if (authed && getConexao()) {
       sincronizar();
       syncUsuariosRemoto();
       carregarAponts();
     }
-  }, [authed]);
+  }, [authed, sessionToken]);
 
   // Auto-refresh a cada 15 minutos enquanto logado
   useEffect(() => {
