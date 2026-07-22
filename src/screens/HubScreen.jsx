@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
-import { fetchMeusModulos, fetchMeuAcesso } from "../supabaseAuth.js";
+import { fetchMeusModulos, fetchMeuAcesso, getSupaAuth } from "../supabaseAuth.js";
 import HubAdmin from "./HubAdmin.jsx";
 import HubFab from "../components/HubFab.jsx";
 import loginLogo from "../../assets/images/logo-login.png";
@@ -79,16 +79,28 @@ export default function HubScreen({
   };
 
   // ── SSO Frota: iframe + postMessage ──
-  const entrarFrota = () => {
-    setShowFrotaModal(true);
-
-    const _handler = (e) => {
-      if (!frotaUrl.startsWith(e.origin)) return;
+  // Listener único (antes era registrado a cada clique e nunca removido).
+  // Responde REQUEST_CO_TOKENS com token FRESCO via getSession() — que renova
+  // sozinho se preciso — para o iframe re-pedir antes de expirar sem rotacionar
+  // o refresh token do CO. Snapshot do sessionStorage fica só como fallback.
+  useEffect(() => {
+    const _handler = async (e) => {
+      if (!frotaUrl || !frotaUrl.startsWith(e.origin)) return;
       if (e.data?.type !== "REQUEST_CO_TOKENS") return;
 
       try {
-        const _raw = sessionStorage.getItem("co_supa_tokens");
-        const _tk = _raw ? JSON.parse(_raw) : null;
+        let _tk = null;
+        try {
+          const sb = getSupaAuth();
+          const { data } = sb ? await sb.auth.getSession() : { data: null };
+          if (data?.session?.access_token) {
+            _tk = { access_token: data.session.access_token, refresh_token: data.session.refresh_token || "" };
+          }
+        } catch {}
+        if (!_tk) {
+          const _raw = sessionStorage.getItem("co_supa_tokens");
+          _tk = _raw ? JSON.parse(_raw) : null;
+        }
         if (_tk?.access_token) {
           try {
             const _pay = JSON.parse(atob(_tk.access_token.split(".")[1]));
@@ -105,10 +117,10 @@ export default function HubScreen({
     };
 
     window.addEventListener("message", _handler);
-
-    // Cleanup ao fechar modal
     return () => window.removeEventListener("message", _handler);
-  };
+  }, [frotaUrl]);
+
+  const entrarFrota = () => setShowFrotaModal(true);
 
   const fecharFrota = () => {
     setShowFrotaModal(false);

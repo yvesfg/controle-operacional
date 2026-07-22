@@ -25,13 +25,15 @@ indevida de documento (potencial LGPD, dependendo do que aparece nos comprovante
   `.../object/public/<bucket>/...`). Torná-los privados **quebra a exibição** até o
   frota-pro passar a gerar **signed URLs**.
 
-## O que fazer no frota-pro (sessão futura)
-1. Confirmar no código do frota-pro onde as URLs desses 3 buckets são geradas/exibidas.
-2. Trocar por **signed URLs** (`createSignedUrl`, com expiração) OU servir via proxy autenticado.
-3. Tornar os buckets **privados** (`public = false`) — mesmo estado de `inspecoes-pneu`.
-4. Adicionar **policies de Storage** (`storage.objects`) restringindo leitura a usuários
-   autenticados/donos, em vez de acesso público.
-5. Testar upload + exibição no frota-pro antes de fechar.
+## O que fazer no frota-pro — STATUS 2026-07-22
+1. ✅ URLs geradas em `src/lib/{abastecimentos,manutencoes,pneus}Repo.js` (getPublicUrl),
+   exibidas em `AbastecimentoModal`, `ManutencaoModal` e `TireControlModal` (CardPneu).
+2. ✅ Signed URLs implementadas: `src/lib/storageUrl.js` (`resolveStorageUrl`/`useStorageUrl`,
+   1h de validade; aceita URL pública legada do banco ou path puro).
+3./4. ⏳ SQL pronto em `frota-pro/supabase/migrations/004_buckets_privados.sql`
+   (buckets private + read=tem_acesso viewer, escrita=editor, padrão inspecoes-pneu).
+   **Aplicar SOMENTE depois do deploy do front** — antes disso quebra a exibição.
+5. ⏳ Testar upload + exibição após deploy + migration.
 
 ## Também no dashboard (Auth) — vale para todo o projeto Supabase
 - **Leaked Password Protection Disabled** (advisor): ligar em
