@@ -75,7 +75,9 @@ export async function hashSenha(s) {
   const e = new TextEncoder().encode(s); const h = await crypto.subtle.digest("SHA-256",e); return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,"0")).join("");
 }
 export async function verificarSenha(plain, stored) {
-  if (plain === stored) return true;
+  // Compara SEMPRE por hash — sem fallback de igualdade em texto puro (que aceitaria
+  // uma senha armazenada em claro como válida). `stored` é sempre um hash SHA-256.
+  if (!stored) return false;
   try { return (await hashSenha(plain)) === stored; } catch { return false; }
 }
 
