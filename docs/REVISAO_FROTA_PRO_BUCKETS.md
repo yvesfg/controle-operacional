@@ -30,10 +30,11 @@ indevida de documento (potencial LGPD, dependendo do que aparece nos comprovante
    exibidas em `AbastecimentoModal`, `ManutencaoModal` e `TireControlModal` (CardPneu).
 2. ✅ Signed URLs implementadas: `src/lib/storageUrl.js` (`resolveStorageUrl`/`useStorageUrl`,
    1h de validade; aceita URL pública legada do banco ou path puro).
-3./4. ⏳ SQL pronto em `frota-pro/supabase/migrations/004_buckets_privados.sql`
-   (buckets private + read=tem_acesso viewer, escrita=editor, padrão inspecoes-pneu).
-   **Aplicar SOMENTE depois do deploy do front** — antes disso quebra a exibição.
-5. ⏳ Testar upload + exibição após deploy + migration.
+3./4. ✅ Migration `004_buckets_privados.sql` APLICADA em 2026-07-22 (após deploy do
+   front): buckets private + read=tem_acesso viewer, escrita=editor (padrão inspecoes-pneu).
+   Verificado: URL pública antiga responde 400; advisor "Public Bucket Allows Listing" sumiu.
+5. ⏳ Teste manual pendente: abrir Frota pelo hub e conferir foto/NF em
+   Abastecimento, Manutenção e Pneus (exibição via signed URL) + um upload novo.
 
 ## Também no dashboard (Auth) — vale para todo o projeto Supabase
 - **Leaked Password Protection Disabled** (advisor): ligar em
