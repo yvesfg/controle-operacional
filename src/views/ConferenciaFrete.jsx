@@ -106,7 +106,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Abre o modo edição admin: inicializa o formulário a partir do CTe.
   const abrirEdicao = (p) => {
     setEditForm({
-      cliente: p.cliente ?? "", categoria: p.categoria ?? "frete",
+      cliente: p.cliente ?? "", base_id: p.base_id ?? "", categoria: p.categoria ?? "frete",
       modalidade: p.is_devolucao ? "FOB" : (p.modalidade || "CIF"),
       ctrc: p.ctrc ?? "", data_emissao: p.data_emissao ?? "", trecho: p.trecho ?? "", placa: p.placa ?? "",
       empresa_cod: p.empresa_cod ?? "", nfs: p.nfs ?? "",
@@ -335,6 +335,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
   const clientesPresentes = React.useMemo(() => [...new Set(linhasPeriodo.map(l => l.cliente))].sort(), [linhasPeriodo]);
+
+  // Destinos possíveis pra edição admin (FOB): embarcadoras que faturam (têm base_id).
+  // Ao escolher, o cliente vira o destinatário e a base acompanha (mesma lógica do import).
+  const embarcadorasOpc = React.useMemo(() => {
+    const seen = new Map();
+    Object.values(clientesMap || {}).forEach((e) => { if (e?.nome && e?.base_id && !seen.has(e.nome)) seen.set(e.nome, e.base_id); });
+    return [...seen.entries()].map(([nome, base_id]) => ({ nome, base_id })).sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [clientesMap]);
+  const basesOpc = React.useMemo(() => Object.values(BASES).map((b) => ({ v: b.id, l: b.label })), []);
 
   const linhasFiltradas = React.useMemo(
     () => clienteFiltro ? linhasPeriodo.filter(l => l.cliente === clienteFiltro) : linhasPeriodo,
@@ -1181,9 +1190,23 @@ export default function ConferenciaFrete({ ctx, conn }) {
               {editando && editForm && (
                 <div style={{ marginBottom: 4 }}>
                   <div style={{ fontSize: 10.5, color: t.ouro, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", margin: "2px 0 8px" }}>Editando (admin) · margem/flags recalculam ao salvar</div>
-                  {editRow("Cliente", "cliente")}
+                  {/* Cliente = pagador. Escolher da lista de embarcadoras já traz a base junto
+                      (essencial no FOB, onde o pagador é o destinatário). Aceita digitar também. */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+                    <span style={{ color: t.txt2, fontSize: 12, width: 128, flexShrink: 0 }}>Cliente (pagador)</span>
+                    <input list="emb-destinos" value={editForm.cliente ?? ""}
+                      onChange={(e) => { const v = e.target.value; const emb = embarcadorasOpc.find((o) => o.nome.toLowerCase() === v.toLowerCase()); setEditForm((f) => ({ ...f, cliente: v, ...(emb ? { base_id: emb.base_id } : {}) })); }}
+                      style={inpStyle} />
+                    <datalist id="emb-destinos">{embarcadorasOpc.map((o) => <option key={o.nome} value={o.nome} />)}</datalist>
+                  </div>
+                  {selRow("Base", "base_id", basesOpc)}
                   {selRow("Categoria", "categoria", [{ v: "frete", l: "Frete" }, { v: "descarga", l: "Descarga" }, { v: "local", l: "Local" }, { v: "diaria", l: "Diária" }])}
                   {selRow("Modalidade", "modalidade", [{ v: "CIF", l: "CIF" }, { v: "FOB", l: "FOB (devolução)" }])}
+                  {editForm.modalidade === "FOB" && (
+                    <div style={{ fontSize: 10.5, color: t.azul, padding: "2px 0 6px", lineHeight: 1.45 }}>
+                      FOB: o pagador é o <b>destinatário</b>. Confira o <b>Cliente</b> acima (ex.: Suzano Belem) — a base acompanha.
+                    </div>
+                  )}
                   {editRow("CTRC", "ctrc")}
                   {editRow("Empresa (código)", "empresa_cod")}
                   {editRow("Placa", "placa")}

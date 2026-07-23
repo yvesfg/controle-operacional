@@ -6,6 +6,16 @@ import { supaFetch } from "./supabase.js";
 
 const TABELA = "despesas_filial";
 
+// SEGURANÇA (V2 / Fase C): despesas_filial guarda financeiro (despesas/créditos/indevidas).
+// Acesso via RPCs SECURITY DEFINER token-validadas (migration 037). Dual-path igual
+// motoristas/frete: se há token de sessão usa a RPC; senão cai no REST anon (que ainda
+// funciona enquanto a policy aberta não for derrubada no go-live, migration 038). Token
+// injetado por App.jsx via setDespesasToken() quando a sessão gera.
+let _sessionToken = null;
+export function setDespesasToken(t) { _sessionToken = t || null; }
+const _rows = (r) => Array.isArray(r) ? r.map(x => typeof x === "string" ? JSON.parse(x) : x) : [];
+const _one = (r) => { const v = typeof r === "string" ? JSON.parse(r) : r; return Array.isArray(v) ? v[0] : v; };
+
 const SECS = new Set([
   "DESPESAS C/ PESSOAL", "DESPESAS C/PESSOAL",
   "DESPESAS FIXAS", "DESPESAS VARIAVEIS", "ENCARGOS",
@@ -107,20 +117,30 @@ export function parseDespesasXLSX(file) {
 const q = (s) => encodeURIComponent(s);
 
 export async function listarDespesas(conn, baseId, mesRef) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_despesas",
+      { p_token: _sessionToken, p_base_id: baseId, p_mes_ref: mesRef }));
+  }
   const path = `${TABELA}?base_id=eq.${q(baseId)}&mes_ref=eq.${q(mesRef)}&order=grupo.asc,valor.desc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
 // Todas as despesas da base (todos os meses) — usado pelo Painel Financeiro p/ evolução.
 export async function listarDespesasBase(conn, baseId) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_despesas",
+      { p_token: _sessionToken, p_base_id: baseId, p_mes_ref: null }));
+  }
   const path = `${TABELA}?base_id=eq.${q(baseId)}&order=mes_ref.asc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 
 // Meses distintos com despesas registradas — leve (só coluna mes_ref).
 export async function listarMesesComDespesas(conn, baseId) {
-  const path = `${TABELA}?base_id=eq.${q(baseId)}&select=mes_ref&order=mes_ref.desc`;
-  const rows = (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+  const rows = _sessionToken
+    ? _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_meses_despesas",
+        { p_token: _sessionToken, p_base_id: baseId }))
+    : ((await supaFetch(conn.url, conn.key, "GET", `${TABELA}?base_id=eq.${q(baseId)}&select=mes_ref&order=mes_ref.desc`)) || []);
   return [...new Set(rows.map((r) => r.mes_ref).filter(Boolean))].sort().reverse();
 }
 
@@ -148,33 +168,57 @@ export async function diffImport(conn, baseId, mesRef, linhas) {
 export async function inserirImportadas(conn, mesRef, linhas) {
   if (!linhas.length) return [];
   const payload = linhas.map((x) => ({ ...x, mes_ref: mesRef, origem: "import" }));
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_despesas_lote",
+      { p_token: _sessionToken, p_rows: payload }));
+  }
   return await supaFetch(conn.url, conn.key, "POST", TABELA, payload);
 }
 
 export async function inserirManual(conn, row) {
   const payload = [{ ...row, origem: "manual" }];
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_despesas_lote",
+      { p_token: _sessionToken, p_rows: payload }));
+  }
   const res = await supaFetch(conn.url, conn.key, "POST", TABELA, payload);
   return Array.isArray(res) ? res[0] : res;
 }
 
 export async function atualizarDespesa(conn, id, patch) {
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/atualizar_despesa",
+      { p_token: _sessionToken, p_id: id, p_patch: patch }));
+  }
   const body = { ...patch, atualizado_em: new Date().toISOString() };
   const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q(id)}`, body);
   return Array.isArray(res) ? res[0] : res;
 }
 
 export async function deletarDespesa(conn, id) {
+  if (_sessionToken) {
+    return await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_despesa",
+      { p_token: _sessionToken, p_id: id });
+  }
   return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q(id)}`);
 }
 
 export async function deletarImportadas(conn, ids) {
   if (!ids || ids.length === 0) return;
+  if (_sessionToken) {
+    return await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_despesas",
+      { p_token: _sessionToken, p_ids: ids });
+  }
   return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=in.(${ids.map(q).join(",")})`);
 }
 
 // ── Conciliação de despesas indevidas → crédito ──────────────
 // Indevidas (débitos marcados) ainda sem crédito vinculado, de qualquer mês da base.
 export async function listarIndevidasPendentes(conn, baseId) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_indevidas_despesas",
+      { p_token: _sessionToken, p_base_id: baseId }));
+  }
   const path = `${TABELA}?base_id=eq.${q(baseId)}&indevida=eq.true&credito_match_id=is.null&order=mes_ref.asc,valor.desc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
@@ -188,12 +232,20 @@ export async function desvincularCredito(conn, indevidaId) {
 // ── Créditos Pendentes (visão global de cobrança) ────────────
 // Todas as indevidas sem crédito vinculado, de TODAS as filiais (sem filtro de base).
 export async function listarIndevidasPendentesGlobal(conn) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_indevidas_despesas",
+      { p_token: _sessionToken, p_base_id: null }));
+  }
   const path = `${TABELA}?indevida=eq.true&credito_match_id=is.null&order=dt_mov.asc,valor.desc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
 // Créditos de TODAS as filiais/meses — para vincular indevida a um crédito lançado
 // em outra base (ex.: indevida em Imperatriz, crédito creditado na aba de Açailândia).
 export async function listarCreditosGlobal(conn) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_creditos_despesas",
+      { p_token: _sessionToken }));
+  }
   const path = `${TABELA}?tipo=eq.credito&order=mes_ref.desc,dt_mov.desc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }

@@ -111,7 +111,11 @@ Prioridade sugerida: `frete_conferencia` e `despesas_filial` (financeiro) > `emb
   (reads 368/103/1, insert→patch→delete, token inválido rejeitado). **Go-live = migration 032**
   (drop das 4 policies anon), PRONTA e comentada — aplicar SÓ após deploy + confirmação no app
   (Conferência de Frete: lista/dashboard, decidir/estornar, importar, sinalizados).
-- ⬜ `despesas_filial` — próxima (financeiro). `despesas.js`.
+- 🟡 **`despesas_filial` (2026-07-23)** — migration **037** (8 RPCs) em prod; dual-path em
+  `despesas.js` + `setDespesasToken` no App.jsx; build OK; testado no banco (343/4/74, ciclo
+  insert→patch→excluir). **Go-live = migration 038** PRONTA — aplicar após deploy + prova no
+  API log (rpc/listar_despesas etc. na sessão do usuário; abas Painel Financeiro / Resultado /
+  Créditos Pendentes usam a tabela).
 - ⬜ `embarcadoras` — `embarcadoras.js` (CNPJ).
 - ⬜ `co_ocorrencias` — `useOcorrHandlers.js` + `relatorioEngine.js` (leem por GET direto).
 

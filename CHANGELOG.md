@@ -1,3 +1,23 @@
+## 2026-07-23 — Edição admin do CTe: FOB troca o pagador p/ o destinatário
+
+**Solicitado:** Ao marcar um CTe como FOB, o pagador (cliente) deixa de ser o remetente e passa a ser o destinatário (ex.: SENDAS que na verdade é Suzano Belem) — o cliente/base devem atualizar.
+
+**Implementado (`src/views/ConferenciaFrete.jsx`):** no form de edição admin, o campo **Cliente (pagador)** virou um seletor (datalist) das embarcadoras que faturam (têm base_id) — escolher já traz a **base** junto (mesma lógica do import de devolução). Adicionado seletor de **Base** e, quando Modalidade=FOB, uma **nota** lembrando que o pagador é o destinatário. `base_id` entra no patch (whitelist da RPC editar_frete já cobre). Aceita digitar cliente livre também.
+
+**Build:** ✓ (exit 0).
+
+## 2026-07-23 — Fase C: despesas_filial CRUD via RPC token-validada (dual-path)
+
+**Implementado:**
+- **Migration 037** (aplicada, aditiva): 8 RPCs SECURITY DEFINER token-validadas — `listar_despesas` (base+mês / base toda), `listar_meses_despesas`, `listar_indevidas_despesas` (base/global), `listar_creditos_despesas`, `inserir_despesas_lote` (import/manual), `atualizar_despesa` (patch dinâmico: edição + indevida/crédito/cobrança), `excluir_despesa`, `excluir_despesas` (lote). REVOKE public + GRANT anon.
+- **`src/despesas.js`**: dual-path (RPC c/ token, senão anon), `setDespesasToken()`. Todas as ~13 funções de I/O convertidas; assinaturas inalteradas.
+- **`src/App.jsx`**: `setDespesasToken(sessionToken)` no efeito `[sessionToken]`.
+- **Migration 038** (go-live) PRONTA, **não aplicada** (aguarda deploy + prova no API log).
+
+**Testado (banco, usuário de teste temporário):** reads = 343 (base) / 4 meses / 74 créditos; ciclo insert→patch(indevida+cobrança+crédito null)→excluir_despesas OK; dados de teste apagados. Nenhum acesso direto à tabela fora de `despesas.js`.
+
+**Build:** ✓ (exit 0). Go-live (038) pendente.
+
 ## 2026-07-23 — Lockdown FECHADO (mig 035) + Fase 2: edição admin de CTe
 
 **Lockdown (3ª tentativa, sem incidente):** migration **035** refez 030 (core read) + 032 (frete). Provado ANTES (API log: navegador do Yves em `POST /rpc/listar_operacional`; banco `listar_frete`=368 c/ token dele; setFreteToken usa o mesmo sessionToken). Provado DEPOIS: anon=0 (core 3 bases + frete), RPC=1073/368. CPF/financeiro do core + conferência só via RPC token-validada.
