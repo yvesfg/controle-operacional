@@ -1408,6 +1408,31 @@ export default function App() {
               <div style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
               <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
             </div>
+              {baseAtual && (
+                <div style={{position:"relative",marginLeft:8}}>
+                  <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
+                    style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 8px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
+                    ● {baseAtual.label}
+                    {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}>▾</span>}
+                  </button>
+                  {baseMenuOpen && basesPermitidas.length>1 && (
+                    <>
+                      <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
+                      <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:200,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
+                        <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
+                        {basesPermitidas.map(b=>(
+                          <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); }}
+                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:12,cursor:"pointer"}}>
+                            <span style={{width:7,height:7,borderRadius:"50%",background:b.id===baseAtual.id?t.ouro:t.borda,flexShrink:0}}/>
+                            <span style={{flex:1}}>{b.label}</span>
+                            {b.id===baseAtual.id && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
               <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
                 {connStatus==="syncing"
