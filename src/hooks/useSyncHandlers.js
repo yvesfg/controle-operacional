@@ -44,7 +44,7 @@ const sincronizar = useCallback(async () => {
     setConnStatus("error");
     showToast(`⚠️ ${e.message}`,"warn");
   }
-}, [getConexao, dadosExtras, showToast]);
+}, [getConexao, dadosExtras, showToast, sessionToken, baseAtual]);
 
 const carregarAponts = useCallback(async () => {
   const conn = getConexao();

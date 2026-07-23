@@ -26,7 +26,11 @@ RPCs SECURITY DEFINER que já existem e ajudam: `listar_operacional`, `upsert_op
 
 ---
 
-## Fase A — `controle_operacional` READ-lockdown  ⚠️ TENTADA E REVERTIDA (028→029)
+## Fase A — `controle_operacional` READ-lockdown  ✅ CONCLUÍDA (migration 030, 2026-07-23)
+> Provado após aplicar: anon SELECT = 0 nas 3 bases; RPC c/ token = 1071/417/371;
+> INSERT/UPDATE anon intactos (o `.gs` segue escrevendo). Histórico do 1º abort abaixo.
+
+### Histórico — 028→029 (tentada e revertida)
 **Fecha o CPF/financeiro do core sem tocar no `.gs`** (o .gs só ESCREVE, não lê).
 
 > POST-MORTEM (2026-07-22): a 028 derrubou o SELECT anon e o dashboard ficou VAZIO.
@@ -43,20 +47,32 @@ RPCs SECURITY DEFINER que já existem e ajudam: `listar_operacional`, `upsert_op
 >    (o path RPC é usado quando há token) — só então derrubar o SELECT.
 > 3. Reaplicar o DROP das 3 policies de leitura.
 
-1. **Wiring (front):** garantir re-sync quando o token chega, senão o 1º load pode vir vazio.
-   Em `App.jsx`, no efeito que já roda em `[sessionToken]` (o mesmo que chama
-   `setMotoristasToken`), adicionar `if (sessionToken) sincronizar();`.
-   (Hoje o sync roda em `[authed]`; o token é assíncrono e pode chegar depois.)
-2. **Verificar** que `sincronizar()` está em escopo nesse ponto (vem de `useSyncHandlers`,
-   linha ~432 — o efeito precisa vir DEPOIS dessa desestruturação).
+1. **Wiring (front) — ✅ FEITO 2026-07-23.** O efeito de re-sync já existe
+   (`App.jsx:506`, `[authed, sessionToken]`) e o de troca de base também
+   (`App.jsx:140`, `[baseAtual]`). O que faltava era a **CAUSA RAIZ**: o callback
+   `sincronizar` (`useSyncHandlers.js`) estava memoizado com deps
+   `[getConexao, dadosExtras, showToast]` — **sem `sessionToken` nem `baseAtual`** —,
+   então congelava `sessionToken=null`/`baseAtual` da criação. Os efeitos re-disparavam
+   mas chamavam o MESMO closure velho → caía no GET anon (mascarado enquanto a policy
+   está aberta, porque o GET usa `tblRef.current`). Fix: deps agora são
+   `[getConexao, dadosExtras, showToast, sessionToken, baseAtual]`. Com isso o path RPC
+   usa o token/base frescos assim que chegam. Build OK.
+2. ~~Verificar escopo de `sincronizar()`~~ — não se aplica (fix foi nas deps do hook).
 3. **Migration** (drop só do SELECT anon nas 3 bases):
    ```sql
    DROP POLICY IF EXISTS anon_read_controle   ON controle_operacional;
    DROP POLICY IF EXISTS anon_read_avb         ON controle_operacional_avb;
    DROP POLICY IF EXISTS anon_read_maracanau   ON controle_operacional_maracanau;
    ```
-4. **Provar antes** (rollback): `listar_operacional(gerar_token_sessao('admin@sistema'),'imperatriz_belem',...)` retorna linhas.
-   **Provar depois:** anon `SELECT` nas 3 tabelas = 0 linhas.
+4. **Provar antes** (✅ 2026-07-23): `listar_operacional(gerar_token_sessao('admin@sistema'),'imperatriz_belem',100000,0)`
+   retornou **1071 linhas** no banco. Policies de leitura confirmadas AINDA ABERTAS (029 vigente).
+   **Falta a prova no NAVEGADOR** (obrigatória antes do DROP): com o fix deployado e a
+   policy ainda aberta, logar como admin e confirmar dashboard cheio (o path RPC é usado
+   quando há token). **Provar depois:** anon `SELECT` nas 3 tabelas = 0 linhas.
+
+   > ⚠️ ORDEM CRÍTICA: (1) Yves faz commit+push do fix (Vercel auto-deploy) →
+   > (2) confirma no app logado que o dashboard carrega → (3) SÓ ENTÃO aplico a 028.
+   > Não aplicar a 028 antes do deploy confirmado (foi o que quebrou da última vez).
 5. Manter INSERT/UPDATE anon (o `.gs` depende) até a Fase B.
 
 ## Fase B — `controle_operacional` WRITE-lockdown (precisa reescrever o `.gs`)

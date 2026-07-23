@@ -1,3 +1,20 @@
+## 2026-07-23 — V2 Fase A (re-tentativa): fix da causa raiz do timing de token
+
+**Solicitado:** Verificar se está tudo certo e continuar o lockdown conforme `PLANO_V2_CONTINUACAO.md` (a Fase A foi tentada na 028 e revertida na 029 por dashboard vazio).
+
+**Diagnóstico (causa raiz do abort da 028):** o `sincronizar` (`src/hooks/useSyncHandlers.js`) estava memoizado com deps `[getConexao, dadosExtras, showToast]` — **sem `sessionToken` nem `baseAtual`**. Os efeitos de re-sync (`App.jsx:506` `[authed, sessionToken]`) e de troca de base (`App.jsx:140` `[baseAtual]`) re-disparavam, mas chamavam o MESMO closure velho que congelava `sessionToken=null`. Enquanto as policies estão abertas isso fica mascarado (o GET anon usa `tblRef.current`, sempre correto); no instante do lockdown o path RPC passa a valer e usa token/base velhos → dashboard vazio.
+
+**Implementado:**
+- **`src/hooks/useSyncHandlers.js`** — deps do `sincronizar` agora `[getConexao, dadosExtras, showToast, sessionToken, baseAtual]`. Path RPC passa a usar token/base frescos assim que chegam. Uma linha, cirúrgico, sem loop (ambos só mudam em login/troca de base).
+- **`docs/PLANO_V2_CONTINUACAO.md`** — passo 1 reescrito (causa raiz + fix real); prova no banco registrada.
+
+**Go-live (após deploy do fix + confirmação no navegador por Yves — dashboard e troca de base OK):**
+migration **030** aplicada. Prova: anon SELECT = **0** nas 3 bases; RPC c/ token = **1071 / 417 / 371**
+(imperatriz/avb/maracanau); INSERT/UPDATE anon **intactos** (o `SyncSupabase.gs` segue escrevendo).
+CPF/financeiro do core agora só saem via RPC token-validada. Fase A CONCLUÍDA.
+
+**Build:** ✓ (exit 0).
+
 ## 2026-06-23 — Diagnóstico geral + correção do tema claro + perfil CRLV
 
 **Solicitado:** Análise completa (IA atual, app Consulta ANTT no GitHub, viabilidade Gemini vs alternativa gratuita), correção da ilegibilidade do tema claro (img2), redesign do modal de detalhe (img1) e fluxo reutilizável de extração de documentos (CRLV).
