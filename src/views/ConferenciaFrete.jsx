@@ -5,6 +5,7 @@ import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, estornarRevisao, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
+  editarFrete, recalcularLinhaEditada,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -63,7 +64,8 @@ const ICO_CATEGORIA = {
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb, usuarioLogado, css, hIco, filaSlot } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot } = ctx;
+  const isAdmin = perfil === "admin";
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
@@ -86,6 +88,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [sinalObs, setSinalObs] = React.useState("");
   const [revisando, setRevisando] = React.useState(false);   // "Marcar revisado" clicado: campo de justificativa aberto
   const [revisObs, setRevisObs] = React.useState("");
+  const [editando, setEditando] = React.useState(false);     // modo edição admin do CTe (modal)
+  const [editForm, setEditForm] = React.useState(null);
+  const [salvandoEdit, setSalvandoEdit] = React.useState(false);
 
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null }));
@@ -94,7 +99,41 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const abrirRevisar = (p) => {
     setSinalizando(false); setSinalObs("");
     setRevisando(false); setRevisObs("");
+    setEditando(false); setEditForm(null);
     setRevisarModal({ open: true, item: p });
+  };
+
+  // Abre o modo edição admin: inicializa o formulário a partir do CTe.
+  const abrirEdicao = (p) => {
+    setEditForm({
+      cliente: p.cliente ?? "", categoria: p.categoria ?? "frete",
+      modalidade: p.is_devolucao ? "FOB" : (p.modalidade || "CIF"),
+      ctrc: p.ctrc ?? "", data_emissao: p.data_emissao ?? "", trecho: p.trecho ?? "", placa: p.placa ?? "",
+      empresa_cod: p.empresa_cod ?? "", nfs: p.nfs ?? "",
+      valor_nf: p.valor_nf ?? 0, peso_nf: p.peso_nf ?? 0, frete_peso: p.frete_peso ?? 0,
+      total_frete: p.total_frete ?? 0, valor_contrato_frete: p.valor_contrato_frete ?? 0, saldo: p.saldo ?? 0,
+    });
+    setSinalizando(false); setRevisando(false);
+    setEditando(true);
+  };
+
+  // Salva a edição admin: monta o patch, recalcula margem/flags e grava via RPC editar_frete.
+  const salvarEdicao = async (id) => {
+    setSalvandoEdit(true);
+    try {
+      const nums = ["valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo"];
+      const patch = { ...editForm };
+      nums.forEach((k) => { patch[k] = Number(patch[k]) || 0; });
+      patch.is_devolucao = editForm.modalidade === "FOB";
+      patch.modalidade = editForm.modalidade;
+      Object.assign(patch, recalcularLinhaEditada(patch)); // margem_lucro + flags
+      await editarFrete(conn, id, patch);
+      showToast?.("CTe atualizado.", "ok");
+      setEditando(false); setEditForm(null);
+      setRevisarModal({ open: false, item: null });
+      await carregar(); // recarrega listas/resumos do servidor (evita estado parcial)
+    } catch (e) { showToast?.("Erro ao salvar edição: " + e.message, "erro"); }
+    finally { setSalvandoEdit(false); }
   };
 
   const carregar = React.useCallback(async () => {
@@ -1085,6 +1124,24 @@ export default function ConferenciaFrete({ ctx, conn }) {
             <span style={{ color: t.txt, fontWeight: 600, textAlign: "right" }}>{v || "—"}</span>
           </div>
         );
+        // Edição admin (migration 036): inputs + selects. setF atualiza um campo do form.
+        const setF = (k, v) => setEditForm((f) => ({ ...f, [k]: v }));
+        const inpStyle = { padding: "6px 9px", fontSize: 12, borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none", width: "100%", minWidth: 0 };
+        const editRow = (label, k, type = "text") => (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+            <span style={{ color: t.txt2, fontSize: 12, width: 128, flexShrink: 0 }}>{label}</span>
+            <input type={type} value={editForm?.[k] ?? ""} onChange={(e) => setF(k, e.target.value)}
+              step={type === "number" ? "0.01" : undefined} style={inpStyle} />
+          </div>
+        );
+        const selRow = (label, k, opcoes) => (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+            <span style={{ color: t.txt2, fontSize: 12, width: 128, flexShrink: 0 }}>{label}</span>
+            <select value={editForm?.[k] ?? ""} onChange={(e) => setF(k, e.target.value)} style={{ ...inpStyle, cursor: "pointer" }}>
+              {opcoes.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+            </select>
+          </div>
+        );
         return (
           <div onClick={fechar} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 560, width: "90vw", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
@@ -1100,21 +1157,47 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {candidatoFrota && badge(ICO_FROTA, "POSSÍVEL FROTA RODORRICA", t.azul)}
               </div>
 
-              {campo("Categoria", CATEGORIA_LABEL[p.categoria] || p.categoria)}
-              {campo("Empresa (código)", p.empresa_cod)}
-              {campo("Placa", p.placa)}
-              {campo("Data emissão", p.data_emissao)}
-              {campo("Trecho", p.trecho)}
-              {campo("NFS", p.nfs)}
-              {campo("Nº Manifesto", p.numero_manifesto)}
-              {campo("Nº Contrato Frete", p.numero_contrato)}
-              {campo("Valor NF", money(p.valor_nf))}
-              {campo("Peso NF", pesoFmt(p.peso_nf))}
-              {campo("Frete Peso", money(p.frete_peso))}
-              {campo("Total do Frete", money(p.total_frete))}
-              {campo("Valor Contrato Frete", money(p.valor_contrato_frete))}
-              {campo("Saldo", money(p.saldo))}
-              {campo("Margem Lucro", Number(p.margem_lucro).toFixed(2) + "%")}
+              {!editando && (<>
+                {campo("Categoria", CATEGORIA_LABEL[p.categoria] || p.categoria)}
+                {campo("Modalidade", p.is_devolucao ? "FOB (devolução)" : (p.modalidade || "CIF"))}
+                {campo("Empresa (código)", p.empresa_cod)}
+                {campo("Placa", p.placa)}
+                {campo("Data emissão", p.data_emissao)}
+                {campo("Trecho", p.trecho)}
+                {campo("NFS", p.nfs)}
+                {campo("Nº Manifesto", p.numero_manifesto)}
+                {campo("Nº Contrato Frete", p.numero_contrato)}
+                {campo("Valor NF", money(p.valor_nf))}
+                {campo("Peso NF", pesoFmt(p.peso_nf))}
+                {campo("Frete Peso", money(p.frete_peso))}
+                {campo("Total do Frete", money(p.total_frete))}
+                {campo("Valor Contrato Frete", money(p.valor_contrato_frete))}
+                {campo("Saldo", money(p.saldo))}
+                {campo("Margem Lucro", Number(p.margem_lucro).toFixed(2) + "%")}
+              </>)}
+
+              {/* Edição admin — corrigir lançamento (ex.: FOB/CIF, categoria, valores).
+                  Margem e flags são recalculadas ao salvar. */}
+              {editando && editForm && (
+                <div style={{ marginBottom: 4 }}>
+                  <div style={{ fontSize: 10.5, color: t.ouro, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", margin: "2px 0 8px" }}>Editando (admin) · margem/flags recalculam ao salvar</div>
+                  {editRow("Cliente", "cliente")}
+                  {selRow("Categoria", "categoria", [{ v: "frete", l: "Frete" }, { v: "descarga", l: "Descarga" }, { v: "local", l: "Local" }, { v: "diaria", l: "Diária" }])}
+                  {selRow("Modalidade", "modalidade", [{ v: "CIF", l: "CIF" }, { v: "FOB", l: "FOB (devolução)" }])}
+                  {editRow("CTRC", "ctrc")}
+                  {editRow("Empresa (código)", "empresa_cod")}
+                  {editRow("Placa", "placa")}
+                  {editRow("Data emissão", "data_emissao", "date")}
+                  {editRow("Trecho", "trecho")}
+                  {editRow("NFS", "nfs")}
+                  {editRow("Valor NF", "valor_nf", "number")}
+                  {editRow("Peso NF", "peso_nf", "number")}
+                  {editRow("Frete Peso", "frete_peso", "number")}
+                  {editRow("Total do Frete", "total_frete", "number")}
+                  {editRow("Valor Contrato Frete", "valor_contrato_frete", "number")}
+                  {editRow("Saldo", "saldo", "number")}
+                </div>
+              )}
 
               {/* Decisão já registrada (quando aberto de Sinalizados/Revisados) */}
               {p.decisao_manual && (
@@ -1200,39 +1283,60 @@ export default function ConferenciaFrete({ ctx, conn }) {
               )}
 
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", marginTop: 16 }}>
-                <button onClick={fechar}
-                  style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
-                  Fechar
-                </button>
-                {p.decisao_manual && !sinalizando && !revisando && (
-                  <button onClick={() => { fechar(); onEstornar(p); }} title="Remover a decisão e devolver à fila (se ainda tiver flag)"
-                    style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
-                    ↩ Estornar decisão
-                  </button>
-                )}
-                {p.flag_ambigua && (
+                {editando ? (
                   <>
-                    <button onClick={() => decidirEFechar("confirmar_descarga", "revisado manualmente")}
-                      style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                      É Descarga
+                    <button onClick={() => { setEditando(false); setEditForm(null); }} disabled={salvandoEdit}
+                      style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                      Cancelar
                     </button>
-                    <button onClick={() => decidirEFechar("confirmar_local", "revisado manualmente")}
-                      style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                      É Local
+                    <button onClick={() => salvarEdicao(p.id)} disabled={salvandoEdit}
+                      style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: salvandoEdit ? "not-allowed" : "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvandoEdit ? .6 : 1 }}>
+                      {salvandoEdit ? "Salvando..." : "Salvar alterações"}
                     </button>
                   </>
-                )}
-                {!sinalizando && !revisando && (
-                  <button onClick={() => setSinalizando(true)}
-                    style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.ouro}`, background: "transparent", color: t.ouro }}>
-                    Sinalizar para correção
-                  </button>
-                )}
-                {!revisando && (
-                  <button onClick={() => { setSinalizando(false); setRevisando(true); }}
-                    style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
-                    Marcar revisado
-                  </button>
+                ) : (
+                  <>
+                    <button onClick={fechar}
+                      style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                      Fechar
+                    </button>
+                    {isAdmin && !sinalizando && !revisando && (
+                      <button onClick={() => abrirEdicao(p)} title="Corrigir este CTe (só admin)"
+                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.azul}`, background: "transparent", color: t.azul }}>
+                        ✎ Editar
+                      </button>
+                    )}
+                    {p.decisao_manual && !sinalizando && !revisando && (
+                      <button onClick={() => { fechar(); onEstornar(p); }} title="Remover a decisão e devolver à fila (se ainda tiver flag)"
+                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
+                        ↩ Estornar decisão
+                      </button>
+                    )}
+                    {p.flag_ambigua && (
+                      <>
+                        <button onClick={() => decidirEFechar("confirmar_descarga", "revisado manualmente")}
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                          É Descarga
+                        </button>
+                        <button onClick={() => decidirEFechar("confirmar_local", "revisado manualmente")}
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                          É Local
+                        </button>
+                      </>
+                    )}
+                    {!sinalizando && !revisando && (
+                      <button onClick={() => setSinalizando(true)}
+                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.ouro}`, background: "transparent", color: t.ouro }}>
+                        Sinalizar para correção
+                      </button>
+                    )}
+                    {!revisando && (
+                      <button onClick={() => { setSinalizando(false); setRevisando(true); }}
+                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
+                        Marcar revisado
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

@@ -18,5 +18,4 @@ Tela: Conferência de Frete → seções "SINALIZADOS" e "REVISADOS" (ver `src/v
 - [x] Itens de SINALIZADOS e REVISADOS clicáveis → abrem o modal existente (`abrirRevisar`).
 - [x] Modal mostra todos os valores + a decisão registrada (quem/quando/obs) + botão Estornar.
 - [x] Bônus: bloco "CTes · {cliente}" ao clicar num cliente em "Por cliente" (lista clicável → mesmo modal).
-- [ ] **Fase 2 (pendente):** edição COMPLETA de CTe só pra admin (corrigir FOB/CIF, categoria, valores brutos)
-      via nova RPC `editar_frete` admin-gated + campos editáveis no modal. Requer `perfil` no ctx do FinanceiroView.
+- [x] **Fase 2 (FEITO 2026-07-23):** edição COMPLETA de CTe só admin — RPC `editar_frete` (mig 036, gate perfil='admin') + botão ✎ Editar no modal (formulário cliente/categoria/modalidade CIF-FOB/valores; recalcula margem+flags ao salvar). `perfil` adicionado ao ctx do FinanceiroView.

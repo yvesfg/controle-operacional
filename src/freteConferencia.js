@@ -334,6 +334,33 @@ export async function excluirFrete(conn, id) {
   return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q}`);
 }
 
+// Edição COMPLETA de um CTe — só ADMIN (o RPC editar_frete valida o perfil pelo token,
+// migration 036). Usado pra corrigir lançamentos errados (ex.: cliente que é FOB e subiu
+// como CIF, categoria trocada, valores). patch = só os campos alterados.
+export async function editarFrete(conn, id, patch) {
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/editar_frete",
+      { p_token: _sessionToken, p_id: id, p_patch: patch }));
+  }
+  const q = encodeURIComponent(id);
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, patch);
+  return Array.isArray(res) ? res[0] : res;
+}
+
+// Recalcula margem + flags de UMA linha após edição admin (mesma regra de
+// recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).
+export function recalcularLinhaEditada(l) {
+  const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga";
+  const margem = margemBruta(l.saldo, l.frete_peso);
+  return {
+    margem_lucro: margem,
+    flag_negativa: !margemFlexivel && margem < 0,
+    flag_baixa: !margemFlexivel && margem >= 0 && margem < 10,
+    flag_ambigua: (l.categoria === "descarga" || l.categoria === "local") &&
+      ((margem > 0 && margem < 1) || (num(l.valor_contrato_frete) === 0 && num(l.total_frete) > 0)),
+  };
+}
+
 // ── Indicadores (dashboard) ──
 export async function listarTodosPeriodo(conn, periodoRef) {
   if (_sessionToken) {

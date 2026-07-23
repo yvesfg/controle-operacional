@@ -1758,7 +1758,7 @@ export default function App() {
           <FinanceiroView ctx={{
             activeTab, baseAtual, DADOS, getConexao,
             t, css, DESIGN, isMobile, showToast, canFin, hexRgb,
-            usuarioLogado, hIco,
+            usuarioLogado, perfil, hIco,
           }} />
         )}
 

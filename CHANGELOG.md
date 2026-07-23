@@ -1,3 +1,15 @@
+## 2026-07-23 — Lockdown FECHADO (mig 035) + Fase 2: edição admin de CTe
+
+**Lockdown (3ª tentativa, sem incidente):** migration **035** refez 030 (core read) + 032 (frete). Provado ANTES (API log: navegador do Yves em `POST /rpc/listar_operacional`; banco `listar_frete`=368 c/ token dele; setFreteToken usa o mesmo sessionToken). Provado DEPOIS: anon=0 (core 3 bases + frete), RPC=1073/368. CPF/financeiro do core + conferência só via RPC token-validada.
+
+**Fase 2 — edição admin do CTe (modal):**
+- **Migration 036** (aplicada): `editar_frete(p_token,p_id,p_patch)` SECURITY DEFINER, gate `perfil='admin'` pelo token, whitelist dinâmica c/ cast por tipo. Testado com usuários de teste temporários (admin edita / operador bloqueado; dados apagados).
+- **`src/freteConferencia.js`**: `editarFrete()` (dual-path) + `recalcularLinhaEditada()` (margem+flags de 1 linha, menos duplicidade).
+- **`src/App.jsx`**: `perfil` no ctx do FinanceiroView.
+- **`src/views/ConferenciaFrete.jsx`**: botão **✎ Editar** no modal (só admin) → formulário (cliente, categoria, modalidade CIF/FOB, CTRC, empresa, placa, data, trecho, NFS, valores). Ao salvar: recalcula margem/flags, grava via RPC, recarrega. Ex. de uso: SENDAS que é FOB e subiu como CIF.
+
+**Build:** ✓ (exit 0).
+
 ## 2026-07-23 — 3ª tentativa (prep): SSO/Hub sem token era a causa raiz REAL
 
 **Descoberta (Supabase API log, pós-F5 do Yves):** a sessão dele fazia TUDO por GET anon — nenhuma RPC, nenhuma chamada a `gerar_token_sessao`. Causa: o bootstrap SSO do Hub (`App.jsx:574`) só faz `setAuthed(true)`; quem entra pelo Hub nunca ganha `sessionToken`. Agravante: `yvesfg@gmail.com` nem existia no `co_usuarios`. Evidência antiga passou despercebida: dashboard mostrando "6 de **0 cadastrados**" (motoristas via GET vazio desde a 027 nas sessões SSO).
