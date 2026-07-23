@@ -26,6 +26,21 @@ RPCs SECURITY DEFINER que já existem e ajudam: `listar_operacional`, `upsert_op
 
 ---
 
+## ⚠️⚠️ LIÇÃO CRÍTICA (2026-07-23, 3º abort): Fase A e Fase B NÃO são independentes
+
+**Achado depois do "go-live" da 035 (que parecia ter dado certo):** o `.gs` grava via
+**UPSERT** (`?on_conflict=dt` / `?on_conflict=codigo`). Postgres exige uma policy de
+**SELECT** pro papel que grava conseguir resolver o `ON CONFLICT DO UPDATE` — MESMO
+numa linha totalmente nova (o mecanismo de arbitragem do conflito precisa "enxergar"
+a tabela via RLS). Sem SELECT pro anon, TODO upsert falha com `401 / SQLSTATE 42501
+"new row violates row-level security policy"`, mesmo com as policies de INSERT/UPDATE
+100% corretas. Reproduzido com curl direto: mesmo erro em `controle_operacional`
+(core) E `controle_operacional_maracanau` — ou seja, a 035 quebrou a sincronização
+das 3 bases por ~1h+ (não só uma base, como pareceu no início da investigação).
+**Migration 039** restaurou o SELECT anon nas 3 bases (rollback de emergência, igual
+à 033). **NÃO tentar a Fase A de novo sem resolver a Fase B (write via RPC) JUNTO** —
+são a mesma mudança, não etapas sequenciáveis, enquanto o `.gs` usar UPSERT direto.
+
 ## Fase A — `controle_operacional` READ-lockdown  ⚠️ 030 REVERTIDA PELA 033 (2º abort, 2026-07-23)
 > A 030 funcionou no banco, mas o app zerou em prod horas depois — causa NÃO foi o
 > deps-fix (que está correto e deployado): os testes das RPCs 031/032 chamaram

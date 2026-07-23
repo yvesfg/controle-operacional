@@ -43,6 +43,20 @@
 
 **Achado paralelo no log (fora do escopo de hoje):** o `SyncSupabase.gs` do **Maracanaú** está tomando **401** no `POST /controle_operacional_maracanau?on_conflict=dt` (apikey errada/antiga no Script Properties?) e um outro script manda `co_config?on_conflict=key` (coluna certa é `chave`) → 400. A planilha do Maracanaú NÃO está sincronizando.
 
+## 2026-07-23 — INCIDENTE #2: lockdown 035 quebrou o UPSERT do .gs nas 3 bases → rollback 039
+
+**Sintoma:** Yves reportou achar que tinha apagado o script funcional do Maracanaú; ao reconstruir e testar (`SyncSupabase_Maracanau.gs` novo), o sync continuava tomando 401 com `"new row violates row-level security policy"` mesmo usando a anon key correta e confirmada.
+
+**Investigação:** reproduzi a chamada exata do `.gs` com `curl` — mesmo erro, `SQLSTATE 42501`, tanto no Maracanaú quanto (teste de controle) no **core (`controle_operacional`)**. Ou seja: não era script errado, não era chave errada — era a migration **035** (o read-lockdown "bem-sucedido" de hoje cedo) quebrando os 3 syncs.
+
+**Causa raiz:** o `.gs` grava via `UPSERT` (`?on_conflict=dt`). Postgres precisa de uma policy de **SELECT** pro papel executor conseguir resolver `ON CONFLICT DO UPDATE` — mesmo em linha nova. Sem SELECT anon (que a 035 derrubou nas 3 bases), todo upsert falha com RLS violation, independente de INSERT/UPDATE estarem corretos. **Fase A (read) e Fase B (write via RPC) não são independentes enquanto o `.gs` usar UPSERT direto** — essa é a lição que faltava nas 2 tentativas anteriores.
+
+**Correção:** migration **039** restaura SELECT anon nas 3 bases (core). Verificado com curl direto: upsert em `controle_operacional` e `controle_operacional_maracanau` = 201 (antes: 401). Dados de teste (`__CURL_TEST*__`, `__WRITE_TEST__`) limpos.
+
+**Script do Maracanaú:** reconstruído (`SyncSupabase_Maracanau.gs`, molde do core adaptado ao schema real — chave `dt`, sem fila sem_dt) e enviado ao Yves — ele estava correto o tempo todo; o 401 era só efeito da 035. Deve voltar a sincronizar no próximo ciclo agora que a 039 restaurou o SELECT.
+
+**Duração do impacto:** as 3 bases ficaram sem sincronizar por ~1h (desde a aplicação da 035 até a 039).
+
 ## 2026-07-23 — INCIDENTE: app sem dados em prod → rollback 033 (desfaz 030 + 032)
 
 **Sintoma:** dashboard, planilha e conferência vazios em prod (badge ONLINE, dados zerados).
