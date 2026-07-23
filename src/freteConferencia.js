@@ -11,6 +11,18 @@ import { supaFetch } from "./supabase.js";
 
 const TABELA = "frete_conferencia";
 
+// SEGURANÇA (V2 / Fase C): frete_conferencia guarda financeiro (CTes/contratos/margens)
+// e hoje é lida/escrita/deletada pela anon key. O acesso passou a ser via RPCs SECURITY
+// DEFINER token-validadas (migration 031). Modelo DUAL-PATH igual motoristas.js: se há
+// token de sessão, usa a RPC; senão cai no REST anon (que ainda funciona enquanto as
+// policies abertas não forem derrubadas no go-live, migration 032). O token é injetado
+// por App.jsx via setFreteToken() quando a sessão gera.
+let _sessionToken = null;
+export function setFreteToken(t) { _sessionToken = t || null; }
+// RPCs retornam SETOF json; PostgREST às vezes devolve as linhas como string — parse defensivo.
+const _rows = (r) => Array.isArray(r) ? r.map(x => typeof x === "string" ? JSON.parse(x) : x) : [];
+const _one = (r) => { const v = typeof r === "string" ? JSON.parse(r) : r; return Array.isArray(v) ? v[0] : v; };
+
 // O cadastro de embarcadoras (CNPJ -> nome/base/códigos do TMS) saiu daqui na migration
 // 006: virou tabela `embarcadoras` + `src/embarcadoras.js` + hook `useEmbarcadoras`,
 // porque é global (outras telas usam) e não mais só do módulo de frete. Este arquivo
@@ -210,6 +222,10 @@ export function parseFreteXLSX(file, clientesMap) {
 const chaveLinha = (l) => `${l.cliente}||${l.categoria}||${l.ctrc}||${l.periodo_ref}`;
 
 export async function listarPorPeriodo(conn, periodoRef, cliente) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_periodos",
+      { p_token: _sessionToken, p_periodos: [periodoRef], p_cliente: cliente ?? null }));
+  }
   const q = (s) => encodeURIComponent(s);
   let path = `${TABELA}?periodo_ref=eq.${q(periodoRef)}`;
   if (cliente) path += `&cliente=eq.${q(cliente)}`;
@@ -219,6 +235,10 @@ export async function listarPorPeriodo(conn, periodoRef, cliente) {
 // Igual listarPorPeriodo, mas pra varios meses de uma vez — necessario porque um
 // arquivo importado pode cobrir varios periodo_ref (ver parseFreteXLSX).
 export async function listarPorPeriodos(conn, periodoRefs, cliente) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_periodos",
+      { p_token: _sessionToken, p_periodos: periodoRefs, p_cliente: cliente ?? null }));
+  }
   const q = (s) => encodeURIComponent(s);
   let path = `${TABELA}?periodo_ref=in.(${periodoRefs.map(q).join(",")})`;
   if (cliente) path += `&cliente=eq.${q(cliente)}`;
@@ -238,6 +258,10 @@ export async function diffImportFrete(conn, linhas) {
 
 export async function inserirFrete(conn, linhas) {
   if (!linhas.length) return [];
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_frete_lote",
+      { p_token: _sessionToken, p_rows: linhas }));
+  }
   return await supaFetch(conn.url, conn.key, "POST", TABELA, linhas);
 }
 
@@ -253,6 +277,10 @@ function mesAnteriorAoCorrente() {
 // só junho e julho aparecem). Meses mais antigos já foram fechados/tratados e não voltam
 // a poluir a fila — quem quiser vê-los ainda pode acessar via listarTodosPeriodo/exportação.
 export async function listarPendentesRevisao(conn, cliente) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_pendentes",
+      { p_token: _sessionToken, p_cliente: cliente ?? null }));
+  }
   const q = (s) => encodeURIComponent(s);
   let path = `${TABELA}?decisao_manual=is.null&periodo_ref=gte.${q(mesAnteriorAoCorrente())}&or=(flag_negativa.eq.true,flag_baixa.eq.true,flag_ambigua.eq.true,flag_duplicidade.eq.true)&order=periodo_ref.desc,margem_lucro.asc`;
   if (cliente) path += `&cliente=eq.${q(cliente)}`;
@@ -263,6 +291,10 @@ export async function listarPendentesRevisao(conn, cliente) {
 // com data + observação até alguém corrigir/excluir a linha de origem; não voltam
 // a alertar e já contam nos totais (listarTodosPeriodo ignora decisao_manual).
 export async function listarSinalizados(conn, cliente) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_sinalizados",
+      { p_token: _sessionToken, p_cliente: cliente ?? null }));
+  }
   const q = (s) => encodeURIComponent(s);
   let path = `${TABELA}?decisao_manual=eq.sinalizar_correcao&order=revisado_em.desc`;
   if (cliente) path += `&cliente=eq.${q(cliente)}`;
@@ -271,6 +303,10 @@ export async function listarSinalizados(conn, cliente) {
 
 export async function decidir(conn, id, decisao, obs, revisadoPor) {
   const body = { decisao_manual: decisao, revisado_em: new Date().toISOString(), revisado_obs: obs || null, revisado_por: revisadoPor || null, atualizado_em: new Date().toISOString() };
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/patch_frete",
+      { p_token: _sessionToken, p_id: id, p_patch: body }));
+  }
   const q = encodeURIComponent(id);
   const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, body);
   return Array.isArray(res) ? res[0] : res;
@@ -280,18 +316,30 @@ export async function decidir(conn, id, decisao, obs, revisadoPor) {
 // decisao_manual + campos de revisão, devolvendo a linha à fila se ainda tiver flag.
 export async function estornarRevisao(conn, id) {
   const body = { decisao_manual: null, revisado_em: null, revisado_obs: null, revisado_por: null, atualizado_em: new Date().toISOString() };
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/patch_frete",
+      { p_token: _sessionToken, p_id: id, p_patch: body }));
+  }
   const q = encodeURIComponent(id);
   const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, body);
   return Array.isArray(res) ? res[0] : res;
 }
 
 export async function excluirFrete(conn, id) {
+  if (_sessionToken) {
+    return await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_frete",
+      { p_token: _sessionToken, p_id: id });
+  }
   const q = encodeURIComponent(id);
   return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q}`);
 }
 
 // ── Indicadores (dashboard) ──
 export async function listarTodosPeriodo(conn, periodoRef) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_periodos",
+      { p_token: _sessionToken, p_periodos: [periodoRef], p_cliente: null }));
+  }
   const q = encodeURIComponent(periodoRef);
   return (await supaFetch(conn.url, conn.key, "GET", `${TABELA}?periodo_ref=eq.${q}`)) || [];
 }

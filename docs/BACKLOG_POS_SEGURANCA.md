@@ -12,10 +12,11 @@ Coluna nova no banco: `motoristas` (tabela Supabase) — ver `src/motoristas.js`
 
 > Lembrar: ao adicionar colunas, atualizar as RPCs `criar_motorista`, `criar_motoristas_lote` e `atualizar_motorista` (whitelist de colunas em `atualizar_motorista`) na migration nova, senão os campos não gravam (a tabela está fechada pra escrita anon direta).
 
-## 2. Conferência de Frete — Sinalizados/Revisados clicáveis (abrir modal de detalhe)
+## 2. Conferência de Frete — Sinalizados/Revisados clicáveis (abrir modal de detalhe) — ✅ FEITO (2026-07-23, Fase 1)
 Tela: Conferência de Frete → seções "SINALIZADOS" e "REVISADOS" (ver `src/views/ConferenciaFrete.jsx`).
 
-- [ ] Tornar **cada item clicável** (tanto em SINALIZADOS quanto em REVISADOS).
-- [ ] Ao clicar, **abrir modal** mostrando a **diferença re-verificada** e **todos os valores envolvidos** no cálculo (o mesmo detalhamento que gerou a flag).
-- [ ] Objetivo duplo: (a) reverificar a diferença antes de decidir; (b) depois de revisado/sinalizado, poder **rever qual era o erro** que motivou a decisão.
-- Dados: reaproveitar `src/freteConferencia.js` (linhas já têm os campos de valor/flags). Provavelmente um novo modal em `src/modals/` ou reuso do padrão de `ModalDetalhe`.
+- [x] Itens de SINALIZADOS e REVISADOS clicáveis → abrem o modal existente (`abrirRevisar`).
+- [x] Modal mostra todos os valores + a decisão registrada (quem/quando/obs) + botão Estornar.
+- [x] Bônus: bloco "CTes · {cliente}" ao clicar num cliente em "Por cliente" (lista clicável → mesmo modal).
+- [ ] **Fase 2 (pendente):** edição COMPLETA de CTe só pra admin (corrigir FOB/CIF, categoria, valores brutos)
+      via nova RPC `editar_frete` admin-gated + campos editáveis no modal. Requer `perfil` no ctx do FinanceiroView.

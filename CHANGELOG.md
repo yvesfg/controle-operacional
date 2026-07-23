@@ -1,3 +1,31 @@
+## 2026-07-23 — Conferência de Frete: CTes clicáveis + bloco por cliente (Fase 1)
+
+**Solicitado:** Sinalizados e Revisados clicáveis (abrir modal pra ver/editar a decisão); e clicar num cliente em "Por cliente" abrir um bloco novo com os CTes daquele cliente, clicáveis/editáveis via o modal existente. (Edição completa de valores = só admin — planejada pra Fase 2.)
+
+**Implementado (Fase 1 — reusa o modal e as RPCs já no ar, sem novo backend):**
+- **`src/views/ConferenciaFrete.jsx`**:
+  - Linhas de **Sinalizados** e **Revisados** agora clicáveis → abrem o modal (`abrirRevisar`); botões internos ("Resolução feita"/"Estornar") com `stopPropagation`.
+  - Modal ganhou **painel da decisão** (rótulo + quem/quando/obs) quando o item já foi decidido, e botão **↩ Estornar decisão** no rodapé.
+  - Novo bloco **"CTes · {cliente}"** que aparece ao selecionar um cliente em "Por cliente": resumo (qtd + saldo) + lista de CTes clicáveis (data/placa/flags/decisão) → abrem o mesmo modal. Botão "limpar ✕".
+
+**Build:** ✓ (exit 0).
+
+**Fase 2 (planejada):** edição COMPLETA de CTe só pra admin (ex.: corrigir FOB/CIF, categoria, valores) — nova RPC `editar_frete` admin-gated + campos editáveis no modal (requer `perfil` no ctx do FinanceiroView).
+
+## 2026-07-23 — V2 Fase C (frete_conferencia): CRUD via RPC token-validada (dual-path)
+
+**Solicitado:** Seguir o lockdown para a Fase C (tabelas app-only), começando por `frete_conferencia` (financeiro, prioridade do plano).
+
+**Implementado:**
+- **`supabase/migrations/031_frete_conferencia_rpcs.sql`** (aplicada em prod, aditiva) — 6 RPCs SECURITY DEFINER token-validadas (`_validar_token_e_base`) que consolidam as 10 funções de acesso: `listar_frete_periodos` (período/períodos/todos), `listar_frete_pendentes` (corte do mês anterior calc. no SQL), `listar_frete_sinalizados`, `inserir_frete_lote` (insert em bloco c/ casts numeric/date/boolean + defaults id/criado_em/origem), `patch_frete` (decidir + estornar), `excluir_frete`. REVOKE public + GRANT anon.
+- **`src/freteConferencia.js`** — dual-path (molde motoristas): `setFreteToken()` + rota RPC quando há token, senão REST anon. As 9 funções de I/O convertidas; assinaturas públicas inalteradas (views não mudam).
+- **`src/App.jsx`** — `setFreteToken(sessionToken)` no efeito `[sessionToken]` (ao lado de motoristas/veículos).
+- **`supabase/migrations/032_golive_drop_policies_frete_conferencia.sql`** — go-live PRONTA, **não aplicada** (drop das 4 policies anon; aguarda deploy + confirmação no navegador).
+
+**Testado (banco, RPCs, policies ainda abertas):** reads com token = 368/103/1 (período 2026-07/pendentes/sinalizados); insert→patch(decidir)→estorno→delete OK (casts e timestamptz validados, linha de teste auto-removida); token inválido rejeitado. Nenhum acesso direto à tabela fora do domínio.
+
+**Build:** ✓ (exit 0). **Go-live FEITO (migration 032, após deploy + teste OK por Yves):** anon = 0 policies (bloqueado); RPC c/ token = 368. frete_conferencia fechada.
+
 ## 2026-07-23 — V2 Fase A (re-tentativa): fix da causa raiz do timing de token
 
 **Solicitado:** Verificar se está tudo certo e continuar o lockdown conforme `PLANO_V2_CONTINUACAO.md` (a Fase A foi tentada na 028 e revertida na 029 por dashboard vazio).

@@ -579,6 +579,56 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
       )}
 
+      {/* CTes do cliente selecionado — lista clicável que abre o modal do CTe (ver/editar) */}
+      {clienteFiltro && linhasFiltradas.length > 0 && (
+        <div style={{ ...tile }}>
+          {sectionHead(`CTes · ${clienteFiltro}`, (
+            <button onClick={() => setClienteFiltro("")}
+              style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 11px", borderRadius: 20, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+              limpar ✕
+            </button>
+          ))}
+          <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 10 }}>
+            {linhasFiltradas.length} CTe(s) · saldo {money(linhasFiltradas.reduce((s, l) => s + (l.saldo || 0), 0))} — clique num CTe pra ver ou editar.
+          </div>
+          <div style={{ maxHeight: 380, overflowY: "auto", margin: "0 -4px" }}>
+            {[...linhasFiltradas]
+              .sort((a, b) => String(b.data_emissao || "").localeCompare(String(a.data_emissao || "")))
+              .map((p) => (
+              <div key={p.id} onClick={() => abrirRevisar(p)}
+                style={{ padding: "8px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer", transition: "background .12s" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = t.card2)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
+                  </span>
+                  <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: p.margem_lucro < 0 ? t.danger : p.margem_lucro < 10 ? t.warn : t.verde }}>
+                    {Number(p.margem_lucro).toFixed(1)}%
+                  </span>
+                  <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                    {money(p.saldo)}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                  {p.data_emissao && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.data_emissao.split("-").reverse().join("/")}</span>}
+                  {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
+                  {p.is_devolucao && badge(ICO_DEVOLUCAO, "FOB", t.azul)}
+                  {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
+                  {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
+                  {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "DUPLICIDADE", t.danger)}
+                  {p.decisao_manual && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: t.verde }}>
+                      ✓ {p.decisao_manual === "sinalizar_correcao" ? "sinalizado" : (DECISAO_LABEL[p.decisao_manual] || p.decisao_manual)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Evolução diária — mini-gráfico de saldo acumulado no mês + lista enxuta por dia */}
       {resumoDia.length > 0 && chartEvo && (
         <div style={{ ...tile }}>
@@ -796,7 +846,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
             Já saíram do alerta e continuam contando no total — aguardando correção na origem (exclusão/reimportação).
           </div>
           {sinalizadosFiltrados.map((p) => (
-            <div key={p.id} style={{ padding: "9px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+            <div key={p.id} onClick={() => abrirRevisar(p)}
+              style={{ padding: "9px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer", transition: "background .12s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = t.card2)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
@@ -804,7 +857,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
                   {money(p.saldo)}
                 </span>
-                <button onClick={() => onDecidir(p.id, "correcao_feita", "correção confirmada")}
+                <button onClick={(e) => { e.stopPropagation(); onDecidir(p.id, "correcao_feita", "correção confirmada"); }}
                   title="A correção na origem foi feita — sai de Sinalizados e vai para Revisados"
                   style={{ fontSize: 10.5, fontWeight: 700, padding: "6px 13px", borderRadius: 7, cursor: "pointer", border: "none", background: t.verde, color: "#fff", flexShrink: 0 }}>
                   Resolução feita
@@ -829,7 +882,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
             Já saíram da fila com uma decisão — fica registrado quem revisou e quando.
           </div>
           {revisados.map((p) => (
-            <div key={p.id} style={{ padding: "9px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+            <div key={p.id} onClick={() => abrirRevisar(p)}
+              style={{ padding: "9px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer", transition: "background .12s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = t.card2)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
@@ -845,7 +901,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </span>
                 <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.revisado_por || "sem registro", 15)}</span>
                 <span style={{ fontSize: 10, color: t.txt2 }}>{p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}</span>
-                <button onClick={() => onEstornar(p)} title="Estornar esta decisão e devolver à fila"
+                <button onClick={(e) => { e.stopPropagation(); onEstornar(p); }} title="Estornar esta decisão e devolver à fila"
                   style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, background: hexRgb(t.danger, .08), border: `1px solid ${hexRgb(t.danger, .18)}`, borderRadius: 6, padding: "2px 9px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: t.danger, fontFamily: "inherit" }}>
                   ↩ Estornar
                 </button>
@@ -1060,6 +1116,19 @@ export default function ConferenciaFrete({ ctx, conn }) {
               {campo("Saldo", money(p.saldo))}
               {campo("Margem Lucro", Number(p.margem_lucro).toFixed(2) + "%")}
 
+              {/* Decisão já registrada (quando aberto de Sinalizados/Revisados) */}
+              {p.decisao_manual && (
+                <div style={{ marginTop: 12, borderRadius: 10, border: `1px solid ${hexRgb(t.verde, .3)}`, background: hexRgb(t.verde, .07), padding: "10px 12px" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: t.verde, marginBottom: 3 }}>
+                    Decisão: {p.decisao_manual === "sinalizar_correcao" ? "sinalizado para correção" : (DECISAO_LABEL[p.decisao_manual] || p.decisao_manual)}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: t.txt2 }}>
+                    {p.revisado_por || "sem registro"}{p.revisado_em ? ` · ${new Date(p.revisado_em).toLocaleDateString("pt-BR")}` : ""}
+                    {p.revisado_obs ? ` · “${p.revisado_obs}”` : ""}
+                  </div>
+                </div>
+              )}
+
               {p.flag_duplicidade && (
                 <button onClick={() => { setDupModal({ open: true, chave: p.dup_grupo_chave }); fechar(); }}
                   style={{ marginTop: 12, width: "100%", fontSize: 11.5, fontWeight: 700, padding: "8px 10px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.danger}`, background: "transparent", color: t.danger }}>
@@ -1135,6 +1204,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
                   Fechar
                 </button>
+                {p.decisao_manual && !sinalizando && !revisando && (
+                  <button onClick={() => { fechar(); onEstornar(p); }} title="Remover a decisão e devolver à fila (se ainda tiver flag)"
+                    style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
+                    ↩ Estornar decisão
+                  </button>
+                )}
                 {p.flag_ambigua && (
                   <>
                     <button onClick={() => decidirEFechar("confirmar_descarga", "revisado manualmente")}

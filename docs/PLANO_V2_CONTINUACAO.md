@@ -95,6 +95,16 @@ Sem escritor externo → molde idêntico ao de motoristas (uma por vez, cada uma
 4. Deploy + teste → go-live: `DROP POLICY anon_*`.
 Prioridade sugerida: `frete_conferencia` e `despesas_filial` (financeiro) > `embarcadoras` (CNPJ) > `co_ocorrencias`.
 
+### Progresso Fase C
+- ✅ **`frete_conferencia` (2026-07-23)** — migration **031** (6 RPCs token-validadas) em prod;
+  dual-path em `freteConferencia.js` + `setFreteToken` no App.jsx; build OK; testado no banco
+  (reads 368/103/1, insert→patch→delete, token inválido rejeitado). **Go-live = migration 032**
+  (drop das 4 policies anon), PRONTA e comentada — aplicar SÓ após deploy + confirmação no app
+  (Conferência de Frete: lista/dashboard, decidir/estornar, importar, sinalizados).
+- ⬜ `despesas_filial` — próxima (financeiro). `despesas.js`.
+- ⬜ `embarcadoras` — `embarcadoras.js` (CNPJ).
+- ⬜ `co_ocorrencias` — `useOcorrHandlers.js` + `relatorioEngine.js` (leem por GET direto).
+
 ## Itens fora deste app (ver docs próprios)
 - Buckets públicos do frota-pro → `docs/REVISAO_FROTA_PRO_BUCKETS.md`.
 - Leaked Password Protection (dashboard Auth) → idem.
