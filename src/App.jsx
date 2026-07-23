@@ -120,6 +120,7 @@ export default function App() {
   });
   // Session token — mantido SÓ em memória (M2/M3: nunca persiste em localStorage)
   const [sessionToken, setSessionToken] = useState(null);
+  const sessionTokenRef = useRef(null); // espelho p/ efeitos com deps vazias (bootstrap SSO)
   const [basesPermitidas, setBasesPermitidas] = useState([]);
   // Filtro global de tipo de carga (base Imperatriz: papel x celulose). "todos" = sem filtro.
   const [filtroTipoCarga, setFiltroTipoCarga] = useState("todos");
@@ -436,6 +437,7 @@ export default function App() {
   // Quando o token chega (login/auto-login é assíncrono), recarrega pela RPC —
   // necessário pós-lockdown, quando o path anon deixa de retornar dados.
   useEffect(() => {
+    sessionTokenRef.current = sessionToken;
     setMotoristasToken(sessionToken);
     setVeiculosToken(sessionToken);
     setFreteToken(sessionToken);
@@ -581,6 +583,18 @@ export default function App() {
       const nome = sess.user?.user_metadata?.full_name || sess.user?.user_metadata?.name || sess.user?.email || "";
       setUsuarioLogado(nome);
       setAuthed(true);
+      // SSO/Hub nao passa pelo handleLogin: gera aqui o token de sessao co_usuarios
+      // (RPCs token-validadas). Sem ele o app cai no GET anon (vazio pos-lockdown).
+      // gerar_token_sessao agora REUSA token vigente (migration 034), entao chamadas
+      // repetidas (onAuthStateChange) nao rotacionam a sessao. Best-effort: e-mail
+      // fora do co_usuarios segue sem token (comportamento atual).
+      const _ssoEmail = sess.user?.email?.toLowerCase();
+      if (_ssoEmail && !sessionTokenRef.current) {
+        const _c = getConexao();
+        if (_c) supaFetch(_c.url, _c.key, "POST", "rpc/gerar_token_sessao", { p_email: _ssoEmail })
+          .then(tok => { if (typeof tok === "string") setSessionToken(tok); })
+          .catch(() => {});
+      }
     };
     sb.auth.getSession().then(({ data }) => aplicar(data?.session));
     const { data: sub } = sb.auth.onAuthStateChange((_evt, sess) => aplicar(sess));

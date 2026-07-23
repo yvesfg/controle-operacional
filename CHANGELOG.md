@@ -1,3 +1,28 @@
+## 2026-07-23 — 3ª tentativa (prep): SSO/Hub sem token era a causa raiz REAL
+
+**Descoberta (Supabase API log, pós-F5 do Yves):** a sessão dele fazia TUDO por GET anon — nenhuma RPC, nenhuma chamada a `gerar_token_sessao`. Causa: o bootstrap SSO do Hub (`App.jsx:574`) só faz `setAuthed(true)`; quem entra pelo Hub nunca ganha `sessionToken`. Agravante: `yvesfg@gmail.com` nem existia no `co_usuarios`. Evidência antiga passou despercebida: dashboard mostrando "6 de **0 cadastrados**" (motoristas via GET vazio desde a 027 nas sessões SSO).
+
+**Implementado:**
+- **Migration 034** (aplicada): cria `co_usuarios` do Yves (admin, 3 bases, senha-hash aleatória) + `gerar_token_sessao` agora **reusa** token vigente (>1h restante) em vez de rotacionar — acaba a guerra de token entre abas/dispositivos.
+- **`src/App.jsx`**: bootstrap SSO gera o token (`gerar_token_sessao(email do SSO)`, guardado por `sessionTokenRef`); best-effort p/ e-mails fora do `co_usuarios`.
+- Provado no banco: reuso ok; RPCs core=1071 / frete=368 com o token do Yves.
+
+**Build:** ✓. Lockdown (035) SÓ depois de: deploy → Yves recarrega → API log mostrar `rpc/listar_operacional`/`rpc/listar_frete_*` na sessão dele.
+
+**Achado paralelo no log (fora do escopo de hoje):** o `SyncSupabase.gs` do **Maracanaú** está tomando **401** no `POST /controle_operacional_maracanau?on_conflict=dt` (apikey errada/antiga no Script Properties?) e um outro script manda `co_config?on_conflict=key` (coluna certa é `chave`) → 400. A planilha do Maracanaú NÃO está sincronizando.
+
+## 2026-07-23 — INCIDENTE: app sem dados em prod → rollback 033 (desfaz 030 + 032)
+
+**Sintoma:** dashboard, planilha e conferência vazios em prod (badge ONLINE, dados zerados).
+
+**Causas (somadas):**
+1. Os testes das RPCs no banco chamaram `gerar_token_sessao('admin@sistema')` várias vezes — a função **rotaciona** o token (UPDATE em `co_usuarios.session_token`), derrubando a sessão viva do navegador do Yves. Com a 030 ativa, o path RPC falhava ('Sessão inválida') e o GET anon voltava vazio.
+2. A 032 foi aplicada com o front antigo no ar: o dual-path de `freteConferencia.js` só subiu no commit `a086109` (10:45), DEPOIS da confirmação do Yves (feita com policies abertas → GET mascarado).
+
+**Correção:** migration **033** reabriu as policies (core 3 bases + frete_conferencia 4). Provado: anon lê 1071/417/371 + 3192. F5 no app normaliza (auto-login regenera o token).
+
+**Lições (antes da próxima tentativa):** testar RPC com usuário de teste (nunca rotacionar token de usuário real); provar pelo Supabase API log que o app deployado chama `rpc/...` antes de derrubar policy; confirmação visual com policy aberta não prova o path RPC.
+
 ## 2026-07-23 — Conferência de Frete: CTes clicáveis + bloco por cliente (Fase 1)
 
 **Solicitado:** Sinalizados e Revisados clicáveis (abrir modal pra ver/editar a decisão); e clicar num cliente em "Por cliente" abrir um bloco novo com os CTes daquele cliente, clicáveis/editáveis via o modal existente. (Edição completa de valores = só admin — planejada pra Fase 2.)

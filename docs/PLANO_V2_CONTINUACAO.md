@@ -26,9 +26,19 @@ RPCs SECURITY DEFINER que já existem e ajudam: `listar_operacional`, `upsert_op
 
 ---
 
-## Fase A — `controle_operacional` READ-lockdown  ✅ CONCLUÍDA (migration 030, 2026-07-23)
-> Provado após aplicar: anon SELECT = 0 nas 3 bases; RPC c/ token = 1071/417/371;
-> INSERT/UPDATE anon intactos (o `.gs` segue escrevendo). Histórico do 1º abort abaixo.
+## Fase A — `controle_operacional` READ-lockdown  ⚠️ 030 REVERTIDA PELA 033 (2º abort, 2026-07-23)
+> A 030 funcionou no banco, mas o app zerou em prod horas depois — causa NÃO foi o
+> deps-fix (que está correto e deployado): os testes das RPCs 031/032 chamaram
+> `gerar_token_sessao('admin@sistema')` no banco, que ROTACIONA o token e derrubou a
+> sessão viva do navegador. Com a leitura anon fechada, sem token válido = tela vazia.
+> A 033 reabriu tudo (core + frete_conferencia).
+>
+> COMO REFAZER (3ª tentativa — checklist NOVO):
+>   1. Testes de RPC no banco: criar usuário de teste temporário (nunca tokenar usuário real).
+>   2. Conferir commit do front no origin/main E deploy Vercel concluído DEPOIS do commit.
+>   3. Yves loga/recarrega; provar pelo Supabase API log que o app chama rpc/listar_operacional
+>      e rpc/listar_frete_* (e NÃO GET nas tabelas) — só então derrubar as policies.
+>   4. Após derrubar: Yves recarrega e confirma; monitorar logs por alguns minutos.
 
 ### Histórico — 028→029 (tentada e revertida)
 **Fecha o CPF/financeiro do core sem tocar no `.gs`** (o .gs só ESCREVE, não lê).
