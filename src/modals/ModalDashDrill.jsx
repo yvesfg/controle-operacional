@@ -1,11 +1,17 @@
 import React from "react";
-import { clickable } from "../utils.js";
+import { clickable, ultimasViagens } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalDashDrill({ ctx }) {
   const { dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe } = ctx;
 
   if (!dashDrillModal) return null;
+
+  const abrirMotorista = (nome) => {
+    const ultimas = ultimasViagens(dashDrillModal.regs, nome, 5);
+    if (!ultimas.length) return;
+    setDashDrillModal({ type: "motorista", label: nome, regs: ultimas });
+  };
 
   return (
     <div
@@ -17,11 +23,15 @@ export default function ModalDashDrill({ ctx }) {
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
           <div style={{width:36,height:36,borderRadius:9,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <Icon n={dashDrillModal.type==="motorista"?"user":dashDrillModal.type==="destino"?"map-pin":"chart"} s={18} c={t.ouro}/>
+            <Icon n={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":dashDrillModal.type==="destino"?"map-pin":"chart"} s={18} c={t.ouro}/>
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
-            <div style={{fontSize:9,color:t.txt2,marginTop:2}}>{dashDrillModal.regs.length} viagem{dashDrillModal.regs.length!==1?"s":""} · {dashDrillModal.type==="motorista"?"Histórico do motorista":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}</div>
+            <div style={{fontSize:9,color:t.txt2,marginTop:2}}>
+              {dashDrillModal.type==="motoristas"
+                ? `${new Set(dashDrillModal.regs.map(r=>r.nome).filter(Boolean)).size} motoristas no período`
+                : `${dashDrillModal.regs.length} viagem${dashDrillModal.regs.length!==1?"s":""} · ${dashDrillModal.type==="motorista"?"Histórico recente":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
+            </div>
           </div>
           <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
         </div>
@@ -39,6 +49,22 @@ export default function ModalDashDrill({ ctx }) {
                     <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{info.count} viagem{info.count!==1?"s":""} · DTs: {info.dts.slice(0,3).join(", ")}{info.dts.length>3?`... +${info.dts.length-3}`:""}</div>
                   </div>
                   <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.ouro,flexShrink:0}}>{info.count}</span>
+                </div>
+              ));
+            })()
+          ):dashDrillModal.type==="motoristas"?(
+            (() => {
+              const motMap = {};
+              dashDrillModal.regs.forEach(r=>{if(r.nome){if(!motMap[r.nome])motMap[r.nome]={count:0,placa:r.placa||""};motMap[r.nome].count++;if(!motMap[r.nome].placa&&r.placa)motMap[r.nome].placa=r.placa;}});
+              return Object.entries(motMap).sort((a,b)=>b[1].count-a[1].count).map(([nome,{count,placa}])=>(
+                <div key={nome} {...clickable(()=>abrirMotorista(nome))} style={{background:t.card2,borderRadius:10,padding:"10px 12px",marginBottom:7,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(217,98,43,.06)`} onMouseLeave={e=>e.currentTarget.style.background=t.card2}>
+                  <div style={{width:36,height:36,borderRadius:"50%",background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:t.ouro,flexShrink:0}}>{nome.charAt(0)}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome}</div>
+                    {placa&&<div style={{fontSize:9,color:t.txt2,fontFamily:"var(--font-mono)",marginTop:1}}>{placa}</div>}
+                  </div>
+                  <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:t.ouro,flexShrink:0}}>{count}</span>
+                  <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>
                 </div>
               ));
             })()

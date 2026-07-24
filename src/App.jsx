@@ -1577,6 +1577,7 @@ export default function App() {
             setPlanilhaFiltroStatus,
             setPlanilhaFiltroDestino,
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
+            setDashDrillModal,
             baseAtual, filtroTipoCarga, getConexao,
           }} />
         )}

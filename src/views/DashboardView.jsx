@@ -4,7 +4,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import DataRow     from '../components/DataRow.jsx';
 import SectionCard from '../components/SectionCard.jsx';
 import PageHeader  from '../components/PageHeader.jsx';
-import { parseData, clickable } from "../utils.js";
+import { parseData, clickable, ultimasViagens } from "../utils.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
 
 export default function DashboardView({ ctx }) {
@@ -188,7 +188,7 @@ export default function DashboardView({ ctx }) {
             <div style={{...css.card,padding:18}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
-                <button onClick={()=>setActiveTab("motoristas")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
+                <button onClick={()=>setDashDrillModal({type:"motoristas",label:"Todos os Motoristas",regs:dashData.filtrado})} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
               </div>
               {topMot.length===0?(
                 <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
@@ -197,9 +197,9 @@ export default function DashboardView({ ctx }) {
                 const pct=Math.round(ct/maxMot*100);
                 const nomeCompleto=(nome||"").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
                 const handleClickMot=()=>{
-                  const registros=dashData.filtrado.filter(r=>r.nome===nome);
-                  if(!registros.length)return;
-                  setDashDrillModal({type:"motorista",label:nomeCompleto,regs:registros});
+                  const ultimas=ultimasViagens(dashData.filtrado,nome,5);
+                  if(!ultimas.length)return;
+                  setDashDrillModal({type:"motorista",label:nomeCompleto,regs:ultimas});
                 };
                 return (
                   <div key={nome} {...clickable(handleClickMot)} style={{marginBottom:i<topMot.length-1?14:0,cursor:"pointer",borderRadius:8,padding:"6px 6px 8px",margin:`0 -6px ${i<topMot.length-1?14:0}px`,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>

@@ -123,6 +123,13 @@ export function normalizarNome(n) {
   return n.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
+// Últimas N viagens de um motorista, mais recente primeiro (drill-downs do Dashboard)
+export function ultimasViagens(regs, nome, n = 5) {
+  return regs.filter(r => r.nome === nome)
+    .sort((a, b) => { const da = parseData(a.data_carr), db = parseData(b.data_carr); return db && da ? db - da : 0; })
+    .slice(0, n);
+}
+
 // ── Acessibilidade: props para um elemento clicável que não é <button> ──────
 // Uso: <div {...clickable(onClick)}>…</div> → role + foco por teclado + Enter/Espaço.
 // Sem onClick (ex.: card não-navegável) retorna {} e o elemento não fica focável.

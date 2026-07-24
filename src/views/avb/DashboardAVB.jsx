@@ -1,5 +1,5 @@
 import React from "react";
-import { parseData, clickable } from "../../utils.js";
+import { parseData, clickable, ultimasViagens } from "../../utils.js";
 import KpiCard from "../../components/KpiCard.jsx";
 
 // DashboardAVB — Dashboard exclusivo Açailândia AVB
@@ -313,8 +313,13 @@ export default function DashboardAVB({ ctx }) {
                 const destCurto=partes[0].trim();
                 const uf=partes[1]?.trim()||"";
                 const efPct=total>0?Math.round(ef/total*100):0;
+                const handleClickRota=()=>{
+                  const registros=dashData.filtrado.filter(r=>(r.destino||"").trim().toUpperCase()===dest);
+                  if(!registros.length)return;
+                  setDashDrillModal({type:"destino",label:destCurto,regs:registros});
+                };
                 return (
-                  <div key={dest} style={{marginBottom:i<topRotas.length-1?12:0}}>
+                  <div key={dest} {...clickable(handleClickRota)} style={{marginBottom:i<topRotas.length-1?12:0,cursor:"pointer",borderRadius:6,padding:"3px 6px",margin:i<topRotas.length-1?"0 -6px 9px -6px":"0 -6px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
                       <div style={{display:"flex",alignItems:"center",gap:7}}>
                         <span style={{fontFamily:"var(--font-mono)",fontSize:11,fontWeight:800,
@@ -411,6 +416,7 @@ export default function DashboardAVB({ ctx }) {
         <div style={{...css.card,padding:18}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
+            <button onClick={()=>setDashDrillModal({type:"motoristas",label:"Todos os Motoristas",regs:dashData.filtrado})} style={{fontSize:9,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver mais ›</button>
           </div>
           {topMot.length===0?(
             <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
@@ -419,9 +425,9 @@ export default function DashboardAVB({ ctx }) {
             const pct=Math.round(ct/maxMot*100);
             const nomeCompleto=(nome||"").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
             const handleClickMot=()=>{
-              const registros=dashData.filtrado.filter(r=>r.nome===nome);
-              if(!registros.length)return;
-              setDashDrillModal({type:"motorista",label:nomeCompleto,regs:registros});
+              const ultimas=ultimasViagens(dashData.filtrado,nome,5);
+              if(!ultimas.length)return;
+              setDashDrillModal({type:"motorista",label:nomeCompleto,regs:ultimas});
             };
             return (
               <div key={nome} {...clickable(handleClickMot)} style={{marginBottom:i<topMot.length-1?14:0,cursor:"pointer",borderRadius:8,padding:"6px 6px 8px",margin:`0 -6px ${i<topMot.length-1?14:0}px`,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
