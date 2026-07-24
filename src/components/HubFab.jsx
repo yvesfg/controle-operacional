@@ -74,16 +74,16 @@ export default function HubFab({ t, onClick }) {
       onMouseLeave={() => setHover(false)}
       title="Voltar ao Hub (arraste para mover)"
       style={{
-        position: "fixed", left: pos.x, top: pos.y, zIndex: 195,
+        position: "fixed", left: pos.x, top: pos.y, zIndex: 250,
         height: SIZE, width: hover ? "auto" : SIZE, minWidth: SIZE,
         padding: hover ? "0 16px 0 12px" : 0,
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         borderRadius: SIZE / 2, cursor: "grab", touchAction: "none",
-        background: hover ? t.card : "rgba(20,24,29,.55)",
+        background: hover ? t.card : "rgba(20,24,29,.78)",
         backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-        border: `1px solid ${hover ? t.borda : "rgba(255,255,255,.12)"}`,
-        boxShadow: "0 6px 20px rgba(0,0,0,.35)",
-        opacity: hover ? 1 : 0.65,
+        border: `1px solid ${hover ? t.borda : "rgba(255,255,255,.22)"}`,
+        boxShadow: "0 6px 20px rgba(0,0,0,.45)",
+        opacity: hover ? 1 : 0.9,
         transition: "opacity .18s, background .18s, border-color .18s, width .18s, padding .18s",
         color: t.txt2, fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
       }}

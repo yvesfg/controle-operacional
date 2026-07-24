@@ -233,10 +233,10 @@ export default function DashboardAVB({ ctx }) {
       </div>
 
       {/* ══ Grid Principal: Evolução | Status DTs | Top Rotas ══ */}
-      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:14,marginBottom:14}}>
+      <div style={{display:"flex",flexDirection:isMobile?"column":"row",alignItems:"stretch",gap:14,marginBottom:14}}>
 
         {/* Evolução do Período */}
-        <div style={{...css.card,padding:18}}>
+        <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"2 1 0"}}>
           <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
             <div>
               <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",
@@ -264,7 +264,7 @@ export default function DashboardAVB({ ctx }) {
         </div>
 
         {/* Status das DTs */}
-        <div style={{...css.card,padding:18}}>
+        <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",
               letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Status das DTs</span>
@@ -299,7 +299,7 @@ export default function DashboardAVB({ ctx }) {
         </div>
 
         {/* Top Rotas */}
-        <div style={{...css.card,padding:18}}>
+        <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",
               letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Rotas</span>
