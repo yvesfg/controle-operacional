@@ -24,6 +24,7 @@ export default function DashboardView({ ctx }) {
     alertas, alertasOpen, setAlertasOpen,
     fmtMoeda, isMobile,
     setDetalheDT, setModalOpen,
+    setDashDrillModal,
     descargaData,
     setPlanilhaFiltroStatus,
     setPlanilhaFiltroDestino,
@@ -198,13 +199,7 @@ export default function DashboardView({ ctx }) {
                 const handleClickMot=()=>{
                   const registros=dashData.filtrado.filter(r=>r.nome===nome);
                   if(!registros.length)return;
-                  const ultimo=registros.reduce((a,b)=>{
-                    const da=a.data_carr||a.data_desc||"";
-                    const db=b.data_carr||b.data_desc||"";
-                    return db>da?b:a;
-                  });
-                  setDetalheDT(ultimo);
-                  setModalOpen("detalhe");
+                  setDashDrillModal({type:"motorista",label:nomeCompleto,regs:registros});
                 };
                 return (
                   <div key={nome} {...clickable(handleClickMot)} style={{marginBottom:i<topMot.length-1?14:0,cursor:"pointer",borderRadius:8,padding:"6px 6px 8px",margin:`0 -6px ${i<topMot.length-1?14:0}px`,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
