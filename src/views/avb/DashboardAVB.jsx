@@ -23,6 +23,7 @@ export default function DashboardAVB({ ctx }) {
     setDetalheDT, setModalOpen,
     setPlanilhaFiltroStatus,
     setPlanilhaFiltroContratante,
+    setDashDrillModal,
   } = ctx;
 
   // ── Helpers ────────────────────────────────────────────────
@@ -69,6 +70,17 @@ export default function DashboardAVB({ ctx }) {
   const maxVg = topContrat[0]?.[1]?.viagens||1;
   const medalhas = ["🥇","🥈","🥉"];
   const podColors = ["var(--accent)","var(--rank-silver)","var(--rank-bronze)"];
+
+  // ── Top Motoristas ───────────────────────────────────────
+  const motCount = {};
+  dashData.filtrado.forEach(r=>{
+    if(!r.nome) return;
+    if(!motCount[r.nome]) motCount[r.nome]={ct:0,placa:r.placa||""};
+    motCount[r.nome].ct++;
+    if(!motCount[r.nome].placa&&r.placa) motCount[r.nome].placa=r.placa;
+  });
+  const topMot = Object.entries(motCount).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
+  const maxMot = topMot[0]?.[1]?.ct||1;
 
   // ── Top Rotas ────────────────────────────────────────────
   const destMap = {};
@@ -329,8 +341,8 @@ export default function DashboardAVB({ ctx }) {
         </div>
       </div>
 
-      {/* ══ Bottom: Registros Recentes | Contratante Leaderboard ══ */}
-      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:14,alignItems:"start"}}>
+      {/* ══ Bottom: Registros Recentes | Top Motoristas | Contratante Leaderboard ══ */}
+      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr",gap:14,alignItems:"start"}}>
 
         {/* Registros Recentes */}
         <div ref={dashRecCardRef} style={{...css.card,padding:18}}>
@@ -393,6 +405,40 @@ export default function DashboardAVB({ ctx }) {
                 );
               })
           }
+        </div>
+
+        {/* Top Motoristas */}
+        <div style={{...css.card,padding:18}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
+          </div>
+          {topMot.length===0?(
+            <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
+          ):topMot.map(([nome,{ct,placa}],i)=>{
+            const initials=(nome||"?").split(" ").filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+            const pct=Math.round(ct/maxMot*100);
+            const nomeCompleto=(nome||"").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+            const handleClickMot=()=>{
+              const registros=dashData.filtrado.filter(r=>r.nome===nome);
+              if(!registros.length)return;
+              setDashDrillModal({type:"motorista",label:nomeCompleto,regs:registros});
+            };
+            return (
+              <div key={nome} {...clickable(handleClickMot)} style={{marginBottom:i<topMot.length-1?14:0,cursor:"pointer",borderRadius:8,padding:"6px 6px 8px",margin:`0 -6px ${i<topMot.length-1?14:0}px`,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeCompleto}</div>
+                    {placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.5,marginTop:1}}>{placa}</div>}
+                  </div>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:13,fontWeight:600,color:t.txt,fontVariantNumeric:"tabular-nums",flexShrink:0}}>{ct}</span>
+                </div>
+                <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:"var(--accent)",borderRadius:2}}/>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Contratante Leaderboard */}

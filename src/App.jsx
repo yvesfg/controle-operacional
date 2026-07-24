@@ -1554,6 +1554,7 @@ export default function App() {
             setPlanilhaFiltroStatus,
             setPlanilhaFiltroContratante,
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
+            setDashDrillModal,
             baseAtual,
           }} />
             : <DashboardView ctx={{
