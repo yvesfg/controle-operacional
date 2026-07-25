@@ -79,10 +79,26 @@ export default function HubScreen({
   };
 
   // ── SSO Frota: iframe + postMessage ──
-  // Listener único (antes era registrado a cada clique e nunca removido).
-  // Responde REQUEST_CO_TOKENS com token FRESCO via getSession() — que renova
-  // sozinho se preciso — para o iframe re-pedir antes de expirar sem rotacionar
-  // o refresh token do CO. Snapshot do sessionStorage fica só como fallback.
+  // Sessão sempre lida de um cache local (sessionRef), NUNCA via getSession() aqui.
+  // getSession() checa expiração e pode disparar seu próprio refresh — se isso
+  // acontecer bem na hora que o autoRefreshToken (fica ligado no cliente do CO,
+  // supabaseAuth.js) também dispara, os dois tentam usar o MESMO refresh_token
+  // quase ao mesmo tempo. O Supabase detecta a reutilização como possível roubo
+  // de token e revoga a sessão inteira ("Possible abuse attempt" nos logs de auth),
+  // derrubando o usuário no meio do uso sem aviso (viagens/veículos somem porque
+  // as políticas RLS passam a barrar tudo). onAuthStateChange mantém o cache
+  // sempre atualizado sem nunca competir com o autoRefreshToken pelo mesmo token.
+  const sessionRef = useRef(null);
+  useEffect(() => {
+    const sb = getSupaAuth();
+    if (!sb) return;
+    sb.auth.getSession().then(({ data }) => { sessionRef.current = data?.session ?? null; });
+    const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
+      sessionRef.current = session;
+    });
+    return () => sub?.subscription?.unsubscribe();
+  }, []);
+
   useEffect(() => {
     const _handler = async (e) => {
       if (!frotaUrl || !frotaUrl.startsWith(e.origin)) return;
@@ -90,13 +106,10 @@ export default function HubScreen({
 
       try {
         let _tk = null;
-        try {
-          const sb = getSupaAuth();
-          const { data } = sb ? await sb.auth.getSession() : { data: null };
-          if (data?.session?.access_token) {
-            _tk = { access_token: data.session.access_token, refresh_token: data.session.refresh_token || "" };
-          }
-        } catch {}
+        const session = sessionRef.current;
+        if (session?.access_token) {
+          _tk = { access_token: session.access_token, refresh_token: session.refresh_token || "" };
+        }
         if (!_tk) {
           const _raw = sessionStorage.getItem("co_supa_tokens");
           _tk = _raw ? JSON.parse(_raw) : null;
