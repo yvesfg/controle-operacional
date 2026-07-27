@@ -352,7 +352,7 @@ function gravarStatus(status) {
         Prefer: 'return=minimal,resolution=merge-duplicates'
       },
       payload: JSON.stringify([{
-        chave: 'gsheet_sync_status',
+        chave: 'gsheet_sync_status_imperatriz_belem',
         valor: JSON.stringify(status)
       }]),
       muteHttpExceptions: true
