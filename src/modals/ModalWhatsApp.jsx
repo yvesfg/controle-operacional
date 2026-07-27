@@ -27,7 +27,7 @@ export default function ModalWhatsApp({ ctx }) {
     wppConfirmModal, setWppConfirmModal,
     DADOS, motoristas,
     t, css, hIco, fmtMoeda, showToast, DESIGN,
-    abrirWppPagModal,
+    abrirWppPagModal, canFin,
   } = ctx;
 
   return (

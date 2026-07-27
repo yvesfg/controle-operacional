@@ -237,7 +237,7 @@ export default function AppModals({ ctx }) {
   wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppFortes, setWppFortes,
   wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
   wppConfirmModal, setWppConfirmModal, DADOS, motoristas,
-  t, css, hIco, fmtMoeda, showToast, DESIGN, abrirWppPagModal,
+  t, css, hIco, fmtMoeda, showToast, DESIGN, abrirWppPagModal, canFin,
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
