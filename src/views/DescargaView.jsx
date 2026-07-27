@@ -3,6 +3,7 @@ import { ExportMenu } from "../exportHelpers.jsx";
 import { saveJSON, parseData, diffDias, clickable } from "../utils.js";
 import { calcAgendaAvb, fmtDataAvb } from "../utils_avb.js";
 import Toggle from "../components/Toggle.jsx";
+import FilterBar from "../components/FilterBar.jsx";
 
 const CORTE_ANTIGOS = "2026-05-01"; // registros com data_carr anterior a isso ficam ocultos por padrao (lixo acumulado/orfaos de meses ja fechados)
 
@@ -272,57 +273,35 @@ export default function DescargaView({ ctx }) {
               const anosD=[...new Set(_tabAll.map(r=>{const ym=_pym(r.data_carr||r.data_agenda||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
               const mesesD=[...new Set(_tabAll.filter(r=>{if(!dscFiltroAno)return true;const ym=_pym(r.data_carr||r.data_agenda||"");return ym?.ano===dscFiltroAno;}).map(r=>{const ym=_pym(r.data_carr||r.data_agenda||"");return ym?.mes;}).filter(Boolean))].sort();
               const origensD=[...new Set(_tabAll.map(r=>(r.origem||"").trim()).filter(Boolean))].sort();
-              const MESES_PT={"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
-              const temFiltro=dscFiltroAno||dscFiltroMes||dscFiltroOrigem!=="todas"||dscFiltroIni||dscFiltroFim;
               const _iniC=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;
               const _fimC=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;
               const _pymF=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};
               const _cnt=_tabAll.filter(r=>{const ym=_pymF(r.data_carr||r.data_agenda||"");if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniC||_fimC){const d=ym?.full||null;if(!d)return false;if(_iniC&&d<_iniC)return false;if(_fimC&&d>_fimC)return false;}return true;}).length;
               return (
-                <div className="co-filter-bar">
-                  <span className="co-filter-bar__label">Filtrar:</span>
-                  <select className={`pv-filter-pill${dscFiltroAno?" active":""}`} value={dscFiltroAno} onChange={e=>{setDscFiltroAno(e.target.value);setDscFiltroMes("");}}
-                    style={{fontWeight:700,appearance:"none"}}>
-                    <option value="">Todos os Anos</option>
-                    {anosD.map(a=><option key={a} value={a}>{a}</option>)}
-                  </select>
-                  <select className={`pv-filter-pill${dscFiltroMes?" active":""}`} value={dscFiltroMes} onChange={e=>setDscFiltroMes(e.target.value)}
-                    style={{fontWeight:700,appearance:"none"}}>
-                    <option value="">Todos os Meses</option>
-                    {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
-                  </select>
-                  <select className={`pv-filter-pill${dscFiltroOrigem!=="todas"?" active":""}`} value={dscFiltroOrigem} onChange={e=>setDscFiltroOrigem(e.target.value)}
-                    style={{fontWeight:700,appearance:"none",maxWidth:180}}>
-                    <option value="todas">Todas as Origens</option>
-                    {origensD.map(o=><option key={o} value={o}>{o}</option>)}
-                  </select>
-                  <span style={{fontSize:9,color:t.txt2,flexShrink:0,paddingLeft:8,borderLeft:`1px solid ${t.borda}`,marginLeft:4}}>ou período:</span>
-                  <input type="date" value={dscFiltroIni} onChange={e=>{setDscFiltroIni(e.target.value);setDscFiltroAno("");setDscFiltroMes("");}}
-                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
-                  <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>até</span>
-                  <input type="date" value={dscFiltroFim} onChange={e=>setDscFiltroFim(e.target.value)}
-                    style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
-                  {temFiltro && (
-                    <button onClick={()=>{setDscFiltroAno("");setDscFiltroMes("");setDscFiltroOrigem("todas");setDscFiltroIni("");setDscFiltroFim("");}}
-                      style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
-                      &#10005; Limpar
-                    </button>
-                  )}
-                  {["atrasado","aguardando","semMotorista"].includes(dscTab) && (
-                    <Toggle checked={dscMostrarAntigos} onChange={setDscMostrarAntigos} size={0.8}
-                      label={<span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>Mostrar antigos (antes de 05/2026)</span>} />
-                  )}
-                  <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>
-                    {_cnt} de {_tabAll.length}
-                  </span>
-                </div>
+                <FilterBar
+                  ano={dscFiltroAno} onAno={setDscFiltroAno}
+                  mes={dscFiltroMes} onMes={setDscFiltroMes}
+                  origem={dscFiltroOrigem} onOrigem={setDscFiltroOrigem}
+                  ini={dscFiltroIni} onIni={setDscFiltroIni}
+                  fim={dscFiltroFim} onFim={setDscFiltroFim}
+                  anos={anosD} meses={mesesD} origens={origensD}
+                  count={_cnt} total={_tabAll.length}
+                  extra={<>
+                    {["atrasado","aguardando","semMotorista"].includes(dscTab) && (
+                      <Toggle checked={dscMostrarAntigos} onChange={setDscMostrarAntigos} size={0.8}
+                        label={<span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>Mostrar antigos (antes de 05/2026)</span>} />
+                    )}
+                    {dscTab!=="semMotorista" && (
+                      <span style={{display:"flex",alignItems:"center",gap:4,paddingLeft:8,borderLeft:`1px solid ${t.borda}`,marginLeft:4}}>
+                        <span style={{fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>Referência:</span>
+                        <input type="date" className="ds-input ds-input--sm" value={dscData} onChange={e=>setDscData(e.target.value)}
+                          style={{width:130}} title="Data usada para calcular dias em atraso e o nome do export"/>
+                      </span>
+                    )}
+                  </>}
+                />
               );
             })()}
-            {dscTab!=="semMotorista" && (
-            <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
-              <input type="date" value={dscData} onChange={e=>setDscData(e.target.value)} style={{...css.inp,flex:1}} />
-              <button onClick={()=>{}} style={{...css.btnGold,padding:"10px 14px",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.card,16)}</button>
-            </div>)}
 
             {/* Toolbar view Descarga */}
             <div className="co-tabbar" style={{flexWrap:"wrap",marginBottom:12}}>
