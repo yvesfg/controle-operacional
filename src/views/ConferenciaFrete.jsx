@@ -26,9 +26,9 @@ const shiftMes = (m, delta) => {
   const d = new Date(y, mo - 1 + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
-const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
+const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária", bonificacao: "Bonificação" };
 // Cor de sistema por categoria — realça o badge do ícone no KPI (frete = accent, e cores distintas nas demais).
-const CATEGORIA_COR = { frete: "var(--accent)", descarga: "var(--color-info)", local: "var(--cyan)", diaria: "var(--yellow)" };
+const CATEGORIA_COR = { frete: "var(--accent)", descarga: "var(--color-info)", local: "var(--cyan)", diaria: "var(--yellow)", bonificacao: "var(--green)" };
 // Rótulo humano de cada decisão possível na fila (exceto sinalizar_correcao, que tem seção própria).
 const DECISAO_LABEL = {
   ok: "sem ação necessária",
@@ -61,6 +61,7 @@ const ICO_CATEGORIA = {
   descarga:<><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 21h14" /></>,
   local:   <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>,
   diaria:  <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
+  bonificacao: <><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></>,
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
@@ -568,8 +569,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       </div>
 
       {/* KPIs por categoria */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 10, marginBottom: 14 }}>
-        {["frete", "descarga", "local", "diaria"].map((c) => {
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap: 10, marginBottom: 14 }}>
+        {["frete", "descarga", "local", "diaria", "bonificacao"].map((c) => {
           const d = resumoCat[c];
           return (
             <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={String(d.registros)}
@@ -1200,7 +1201,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     <datalist id="emb-destinos">{embarcadorasOpc.map((o) => <option key={o.nome} value={o.nome} />)}</datalist>
                   </div>
                   {selRow("Base", "base_id", basesOpc)}
-                  {selRow("Categoria", "categoria", [{ v: "frete", l: "Frete" }, { v: "descarga", l: "Descarga" }, { v: "local", l: "Local" }, { v: "diaria", l: "Diária" }])}
+                  {selRow("Categoria", "categoria", [{ v: "frete", l: "Frete" }, { v: "descarga", l: "Descarga" }, { v: "local", l: "Local" }, { v: "diaria", l: "Diária" }, { v: "bonificacao", l: "Bonificação" }])}
                   {selRow("Modalidade", "modalidade", [{ v: "CIF", l: "CIF" }, { v: "FOB", l: "FOB (devolução)" }])}
                   {editForm.modalidade === "FOB" && (
                     <div style={{ fontSize: 10.5, color: t.azul, padding: "2px 0 6px", lineHeight: 1.45 }}>

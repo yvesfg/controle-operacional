@@ -137,7 +137,8 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
     // semana/mês seguinte — margem negativa aqui é o fluxo normal, não é alerta.
     // Descarga: CTe e Contrato têm o mesmo valor por definição (margem 0) — recebido
     // via NFSe na semana/mês seguinte e conciliado depois; margem 0 não é alerta aqui.
-    const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga";
+    // Bonificação: valor bônus, não é frete propriamente dito — margem não se aplica.
+    const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga" || l.categoria === "bonificacao";
     // Ignora a "Margem Lucro" da planilha e recalcula no app (ver margemBruta).
     l.margem_lucro = margemBruta(l.saldo, l.frete_peso);
     l.flag_negativa = !margemFlexivel && l.margem_lucro < 0;
@@ -350,7 +351,7 @@ export async function editarFrete(conn, id, patch) {
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).
 export function recalcularLinhaEditada(l) {
-  const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga";
+  const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga" || l.categoria === "bonificacao";
   const margem = margemBruta(l.saldo, l.frete_peso);
   return {
     margem_lucro: margem,
@@ -372,7 +373,7 @@ export async function listarTodosPeriodo(conn, periodoRef) {
 }
 
 export function resumoPorCategoria(linhas) {
-  const cats = ["frete", "descarga", "local", "diaria"];
+  const cats = ["frete", "descarga", "local", "diaria", "bonificacao"];
   const out = {};
   cats.forEach((c) => {
     const sub = linhas.filter(l => l.categoria === c);
@@ -424,7 +425,7 @@ export function resumoPorDia(linhas) {
 // com indicadores por cliente/embarcadora + totais + aba RESUMO. Dispara download no navegador.
 export function gerarWorkbookXLSX(linhas, periodoRef) {
   const wb = XLSX.utils.book_new();
-  const CAT_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária" };
+  const CAT_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária", bonificacao: "Bonificação" };
   // "Modalidade" no fim (CIF/FOB) — appendada pra não deslocar os índices posicionais das
   // linhas de subtotal/total abaixo (que ficam mais curtas, com a célula final vazia).
   const COLS = ["Cliente", "CTRC", "Empresa", "Data Emissão", "Trecho", "NFS", "Placa", "Nome do Usuário",
@@ -470,12 +471,13 @@ export function gerarWorkbookXLSX(linhas, periodoRef) {
   construirAba("descarga", "DESCARGAS");
   construirAba("diaria", "DIARIAS");
   construirAba("local", "LOCAL");
+  construirAba("bonificacao", "BONIFICACAO");
 
   // RESUMO: indicadores por cliente/categoria + margem real (amostragem só de Frete)
   const resumoAoa = [["Cliente", "Categoria", "Registros", "Peso (kg)", "Frete Peso (R$)", "Saldo (R$)", "Margem média (%)", "Obs"]];
   const clientes = [...new Set(linhas.map((l) => l.cliente))].sort();
   clientes.forEach((cli) => {
-    ["frete", "descarga", "local", "diaria"].forEach((cat) => {
+    ["frete", "descarga", "local", "diaria", "bonificacao"].forEach((cat) => {
       const sub = linhas.filter((l) => l.cliente === cli && l.categoria === cat);
       if (!sub.length) return;
       const qtd = sub.length;
@@ -484,7 +486,8 @@ export function gerarWorkbookXLSX(linhas, periodoRef) {
       const saldo = sub.reduce((s, l) => s + num(l.saldo), 0);
       const margem = qtd ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / qtd : 0;
       const obs = cat === "descarga" ? "margem 0 por definição (CTe = Contrato)"
-        : cat === "diaria" ? "margem negativa esperada (recebido via CTe complementar depois)" : "";
+        : cat === "diaria" ? "margem negativa esperada (recebido via CTe complementar depois)"
+        : cat === "bonificacao" ? "valor bônus, margem não se aplica" : "";
       resumoAoa.push([cli, CAT_LABEL[cat], qtd, peso, fretePeso, saldo, r2(margem), obs]);
     });
   });
