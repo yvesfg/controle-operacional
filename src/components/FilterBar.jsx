@@ -42,6 +42,8 @@ export default function FilterBar({
   quick = true,
   count, total,
   extra,
+  className = "",
+  style,
 }) {
   const temOrigem = Array.isArray(origens);
 
@@ -67,7 +69,7 @@ export default function FilterBar({
   const temFiltro = !!(ano || mes || (temOrigem && origem !== "todas") || ini || fim);
 
   return (
-    <div className="co-filter-bar">
+    <div className={`co-filter-bar${className ? ` ${className}` : ""}`} style={style}>
       <span className="co-filter-bar__label">Filtrar:</span>
       <select className={`pv-filter-pill${ano ? " active" : ""}`} value={ano} onChange={e => handleAno(e.target.value)}
         style={{ fontWeight: 700, appearance: "none" }}>

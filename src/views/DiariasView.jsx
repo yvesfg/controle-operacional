@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { exportCSV, exportODS, exportPDF, ExportMenu } from "../exportHelpers.jsx";
 import { clickable } from "../utils.js";
+import FilterBar from "../components/FilterBar.jsx";
 
 export default function DiariasView({ ctx }) {
   const {
@@ -92,35 +93,20 @@ export default function DiariasView({ ctx }) {
                   const anosR=[...new Set(diariasData.items.map(({r})=>{const ym=_pymR(r.data_carr||r.data_agenda||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
                   const mesesR=[...new Set(diariasData.items.filter(({r})=>{if(!dPlanFiltroAno)return true;const ym=_pymR(r.data_carr||r.data_agenda||"");return ym?.ano===dPlanFiltroAno;}).map(({r})=>{const ym=_pymR(r.data_carr||r.data_agenda||"");return ym?.mes;}).filter(Boolean))].sort();
                   const origensR=[...new Set(diariasData.items.map(({r})=>(r.origem||"").trim()).filter(Boolean))].sort();
-                  const MESES_PTR={"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
-                  const temFiltroR=dPlanFiltroAno||dPlanFiltroMes||dPlanFiltroOrigem!=="todas"||dPlanFiltroIni||dPlanFiltroFim;
                   const _iniRC=dPlanFiltroIni?new Date(dPlanFiltroIni+"T00:00:00"):null;
                   const _fimRC=dPlanFiltroFim?new Date(dPlanFiltroFim+"T23:59:59"):null;
                   const _pymRC=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};
                   const _cntR=diariasData.items.filter(({r})=>{const ym=_pymRC(r.data_carr||r.data_agenda||"");if(dPlanFiltroAno&&ym?.ano!==dPlanFiltroAno)return false;if(dPlanFiltroMes&&ym?.mes!==dPlanFiltroMes)return false;if(dPlanFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dPlanFiltroOrigem)return false;if(_iniRC||_fimRC){const d=ym?.full||null;if(!d)return false;if(_iniRC&&d<_iniRC)return false;if(_fimRC&&d>_fimRC)return false;}return true;}).length;
                   return (
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"7px 10px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,flexWrap:"wrap"}}>
-                      <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-                      <select className={`pv-filter-pill${dPlanFiltroAno?" active":""}`} value={dPlanFiltroAno} onChange={e=>{setDPlanFiltroAno(e.target.value);setDPlanFiltroMes("");}} style={{fontWeight:700,appearance:"none"}}>
-                        <option value="">Todos os Anos</option>
-                        {anosR.map(a=><option key={a} value={a}>{a}</option>)}
-                      </select>
-                      <select className={`pv-filter-pill${dPlanFiltroMes?" active":""}`} value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)} style={{fontWeight:700,appearance:"none"}}>
-                        <option value="">Todos os Meses</option>
-                        {mesesR.map(m=><option key={m} value={m}>{MESES_PTR[m]||m}</option>)}
-                      </select>
-                      <select className={`pv-filter-pill${dPlanFiltroOrigem!=="todas"?" active":""}`} value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)} style={{fontWeight:700,appearance:"none",maxWidth:180}}>
-                        <option value="todas">Todas as Origens</option>
-                        {origensR.map(o=><option key={o} value={o}>{o}</option>)}
-                      </select>
-                      <span style={{fontSize:9,color:t.txt2,flexShrink:0,paddingLeft:8,borderLeft:`1px solid ${t.borda}`,marginLeft:4}}>ou período:</span><input type="date" value={dPlanFiltroIni} onChange={e=>{setDPlanFiltroIni(e.target.value);setDPlanFiltroAno("");setDPlanFiltroMes("");}} style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
-                      <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>até</span>
-                      <input type="date" value={dPlanFiltroFim} onChange={e=>setDPlanFiltroFim(e.target.value)} style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
-                      {temFiltroR && (
-                        <button onClick={()=>{setDPlanFiltroAno("");setDPlanFiltroMes("");setDPlanFiltroOrigem("todas");setDPlanFiltroIni("");setDPlanFiltroFim("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
-                      )}
-                      <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>{_cntR} de {diariasData.items.length}</span>
-                    </div>
+                    <FilterBar
+                      ano={dPlanFiltroAno} onAno={setDPlanFiltroAno}
+                      mes={dPlanFiltroMes} onMes={setDPlanFiltroMes}
+                      origem={dPlanFiltroOrigem} onOrigem={setDPlanFiltroOrigem}
+                      ini={dPlanFiltroIni} onIni={setDPlanFiltroIni}
+                      fim={dPlanFiltroFim} onFim={setDPlanFiltroFim}
+                      anos={anosR} meses={mesesR} origens={origensR}
+                      count={_cntR} total={diariasData.items.length}
+                    />
                   );
                 })()}
                 {/* Filtro + toolbar de view */}
@@ -269,7 +255,6 @@ export default function DiariasView({ ctx }) {
               const anosD    = [...new Set(dItems.map(({r})=>{const ym=parseYMd(r.data_carr||r.data_agenda||"");return ym?.ano;}).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
               const mesesD   = [...new Set(dItems.filter(({r})=>{if(!dPlanFiltroAno)return true;const ym=parseYMd(r.data_carr||r.data_agenda||"");return ym?.ano===dPlanFiltroAno;}).map(({r})=>{const ym=parseYMd(r.data_carr||r.data_agenda||"");return ym?.mes;}).filter(Boolean))].sort();
               const origensD = [...new Set(dItems.map(({r})=>(r.origem||"").trim()).filter(Boolean))].sort();
-              const MESES_PT = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
               const iniD = dPlanFiltroIni ? new Date(dPlanFiltroIni+"T00:00:00") : null;
               const fimD = dPlanFiltroFim ? new Date(dPlanFiltroFim+"T23:59:59") : null;
               const filtrados = dItems.filter(({r}) => {
@@ -285,43 +270,18 @@ export default function DiariasView({ ctx }) {
                 }
                 return true;
               });
-              const temFiltro = dPlanFiltroAno || dPlanFiltroMes || dPlanFiltroOrigem!=="todas" || dPlanFiltroIni || dPlanFiltroFim;
               return (
                 <div>
-                  {/* Barra de filtros */}
-                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:t.card,
-                    border:`1px solid ${t.borda}`,borderRadius:"10px 10px 0 0",flexWrap:"wrap",margin:"0 -16px"}}>
-                    <span style={{fontSize:9,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:.8,marginRight:2}}>Filtrar:</span>
-                    <select className={`pv-filter-pill${dPlanFiltroAno?" active":""}`} value={dPlanFiltroAno} onChange={e=>setDPlanFiltroAno(e.target.value)}
-                      style={{fontWeight:700,appearance:"none"}}>
-                      <option value="">Todos os Anos</option>
-                      {anosD.map(a=><option key={a} value={a}>{a}</option>)}
-                    </select>
-                    <select className={`pv-filter-pill${dPlanFiltroMes?" active":""}`} value={dPlanFiltroMes} onChange={e=>setDPlanFiltroMes(e.target.value)}
-                      style={{fontWeight:700,appearance:"none"}}>
-                      <option value="">Todos os Meses</option>
-                      {mesesD.map(m=><option key={m} value={m}>{MESES_PT[m]||m}</option>)}
-                    </select>
-                    <select className={`pv-filter-pill${dPlanFiltroOrigem!=="todas"?" active":""}`} value={dPlanFiltroOrigem} onChange={e=>setDPlanFiltroOrigem(e.target.value)}
-                      style={{fontWeight:700,appearance:"none",maxWidth:180}}>
-                      <option value="todas">Todas as Origens</option>
-                      {origensD.map(o=><option key={o} value={o}>{o}</option>)}
-                    </select>
-                    <input type="date" value={dPlanFiltroIni} onChange={e=>setDPlanFiltroIni(e.target.value)}
-                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
-                    <span style={{fontSize:10,color:t.txt2,flexShrink:0}}>at&#233;</span>
-                    <input type="date" value={dPlanFiltroFim} onChange={e=>setDPlanFiltroFim(e.target.value)}
-                      style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,flex:"1 1 110px",minWidth:0}}/>
-                    {temFiltro && (
-                      <button onClick={()=>{setDPlanFiltroAno("");setDPlanFiltroMes("");setDPlanFiltroOrigem("todas");setDPlanFiltroIni("");setDPlanFiltroFim("");}}
-                        style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
-                        &#10005; Limpar
-                      </button>
-                    )}
-                    <span style={{marginLeft:"auto",fontSize:10,color:t.txt2,fontWeight:600,whiteSpace:"nowrap"}}>
-                      {filtrados.length} de {dItems.length} registros
-                    </span>
-                  </div>
+                  <FilterBar
+                    ano={dPlanFiltroAno} onAno={setDPlanFiltroAno}
+                    mes={dPlanFiltroMes} onMes={setDPlanFiltroMes}
+                    origem={dPlanFiltroOrigem} onOrigem={setDPlanFiltroOrigem}
+                    ini={dPlanFiltroIni} onIni={setDPlanFiltroIni}
+                    fim={dPlanFiltroFim} onFim={setDPlanFiltroFim}
+                    anos={anosD} meses={mesesD} origens={origensD}
+                    count={filtrados.length} total={dItems.length}
+                    style={{borderRadius:"10px 10px 0 0",margin:"0 -16px",width:"auto"}}
+                  />
                   {/* Tabela */}
                   <div className="ds-table-wrap" style={{borderTop:"none",maxHeight:"calc(100vh - 240px)",overflowY:"auto",margin:"0 -16px"}}>
                     <table className="ds-table ds-table--compact" style={{minWidth:600}}>
