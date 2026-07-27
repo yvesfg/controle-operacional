@@ -40,6 +40,7 @@ export default function FilterBar({
   ini, onIni, fim, onFim,
   anos = [],
   quick = true,
+  onQuickDate,
   count, total,
   extra,
   className = "",
@@ -59,6 +60,7 @@ export default function FilterBar({
     const q = QUICK.find(x => x.k === k);
     const [i, f] = q.range();
     onAno(""); onMes(""); onIni(i); onFim(f);
+    if (onQuickDate && i === f) onQuickDate(i); // Hoje/Amanhã são dias únicos: também move a Referência
   };
 
   const handleClear = () => {
