@@ -385,8 +385,12 @@ select:focus {
   display:         flex; flex-direction: column; overflow: hidden;
   animation:       mslide .26s cubic-bezier(.34,1.1,.64,1);
 }
-.co-dt-body      { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0; }
-.co-dt-close-bar { display: block !important; }
+.co-dt-body      { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 0; min-height: 0; }
+/* Chips de navegação por âncora — pulam direto pra seção, sem depender de rolagem */
+.co-dt-nav       { flex-shrink: 0; display: flex; gap: 6px; padding: 8px 14px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); background: var(--color-card); }
+.co-dt-nav::-webkit-scrollbar { display: none; }
+/* Rodapé fixo (Fechar + Salvar) — sempre visível, mobile e desktop */
+.co-dt-footer    { flex-shrink: 0; display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--color-modal-bg); }
 .co-dt-panel     { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 .co-dt-right     { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
 .co-dados-grid   { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; }
@@ -399,7 +403,6 @@ select:focus {
   .co-dados-grid  { grid-template-columns: repeat(3,1fr) !important; }
   .co-min-g4      { grid-template-columns: repeat(3,1fr) !important; }
   .co-min-g3      { grid-template-columns: repeat(3,1fr) !important; }
-  .co-dt-close-bar { display: none !important; }
 }
 @media (min-width: 1024px) {
   .co-dt-modal   { max-width: 960px !important; width: 90vw !important; max-height: 88vh !important; }

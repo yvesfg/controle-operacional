@@ -47,6 +47,14 @@ export default function ModalDetalhe({ ctx }) {
   const [ocorrModalLocalOpen, setOcorrModalLocalOpen] = React.useState(false);
   const [dadosExpanded, setDadosExpanded] = React.useState(false);
 
+  // ── Navegação por âncora (chips no topo pulam pra cada seção) ──
+  const refTimeline = React.useRef(null);
+  const refDados = React.useRef(null);
+  const refAcomp = React.useRef(null);
+  const refOcorr = React.useRef(null);
+  const refDocs = React.useRef(null);
+  const irPara = (ref) => ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   // ── Variáveis locais computadas a partir do contexto ──
   const r = detalheDT;
   const canEditDetalhe = isAdmin || perms.editar;
@@ -110,12 +118,27 @@ export default function ModalDetalhe({ ctx }) {
                 )}
               </div>
 
+              {/* Navegação por âncora — pula direto pra seção, sem depender de rolagem */}
+              <div className="co-dt-nav">
+                {[
+                  {ref:refTimeline, l:"Timeline", ico:<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>},
+                  {ref:refDados, l:"Dados", ico:<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>},
+                  {ref:refAcomp, l:"Acompanh.", ico:<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>},
+                  {ref:refOcorr, l:"Ocorrências", ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>},
+                  {ref:refDocs, l:"Documentos", ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>},
+                ].map(n => (
+                  <button key={n.l} onClick={()=>irPara(n.ref)} className="pv-filter-pill" style={{flexShrink:0,display:"inline-flex",alignItems:"center",gap:5}}>
+                    {hIco(n.ico,t.txt2,12)} {n.l}
+                  </button>
+                ))}
+              </div>
+
               <div className="co-dt-body" style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
               {/* ── PAINEL ESQUERDO: Timeline + Dados + Minutas ── */}
               <div className="co-dt-panel">
 
                 {/* ── Timeline ── */}
-                <div>
+                <div ref={refTimeline}>
                   <div style={{...css.secTitle,marginBottom:10}}>{hIco(<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,t.ouro,12)} Timeline <span style={{flex:1,height:1,background:t.borda}} /></div>
                   <div style={{display:"flex",alignItems:"flex-start",gap:0,position:"relative",padding:"0 8px"}}>
                     {steps.map((s,si) => (
@@ -148,7 +171,7 @@ export default function ModalDetalhe({ ctx }) {
                   const shown = dadosExpanded ? dadosTodos : dadosTodos.slice(0, VISIBLE);
                   const hidden = dadosTodos.length - VISIBLE;
                   return (
-                    <div>
+                    <div ref={refDados}>
                       <div style={{...css.secTitle,marginBottom:8}}>{hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>,t.ouro,12)} Dados do Registro <span style={{flex:1,height:1,background:t.borda}} /></div>
                       <div className="co-dados-grid">
                         {shown.map((f,fi)=>(
@@ -182,7 +205,7 @@ export default function ModalDetalhe({ ctx }) {
                     const conn2=getConexao(); if(conn2&&(texto.trim()||imgs.length)){supaFetch(conn2.url,conn2.key,"POST","co_acompanhamento_dt",[{dt:detalheDT.dt,data,texto,imagens:JSON.stringify(imgs||[]),usuario:e.usuario,atualizado_em:e.at}]).catch(()=>{});}
                   };
                   return (
-                    <div>
+                    <div ref={refAcomp}>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,t.ouro,12)} Acompanhamento Dia a Dia
                         {dias.length>0&&<span style={{fontSize:9,color:t.txt2,fontWeight:400,marginLeft:4}}>{dias.length} dias</span>}
@@ -228,7 +251,7 @@ export default function ModalDetalhe({ ctx }) {
                 })()}
 
                 {/* ── Histórico de Ocorrências ── */}
-                <div>
+                <div ref={refOcorr}>
                   <div style={{...css.secTitle,marginBottom:8}}>
                     {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Histórico de Ocorrências
                     {ocorrLoading && <span style={{fontSize:9,color:t.txt2,fontWeight:400}}> carregando…</span>}
@@ -297,8 +320,12 @@ export default function ModalDetalhe({ ctx }) {
                   const isDescargaReg = !!(r.data_agenda||r.data_desc);
                   const lblP2 = {fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,color:t.txt2,marginBottom:3};
                   const inpP2 = {...css.inp,fontSize:12,padding:"7px 9px",height:"auto"};
+                  // Estilo único pros 3 cabeçalhos de seção colapsável — só o ícone carrega a cor,
+                  // o fundo fica neutro (antes cada seção tinha uma cor de fundo diferente,
+                  // competindo por atenção sem hierarquia real entre elas).
+                  const accHdr = open => ({width:"100%",background:t.card2,border:`1px solid ${t.borda}`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:open?6:0});
                   return (
-                    <div>
+                    <div ref={refDocs}>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
                         {isDiariaReg&&<span style={{fontSize:9,background:"rgba(217,98,43,.15)",border:"1px solid rgba(217,98,43,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="bed" s={10} c={t.ouro}/> DIÁRIA</span>}
@@ -320,9 +347,9 @@ export default function ModalDetalhe({ ctx }) {
 
                       {/* ─ Minutas DCC — colapsável (aberto por padrão) ─ */}
                       {detalheTemDcc==="sim"&&<div style={{marginBottom:10}}>
-                        <button onClick={()=>setDetalheSecDcc(p=>!p)} style={{width:"100%",background:`rgba(217,98,43,.07)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecDcc?6:0}}>
+                        <button onClick={()=>setDetalheSecDcc(p=>!p)} style={accHdr(detalheSecDcc)}>
                           {hIco(<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>,t.ouro,13,2)}
-                          <span style={{fontSize:10,fontWeight:700,color:t.ouro,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DCC</span>
+                          <span style={{fontSize:10,fontWeight:700,color:t.txt,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DCC</span>
                           <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDcc.length} minuta(s)</span>
                           {hIco(detalheSecDcc?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
@@ -352,9 +379,9 @@ export default function ModalDetalhe({ ctx }) {
 
                       {/* ─ CTE Complementar — colapsável (fechado por padrão) ─ */}
                       <div style={{marginBottom:10}}>
-                        <button onClick={()=>setDetalheSecCteComp(p=>!p)} style={{width:"100%",background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecCteComp?6:0}}>
+                        <button onClick={()=>setDetalheSecCteComp(p=>!p)} style={accHdr(detalheSecCteComp)}>
                           {hIco(<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,t.azulLt,13,2)}
-                          <span style={{fontSize:10,fontWeight:700,color:t.azulLt,letterSpacing:.5,flex:1,textAlign:"left"}}>CTE COMPLEMENTAR</span>
+                          <span style={{fontSize:10,fontWeight:700,color:t.txt,letterSpacing:.5,flex:1,textAlign:"left"}}>CTE COMPLEMENTAR</span>
                           {(detalheCteComp.cte||detalheCteComp.mdf||detalheCteComp.mat)&&<span style={{fontSize:8,background:"rgba(22,119,255,.12)",borderRadius:8,padding:"1px 6px",color:t.azulLt,fontWeight:700}}>preenchido</span>}
                           {hIco(detalheSecCteComp?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
@@ -369,9 +396,9 @@ export default function ModalDetalhe({ ctx }) {
 
                       {/* ─ Minutas Descarga — colapsável (aberto por padrão) ─ */}
                       <div style={{marginBottom:10}}>
-                        <button onClick={()=>setDetalheSecMinDsc(p=>!p)} style={{width:"100%",background:`rgba(22,119,255,.06)`,border:`1px solid rgba(22,119,255,.18)`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:7,cursor:"pointer",fontFamily:"inherit",marginBottom:detalheSecMinDsc?6:0}}>
+                        <button onClick={()=>setDetalheSecMinDsc(p=>!p)} style={accHdr(detalheSecMinDsc)}>
                           {hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.04 8.73-5.04M12 22V12"/></>,t.azulLt,13,2)}
-                          <span style={{fontSize:10,fontWeight:700,color:t.azulLt,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DESCARGA</span>
+                          <span style={{fontSize:10,fontWeight:700,color:t.txt,letterSpacing:.5,flex:1,textAlign:"left"}}>MINUTAS DESCARGA</span>
                           <span style={{fontSize:9,color:t.txt2,fontWeight:400}}>{detalheMinDsc.length} minuta(s)</span>
                           {hIco(detalheSecMinDsc?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
@@ -446,11 +473,6 @@ export default function ModalDetalhe({ ctx }) {
                           </div>
                         );
                       })()}
-
-                      {/* ─ Botão Salvar ─ */}
-                      <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
-                        <span style={{display:"inline-flex",alignItems:"center",gap:6}}>{salvandoMins?<><Icon n="clock" s={14} c="currentColor"/> Salvando...</>:<><Icon n="save" s={14} c="currentColor"/> SALVAR DOCUMENTOS</>}</span>
-                      </button>
                     </div>
                   );
                 })()}
@@ -458,9 +480,12 @@ export default function ModalDetalhe({ ctx }) {
               </div>{/* fim co-dt-right */}
             </div>{/* fim co-dt-body */}
 
-            {/* Botão fechar — sticky no fundo, visível no mobile */}
-            <div style={{flexShrink:0,padding:"10px 16px",borderTop:`1px solid ${t.borda}`,background:t.modalBg,display:"none"}} className="co-dt-close-bar">
-              <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{width:"100%",padding:"13px",background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.btn,color:t.txt2,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><Icon n="x" s={14} c="currentColor" sw={2}/> FECHAR</button>
+            {/* Rodapé fixo — Salvar Documentos sempre alcançável, sem depender de rolar até o fim (desktop e mobile) */}
+            <div className="co-dt-footer">
+              <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{flexShrink:0,padding:"0 16px",background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.btn,color:t.txt2,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="x" s={13} c="currentColor" sw={2}/> Fechar</button>
+              <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{flex:1,padding:"12px",borderRadius:DESIGN.r.btn,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
+                <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>{salvandoMins?<><Icon n="clock" s={14} c="currentColor"/> Salvando...</>:<><Icon n="save" s={14} c="currentColor"/> SALVAR DOCUMENTOS</>}</span>
+              </button>
             </div>
           </div>{/* fim co-dt-modal */}
         </div>
