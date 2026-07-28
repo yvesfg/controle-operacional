@@ -4,6 +4,8 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import DataRow     from '../components/DataRow.jsx';
 import SectionCard from '../components/SectionCard.jsx';
 import PageHeader  from '../components/PageHeader.jsx';
+import { Table }   from '../design-system/components/Table.jsx';
+import { Badge }   from '../design-system/components/Badge.jsx';
 import { parseData, clickable, ultimasViagens } from "../utils.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
 
@@ -73,14 +75,50 @@ export default function DashboardView({ ctx }) {
     .sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return db&&da?db-da:0;})
     .slice(0,10);
 
-  const sc = s => {
+  const statusVariant = s => {
     const u=(s||"").toUpperCase();
-    if(u.includes("CARREGAD")) return t.azul;
-    if(u.includes("ENTREG")) return t.verde;
-    if(u.includes("AGUARD")||u.includes("PEND")) return t.laranja;
-    if(u.includes("CANCEL")||u.includes("NO-SHOW")) return t.danger;
-    return t.ouro;
+    if(u.includes("CARREGAD")) return "info";
+    if(u.includes("ENTREG")) return "success";
+    if(u.includes("AGUARD")||u.includes("PEND")) return "warning";
+    if(u.includes("CANCEL")||u.includes("NO-SHOW")) return "danger";
+    return "default";
   };
+  const recentesColumns = [
+    {
+      key: "nome", label: "Motorista", sortable: true,
+      render: (_, r) => {
+        const partes = (r.nome||"").split(" ").filter(Boolean);
+        const nomeExib = partes.length>=2 ? `${partes[0]} ${partes[1]}` : partes[0]||"?";
+        const initials = partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
+        return (
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:26,height:26,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:11,fontWeight:600,color:t.txt,textTransform:"capitalize",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nomeExib.toLowerCase()}</div>
+              {r.placa && <div style={{fontSize:10,color:"var(--text3)",fontFamily:"var(--font-mono)"}}>{r.placa}</div>}
+            </div>
+          </div>
+        );
+      },
+    },
+    { key: "dt", label: "DT", sortable: true, mono: true },
+    {
+      key: "rota", label: "Rota",
+      render: (_, r) => {
+        const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim();
+        const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim();
+        return origemCurta&&destinoCurto ? `${origemCurta} → ${destinoCurto}` : (origemCurta||destinoCurto||"—");
+      },
+    },
+    {
+      key: "status", label: "Status", sortable: true,
+      render: v => <Badge variant={statusVariant(v)} dot size="sm">{v||"—"}</Badge>,
+    },
+    ...(canFin ? [{
+      key: "vl_cte", label: "Valor", align: "right", sortable: true, mono: true,
+      render: v => v && parseFloat(v)>0 ? fmtMoeda(parseFloat(v)) : "—",
+    }] : []),
+  ];
 
   return (
     <div style={{padding:isMobile?"16px 12px":"24px"}}>
@@ -111,14 +149,32 @@ export default function DashboardView({ ctx }) {
         const totalDevD = comD.reduce((s,{r})=>s+(parseFloat(r.diaria_prev)||0),0);
         const totalPgD  = comD.reduce((s,{r})=>s+(parseFloat(r.diaria_pg)||0),0);
         const saldoD = totalDevD-totalPgD;
+
+        // Tendência mensal (últimos 6 meses) — vem de dashData.grupos, que é global (não filtrado
+        // por mês/origem do dashboard), então o sparkline sempre mostra o histórico completo.
+        const mesesT = dashData.meses.slice(-6);
+        const pctDelta = arr => {
+          if (arr.length < 2) return null;
+          const prev = arr[arr.length-2], cur = arr[arr.length-1];
+          if (!prev) return null;
+          return ((cur-prev)/prev)*100;
+        };
+        const carregTrend = mesesT.map(m=>dashData.grupos[m].regs.length);
+        const cteTrend     = mesesT.map(m=>Math.round(dashData.grupos[m].cte));
+        const dtsTrend     = mesesT.map(m=>dashData.grupos[m].dts.size);
+        const motsTrend    = mesesT.map(m=>dashData.grupos[m].mots.size);
+        const cteMedTrend  = mesesT.map(m=>{const r=dashData.grupos[m].regs.length; return r?dashData.grupos[m].cte/r:0;});
+        const efic = m => {const regs=dashData.grupos[m].regs; if(!regs.length) return 0; const ok=regs.filter(r=>(r.status||"")==="Carregado"||(r.status||"")==="CARREGADO").length; return Math.round(ok/regs.length*100);};
+        const eficTrend    = mesesT.map(efic);
+
         const kpis = [
-          {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",icon:<><path d="M1 3h15v13H1z"/><path d="M16 8l4 2v5h-4V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
-          {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,icon:<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>},
-          {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,click:()=>setActiveTab("planilha")},
+          {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",trend:dashHeroTab==="cte"?cteTrend:carregTrend,delta:pctDelta(dashHeroTab==="cte"?cteTrend:carregTrend),click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
+          {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
+          {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:()=>setActiveTab("planilha")},
           // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
           ...(baseAtual?.id==="imperatriz_belem" && semDtAguardando>0 ? [{label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:()=>setActiveTab("planilha")}]:[]),
-          {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,icon:<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,click:()=>setActiveTab("motoristas")},
-          ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",icon:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></>}]:[]),
+          {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:()=>setActiveTab("motoristas")},
+          ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
           ...(canFin?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
           {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",danger:alertas.length>0,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
         ];
@@ -126,7 +182,8 @@ export default function DashboardView({ ctx }) {
           <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
             {kpis.map((k,i)=>(
               <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} danger={k.danger}
-                icon={hIco(k.icon,"var(--text3)",isMobile?10:11)} onClick={k.click} compact={isMobile} />
+                icon={k.icon && hIco(k.icon,"var(--text3)",isMobile?10:11)} trend={k.trend} deltaPct={k.delta}
+                deltaLabel="vs mês anterior" onClick={k.click} compact={isMobile} />
             ))}
           </div>
         );
@@ -227,47 +284,20 @@ export default function DashboardView({ ctx }) {
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:14,alignItems:"start"}}>
 
         {/* Registros Recentes */}
-        <div ref={dashRecCardRef} style={{...css.card,padding:18,display:"flex",flexDirection:"column"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexShrink:0}}>
-            <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Registros Recentes</span>
-            <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver Tudo ›</button>
-          </div>
-          <div style={{display:"flex",flexDirection:"column",overflow:"hidden"}}>
-            {recentesDash.length===0?(
-              <div style={{textAlign:"center",padding:16,color:t.txt2,fontSize:11}}>Sem dados no período</div>
-            ):recentesDash.slice(0,dashRecentesN).map((r,i)=>{
-              const partes=(r.nome||"").split(" ").filter(Boolean);
-              const nomeExib=partes.length>=2?`${partes[0]} ${partes[1]}`:partes[0]||"?";
-              const initials=partes.map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";
-              const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim();
-              const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim();
-              const rota=origemCurta&&destinoCurto?`${origemCurta} → ${destinoCurto}`:origemCurta||destinoCurto||"";
-              const statusColor=sc(r.status);
-              return (
-                <div key={i} {...clickable(()=>{setDetalheDT(r);setModalOpen("detalhe");})}
-                  style={{height:44,display:"flex",alignItems:"center",gap:8,padding:"0 6px",borderTop:i===0?"none":`1px solid ${hexRgb(t.borda,.4)}`,cursor:"pointer",borderRadius:6,transition:"background .1s",flexShrink:0}}
-                  onMouseEnter={e=>e.currentTarget.style.background=t.card2}
-                  onMouseLeave={e=>e.currentTarget.style.background="transparent"}
-                >
-                  <div style={{width:26,height:26,borderRadius:"50%",background:t.card2,border:`1px solid ${t.borda}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:t.txt2,flexShrink:0}}>{initials}</div>
-                  <div style={{minWidth:0,flex:"0 0 110px"}}>
-                    <div style={{fontSize:10,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{nomeExib.toLowerCase()}</div>
-                    <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:.4,marginTop:1,display:"flex",gap:5,overflow:"hidden"}}>
-                      {r.placa&&<span style={{flexShrink:0}}>{r.placa}</span>}
-                      <span style={{color:"var(--text3)",flexShrink:0}}>{r.dt}</span>
-                    </div>
-                  </div>
-                  {rota&&<div style={{flex:1,fontSize:10,color:t.txt2,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",padding:"0 4px"}}>{rota}</div>}
-                  <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 6px",height:18,borderRadius:4,fontFamily:"var(--font-mono)",fontSize:9,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em",color:statusColor,background:hexRgb(statusColor,.1),whiteSpace:"nowrap",flexShrink:0}}>
-                    <span style={{width:5,height:5,borderRadius:"50%",background:"currentColor",flexShrink:0}}/>
-                    {(r.status||"–").slice(0,10)}
-                  </span>
-                  {canFin&&r.vl_cte&&parseFloat(r.vl_cte)>0&&<span style={{fontSize:10,fontWeight:500,color:t.txt,fontFamily:"var(--font-mono)",fontVariantNumeric:"tabular-nums",textAlign:"right",flexShrink:0}}>{"R$"+(parseFloat(r.vl_cte)/1000).toFixed(1)+"k"}</span>}
-                  <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-              );
-            })}
-          </div>
+        <div ref={dashRecCardRef} style={{display:"flex",flexDirection:"column",minHeight:0}}>
+          <Table
+            columns={recentesColumns}
+            data={recentesDash.slice(0,dashRecentesN)}
+            onRowClick={r=>{setDetalheDT(r);setModalOpen("detalhe");}}
+            compact
+            emptyText="Sem dados no período"
+            toolbar={
+              <div className="ds-table-toolbar">
+                <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Registros Recentes</span>
+                <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"inline-flex",alignItems:"center"}}>Ver Tudo ›</button>
+              </div>
+            }
+          />
         </div>
 
         {/* Painel Operacional: Diárias + Descargas + Top Pendentes */}

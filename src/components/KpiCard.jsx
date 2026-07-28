@@ -4,6 +4,34 @@
 import React from "react";
 import { clickable } from "../utils.js";
 
+// Sparkline em SVG puro (sem libs) — última barra em destaque, mesmo padrão do modelo de referência.
+function Sparkline({ data, compact }) {
+  if (!data || data.length < 2) return null;
+  const w = compact ? 44 : 56, h = compact ? 20 : 26, gap = 2;
+  const barW = (w - gap * (data.length - 1)) / data.length;
+  const max = Math.max(...data, 1);
+  return (
+    <svg width={w} height={h} style={{ flexShrink: 0 }}>
+      {data.map((v, i) => {
+        const barH = Math.max(2, (v / max) * h);
+        const isLast = i === data.length - 1;
+        return (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={h - barH}
+            width={barW}
+            height={barH}
+            rx={1}
+            fill={isLast ? "var(--color-primary)" : "var(--text3)"}
+            opacity={isLast ? 1 : 0.35}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function KpiCard({
   label,
   value,
@@ -14,6 +42,9 @@ export default function KpiCard({
   iconTint,   // cor do sistema p/ realçar o ícone num badge (opt-in; sem ela, ícone flutua discreto)
   onClick,
   compact = false,
+  trend,        // number[] opcional — histórico curto p/ sparkline (ex.: últimos 6 meses)
+  deltaPct,     // number opcional — variação % vs período anterior (+/-)
+  deltaLabel,   // string opcional — texto ao lado do delta (default: "vs período anterior")
 }) {
   return (
     <div
@@ -30,7 +61,7 @@ export default function KpiCard({
       onMouseEnter={e => onClick && (e.currentTarget.style.borderColor = danger ? "var(--red)" : "var(--border2)")}
       onMouseLeave={e => onClick && (e.currentTarget.style.borderColor = danger ? "color-mix(in srgb, var(--red) 45%, transparent)" : "var(--border)")}
     >
-      {icon && (iconTint ? (
+      {icon ? (iconTint ? (
         <div style={{
           position: "absolute", top: 10, right: 10,
           width: compact ? 26 : 30, height: compact ? 26 : 30,
@@ -45,7 +76,11 @@ export default function KpiCard({
         <div style={{ position: "absolute", top: 10, right: 10, opacity: 0.5 }}>
           {icon}
         </div>
-      ))}
+      )) : trend && (
+        <div style={{ position: "absolute", top: compact ? 12 : 16, right: compact ? 12 : 16 }}>
+          <Sparkline data={trend} compact={compact} />
+        </div>
+      )}
       <div style={{
         fontFamily:    "var(--font-mono)",
         fontSize:      compact ? 10 : 11,
@@ -54,7 +89,7 @@ export default function KpiCard({
         color:         "var(--text3)",
         fontWeight:    400,
         lineHeight:    1.4,
-        paddingRight:  icon ? (iconTint ? 38 : 20) : 0,
+        paddingRight:  icon ? (iconTint ? 38 : 20) : (trend ? (compact ? 50 : 62) : 0),
         marginBottom:  compact ? 3 : 8,
       }}>
         {label}
@@ -73,6 +108,18 @@ export default function KpiCard({
       {sub && (
         <div style={{ fontSize: compact ? 10 : 12, color: "var(--text2)", lineHeight: 1.3 }}>
           {sub}
+        </div>
+      )}
+      {deltaPct != null && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 4,
+          marginTop: compact ? 4 : 8,
+          fontSize: compact ? 10 : 11,
+          fontFamily: "var(--font-mono)",
+          color: deltaPct >= 0 ? "var(--color-success)" : "var(--color-danger)",
+        }}>
+          <span>{deltaPct >= 0 ? "↑" : "↓"} {Math.abs(deltaPct).toFixed(0)}%</span>
+          <span style={{ color: "var(--text3)" }}>{deltaLabel || "vs período anterior"}</span>
         </div>
       )}
     </div>
