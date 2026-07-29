@@ -1,5 +1,6 @@
 import React from "react";
-import { clickable } from "../utils.js";
+import { getPerfil } from "../operacao/perfil.js";
+import { clickable, saveJSON } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalWhatsApp({ ctx }) {
@@ -479,7 +480,8 @@ export default function ModalWhatsApp({ ctx }) {
       {/* ═══ WHATSAPP FATURAMENTO MODAL ═══ */}
       {wppFatModal && (()=>{
         const {reg,mot,base} = wppFatModal;
-        const isAvb = base === "acailandia_avb";
+        // Nao e "a base e a AVB", e "esta operacao ancora por codigo em vez de DT".
+        const isAvb = getPerfil(base).ancora === "codigo";
         const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
         const inpF = {...css.inp,fontSize:12,padding:"7px 10px"};
         const lblF = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:3};

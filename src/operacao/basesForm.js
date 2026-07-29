@@ -19,6 +19,20 @@ export const textoParaValores = (txt) =>
 export const listaParaTexto = (v) => (v || []).join(", ");
 export const textoParaLista = (s) => String(s || "").split(",").map((x) => x.trim()).filter(Boolean);
 
+// Campos extras: "coluna|Rótulo|tipo|Seção" por linha. tipo e seção são opcionais
+// (padrão: texto na seção Operacional).
+export const extrasParaTexto = (cs) =>
+  (cs || []).map((c) => [c.k, c.l, c.type || "", c.secao || ""].join("|")).join("\n");
+
+export const textoParaExtras = (txt) =>
+  String(txt || "").split("\n").map((l) => l.trim()).filter(Boolean).map((l) => {
+    const [k, rotulo, tipo, secao] = l.split("|").map((x) => (x || "").trim());
+    if (!k) return null;
+    const c = { k, l: rotulo || k, secao: secao || "Operacional" };
+    if (tipo) c.type = tipo;
+    return c;
+  }).filter(Boolean);
+
 export function formDaBase(b) {
   const p = b?.perfil || {};
   return {
@@ -38,6 +52,7 @@ export function formDaBase(b) {
     clfLabel: p.classificador?.label || "Tipo de carga",
     clfPadrao: p.classificador?.padrao || "",
     clfValores: valoresParaTexto(p.classificador?.valores),
+    camposExtras: extrasParaTexto(p.camposExtras),
   };
 }
 
@@ -75,5 +90,8 @@ export function perfilDoForm(f) {
       };
     }
   }
+  const extras = textoParaExtras(f.camposExtras);
+  if (extras.length) perfil.camposExtras = extras;
+
   return perfil;
 }

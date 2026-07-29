@@ -24,10 +24,13 @@ function ModalEditComponent({ ctx }) {
   if (modalOpen !== "edit") return null;
 
   const isWide = typeof window !== "undefined" && window.innerWidth >= 768;
-  const isAvb = baseAtual?.id === "acailandia_avb";
   // Classificador da operacao: sem isto so a planilha (sync) conseguia marcar o tipo —
   // uma base nova nao teria como separar "padrao" de "exportacao" pelo proprio app.
-  const clf = getPerfil(baseAtual?.id).classificador;
+  const _perfil = getPerfil(baseAtual?.id);
+  const clf = _perfil.classificador;
+  // Campos que so existem nesta operacao (perfil.camposExtras) — antes eram um
+  // `isAvb ? [...] : []` cravado aqui, o que obrigava deploy pra cada operacao nova.
+  const extras = (secao) => (_perfil.camposExtras || []).filter((c) => c.secao === secao);
 
   // ── ÍCONES ────────────────────────────────────────────────────────────
   const icoIdent = <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>;
@@ -70,7 +73,7 @@ function ModalEditComponent({ ctx }) {
       {k:"data_carr",   l:"Carregamento",                        type:"date"},
       {k:"data_agenda", l:"Agenda (DT PRV. P/ DESCARREGAR)",     type:"date_or_oc"},
       {k:"status",      l:"Status",                              type:"select_status"},
-      ...(isAvb ? [{k:"data_final", l:"Data Final (Descarregado — encerra trânsito)", type:"date"}] : []),
+      ...extras("Agenda"),
       {k:"dias",        l:"Dias",                                type:"computed_dias", lock:true},
     ]},
     {s:"Financeiro", ico:icoFin, fields:[
@@ -92,10 +95,7 @@ function ModalEditComponent({ ctx }) {
       {k:"forms",            l:"FORMS",                                        type:"select_sim_nao"},
       ...(clf ? [{k:clf.campo, l:clf.label, type:"select_opts",
                   opts:clf.valores.map(o=>o.valor), span:2}] : []),
-      ...(isAvb ? [
-        {k:"baixa_homerico", l:"Baixa Homérico", type:"date"},
-        {k:"ganchos",        l:"Ganchos"},
-      ] : []),
+      ...extras("Operacional"),
     ]},
   ];
 

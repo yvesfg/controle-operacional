@@ -1,3 +1,35 @@
+## 2026-07-29 — Verificação no navegador + Fase 6: campos extras por operação
+
+### Smoke test do app rodando (1ª verificação real das 6 fases)
+
+Subi o dev server e verifiquei o que build e teste de lógica não alcançam:
+
+| Verificado | Resultado |
+|---|---|
+| App carrega, tela de login renderiza | ✓ zero erros no console |
+| `rpc/listar_bases` do navegador, **sem login**, com anon key | ✓ 3 bases + `ordem` (campo que só existe no banco) |
+| Efeito de boot roda sozinho | ✓ `getBase()` devolve a linha do banco, não a do código |
+
+O 3º item revelou algo que merecia checagem: o objeto vindo do banco **não tem** `noDiarias`/`hasContratante`/`origemPadrao`/`agendaKmDia`, que existem em `BASES` (constants.js). Se algo ainda os lesse, o AVB regrediria (aba Diárias voltaria). Confirmado que **ninguém lê** — a Fase 1 já havia removido o único leitor. Sem regressão.
+
+### Fase 6 — o terceiro eixo do diagnóstico inicial
+
+Faltava o último eixo: **campos específicos da operação**. Features, vocabulário e classificador já eram configuráveis, mas os campos próprios (SGS, código, ganchos) ainda exigiam código.
+
+- **`perfil.camposExtras`**: `[{k, l, type, secao}]` — campos que existem só naquela operação, injetados no modal de edição pela seção correspondente.
+- **`ModalEdit`**: os dois blocos `...(isAvb ? [...] : [])` viraram `...extras("Agenda")` / `...extras("Operacional")`. **`isAvb` deixou de existir no arquivo.**
+- **`ModalWhatsApp`**: os 5 usos de `isAvb` não eram campo extra — eram a **âncora** do registro (código × DT), que o perfil já modelava. Agora `getPerfil(base).ancora === "codigo"`. Mesmo comportamento, sem citar a base.
+- **Admin**: editor de campos extras (`coluna|Rótulo|tipo|Seção`, um por linha), com aviso de que a coluna precisa existir na tabela.
+- **`co_bases`**: perfil do AVB atualizado com os 3 campos.
+
+**Testado:** ida-e-volta do formulário **lossless** com o campo novo; campos chegam ao modal na seção certa; Imperatriz e Maracanaú seguem com zero campos extras; transportadora nova declara os seus (`num_container`, `data_embarque`) pelo Admin. Confirmado no navegador com o app rodando: o perfil do AVB chega do banco com os `camposExtras`. Build ✓, ESLint `no-undef` limpo.
+
+**Refs hardcoded a id de base: 64 → 30.**
+
+### Bug pré-existente corrigido (não relacionado às fases)
+
+`ModalWhatsApp.jsx` usava `saveJSON` sem importar — só `clickable` vinha de `utils.js`. Enviar documento pelo WhatsApp **com OBS preenchida e marcada para incluir** disparava `ReferenceError` e quebrava o envio. O build nunca pegaria isso (Vite não valida variável indefinida); apareceu no ESLint. Corrigido adicionando ao import — mudança de uma palavra, fácil de reverter se preferir tratar à parte.
+
 ## 2026-07-29 — Fase 4b (tela no Admin) + Fase 5 (classificador genérico)
 
 ### Fase 4b — Admin › Bases / Operações

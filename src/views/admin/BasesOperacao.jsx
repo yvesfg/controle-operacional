@@ -221,6 +221,18 @@ export default function BasesOperacao({ ctx }) {
                 </>
               )}
 
+              <div style={secao}>Campos extras da operação<span style={{ flex: 1, height: 1, background: t.borda }} /></div>
+              <div>
+                <label style={lbl}>Um por linha — coluna|Rótulo|tipo|Seção (tipo e seção opcionais)</label>
+                <textarea value={form.camposExtras} onChange={(e) => set("camposExtras", e.target.value)} rows={4}
+                  placeholder={"data_final|Data Final|date|Agenda\nganchos|Ganchos||Operacional"}
+                  style={{ ...css.inp, fontFamily: "var(--font-mono)", fontSize: 11, resize: "vertical" }} />
+                <div style={{ fontSize: 9, color: t.txt2, marginTop: 4, lineHeight: 1.5 }}>
+                  Aparecem no modal de edição do registro. A coluna precisa existir na tabela da base —
+                  campo sem coluna correspondente é ignorado ao salvar, sem erro.
+                </div>
+              </div>
+
               <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                 <button onClick={salvar} disabled={salvando} style={{ ...css.hBtn, fontSize: 11, padding: "6px 14px", borderColor: t.ouro, color: t.ouro }}>
                   {salvando ? "Salvando..." : "Salvar base"}

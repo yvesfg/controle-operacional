@@ -68,6 +68,13 @@ const PADRAO = {
   // Classificador de operação (ex.: papel × celulose; padrão × exportação).
   // null = base sem separação interna. Ver features.classificadores.
   classificador: null,
+
+  // Campos que existem SÓ nesta operação, adicionados ao modal de edição.
+  // { k: coluna na tabela, l: rótulo, type: tipo do campo, secao: onde aparece }
+  // `secao` casa com o título das seções do ModalEdit ("Agenda", "Operacional"...).
+  // O campo precisa existir como coluna na tabela da base — o upsert usa
+  // jsonb_populate_record, que simplesmente ignora chave sem coluna correspondente.
+  camposExtras: [],
 };
 
 // Divergências por base. Só o que muda em relação ao PADRÃO.
@@ -108,6 +115,11 @@ const POR_BASE = {
     },
     financeiro: { complementarMargemZero: true, filialDespesas: "AÇA" },
     alertas: "avb",
+    camposExtras: [
+      { k: "data_final",      l: "Data Final (Descarregado — encerra trânsito)", type: "date", secao: "Agenda" },
+      { k: "baixa_homerico",  l: "Baixa Homérico",                               type: "date", secao: "Operacional" },
+      { k: "ganchos",         l: "Ganchos",                                                    secao: "Operacional" },
+    ],
   },
 };
 
