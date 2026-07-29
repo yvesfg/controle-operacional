@@ -1,3 +1,27 @@
+## 2026-07-29 — Fase 4a: o Perfil de Operação passa a vir do banco
+
+**Objetivo:** ajustar uma operação — ou cadastrar uma transportadora nova — **sem deploy**.
+
+**Migrations 043 + 044 (aplicadas):**
+- Tabela **`co_bases`** (`id`, `label`, `tabela`, `perfil jsonb`, `ordem`, `ativo`), RLS ligada e **sem policy** — anon não lê a tabela direto, só pelas RPCs (padrão das migrations 023/025/031/037).
+- **`salvar_base(p_token, p_id, p_dados)`** — gate `perfil='admin'`, mesmo do `editar_frete` (036).
+- **`listar_bases()`** — **sem token de propósito**: o mapeamento `id → base` acontece no login e no Hub, *antes* de existir sessão (o token é o resultado do login). Exigir token ali inviabilizaria a fase inteira. O conteúdo é o mesmo que já viaja no bundle público (`constants.js BASES`) — nenhum dado operacional, pessoal ou financeiro.
+- Seed com as 3 bases atuais, refletindo `constants.js` + `operacao/perfil.js`.
+
+**Front:**
+- **`src/operacao/bases.js`** (novo): `carregarBases(conn)` no boot, `getBase(id)` / `getTodasBases()` (banco vence, código é fallback) e `salvarBase()`.
+- **`operacao/perfil.js`**: camada `setPerfisRemotos()` — precedência **PADRÃO → POR_BASE (código) → banco**, merge por seção (desligar uma feature no banco não apaga as outras).
+- **`App.jsx`**: carga no boot (best-effort, `.catch(() => {})`) + `basesVersao` nas deps do `perfilAtual`, porque o perfil pode chegar do banco **depois** do primeiro render.
+- **`useAuthHandlers.js` / `HubScreen.jsx`**: `BASES[id]` → `getBase(id)`, para base cadastrada sem deploy aparecer já no login.
+
+**Testado:**
+- RPCs, com usuário de teste temporário e `ROLLBACK` (nunca com token real — lição da migration 034): ler sem token → barrado; operador gravar → barrado; token falso gravar → barrado; admin criar → ok; base nova aparece na listagem. Prod intacta.
+- **Seed é neutro:** comparação profunda (ignorando ordem de chave do `jsonb`) provou perfil do banco **idêntico** ao do código nas 3 bases — zero mudança de comportamento.
+- Base nova só no banco (`zz_ferro`, sem existir em `constants.js`) recebe perfil completo: seletor "Padrão / Exportação", aba Diárias oculta, vocabulário herdado do padrão.
+- Build ✓. Não validado em navegador (exige login SSO).
+
+**Falta a Fase 4b:** tela no Admin para editar isso sem SQL. Hoje a edição é via `salvar_base` (SQL/MCP).
+
 ## 2026-07-29 — Duplicação fechada (gatilho) + Fase 3: ramos AVB mortos nas views padrão
 
 ### Duplicação do motorista — fechada com gatilho (opção "c")

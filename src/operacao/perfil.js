@@ -111,16 +111,24 @@ const POR_BASE = {
   },
 };
 
+// Perfis vindos da tabela `co_bases` (migration 043), carregados no boot por
+// operacao/bases.js. Sobrepõem o POR_BASE do código — é o que permite ajustar uma
+// operação (ou cadastrar outra) sem deploy. Vazio = comportamento idêntico ao de antes.
+let _remotos = {};
+export function setPerfisRemotos(mapa) { _remotos = mapa || {}; }
+
 // Merge raso por seção (features/vocab/financeiro são objetos de 1 nível).
-// Suficiente para o formato acima e trivial de portar quando o perfil vier do banco.
+// Precedência: PADRÃO → POR_BASE (código) → banco.
 export function getPerfil(baseId) {
   const over = POR_BASE[baseId] || {};
+  const rem  = _remotos[baseId] || {};
   return {
     ...PADRAO,
     ...over,
-    features:   { ...PADRAO.features,   ...(over.features   || {}) },
-    vocab:      { ...PADRAO.vocab,      ...(over.vocab      || {}) },
-    financeiro: { ...PADRAO.financeiro, ...(over.financeiro || {}) },
+    ...rem,
+    features:   { ...PADRAO.features,   ...(over.features   || {}), ...(rem.features   || {}) },
+    vocab:      { ...PADRAO.vocab,      ...(over.vocab      || {}), ...(rem.vocab      || {}) },
+    financeiro: { ...PADRAO.financeiro, ...(over.financeiro || {}), ...(rem.financeiro || {}) },
   };
 }
 

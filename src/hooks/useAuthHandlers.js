@@ -3,6 +3,7 @@ import { loadJSON, saveJSON, hashSenha, verificarSenha } from "../utils.js";
 import { supaFetch } from "../supabase.js";
 import { BASES, TABLE_CONFIG, ENV_SUPA_URL, ENV_SUPA_KEY, PERMS_PADRAO } from "../constants.js";
 import { logoutSupa } from "../supabaseAuth.js";
+import { getBase } from "../operacao/bases.js";
 
 export function useAuthHandlers({
   getConexao, showToast, registrarLog,
@@ -151,7 +152,9 @@ const handleLogin = async () => {
     // Carregar bases permitidas do usuario
     const _idsUsr = Array.isArray(found.bases_permitidas) ? found.bases_permitidas
       : (typeof found.bases_permitidas === "string" ? JSON.parse(found.bases_permitidas || '["imperatriz_belem"]') : ["imperatriz_belem"]);
-    const _basesUsr = _idsUsr.map(id => BASES[id]).filter(Boolean);
+    // getBase: banco (co_bases) primeiro, BASES do codigo como fallback — permite
+    // base cadastrada sem deploy aparecer pro usuario ja no login.
+    const _basesUsr = _idsUsr.map(id => getBase(id)).filter(Boolean);
     const _permitidasUsr = _basesUsr.length ? _basesUsr : [BASES.imperatriz_belem];
     setBasesPermitidas(_permitidasUsr);
     setBaseAtual(_permitidasUsr.length === 1 ? _permitidasUsr[0] : null);

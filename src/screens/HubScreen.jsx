@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
 import { fetchMeusModulos, fetchMeuAcesso, getSupaAuth } from "../supabaseAuth.js";
+import { getBase, getTodasBases } from "../operacao/bases.js";
 import HubAdmin from "./HubAdmin.jsx";
 import HubFab from "../components/HubFab.jsx";
 import loginLogo from "../../assets/images/logo-login.png";
@@ -69,8 +70,8 @@ export default function HubScreen({
     const perfil = cfg.perfil || ROLE_TO_PERFIL[acesso?.role] || "visualizador";
     const perms = cfg.perms || PERMS_PADRAO[perfil] || PERMS_PADRAO.visualizador;
     let baseIds = Array.isArray(cfg.bases) ? cfg.bases : [];
-    if (perfil === "admin" && baseIds.length === 0) baseIds = Object.keys(BASES);
-    const bases = baseIds.map(id => BASES[id]).filter(Boolean);
+    if (perfil === "admin" && baseIds.length === 0) baseIds = Object.keys(getTodasBases());
+    const bases = baseIds.map(id => getBase(id)).filter(Boolean);
     const permitidas = bases.length ? bases : [BASES.imperatriz_belem];
     setPerfil(perfil); setPerms(perms);
     setBasesPermitidas(permitidas);

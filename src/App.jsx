@@ -17,6 +17,7 @@ import { apontToSupabase } from './utils/apontMappers.js';
 import { buildRodorricaRows, rodorricaAIRemap } from './utils/rodorricaParse.js';
 import { validarRegistroOperacional } from './validators.js';
 import { getPerfil } from './operacao/perfil.js';
+import { carregarBases } from './operacao/bases.js';
 import { exportCSV, exportODS, exportPDF, ExportMenu,
   gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
 import Toast from './components/Toast.jsx';
@@ -139,8 +140,11 @@ export default function App() {
   // Ref sempre atualizado — usado em callbacks (useCallback) sem precisar alterar dep arrays
   const tblRef = useRef(BASES.imperatriz_belem.table);
   useEffect(() => { tblRef.current = baseAtual?.table ?? BASES.imperatriz_belem.table; }, [baseAtual]);
-  // Perfil da operacao (features/vocabulario/rotulos) — substitui os `if (baseAtual?.id === ...)`
-  const perfilAtual = useMemo(() => getPerfil(baseAtual?.id), [baseAtual]);
+  // Perfil da operacao (features/vocabulario/rotulos) — substitui os `if (baseAtual?.id === ...)`.
+  // basesVersao entra nas deps porque o perfil pode chegar do banco (co_bases) DEPOIS
+  // do primeiro render; sem isso a tela ficaria com o perfil do codigo.
+  const [basesVersao, setBasesVersao] = useState(0);
+  const perfilAtual = useMemo(() => getPerfil(baseAtual?.id), [baseAtual, basesVersao]);
   // Re-sincroniza ao trocar de base (ex: selecionar Maracanau após login)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (authed && baseAtual) sincronizar(); }, [baseAtual]);
@@ -409,6 +413,16 @@ export default function App() {
     const ativa = loadJSON("co_conexao_ativa",0);
     return conexoes[ativa] || conexoes[0] || null;
   }, [conexoes]);
+
+  // Perfis de operacao vindos do banco (co_bases). Best-effort: se falhar, o app
+  // segue com os perfis do codigo (operacao/perfil.js) — nada quebra, so nao pega
+  // ajuste feito sem deploy. `listar_bases` nao exige token de proposito: roda antes
+  // do login, quando o usuario ainda vai escolher a base.
+  useEffect(() => {
+    const conn = getConexao();
+    if (!conn) return;
+    carregarBases(conn).then((ok) => { if (ok) setBasesVersao((v) => v + 1); }).catch(() => {});
+  }, [getConexao]);
 
   // Motoristas — Supabase (tabelas `motoristas`+`veiculos`, migrations 007/008),
   // não mais localStorage. Mesma assinatura de sempre (array + saveMotoristasLS).
