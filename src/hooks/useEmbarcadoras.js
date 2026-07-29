@@ -40,7 +40,13 @@ export default function useEmbarcadoras(conn, { incluirInativas = false, onErro 
     () => (incluirInativas ? todas : todas.filter((e) => e.ativo)),
     [todas, incluirInativas],
   );
-  const mapa = React.useMemo(() => mapaEmbarcadoras(lista), [lista]);
+  // O mapa (CNPJ -> embarcadora) é ROTEAMENTO da importação, não lista de escolha:
+  // usa SEMPRE `todas`, inclusive as inativas. Se usasse `lista` (filtrada por ativo),
+  // desativar uma embarcadora — ainda mais uma regra de devolução/FOB — faria o CNPJ
+  // voltar a cair em "não cadastrado" na próxima importação, quebrando a reclassificação
+  // que manda a receita pro cliente final. `ativo` controla o que aparece na tela; não
+  // pode mudar como o arquivo é lido.
+  const mapa = React.useMemo(() => mapaEmbarcadoras(todas), [todas]);
 
   const criar = React.useCallback(async (dados) => {
     const nova = await criarEmbarcadora(connRef.current, dados);

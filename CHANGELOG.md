@@ -1,3 +1,18 @@
+## 2026-07-29 — Regra de inatividade das embarcadoras (FOB + 15 dias)
+
+**Pedido:** deixar desativado se for FOB (considerando só o cliente final) e se não tiver movimento em 15 dias.
+
+**Risco encontrado antes de aplicar:** `useEmbarcadoras` montava o mapa `CNPJ → embarcadora` a partir da lista **filtrada por `ativo`** — e é esse mapa que a importação usa (`ConferenciaFrete` → `parseFreteXLSX` → `clienteEfetivo`). Desativar uma regra de devolução faria o CNPJ voltar a cair em **"não cadastrado"** no próximo arquivo, e a receita deixaria de ser roteada pro cliente final — o oposto do pedido. Corrigido primeiro: o mapa passa a usar **todas**, inclusive inativas. `ativo` controla o que aparece na tela, nunca como o arquivo é lido.
+
+**Migration 046 (aplicada):**
+- **Gatilho de reativação**: movimento novo reativa cliente comum automaticamente — contrapartida necessária da regra dos 15 dias, senão quem voltasse a rodar continuaria invisível. Regra de devolução **não** reativa, de propósito.
+- **`desativar_embarcadoras_sem_movimento(dias := 15)`**: idempotente, não toca em devolução, não reativa ninguém. Rodável quando quiser.
+- **Aplicado agora:** as 3 regras de devolução/FOB desativadas + `MARANHAO IND DE COUROS` (nunca teve CTe).
+
+**Estado:** 3 ativas (SUZANO FAB IMPERATRIZ, AVB - ACAILANDIA, SUZANO FAB BELEM — todas com movimento de 1 dia atrás), 3 devoluções inativas, MARANHAO inativa.
+
+**Testado** em transação com ROLLBACK: movimento novo reativa cliente comum ✓ e **não** reativa devolução ✓. Prod intacta (0 linhas de teste). Build ✓.
+
 ## 2026-07-29 — Conferência de Faturamento: cliente duplicado era CTe duplicado
 
 **Relato:** "Por cliente" listava 7 clientes, com o mesmo cliente aparecendo duas vezes (Suzano Imperatriz + SUZANO FAB IMPERATRIZ, Suzano Belem + SUZANO FAB BELEM, AVB Acailandia + AVB - ACAILANDIA). Pedido: conciliar pelas embarcadoras cadastradas.
