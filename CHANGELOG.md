@@ -1,3 +1,32 @@
+## 2026-07-29 — Conferência de Faturamento: cliente duplicado era CTe duplicado
+
+**Relato:** "Por cliente" listava 7 clientes, com o mesmo cliente aparecendo duas vezes (Suzano Imperatriz + SUZANO FAB IMPERATRIZ, Suzano Belem + SUZANO FAB BELEM, AVB Acailandia + AVB - ACAILANDIA). Pedido: conciliar pelas embarcadoras cadastradas.
+
+**O cadastro sempre esteve certo** — 1 linha por CNPJ. O histórico é que tinha dois textos para o mesmo CNPJ, e `resumoPorCliente` agrupa pelo TEXTO.
+
+**CAUSA RAIZ (achada ao normalizar e bater na unique):** a chave era `unique (cliente, categoria, ctrc, periodo_ref)` — usava o **nome**, que é mutável, em vez do **CNPJ**. Quando a embarcadora foi renomeada no cadastro, a importação seguinte **não reconheceu os CTes já gravados e inseriu linhas novas**. Não era só rótulo: **7 CTes de 07/2026 estavam gravados em dobro, inflando o faturamento**. Qualquer renomeação futura repetiria isso, em silêncio.
+
+**Migration 045 (aplicada):**
+1. **Backup + remoção** das 7 duplicatas → tabela `frete_conferencia_removidas` (decisão do Yves: apagar com cópia). Conferido antes: os 7 pares são idênticos em placa/trecho/valor_nf/peso/frete/contrato/saldo — diferem só em `cliente` e `criado_em` (27/07 × 28/07). Zero casos ambíguos.
+2. **SENDAS** vira regra de devolução apontando para Suzano Belém — o CTe dela já era `is_devolucao/FOB`, mas o cadastro dizia "cliente normal", por isso virava linha própria. Em devolução quem fatura é o destinatário.
+3. **Chave única passa a ser por CNPJ** — fecha a duplicação na raiz.
+4. **Normalização** do histórico: `cliente` = nome do cadastro (devolução usa o nome do cliente-alvo).
+5. **Gatilho `trg_propagar_nome_embarcadora`**: renomear no cadastro atualiza o histórico, inclusive as linhas de devolução que faturam naquele nome. Testado em transação com ROLLBACK (2.092 linhas propagadas).
+
+**Totais de 07/2026 — batem com a tela:**
+
+| | CTRCs | Peso | Frete | Saldo |
+|---|---|---|---|---|
+| antes | 463 | 6.983.462 kg | R$ 2.802.623,25 | R$ 424.322,45 |
+| **depois** | **456** | **6.792.669 kg** | **R$ 2.728.812,96** | **R$ 408.265,39** |
+| backup | 7 | 190.793 kg | R$ 73.810,29 | R$ 16.057,06 |
+
+"Por cliente" passou de 7 linhas para 3: SUZANO FAB IMPERATRIZ (304), AVB - ACAILANDIA (118), SUZANO FAB BELEM (34).
+
+**Frota Pro — não é bug:** `viagens`, `motoristas`, `veiculos`, `clientes`, `conjuntos` e `carretas` estão com **0 registros** no projeto `fmkscmprtdqrpphqknte`. Só `despesas` (4.260) e `receitas` (562) foram importadas, via 13 `import_jobs`. Não existe schema `frota` — só `public`. A tela está correta ao dizer "nenhuma viagem": o módulo ainda não foi alimentado.
+
+**Aberto:** `MARANHAO IND DE COUROS` está cadastrada e nunca teve CTe (0 registros) — decidir se desativa.
+
 ## 2026-07-29 — Verificação no navegador + Fase 6: campos extras por operação
 
 ### Smoke test do app rodando (1ª verificação real das 6 fases)
