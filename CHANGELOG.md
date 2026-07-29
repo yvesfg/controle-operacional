@@ -1,3 +1,21 @@
+## 2026-07-29 — App genérico · Fase 1: Perfil de Operação
+
+**Solicitado:** tornar o app utilizável por qualquer transportadora — hoje as diferenças entre operações (AVB não tem diária/SGS/descarga agendada; Suzano tem papel×celulose; cada base tem origens próprias) estão cravadas no código como `if (baseAtual?.id === "...")`.
+
+**Diagnóstico:** 64 referências literais a ids de base em 19 arquivos; 3 tabelas quase gêmeas (58 colunas em comum, AVB +14, Imperatriz +2); fork de UI em `src/views/avb/*` (1.364 linhas); enums de vocabulário fixos em `validators.js`. O embrião da solução já existia em `BASES` (`noDiarias`/`hasContratante`/`origemPadrao`), mas só `noDiarias` chegou a ser lido.
+
+**Implementado:**
+- **`src/operacao/perfil.js`** (novo): descreve cada base como DADO — `ancora` (dt/código), `rotuloCliente`, `features` (diarias, descargaAgendada, cobrancaSaldo, sgs, operacional, gestao, semDt, classificadores), `vocab` (status/vinculo/roStatus/origem), `financeiro.complementarMargemZero`, `alertas` e `classificador`. Formato JSON puro, para virar tabela `co_bases` na Fase 4 sem reescrita.
+- **`src/validators.js`**: enums deixam de ser constantes fixas e vêm do perfil (`validarRegistroOperacional(reg, baseId)`); lista vazia = campo livre.
+- **`src/hooks/useDTHandlers.js`**: passa `baseAtual?.id` na validação.
+- **`src/App.jsx`**: `perfilAtual` (useMemo) e as tabs passam a declarar a feature que exigem (`feat:"diarias"|"operacional"|"gestao"`) — os 3 filtros que citavam `acailandia_avb` viraram um só, por feature.
+
+**BUG CORRIGIDO de quebra:** `ORIGEM_OPTS` fixo (`IMPERATRIZ-MA`/`BELEM-PA`) valia para TODAS as bases exceto AVB — Maracanaú tem 411 registros em `MARACANAU-CE`, então **salvar/editar qualquer registro de Maracanaú pelo app falhava** com `"origem" inválido`. Agora cada base tem seu vocabulário (Imperatriz mantém o enum fechado; Maracanaú e AVB ficam livres).
+
+**Testado:** build ✓ (exit 0) + teste de lógica das 3 bases — tabs idênticas ao comportamento anterior, origem real de cada base aceita, Imperatriz ainda barra origem estranha, status inválido ainda barra. Não validado em navegador (exige login SSO).
+
+**Próximas fases:** 2) alertas/financeiro/rótulos pelo perfil · 3) fundir `views/avb/*` com as padrão · 4) perfil → tabela `co_bases` editável no Admin · 5) classificadores genéricos (ferro×exportação) substituindo `tipo_carga`.
+
 ## 2026-07-29 — Fix: race condition em gerar_token_sessao causava "Sessão inválida ou expirada"
 
 **Sintoma:** Yves relatou erro ao abrir um módulo/selecionar base — toast "HTTP 400 P0001 Sessão inválida ou expirada" repetido. Diagnosticado via Supabase MCP (SQL live + API log): usuário tinha token válido no banco, mas o front usava um token diferente.

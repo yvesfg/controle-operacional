@@ -65,7 +65,7 @@ export function useDTHandlers({
       return;
     }
     if (!clean.dt) throw new Error("DT obrigatório");
-    const { ok: validOk, erros: validErros } = validarRegistroOperacional(clean);
+    const { ok: validOk, erros: validErros } = validarRegistroOperacional(clean, baseAtual?.id);
     if (!validOk) throw new Error("Dados inválidos: " + validErros.join("; "));
     // M2/M3: escrita via RPC que valida token + base no servidor
     await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_operacional", {

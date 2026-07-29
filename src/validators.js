@@ -1,9 +1,6 @@
 // ── validators.js — validação de dados antes do upsert no Supabase ──
+import { getPerfil } from "./operacao/perfil.js";
 
-const VINCULO_OPTS   = ["TERCEIRO", "FROTA", "AGREGADO"];
-const STATUS_OPTS    = ["CARREGADO", "PENDENTE", "NO-SHOW", "NÃO ACEITE", "EM ABERTO", "CANCELADO"];
-const RO_STATUS_OPTS = ["EM TRATATIVA", "FINALIZADO"];
-const ORIGEM_OPTS    = ["IMPERATRIZ-MA", "BELEM-PA"];
 const SIM_NAO_OPTS   = ["sim", "nao"];
 
 const NUM_FIELDS   = ["vl_cte","vl_contrato","adiant","saldo","diaria_prev","diaria_pg","vl_cte_comp","dias"];
@@ -12,8 +9,10 @@ const STR_MAX_255  = ["nome","cpf","placa","placa2","placa3","origem","destino",
 
 function isNullish(v) { return v === null || v === undefined; }
 
+// Lista vazia = campo livre (a operação não tem conjunto fechado para esse campo).
 function checkEnum(campo, valor, opcoes) {
   if (isNullish(valor)) return null;
+  if (!opcoes || !opcoes.length) return null;
   if (!opcoes.includes(valor)) return `"${campo}" inválido: "${valor}". Permitidos: ${opcoes.join(", ")}`;
   return null;
 }
@@ -35,19 +34,22 @@ function checkStrLen(campo, valor, max) {
 /**
  * Valida um registro operacional antes de enviar ao Supabase.
  * @param {object} reg — objeto limpo (sem _override, "" já convertido para null)
+ * @param {string} baseId — id da base; define o vocabulário aceito (ver operacao/perfil.js).
+ *                          Sem baseId cai no perfil padrão, onde origem é livre.
  * @returns {{ ok: boolean, erros: string[] }}
  */
-export function validarRegistroOperacional(reg) {
+export function validarRegistroOperacional(reg, baseId) {
   const erros = [];
+  const { vocab } = getPerfil(baseId);
 
   // Obrigatório
   if (!reg.dt) erros.push('"dt" é obrigatório');
 
-  // ENUMs
-  erros.push(checkEnum("vinculo",          reg.vinculo,          VINCULO_OPTS));
-  erros.push(checkEnum("status",           reg.status,           STATUS_OPTS));
-  erros.push(checkEnum("ro_status",        reg.ro_status,        RO_STATUS_OPTS));
-  erros.push(checkEnum("origem",           reg.origem,           ORIGEM_OPTS));
+  // ENUMs — vindos do perfil da operação, não fixos no código
+  erros.push(checkEnum("vinculo",          reg.vinculo,          vocab.vinculo));
+  erros.push(checkEnum("status",           reg.status,           vocab.status));
+  erros.push(checkEnum("ro_status",        reg.ro_status,        vocab.roStatus));
+  erros.push(checkEnum("origem",           reg.origem,           vocab.origem));
   erros.push(checkEnum("informou_analista",reg.informou_analista, SIM_NAO_OPTS));
 
   // Numéricos
