@@ -37,6 +37,10 @@ const PADRAO = {
     semDt: false,             // fila "Cargas sem DT" (Suzano carrega sem DT)
     classificadores: false,   // filtro global papel/celulose (ver `classificador`)
     filialNasDespesas: false, // despesas da base vêm separadas por filial (IMP/BELÉM)
+    // Dashboard — cada bloco declara a feature que exige, em vez de existir uma tela
+    // por operação. Ver views/DashboardView.jsx.
+    rastreamentoDocumental: false, // painel CTE/MDF/NF + KPIs Efetivadas e Taxa Documental
+    rankingCliente: false,         // pódio por cliente/contratante
   },
 
   // ── Vocabulário ────────────────────────────────────────────────────────
@@ -112,6 +116,8 @@ const POR_BASE = {
       sgs: false,
       operacional: false,
       gestao: true,
+      rastreamentoDocumental: true,
+      rankingCliente: true,
     },
     financeiro: { complementarMargemZero: true, filialDespesas: "AÇA" },
     alertas: "avb",
@@ -162,6 +168,8 @@ export const FEATURES_META = [
   { k: "semDt",             l: "Fila Cargas sem DT",  d: "Para operações que carregam antes de o DT sair." },
   { k: "classificadores",   l: "Classificador",       d: "Separa a operação em tipos (ex.: papel × celulose)." },
   { k: "filialNasDespesas", l: "Filial nas despesas", d: "Despesas chegam marcadas por filial." },
+  { k: "rastreamentoDocumental", l: "Rastreamento documental", d: "Painel CTE/MDF/NF no dashboard, com taxa de cobertura." },
+  { k: "rankingCliente",    l: "Ranking por cliente",  d: "Pódio de volume por cliente/contratante no dashboard." },
 ];
 
 export const ALERTAS_OPCOES = [

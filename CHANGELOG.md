@@ -1,3 +1,29 @@
+## 2026-07-29 — Dashboard unificado por feature (fim da tela exclusiva do AVB)
+
+**Pergunta do Yves:** por que o dashboard do AVB é diferente dos outros?
+
+**Resposta:** eram dois componentes. `App.jsx` roteava `acailandia_avb ? <DashboardAVB/> : <DashboardView/>`. Parte da diferença era legítima (AVB não tem DT nem diária), parte era só consequência de a tela ter sido escrita do zero: o AVB **não tinha** `CTE Médio/Viagem`, `Taxa Eficiência` e `Motoristas Ativos`, e ainda exibia a seção **"Status das DTs"** — rótulo de DT numa base que ancora por código.
+
+**Implementado — um dashboard só, com cada KPI/bloco declarando a feature que exige:**
+- Perfil ganhou `features.rastreamentoDocumental` e `features.rankingCliente` (ambas true só no AVB), ambas editáveis no Admin.
+- `DTs Únicas` agora depende de `ancora === "dt"`; `Diárias a Pagar` de `features.diarias`.
+- `Cargas Efetivadas` + `Taxa Documental` e o painel **Rastreamento Documental** (CTE/MDF/NF, barra de cobertura e lista de pendências) migraram para o dashboard padrão, gateados — qualquer operação documental pode ligar.
+- **Pódio por cliente/contratante** portado com o mesmo visual, usando `rotuloCliente` no título ("Contratantes" no AVB, "Clientes" nos demais) e o campo certo (`contratante` × `cliente`).
+- `Status das DTs` → `Status das Cargas` onde a âncora não é DT.
+- `views/avb/DashboardAVB.jsx` e seu wrapper **removidos**; rota única.
+
+**Resultado por base (verificado no navegador, com o app rodando):**
+
+| | âncora | DTs Únicas | Diárias | Taxa Documental | Rastreamento | Ranking | Título do status |
+|---|---|---|---|---|---|---|---|
+| AVB | codigo | não | não | **sim** | **sim** | **Contratantes** | Status das Cargas |
+| Imperatriz | dt | sim | sim | não | não | não | Status das DTs |
+| Maracanaú | dt | sim | sim | não | não | não | Status das DTs |
+
+**Verificado:** build ✓, ESLint `no-undef` zero no DashboardView, módulo carrega no navegador sem erro de console e o gating por base confere. **Não validado logado** (exige SSO) — vale um passe no dashboard das 3 bases após o deploy.
+
+**Incidente durante o trabalho:** um script Python truncou o `DashboardView.jsx` (abriu em modo `w` e falhou ao escrever por causa de emoji em surrogate pair), zerando o arquivo. Restaurado do git e refeito. Passei a usar **escrita atômica** (grava em `.tmp` e só então substitui) — falha nunca mais destrói o original.
+
 ## 2026-07-29 — Regra de inatividade das embarcadoras (FOB + 15 dias)
 
 **Pedido:** deixar desativado se for FOB (considerando só o cliente final) e se não tiver movimento em 15 dias.

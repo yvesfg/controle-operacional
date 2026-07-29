@@ -33,6 +33,7 @@ export default function DashboardView({ ctx }) {
     setPlanilhaFiltroDestino,
     setBuscaInput, setBuscaTipo, setBuscaModalOpen,
     baseAtual, filtroTipoCarga, getConexao,
+    setPlanilhaFiltroContratante,
   } = ctx;
 
   // Indicador "Sem DT" — cargas reais que ficaram sem DT (ex.: sistema Suzano fora do ar).
@@ -50,6 +51,43 @@ export default function DashboardView({ ctx }) {
     contarSemDtAguardando(conn, tipo, dashMes, ["pendente"]).then(n => { if (!cancel) setSemDtAguardando(n); }).catch(() => {});
     return () => { cancel = true; };
   }, [baseAtual, filtroTipoCarga, getConexao, dashMes]);
+
+  // Perfil da operacao: cada KPI/bloco declara a feature que exige, em vez de existir
+  // um dashboard por base. Antes disso a AVB tinha tela propria (views/avb/DashboardAVB).
+  const perfil = getPerfil(baseAtual?.id);
+  const temDoc = perfil.features.rastreamentoDocumental;
+
+  // Efetivada = saiu do status PENDENTE. Base do rastreamento documental.
+  const efet    = dashData.filtrado.filter(r=>(r.status||"").toUpperCase()!=="PENDENTE");
+  const pendN   = dashData.filtrado.length - efet.length;
+  const semCTE  = efet.filter(r=>!r.cte||!String(r.cte).trim());
+  const semMDF  = efet.filter(r=>!r.mdf||!String(r.mdf).trim());
+  const semNF   = efet.filter(r=>!r.nf ||!String(r.nf ).trim());
+  const docOk   = efet.filter(r=>r.cte&&r.mdf&&r.nf).length;
+  const taxaDoc = efet.length>0 ? Math.round(docOk/efet.length*100) : 0;
+  const docColor= taxaDoc>=95 ? t.verde : taxaDoc>=80 ? t.ouro : t.danger;
+  const incompletas = efet.filter(r=>!r.cte||!r.mdf||!r.nf)
+    .map(r=>({...r, falta:[!r.cte&&"CTE",!r.mdf&&"MDF",!r.nf&&"NF"].filter(Boolean)}))
+    .slice(0,20);
+
+  // Ranking por cliente/contratante (feature rankingCliente). O campo depende da
+  // operacao: quem chama de "Contratante" grava em `contratante`; o resto usa `cliente`.
+  const campoCli = perfil.rotuloCliente === "Contratante" ? "contratante" : "cliente";
+  const normC = x => (x||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().trim().replace(/\s+/g," ");
+  const fmtV  = v => v>=1000 ? "R$"+(v/1000).toFixed(1)+"k" : v>0 ? "R$"+Math.round(v).toLocaleString("pt-BR") : "R$ 0";
+  const cMap = {};
+  if (perfil.features.rankingCliente) efet.forEach(r=>{
+    const raw=(r[campoCli]||"").trim(); const c=normC(raw); if(!c) return;
+    if(!cMap[c]) cMap[c]={viagens:0,comDoc:0,vlr:0,raw};
+    cMap[c].viagens++;
+    if(r.cte&&r.mdf&&r.nf) cMap[c].comDoc++;
+    const v=parseFloat(String(r.vl_contrato||"").replace(/[R$\s]/g,"").replace(",","."));
+    if(!isNaN(v)) cMap[c].vlr+=v;
+  });
+  const topCli = Object.entries(cMap).sort((a,b)=>b[1].viagens-a[1].viagens);
+  const maxVg = topCli[0]?.[1]?.viagens || 1;
+  const medalhas = ["🥇","🥈","🥉"];
+  const podColors = ["var(--accent)","var(--rank-silver)","var(--rank-bronze)"];
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
   const carregadosN = dashData.filtrado.length;
@@ -171,12 +209,17 @@ export default function DashboardView({ ctx }) {
         const kpis = [
           {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",trend:dashHeroTab==="cte"?cteTrend:carregTrend,delta:pctDelta(dashHeroTab==="cte"?cteTrend:carregTrend),click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
           {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
-          {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:()=>setActiveTab("planilha")},
+          // "DTs Únicas" so faz sentido onde a ancora do registro E o DT (AVB ancora por codigo).
+          ...(perfil.ancora==="dt"?[{label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:()=>setActiveTab("planilha")}]:[]),
+          ...(temDoc?[
+            {label:"Cargas Efetivadas",value:String(efet.length),sub:`${pendN} pendente${pendN!==1?"s":""}`,color:t.verde},
+            {label:"Taxa Documental",value:`${taxaDoc}%`,sub:`${docOk}/${efet.length} doc completa`,color:docColor},
+          ]:[]),
           // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
           ...(getPerfil(baseAtual?.id).features.semDt && semDtAguardando>0 ? [{label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:()=>setActiveTab("planilha")}]:[]),
           {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:()=>setActiveTab("motoristas")},
           ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
-          ...(canFin?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
+          ...(canFin && perfil.features.diarias?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
           {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",danger:alertas.length>0,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
         ];
         return (
@@ -220,7 +263,7 @@ export default function DashboardView({ ctx }) {
             {/* ─ Status DTs — barra horizontal stacked ─ */}
             <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-                <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Status das DTs</span>
+                <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.ancora==="dt"?"Status das DTs":"Status das Cargas"}</span>
                 <span style={{fontFamily:DESIGN.fnt.h,fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-0.02em"}}>{totalStatusDash}</span>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -280,6 +323,119 @@ export default function DashboardView({ ctx }) {
           </div>
         );
       })()}
+
+      {/* -- Rastreamento Documental (feature rastreamentoDocumental) --
+           Painel CTE/MDF/NF: nasceu na tela exclusiva da AVB e virou feature, porque
+           qualquer operacao documental precisa disso. */}
+      {temDoc && (
+        <div style={{...css.card,padding:18,marginBottom:14,border:`1px solid ${hexRgb(docColor,.5)}`}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <div>
+              <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Rastreamento Documental</div>
+              <div style={{fontSize:10,color:t.txt2,marginTop:3}}>Cargas efetivadas com documento faltante — clique para abrir</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:800,color:docColor,letterSpacing:"-0.04em",lineHeight:1}}>{taxaDoc}%</div>
+              <div style={{fontSize:9,color:"var(--text3)"}}>cobertura doc.</div>
+            </div>
+          </div>
+          <div style={{height:6,borderRadius:3,background:t.card2,overflow:"hidden",marginBottom:14}}>
+            <div style={{height:"100%",width:"100%",transform:`scaleX(${taxaDoc/100})`,transformOrigin:"left",
+              background:`linear-gradient(90deg,var(--accent),${t.verde})`,borderRadius:3,transition:"transform .5s"}}/>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:incompletas.length>0?14:0}}>
+            {[{label:"Sem CTE",count:semCTE.length},{label:"Sem MDF",count:semMDF.length},{label:"Sem NF",count:semNF.length}].map(({label,count})=>(
+              <KpiCard key={label} label={label} value={count} sub={count>0?"cargas pendentes":"✓ completo"}
+                color={count>0?undefined:t.verde} danger={count>0} compact />
+            ))}
+          </div>
+          {incompletas.length > 0 && (
+            <div style={{borderTop:`1px solid ${t.borda}`,paddingTop:12}}>
+              <div style={{fontFamily:"var(--font-mono)",fontSize:9,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",marginBottom:8}}>Cargas com pendência documental</div>
+              <div style={{display:"flex",flexDirection:"column",gap:3,maxHeight:200,overflowY:"auto"}}>
+                {incompletas.map((r,i)=>{
+                  const nomeExib=(r.nome||"").split(" ").filter(Boolean).slice(0,2).join(" ").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+                  const destCurto=(r.destino||"—").split(/\s*[-–]\s*/)[0].trim();
+                  return (
+                    <div key={i} {...clickable(()=>{setDetalheDT(r);setModalOpen("detalhe");})}
+                      style={{display:"flex",alignItems:"center",gap:8,padding:isMobile?"14px 8px":"5px 8px",borderRadius:6,cursor:"pointer",background:"transparent",transition:"background .1s"}}
+                      onMouseEnter={e=>e.currentTarget.style.background=t.card2}
+                      onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                      <div style={{display:"flex",gap:4,flexShrink:0}}>
+                        {r.falta.map(doc=>(
+                          <span key={doc} style={{background:"rgba(246,70,93,.1)",border:"1px solid rgba(246,70,93,.3)",borderRadius:3,padding:"1px 5px",fontSize:8,fontWeight:700,color:t.danger,fontFamily:"var(--font-mono)"}}>{doc}</span>
+                        ))}
+                      </div>
+                      <span style={{flex:1,fontSize:10,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExib}</span>
+                      <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>{destCurto}</span>
+                      {r.data_carr&&<span style={{fontSize:9,color:"var(--text3)",fontFamily:"var(--font-mono)",flexShrink:0}}>{String(r.data_carr).slice(0,5)}</span>}
+                      <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {incompletas.length === 0 && efet.length > 0 && (
+            <div style={{textAlign:"center",padding:"12px 0",color:t.verde,fontSize:11,fontWeight:600}}>
+              ✓ Toda documentação completa no período
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* -- Ranking por cliente/contratante (feature rankingCliente) -- */}
+      {perfil.features.rankingCliente && topCli.length > 0 && (
+        <div style={{...css.card,padding:18,marginBottom:14}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.rotuloCliente}s</span>
+            <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topCli.length} ativos</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${Math.min(topCli.length,3)},1fr)`,gap:8,marginBottom:topCli.length>3?14:0}}>
+            {topCli.slice(0,3).map(([nome,{viagens,comDoc,vlr,raw}],i)=>{
+              const ef=viagens>0?Math.round(comDoc/viagens*100):0;
+              const abrir=()=>{ setPlanilhaFiltroContratante?.(raw); setActiveTab("planilha"); };
+              return (
+                <div key={nome} {...clickable(abrir)} title={`Ver cargas de ${raw}`}
+                  style={{background:t.bg,border:`2px solid ${i===0?"var(--accent)":t.borda}`,borderRadius:10,padding:"12px 8px",textAlign:"center",cursor:"pointer",transition:"background .15s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
+                  onMouseLeave={e=>e.currentTarget.style.background=t.bg}>
+                  <div style={{fontSize:20,marginBottom:4,lineHeight:1}}>{medalhas[i]}</div>
+                  <div style={{fontFamily:"var(--font-heading)",fontSize:i===0?13:11,fontWeight:700,color:podColors[i],letterSpacing:"-0.02em",lineHeight:1.2,marginBottom:6,textTransform:"capitalize",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nome.toLowerCase()}</div>
+                  <div style={{fontFamily:"var(--font-mono)",fontSize:i===0?24:18,fontWeight:800,color:t.txt,lineHeight:1,marginBottom:2}}>{viagens}</div>
+                  <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:4}}>viagens</div>
+                  {i===0&&canFin&&<div style={{fontSize:10,color:t.verde,fontFamily:"var(--font-mono)",fontWeight:600,marginBottom:3}}>{fmtV(vlr)}</div>}
+                  <div style={{fontSize:8,color:ef>=90?t.verde:ef>=70?t.ouro:t.danger}}>{ef}% doc</div>
+                </div>
+              );
+            })}
+          </div>
+          {topCli.slice(3).map(([nome,{viagens,comDoc,raw}],i,arr)=>{
+            const pct=Math.round(viagens/maxVg*100);
+            const ef=viagens>0?Math.round(comDoc/viagens*100):0;
+            const abrir=()=>{ setPlanilhaFiltroContratante?.(raw); setActiveTab("planilha"); };
+            return (
+              <div key={nome} {...clickable(abrir)} title={`Ver cargas de ${raw}`}
+                style={{cursor:"pointer",borderRadius:6,padding:"3px 6px",margin:i<arr.length-1?"0 -6px 5px -6px":"0 -6px",transition:"background .15s"}}
+                onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                  <span style={{fontSize:10,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,paddingRight:6,textTransform:"capitalize"}}>{nome.toLowerCase()}</span>
+                  <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+                    <span style={{fontSize:9,color:ef>=90?t.verde:ef>=70?t.ouro:t.danger}}>{ef}% doc</span>
+                    <span style={{fontSize:10,fontWeight:600,color:t.txt,fontFamily:"var(--font-mono)"}}>{viagens}</span>
+                  </div>
+                </div>
+                <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:"var(--accent)",borderRadius:2}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Bottom: Registros Recentes + Painel Operacional ── */}
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:14,alignItems:"start"}}>

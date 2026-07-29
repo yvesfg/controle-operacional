@@ -68,7 +68,6 @@ import { setFreteToken } from './freteConferencia.js';
 import { setDespesasToken } from './despesas.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
-import DashboardAVB from './views/avb/DashboardAVBWrapper.jsx';
 import PlanilhaAVB  from './views/avb/PlanilhaAVBWrapper.jsx';
 import LogisticaAVB from './views/avb/LogisticaAVBWrapper.jsx';
 import GestaoAVB    from './views/avb/GestaoAVBWrapper.jsx';
@@ -1550,31 +1549,7 @@ export default function App() {
 
         {/* ═══ DASHBOARD ═══ */}
         {activeTab === "dashboard" && (
-          baseAtual?.id === "acailandia_avb"
-            ? <DashboardAVB ctx={{
-            dashMes, setDashMes,
-            dashOrigem, setDashOrigem,
-            dashHeroTab, setDashHeroTab,
-            dashRecentesN, setDashRecentesN,
-            dashRecCardRef,
-            dashData,
-            canFin,
-            parseData,
-            t, css, DESIGN, hexRgb, hIco, showToast,
-            setActiveTab,
-            chartAreaRef, chartDonutRef,
-            diariasData, motoristas,
-            alertas, alertasOpen, setAlertasOpen,
-            fmtMoeda, isMobile,
-            setDetalheDT, setModalOpen,
-            descargaData,
-            setPlanilhaFiltroStatus,
-            setPlanilhaFiltroContratante,
-            setBuscaInput, setBuscaTipo, setBuscaModalOpen,
-            setDashDrillModal,
-            baseAtual,
-          }} />
-            : <DashboardView ctx={{
+          <DashboardView ctx={{
             dashMes, setDashMes,
             dashOrigem, setDashOrigem,
             dashHeroTab, setDashHeroTab,
@@ -1593,6 +1568,7 @@ export default function App() {
             descargaData,
             setPlanilhaFiltroStatus,
             setPlanilhaFiltroDestino,
+            setPlanilhaFiltroContratante,
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             setDashDrillModal,
             baseAtual, filtroTipoCarga, getConexao,
