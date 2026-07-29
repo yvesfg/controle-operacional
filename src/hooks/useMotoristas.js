@@ -8,7 +8,10 @@ import { listarMotoristas, criarMotorista, atualizarMotorista, excluirMotorista 
 import { listarVeiculos, criarVeiculo, atualizarVeiculo, desvincularVeiculosDoMotorista, soDigitosPlaca } from "../veiculos.js";
 import { getCached, invalidar, inscrever, CHAVES } from "../dataCache.js";
 
-const CAMPOS_MOTORISTA = ["nome", "cpf", "tel", "vinculo", "banco", "agencia", "conta", "favorecido", "status_risco", "observacao"];
+// Campos persistidos no cadastro. pix_tipo/pix_chave (migration 041) fecham o ciclo:
+// o formulário (ModalMotorista) e a mensagem de pagamento (ModalWhatsApp) já os usavam,
+// mas sem coluna no banco nem na whitelist da RPC o PIX se perdia ao salvar.
+const CAMPOS_MOTORISTA = ["nome", "cpf", "tel", "vinculo", "banco", "agencia", "conta", "favorecido", "status_risco", "observacao", "pix_tipo", "pix_chave"];
 
 // [{...motorista}] x [{...veiculo, motorista_id}] -> array achatado com placa1..placa4.
 // Cavalo(s) primeiro, depois carretas — cada grupo em ordem alfabética de placa.

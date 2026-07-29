@@ -2,6 +2,7 @@ import React from "react";
 import PainelFinanceiro from "./PainelFinanceiro.jsx";
 import Resultado from "./Resultado.jsx";
 import CreditosPendentes from "./CreditosPendentes.jsx";
+import { getPerfil } from "../operacao/perfil.js";
 
 const LS_TAB  = "co_fin_tab";
 
@@ -18,8 +19,10 @@ export default function FinanceiroView({ ctx }) {
   // podendo mostrar números "diferentes" pro mesmo período (achado de auditoria).
   const [mesRefFin, setMesRefFin] = React.useState("");
   const baseId = baseAtual?.id;
-  const [incluirCompFin, setIncluirCompFin] = React.useState(baseId === "imperatriz_belem");
-  React.useEffect(() => { setIncluirCompFin(baseId === "imperatriz_belem"); }, [baseId]);
+  // Default do toggle vem do perfil da operacao, nao do id da base.
+  const compPadrao = getPerfil(baseId).financeiro.incluirComplementarPadrao;
+  const [incluirCompFin, setIncluirCompFin] = React.useState(compPadrao);
+  React.useEffect(() => { setIncluirCompFin(compPadrao); }, [compPadrao]);
 
   // Navegação Resultado → Créditos Pendentes (achado de auditoria: "indevidas aguardando
   // crédito" existia duplicado nas duas telas; agora Resultado só resume e linka pra cá,

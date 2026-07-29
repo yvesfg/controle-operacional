@@ -36,6 +36,7 @@ const PADRAO = {
     gestao: false,            // aba Gestão (hoje exclusiva AVB)
     semDt: false,             // fila "Cargas sem DT" (Suzano carrega sem DT)
     classificadores: false,   // filtro global papel/celulose (ver `classificador`)
+    filialNasDespesas: false, // despesas da base vêm separadas por filial (IMP/BELÉM)
   },
 
   // ── Vocabulário ────────────────────────────────────────────────────────
@@ -52,7 +53,13 @@ const PADRAO = {
   // ── Financeiro ─────────────────────────────────────────────────────────
   // complementarMargemZero: o complementar (vl_cte_comp) é repasse pago integralmente
   // (entra na receita E no custo) em vez de diária recebida depois (só receita).
-  financeiro: { complementarMargemZero: false },
+  // incluirComplementarPadrao: se o toggle "Incluir complementar" começa ligado.
+  // filialDespesas: sigla da filial desta base no arquivo de despesas (null = todas).
+  financeiro: {
+    complementarMargemZero: false,
+    incluirComplementarPadrao: false,
+    filialDespesas: null,
+  },
 
   // Motor de alertas usado no topo do app ("padrao" | "avb").
   // Fase 2 do plano: descrever os alertas como dado também.
@@ -66,7 +73,8 @@ const PADRAO = {
 // Divergências por base. Só o que muda em relação ao PADRÃO.
 const POR_BASE = {
   imperatriz_belem: {
-    features: { semDt: true, classificadores: true },
+    features: { semDt: true, classificadores: true, filialNasDespesas: true },
+    financeiro: { incluirComplementarPadrao: true },
     // Enum fechado de propósito: o sync do Sheets já valida as mesmas 2 origens,
     // e essa disciplina evita cidade digitada errada entrar na base.
     vocab: { origem: ["IMPERATRIZ-MA", "BELEM-PA"] },
@@ -98,7 +106,7 @@ const POR_BASE = {
       operacional: false,
       gestao: true,
     },
-    financeiro: { complementarMargemZero: true },
+    financeiro: { complementarMargemZero: true, filialDespesas: "AÇA" },
     alertas: "avb",
   },
 };

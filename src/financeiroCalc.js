@@ -1,3 +1,5 @@
+import { getPerfil } from "./operacao/perfil.js";
+
 // ── financeiroCalc.js ──
 // Regra de margem operacional (Σ vl_cte − Σ vl_contrato) compartilhada entre
 // PainelFinanceiro.jsx e Resultado.jsx — antes cada tela reimplementava o parsing e o
@@ -18,13 +20,14 @@ export const nContrato = (v) => {
 };
 
 // Aplica a regra do complementar sobre um acumulado {receita,custo,comp} já somado.
-// AVB (acailandia_avb): repasse de serviço raro pago integralmente → soma nos dois lados,
-// margem zero. Demais bases (ex. Suzano/imperatriz_belem): complementar é a diária
-// recebida ~1 mês depois → soma só na receita, margem cheia.
+// Operação com complementarMargemZero (hoje AVB): repasse de serviço raro pago
+// integralmente → soma nos dois lados, margem zero. Demais: o complementar é a diária
+// recebida ~1 mês depois → soma só na receita, margem cheia. Qual regra vale vem do
+// perfil da operação (operacao/perfil.js), não do id da base.
 export function aplicarComplementar({ receita, custo, comp }, { incluirComp, baseId }) {
   let r = receita, c = custo;
   if (incluirComp) {
-    if (baseId === "acailandia_avb") { r += comp; c += comp; }
+    if (getPerfil(baseId).financeiro.complementarMargemZero) { r += comp; c += comp; }
     else { r += comp; }
   }
   return { receita: r, custo: c, margem: r - c };

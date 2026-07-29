@@ -1,4 +1,5 @@
 import React from "react";
+import { getPerfil } from "../operacao/perfil.js";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
 import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
@@ -48,8 +49,9 @@ export default function PainelFinanceiro({ ctx }) {
   // de mês (quando ainda vazio) continua local, pois cada aba computa mesesDisp diferente.
   React.useEffect(() => { if (!mesRef && mesesDisp.length) setMesRef(mesesDisp[0]); }, [mesesDisp, mesRef]);
 
-  // Filtro por origem (só imperatriz_belem): despesas vêm tagueadas IMP/BELÉM na planilha.
-  const temFilial = baseId === "imperatriz_belem";
+  // Filtro por origem: só em operações cujas despesas vêm tagueadas por filial
+  // (IMP/BELÉM na planilha). Declarado no perfil da operação.
+  const temFilial = getPerfil(baseId).features.filialNasDespesas;
   const [filial, setFilial] = React.useState("todos"); // todos | IMP | BELÉM
   React.useEffect(() => { setFilial("todos"); }, [baseId]);
 
@@ -248,7 +250,7 @@ export default function PainelFinanceiro({ ctx }) {
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
           padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
           <Toggle checked={incluirComp} onChange={setIncluirComp}
-            label={`Incluir complementar ${baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}`} />
+            label={`Incluir complementar ${getPerfil(baseId).financeiro.complementarMargemZero ? "(margem zero)" : "(margem cheia)"}`} />
         </div>
         <div style={{ marginLeft: "auto", fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)" }}>
           {baseAtual?.label} · {r.n} viagens

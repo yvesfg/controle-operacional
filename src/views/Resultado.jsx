@@ -10,6 +10,7 @@ import {
   listarIndevidasPendentes,
 } from "../despesas.js";
 import ConferenciaFrete from "./ConferenciaFrete.jsx";
+import { getPerfil } from "../operacao/perfil.js";
 import KpiCard from "../components/KpiCard.jsx";
 import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
 
@@ -277,7 +278,7 @@ export default function Resultado({ ctx }) {
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
           padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
           <Toggle checked={incluirComp} onChange={setIncluirComp}
-            label={`Incluir complementar ${baseId === "acailandia_avb" ? "(margem zero)" : "(margem cheia)"}`} />
+            label={`Incluir complementar ${getPerfil(baseId).financeiro.complementarMargemZero ? "(margem zero)" : "(margem cheia)"}`} />
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
@@ -488,7 +489,7 @@ export default function Resultado({ ctx }) {
           só em Créditos Pendentes agora, evitando duas telas com fluxos incompletos entre si. */}
       {indevidas.length > 0 && (() => {
         const totalIndevido = indevidas.reduce((s, i) => s + Math.abs(Number(i.valor || 0)), 0);
-        const filialParaCreditos = baseId === "acailandia_avb" ? "AÇA" : null;
+        const filialParaCreditos = getPerfil(baseId).financeiro.filialDespesas;
         return (
           <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55`,
             display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>

@@ -355,13 +355,15 @@ export default function App() {
     const baseDTs = new Set(merged.map(r => r.dt));
     const additions = extras.filter(x => !x._override && !baseDTs.has(x.dt));
     const todas = [...merged, ...additions, ...semDtRows];
-    // Filtro global por tipo de carga — só na base Imperatriz/Belém (papel + celulose).
-    // Default "todos" = sem alteração. tipo_carga ausente (linha criada no app) conta como papel.
-    if (baseAtual?.id === "imperatriz_belem" && filtroTipoCarga !== "todos") {
-      return todas.filter(r => (r.tipo_carga || "papel") === filtroTipoCarga);
+    // Filtro global pelo classificador da operação (ex.: papel/celulose) — só onde a
+    // operação declara ter classificadores. Default "todos" = sem alteração; registro
+    // sem o campo (linha criada no app) assume o valor padrão do classificador.
+    const clf = perfilAtual.classificador;
+    if (perfilAtual.features.classificadores && clf && filtroTipoCarga !== "todos") {
+      return todas.filter(r => (r[clf.campo] || clf.padrao) === filtroTipoCarga);
     }
     return todas;
-  }, [dadosBase, dadosExtras, baseAtual, filtroTipoCarga, semDtRows]);
+  }, [dadosBase, dadosExtras, baseAtual, perfilAtual, filtroTipoCarga, semDtRows]);
 
   // Alertas calculation
   const alertas = useMemo(() => {
@@ -369,8 +371,8 @@ export default function App() {
     const list = [];
     DADOS.forEach(r => {
       if (!r.nome?.trim()) return;
-      // ── Alertas AVB (somente base acailandia_avb) ──
-      if (baseAtual?.id === "acailandia_avb") {
+      // ── Alertas da operação AVB (perfil.alertas === "avb") ──
+      if (perfilAtual.alertas === "avb") {
         const camposDatas = [r.data_carr, r.data_homerico, r.data_liberacao, r.data_manifesto];
         const dataInvalida = camposDatas.some(d => d && !/^\d{2}\/\d{2}\/\d{4}/.test(d) && !/^\d{4}-\d{2}-\d{2}/.test(d));
         if (dataInvalida) list.push({tipo:"warn",cat:"data_avb",txt:`Data inválida: ${r.contratante||r.nome} · Cód ${r.codigo||"—"}`,reg:r});
@@ -383,15 +385,15 @@ export default function App() {
       // ── Alertas padrão (Imperatriz/Belém / Maracanau) ──
       const da = parseData(r.data_agenda), dd = parseData(r.data_desc);
       // Alerta de atraso na descarga — inclui ref. ao registro para botão de calendário
-      if (da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
+      if (perfilAtual.features.descargaAgendada && da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
       // Alerta de cobrança — saldo pendente após descarga
       const saldo = parseFloat(r.saldo);
-      if (!isNaN(saldo) && saldo > 0 && dd) {
+      if (perfilAtual.features.cobrancaSaldo && !isNaN(saldo) && saldo > 0 && dd) {
         list.push({tipo:"warn",cat:"cobranca",txt:`💰 Cobrança pendente: ${r.nome} · DT ${r.dt} · Saldo ${fmtMoeda(r.saldo)}`,reg:r});
       }
     });
     return list;
-  }, [DADOS, baseAtual]);
+  }, [DADOS, baseAtual, perfilAtual]);
 
   // Toast helper
   const showToast = useCallback((msg, type="") => {
@@ -425,7 +427,7 @@ export default function App() {
     [hubScreen, getConexao],
   );
   useEffect(() => {
-    if (!motoristasConn || baseAtual?.id !== "imperatriz_belem") { setSemDtRows([]); return; }
+    if (!motoristasConn || !perfilAtual.features.semDt) { setSemDtRows([]); return; }
     let cancel = false;
     listarSemDt(motoristasConn, "confirmado")
       .then((linhas) => { if (cancel) return; setSemDtRows((linhas || []).map((l) => {
@@ -1392,9 +1394,9 @@ export default function App() {
                   )}
                 </div>
               )}
-              {baseAtual?.id === "imperatriz_belem" && (
-                <div title="Filtrar por tipo de carga" style={{display:"flex",alignItems:"center",borderRadius:6,overflow:"hidden",border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
-                  {[["todos","Todos"],["papel","Papel"],["celulose","Celulose"]].map(([v,l])=>(
+              {perfilAtual.features.classificadores && perfilAtual.classificador && (
+                <div title={perfilAtual.classificador.label} style={{display:"flex",alignItems:"center",borderRadius:6,overflow:"hidden",border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
+                  {[["todos","Todos"], ...perfilAtual.classificador.valores.map(o=>[o.valor,o.label])].map(([v,l])=>(
                     <button key={v} onClick={()=>setFiltroTipoCarga(v)}
                       style={{fontSize:9,fontFamily:"var(--font-mono)",letterSpacing:".06em",textTransform:"uppercase",padding:"4px 9px",border:"none",cursor:"pointer",background:filtroTipoCarga===v?hexRgb(t.ouro,.18):"transparent",color:filtroTipoCarga===v?t.ouro:t.txt2}}>
                       {l}

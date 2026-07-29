@@ -1,4 +1,5 @@
 import React from "react";
+import { getPerfil } from "../operacao/perfil.js";
 import KpiCard     from '../components/KpiCard.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import DataRow     from '../components/DataRow.jsx';
@@ -39,7 +40,7 @@ export default function DashboardView({ ctx }) {
   // Só na base Imperatriz/Belém (única com a fila); segue o filtro de tipo de carga do topo.
   const [semDtAguardando, setSemDtAguardando] = React.useState(0);
   React.useEffect(() => {
-    if (baseAtual?.id !== "imperatriz_belem" || !getConexao) { setSemDtAguardando(0); return; }
+    if (!getPerfil(baseAtual?.id).features.semDt || !getConexao) { setSemDtAguardando(0); return; }
     const conn = getConexao();
     if (!conn) return;
     let cancel = false;
@@ -172,7 +173,7 @@ export default function DashboardView({ ctx }) {
           {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
           {label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:()=>setActiveTab("planilha")},
           // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
-          ...(baseAtual?.id==="imperatriz_belem" && semDtAguardando>0 ? [{label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:()=>setActiveTab("planilha")}]:[]),
+          ...(getPerfil(baseAtual?.id).features.semDt && semDtAguardando>0 ? [{label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:()=>setActiveTab("planilha")}]:[]),
           {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:()=>setActiveTab("motoristas")},
           ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
           ...(canFin?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),

@@ -1,0 +1,38 @@
+-- 042_drop_dados_bancarios_avb.sql — **NÃO APLICADA** (aguarda o .gs)
+--
+-- ⚠️ REGRA APRENDIDA (3 aborts no lockdown — ver docs/PLANO_V2_CONTINUACAO.md):
+-- derrubar coluna que o Apps Script ainda escreve QUEBRA o sync. O SyncSupabase_AVB.gs
+-- mapeia hoje (por volta da linha 282, função de mapeamento de cabeçalho):
+--
+--     'telefone': 'telefone',
+--     'banco': 'banco',
+--     'agência': 'agencia', 'agencia': 'agencia',
+--     'conta': 'conta',
+--     'chave pix': 'chave_pix',
+--     'cpf/cnpj': 'cpf_cnpj', 'cpf / cnpj': 'cpf_cnpj',
+--     'favorecido': 'favorecido',
+--
+-- Enquanto essas linhas existirem, o upsert manda as colunas e o DROP faz o sync
+-- responder 400 (column does not exist) — AVB para de sincronizar.
+--
+-- ORDEM OBRIGATÓRIA:
+--   1. Yves atualiza o SyncSupabase_AVB.gs (remover/redirecionar o bloco acima)
+--   2. Rodar um sync e confirmar 200 no API log
+--   3. SÓ ENTÃO aplicar este arquivo (e renomear tirando o .PENDENTE)
+--
+-- Os dados já foram resgatados para `motoristas` pela migration 041 — este DROP
+-- remove apenas as cópias por viagem, não a informação.
+--
+-- DECISÃO PENDENTE DO YVES sobre o passo 1:
+--   (a) .gs para de enviar → o cadastro do app vira a única entrada desses dados
+--   (b) .gs passa a fazer upsert em `motoristas` por CPF → a planilha segue sendo a
+--       entrada, mas grava no lugar certo (exige mais trabalho no .gs)
+
+ALTER TABLE controle_operacional_avb
+  DROP COLUMN IF EXISTS banco,
+  DROP COLUMN IF EXISTS agencia,
+  DROP COLUMN IF EXISTS conta,
+  DROP COLUMN IF EXISTS chave_pix,
+  DROP COLUMN IF EXISTS cpf_cnpj,
+  DROP COLUMN IF EXISTS favorecido,
+  DROP COLUMN IF EXISTS telefone;

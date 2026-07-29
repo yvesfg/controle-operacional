@@ -1,3 +1,28 @@
+## 2026-07-29 — Duplicação de dados do motorista + Fase 2 do Perfil de Operação
+
+### Duplicação corrigida (dados de pagamento do motorista)
+
+**Achado:** `controle_operacional_avb` guardava cópias POR VIAGEM de `banco/agencia/conta/chave_pix/cpf_cnpj/favorecido/telefone` (escritas pelo `SyncSupabase_AVB.gs`), enquanto o cadastro `motoristas` — o lugar canônico, e o único que o app lê — estava com esses campos NULOS. A mensagem de pagamento do WhatsApp mostrava "—" para dados que existiam no banco. Pior: `ModalMotorista` e `ModalWhatsApp` já referenciavam `pix_tipo`/`pix_chave`, colunas que **nunca existiram** — o cadastro salvava tudo menos o PIX, em silêncio.
+
+**Implementado — migration 041 (aplicada em prod):**
+- `motoristas` ganhou `pix_tipo` + `pix_chave` (nomes que o código já esperava);
+- whitelists das RPCs `criar_motorista`/`atualizar_motorista` atualizadas — sem isso o PIX se perderia ao salvar;
+- **backfill** do que estava preso na tabela de viagens, sem sobrescrever nada já preenchido: telefone **1 → 184**, banco 1 → 9, conta 0 → 6, PIX 0 → 7 (de 849 motoristas). `pix_tipo` inferido (chave == CPF → CPF; 10/11 dígitos → Telefone) e conferido nos 7 casos;
+- `useMotoristas.js`: `CAMPOS_MOTORISTA` += `pix_tipo`/`pix_chave`.
+
+**PENDENTE (não aplicado):** `supabase/migrations/042_drop_dados_bancarios_avb.sql.PENDENTE` derruba as cópias da tabela de viagens — **só depois** de o `SyncSupabase_AVB.gs` parar de enviá-las, senão o sync quebra com 400 (mesma armadilha dos 3 aborts do lockdown). Decisão do Yves: (a) o .gs para de enviar e o cadastro do app vira a entrada, ou (b) o .gs passa a fazer upsert em `motoristas` por CPF.
+
+### Fase 2 — alertas, financeiro e portões de tela pelo perfil
+
+- **`operacao/perfil.js`**: + `features.filialNasDespesas`, `financeiro.incluirComplementarPadrao`, `financeiro.filialDespesas`.
+- **`financeiroCalc.js`**: a regra do complementar (margem zero × margem cheia) vem de `financeiro.complementarMargemZero`, não de `baseId === "acailandia_avb"`.
+- **`App.jsx`**: motor de alertas por `perfil.alertas`; alertas de descarga atrasada e cobrança de saldo gateados por feature; fila sem-DT por `features.semDt`; **filtro de tipo de carga agora é genérico** — lê `perfil.classificador` (campo/padrão/valores), então o seletor do topbar deixa de ser "Papel/Celulose" fixo e passa a ser o que a operação declarar.
+- **`FinanceiroView` / `PainelFinanceiro` / `Resultado` / `DashboardView`**: default do toggle de complementar, filtro de filial, rótulo "(margem zero)/(margem cheia)", filial dos créditos e KPI "Sem DT" — todos pelo perfil.
+
+**Resultado:** referências hardcoded a id de base caíram de **64 → 35** (fora `constants.js`/`perfil.js`). O que sobra é Fase 3 (escolha de views AVB), `useDTHandlers` (âncora dt/código), `despesas.js` (mapa de siglas) e defaults de bootstrap.
+
+**Testado:** build ✓ (exit 0) + teste de lógica nas 3 bases — margem do complementar (AVB 200 × padrão 300), motor de alertas, portões e opções do classificador idênticos ao comportamento anterior. Não validado em navegador (exige login SSO).
+
 ## 2026-07-29 — App genérico · Fase 1: Perfil de Operação
 
 **Solicitado:** tornar o app utilizável por qualquer transportadora — hoje as diferenças entre operações (AVB não tem diária/SGS/descarga agendada; Suzano tem papel×celulose; cada base tem origens próprias) estão cravadas no código como `if (baseAtual?.id === "...")`.
