@@ -24,24 +24,6 @@ const COLS = [
   {h:"Status",    k:"status",      w:"11%"},
 ];
 
-// Colunas exclusivas AVB (acailandia_avb)
-const COLS_AVB = [
-  {h:"Cód.",       k:"codigo",        w:"7%"},
-  {h:"Carreg.",    k:"data_carr",     w:"8%"},
-  {h:"Contratante",k:"contratante",   w:"14%"},
-  {h:"Cliente",    k:"cliente",       w:"13%"},
-  {h:"Motorista",  k:"nome",          w:"13%"},
-  {h:"Placas",     k:"placa",         w:"9%"},
-  {h:"Origem",     k:"origem",        w:"9%"},
-  {h:"Destino",    k:"destino",       w:"9%"},
-  {h:"Status",     k:"status",        w:"7%"},
-  {h:"Gerenc.",    k:"gerenciadora",  w:"7%"},
-  {h:"Contrato",   k:"vl_contrato",   w:"8%"},
-  {h:"ADT",        k:"adiant",        w:"7%"},
-  {h:"Saldo",      k:"saldo",         w:"6%"},
-  {h:"CTE",        k:"cte",           w:"6%"},
-  {h:"MDF",        k:"mdf",           w:"6%"},
-];
 
 function toISO(d) {
   if (!d) return "";
@@ -60,15 +42,6 @@ function parseYMfilt(s) {
   return null;
 }
 
-// AVB: extrai ano/mes tentando varios campos de data do registro
-function parseYMfiltAvb(r) {
-  const campos = [r.data_carr, r.data_homerico, r.data_manifesto, r.data_liberacao];
-  for (const c of campos) {
-    const ym = parseYMfilt(c);
-    if (ym) return ym;
-  }
-  return null;
-}
 
 // ── Glass helpers ────────────────────────────────────────────────────────────
 function usePvExpanded() {
@@ -127,24 +100,23 @@ export default function PlanilhaView({ ctx }) {
     t, isMobile,
     ExportMenu,
     baseAtual,
-    planilhaFiltroContratante, setPlanilhaFiltroContratante,
-    planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
+    setPlanilhaFiltroContratante,
+    setPlanilhaFiltroGerenciadora,
   } = ctx;
 
   // ── Filtros disponíveis ──────────────────────────────────────────────────
-  const isAvb = baseAtual?.id === "acailandia_avb";
-  const activeCols = isAvb ? COLS_AVB : COLS;
+  const activeCols = COLS;
   const anosDisp = [...new Set(DADOS.map(r => {
-    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.ano;
   }).filter(Boolean))].sort((a, b) => b.localeCompare(a));
 
   const mesesDisp = [...new Set(DADOS.filter(r => {
     if (!planilhaFiltroAno) return true;
-    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.ano === planilhaFiltroAno;
   }).map(r => {
-    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.mes;
   }).filter(Boolean))].sort();
 
@@ -152,33 +124,19 @@ export default function PlanilhaView({ ctx }) {
 
   // ── Filtro e ordenação ────────────────────────────────────────────────────
   const dadosFiltrados = DADOS.filter(r => {
-    const ym = isAvb ? parseYMfiltAvb(r) : parseYMfilt(r.data_carr || r.data_desc || "");
+    const ym = parseYMfilt(r.data_carr || r.data_desc || "");
     if (planilhaFiltroAno   && ym?.ano !== planilhaFiltroAno)   return false;
     if (planilhaFiltroMes   && ym?.mes !== planilhaFiltroMes)   return false;
     if (planilhaFiltroOrigem && planilhaFiltroOrigem !== "todas"
         && (r.origem || "").trim() !== planilhaFiltroOrigem)    return false;
     if (planilhaFiltroDataDe && toISO(r.data_carr||r.data_agenda||"") < planilhaFiltroDataDe) return false;
     if (planilhaFiltroDataAte && toISO(r.data_carr||r.data_agenda||"") > planilhaFiltroDataAte) return false;
-    // Filtros exclusivos AVB
-    if (isAvb && planilhaFiltroContratante && (r.contratante||"").trim() !== planilhaFiltroContratante) return false;
-    if (isAvb && planilhaFiltroGerenciadora && (r.gerenciadora||"").trim() !== planilhaFiltroGerenciadora) return false;
     if (planilhaBusca) {
       const q = planilhaBusca.trim().toLowerCase();
       const matchBase = (r.dt||"").toLowerCase().includes(q)
         || (r.placa||"").toLowerCase().includes(q)
         || (r.nome||"").toLowerCase().includes(q);
-      // AVB: busca expandida
-      const matchAvb = isAvb && (
-        (r.codigo||"").toLowerCase().includes(q)
-        || (r.cte||"").toLowerCase().includes(q)
-        || (r.mdf||"").toLowerCase().includes(q)
-        || (r.nf||"").toLowerCase().includes(q)
-        || (r.cliente||"").toLowerCase().includes(q)
-        || (r.contratante||"").toLowerCase().includes(q)
-        || (r.gerenciadora||"").toLowerCase().includes(q)
-        || (r.placa2||"").toLowerCase().includes(q)
-      );
-      if (!matchBase && !matchAvb) return false;
+      if (!matchBase) return false;
     }
     if (planilhaFiltroStatus) {
       const s = (r.status||"Sem Status");
@@ -258,20 +216,6 @@ export default function PlanilhaView({ ctx }) {
           <option value="todas">Todas as origens</option>
           {origensDisp.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
-        {isAvb && (() => {
-          const contrats = [...new Set(DADOS.map(r=>(r.contratante||"").trim()).filter(Boolean))].sort();
-          const gerenc   = [...new Set(DADOS.map(r=>(r.gerenciadora||"").trim()).filter(Boolean))].sort();
-          return (<>
-            <select className="pv-filter-pill" value={planilhaFiltroContratante||""} onChange={e=>{setPlanilhaFiltroContratante(e.target.value);setPlanilhaPagina(1);}} style={{appearance:"none",cursor:"pointer"}}>
-              <option value="">Contratante: Todos</option>
-              {contrats.map(c=><option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className="pv-filter-pill" value={planilhaFiltroGerenciadora||""} onChange={e=>{setPlanilhaFiltroGerenciadora(e.target.value);setPlanilhaPagina(1);}} style={{appearance:"none",cursor:"pointer"}}>
-              <option value="">Gerenc.: Todas</option>
-              {gerenc.map(g=><option key={g} value={g}>{g}</option>)}
-            </select>
-          </>);
-        })()}
         <input
           type="text"
           placeholder="Buscar..."
@@ -387,7 +331,7 @@ export default function PlanilhaView({ ctx }) {
                   </div>
                 </div>
                 <div className="pv-row-detail">
-                  {row.placa && <div className="pv-detail-chip"><div className="dc-label">Placa</div><div className="dc-val">{isAvb ? [row.placa,row.placa2,row.placa3].filter(Boolean).join(" / ") : row.placa}</div></div>}
+                  {row.placa && <div className="pv-detail-chip"><div className="dc-label">Placa</div><div className="dc-val">{row.placa}</div></div>}
                   {(row.vl_cte || row.cte) && <div className="pv-detail-chip"><div className="dc-label">CTE</div><div className="dc-val">{fmtR(row.vl_cte || row.cte)}</div></div>}
                   {(row.vl_contrato || row.contrato) && <div className="pv-detail-chip"><div className="dc-label">Contrato</div><div className="dc-val">{fmtR(row.vl_contrato || row.contrato)}</div></div>}
                   {row.data_carr && <div className="pv-detail-chip"><div className="dc-label">Carreg.</div><div className="dc-val">{row.data_carr}</div></div>}

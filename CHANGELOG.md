@@ -1,3 +1,28 @@
+## 2026-07-29 — Duplicação fechada (gatilho) + Fase 3: ramos AVB mortos nas views padrão
+
+### Duplicação do motorista — fechada com gatilho (opção "c")
+
+Avaliadas 3 saídas com o Yves; escolhida a **(c)**. As descartadas e o porquê estão no cabeçalho da migration. Resumo: (a) o `.gs` parar de enviar limparia o schema, mas **304 dos 430 registros AVB têm telefone** — a planilha *é* a entrada de verdade, e cortá-la mudaria a rotina de quem opera; (b) o `.gs` gravar direto em `motoristas` exigiria uma RPC chamável com a **anon key** (que está no bundle público) escrevendo dados bancários — reabrir a classe de buraco que a auditoria fechou.
+
+**Migration 042 (aplicada):** gatilho `trg_promover_dados_motorista_avb` em `controle_operacional_avb` promove telefone/banco/agência/conta/PIX/favorecido para o cadastro `motoristas` casando por CPF. **Só preenche o que está vazio** — o que foi editado no app nunca é sobrescrito pela planilha. O `SyncSupabase_AVB.gs` **não muda** (zero risco de repetir os 3 aborts do lockdown). Guarda no `WHERE` evita reescrever as mesmas linhas a cada sync. Testado em transação com ROLLBACK: campo já preenchido preservado, resto veio da planilha, `pix_tipo` inferido como CPF; prod intacta (0 linhas de teste).
+
+*Não tratado de propósito:* 40 CPFs do AVB sem cadastro em `motoristas` — o gatilho completa cadastro existente, não cria (criar motorista a partir de linha de viagem é decisão de produto).
+
+### Fase 3 — o diagnóstico anterior estava errado
+
+Eu havia registrado "1.364 linhas duplicadas em `views/avb/*`". **Não procede:** `DashboardAVB` (rastreamento documental CTE/MDF/NF), `LogisticaAVB` (cargas em trânsito) e `GestaoAVB` (fluxo Homérico → Gerenciadora → Fortes → NF → ADT) são telas *distintas* de uma operação distinta — fundi-las seria forçar telas sem relação.
+
+A duplicação real era outra: **os ramos AVB abandonados dentro das views padrão**, restos de quando as telas AVB foram extraídas. `App.jsx` roteia `baseAtual?.id === "acailandia_avb" ? <XAVB/> : <XPadrão/>`, então dentro de `PlanilhaView`/`DescargaView` a condição AVB é **sempre falsa**:
+
+- **`DescargaView.jsx`**: bloco `if (baseAtual?.id === "acailandia_avb")` de **162 linhas**, inalcançável — removido (+ import órfão de `utils_avb`, `baseAtual`/`DADOS` do ctx).
+- **`PlanilhaView.jsx`**: `COLS_AVB`, `parseYMfiltAvb`, `isAvb` e seus 11 usos (filtros de contratante/gerenciadora, busca expandida, chip de placa) — removidos. Os setters seguem no botão "limpar filtros".
+
+**Bug latente encontrado no caminho:** `PlanilhaView.COLS_AVB` declarava a coluna `gerenciadora`, que **não existe** em `controle_operacional_avb` (a coluna é `gerenc`) — duas definições divergentes das colunas do AVB, uma delas apontando para campo inexistente. Sumiu junto.
+
+**Total: −268 linhas.** Refs hardcoded a id de base: **64 → 31**.
+
+**Verificado:** build ✓ + ESLint `no-undef` **zero** nas duas views (o build sozinho não pegaria — a primeira passada deixou `matchAvb`/`isAvb` pendurados, que dariam ReferenceError em runtime; corrigidos antes de fechar). Órfãos restantes (`activeCols`, `t`, `isMobile`, `toggleSort`, `DESIGN`, `showToast`, `motoristas`, `parseData`, `diffDias`) foram conferidos contra a versão do git e **já existiam antes** — não mexi, conforme a regra de não remover código morto pré-existente.
+
 ## 2026-07-29 — Duplicação de dados do motorista + Fase 2 do Perfil de Operação
 
 ### Duplicação corrigida (dados de pagamento do motorista)
