@@ -1,3 +1,11 @@
+## 2026-07-29 — Fix: race condition em gerar_token_sessao causava "Sessão inválida ou expirada"
+
+**Sintoma:** Yves relatou erro ao abrir um módulo/selecionar base — toast "HTTP 400 P0001 Sessão inválida ou expirada" repetido. Diagnosticado via Supabase MCP (SQL live + API log): usuário tinha token válido no banco, mas o front usava um token diferente.
+
+**Causa:** `gerar_token_sessao` (migration 034) fazia SELECT→IF→UPDATE em passos separados, não atômico. O bootstrap SSO do App.jsx disparou 3 chamadas concorrentes em ~37ms (visto no API log); cada uma gerou seu próprio UUID e gravou por cima da anterior — o front ficou com o token de uma chamada "perdedora", que não batia mais com o banco. Toda leitura via RPC (`listar_operacional`, `listar_motoristas`, `listar_veiculos`, `listar_despesas`) passava a falhar até recarregar (podendo repetir a corrida no reload seguinte).
+
+**Fix (migration 040, aplicada em prod):** reescrita como `UPDATE ... RETURNING` atômico — o lock de linha do Postgres serializa chamadas concorrentes, então todas devolvem o mesmo token final. Testado (3 chamadas simultâneas via SQL → mesmo token, batendo com o banco). Não mexe em RLS/policies nem em front-end.
+
 ## 2026-07-23 — Edição admin do CTe: FOB troca o pagador p/ o destinatário
 
 **Solicitado:** Ao marcar um CTe como FOB, o pagador (cliente) deixa de ser o remetente e passa a ser o destinatário (ex.: SENDAS que na verdade é Suzano Belem) — o cliente/base devem atualizar.
