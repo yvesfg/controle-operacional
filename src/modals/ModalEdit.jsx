@@ -1,4 +1,5 @@
 import React from "react";
+import { getPerfil } from "../operacao/perfil.js";
 import Toggle from "../components/Toggle.jsx";
 import Icon from "../components/Icon.jsx";
 
@@ -24,6 +25,9 @@ function ModalEditComponent({ ctx }) {
 
   const isWide = typeof window !== "undefined" && window.innerWidth >= 768;
   const isAvb = baseAtual?.id === "acailandia_avb";
+  // Classificador da operacao: sem isto so a planilha (sync) conseguia marcar o tipo —
+  // uma base nova nao teria como separar "padrao" de "exportacao" pelo proprio app.
+  const clf = getPerfil(baseAtual?.id).classificador;
 
   // ── ÍCONES ────────────────────────────────────────────────────────────
   const icoIdent = <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>;
@@ -86,6 +90,8 @@ function ModalEditComponent({ ctx }) {
       {k:"data_manifesto",   l:"Manifesto",                                    type:"date"},
       {k:"gerenc",           l:"Gerenciadora", type:"select_opts", opts:["SKYMARK (FRETEBRAS)","INFINITY","MUNDIAL","OPENTECH"], span:2},
       {k:"forms",            l:"FORMS",                                        type:"select_sim_nao"},
+      ...(clf ? [{k:clf.campo, l:clf.label, type:"select_opts",
+                  opts:clf.valores.map(o=>o.valor), span:2}] : []),
       ...(isAvb ? [
         {k:"baixa_homerico", l:"Baixa Homérico", type:"date"},
         {k:"ganchos",        l:"Ganchos"},

@@ -7,6 +7,7 @@
  *                t, isMobile, ExportMenu }
  */
 import React from "react";
+import { getPerfil } from "../operacao/perfil.js";
 import { parseValorBR } from "../utils.js";
 
 const MESES_PT = { "01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez" };
@@ -106,6 +107,15 @@ export default function PlanilhaView({ ctx }) {
 
   // ── Filtros disponíveis ──────────────────────────────────────────────────
   const activeCols = COLS;
+  // Classificador da operacao (ex.: papel x celulose; padrao x exportacao). O chip so
+  // aparece no valor NAO-padrao — marcar toda linha com o valor comum seria ruido.
+  const clf = getPerfil(baseAtual?.id).classificador;
+  const rotuloClf = (row) => {
+    if (!clf) return null;
+    const v = row[clf.campo];
+    if (!v || v === clf.padrao) return null;
+    return (clf.valores.find((o) => o.valor === v) || {}).label || v;
+  };
   const anosDisp = [...new Set(DADOS.map(r => {
     const ym = parseYMfilt(r.data_carr || r.data_desc || "");
     return ym?.ano;
@@ -315,8 +325,8 @@ export default function PlanilhaView({ ctx }) {
                   </div>
                   <div style={{ flex: 2, fontSize: 10, color: "var(--text3)", display: "flex", alignItems: "center", gap: 6 }}>
                     <span>{rota}</span>
-                    {row.tipo_carga === "celulose" && (
-                      <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--color-info)", background: "color-mix(in srgb, var(--color-info) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--color-info) 30%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Celulose</span>
+                    {rotuloClf(row) && (
+                      <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--color-info)", background: "color-mix(in srgb, var(--color-info) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--color-info) 30%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>{rotuloClf(row)}</span>
                     )}
                     {row._semDt && (
                       <span title="Carga carregada sem DT (aguardando o DT da Suzano) — confirmada e contando nos totais" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--accent)", background: "color-mix(in srgb, var(--accent) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Sem DT</span>

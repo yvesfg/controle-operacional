@@ -136,3 +136,23 @@ export function getPerfil(baseId) {
 export function temFeature(baseId, feature) {
   return getPerfil(baseId).features[feature] === true;
 }
+
+// ── Metadados para a tela de Bases no Admin ───────────────────────────────
+// Ficam aqui, ao lado da definição, para a tela não precisar ser editada toda vez
+// que uma feature nova nascer: basta acrescentar em `features` (PADRAO) e aqui.
+export const FEATURES_META = [
+  { k: "diarias",           l: "Diárias",             d: "Aba de diárias. Operação que não paga diária desliga." },
+  { k: "descargaAgendada",  l: "Descarga agendada",   d: "Alerta de agenda marcada sem descarga registrada." },
+  { k: "cobrancaSaldo",     l: "Cobrança de saldo",   d: "Alerta de saldo pendente após a descarga." },
+  { k: "sgs",               l: "SGS",                 d: "Campo/relatório do SGS (sistema da Suzano)." },
+  { k: "operacional",       l: "Aba Operacional",     d: "SGS + apontamentos." },
+  { k: "gestao",            l: "Aba Gestão",          d: "Acompanhamento por etapas do embarcador." },
+  { k: "semDt",             l: "Fila Cargas sem DT",  d: "Para operações que carregam antes de o DT sair." },
+  { k: "classificadores",   l: "Classificador",       d: "Separa a operação em tipos (ex.: papel × celulose)." },
+  { k: "filialNasDespesas", l: "Filial nas despesas", d: "Despesas chegam marcadas por filial." },
+];
+
+export const ALERTAS_OPCOES = [
+  { v: "padrao", l: "Padrão (atraso de descarga + cobrança)" },
+  { v: "avb",    l: "AVB (documentos, data inválida, código zerado)" },
+];

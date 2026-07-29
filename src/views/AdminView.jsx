@@ -1,6 +1,7 @@
 import React from "react";
 import Toggle from "../components/Toggle.jsx";
 import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
+import BasesOperacao from "./admin/BasesOperacao.jsx";
 import { TABLE_USUARIOS, PERMS_PADRAO, BASES as BASES_CONST } from '../constants.js';
 import { saveJSON, loadJSON } from '../utils.js';
 
@@ -57,6 +58,9 @@ export default function AdminView({ ctx }) {
               {hIco(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,t.ouro,16)}
               <span>A gestão de <b style={{color:t.ouro}}>usuários, perfis e permissões</b> agora fica no <b style={{color:t.ouro}}>Hub → Gerenciar acessos</b>. Saia para o Hub para liberar módulos, definir perfil/bases e permissões finas.</span>
             </div>
+
+            {/* Bases / Operações — perfil da operação vindo de co_bases (Fase 4b) */}
+            <BasesOperacao ctx={ctx} />
 
             {/* Conexões Supabase — colapsável */}
             <div style={{...css.secTitle,margin:"20px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setConexoesOpen(!conexoesOpen)}>

@@ -1,3 +1,25 @@
+## 2026-07-29 — Fase 4b (tela no Admin) + Fase 5 (classificador genérico)
+
+### Fase 4b — Admin › Bases / Operações
+
+Seção nova e colapsável no Admin (`src/views/admin/BasesOperacao.jsx`, componente próprio para não engordar o `AdminView`, que já tinha 682 linhas). Lista as bases de `co_bases` e edita: identificação (id/nome/tabela/ordem), **funcionalidades** (um `Toggle` por feature), rótulos e vocabulário (âncora DT/Código, como chamar quem paga, motor de alertas, origens válidas), financeiro e o classificador. Botão **+ Nova base** cadastra uma transportadora do zero — sem deploy.
+
+A UI é **data-driven**: `FEATURES_META` e `ALERTAS_OPCOES` moram em `operacao/perfil.js`, ao lado da definição. Feature nova aparece na tela sozinha, sem editar o formulário.
+
+**Só grava o que diverge do padrão** — campo deixado no valor padrão não vai pro banco, para não congelar lá um default que amanhã pode mudar no código.
+
+**Lógica pura extraída para `operacao/basesForm.js`** (`formDaBase`/`perfilDoForm`), porque o risco desta tela é silencioso: se a ida-e-volta perdesse um campo, abrir e salvar uma base apagaria configuração sem ninguém notar. Separada assim, deu para testar sem navegador — **ida-e-volta é lossless nas 3 bases reais**, e base sem alteração gera `{}`.
+
+### Fase 5 — o classificador deixou de ser "papel × celulose"
+
+- **`PlanilhaView`**: o chip fixo `Celulose` virou o rótulo do classificador da operação — aparece só no valor **não-padrão** (marcar toda linha com o valor comum seria ruído).
+- **`CargasSemDt`**: os 2 chips e o `<select>` Papel/Celulose passaram a vir do classificador (recebido via ctx).
+- **`ModalEdit`**: **campo novo** para marcar o classificador no registro. Antes só o sync da planilha conseguia definir o tipo — uma base nova não teria como separar "padrão" de "exportação" pelo próprio app. Persiste sem tocar na RPC: o `upsert_operacional` usa `jsonb_populate_record`, que mapeia só colunas reais.
+
+**Testado:** Imperatriz mantém o comportamento de hoje (chip só em celulose, opções papel/celulose); AVB e Maracanaú seguem sem classificador (nenhum chip, nenhum campo extra); e a base `ferro_exportacao`, cadastrada **só pelo Admin**, ganha seletor "Padrão | Exportação", chip em Exportação e o título "Tipo de operação". Build ✓ e ESLint `no-undef` zero nos arquivos tocados.
+
+**Sobrou hardcoded:** 4 menções a "celulose" — todas **comentários** de exemplo, nenhuma lógica. Refs a id de base: **32** (`ModalEdit`/`ModalWhatsApp` com campos específicos do AVB, escolha das telas AVB no `App.jsx`, `despesas.js` e defaults de bootstrap).
+
 ## 2026-07-29 — Fase 4a: o Perfil de Operação passa a vir do banco
 
 **Objetivo:** ajustar uma operação — ou cadastrar uma transportadora nova — **sem deploy**.

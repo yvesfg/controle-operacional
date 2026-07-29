@@ -1601,7 +1601,7 @@ export default function App() {
 
         {/* ═══ PLANILHA ═══ */}
         {activeTab === "planilha" && baseAtual?.id === "imperatriz_belem" && (
-          <CargasSemDt conn={motoristasConn} ctx={{ t, hexRgb, showToast, usuarioLogado }} />
+          <CargasSemDt conn={motoristasConn} ctx={{ t, hexRgb, showToast, usuarioLogado, classificador: perfilAtual.classificador }} />
         )}
         {activeTab === "planilha" && (
           baseAtual?.id === "acailandia_avb"
@@ -1846,6 +1846,7 @@ export default function App() {
           auditReport, auditarDesign,
           setModalOpen,
           getConexao, supaFetch,
+          sessionToken,
           connStatus,
           baseAtual, BASES,
           saveMotoristasLS,

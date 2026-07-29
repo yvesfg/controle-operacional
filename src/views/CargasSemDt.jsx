@@ -32,7 +32,14 @@ const CAMPOS_TEXTO = [
 ];
 
 export default function CargasSemDt({ conn, ctx }) {
-  const { t, hexRgb, showToast, usuarioLogado } = ctx;
+  const { t, hexRgb, showToast, usuarioLogado, classificador: clf } = ctx;
+  // Rotulo do classificador da operacao (ex.: Celulose). So no valor NAO-padrao.
+  const rotuloClf = (p) => {
+    if (!clf) return null;
+    const v = p[clf.campo];
+    if (!v || v === clf.padrao) return null;
+    return (clf.valores.find((o) => o.valor === v) || {}).label || v;
+  };
   const [aba, setAba] = React.useState("pendente");
   const [linhas, setLinhas] = React.useState([]);
   const [contagem, setContagem] = React.useState({});
@@ -177,8 +184,8 @@ export default function CargasSemDt({ conn, ctx }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
                     <span style={{ fontSize: 12.5, fontWeight: 700, color: t.txt }}>{p.nome || "sem motorista"}</span>
                     <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: t.txt2 }}>{p.placa || "sem placa"}</span>
-                    {p.tipo_carga === "celulose" && (
-                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: t.azul, background: hexRgb(t.azul, 0.12), border: `1px solid ${hexRgb(t.azul, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>Celulose</span>
+                    {rotuloClf(p) && (
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: t.azul, background: hexRgb(t.azul, 0.12), border: `1px solid ${hexRgb(t.azul, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>{rotuloClf(p)}</span>
                     )}
                     {p.status === "conciliado" && p.dt_conciliado && (
                       <span style={{ fontSize: 10, fontWeight: 700, color: t.verde, background: hexRgb(t.verde, 0.12), border: `1px solid ${hexRgb(t.verde, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>
@@ -216,8 +223,8 @@ export default function CargasSemDt({ conn, ctx }) {
             <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "22px 22px 18px", minWidth: 340, maxWidth: 600, width: "92vw", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 800, fontSize: 14, color: t.txt }}>Carga sem DT</span>
-                {p.tipo_carga === "celulose" && (
-                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: t.azul, background: hexRgb(t.azul, 0.12), border: `1px solid ${hexRgb(t.azul, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>Celulose</span>
+                {rotuloClf(p) && (
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: t.azul, background: hexRgb(t.azul, 0.12), border: `1px solid ${hexRgb(t.azul, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>{rotuloClf(p)}</span>
                 )}
                 <span style={{ marginLeft: "auto", fontSize: 10.5, color: t.txt2, textTransform: "capitalize" }}>{p.status}</span>
               </div>
@@ -238,9 +245,8 @@ export default function CargasSemDt({ conn, ctx }) {
                 </div>
                 <div>
                   <label style={lbl}>Tipo de carga</label>
-                  <select value={p.tipo_carga || "papel"} onChange={(e) => set("tipo_carga", e.target.value)} style={inp}>
-                    <option value="papel">Papel</option>
-                    <option value="celulose">Celulose</option>
+                  <select value={p[clf?.campo] || clf?.padrao || ""} onChange={(e) => set(clf?.campo, e.target.value)} style={inp}>
+                    {(clf?.valores || []).map((o) => <option key={o.valor} value={o.valor}>{o.label}</option>)}
                   </select>
                 </div>
                 {CAMPOS_TEXTO.filter(([k]) => k !== "nome").map(([k, label]) => (
