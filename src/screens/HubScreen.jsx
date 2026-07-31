@@ -24,7 +24,7 @@ const ROLE_TO_PERFIL = { admin:"admin", editor:"operador", viewer:"visualizador"
 
 export default function HubScreen({
   t, css,
-  setHubScreen, setPerfil, setPerms, setBasesPermitidas, setBaseAtual,
+  setHubScreen, setPerfil, setPerms, setDashCfg, setBasesPermitidas, setBaseAtual,
   frotaUrl, handleLogout, showToast, toast,
 }) {
   const [mods, setMods] = useState(null);   // null = carregando
@@ -74,6 +74,8 @@ export default function HubScreen({
     const bases = baseIds.map(id => getBase(id)).filter(Boolean);
     const permitidas = bases.length ? bases : [BASES.imperatriz_belem];
     setPerfil(perfil); setPerms(perms);
+    // config.dash define quais KPIs/blocos do Dashboard esse usuario ve.
+    setDashCfg?.(cfg.dash || {});
     setBasesPermitidas(permitidas);
     setBaseAtual(permitidas.length === 1 ? permitidas[0] : null);
     setHubScreen("controle_op");

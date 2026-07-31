@@ -57,6 +57,12 @@ export const BASES = {
                       agendaKmDia: 500 },
 };
 
+// Base virtual "Todas as bases" — não existe no banco: é um modo de LEITURA que
+// carrega as bases do usuário juntas (ver useSyncHandlers). `table: null` é de
+// propósito: nada que escreve pode apontar pra cá, e o app trava a edição
+// enquanto ela está ativa (App.jsx, canEdit).
+export const BASE_TODAS = { id: "__todas__", label: "Todas as bases", table: null, consolidado: true };
+
 export const TABLE_USUARIOS = "co_usuarios";
 export const TABLE_CONFIG   = "co_config";
 export const TABLE_OCORR    = "co_ocorrencias";
@@ -66,20 +72,32 @@ export const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set
 // Tabs fixadas no bottom bar mobile (compartilhado entre BottomNav e AppSidebar,
 // para o drawer "Mais" não duplicar o que já está fixado embaixo).
 export const MOBILE_NAV_PINNED = ["dashboard", "financeiro", "planilha", "descarga"];
+// Chaves `buscar`, `relatorios`, `operacional` e `gestao` nasceram depois das
+// outras: as abas correspondentes não tinham perm nenhuma, então apareciam pra
+// todo mundo — inclusive pra um visualizador que só deveria ver o dashboard.
+// Quem já tem perms gravadas no banco NÃO é afetado: o filtro de abas testa
+// `perms[k] !== false`, e chave ausente (undefined) continua visível.
 export const PERMS_PADRAO = {
   // ── Admin: acesso total ──
-  admin:      {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:true,  usuarios:true,  ocorrencias:true,  cadastros:true },
+  admin:      {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:true,  usuarios:true,  ocorrencias:true,  cadastros:true,  buscar:true,  relatorios:true,  operacional:true,  gestao:true,  creditos:true },
   // ── Gerente: vê financeiro, edita tudo operacional, sem config de sistema ──
-  gerente:    {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true,  cadastros:true },
+  gerente:    {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true,  cadastros:true,  buscar:true,  relatorios:true,  operacional:true,  gestao:true,  creditos:true },
   // ── Operador: edita tudo operacional incluindo financeiro, sem config de sistema ──
-  operador:   {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true,  cadastros:true },
+  operador:   {financeiro:true, editar:true, importar:true, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:true,  cadastros:true,  buscar:true,  relatorios:true,  operacional:true,  gestao:true,  creditos:true },
+  // ── Gestor: acompanha resultado, não opera. Só Dashboard + Financeiro. ──
+  // Perfil de quem cobra número e não mexe em carga: vê dinheiro (financeiro),
+  // não vê a operação do dia a dia (planilha, diárias, descarga, ocorrências).
+  gestor:     {financeiro:true, editar:false,importar:false,dashboard:true, diarias:false,descarga:false,planilha:false,config_db:false, usuarios:false, ocorrencias:false, cadastros:false, buscar:false, relatorios:false, operacional:false, gestao:false, creditos:false},
   // ── Visualizador: somente leitura ──
-  visualizador:{financeiro:false,editar:false,importar:false,dashboard:true,diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:false, cadastros:false},
+  visualizador:{financeiro:false,editar:false,importar:false,dashboard:true,diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:false, cadastros:false, buscar:true,  relatorios:true,  operacional:true,  gestao:true,  creditos:true },
 };
 export const PERMS_LISTA = [
   {key:"financeiro",lbl:"Financeiro"},{key:"editar",lbl:"Editar"},{key:"importar",lbl:"Importar"},
   {key:"dashboard",lbl:"Dashboard"},{key:"diarias",lbl:"Diárias"},{key:"descarga",lbl:"Descarga"},
-  {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"cadastros",lbl:"Cadastros"},{key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
+  {key:"planilha",lbl:"Planilha"},{key:"ocorrencias",lbl:"Ocorrências"},{key:"cadastros",lbl:"Cadastros"},
+  {key:"buscar",lbl:"Buscar"},{key:"relatorios",lbl:"Relatórios"},{key:"operacional",lbl:"Operacional"},{key:"gestao",lbl:"Gestão"},
+  {key:"creditos",lbl:"Créditos Pend."},
+  {key:"config_db",lbl:"Config DB"},{key:"usuarios",lbl:"Usuários"},
 ];
 
 // ════════════════════════════════════════════════════════════
@@ -145,6 +163,23 @@ export const hexRgb = (colorOrVar, a) => {
 };
 
 export const DEV_CHANGELOG = [
+  {
+    data: "2026-07-31", sessao: "Sessao 50",
+    itens: [
+      "FEAT (pedido Yves) · Acesso do gestor sem app novo: mesma URL, o que muda e o acesso. Novo perfil 'gestor' (Dashboard + Financeiro, sem editar) + convite por e-mail + painel configuravel por usuario.",
+      "DB · Migration 047 (APLICADA em producao): tabela hub_convites (RLS ligada SEM policy -- so RPC SECURITY DEFINER com gate is_hub_admin) + hub_admin_convidar/listar/cancelar + hub_admin_set_acesso. handle_hub_new_user passa a consumir o convite no 1o login: o admin libera o e-mail ANTES da pessoa existir, ela entra com Google e ja cai nas telas (sem fila de aprovacao). O consumo fica em bloco EXCEPTION -- convite defeituoso nunca pode quebrar o cadastro do usuario.",
+      "BUG PROD (grave) · bases_permitidas estava como STRING JSON em imperatriz@rodorrica.com.br e ocorrencias.ro@rodorrica.com.br. _validar_token_e_base compara com @>, que em escalar NUNCA casa: os dois levavam 'Acesso negado a base' em toda leitura. Dado legado (cliente atual manda array). Normalizado + CHECK co_usuarios_bases_array (NOT VALID) pra nao voltar.",
+      "BUG PROD · ocimarnunes98@gmail.com tinha acesso no Hub e NENHUMA linha em co_usuarios -> nunca recebia token, app abria vazio. Backfill criou a linha.",
+      "BUG PROD · Os chips de base do Gerenciar acessos nao valiam nada: a tela so escrevia hub_user_modulos.config, mas quem libera leitura e co_usuarios.bases_permitidas. Toda escrita agora passa por hub_admin_set_acesso, que grava nos DOIS lugares. Backfill so aditivo (uniao das bases) -- tirar base de quem usa hoje seria efeito colateral silencioso.",
+      "BUG · KPI 'Motoristas Ativos' do dashboard mandava pra activeTab='motoristas', que nao existe na lista de abas (e sub-secao de Cadastros): clique dava tela em branco pra qualquer usuario. Agora vai pra Cadastros, e so se o usuario tiver a aba.",
+      "FEAT · Abas Buscar/Ocorrencias/Relatorios/Operacional/Gestao nao tinham perm nenhuma -- apareciam pra qualquer um, inclusive visualizador. Ganharam chave em PERMS_PADRAO/PERMS_LISTA. Ninguem perde aba: o filtro testa perms[k] !== false, chave ausente segue visivel.",
+      "FEAT · Gerenciar acessos redesenhado: botao unico '+ Adicionar usuario' (1 Quem / 2 O que acessa / 3 Como entra), decidindo so no fim entre convite por e-mail e usuario de teste. Secao de convites pendentes com 'Copiar aviso'. Card mostra perfil e bases na linha fechada, com alerta de 'sem base'.",
+      "FEAT · Financeiro ganhou sub-aba Resumo (views/ResumoFinanceiro.jsx): faturamento, pago motorista, margem, despesas e resultado do mes, sparkline de 6 meses e tabela do historico. Mesmos numeros do Resultado por construcao (financeiroCalc + despesas_filial). E a aba de entrada de quem nao tem Planilha; Creditos Pendentes sai por perms.creditos.",
+      "FEAT · Painel configuravel por usuario: src/dashboardConfig.js cataloga 10 KPIs e 11 blocos com id estavel; toggles no Gerenciar acessos e ja na criacao (no convite a config viaja junto). So o que esta DESLIGADO e gravado em config.dash -- usuario sem config nasce com o painel cheio.",
+      "FEAT · Consolidado 'Todas as bases' (BASE_TODAS, table:null de proposito): sincronizar carrega base a base marcando _baseId, o token valida cada uma. LEITURA PURA -- canEdit desligado e so Dashboard + Financeiro>Resumo. Bloco novo 'Por base' com drill. O Resumo agrupa por mes E por base antes de aplicar o complementar: a regra muda por operacao (complementarMargemZero na AVB), somar antes daria margem errada.",
+      "VERIFICADO · Build ok; app carrega sem erro de console; convite testado ponta a ponta em transacao com ROLLBACK (convite -> 1o login -> hub aprovado + co_usuarios com perfil/bases certos); as 3 RPCs recusam anon e hub_convites devolve 0 linha pro anon. NAO validado logado (exige Google) -- vale um passe no Gerenciar acessos e no consolidado apos o deploy.",
+    ],
+  },
   {
     data: "2026-07-21", sessao: "Sessao 49",
     itens: [

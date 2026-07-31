@@ -1,3 +1,45 @@
+## 2026-07-31 — Acesso do gestor: convite por e-mail, perfil Gestor e painel configurável
+
+**Pedido do Yves:** dar ao gestor um link que abra só o Dashboard das 3 bases (Imperatriz, Maracanaú, Açailândia) + uma aba de Financeiro alimentada pelos relatórios que ele sobe, podendo escolher quais KPIs/painéis aparecem. E melhorar a tela "Gerenciar acessos", permitindo cadastrar o usuário primeiro e só depois decidir se é usuário de teste ou uma pré-aprovação por e-mail.
+
+**Não precisou de app nem de link novo:** é a mesma URL. O que mudou foi como o acesso é concedido e o que a pessoa vê depois de entrar.
+
+### 3 bugs de produção encontrados no caminho (todos corrigidos)
+1. **`bases_permitidas` gravado como string JSON** (`"[\"imperatriz_belem\"]"`) em 2 usuários — `imperatriz@rodorrica.com.br` e `ocorrencias.ro@rodorrica.com.br`. O `_validar_token_e_base` testa com `@>`, que num escalar nunca casa: os dois levavam **"Acesso negado à base" em toda leitura**. Dado legado (o cliente atual manda array). Normalizado + `CHECK` pra não voltar.
+2. **`ocimarnunes98@gmail.com` tinha acesso no Hub e nenhuma linha em `co_usuarios`** → nunca recebia token de sessão, o app abria vazio pra ele. Linha criada no backfill.
+3. **Os chips de base da tela de acessos não valiam nada:** a tela só escrevia em `hub_user_modulos.config`, mas quem libera a leitura é `co_usuarios.bases_permitidas`. As duas fontes já tinham divergido em produção. Agora toda escrita passa por `hub_admin_set_acesso`, que grava nos dois lugares.
+
+Também corrigido: o KPI **"Motoristas Ativos"** do dashboard apontava para `activeTab="motoristas"`, que **não existe** na lista de abas (é sub-seção de Cadastros) — clique levava a tela em branco pra qualquer usuário.
+
+### Migration 047 — convites + espelho Hub→co_usuarios
+- Tabela `hub_convites` (RLS ligada, **sem policy**: só as RPCs `SECURITY DEFINER` com gate `is_hub_admin()` tocam nela).
+- `hub_admin_convidar(email, nome, modulos)`: se o e-mail já tem conta, aplica na hora; se não, guarda o convite. `handle_hub_new_user` (trigger em `auth.users`) consome o convite no **primeiro login** — a pessoa entra com o Google e já cai nas telas, sem fila de aprovação. O consumo é envolvido em `EXCEPTION` pra que um convite defeituoso nunca quebre o cadastro do usuário.
+- `hub_admin_set_acesso` / `hub_admin_listar_convites` / `hub_admin_cancelar_convite`.
+- Backfill **só aditivo**: onde Hub e `co_usuarios` divergiam, venceu a **união** das bases — tirar base de quem usa hoje seria efeito colateral silencioso.
+- Verificado: fluxo convite→1º login→acesso aplicado testado numa transação com `ROLLBACK`; as 3 RPCs recusam `anon`; `hub_convites` devolve 0 linhas pro `anon`.
+
+### Perfil "Gestor" e abas que faltavam travar
+- Novo perfil `gestor`: Dashboard + Financeiro, sem editar nada.
+- As abas **Buscar, Ocorrências, Relatórios, Operacional e Gestão não tinham `perm` nenhuma** — apareciam pra qualquer um, inclusive pra um visualizador. Ganharam chave. **Ninguém perde aba:** o filtro testa `perms[k] !== false`, e chave ausente segue visível.
+- Cliques de KPI que levam a abas sem permissão agora não viram clique (antes: tela vazia).
+
+### Financeiro do gestor
+- Nova sub-aba **Resumo** (`views/ResumoFinanceiro.jsx`): faturamento, pago motorista, margem, despesas e resultado do mês, com sparkline de 6 meses e tabela do histórico. Usa `financeiroCalc` + `despesas_filial` — os mesmos números do Resultado, por construção.
+- É a aba de entrada de quem não tem Planilha. **Créditos Pendentes** (tela de cobrança) sai por `perms.creditos`.
+
+### Painel configurável por usuário (`config.dash`)
+- `src/dashboardConfig.js`: catálogo de 10 KPIs e 11 blocos do dashboard, cada um com id estável.
+- Toggles por usuário no Gerenciar acessos (e já na criação, importante no convite: a config viaja junto e é aplicada no 1º login). Só o que está **desligado** é gravado — usuário sem config nasce com o painel cheio.
+- A lista respeita as features das bases do usuário: não oferece "Ranking por cliente" pra quem não tem base com essa feature.
+
+### Consolidado das 3 bases
+- Base virtual `BASE_TODAS` (`table: null` de propósito). `sincronizar` carrega uma base por vez e marca `_baseId` em cada linha; o token valida base a base, então ninguém vê o que não pode.
+- **Leitura pura:** `canEdit` desligado e só Dashboard + Financeiro>Resumo disponíveis — as demais telas leem de uma tabela só.
+- Bloco novo **"Por base"** no dashboard, com drill (clique abre a base).
+- O Resumo agrupa por mês **e por base** antes de aplicar o complementar: a regra muda por operação (`complementarMargemZero` na AVB), então somar antes daria margem errada.
+
+**Verificado:** build ✓, app carrega sem erro de console. **Não validado logado** (exige Google) — vale um passe no Gerenciar acessos e no consolidado após o deploy.
+
 ## 2026-07-29 — Dashboard unificado por feature (fim da tela exclusiva do AVB)
 
 **Pergunta do Yves:** por que o dashboard do AVB é diferente dos outros?

@@ -3,7 +3,7 @@ import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
 
 import * as XLSX from "xlsx";
-import { themes, TABLE, BASES, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
+import { themes, TABLE, BASES, BASE_TODAS, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
   DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY } from './constants.js';
 import { DEFAULT_LOGO } from './defaultLogo.js';
@@ -124,6 +124,9 @@ export default function App() {
   const [sessionToken, setSessionToken] = useState(null);
   const sessionTokenRef = useRef(null); // espelho p/ efeitos com deps vazias (bootstrap SSO)
   const [basesPermitidas, setBasesPermitidas] = useState([]);
+  // Painel por usuario (hub_user_modulos.config.dash) -- quais KPIs/blocos do
+  // Dashboard aquele usuario ve. Vazio = tudo visivel. Ver dashboardConfig.js.
+  const [dashCfg, setDashCfg] = useState({});
   // Filtro global de tipo de carga (base Imperatriz: papel x celulose). "todos" = sem filtro.
   const [filtroTipoCarga, setFiltroTipoCarga] = useState("todos");
   // Cargas SEM DT CONFIRMADAS (fila) injetadas no DADOS como linhas normais com flag
@@ -146,7 +149,11 @@ export default function App() {
   const perfilAtual = useMemo(() => getPerfil(baseAtual?.id), [baseAtual, basesVersao]);
   // Re-sincroniza ao trocar de base (ex: selecionar Maracanau após login)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (authed && baseAtual) sincronizar(); }, [baseAtual]);
+  // No consolidado quem define O QUE carregar e a lista de bases, e ela chega do
+  // Hub DEPOIS do baseAtual restaurado do localStorage — sem isto, um reload em
+  // "Todas as bases" sincronizava zero registro e nunca mais tentava.
+  const basesChave = baseAtual?.consolidado ? (basesPermitidas || []).map(b => b.id).join(",") : "";
+  useEffect(() => { if (authed && baseAtual) sincronizar(); }, [baseAtual, basesChave]);
   // Resetar filtros AVB ao trocar de base
   useEffect(() => {
     setPlanilhaFiltroContratante("");
@@ -466,7 +473,7 @@ export default function App() {
   }, [sessionToken]);
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
-    getConexao, showToast, tblRef, sessionToken, baseAtual,
+    getConexao, showToast, tblRef, sessionToken, baseAtual, basesPermitidas,
     dadosExtras, setDadosBase, setDadosExtras, setConnStatus, setUltimaSync,
     setApontItems, setApontLoading, setUsuarios, setUsuariosPendentes,
   });
@@ -1125,8 +1132,18 @@ export default function App() {
   });
 
   const isAdmin = perfil === "admin";
-  const canEdit = isAdmin || perms.editar;
+  // "Todas as bases" e leitura pura: um registro veio de uma tabela especifica e
+  // salvar dali nao teria pra onde ir (BASE_TODAS.table e null). Quem quer editar
+  // troca pra base do registro.
+  const modoConsolidado = baseAtual?.consolidado === true;
+  const canEdit = (isAdmin || perms.editar) && !modoConsolidado;
   const canFin = perms.financeiro;
+
+  // Entrar no consolidado estando numa aba que nao existe la (Planilha, por ex.)
+  // deixaria a area de conteudo vazia — volta pro Dashboard.
+  useEffect(() => {
+    if (modoConsolidado && activeTab !== "dashboard" && activeTab !== "financeiro") setActiveTab("dashboard");
+  }, [modoConsolidado, activeTab]);
 
   // css + statusBorderColor — via useCss
   const { css, statusBorderColor } = useCss(t);
@@ -1166,7 +1183,7 @@ export default function App() {
     return <HubScreen
       t={t} css={css}
       setHubScreen={setHubScreen}
-      setPerfil={setPerfil} setPerms={setPerms}
+      setPerfil={setPerfil} setPerms={setPerms} setDashCfg={setDashCfg}
       setBasesPermitidas={setBasesPermitidas} setBaseAtual={setBaseAtual}
       frotaUrl={import.meta.env.VITE_FROTA_URL || "http://localhost:3000"}
       handleLogout={handleLogout} showToast={showToast}
@@ -1305,7 +1322,7 @@ export default function App() {
   }
 
     const tabs = [
-    {k:"busca", l:"Buscar",
+    {k:"busca", l:"Buscar", perm:"buscar",
       ico:(a)=>svgIco(a,<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>)},
     {k:"dashboard", l:"Dashboard", perm:"dashboard",
       ico:(a)=>svgIco(a,<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>)},
@@ -1317,18 +1334,21 @@ export default function App() {
       ico:(a)=>svgIco(a,<><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></>)},
     {k:"descarga", l:"Carga/Descarga", perm:"descarga",
       ico:(a)=>svgIco(a,<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.04 8.73-5.04M12 22V12"/></>)},
-    {k:"ocorrencias", l:"Ocorrências",
+    {k:"ocorrencias", l:"Ocorrências", perm:"ocorrencias",
       ico:(a)=>svgIco(a,<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>)},
-    {k:"operacional", l:"Operac.", feat:"operacional",
+    {k:"operacional", l:"Operac.", perm:"operacional", feat:"operacional",
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>)},
-    {k:"gestao", l:"Gestão", feat:"gestao",
+    {k:"gestao", l:"Gestão", perm:"gestao", feat:"gestao",
       ico:(a)=>svgIco(a,<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></>)},
-    {k:"relatorios", l:"Relatórios",
+    {k:"relatorios", l:"Relatórios", perm:"relatorios",
       ico:(a)=>svgIco(a,<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></>)},
     {k:"cadastros", l:"Cadastros", perm:"cadastros",
       ico:(a)=>svgIco(a,<><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></>)},
   ].filter(tb => !tb.perm || perms[tb.perm] !== false)
-    .filter(tb => !tb.feat || perfilAtual.features[tb.feat] !== false);
+    .filter(tb => !tb.feat || perfilAtual.features[tb.feat] !== false)
+    // No consolidado só existem as telas que somam bem entre bases. As demais
+    // dependem de uma tabela só (edicao, importacao, filas por base).
+    .filter(tb => !modoConsolidado || tb.k === "dashboard" || tb.k === "financeiro");
 
   // RELATÓRIOS PDF — via criarMotoresRelatorio (src/relatorios/relatorioEngine.js)
   const { relHtmlBase, gerarRelatorioMotorista, gerarRelatorioGeral, gerarRelatorioDiarias, gerarRelatorioDescargas, gerarRelatorioOperacional } =
@@ -1392,7 +1412,7 @@ export default function App() {
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:210,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
-                        {basesPermitidas.map(b=>(
+                        {[...(basesPermitidas.length>1?[BASE_TODAS]:[]), ...basesPermitidas].map(b=>(
                           <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); }}
                             style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:12,cursor:"pointer"}}
                             onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.16)}
@@ -1454,7 +1474,7 @@ export default function App() {
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:200,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
-                        {basesPermitidas.map(b=>(
+                        {[...(basesPermitidas.length>1?[BASE_TODAS]:[]), ...basesPermitidas].map(b=>(
                           <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); }}
                             style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:12,cursor:"pointer"}}>
                             <span style={{width:7,height:7,borderRadius:"50%",background:b.id===baseAtual.id?t.ouro:t.borda,flexShrink:0}}/>
@@ -1572,6 +1592,7 @@ export default function App() {
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             setDashDrillModal,
             baseAtual, filtroTipoCarga, getConexao,
+            perms, dashCfg, setBaseAtual, basesPermitidas,
           }} />
         )}
 
@@ -1755,7 +1776,7 @@ export default function App() {
           <FinanceiroView ctx={{
             activeTab, baseAtual, DADOS, getConexao,
             t, css, DESIGN, isMobile, showToast, canFin, hexRgb,
-            usuarioLogado, perfil, hIco,
+            usuarioLogado, perfil, perms, hIco, basesPermitidas,
           }} />
         )}
 

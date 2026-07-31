@@ -2,15 +2,33 @@ import React from "react";
 import PainelFinanceiro from "./PainelFinanceiro.jsx";
 import Resultado from "./Resultado.jsx";
 import CreditosPendentes from "./CreditosPendentes.jsx";
+import ResumoFinanceiro from "./ResumoFinanceiro.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 
 const LS_TAB  = "co_fin_tab";
 
 export default function FinanceiroView({ ctx }) {
-  const { activeTab, t, DESIGN, css, baseAtual } = ctx;
+  const { activeTab, t, DESIGN, css, baseAtual, perms } = ctx;
+  // "Todas as bases": só o Resumo soma entre bases. As outras leem despesas e
+  // conferências de UMA base — juntar tudo ali daria número sem dono.
+  const consolidado = baseAtual?.consolidado === true;
   if (activeTab !== "financeiro") return null;
 
-  const [finTab, setFinTabRaw] = React.useState(() => localStorage.getItem(LS_TAB) || "painel");
+  // Créditos Pendentes é tela de cobrança (marcar cobrado, vincular crédito) —
+  // não entra pra quem só acompanha resultado. Chave ausente = visível, então
+  // ninguém que já usa perde a aba.
+  const podeCreditos = perms?.creditos !== false;
+  // Quem não tem Planilha não opera: abre no Resumo em vez do Painel, que é tela
+  // de trabalho. Vale pro perfil "gestor" e pra qualquer perm equivalente.
+  const soAcompanha = perms?.planilha === false;
+
+  const [finTab, setFinTabRaw] = React.useState(() => {
+    const salvo = localStorage.getItem(LS_TAB);
+    if (salvo === "creditos" && !podeCreditos) return soAcompanha ? "resumo" : "painel";
+    return salvo || (soAcompanha ? "resumo" : "painel");
+  });
+  // Trocar pro consolidado com o Painel aberto deixaria a tela vazia.
+  React.useEffect(() => { if (consolidado && finTab !== "resumo") setFinTabRaw("resumo"); }, [consolidado, finTab]);
 
   const setFinTab = (v) => { setFinTabRaw(v); localStorage.setItem(LS_TAB, v); };
 
@@ -72,12 +90,18 @@ export default function FinanceiroView({ ctx }) {
         flexWrap: "wrap",
         flexShrink: 0,
       }}>
-        {tabBtn("painel", "Painel Financeiro")}
-        {tabBtn("resultado", "Resultado")}
-        {tabBtn("creditos", "Créditos Pendentes")}
+        {tabBtn("resumo", "Resumo")}
+        {!consolidado && tabBtn("painel", "Painel Financeiro")}
+        {!consolidado && tabBtn("resultado", "Resultado")}
+        {!consolidado && podeCreditos && tabBtn("creditos", "Créditos Pendentes")}
+        {consolidado && (
+          <span style={{ fontSize: 10.5, color: t.txt2, marginLeft: 4 }}>
+            Painel, Resultado e Créditos são por base — escolha uma no topo.
+          </span>
+        )}
 
         {/* Segmentado Operacional/Faturamento — só na aba Resultado, na mesma faixa */}
-        {finTab === "resultado" && (
+        {finTab === "resultado" && !consolidado && (
           <div style={{ display: "flex", gap: 4, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}` }}>
             {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"]].map(([id, label]) => (
               <button key={id} onClick={() => setSegmento(id)}
@@ -96,13 +120,16 @@ export default function FinanceiroView({ ctx }) {
 
       {/* ── Conteúdo ── */}
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-        {finTab === "painel" && (
+        {finTab === "resumo" && (
+          <ResumoFinanceiro ctx={{ ...finCtx, activeTab: "resumo" }} />
+        )}
+        {finTab === "painel" && !consolidado && (
           <PainelFinanceiro ctx={{ ...finCtx, activeTab: "painel_financeiro" }} />
         )}
-        {finTab === "resultado" && (
+        {finTab === "resultado" && !consolidado && (
           <Resultado ctx={{ ...finCtx, activeTab: "resultado" }} />
         )}
-        {finTab === "creditos" && (
+        {finTab === "creditos" && podeCreditos && !consolidado && (
           <CreditosPendentes ctx={{ ...ctx, activeTab: "creditos_pendentes", filtroFilialInicial }} />
         )}
       </div>

@@ -1,7 +1,7 @@
 // ── supabaseAuth.js — cliente Supabase Auth (identidade única do Hub YFGroup) ──
 // Login só via Google. A sessão (JWT) é o que dá acesso ao Hub e o SSO da Frota.
 import { createClient } from "@supabase/supabase-js";
-import { ENV_SUPA_URL, ENV_SUPA_KEY } from "./constants.js";
+import { ENV_SUPA_URL, ENV_SUPA_KEY, PERMS_PADRAO } from "./constants.js";
 
 // Dominio ficticio -- nunca recebe email de verdade. Usuario de teste digita
 // so o "usuario"; aqui vira um email sintetico pro Supabase Auth aceitar.
@@ -91,7 +91,9 @@ export async function fetchMeuAcesso(slug) {
 // SOMENTE LEITURA (perfil "visualizador") a um modulo. Usa um client
 // temporario (nao o singleton) pra nao derrubar a sessao do admin logado.
 // Retorna { ok, error?, needsEmailConfirm? }.
-export async function createTestViewer({ username, password, moduloSlug, nomeExibicao, bases = [] }) {
+// `perfil`/`perms` passaram a ser parâmetro: antes todo usuário de teste nascia
+// "visualizador" fixo, então não dava pra criar um teste do painel do gestor.
+export async function createTestViewer({ username, password, moduloSlug, nomeExibicao, bases = [], perfil, perms }) {
   if (!ENV_SUPA_URL || !ENV_SUPA_KEY) return { ok: false, error: "Supabase nao configurado" };
   const email = testUserEmail(username);
   const tempClient = createClient(ENV_SUPA_URL, ENV_SUPA_KEY, {
@@ -106,9 +108,9 @@ export async function createTestViewer({ username, password, moduloSlug, nomeExi
   if (!userId) return { ok: false, error: "Supabase nao retornou o id do usuario" };
 
   const sb = getSupaAuth();
-  const role = moduloSlug === "controle_op" ? "viewer" : "viewer";
+  const role = "viewer";
   const config = moduloSlug === "controle_op"
-    ? { bases, perfil: "visualizador", perms: { financeiro:false, editar:false, importar:false, dashboard:true, diarias:true, descarga:true, planilha:true, config_db:false, usuarios:false, ocorrencias:false } }
+    ? { bases, perfil: perfil || "visualizador", perms: perms || PERMS_PADRAO[perfil || "visualizador"] }
     : {};
   const { error: errModulo } = await sb.from("hub_user_modulos").upsert(
     { user_id: userId, modulo_slug: moduloSlug, role, ativo: true, config },
@@ -136,6 +138,52 @@ export async function hubAdminSetStatus(userId, status) {
   const sb = getSupaAuth();
   if (!sb) return { ok: false, error: "Supabase nao configurado" };
   const { error } = await sb.rpc("hub_admin_set_status", { p_user_id: userId, p_status: status });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// ── Convites (migration 047) ────────────────────────────────────────────────
+// Pré-aprovação: o admin libera o e-mail ANTES de a pessoa existir. No primeiro
+// login com aquele e-mail o trigger aplica módulos/perfil/bases e ela já entra
+// direto nas telas — sem passar pela fila de "aguardando aprovação".
+// Se o e-mail já tiver conta, a RPC aplica na hora (retorna aplicado:true).
+export async function hubAdminConvidar({ email, nome, modulos }) {
+  const sb = getSupaAuth();
+  if (!sb) return { ok: false, error: "Supabase não configurado" };
+  const { data, error } = await sb.rpc("hub_admin_convidar", {
+    p_email: email, p_nome: nome || null, p_modulos: modulos || [],
+  });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, aplicado: !!data?.aplicado };
+}
+
+export async function hubAdminListarConvites() {
+  const sb = getSupaAuth();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc("hub_admin_listar_convites");
+  if (error) { console.error("[hub] listar_convites:", error.message); return []; }
+  return data ?? [];
+}
+
+export async function hubAdminCancelarConvite(email) {
+  const sb = getSupaAuth();
+  if (!sb) return { ok: false, error: "Supabase não configurado" };
+  const { error } = await sb.rpc("hub_admin_cancelar_convite", { p_email: email });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+// Grava o acesso de um módulo. Substitui o UPDATE direto em hub_user_modulos:
+// só esta RPC mantém co_usuarios (bases_permitidas/perfil) em dia, e é o
+// co_usuarios que o _validar_token_e_base consulta na hora de liberar leitura.
+// Editar base pela tela sem passar por aqui não mudava nada de verdade.
+export async function hubAdminSetAcesso({ userId, slug, role, config, ativo = true }) {
+  const sb = getSupaAuth();
+  if (!sb) return { ok: false, error: "Supabase não configurado" };
+  const { error } = await sb.rpc("hub_admin_set_acesso", {
+    p_user_id: userId, p_slug: slug, p_role: role || "viewer",
+    p_config: config || {}, p_ativo: ativo,
+  });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

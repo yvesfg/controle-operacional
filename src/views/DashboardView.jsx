@@ -9,6 +9,7 @@ import { Table }   from '../design-system/components/Table.jsx';
 import { Badge }   from '../design-system/components/Badge.jsx';
 import { parseData, clickable, ultimasViagens } from "../utils.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
+import { verKpi, verBloco } from "../dashboardConfig.js";
 
 export default function DashboardView({ ctx }) {
   const {
@@ -34,7 +35,22 @@ export default function DashboardView({ ctx }) {
     setBuscaInput, setBuscaTipo, setBuscaModalOpen,
     baseAtual, filtroTipoCarga, getConexao,
     setPlanilhaFiltroContratante,
+    perms, dashCfg, setBaseAtual, basesPermitidas,
   } = ctx;
+
+  // Painel por usuario (hub_user_modulos.config.dash) -- ver dashboardConfig.js.
+  // Chave ausente = visivel, entao quem nao tem config segue com o painel cheio.
+  const verK = (k) => verKpi(dashCfg, k);
+  const verB = (k) => verBloco(dashCfg, k);
+
+  // Navegacao so quando o usuario TEM a aba de destino. Um perfil sem Planilha
+  // (gestor) clicava num KPI e caia numa tela vazia -- e "Motoristas Ativos"
+  // apontava pra "motoristas", que nunca foi aba: e secao dentro de Cadastros.
+  const podeAba = (k) => !k || perms?.[k] !== false;
+  const nav = (tab) => (podeAba(tab) ? () => setActiveTab(tab) : undefined);
+  const navProps = (tab, antes) => (podeAba(tab)
+    ? clickable(() => { antes?.(); setActiveTab(tab); })
+    : {});
 
   // Indicador "Sem DT" — cargas reais que ficaram sem DT (ex.: sistema Suzano fora do ar).
   // Lê a fila controle_operacional_sem_dt (pendente+confirmado) SEM tocar no DADOS global.
@@ -207,21 +223,22 @@ export default function DashboardView({ ctx }) {
         const eficTrend    = mesesT.map(efic);
 
         const kpis = [
-          {label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",trend:dashHeroTab==="cte"?cteTrend:carregTrend,delta:pctDelta(dashHeroTab==="cte"?cteTrend:carregTrend),click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
-          {label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
+          {id:"hero",label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",trend:dashHeroTab==="cte"?cteTrend:carregTrend,delta:pctDelta(dashHeroTab==="cte"?cteTrend:carregTrend),click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
+          {id:"eficiencia",label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
           // "DTs Únicas" so faz sentido onde a ancora do registro E o DT (AVB ancora por codigo).
-          ...(perfil.ancora==="dt"?[{label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:()=>setActiveTab("planilha")}]:[]),
+          ...(perfil.ancora==="dt"?[{id:"dts",label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:nav("planilha")}]:[]),
           ...(temDoc?[
-            {label:"Cargas Efetivadas",value:String(efet.length),sub:`${pendN} pendente${pendN!==1?"s":""}`,color:t.verde},
-            {label:"Taxa Documental",value:`${taxaDoc}%`,sub:`${docOk}/${efet.length} doc completa`,color:docColor},
+            {id:"efetivadas",label:"Cargas Efetivadas",value:String(efet.length),sub:`${pendN} pendente${pendN!==1?"s":""}`,color:t.verde},
+            {id:"taxa_doc",label:"Taxa Documental",value:`${taxaDoc}%`,sub:`${docOk}/${efet.length} doc completa`,color:docColor},
           ]:[]),
           // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
-          ...(getPerfil(baseAtual?.id).features.semDt && semDtAguardando>0 ? [{label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:()=>setActiveTab("planilha")}]:[]),
-          {label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:()=>setActiveTab("motoristas")},
-          ...(canFin?[{label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
-          ...(canFin && perfil.features.diarias?[{label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:()=>setActiveTab("diarias")}]:[]),
-          {label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",danger:alertas.length>0,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
-        ];
+          ...(getPerfil(baseAtual?.id).features.semDt && semDtAguardando>0 ? [{id:"sem_dt",label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:nav("planilha")}]:[]),
+          {id:"motoristas",label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:nav("cadastros")},
+          ...(canFin?[{id:"cte_medio",label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
+          ...(canFin && perfil.features.diarias?[{id:"diarias",label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:nav("diarias")}]:[]),
+          {id:"alertas",label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",danger:alertas.length>0,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
+        ].filter(k=>verK(k.id));
+        if (!kpis.length) return null;
         return (
           <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
             {kpis.map((k,i)=>(
@@ -233,8 +250,66 @@ export default function DashboardView({ ctx }) {
         );
       })()}
 
+      {/* -- Comparativo por base (so no modo "Todas as bases") --
+           O consolidado sem esta tabela responde "quanto deu no total" mas nao
+           "qual base puxou pra baixo", que e a pergunta seguinte de quem olha. */}
+      {baseAtual?.consolidado && verB("por_base") && (()=>{
+        const porBase = {};
+        dashData.filtrado.forEach(r=>{
+          const id = r._baseId || "—";
+          if(!porBase[id]) porBase[id] = { id, label: r._baseLabel || id, n:0, cte:0, contrato:0 };
+          porBase[id].n++;
+          const c = parseFloat(r.vl_cte); if(!isNaN(c)) porBase[id].cte += c;
+          let vc = String(r.vl_contrato||"").replace(/[R$\s]/g,"");
+          if (vc.includes(",")) vc = vc.replace(/\./g,"").replace(",",".");
+          const k = parseFloat(vc); if(!isNaN(k)) porBase[id].contrato += k;
+        });
+        const linhas = Object.values(porBase).sort((a,b)=>b.n-a.n);
+        if(!linhas.length) return null;
+        const irParaBase = (id) => {
+          const b = (basesPermitidas||[]).find(x=>x.id===id);
+          if (b && setBaseAtual) setBaseAtual(b);
+        };
+        return (
+          <div style={{...css.card,padding:18,marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Por base</span>
+              <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>clique para abrir a base</span>
+            </div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:420}}>
+                <thead>
+                  <tr style={{color:t.txt2,fontSize:10,textTransform:"uppercase",letterSpacing:".05em"}}>
+                    <th style={{textAlign:"left",padding:"6px 4px"}}>Base</th>
+                    <th style={{textAlign:"right",padding:"6px 4px"}}>Cargas</th>
+                    {canFin && <th style={{textAlign:"right",padding:"6px 4px"}}>Receita CTE</th>}
+                    {canFin && <th style={{textAlign:"right",padding:"6px 4px"}}>Margem</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {linhas.map(l=>{
+                    const margem = l.cte - l.contrato;
+                    return (
+                      <tr key={l.id} {...clickable(()=>irParaBase(l.id))}
+                        style={{borderTop:`1px solid ${t.borda}`,cursor:"pointer"}}
+                        onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <td style={{padding:"8px 4px",color:t.txt,fontWeight:600}}>{l.label}</td>
+                        <td style={{padding:"8px 4px",textAlign:"right",color:t.txt}}>{l.n}</td>
+                        {canFin && <td style={{padding:"8px 4px",textAlign:"right",color:t.txt}}>{fmtMoeda(l.cte)}</td>}
+                        {canFin && <td style={{padding:"8px 4px",textAlign:"right",fontWeight:700,color:margem<0?t.danger:t.verde}}>{fmtMoeda(margem)}</td>}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Main Grid: Chart | Status DTs | Top Motoristas ── */}
-      {(()=>{
+      {(verB("grafico")||verB("status")||verB("motoristas"))&&(()=>{
         const motCount={};
         dashData.filtrado.forEach(r=>{if(r.nome){if(!motCount[r.nome])motCount[r.nome]={ct:0,placa:r.placa||""};motCount[r.nome].ct++;if(!motCount[r.nome].placa&&r.placa)motCount[r.nome].placa=r.placa;}});
         const topMot=Object.entries(motCount).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
@@ -243,7 +318,7 @@ export default function DashboardView({ ctx }) {
           <div style={{display:"flex",flexDirection:isMobile?"column":"row",alignItems:"stretch",gap:14,marginBottom:14}}>
 
             {/* ─ Area Chart ─ */}
-            <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"2 1 0"}}>
+            {verB("grafico")&&<div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"2 1 0"}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
                 <div>
                   <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Evolução do Período</div>
@@ -258,10 +333,10 @@ export default function DashboardView({ ctx }) {
                 </div>
               </div>
               <div style={{height:200}}><canvas ref={chartAreaRef} /></div>
-            </div>
+            </div>}
 
             {/* ─ Status DTs — barra horizontal stacked ─ */}
-            <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
+            {verB("status")&&<div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.ancora==="dt"?"Status das DTs":"Status das Cargas"}</span>
                 <span style={{fontFamily:DESIGN.fnt.h,fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-0.02em"}}>{totalStatusDash}</span>
@@ -269,12 +344,12 @@ export default function DashboardView({ ctx }) {
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
                 <div style={{height:10,background:t.bg,borderRadius:4,overflow:"hidden",display:"flex",gap:2}}>
                   {statusArrDash.map(([nome,val],i)=>(
-                    <div key={nome} title={nome} aria-label={`${nome}: ${val} (${totalStatusDash>0?((val/totalStatusDash)*100).toFixed(0):0}%)`} {...clickable(()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");})} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%",cursor:"pointer"}}/>
+                    <div key={nome} title={nome} aria-label={`${nome}: ${val} (${totalStatusDash>0?((val/totalStatusDash)*100).toFixed(0):0}%)`} {...navProps("planilha",()=>setPlanilhaFiltroStatus(nome))} style={{width:`${totalStatusDash>0?(val/totalStatusDash)*100:0}%`,background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],height:"100%",cursor:"pointer"}}/>
                   ))}
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {statusArrDash.map(([nome,val],i)=>(
-                    <div key={nome} {...clickable(()=>{setPlanilhaFiltroStatus(nome);setActiveTab("planilha");})} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",borderRadius:6,padding:"2px 4px",margin:"0 -4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                    <div key={nome} {...navProps("planilha",()=>setPlanilhaFiltroStatus(nome))} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",borderRadius:6,padding:"2px 4px",margin:"0 -4px",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                       <span style={{width:6,height:6,borderRadius:"50%",background:STATUS_COLOR_MAP[nome]||DONUT_LEGEND[i],flexShrink:0}}/>
                       <span style={{flex:1,fontSize:13,color:t.txt2}}>{nome}</span>
                       <span style={{fontFamily:DESIGN.fnt.b,fontVariantNumeric:"tabular-nums",fontSize:13,fontWeight:500}}>{val}</span>
@@ -283,10 +358,10 @@ export default function DashboardView({ ctx }) {
                   ))}
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* ─ Top Motoristas ─ */}
-            <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
+            {verB("motoristas")&&<div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
                 <button onClick={()=>setDashDrillModal({type:"motoristas",label:"Todos os Motoristas",regs:dashData.filtrado})} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
@@ -318,7 +393,7 @@ export default function DashboardView({ ctx }) {
                   </div>
                 );
               })}
-            </div>
+            </div>}
 
           </div>
         );
@@ -327,7 +402,7 @@ export default function DashboardView({ ctx }) {
       {/* -- Rastreamento Documental (feature rastreamentoDocumental) --
            Painel CTE/MDF/NF: nasceu na tela exclusiva da AVB e virou feature, porque
            qualquer operacao documental precisa disso. */}
-      {temDoc && (
+      {temDoc && verB("documental") && (
         <div style={{...css.card,padding:18,marginBottom:14,border:`1px solid ${hexRgb(docColor,.5)}`}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <div>
@@ -387,7 +462,7 @@ export default function DashboardView({ ctx }) {
       )}
 
       {/* -- Ranking por cliente/contratante (feature rankingCliente) -- */}
-      {perfil.features.rankingCliente && topCli.length > 0 && (
+      {perfil.features.rankingCliente && verB("ranking") && topCli.length > 0 && (
         <div style={{...css.card,padding:18,marginBottom:14}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.rotuloCliente}s</span>
@@ -441,7 +516,7 @@ export default function DashboardView({ ctx }) {
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:14,alignItems:"start"}}>
 
         {/* Registros Recentes */}
-        <div ref={dashRecCardRef} style={{display:"flex",flexDirection:"column",minHeight:0}}>
+        {verB("recentes")&&<div ref={dashRecCardRef} style={{display:"flex",flexDirection:"column",minHeight:0}}>
           <Table
             columns={recentesColumns}
             data={recentesDash.slice(0,dashRecentesN)}
@@ -455,14 +530,14 @@ export default function DashboardView({ ctx }) {
               </div>
             }
           />
-        </div>
+        </div>}
 
         {/* Painel Operacional: Diárias + Descargas + Top Pendentes */}
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
 
           <>
           {/* Diárias */}
-          <div style={{...css.card,padding:18}}>
+          {verB("diarias")&&<div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Diárias</span>
               <button onClick={()=>setActiveTab("diarias")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
@@ -502,10 +577,10 @@ export default function DashboardView({ ctx }) {
                 </div>
               );
             })()}
-          </div>
+          </div>}
 
           {/* Descargas */}
-          <div style={{...css.card,padding:18}}>
+          {verB("descargas")&&<div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Descargas</span>
               <button onClick={()=>setActiveTab("descarga")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
@@ -534,10 +609,10 @@ export default function DashboardView({ ctx }) {
                 ))}
               </div>
             )}
-          </div>
+          </div>}
 
           {/* Top Destinos */}
-          {(()=>{
+          {verB("destinos")&&(()=>{
             const destMap={};
             dashData.filtrado.forEach(r=>{
               if(!r.destino) return;
@@ -582,7 +657,7 @@ export default function DashboardView({ ctx }) {
           })()}
 
           {/* Top Diárias Pendentes */}
-          {canFin&&(()=>{
+          {canFin&&verB("diarias_pend")&&(()=>{
             const pendMap={};
             diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").forEach(({r})=>{
               if(!r.nome)return;

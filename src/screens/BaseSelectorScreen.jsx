@@ -1,6 +1,6 @@
 import React from "react";
 import Toast from "../components/Toast.jsx";
-import { hexRgb } from "../constants.js";
+import { hexRgb, BASE_TODAS } from "../constants.js";
 import loginLogo from "../../assets/images/logo-login.png";
 
 export default function BaseSelectorScreen({
@@ -23,6 +23,24 @@ export default function BaseSelectorScreen({
       <div style={{width:"100%",maxWidth:360,background:t.card,border:`1px solid ${t.borda}`,borderRadius:16,padding:"28px 28px 24px",display:"flex",flexDirection:"column",gap:12,animation:"loginFadeUp .4s ease-out",position:"relative",zIndex:1}}>
         <div style={{fontFamily:"var(--font-heading)",fontSize:16,fontWeight:700,letterSpacing:"-.02em",color:t.txt,marginBottom:4}}>Selecione a base de operação</div>
         <div style={{fontSize:12,color:t.txt2,marginBottom:8,lineHeight:1.5}}>Você tem acesso a múltiplas bases. Escolha com qual deseja trabalhar agora.</div>
+
+        {/* Consolidado: soma as bases num painel só (leitura). Fica em destaque
+            porque é o que quem acompanha resultado quer abrir primeiro. */}
+        <button
+          onClick={() => setBaseAtual(BASE_TODAS)}
+          style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:hexRgb(t.ouro,.10),border:`1px solid ${hexRgb(t.ouro,.45)}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",textAlign:"left",transition:"all .15s"}}
+          onMouseEnter={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.16)}}
+          onMouseLeave={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.10)}}
+        >
+          <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${hexRgb(t.ouro,.28)},${hexRgb(t.ouro,.12)})`,border:`1px solid ${hexRgb(t.ouro,.4)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </div>
+          <div>
+            <div style={{fontFamily:"var(--font-heading)",fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-.01em"}}>{BASE_TODAS.label}</div>
+            <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Painel somado das {basesPermitidas.length} bases · só leitura</div>
+          </div>
+        </button>
+
         {basesPermitidas.map(base => (
           <button
             key={base.id}
