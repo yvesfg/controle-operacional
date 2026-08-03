@@ -242,8 +242,14 @@ export function parseFreteXLSX(file, clientesMap) {
 }
 
 // ── Diff / import não-destrutivo (mesmo espírito de despesas.diffImport) ──
-// Chave de dedupe = cliente+categoria+ctrc+periodo_ref (== constraint UNIQUE da tabela).
-const chaveLinha = (l) => `${l.cliente}||${l.categoria}||${l.ctrc}||${l.periodo_ref}`;
+// Chave de dedupe = a MESMA da constraint UNIQUE da tabela: cnpj_remetente + categoria +
+// ctrc + periodo_ref. Era por `cliente` (nome) aqui e por cnpj no banco desde a migration
+// 045 — divergência que fazia o diff achar que a linha era nova e o insert bater na UNIQUE
+// (caso típico: devolução FOB, onde o cliente é o alvo e o CNPJ é o de quem devolveu).
+const chaveLinha = (l) => `${soDigitos(l.cnpj_remetente)}||${l.categoria}||${l.ctrc}||${l.periodo_ref}`;
+// Chave do DOCUMENTO (sem categoria): identifica o CTe independente de como ele foi
+// classificado. Usada pra proteger linha com categoria definida à mão (ver diffImportFrete).
+const chaveDoc = (l) => `${soDigitos(l.cnpj_remetente)}||${l.ctrc}||${l.periodo_ref}`;
 
 export async function listarPorPeriodo(conn, periodoRef, cliente) {
   if (_sessionToken) {
@@ -271,13 +277,27 @@ export async function listarPorPeriodos(conn, periodoRefs, cliente) {
 
 // Sem filtro de cliente: um arquivo pode trazer varias embarcadoras juntas agora
 // (ver parseFreteXLSX), entao o diff busca os periodos inteiros e a propria chave
-// (que ja inclui l.cliente) separa quem e quem.
+// (que ja inclui o CNPJ) separa quem e quem.
+//
+// PROTEÇÃO DE CATEGORIA MANUAL (migration 049): a planilha só sabe classificar em
+// frete/descarga/local/diaria. Se alguém já definiu a categoria daquele CTe à mão (ex.:
+// Bonificação, que NUNCA vem da planilha), reimportar criava uma SEGUNDA linha do mesmo
+// CTRC na categoria que a planilha sugere — o CTe "voltava a aparecer" e a correção batia
+// na UNIQUE. Agora o documento inteiro é pulado, e o diff reporta quantos foram protegidos.
 export async function diffImportFrete(conn, linhas) {
   const periodos = [...new Set(linhas.map(l => l.periodo_ref))];
   const existentes = periodos.length ? await listarPorPeriodos(conn, periodos) : [];
   const existKeys = new Set(existentes.map(chaveLinha));
-  const novas = linhas.filter(l => !existKeys.has(chaveLinha(l)));
-  return { novas, jaExistem: linhas.length - novas.length, existentesTotal: existentes.length };
+  const docsManuais = new Set(existentes.filter(l => l.categoria_manual).map(chaveDoc));
+  const protegidas = linhas.filter(l => !existKeys.has(chaveLinha(l)) && docsManuais.has(chaveDoc(l)));
+  const novas = linhas.filter(l => !existKeys.has(chaveLinha(l)) && !docsManuais.has(chaveDoc(l)));
+  return {
+    novas,
+    jaExistem: linhas.length - novas.length - protegidas.length,
+    protegidas: protegidas.length,
+    protegidasCtrcs: [...new Set(protegidas.map(l => l.ctrc))],
+    existentesTotal: existentes.length,
+  };
 }
 
 export async function inserirFrete(conn, linhas) {

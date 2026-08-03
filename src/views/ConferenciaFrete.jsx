@@ -6,7 +6,7 @@ import {
   decidir, estornarRevisao, listarTodosPeriodo, listarPorPeriodos, chaveDuplicidade,
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
-  editarFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
+  editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -59,6 +59,8 @@ const ICO_DEVOLUCAO = <><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9
 const ICO_SUBSTITUICAO = <><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>;
 const ICO_CANCELADO = <><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></>;
 const ICO_COMPLEMENTAR = <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>;
+// Categoria definida por uma pessoa (migration 049) — a planilha não sobrescreve.
+const ICO_CATEGORIA_MANUAL = <><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>;
 
 // Ícones dos KPIs por categoria — mesma linguagem do Dashboard (hIco, 24x24 stroke).
 const ICO_CATEGORIA = {
@@ -153,7 +155,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   };
 
   // Salva a edição admin: monta o patch, recalcula margem/flags e grava via RPC editar_frete.
-  const salvarEdicao = async (id) => {
+  const salvarEdicao = async (p) => {
     setSalvandoEdit(true);
     try {
       const nums = ["valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo"];
@@ -161,14 +163,37 @@ export default function ConferenciaFrete({ ctx, conn }) {
       nums.forEach((k) => { patch[k] = Number(patch[k]) || 0; });
       patch.is_devolucao = editForm.modalidade === "FOB";
       patch.modalidade = editForm.modalidade;
+      // Trocar a categoria é decisão humana: marca a linha pra reimportação não recriar
+      // o mesmo CTe na categoria que a planilha sugere (migration 049).
+      if (editForm.categoria !== p.categoria) patch.categoria_manual = true;
       Object.assign(patch, recalcularLinhaEditada(patch)); // margem_lucro + flags
-      await editarFrete(conn, id, patch);
+      await editarFrete(conn, p.id, patch);
       showToast?.("CTe atualizado.", "ok");
       setEditando(false); setEditForm(null);
       setRevisarModal({ open: false, item: null });
       await carregar(); // recarrega listas/resumos do servidor (evita estado parcial)
-    } catch (e) { showToast?.("Erro ao salvar edição: " + e.message, "erro"); }
+    } catch (e) {
+      // 23505 = UNIQUE (cnpj_remetente, categoria, ctrc, periodo_ref). Acontece quando já
+      // existe uma linha desse CTe na categoria escolhida — normalmente a linha ORIGINAL,
+      // e a que está sendo editada é uma cópia criada por reimportação.
+      const dup = /23505|duplicate key/i.test(e.message || "");
+      showToast?.(dup
+        ? `Já existe um CTe ${editForm.ctrc} como ${CATEGORIA_LABEL[editForm.categoria] || editForm.categoria} em ${mesLabel(p.periodo_ref)}. Esta linha aqui é uma cópia criada por reimportação — use "Excluir CTe" nela em vez de duplicar a categoria.`
+        : "Erro ao salvar edição: " + e.message, "erro");
+    }
     finally { setSalvandoEdit(false); }
+  };
+
+  // Exclusão de uma linha de CTe (admin) — existia no módulo mas não tinha botão na tela.
+  // Serve pra limpar a cópia que a reimportação criou antes da proteção de categoria manual.
+  const onExcluir = async (p) => {
+    if (!window.confirm(`Excluir a linha do CTRC ${p.ctrc} (${CATEGORIA_LABEL[p.categoria] || p.categoria} · ${mesLabel(p.periodo_ref)})?\n\nIsso apaga só ESTA linha da conferência — a planilha bruta e as outras linhas do mesmo CTRC continuam como estão.`)) return;
+    try {
+      await excluirFrete(conn, p.id);
+      showToast?.(`Linha do CTRC ${p.ctrc} excluída.`, "ok");
+      setRevisarModal({ open: false, item: null });
+      await carregar();
+    } catch (e) { showToast?.("Erro ao excluir: " + e.message, "erro"); }
   };
 
   const carregar = React.useCallback(async () => {
@@ -320,14 +345,18 @@ export default function ConferenciaFrete({ ctx, conn }) {
     if (!preview) return;
     setImporting(true);
     try {
-      const { novas, jaExistem } = await diffImportFrete(conn, preview.linhas);
+      const { novas, jaExistem, protegidas, protegidasCtrcs } = await diffImportFrete(conn, preview.linhas);
+      // Categoria definida à mão não é recriada pela planilha (migration 049) — avisa quais.
+      const avisoProt = protegidas
+        ? ` — ${protegidas} mantiveram a categoria definida à mão (CTRC ${protegidasCtrcs.slice(0, 4).join(", ")}${protegidasCtrcs.length > 4 ? "…" : ""})`
+        : "";
       if (novas.length === 0) {
-        showToast?.("Nada novo — todos os CTRCs desse período já estavam importados.", "ok");
+        showToast?.(`Nada novo — todos os CTRCs desse período já estavam importados${avisoProt}.`, "ok");
         setPreview(null); return;
       }
       await inserirFrete(conn, novas);
       const nomesClientes = [...new Set(novas.map(l => l.cliente))];
-      showToast?.(`${novas.length} registro(s) novo(s) importado(s) (${nomesClientes.join(", ")})${jaExistem ? ` — ${jaExistem} já existiam` : ""}.`, "ok");
+      showToast?.(`${novas.length} registro(s) novo(s) importado(s) (${nomesClientes.join(", ")})${jaExistem ? ` — ${jaExistem} já existiam` : ""}${avisoProt}.`, "ok");
       setPreview(null);
       setPeriodoRef(preview.periodoRef);
       await carregar();
@@ -1272,6 +1301,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
               <div style={{ marginBottom: 12 }}>
                 {p.is_devolucao && badge(ICO_DEVOLUCAO, "DEVOLUÇÃO · FOB", t.azul)}
+                {p.categoria_manual && badge(ICO_CATEGORIA_MANUAL, "CATEGORIA DEFINIDA À MÃO", t.verde)}
                 {badgesCiclo(p)}
                 {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
@@ -1440,6 +1470,37 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
               {/* Duplicidade: dizer COM QUAL CTe é o conflito já aqui — antes o modal só
                   mostrava o badge e o botão, sem identificar o par. */}
+              {/* MESMO CTRC, mesmo mês, categoria diferente = quase sempre cópia criada por
+                  reimportação depois de alguém ter definido a categoria à mão (o caso do
+                  CTRC 2591 lançado como Bonificação e reimportado como Local). */}
+              {(() => {
+                const copias = universoLinhas.filter((l) => l.id !== p.id
+                  && String(l.ctrc) === String(p.ctrc) && l.periodo_ref === p.periodo_ref
+                  && l.cnpj_remetente === p.cnpj_remetente && l.categoria !== p.categoria);
+                if (!copias.length) return null;
+                return (
+                  <div style={{ marginTop: 12, borderRadius: 10, border: `1px solid ${hexRgb(t.warn, .35)}`, background: hexRgb(t.warn, .08), padding: "10px 12px" }}>
+                    <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5 }}>
+                      O <b>mesmo CTRC {p.ctrc}</b> também está lançado em {copias.length === 1 ? "outra categoria" : "outras categorias"} neste mês.
+                      Uma das linhas costuma ser cópia criada por reimportação — abra e exclua a que estiver errada.
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 9 }}>
+                      {copias.map((o) => (
+                        <button key={o.id} onClick={() => abrirRevisar(o)}
+                          style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", textAlign: "left", width: "100%",
+                            fontSize: 11.5, padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                            border: `1px solid ${hexRgb(t.warn, .35)}`, background: t.card, color: t.txt }}>
+                          <b>{CATEGORIA_LABEL[o.categoria] || o.categoria}</b>
+                          {o.categoria_manual && <span style={{ fontSize: 9.5, fontWeight: 800, padding: "2px 6px", borderRadius: 20, background: hexRgb(t.verde, .15), color: t.verde }}>DEFINIDA À MÃO</span>}
+                          <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontWeight: 700, color: t.ouro }}>{money(o.saldo)}</span>
+                          <span style={{ color: t.azul, fontWeight: 700, fontSize: 10.5 }}>abrir ›</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Aparece quando ESTE CTe está marcado, ou quando o par dele está — assim os
                   dois lados do conflito mostram a mesma informação. Não inventa duplicidade
                   nova onde a importação não marcou nada. */}
@@ -1552,7 +1613,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
                       Cancelar
                     </button>
-                    <button onClick={() => salvarEdicao(p.id)} disabled={salvandoEdit}
+                    <button onClick={() => salvarEdicao(p)} disabled={salvandoEdit}
                       style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: salvandoEdit ? "not-allowed" : "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvandoEdit ? .6 : 1 }}>
                       {salvandoEdit ? "Salvando..." : "Salvar alterações"}
                     </button>
@@ -1567,6 +1628,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       <button onClick={() => abrirEdicao(p)} title="Corrigir este CTe (só admin)"
                         style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.azul}`, background: "transparent", color: t.azul }}>
                         ✎ Editar
+                      </button>
+                    )}
+                    {isAdmin && !sinalizando && !revisando && (
+                      <button onClick={() => onExcluir(p)} title="Apaga só ESTA linha da conferência (ex.: cópia criada por reimportação)"
+                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
+                        🗑 Excluir CTe
                       </button>
                     )}
                     {p.decisao_manual && !sinalizando && !revisando && (
