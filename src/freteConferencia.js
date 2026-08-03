@@ -375,10 +375,13 @@ export async function editarFrete(conn, id, patch) {
 // de outro CTRC, ou como cancelado — e, na substituição, derruba o antigo pra fora dos
 // somatórios. tipo = 'substituto' | 'complementar' | 'cancelado' | 'normal' (desfaz).
 // O RPC faz os dois lados numa transação; devolve as linhas afetadas.
-export async function vincularCte(conn, id, tipo, ctrcRef, por) {
+// idRef (opcional) = id do CTe par, quando a tela já sabe qual é (grupo de duplicidade).
+// Tem precedência sobre o número: o par pode estar em outra categoria, e o mesmo número de
+// CTRC pode existir em mais de uma — casar só pelo número derrubaria a linha errada.
+export async function vincularCte(conn, id, tipo, ctrcRef, por, idRef) {
   if (_sessionToken) {
     return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/vincular_cte",
-      { p_token: _sessionToken, p_id: id, p_tipo: tipo, p_ctrc_ref: ctrcRef || null, p_por: por || null }));
+      { p_token: _sessionToken, p_id: id, p_tipo: tipo, p_ctrc_ref: ctrcRef || null, p_por: por || null, p_id_ref: idRef || null }));
   }
   // Fallback anon (pré go-live): só o lado desta linha — o par é recalculado no próximo load.
   const body = tipo === "normal"

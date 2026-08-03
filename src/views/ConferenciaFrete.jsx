@@ -87,7 +87,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [preview, setPreview] = React.useState(null); // { periodoRef, periodosEncontrados, linhas, naoClassificadas, desconhecidos, resumo }
   const [formsDesconhecidos, setFormsDesconhecidos] = React.useState({}); // { [cnpj]: { nome, base_id, mapEmpresa: {codigo: categoria} } }
   const [cadastrando, setCadastrando] = React.useState(null); // cnpj em processo de cadastro (spinner do botão)
-  const [dupModal, setDupModal] = React.useState({ open: false, chave: null });
+  const [dupModal, setDupModal] = React.useState({ open: false, chave: null, origemId: null }); // origemId = CTe de onde o grupo foi aberto (marcado como "ESTE")
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
   const [sinalObs, setSinalObs] = React.useState("");
@@ -102,7 +102,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [salvandoVinc, setSalvandoVinc] = React.useState(false);
 
   useModalEsc(!!preview, () => setPreview(null));
-  useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null }));
+  useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null, origemId: null }));
   useModalEsc(revisarModal.open, () => setRevisarModal({ open: false, item: null }));
 
   const abrirRevisar = (p) => {
@@ -116,16 +116,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Vínculo de ciclo de vida: marca este CTe como substituto/complementar de outro CTRC,
   // como cancelado, ou desfaz ('normal'). Na substituição o RPC também derruba o CTe antigo
   // (status_doc='substituido'), então recarrega tudo em vez de remendar o estado local.
-  const onVincular = async (p, tipo, ctrcRef) => {
+  const onVincular = async (p, tipo, ctrcRef, idRef) => {
     setSalvandoVinc(true);
     try {
-      await vincularCte(conn, p.id, tipo, ctrcRef, usuarioLogado);
+      await vincularCte(conn, p.id, tipo, ctrcRef, usuarioLogado, idRef);
       showToast?.(tipo === "normal" ? "Vínculo desfeito." :
         tipo === "cancelado" ? `CTRC ${p.ctrc} marcado como cancelado — fora dos totais.` :
         tipo === "substituto" ? `CTRC ${p.ctrc} substitui o ${ctrcRef} — o antigo saiu dos totais.` :
         `CTRC ${p.ctrc} marcado como complementar do ${ctrcRef} — os dois continuam somando.`, "ok");
       setVincTipo(null); setVincCtrc("");
       setRevisarModal({ open: false, item: null });
+      setDupModal({ open: false, chave: null, origemId: null });
       await carregar();
     } catch (e) { showToast?.("Erro ao vincular CTe: " + e.message, "erro"); }
     finally { setSalvandoVinc(false); }
@@ -539,16 +540,33 @@ export default function ConferenciaFrete({ ctx, conn }) {
     </span>
   );
 
-  const grupoDup = dupModal.open ? pendentes.filter(p => p.dup_grupo_chave === dupModal.chave) : [];
+  // Universo de linhas conhecidas: mês exibido + os 2 meses já carregados pro comparativo.
+  // Usado pelo grupo de duplicidade e pelos candidatos a vínculo — os dois precisam
+  // enxergar o PAR, que muitas vezes está fora da fila de pendentes ou de outro mês.
+  const universoLinhas = React.useMemo(() => {
+    const porId = new Map();
+    [...linhasPeriodo, ...Object.values(linhasComparativo).flat(), ...pendentes, ...sinalizados]
+      .forEach((l) => { if (l?.id && !porId.has(l.id)) porId.set(l.id, l); });
+    return [...porId.values()];
+  }, [linhasPeriodo, linhasComparativo, pendentes, sinalizados]);
+
+  // BUG corrigido: o grupo era montado só a partir de `pendentes`, então o outro CTe do par
+  // (já revisado, ou de mês/categoria fora da fila) sumia e o modal mostrava 1 item só —
+  // sem como saber COM QUAL CTe era a duplicidade.
+  const grupoDup = React.useMemo(() => {
+    if (!dupModal.open || !dupModal.chave) return [];
+    return universoLinhas
+      .filter((l) => l.dup_grupo_chave === dupModal.chave)
+      .sort((a, b) => String(a.data_emissao || "").localeCompare(String(b.data_emissao || "")) || String(a.ctrc).localeCompare(String(b.ctrc)));
+  }, [dupModal.open, dupModal.chave, universoLinhas]);
 
   // Candidatos a par do CTe aberto no modal (substituição/complementar). Procura no mês
   // exibido + nos 2 meses já carregados pro comparativo — a substituição costuma cruzar
   // o mês (CTe de junho refeito em julho).
   const candidatosDoCTe = React.useMemo(() => {
     if (!revisarModal.open || !revisarModal.item) return [];
-    const universo = [...linhasPeriodo, ...Object.values(linhasComparativo).flat()];
-    return candidatosVinculo(revisarModal.item, universo);
-  }, [revisarModal.open, revisarModal.item, linhasPeriodo, linhasComparativo]);
+    return candidatosVinculo(revisarModal.item, universoLinhas);
+  }, [revisarModal.open, revisarModal.item, universoLinhas]);
 
   // Controles (mês + filial + ações) — vão pra faixa única do FinanceiroView via portal.
   const controles = (
@@ -1384,12 +1402,32 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 );
               })()}
 
-              {p.flag_duplicidade && (
-                <button onClick={() => { setDupModal({ open: true, chave: p.dup_grupo_chave }); fechar(); }}
-                  style={{ marginTop: 12, width: "100%", fontSize: 11.5, fontWeight: 700, padding: "8px 10px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.danger}`, background: "transparent", color: t.danger }}>
-                  Ver grupo de duplicidade
-                </button>
-              )}
+              {/* Duplicidade: dizer COM QUAL CTe é o conflito já aqui — antes o modal só
+                  mostrava o badge e o botão, sem identificar o par. */}
+              {p.flag_duplicidade && (() => {
+                const pares = universoLinhas.filter((l) => l.dup_grupo_chave === p.dup_grupo_chave && l.id !== p.id);
+                return (
+                  <div style={{ marginTop: 12, borderRadius: 10, border: `1px solid ${hexRgb(t.danger, .3)}`, background: hexRgb(t.danger, .07), padding: "10px 12px" }}>
+                    <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5 }}>
+                      {pares.length ? (<>
+                        Mesma placa, valor NF, peso, trecho e total do frete {pares.length === 1 ? "do CTRC" : "dos CTRCs"}{" "}
+                        {pares.map((o, i) => (
+                          <span key={o.id}>{i > 0 ? ", " : ""}<b>{o.ctrc}</b> ({CATEGORIA_LABEL[o.categoria] || o.categoria})</span>
+                        ))}. Pode ser o mesmo transporte lançado 2x — ou um CTe que substituiu o outro.
+                      </>) : (<>
+                        O par desta duplicidade não está nos meses carregados ({mesLabel(periodoRef)} e os 2 anteriores).
+                        Troque o mês pra comparar.
+                      </>)}
+                    </div>
+                    {pares.length > 0 && (
+                      <button onClick={() => { setDupModal({ open: true, chave: p.dup_grupo_chave, origemId: p.id }); fechar(); }}
+                        style={{ marginTop: 9, width: "100%", fontSize: 11.5, fontWeight: 700, padding: "8px 10px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.danger}`, background: "transparent", color: t.danger }}>
+                        Comparar os {pares.length + 1} CTes lado a lado
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Regra da frota Rodorrica: contrato = CTe − R$ 300 fixos, então margem baixa é
                   esperada. A planilha não diz de quem é a frota — quem revisa confirma aqui. */}
@@ -1516,42 +1554,125 @@ export default function ConferenciaFrete({ ctx, conn }) {
         );
       })()}
 
-      {/* Modal: grupo de duplicidade */}
-      {dupModal.open && (
-        <div onClick={() => setDupModal({ open: false, chave: null })} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 560, width: "90vw", maxHeight: "80vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
-            <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Possível duplicidade de valor</div>
-            <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12 }}>
-              Mesma placa + valor NF + peso + trecho + total do frete em CTRCs diferentes — pode ser o mesmo transporte lançado 2x em categorias diferentes.
+      {/* Modal: grupo de duplicidade — comparação lado a lado.
+          Antes listava só os itens da fila (quase sempre 1) e mostrava 3 valores, sem dizer
+          qual documento era nem no que os dois diferiam. Agora: o que é IGUAL (a chave que
+          disparou o alerta) em cima, e os CTes em colunas com TODOS os campos, destacando em
+          dourado o que difere — é o que dá certeza se é duplicidade, substituição ou 2 fretes. */}
+      {dupModal.open && (() => {
+        const g = grupoDup;
+        const base = g[0] || {};
+        const difere = (k) => new Set(g.map((x) => String(x[k] ?? ""))).size > 1;
+        const CAMPOS = [
+          ["Categoria", "categoria", (d) => CATEGORIA_LABEL[d.categoria] || d.categoria],
+          ["Data emissão", "data_emissao", (d) => d.data_emissao ? d.data_emissao.split("-").reverse().join("/") : "—"],
+          ["Competência", "periodo_ref", (d) => mesLabel(d.periodo_ref)],
+          ["Empresa (cód.)", "empresa_cod", (d) => d.empresa_cod || "—"],
+          ["NFS", "nfs", (d) => d.nfs || "—"],
+          ["Nº Manifesto", "numero_manifesto", (d) => d.numero_manifesto || "—"],
+          ["Nº Contrato", "numero_contrato", (d) => d.numero_contrato || "—"],
+          ["Frete Peso", "frete_peso", (d) => money(d.frete_peso)],
+          ["Contrato", "valor_contrato_frete", (d) => money(d.valor_contrato_frete)],
+          ["Saldo", "saldo", (d) => money(d.saldo)],
+          ["Margem", "margem_lucro", (d) => Number(d.margem_lucro).toFixed(2) + "%"],
+        ];
+        const IGUAIS = [
+          ["Placa", base.placa || "—"], ["Trecho", base.trecho || "—"],
+          ["Valor NF", money(base.valor_nf)], ["Peso NF", pesoFmt(base.peso_nf)],
+          ["Total do Frete", money(base.total_frete)],
+        ];
+        return (
+        <div onClick={() => setDupModal({ open: false, chave: null, origemId: null })} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 340, maxWidth: 760, width: "92vw", maxHeight: "88vh", overflowY: "auto", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>
+              Possível duplicidade de valor · {g.length} CTe(s){base.cliente ? ` · ${base.cliente}` : ""}
             </div>
-            {grupoDup.map((d) => (
-              <div key={d.id} style={{ padding: "10px 8px", borderBottom: `1px solid ${hexRgb(t.borda, .33)}`, fontSize: 12 }}>
-                <div style={{ fontWeight: 700, color: t.txt }}>CTRC {d.ctrc} · {CATEGORIA_LABEL[d.categoria]}</div>
-                <div style={{ fontSize: 10.5, color: t.txt, fontWeight: 700, marginTop: 1 }}>{userChip(d.nome_usuario || "sem usuário na planilha", 15)}</div>
-                <div style={{ color: t.txt2, fontSize: 11, marginTop: 2 }}>
-                  contrato {money(d.valor_contrato_frete)} · saldo {money(d.saldo)} · margem {Number(d.margem_lucro).toFixed(2)}%
-                </div>
-                <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                  <button onClick={() => onDecidir(d.id, "confirmar_ambas", "confirmado — não é duplicidade real")}
-                    style={{ fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 7, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                    Confirmar (são 2 lançamentos reais)
-                  </button>
-                  <button onClick={() => onDecidir(d.id, "ignorar_duplicidade", "marcado como lançamento errado")}
-                    style={{ fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 7, cursor: "pointer", border: "none", background: t.danger, color: "#fff" }}>
-                    É duplicidade — ignorar este
-                  </button>
-                </div>
+            <div style={{ fontSize: 11, color: t.txt2, marginBottom: 12, lineHeight: 1.5 }}>
+              Estes CTRCs têm <b style={{ color: t.txt }}>placa, valor NF, peso, trecho e total do frete idênticos</b>.
+              Pode ser o mesmo transporte lançado 2x, um CTe que substituiu o outro, ou 2 fretes reais iguais.
+              Em <b style={{ color: t.ouro }}>dourado</b>, o que difere entre eles.
+            </div>
+
+            {/* O que é igual — a chave que disparou o alerta */}
+            <div style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.borda, .5)}`, background: t.card2, padding: "10px 12px", marginBottom: 14 }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--text3)", marginBottom: 6 }}>Igual em todos</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
+                {IGUAIS.map(([l, v]) => (
+                  <span key={l} style={{ fontSize: 11.5, color: t.txt2 }}>{l}: <b style={{ color: t.txt }}>{v}</b></span>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Um card por CTe, lado a lado */}
+            <div style={{ display: "grid", gridTemplateColumns: isMobile || g.length === 1 ? "1fr" : "repeat(2, minmax(0,1fr))", gap: 12 }}>
+              {g.map((d) => {
+                const outro = g.length === 2 ? g.find((x) => x.id !== d.id) : null;
+                const esteId = d.id === dupModal.origemId;
+                return (
+                  <div key={d.id} style={{ borderRadius: 12, border: `1.5px solid ${esteId ? hexRgb(t.ouro, .5) : t.borda}`, background: t.bg, padding: "12px 13px", opacity: ehAtivo(d) ? 1 : .55 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: 800, fontSize: 13, color: t.txt }}>CTRC {d.ctrc}</span>
+                      {esteId && <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 20, background: hexRgb(t.ouro, .15), color: t.ouro }}>ESTE</span>}
+                    </div>
+                    <div style={{ fontSize: 10.5, color: t.txt, fontWeight: 700, marginBottom: 7 }}>{userChip(d.nome_usuario || "sem usuário na planilha", 15)}</div>
+                    <div style={{ marginBottom: 7 }}>
+                      {d.is_devolucao && badge(ICO_DEVOLUCAO, "FOB", t.azul)}
+                      {badgesCiclo(d)}
+                      {d.decisao_manual && (
+                        <span style={{ fontSize: 9.5, fontWeight: 700, color: t.verde }}>✓ {DECISAO_LABEL[d.decisao_manual] || d.decisao_manual}</span>
+                      )}
+                    </div>
+
+                    {CAMPOS.map(([label, k, fmt]) => (
+                      <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 11.5, padding: "4px 0", borderBottom: `1px solid ${hexRgb(t.borda, .18)}` }}>
+                        <span style={{ color: t.txt2 }}>{label}</span>
+                        <span style={{ textAlign: "right", fontWeight: difere(k) ? 800 : 600, color: difere(k) ? t.ouro : t.txt }}>{fmt(d)}</span>
+                      </div>
+                    ))}
+
+                    <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                      <button onClick={() => { setDupModal({ open: false, chave: null, origemId: null }); abrirRevisar(d); }}
+                        title="Abrir o CTe completo (editar, sinalizar, vincular)"
+                        style={{ fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 7, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                        Abrir CTe
+                      </button>
+                      <button onClick={() => onDecidir(d.id, "confirmar_ambas", "confirmado — não é duplicidade real")}
+                        title="Os dois lançamentos existem de verdade — tira este da fila sem mexer nos valores"
+                        style={{ fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 7, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                        São 2 lançamentos reais
+                      </button>
+                      {outro && ehAtivo(d) && ehAtivo(outro) && (
+                        <button onClick={() => onVincular(d, "substituto", outro.ctrc, outro.id)} disabled={salvandoVinc}
+                          title={`Marca este como substituto do CTRC ${outro.ctrc} — o outro sai do faturamento`}
+                          style={{ fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 7, cursor: "pointer", border: `1px solid ${hexRgb(t.azul, .5)}`, background: "transparent", color: t.azul }}>
+                          Este substitui o {outro.ctrc}
+                        </button>
+                      )}
+                      <button onClick={() => onDecidir(d.id, "ignorar_duplicidade", "marcado como lançamento errado")}
+                        title="Marca este como lançamento errado na fila (não exclui a linha nem muda os totais)"
+                        style={{ fontSize: 10.5, fontWeight: 700, padding: "5px 9px", borderRadius: 7, cursor: "pointer", border: "none", background: t.danger, color: "#fff" }}>
+                        É duplicidade — este está errado
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 12, lineHeight: 1.45 }}>
+              “É duplicidade” só marca a linha na fila (nada sai dos totais). Se um CTe realmente
+              anulou o outro, use <b style={{ color: t.azul }}>Este substitui o …</b> — aí o antigo sai do faturamento.
+            </div>
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-              <button onClick={() => setDupModal({ open: false, chave: null })}
+              <button onClick={() => setDupModal({ open: false, chave: null, origemId: null })}
                 style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
                 Fechar
               </button>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

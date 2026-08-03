@@ -44,15 +44,25 @@ CREATE INDEX IF NOT EXISTS idx_frete_conf_ctrc_par ON frete_conferencia (cnpj_re
 -- Autz = sessão válida (mesmo nível de patch_frete/decidir — é decisão de conferência,
 -- não é edição de CTe, que é só admin via editar_frete).
 -- p_tipo: 'substituto' | 'complementar' | 'cancelado' | 'normal' (desfaz o vínculo).
+-- p_id_ref (opcional): id do par, quando o app JÁ sabe qual é a linha (ex.: escolhido no
+--   grupo de duplicidade). Tem precedência sobre p_ctrc_ref — necessário porque o par pode
+--   estar em OUTRA categoria (o caso clássico: mesma carga lançada como Descarga e Local) e
+--   o mesmo número de CTRC pode existir em mais de uma categoria.
 -- Devolve as linhas afetadas (a própria + o par, quando existe).
 CREATE OR REPLACE FUNCTION public.vincular_cte(p_token text, p_id uuid, p_tipo text,
-                                               p_ctrc_ref text DEFAULT NULL, p_por text DEFAULT NULL)
+                                               p_ctrc_ref text DEFAULT NULL, p_por text DEFAULT NULL,
+                                               p_id_ref uuid DEFAULT NULL)
  RETURNS SETOF json LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE v_row frete_conferencia; v_ref text;
 BEGIN
   PERFORM _validar_token_e_base(p_token, null);
   SELECT * INTO v_row FROM frete_conferencia WHERE id = p_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'CTe não encontrado' USING ERRCODE='P0001'; END IF;
+  -- Par indicado por id: o número do CTRC vem dele (o app não precisa mandar os dois).
+  IF p_id_ref IS NOT NULL THEN
+    SELECT ctrc INTO p_ctrc_ref FROM frete_conferencia WHERE id = p_id_ref;
+    IF p_ctrc_ref IS NULL THEN RAISE EXCEPTION 'CTe de origem não encontrado' USING ERRCODE='P0001'; END IF;
+  END IF;
   IF p_tipo NOT IN ('substituto','complementar','cancelado','normal') THEN
     RAISE EXCEPTION 'Tipo de vínculo inválido: %', p_tipo USING ERRCODE='P0001';
   END IF;
@@ -62,11 +72,13 @@ BEGIN
   v_ref := nullif(btrim(p_ctrc_ref), '');
 
   -- Desfaz o vínculo anterior desta linha: se ela substituía alguém, aquele volta a 'ativo'.
+  -- Acha o antigo pelo vínculo REVERSO (ctrc_ref apontando pra cá), não pela categoria — o
+  -- par pode ser de outra categoria.
   IF v_row.tipo_doc = 'substituto' AND v_row.ctrc_ref IS NOT NULL THEN
     UPDATE frete_conferencia
        SET status_doc = 'ativo', ctrc_ref = NULL, vinculo_em = NULL, vinculo_por = NULL, atualizado_em = now()
-     WHERE cnpj_remetente = v_row.cnpj_remetente AND categoria = v_row.categoria
-       AND ctrc = v_row.ctrc_ref AND status_doc = 'substituido';
+     WHERE cnpj_remetente = v_row.cnpj_remetente AND ctrc = v_row.ctrc_ref
+       AND ctrc_ref = v_row.ctrc AND status_doc = 'substituido';
   END IF;
 
   IF p_tipo = 'normal' THEN
@@ -86,18 +98,22 @@ BEGIN
     IF p_tipo = 'substituto' THEN
       UPDATE frete_conferencia
          SET status_doc='substituido', ctrc_ref=v_row.ctrc, vinculo_em=now(), vinculo_por=p_por, atualizado_em=now()
-       WHERE cnpj_remetente = v_row.cnpj_remetente AND categoria = v_row.categoria
-         AND ctrc = v_ref AND id <> p_id;
+       WHERE id <> p_id AND (
+              (p_id_ref IS NOT NULL AND id = p_id_ref)
+           -- Sem id do par: casa por número dentro da MESMA categoria (o mesmo CTRC pode
+           -- existir em categorias diferentes; sem esse recorte derrubaria as duas linhas).
+           OR (p_id_ref IS NULL AND cnpj_remetente = v_row.cnpj_remetente
+               AND categoria = v_row.categoria AND ctrc = v_ref));
       -- Se o CTe antigo não estiver na base (mês não importado), nada acontece aqui —
       -- o número fica registrado em ctrc_ref e o vínculo se completa na próxima importação.
     END IF;
   END IF;
 
   RETURN QUERY SELECT row_to_json(f) FROM frete_conferencia f
-   WHERE f.id = p_id
-      OR (f.cnpj_remetente = v_row.cnpj_remetente AND f.categoria = v_row.categoria
+   WHERE f.id = p_id OR f.id = p_id_ref
+      OR (f.cnpj_remetente = v_row.cnpj_remetente
           AND f.ctrc IN (coalesce(v_ref, ''), coalesce(v_row.ctrc_ref, '')));
 END; $$;
 
-REVOKE ALL ON FUNCTION public.vincular_cte(text,uuid,text,text,text) FROM public;
-GRANT EXECUTE ON FUNCTION public.vincular_cte(text,uuid,text,text,text) TO anon;
+REVOKE ALL ON FUNCTION public.vincular_cte(text,uuid,text,text,text,uuid) FROM public;
+GRANT EXECUTE ON FUNCTION public.vincular_cte(text,uuid,text,text,text,uuid) TO anon;
