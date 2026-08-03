@@ -164,6 +164,19 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-08-03", sessao: "Sessao 51",
+    itens: [
+      "FIX (pedido Yves) · Card 'Por cliente' da Conferencia de Faturamento: a coluna Frete tinha 96px e 'R$ 1.815.679,85' quebrava linha entre o R$ e o numero. Virou constante COL_MOEDA=118 + whiteSpace nowrap em TODAS as celulas de dinheiro do arquivo (Por cliente, Evolucao diaria, listas de CTe), pra nenhuma tabela repetir o problema.",
+      "FEAT (pedido Yves) · Ciclo de vida do CTe na Conferencia de Faturamento: substituicao, cancelamento e complementar. A planilha bruta traz TODOS os CTes emitidos, entao um CTe refeito estava sendo somado 2x no faturamento (e o par ainda caia na fila como 'duplicidade', que nao e o caso).",
+      "DB · Migration 048 (PENDENTE de rodar no Supabase): frete_conferencia + tipo_doc ('normal'|'substituto'|'complementar'), status_doc ('ativo'|'substituido'|'cancelado'), ctrc_ref, vinculo_em/vinculo_por + RPC vincular_cte (grava os 2 lados numa transacao). Tudo aditivo com default 'normal'/'ativo' -- nenhum total existente muda ate alguem marcar um vinculo.",
+      "REGRA · Substituicao: o CTe novo aponta o antigo em ctrc_ref e o ANTIGO vira status_doc='substituido' (sai de todos os somatorios, continua na base e na tela esmaecido). Cancelamento: o proprio CTe sai dos totais. Complementar: os DOIS ficam ativos (faturamento = original + complementar), so ganha o vinculo visual.",
+      "FEAT · resumoPorCategoria/Cliente/Dia e gerarWorkbookXLSX filtram ehAtivo() na ENTRADA (nenhum caller pode esquecer); fila de revisao e 'Pendencias por usuario' ignoram CTe fora do faturamento; export ganhou coluna 'Situacao' com o vinculo.",
+      "FEAT · Modal do CTe: bloco 'Ciclo de vida' com 3 acoes (Substitui outro CTe / E complementar / Foi cancelado), sugestao de candidatos (mesmo cliente+categoria com mesma NF ou mesmo valor, buscando tambem nos 2 meses do comparativo) e 'Desfazer vinculo'. Badges novos na lista e no modal.",
+      "PENDENTE · Fase 2 do ciclo de vida: se o export do TMS tiver coluna de tipo/CTe referenciado, o parser preenche tipo_doc/ctrc_ref sozinho e o manual vira excecao. Depende de um export de exemplo pra confirmar as colunas.",
+      "NAO TESTADO em navegador logado (login exige credencial) e migration 048 ainda nao rodada. Build limpo.",
+    ],
+  },
+  {
     data: "2026-07-31", sessao: "Sessao 50",
     itens: [
       "FEAT (pedido Yves) · Acesso do gestor sem app novo: mesma URL, o que muda e o acesso. Novo perfil 'gestor' (Dashboard + Financeiro, sem editar) + convite por e-mail + painel configuravel por usuario.",

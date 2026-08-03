@@ -44,6 +44,29 @@ const margemBruta = (saldo, fretePeso) => {
   return fp > 0 ? r2((num(saldo) / fp) * 100) : 0;
 };
 
+// ── Ciclo de vida do CTe (migration 048) ──
+// status_doc diz se o CTe ENTRA no faturamento: 'ativo' entra; 'substituido' (foi refeito
+// por outro CTe) e 'cancelado' ficam na base pra consulta/auditoria mas fora de todo
+// somatório. Linha sem o campo (import antigo / preview de importação) é 'ativo'.
+export const ehAtivo = (l) => (l?.status_doc || "ativo") === "ativo";
+// tipo_doc diz o que o CTe É: 'substituto' e 'complementar' apontam o CTe de origem em
+// ctrc_ref. Complementar NÃO derruba o original — o faturamento é original + complementar.
+export const TIPO_DOC = { normal: "normal", substituto: "substituto", complementar: "complementar" };
+
+// Candidatos a vínculo de UM CTe: mesmo cliente e mesma categoria, CTRC diferente, e algo
+// em comum que indique ser o mesmo transporte (mesma NF, ou a mesma chave de duplicidade
+// de valor). É só sugestão pra quem revisa escolher — quem decide é sempre a pessoa.
+export function candidatosVinculo(linha, linhas) {
+  if (!linha) return [];
+  const chave = chaveDuplicidade(linha);
+  const nfs = String(linha.nfs || "").trim();
+  return linhas
+    .filter((l) => l.id !== linha.id && l.cliente === linha.cliente && l.categoria === linha.categoria
+      && String(l.ctrc) !== String(linha.ctrc)
+      && ((nfs && String(l.nfs || "").trim() === nfs) || chaveDuplicidade(l) === chave))
+    .sort((a, b) => String(b.data_emissao || "").localeCompare(String(a.data_emissao || "")));
+}
+
 // Frota Rodorrica: por regra o Contrato é o CTe menos R$ 300 fixos, então a margem fica
 // baixa por construção e não é erro de lançamento. A planilha bruta não diz de quem é a
 // frota — o app só aponta o CANDIDATO (Frete com Saldo de exatamente R$ 300) e quem revisa
@@ -348,6 +371,26 @@ export async function editarFrete(conn, id, patch) {
   return Array.isArray(res) ? res[0] : res;
 }
 
+// Vínculo de ciclo de vida (migration 048): marca ESTE CTe como substituto/complementar
+// de outro CTRC, ou como cancelado — e, na substituição, derruba o antigo pra fora dos
+// somatórios. tipo = 'substituto' | 'complementar' | 'cancelado' | 'normal' (desfaz).
+// O RPC faz os dois lados numa transação; devolve as linhas afetadas.
+export async function vincularCte(conn, id, tipo, ctrcRef, por) {
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/vincular_cte",
+      { p_token: _sessionToken, p_id: id, p_tipo: tipo, p_ctrc_ref: ctrcRef || null, p_por: por || null }));
+  }
+  // Fallback anon (pré go-live): só o lado desta linha — o par é recalculado no próximo load.
+  const body = tipo === "normal"
+    ? { tipo_doc: "normal", status_doc: "ativo", ctrc_ref: null, vinculo_em: null, vinculo_por: null }
+    : tipo === "cancelado"
+      ? { status_doc: "cancelado", ctrc_ref: ctrcRef || null, vinculo_em: new Date().toISOString(), vinculo_por: por || null }
+      : { tipo_doc: tipo, status_doc: "ativo", ctrc_ref: ctrcRef, vinculo_em: new Date().toISOString(), vinculo_por: por || null };
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${encodeURIComponent(id)}`,
+    { ...body, atualizado_em: new Date().toISOString() });
+  return Array.isArray(res) ? res : [res];
+}
+
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).
 export function recalcularLinhaEditada(l) {
@@ -372,11 +415,15 @@ export async function listarTodosPeriodo(conn, periodoRef) {
   return (await supaFetch(conn.url, conn.key, "GET", `${TABELA}?periodo_ref=eq.${q}`)) || [];
 }
 
+// Todos os resumos abaixo somam SÓ CTes ativos (ver ehAtivo): substituídos e cancelados
+// continuam na base e na tela, mas fora de qualquer total. Filtro na entrada de cada
+// função pra nenhum caller esquecer — inclusive o preview da importação.
 export function resumoPorCategoria(linhas) {
   const cats = ["frete", "descarga", "local", "diaria", "bonificacao"];
   const out = {};
+  const ativas = linhas.filter(ehAtivo);
   cats.forEach((c) => {
-    const sub = linhas.filter(l => l.categoria === c);
+    const sub = ativas.filter(l => l.categoria === c);
     out[c] = {
       registros: sub.length,
       peso: sub.reduce((s, l) => s + num(l.peso_nf), 0),
@@ -390,7 +437,7 @@ export function resumoPorCategoria(linhas) {
 
 export function resumoPorCliente(linhas) {
   const out = {};
-  linhas.forEach((l) => {
+  linhas.filter(ehAtivo).forEach((l) => {
     out[l.cliente] = out[l.cliente] || { registros: 0, peso: 0, fretePeso: 0, saldo: 0, _margensFrete: [] };
     out[l.cliente].registros++;
     out[l.cliente].peso += num(l.peso_nf);
@@ -409,7 +456,7 @@ export function resumoPorCliente(linhas) {
 // entraram de um dia pro outro, sem esperar o mês fechar.
 export function resumoPorDia(linhas) {
   const out = {};
-  linhas.forEach((l) => {
+  linhas.filter(ehAtivo).forEach((l) => {
     const dia = l.data_emissao;
     if (!dia) return;
     out[dia] = out[dia] || { registros: 0, peso: 0, fretePeso: 0, saldo: 0 };
@@ -423,20 +470,28 @@ export function resumoPorDia(linhas) {
 
 // ── Exportação: planilha formatada (mesmo modelo original FRETES/DESCARGAS/DIARIAS/LOCAL)
 // com indicadores por cliente/embarcadora + totais + aba RESUMO. Dispara download no navegador.
-export function gerarWorkbookXLSX(linhas, periodoRef) {
+export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
+  // Só CTes ativos: substituídos/cancelados ficam de fora do arquivo pra planilha bater
+  // com os totais da tela. O vínculo dos que entram aparece na coluna "Situação".
+  const linhas = linhasTodas.filter(ehAtivo);
   const wb = XLSX.utils.book_new();
   const CAT_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária", bonificacao: "Bonificação" };
   // "Modalidade" no fim (CIF/FOB) — appendada pra não deslocar os índices posicionais das
   // linhas de subtotal/total abaixo (que ficam mais curtas, com a célula final vazia).
   const COLS = ["Cliente", "CTRC", "Empresa", "Data Emissão", "Trecho", "NFS", "Placa", "Nome do Usuário",
     "Nº Manifesto", "Nº Contrato Frete", "Valor NF", "Peso NF", "Frete Peso", "Total do Frete",
-    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)", "Modalidade"];
+    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)", "Modalidade", "Situação"];
+
+  const situacao = (l) =>
+    l.tipo_doc === "substituto" ? `Substitui o CTRC ${l.ctrc_ref || "?"}`
+    : l.tipo_doc === "complementar" ? `Complementar do CTRC ${l.ctrc_ref || "?"}`
+    : "";
 
   const linhaArray = (l) => [
     l.cliente, l.ctrc, l.empresa_cod, l.data_emissao, l.trecho, l.nfs, l.placa, l.nome_usuario,
     l.numero_manifesto, l.numero_contrato, num(l.valor_nf), num(l.peso_nf), num(l.frete_peso),
     num(l.total_frete), num(l.valor_contrato_frete), num(l.saldo), r2(num(l.margem_lucro)),
-    l.is_devolucao ? "FOB (devolução)" : "CIF",
+    l.is_devolucao ? "FOB (devolução)" : "CIF", situacao(l),
   ];
 
   const construirAba = (categoria, titulo) => {

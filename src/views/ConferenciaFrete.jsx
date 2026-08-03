@@ -5,7 +5,7 @@ import {
   parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
   decidir, estornarRevisao, listarTodosPeriodo, resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
-  editarFrete, recalcularLinhaEditada,
+  editarFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -54,6 +54,10 @@ const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 
 const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
 const ICO_FROTA = <><rect x="1" y="3" width="15" height="13" rx="2" /><path d="m16 8 4 2 3 3v4h-7" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></>;
 const ICO_DEVOLUCAO = <><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></>;
+// Ciclo de vida do CTe (substituição/cancelamento/complementar) — migration 048.
+const ICO_SUBSTITUICAO = <><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>;
+const ICO_CANCELADO = <><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></>;
+const ICO_COMPLEMENTAR = <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>;
 
 // Ícones dos KPIs por categoria — mesma linguagem do Dashboard (hIco, 24x24 stroke).
 const ICO_CATEGORIA = {
@@ -92,6 +96,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [editando, setEditando] = React.useState(false);     // modo edição admin do CTe (modal)
   const [editForm, setEditForm] = React.useState(null);
   const [salvandoEdit, setSalvandoEdit] = React.useState(false);
+  // Vínculo de ciclo de vida do CTe (substituição/cancelamento/complementar, migration 048)
+  const [vincTipo, setVincTipo] = React.useState(null);      // 'substituto' | 'complementar' | null
+  const [vincCtrc, setVincCtrc] = React.useState("");
+  const [salvandoVinc, setSalvandoVinc] = React.useState(false);
 
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, chave: null }));
@@ -101,7 +109,26 @@ export default function ConferenciaFrete({ ctx, conn }) {
     setSinalizando(false); setSinalObs("");
     setRevisando(false); setRevisObs("");
     setEditando(false); setEditForm(null);
+    setVincTipo(null); setVincCtrc("");
     setRevisarModal({ open: true, item: p });
+  };
+
+  // Vínculo de ciclo de vida: marca este CTe como substituto/complementar de outro CTRC,
+  // como cancelado, ou desfaz ('normal'). Na substituição o RPC também derruba o CTe antigo
+  // (status_doc='substituido'), então recarrega tudo em vez de remendar o estado local.
+  const onVincular = async (p, tipo, ctrcRef) => {
+    setSalvandoVinc(true);
+    try {
+      await vincularCte(conn, p.id, tipo, ctrcRef, usuarioLogado);
+      showToast?.(tipo === "normal" ? "Vínculo desfeito." :
+        tipo === "cancelado" ? `CTRC ${p.ctrc} marcado como cancelado — fora dos totais.` :
+        tipo === "substituto" ? `CTRC ${p.ctrc} substitui o ${ctrcRef} — o antigo saiu dos totais.` :
+        `CTRC ${p.ctrc} marcado como complementar do ${ctrcRef} — os dois continuam somando.`, "ok");
+      setVincTipo(null); setVincCtrc("");
+      setRevisarModal({ open: false, item: null });
+      await carregar();
+    } catch (e) { showToast?.("Erro ao vincular CTe: " + e.message, "erro"); }
+    finally { setSalvandoVinc(false); }
   };
 
   // Abre o modo edição admin: inicializa o formulário a partir do CTe.
@@ -357,6 +384,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const filaMesRef = filaMes === "atual" ? mesCorrenteReal : filaMes === "anterior" ? mesAnteriorReal : null;
 
   const pendentesFiltrados = React.useMemo(() => pendentes
+    // CTe substituído/cancelado não gera mais trabalho de revisão — está fora do faturamento.
+    .filter(ehAtivo)
     .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
     .filter(p => !usuarioFiltro || (p.nome_usuario || "(sem usuário na planilha)") === usuarioFiltro)
     .filter(p => !filaMesRef || p.periodo_ref === filaMesRef),
@@ -419,6 +448,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const resumoPorUsuario = React.useMemo(() => {
     const out = {};
     pendentes
+      .filter(ehAtivo)
       .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
       .filter(p => !filaMesRef || p.periodo_ref === filaMesRef)
       .forEach((p) => {
@@ -456,6 +486,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Mosaico (CSS columns) em vez de grid pareado — cards de altura desigual (ex.: Por
   // cliente curto ao lado de Evolução diária longa) não deixam mais espaço morto na
   // linha, porque cada coluna flui independente em vez de esticar pra bater com a maior.
+  // Largura fixa das colunas de dinheiro nas tabelas-resumo. "R$ 1.815.679,85" em mono 12px
+  // não cabia em 96px e quebrava linha entre o "R$" e o número; 118 + nowrap segura valores
+  // até dezenas de milhões numa coluna só. Alterar aqui muda cabeçalho e linhas juntos.
+  const COL_MOEDA = 118;
   const masonry = { columnCount: isMobile ? 1 : 2, columnGap: 16 };
   const tile = { ...card, breakInside: "avoid", WebkitColumnBreakInside: "avoid", display: "inline-block", width: "100%", marginBottom: 16 };
 
@@ -474,6 +508,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {texto}
     </span>
   );
+
+  // Badges do ciclo de vida do CTe (migration 048): o que ele É (tipo_doc) e se ainda
+  // conta no faturamento (status_doc). Cinza = fora dos totais; azul/verde = continua contando.
+  const badgesCiclo = (p) => (<>
+    {p.status_doc === "substituido" && badge(ICO_SUBSTITUICAO, p.ctrc_ref ? `SUBSTITUÍDO PELO ${p.ctrc_ref}` : "SUBSTITUÍDO", t.txt2)}
+    {p.status_doc === "cancelado" && badge(ICO_CANCELADO, p.ctrc_ref ? `CANCELADO · REFEITO NO ${p.ctrc_ref}` : "CANCELADO", t.danger)}
+    {p.tipo_doc === "substituto" && badge(ICO_SUBSTITUICAO, `SUBSTITUI O ${p.ctrc_ref || "?"}`, t.azul)}
+    {p.tipo_doc === "complementar" && badge(ICO_COMPLEMENTAR, `COMPLEMENTAR DO ${p.ctrc_ref || "?"}`, t.verde)}
+  </>);
 
   // Avatar de usuário — mesmo modelo do círculo com iniciais do rodapé da sidebar
   // (co-sidebar__user), usado em qualquer lugar da tela que identifique uma pessoa.
@@ -497,6 +540,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
   );
 
   const grupoDup = dupModal.open ? pendentes.filter(p => p.dup_grupo_chave === dupModal.chave) : [];
+
+  // Candidatos a par do CTe aberto no modal (substituição/complementar). Procura no mês
+  // exibido + nos 2 meses já carregados pro comparativo — a substituição costuma cruzar
+  // o mês (CTe de junho refeito em julho).
+  const candidatosDoCTe = React.useMemo(() => {
+    if (!revisarModal.open || !revisarModal.item) return [];
+    const universo = [...linhasPeriodo, ...Object.values(linhasComparativo).flat()];
+    return candidatosVinculo(revisarModal.item, universo);
+  }, [revisarModal.open, revisarModal.item, linhasPeriodo, linhasComparativo]);
 
   // Controles (mês + filial + ações) — vão pra faixa única do FinanceiroView via portal.
   const controles = (
@@ -593,8 +645,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
             <span style={{ flex: 1, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Cliente</span>
             <span style={{ width: 52, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>CTRCs</span>
             {!isMobile && <span style={{ width: 84, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Peso</span>}
-            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
-            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
             {!isMobile && <span style={{ width: 60, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Margem</span>}
           </div>
 
@@ -607,8 +659,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cliente}</span>
               <span style={{ width: 52, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{d.registros}</span>
               {!isMobile && <span style={{ width: 84, textAlign: "right", fontSize: 11, fontVariantNumeric: "tabular-nums", color: t.txt2 }}>{pesoFmt(d.peso)}</span>}
-              <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(d.fretePeso)}</span>
-              <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(d.saldo)}</span>
+              <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(d.fretePeso)}</span>
+              <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>{money(d.saldo)}</span>
               {!isMobile && (
                 <span style={{ width: 60, textAlign: "right", fontSize: 11, fontWeight: 700, color: d.margemMedia < 0 ? t.danger : d.margemMedia < 10 ? t.warn : t.verde }}>
                   {d.margemMedia.toFixed(1)}%
@@ -621,8 +673,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
             <span style={{ flex: 1, fontWeight: 800, color: t.txt, textTransform: "uppercase", fontSize: 10, letterSpacing: ".04em" }}>Total</span>
             <span style={{ width: 52, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{totalMes.registros}</span>
             {!isMobile && <span style={{ width: 84, textAlign: "right", fontSize: 11, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: t.txt }}>{pesoFmt(totalMes.peso)}</span>}
-            <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(totalMes.fretePeso)}</span>
-            <span style={{ width: 96, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(totalMes.saldo)}</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(totalMes.fretePeso)}</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>{money(totalMes.saldo)}</span>
             {!isMobile && <span style={{ width: 60 }} />}
           </div>
         </div>
@@ -638,14 +690,19 @@ export default function ConferenciaFrete({ ctx, conn }) {
             </button>
           ))}
           <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 10 }}>
-            {linhasFiltradas.length} CTe(s) · saldo {money(linhasFiltradas.reduce((s, l) => s + (l.saldo || 0), 0))} — clique num CTe pra ver ou editar.
+            {linhasFiltradas.filter(ehAtivo).length} CTe(s) · saldo {money(linhasFiltradas.filter(ehAtivo).reduce((s, l) => s + (l.saldo || 0), 0))} — clique num CTe pra ver ou editar.
+            {linhasFiltradas.length !== linhasFiltradas.filter(ehAtivo).length && (
+              <> · <b style={{ color: t.txt }}>{linhasFiltradas.length - linhasFiltradas.filter(ehAtivo).length}</b> fora do faturamento (substituído/cancelado)</>
+            )}
           </div>
           <div style={{ maxHeight: 380, overflowY: "auto", margin: "0 -4px" }}>
             {[...linhasFiltradas]
               .sort((a, b) => String(b.data_emissao || "").localeCompare(String(a.data_emissao || "")))
               .map((p) => (
               <div key={p.id} onClick={() => abrirRevisar(p)}
-                style={{ padding: "8px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer", transition: "background .12s" }}
+                style={{ padding: "8px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer", transition: "background .12s",
+                  // Fora do faturamento (substituído/cancelado): fica esmaecido, mas continua clicável.
+                  opacity: ehAtivo(p) ? 1 : .5 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = t.card2)}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -655,7 +712,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: p.margem_lucro < 0 ? t.danger : p.margem_lucro < 10 ? t.warn : t.verde }}>
                     {Number(p.margem_lucro).toFixed(1)}%
                   </span>
-                  <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                  <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
                     {money(p.saldo)}
                   </span>
                 </div>
@@ -663,6 +720,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {p.data_emissao && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.data_emissao.split("-").reverse().join("/")}</span>}
                   {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
                   {p.is_devolucao && badge(ICO_DEVOLUCAO, "FOB", t.azul)}
+                  {badgesCiclo(p)}
                   {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                   {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
                   {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "DUPLICIDADE", t.danger)}
@@ -712,7 +770,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
             <span style={{ width: 46, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Dia</span>
             <span style={{ width: 74, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>CTRCs</span>
             <span style={{ flex: 1, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Frete</span>
-            <span style={{ width: 96, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo</span>
           </div>
 
           {[...resumoDia].reverse().map((d, i, arr) => {
@@ -727,8 +785,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{d.registros}</span>
                   {delta !== null && delta !== 0 && <span style={{ fontSize: 10, fontWeight: 700, color: delta > 0 ? t.verde : t.danger }}>{delta > 0 ? "▲" : "▼"}{Math.abs(delta)}</span>}
                 </span>
-                <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{money(d.fretePeso)}</span>
-                <span style={{ width: 96, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>{money(d.saldo)}</span>
+                <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(d.fretePeso)}</span>
+                <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>{money(d.saldo)}</span>
               </div>
             );
           })}
@@ -863,7 +921,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, color: p.margem_lucro < 0 ? t.danger : p.margem_lucro < 10 ? t.warn : t.verde }}>
                 {Number(p.margem_lucro).toFixed(1)}%
               </span>
-              <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+              <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
                 {money(p.saldo)}
               </span>
               <button onClick={(e) => { e.stopPropagation(); abrirRevisar(p); }}
@@ -903,7 +961,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
                 </span>
-                <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
                   {money(p.saldo)}
                 </span>
                 <button onClick={(e) => { e.stopPropagation(); onDecidir(p.id, "correcao_feita", "correção confirmada"); }}
@@ -939,7 +997,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
                 </span>
-                <span style={{ width: 96, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.ouro }}>
+                <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
                   {money(p.saldo)}
                 </span>
               </div>
@@ -1160,6 +1218,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
               <div style={{ marginBottom: 12 }}>
                 {p.is_devolucao && badge(ICO_DEVOLUCAO, "DEVOLUÇÃO · FOB", t.azul)}
+                {badgesCiclo(p)}
                 {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
@@ -1235,6 +1294,95 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   </div>
                 </div>
               )}
+
+              {/* Ciclo de vida do CTe (migration 048) — substituição / cancelamento / complementar.
+                  Substituição e cancelamento tiram valor do faturamento; complementar só linka. */}
+              {!editando && !revisando && !sinalizando && (() => {
+                const vinculado = (p.tipo_doc && p.tipo_doc !== "normal") || !ehAtivo(p);
+                const obrigaCtrc = vincTipo === "substituto" || vincTipo === "complementar";
+                const labelVinc = {
+                  substituto: "Este CTe SUBSTITUI o CTRC:",
+                  complementar: "Este CTe é COMPLEMENTAR do CTRC:",
+                  cancelado: "Este CTe foi CANCELADO. Refeito no CTRC (opcional):",
+                }[vincTipo];
+                const btn = (label, cor, onClick) => (
+                  <button onClick={onClick} disabled={salvandoVinc}
+                    style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                      border: `1px solid ${hexRgb(cor, .5)}`, background: "transparent", color: cor, opacity: salvandoVinc ? .6 : 1 }}>
+                    {label}
+                  </button>
+                );
+                return (
+                  <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
+                      Ciclo de vida do CTe
+                    </div>
+
+                    {vinculado ? (
+                      <div style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.azul, .3)}`, background: hexRgb(t.azul, .07), padding: "10px 12px" }}>
+                        <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5 }}>
+                          {p.status_doc === "substituido" ? <>Substituído pelo CTRC <b>{p.ctrc_ref || "?"}</b> — <b>fora dos totais</b>.</>
+                            : p.status_doc === "cancelado" ? <>Cancelado{p.ctrc_ref ? <> (refeito no CTRC <b>{p.ctrc_ref}</b>)</> : ""} — <b>fora dos totais</b>.</>
+                            : p.tipo_doc === "substituto" ? <>Substitui o CTRC <b>{p.ctrc_ref}</b>, que saiu dos totais. Este continua faturando.</>
+                            : <>Complementar do CTRC <b>{p.ctrc_ref}</b> — os dois somam no faturamento.</>}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 4 }}>
+                          {p.vinculo_por || "sem registro"}{p.vinculo_em ? ` · ${new Date(p.vinculo_em).toLocaleDateString("pt-BR")}` : ""}
+                        </div>
+                        <button onClick={() => onVincular(p, "normal")} disabled={salvandoVinc}
+                          style={{ marginTop: 9, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                            border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                          ↩ Desfazer vínculo
+                        </button>
+                      </div>
+                    ) : vincTipo ? (
+                      <div>
+                        <div style={{ fontSize: 11.5, color: t.txt, marginBottom: 7 }}>{labelVinc}</div>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                          <input value={vincCtrc} onChange={(e) => setVincCtrc(e.target.value)} autoFocus placeholder="nº do CTRC"
+                            onKeyDown={(e) => { if (e.key === "Enter" && (!obrigaCtrc || vincCtrc.trim())) onVincular(p, vincTipo, vincCtrc.trim()); }}
+                            style={{ width: 140, padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "var(--font-mono)", outline: "none" }} />
+                          <button onClick={() => onVincular(p, vincTipo, vincCtrc.trim())} disabled={salvandoVinc || (obrigaCtrc && !vincCtrc.trim())}
+                            style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "inherit",
+                              cursor: (obrigaCtrc && !vincCtrc.trim()) ? "not-allowed" : "pointer", opacity: salvandoVinc || (obrigaCtrc && !vincCtrc.trim()) ? .45 : 1 }}>
+                            {salvandoVinc ? "Salvando..." : "Confirmar"}
+                          </button>
+                          <button onClick={() => { setVincTipo(null); setVincCtrc(""); }}
+                            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>✕</button>
+                        </div>
+                        {/* Sugestões: mesmo cliente/categoria com a mesma NF ou o mesmo valor — é onde
+                            o par costuma estar. Só atalho de digitação; quem decide é quem revisa. */}
+                        {candidatosDoCTe.length > 0 && (
+                          <div style={{ marginTop: 8 }}>
+                            <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 5 }}>Candidatos (mesma NF ou mesmo valor):</div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                              {candidatosDoCTe.slice(0, 6).map((c) => (
+                                <button key={c.id} onClick={() => setVincCtrc(String(c.ctrc))}
+                                  style={{ fontSize: 10.5, fontWeight: 600, padding: "5px 9px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
+                                    border: `1px solid ${String(c.ctrc) === vincCtrc.trim() ? t.azul : t.borda}`, background: String(c.ctrc) === vincCtrc.trim() ? hexRgb(t.azul, .12) : "transparent", color: t.txt }}>
+                                  {c.ctrc} · {money(c.total_frete)}{c.data_emissao ? ` · ${c.data_emissao.split("-").reverse().join("/")}` : ""}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {btn("Substitui outro CTe", t.azul, () => { setVincCtrc(""); setVincTipo("substituto"); })}
+                          {btn("É complementar", t.verde, () => { setVincCtrc(""); setVincTipo("complementar"); })}
+                          {btn("Foi cancelado", t.danger, () => { setVincCtrc(""); setVincTipo("cancelado"); })}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 7, lineHeight: 1.45 }}>
+                          Substituição e cancelamento tiram o CTe anulado dos totais (ele continua aqui, esmaecido).
+                          Complementar mantém os dois somando — original + complementar.
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
 
               {p.flag_duplicidade && (
                 <button onClick={() => { setDupModal({ open: true, chave: p.dup_grupo_chave }); fechar(); }}
