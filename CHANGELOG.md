@@ -37,6 +37,30 @@ Se julho fosse importado como estava, **Açailândia iria de R$ 88.250,79 de des
 
 **Feito no app:** KPI "Receitas" (fora do resultado), "Créditos" virou "Créditos (estorno)", badge RECEITA na linha, subtotal do grupo exclui receita, e o modal de seleção de abas lista os negativos reconhecidos como receita **antes** de gravar. No ModalDespesa, seletor estorno × receita.
 
+### Ver só Belém: segmento de filial na aba Resultado
+
+**Pergunta do Yves:** a planilha sobe com 3 abas (Açailândia, Belém, Imperatriz), mas o seletor de base junta "Imperatriz / Belém" — como ver os débitos só de Belém?
+
+O split **já existia no Painel Financeiro** (segmento `Imp + Bel` · `Imperatriz` · `Belém`), só não na aba Resultado, que é onde se importa e se vê a lista lançamento a lançamento. Portado.
+
+O recorte vale para o **P&L inteiro**, não só para a despesa: receita e pago-motorista saem da `origem` da viagem (`IMPERATRIZ-MA` / `BELEM-PA`), despesa sai da `aba_origem` (`IMP` / `BELÉM`). Filtrar só a despesa daria um "Resultado de Belém" com o faturamento das duas cidades dentro. Aplica em KPIs, lista, subtotais por grupo, modal de duplicidade e card de indevidas.
+
+`origemBate()` saiu de `PainelFinanceiro.jsx` para `financeiroCalc.js` — as duas telas precisam recortar igual, senão o mesmo mês fecha diferente em duas abas do mesmo app.
+
+**07/2026, para conferência:**
+
+| | Viagens | Faturamento | Pago motorista | Margem | Despesa | Resultado |
+|---|---:|---:|---:|---:|---:|---:|
+| Imperatriz | 134 | R$ 1.233.910,67 | R$ 974.864,18 | R$ 259.046,49 | R$ 114.674,07 | **R$ 146.227,22** |
+| Belém | 21 | R$ 43.040,00 | R$ 32.700,00 | R$ 10.340,00 | R$ 16.672,24 | **− R$ 6.332,24** |
+
+Belém fecha negativo por causa da linha "SALDO NEGATIVO MÊS 06/2026" (R$ 9.131,96); sem ela, fecha positivo.
+
+**Viagem sem `origem` preenchida não entra em nenhum dos dois recortes** — em 07/2026 são 6 viagens (R$ 2.101,00), então Imperatriz + Belém dá R$ 139.894,98 contra R$ 140.395,98 de "Imp + Bel". A legenda do recorte diz quantas são e quanto valem, em vez de sumir com elas em silêncio.
+
+### "Selecionar todas" no modal de linhas de outro mês
+Pedido do Yves durante o teste: marcar tudo e ir desmarcando a exceção é mais rápido que clicar linha a linha. Mestre no topo da lista, com contador e estado indeterminado quando só parte está marcada.
+
 ### Bug de produção corrigido no caminho
 `ModalDespesa` recusava salvar qualquer valor `<= 0` ("Informe um valor válido"), embora a própria função já calculasse `tipo='credito'` para negativo — na prática **nenhum crédito podia ser editado**. Passou a recusar só NaN e zero.
 

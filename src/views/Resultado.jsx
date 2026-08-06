@@ -12,7 +12,7 @@ import {
 import ConferenciaFrete from "./ConferenciaFrete.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import KpiCard from "../components/KpiCard.jsx";
-import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
+import { nCte, nContrato, aplicarComplementar, origemBate, semFilial } from "../financeiroCalc.js";
 
 // Resultado — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
 // despesas mensais persistidas (tabela despesas_filial). Aba por base (qualquer base),
@@ -70,6 +70,13 @@ export default function Resultado({ ctx }) {
 
   const [despesas, setDespesas] = React.useState([]);
   const [indevidas, setIndevidas] = React.useState([]);
+  // Recorte por filial — só nas bases cujas despesas chegam marcadas por aba (IMP/BELÉM).
+  // Mesma feature e mesmos valores do Painel Financeiro, pra não existirem dois recortes.
+  const temFilial = getPerfil(baseId).features.filialNasDespesas;
+  const [filial, setFilial] = React.useState("todos"); // todos | IMP | BELÉM
+  React.useEffect(() => { setFilial("todos"); }, [baseId]);
+  const recorteFilial = temFilial && filial !== "todos";
+  const filialLabel = filial === "IMP" ? "Imperatriz" : "Belém";
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const [modal, setModal] = React.useState({ open: false, inicial: null });
@@ -122,23 +129,44 @@ export default function Resultado({ ctx }) {
 
   React.useEffect(() => { carregar(); }, [carregar]);
 
+  // Despesa carrega sempre a base inteira (o import grava as 2 filiais juntas); o recorte
+  // é de exibição, por `aba_origem` — a mesma coluna que o parser grava da aba da planilha.
+  const porFilial = React.useCallback(
+    (arr) => (recorteFilial ? arr.filter((d) => d.aba_origem === filial) : arr),
+    [recorteFilial, filial]);
+  const despesasMes = React.useMemo(() => porFilial(despesas), [despesas, porFilial]);
+  const indevidasView = React.useMemo(() => porFilial(indevidas), [indevidas, porFilial]);
+
   // ── Receita / custo / margem (exclui PENDENTE) ──
+  // Com filial selecionada, recorta pela origem da viagem — o mesmo casamento que o
+  // Painel Financeiro faz (origemBate, em financeiroCalc.js). Filtrar só a despesa daria
+  // um "Resultado de Belém" com o faturamento das duas cidades dentro.
   const fin = React.useMemo(() => {
-    const regs = (DADOS || []).filter((r) => mesDe(r.data_carr) === mesRef && (r.status || "").toUpperCase() !== "PENDENTE");
+    const regs = (DADOS || []).filter((r) => mesDe(r.data_carr) === mesRef && (r.status || "").toUpperCase() !== "PENDENTE"
+      && (!recorteFilial || origemBate(r.origem, filial)));
     let receita = 0, custo = 0, comp = 0;
     regs.forEach((r) => { receita += nCte(r.vl_cte); custo += nContrato(r.vl_contrato); comp += nCte(r.vl_cte_comp); });
     const { receita: receitaF, custo: custoF, margem } = aplicarComplementar({ receita, custo, comp }, { incluirComp, baseId });
     return { receita: receitaF, custo: custoF, comp, margem, n: regs.length };
-  }, [DADOS, mesRef, incluirComp, baseId]);
+  }, [DADOS, mesRef, incluirComp, baseId, recorteFilial, filial]);
+
+  // Viagens do mês que ficam de fora dos DOIS recortes por não ter origem preenchida —
+  // é o que faz Imperatriz + Belém não fechar com o total. A tela avisa em vez de sumir.
+  const semOrigem = React.useMemo(() => {
+    if (!temFilial) return { n: 0 };
+    const regs = (DADOS || []).filter((r) => mesDe(r.data_carr) === mesRef
+      && (r.status || "").toUpperCase() !== "PENDENTE" && semFilial(r));
+    return { n: regs.length, receita: regs.reduce((s, r) => s + nCte(r.vl_cte), 0) };
+  }, [DADOS, mesRef, temFilial]);
 
   // Crédito tem duas classes (migration 050) e elas NÃO podem entrar no mesmo lugar:
   // estorno é devolução de despesa paga → abate a despesa do mês; receita (sinistro,
   // venda de gancho/avaria, CTe faturado) é dinheiro de outra origem → fica FORA do
   // cálculo de despesa e aparece só como indicador, senão vira lucro operacional falso.
-  const creditos = despesas.filter((d) => d.tipo === "credito");
+  const creditos = despesasMes.filter((d) => d.tipo === "credito");
   const estornos = creditos.filter((d) => classeDoCredito(d) === "estorno");
   const receitasCred = creditos.filter((d) => classeDoCredito(d) === "receita");
-  const debitos = despesas.filter((d) => d.tipo !== "credito");
+  const debitos = despesasMes.filter((d) => d.tipo !== "credito");
   const despDebInc = debitos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
   const credInc = estornos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
   const receitaInc = receitasCred.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
@@ -254,7 +282,7 @@ export default function Resultado({ ctx }) {
   };
   // Agrupa despesas por grupo p/ exibição (com filtro de busca)
   const buscaQ = busca.trim().toLowerCase();
-  const pool = buscaTodosMeses ? despesasTodas : despesas;
+  const pool = porFilial(buscaTodosMeses ? despesasTodas : despesas);
   const despesasFiltradas = buscaQ
     ? pool.filter(d =>
         (d.natureza || "").toLowerCase().includes(buscaQ) ||
@@ -287,6 +315,20 @@ export default function Resultado({ ctx }) {
           <Toggle checked={incluirComp} onChange={setIncluirComp}
             label={`Incluir complementar ${getPerfil(baseId).financeiro.complementarMargemZero ? "(margem zero)" : "(margem cheia)"}`} />
         </div>
+        {/* Mesmo segmento e mesmos rótulos do Painel Financeiro — as duas telas têm que
+            oferecer o mesmo recorte, senão viram números diferentes pro mesmo mês. */}
+        {temFilial && (
+          <div style={{ display: "flex", border: `1px solid ${t.borda}`, borderRadius: 8, overflow: "hidden" }}>
+            {[["todos", "Imp + Bel"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]].map(([k, l]) => (
+              <button key={k} onClick={() => setFilial(k)}
+                style={{ fontSize: 12, fontWeight: filial === k ? 700 : 500, padding: "8px 12px", cursor: "pointer",
+                  fontFamily: "inherit", border: "none", borderRight: k !== "BELÉM" ? `1px solid ${t.borda}` : "none",
+                  background: filial === k ? "var(--accent)" : "transparent", color: filial === k ? "#fff" : t.txt2 }}>
+                {l}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
           {lastImportIds.length > 0 && (
@@ -469,6 +511,32 @@ export default function Resultado({ ctx }) {
                 ⚠ Nenhuma linha datada de {mesLabel(mesRef)} nas abas selecionadas — confira se é o arquivo/mês certo antes de marcar linhas abaixo.
               </div>
             )}
+            {/* Mestre da lista: marcar tudo e ir desmarcando a exceção é mais rápido do que
+                clicar linha a linha (o arquivo pode trazer ~200 linhas de outro mês). */}
+            {(() => {
+              const total = foraMesSel.foraMes.length;
+              const marcadas = foraMesSel.foraMes.filter((_, i) => foraMesSel.checked[String(i)]).length;
+              const todas = total > 0 && marcadas === total;
+              const marcarTodas = (on) => setForaMesSel(prev => ({
+                ...prev,
+                checked: Object.fromEntries(prev.foraMes.map((_, i) => [String(i), on])),
+              }));
+              return (
+                <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", marginBottom: 8,
+                  borderRadius: 8, cursor: "pointer", background: t.card2, border: `1px solid ${t.borda}` }}>
+                  <input type="checkbox" checked={todas}
+                    /* indeterminado quando só parte está marcada — só dá pra setar por ref */
+                    ref={(el) => { if (el) el.indeterminate = marcadas > 0 && !todas; }}
+                    onChange={() => marcarTodas(!todas)}
+                    style={{ width: 15, height: 15, cursor: "pointer", accentColor: t.verde, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 11.5, fontWeight: 700, color: t.txt }}>
+                    {todas ? "Desmarcar todas" : "Selecionar todas"}
+                  </span>
+                  <span style={{ fontSize: 10, color: t.txt2, fontFamily: "var(--font-mono)" }}>{marcadas}/{total}</span>
+                </label>
+              );
+            })()}
+
             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14, overflowY: "auto", flex: 1 }}>
               {foraMesSel.foraMes.map((l, idx) => {
                 const k = String(idx);
@@ -506,6 +574,20 @@ export default function Resultado({ ctx }) {
         </div>
       )}
 
+      {/* Recorte ativo: diz de onde vem cada metade do P&L, pra ninguém ler como se fosse
+          a base inteira. O aviso das viagens sem origem explica por que Imperatriz + Belém
+          não fecha com "Imp + Bel". */}
+      {recorteFilial && (
+        <div style={{ fontSize: 11, color: t.ouro, marginBottom: 12, marginTop: -6 }}>
+          Visão isolada: <b>{filialLabel}</b> · receita pela origem da viagem + despesas da aba {filial}.
+          {semOrigem.n > 0 && (
+            <span style={{ color: t.txt2 }}>
+              {" "}· {semOrigem.n} viagem(ns) do mês sem origem preenchida ({money(semOrigem.receita)}) ficam fora deste recorte e do de {filial === "IMP" ? "Belém" : "Imperatriz"}.
+            </span>
+          )}
+        </div>
+      )}
+
       {/* KPIs do resultado */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>
         <KpiCard label="Faturamento (CTE)" value={money(fin.receita)} sub={`${fin.n} viagens`} color={t.verde} compact={isMobile} />
@@ -519,8 +601,8 @@ export default function Resultado({ ctx }) {
 
       {/* Indevidas aguardando crédito — resumo. O vínculo (incl. cross-filial/mês) é feito
           só em Créditos Pendentes agora, evitando duas telas com fluxos incompletos entre si. */}
-      {indevidas.length > 0 && (() => {
-        const totalIndevido = indevidas.reduce((s, i) => s + Math.abs(Number(i.valor || 0)), 0);
+      {indevidasView.length > 0 && (() => {
+        const totalIndevido = indevidasView.reduce((s, i) => s + Math.abs(Number(i.valor || 0)), 0);
         const filialParaCreditos = getPerfil(baseId).financeiro.filialDespesas;
         return (
           <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55`,
@@ -531,7 +613,7 @@ export default function Resultado({ ctx }) {
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Indevidas aguardando crédito</span>
-                <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{indevidas.length}</span>
+                <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{indevidasView.length}</span>
               </div>
               <div style={{ fontSize: 11, color: t.txt2 }}>
                 {money(totalIndevido)} nesta base, em todos os meses até resolver.
@@ -549,7 +631,9 @@ export default function Resultado({ ctx }) {
       {/* Lista de despesas */}
       <div style={{ ...card }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, flex: "0 0 auto" }}>Despesas · {mesLabel(mesRef)}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, flex: "0 0 auto" }}>
+            Despesas · {mesLabel(mesRef)}{recorteFilial && <span style={{ color: t.ouro }}> · {filialLabel}</span>}
+          </div>
           <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round"
@@ -722,7 +806,7 @@ export default function Resultado({ ctx }) {
       {/* Modal de possível duplicidade — lista os lançamentos de mesma chave (valor + natureza + histórico) */}
       {dupModal.open && dupModal.registro && (() => {
         const chave = dupKeyOf(dupModal.registro);
-        const grupo = despesas.filter((x) => x.tipo !== "credito" && dupKeyOf(x) === chave);
+        const grupo = despesasMes.filter((x) => x.tipo !== "credito" && dupKeyOf(x) === chave);
         const incluidos = grupo.filter((x) => x.incluir);
         const totalIncl = incluidos.reduce((s, x) => s + Number(x.valor || 0), 0);
         const fechar = () => setDupModal({ open: false, registro: null });

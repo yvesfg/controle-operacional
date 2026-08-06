@@ -32,3 +32,20 @@ export function aplicarComplementar({ receita, custo, comp }, { incluirComp, bas
   }
   return { receita: r, custo: c, margem: r - c };
 }
+
+// ── Recorte por filial (bases com features.filialNasDespesas, hoje só imperatriz_belem) ──
+// As duas pontas do P&L vêm marcadas de formas diferentes: a DESPESA traz a aba da planilha
+// em `aba_origem` ('IMP'|'BELÉM') e a RECEITA traz a cidade da viagem em `origem`
+// ('IMPERATRIZ-MA'|'BELEM-PA'). Isto casa as duas, e vive aqui porque PainelFinanceiro e
+// Resultado precisam recortar igual — se cada tela tivesse sua cópia, o mesmo mês fecharia
+// diferente em duas abas do mesmo app.
+const normCidade = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+export const origemBate = (origem, filial) => {
+  const o = normCidade(origem);
+  if (filial === "IMP") return o.includes("IMPERATRIZ");
+  if (filial === "BELÉM") return o.includes("BELEM");
+  return true;
+};
+// Viagem sem `origem` preenchida não pertence a nenhuma filial e some dos dois recortes —
+// por isso Imperatriz + Belém pode não fechar com o total. Quem usa avisa na tela.
+export const semFilial = (r) => !String(r?.origem || "").trim();

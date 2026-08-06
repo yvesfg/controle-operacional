@@ -2,7 +2,7 @@ import React from "react";
 import { getPerfil } from "../operacao/perfil.js";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
-import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
+import { nCte, nContrato, aplicarComplementar, origemBate } from "../financeiroCalc.js";
 import Toggle from "../components/Toggle.jsx";
 import KpiCard from "../components/KpiCard.jsx";
 
@@ -16,14 +16,6 @@ const moneyK = (n) => { const a = Math.abs(n); const s = n < 0 ? "−" : ""; ret
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
 const mesCurto = (m) => { if (!m) return ""; const [, mo] = m.split("-"); return ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][parseInt(mo, 10)] || mo; };
 const cssVar = (n, fb) => { try { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v || fb; } catch { return fb; } };
-const normCidade = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
-// origem da viagem (IMPERATRIZ-MA / BELEM-PA) → mesma origem da despesa (IMP / BELÉM)
-const origemBate = (origem, filial) => {
-  const o = normCidade(origem);
-  if (filial === "IMP") return o.includes("IMPERATRIZ");
-  if (filial === "BELÉM") return o.includes("BELEM");
-  return true;
-};
 
 export default function PainelFinanceiro({ ctx }) {
   const {
@@ -88,7 +80,8 @@ export default function PainelFinanceiro({ ctx }) {
     return acc;
   }, [DADOS, incluirComp, baseId, temFilial, filial]);
 
-  // Despesas filtradas pela origem selecionada (IMP/BELÉM) — receita continua combinada.
+  // Despesas filtradas pela origem selecionada (IMP/BELÉM). A receita também é recortada,
+  // pela origem da viagem (ver receitaPorMes) — o P&L da filial é isolado de verdade.
   const despesasView = React.useMemo(
     () => (filial === "todos" ? despesas : despesas.filter((d) => d.aba_origem === filial)),
     [despesas, filial]
