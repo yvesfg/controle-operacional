@@ -37,6 +37,54 @@ Se julho fosse importado como estava, **Açailândia iria de R$ 88.250,79 de des
 
 **Feito no app:** KPI "Receitas" (fora do resultado), "Créditos" virou "Créditos (estorno)", badge RECEITA na linha, subtotal do grupo exclui receita, e o modal de seleção de abas lista os negativos reconhecidos como receita **antes** de gravar. No ModalDespesa, seletor estorno × receita.
 
+### Base de comissão definida
+
+**Decisão do Yves:** a comissão sai do **saldo dos relatórios de frete que ele sobe**, menos os **débitos que recebem depois**. Fica assim, e não pelo Resultado (que usa o operacional).
+
+Novo bloco na Conferência, uma linha por base — 07/2026:
+
+| Base | Saldo fretes | Débitos | Comissionável |
+|---|---:|---:|---:|
+| Açailândia - AVB | R$ 171.655,88 | − R$ 88.250,79 | **R$ 83.405,09** |
+| Imperatriz / Belém | R$ 338.296,29 | − R$ 120.359,55 | **R$ 217.936,74** |
+| **Total** | **R$ 509.952,17** | **− R$ 208.610,34** | **R$ 301.341,83** |
+
+O casamento das duas fontes é por `base_id` — a Conferência já traz a base em cada CTe (via cadastro da embarcadora) e a despesa é gravada por base. Não precisa de mapeamento manual **nem depende da conciliação CTe a CTe**, que segue divergindo e agora não bloqueia mais o cálculo.
+
+Só **estorno** abate; receita (sinistro, venda de avaria, venda de gancho) fica de fora — senão a comissão sairia paga sobre dinheiro que não é frete. Mesma regra da migration 050.
+
+Badge **"débitos não importados"** na base cujo mês ainda não recebeu a planilha — que é o caso normal, já que ela chega no mês seguinte. Sem isso o comissionável apareceria inflado como se fosse definitivo. O filtro de cliente não se aplica ao bloco (débito chega por base, não por cliente) e a tela avisa quando o filtro está ligado.
+
+### Card de gestão: frete × diária paga × diária emitida
+
+**Pedido do Yves:** um card fácil de apresentar para a gestão com o custo mensal das diárias D01, as diárias emitidas (CTes de 100% de margem) e os fretes, cruzando o relatório de fretes (upload quase diário) com os débitos (que chegam no mês seguinte).
+
+**O achado que estava no caminho:** a diária tem **dois documentos** e eles estavam em baldes errados.
+- `D01`/`D05` — o que se **paga** ao motorista na hora. Estava certo (categoria `diaria`, saldo negativo).
+- O CTe emitido depois **cobrando o cliente** — vinha no código de **frete**, com contrato zerado e margem 100%, somado junto com o frete de verdade. Isso **inflava a margem do frete** e escondia o custo real da diária. Depois da separação, a margem média do frete em 07/2026 caiu para **19,9%** reais.
+
+O caminho que o app já previa para isso nunca foi usado: `tipo_doc='complementar'` (migration 048) tem **zero registros**, e `vl_cte_comp` está **zerado nas 1.043 viagens de 2026** — ou seja, o toggle "Incluir complementar (margem cheia)" do Resultado **não faz efeito nenhum hoje**. `diaria_rec` e `diaria_pg` pararam de ser preenchidos em 03/2026.
+
+**Migration 051** (aplicada em produção 2026-08-06): categoria `diaria_emitida`. A régua foi calibrada nos 2.111 CTes de frete de 01–08/2026, não chutada:
+
+| Sinal | Margem 100% | Frete normal |
+|---|---:|---:|
+| Total de casos | 243 | 1.868 |
+| Sem nota fiscal | 96% | 1% |
+| Valor redondo em centenas | 95% | 17% |
+
+Mais um teto de R$ 5.000 — a maior diária **paga** em 8 meses foi R$ 3.600. Resultado: **226 reclassificados, 10 duvidosos para a fila** (via `flag_ambigua`, decisão humana), 6 seguem como frete. Linha com `categoria_manual = true` não é tocada.
+
+**Na tela:** card no topo da Conferência. `Diária` virou `Diária paga` para não confundir com a emitida; a emitida ganhou o 6º KPI por categoria e aba própria no export.
+
+O card abre com **a leitura do mês em uma frase** — "Em 07/2026 o frete deixou R$ 498.554,61 de saldo; a diária custou R$ 58.000,00 e voltou R$ 17.200,00 em CTe" — e a recuperação é dita em dinheiro, não em percentual: **"De cada R$ 100,00 de diária paga, voltaram R$ 67,25 em CTe"**. Os três blocos ficam abaixo como prova do número, não como o recado.
+
+Os **duvidosos da régua** ganharam ação de um clique no modal da fila: `É diária emitida` reclassifica, marca `categoria_manual` e registra a decisão; `É frete — contrato faltando` fecha como revisado. Mesmo desenho do candidato de frota Rodorrica. Antes só dava para resolver entrando no modo edição admin.
+
+**Toggle "Incluir complementar" parou de fingir.** Com `vl_cte_comp` zerado — o caso de hoje em toda a base — ligar ou desligar não mudava número nenhum. Agora aparece desabilitado, com o rótulo "Sem complementar lançado neste mês" e tooltip explicando; volta a funcionar sozinho no dia em que o campo tiver valor.
+
+**O CTe da diária é emitido no mês seguinte ao pagamento**, então comparar pago × emitido dentro do mesmo mês mede o atraso, não a recuperação — julho isolado dá 30%. Por isso o card usa o acumulado dos 3 meses carregados. Nos 8 meses de 2026: pagou R$ 218.149,93, emitiu R$ 201.600,00 = **92%**.
+
 ### Ver só Belém: segmento de filial na aba Resultado
 
 **Pergunta do Yves:** a planilha sobe com 3 abas (Açailândia, Belém, Imperatriz), mas o seletor de base junta "Imperatriz / Belém" — como ver os débitos só de Belém?

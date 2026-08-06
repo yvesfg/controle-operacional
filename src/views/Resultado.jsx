@@ -310,10 +310,16 @@ export default function Resultado({ ctx }) {
           {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
           {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
-        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
-          padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>
-          <Toggle checked={incluirComp} onChange={setIncluirComp}
-            label={`Incluir complementar ${getPerfil(baseId).financeiro.complementarMargemZero ? "(margem zero)" : "(margem cheia)"}`} />
+        {/* O toggle não pode fingir que faz algo: vl_cte_comp está zerado em toda a base
+            hoje (ninguém alimenta o campo), então ligá-lo não muda número nenhum.
+            Desligado e explicado é honesto; some sozinho quando o campo voltar a ter valor. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12,
+          color: fin.comp ? t.txt : t.txt2, padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}
+          title={fin.comp ? "" : "Nenhum valor de CTe complementar lançado neste mês — o campo vl_cte_comp está vazio no operacional."}>
+          <Toggle checked={incluirComp && !!fin.comp} onChange={setIncluirComp} disabled={!fin.comp}
+            label={fin.comp
+              ? `Incluir complementar ${getPerfil(baseId).financeiro.complementarMargemZero ? "(margem zero)" : "(margem cheia)"}`
+              : "Sem complementar lançado neste mês"} />
         </div>
         {/* Mesmo segmento e mesmos rótulos do Painel Financeiro — as duas telas têm que
             oferecer o mesmo recorte, senão viram números diferentes pro mesmo mês. */}

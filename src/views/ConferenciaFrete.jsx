@@ -6,9 +6,11 @@ import {
   decidir, estornarRevisao, listarTodosPeriodo, listarPorPeriodos, chaveDuplicidade,
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
+  ehCandidatoDiariaEmitida,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
+import { listarDespesas, classeDoCredito } from "../despesas.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
 import KpiCard from "../components/KpiCard.jsx";
 import Toggle from "../components/Toggle.jsx";
@@ -28,12 +30,12 @@ const shiftMes = (m, delta) => {
   const d = new Date(y, mo - 1 + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
-const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária", bonificacao: "Bonificação" };
+const CATEGORIA_LABEL = { frete: "Frete", diaria_emitida: "Diária emitida", descarga: "Descarga", local: "Local", diaria: "Diária paga", bonificacao: "Bonificação" };
 // Normalização da busca de CTe: só letras/números, maiúsculo. Assim "otd9d27" acha a placa
 // OTD-9D27 e "80860" acha a NF dentro de um campo com várias ("80860/80861").
 const normBusca = (v) => String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 // Cor de sistema por categoria — realça o badge do ícone no KPI (frete = accent, e cores distintas nas demais).
-const CATEGORIA_COR = { frete: "var(--accent)", descarga: "var(--color-info)", local: "var(--cyan)", diaria: "var(--yellow)", bonificacao: "var(--green)" };
+const CATEGORIA_COR = { frete: "var(--accent)", diaria_emitida: "var(--green)", descarga: "var(--color-info)", local: "var(--cyan)", diaria: "var(--yellow)", bonificacao: "var(--purple, var(--cyan))" };
 // Rótulo humano de cada decisão possível na fila (exceto sinalizar_correcao, que tem seção própria).
 const DECISAO_LABEL = {
   ok: "sem ação necessária",
@@ -73,6 +75,7 @@ const ICO_CATEGORIA = {
   local:   <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></>,
   diaria:  <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
   bonificacao: <><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></>,
+  diaria_emitida: <><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></>,
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
@@ -152,6 +155,23 @@ export default function ConferenciaFrete({ ctx, conn }) {
     finally { setSalvandoVinc(false); }
   };
 
+  // Um clique na fila: reclassifica o CTe como diária emitida. Marca categoria_manual
+  // pra reimportação não desfazer (migration 049) e registra a decisão, tirando da fila.
+  const marcarDiariaEmitida = async (p) => {
+    setSalvandoEdit(true);
+    try {
+      await editarFrete(conn, p.id, {
+        categoria: "diaria_emitida", categoria_manual: true,
+        ...recalcularLinhaEditada({ ...p, categoria: "diaria_emitida" }),
+      });
+      await decidir(conn, p.id, "ok", "confirmado: diária emitida (cobrança da diária paga no D01)", usuarioLogado);
+      showToast?.(`CTRC ${p.ctrc} reclassificado como diária emitida.`, "ok");
+      setRevisarModal({ open: false, item: null });
+      await carregar();
+    } catch (e) { showToast?.("Erro ao reclassificar: " + e.message, "erro"); }
+    finally { setSalvandoEdit(false); }
+  };
+
   // Abre o modo edição admin: inicializa o formulário a partir do CTe.
   const abrirEdicao = (p) => {
     setEditForm({
@@ -207,6 +227,51 @@ export default function ConferenciaFrete({ ctx, conn }) {
       await carregar();
     } catch (e) { showToast?.("Erro ao excluir: " + e.message, "erro"); }
   };
+
+  // ── Base de comissão (regra do Yves) ────────────────────────────────────────
+  // Saldo do relatório de fretes que ele sobe MENOS os débitos que chegam depois.
+  // O casamento é por `base_id`: a Conferência traz a base em cada CTe (via cadastro
+  // da embarcadora) e a despesa é gravada por base — não precisa de mapeamento manual.
+  // Receita (sinistro, venda de avaria...) NÃO abate, só estorno: mesma regra do
+  // Resultado (migration 050), senão a comissão sairia inflada por receita de outra via.
+  const [despesasBase, setDespesasBase] = React.useState({}); // { [base_id]: {deb, est, linhas} }
+  const basesDoPeriodo = React.useMemo(
+    () => [...new Set(linhasPeriodo.filter(ehAtivo).map((l) => l.base_id).filter(Boolean))].sort(),
+    [linhasPeriodo]);
+
+  React.useEffect(() => {
+    if (!conn || !periodoRef || !basesDoPeriodo.length) { setDespesasBase({}); return; }
+    let cancelado = false;
+    Promise.all(basesDoPeriodo.map(async (b) => [b, await listarDespesas(conn, b, periodoRef).catch(() => null)]))
+      .then((pares) => {
+        if (cancelado) return;
+        const out = {};
+        pares.forEach(([b, linhas]) => {
+          if (!linhas) return; // falha de rede: a base fica sem despesa e a tela avisa
+          const inc = (f) => linhas.filter((d) => d.incluir && f(d)).reduce((s, d) => s + (Number(d.valor) || 0), 0);
+          out[b] = { linhas: linhas.length, deb: inc((d) => d.tipo !== "credito"), est: inc((d) => classeDoCredito(d) === "estorno") };
+        });
+        setDespesasBase(out);
+      });
+    return () => { cancelado = true; };
+  }, [conn, periodoRef, basesDoPeriodo]);
+
+  // Uma linha por base: saldo da Conferência, despesa líquida e a diferença.
+  // Sempre sobre TODOS os clientes da base — o filtro de cliente não se aplica aqui,
+  // porque a despesa não é rateada por cliente. A tela diz isso quando o filtro está ligado.
+  const comissao = React.useMemo(() => {
+    const linhas = basesDoPeriodo.map((b) => {
+      const saldo = linhasPeriodo.filter(ehAtivo).filter((l) => l.base_id === b)
+        .reduce((s, l) => s + (Number(l.saldo) || 0), 0);
+      const d = despesasBase[b];
+      const despesa = d ? d.deb + d.est : 0;
+      return { base: b, label: BASES[b]?.label || b, saldo, despesa, temDespesa: !!d && d.linhas > 0, base_comissao: saldo - despesa };
+    });
+    const tot = linhas.reduce((a, l) => ({
+      saldo: a.saldo + l.saldo, despesa: a.despesa + l.despesa, base_comissao: a.base_comissao + l.base_comissao,
+    }), { saldo: 0, despesa: 0, base_comissao: 0 });
+    return { linhas, tot, faltando: linhas.filter((l) => !l.temDespesa) };
+  }, [basesDoPeriodo, linhasPeriodo, despesasBase]);
 
   const carregar = React.useCallback(async () => {
     if (!conn) return;
@@ -500,6 +565,37 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const totalMes = React.useMemo(() => Object.values(resumoCli).reduce((a, d) => ({
     registros: a.registros + d.registros, peso: a.peso + d.peso, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo,
   }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
+
+  // ── Card de gestão: frete × diária paga × diária emitida ──────────────────
+  // As três naturezas que a gestão precisa ver separadas. O CUSTO da diária é o
+  // CONTRATO da categoria 'diaria' (o que saiu pro motorista) — não o frete_peso,
+  // porque no D01 o TMS manda Saldo = −Contrato e frete_peso ≈ contrato.
+  // A diária EMITIDA quase sempre cai no mês seguinte ao pagamento, então comparar
+  // as duas dentro do mesmo mês mede o atraso, não a recuperação: por isso o card
+  // também mostra o acumulado dos 3 meses que a tela já tem carregados.
+  const gestao = React.useMemo(() => {
+    const ativas = (arr) => arr.filter(ehAtivo);
+    const soma = (arr, cat, campo) => ativas(arr).filter(l => l.categoria === cat)
+      .reduce((s, l) => s + (Number(l[campo]) || 0), 0);
+    const conta = (arr, cat) => ativas(arr).filter(l => l.categoria === cat).length;
+    const doMes = (arr) => ({
+      freteSaldo: soma(arr, "frete", "saldo"),
+      fretePeso: soma(arr, "frete", "frete_peso"),
+      nFrete: conta(arr, "frete"),
+      diariaPaga: soma(arr, "diaria", "valor_contrato_frete"),
+      nPaga: conta(arr, "diaria"),
+      diariaEmitida: soma(arr, "diaria_emitida", "frete_peso"),
+      nEmitida: conta(arr, "diaria_emitida"),
+    });
+    const porCli = (arr) => clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
+    const meses = [periodoRef, mesAnt1, mesAnt2].map((m) => ({
+      mes: m,
+      ...doMes(m === periodoRef ? linhasFiltradas : porCli(linhasComparativo[m] || [])),
+    }));
+    const pagoAcum = meses.reduce((s, m) => s + m.diariaPaga, 0);
+    const emitAcum = meses.reduce((s, m) => s + m.diariaEmitida, 0);
+    return { atual: meses[0], meses, pagoAcum, emitAcum };
+  }, [linhasFiltradas, linhasComparativo, periodoRef, mesAnt1, mesAnt2, clienteFiltro]);
 
   // Curva de saldo acumulado ao longo do mês — pontos para o mini-gráfico de área da Evolução diária.
   const chartEvo = React.useMemo(() => {
@@ -870,9 +966,120 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
       )}
 
+      {/* Card de gestão — leitura de negócio antes do detalhe por categoria */}
+      {(gestao.atual.nFrete > 0 || gestao.atual.nPaga > 0 || gestao.atual.nEmitida > 0) && (
+        <div style={{ ...card, marginBottom: 14 }}>
+          {sectionHead(`Frete × diária · ${mesLabel(periodoRef)}`, (
+            <span style={{ fontSize: 10.5, color: t.txt2 }}>
+              {gestao.atual.nFrete + gestao.atual.nPaga + gestao.atual.nEmitida} documentos
+            </span>
+          ))}
+
+          {/* A leitura do mês em uma frase — é o que a gestão lê primeiro; os blocos
+              abaixo são a prova do número, não o recado. */}
+          <div style={{ fontSize: isMobile ? 12 : 13, color: t.txt, lineHeight: 1.65, marginTop: -6, marginBottom: 12 }}>
+            Em <b>{mesLabel(periodoRef)}</b> o frete deixou <b style={{ color: t.verde }}>{money(gestao.atual.freteSaldo)}</b> de saldo;
+            a diária custou <b style={{ color: t.danger }}>{money(gestao.atual.diariaPaga)}</b> e voltou <b style={{ color: t.azul }}>{money(gestao.atual.diariaEmitida)}</b> em CTe.
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 10 }}>
+            {[
+              { rot: "Frete", val: gestao.atual.freteSaldo, sub: `${gestao.atual.nFrete} CTes · saldo sobre ${money(gestao.atual.fretePeso)}`, cor: t.verde, sinal: "" },
+              { rot: "Diária paga (D01/D05)", val: -gestao.atual.diariaPaga, sub: `${gestao.atual.nPaga} CTes · pago ao motorista na hora`, cor: t.danger, sinal: "−" },
+              { rot: "Diária emitida", val: gestao.atual.diariaEmitida, sub: `${gestao.atual.nEmitida} CTes · 100% de margem`, cor: t.azul, sinal: "" },
+            ].map((k) => (
+              <div key={k.rot} style={{ background: t.card2, borderRadius: 10, padding: "12px 14px", borderLeft: `3px solid ${k.cor}` }}>
+                <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 6 }}>{k.rot}</div>
+                <div style={{ fontSize: isMobile ? 18 : 21, fontWeight: 800, color: k.cor, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums" }}>
+                  {k.sinal}{money(Math.abs(k.val))}
+                </div>
+                <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 4 }}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recuperação da diária: o CTe emitido quase sempre cai no mês seguinte
+              ao pagamento, então o número do mês isolado engana — o acumulado não. */}
+          {(gestao.pagoAcum > 0 || gestao.emitAcum > 0) && (() => {
+            const pct = gestao.pagoAcum > 0 ? (gestao.emitAcum / gestao.pagoAcum) * 100 : 0;
+            const cor = pct >= 95 ? t.verde : pct >= 70 ? t.warn : t.danger;
+            const label = [...gestao.meses].reverse().map(m => mesLabel(m.mes)).join(" + ");
+            return (
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .35)}` }}>
+                {/* "R$ X de cada R$ 100" em vez de percentual: a gestão lê sem traduzir. */}
+                <div style={{ fontSize: isMobile ? 13 : 14.5, color: t.txt, lineHeight: 1.5, marginBottom: 9 }}>
+                  De cada <b>R$ 100,00</b> de diária paga, voltaram <b style={{ color: cor }}>{money(pct)}</b> em CTe.
+                </div>
+                <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", background: hexRgb(t.danger, .25) }}>
+                  <div style={{ width: `${Math.min(pct, 100)}%`, background: cor }} />
+                </div>
+                <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 7, lineHeight: 1.55 }}>
+                  Últimos 3 meses ({label}) · pagou {money(gestao.pagoAcum)} · emitiu {money(gestao.emitAcum)}
+                  {gestao.emitAcum < gestao.pagoAcum && <> · faltam <b style={{ color: t.txt }}>{money(gestao.pagoAcum - gestao.emitAcum)}</b> em CTe</>}
+                  <br />
+                  A leitura é do acumulado porque o CTe da diária sai no mês seguinte ao pagamento — o mês sozinho sempre parece pior do que é.
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* Base de comissão: saldo do relatório de fretes − débitos do mês, por base. */}
+      {comissao.linhas.length > 0 && (
+        <div style={{ ...card, marginBottom: 14 }}>
+          {sectionHead(`Base de comissão · ${mesLabel(periodoRef)}`, (
+            <span style={{ fontSize: 10.5, color: t.txt2 }}>saldo dos fretes − débitos do mês</span>
+          ))}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
+            <span style={{ flex: 1, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Base</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Saldo fretes</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Débitos</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Comissionável</span>
+          </div>
+
+          {comissao.linhas.map((l) => (
+            <div key={l.base} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 6px", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: t.txt }}>
+                {l.label}
+                {!l.temDespesa && (
+                  <span style={{ marginLeft: 7, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap",
+                    background: hexRgb(t.warn, .12), border: `1px solid ${hexRgb(t.warn, .3)}`, color: t.warn }}>
+                    DÉBITOS NÃO IMPORTADOS
+                  </span>
+                )}
+              </span>
+              <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(l.saldo)}</span>
+              <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: l.despesa ? t.danger : t.txt2 }}>
+                {l.despesa ? `− ${money(l.despesa)}` : "—"}
+              </span>
+              <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: l.base_comissao < 0 ? t.danger : t.verde }}>{money(l.base_comissao)}</span>
+            </div>
+          ))}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 6px 2px", marginTop: 2 }}>
+            <span style={{ flex: 1, fontWeight: 800, color: t.txt, textTransform: "uppercase", fontSize: 10, letterSpacing: ".04em" }}>Total</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(comissao.tot.saldo)}</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.danger }}>− {money(comissao.tot.despesa)}</span>
+            <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 13, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: comissao.tot.base_comissao < 0 ? t.danger : t.verde }}>{money(comissao.tot.base_comissao)}</span>
+          </div>
+
+          <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 10, lineHeight: 1.55 }}>
+            {comissao.faltando.length > 0 && (
+              <div style={{ color: t.warn, marginBottom: 4 }}>
+                Ainda faltam os débitos de {comissao.faltando.map((l) => l.label).join(", ")} em {mesLabel(periodoRef)} — até importar, o comissionável dessa(s) base(s) está sem o desconto.
+              </div>
+            )}
+            Só o <b>estorno</b> abate o débito; receita (sinistro, venda de avaria, venda de gancho) fica de fora, senão a comissão sairia paga sobre dinheiro que não é frete.
+            {clienteFiltro && <> O filtro <b>{clienteFiltro}</b> não vale aqui: o débito chega por base, não por cliente.</>}
+          </div>
+        </div>
+      )}
+
       {/* KPIs por categoria */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap: 10, marginBottom: 14 }}>
-        {["frete", "descarga", "local", "diaria", "bonificacao"].map((c) => {
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(6,1fr)", gap: 10, marginBottom: 14 }}>
+        {["frete", "diaria_emitida", "descarga", "local", "diaria", "bonificacao"].map((c) => {
           const d = resumoCat[c];
           return (
             <KpiCard key={c} label={CATEGORIA_LABEL[c]} value={String(d.registros)}
@@ -1440,6 +1647,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
         const fechar = () => setRevisarModal({ open: false, item: null });
         const decidirEFechar = async (decisao, obs) => { await onDecidir(p.id, decisao, obs); fechar(); };
         const candidatoFrota = ehCandidatoFrotaRodorrica(p);
+        const candidatoDiaria = ehCandidatoDiariaEmitida(p);
         const atalhos = candidatoFrota ? ["Frota Rodorrica — desconto padrão de R$ 300", ...OBS_ATALHOS] : OBS_ATALHOS;
         const campo = (l, v) => (
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
@@ -1730,6 +1938,26 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     <button onClick={() => setRevisando(true)}
                       style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, fontFamily: "inherit" }}>
                       Não é frota — revisar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Margem 100% dentro do teto da diária, mas a régua não fechou (tem NF ou
+                  valor quebrado). Um clique resolve em vez de mandar pro modo edição. */}
+              {candidatoDiaria && !revisando && !sinalizando && !editando && (
+                <div style={{ marginTop: 12, borderRadius: 10, border: `1px solid ${hexRgb(t.verde, .35)}`, background: hexRgb(t.verde, .08), padding: "10px 12px" }}>
+                  <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5 }}>
+                    Este CTe tem <b>100% de margem</b> ({money(p.frete_peso)} de CTe, contrato zerado) — o formato de uma <b>diária emitida</b>, que é a cobrança da diária já paga ao motorista no CTe D01. Mas {String(p.nfs || "").trim() ? "ele tem nota fiscal" : "o valor não é redondo"}, então pode ser um frete comum com o contrato esquecido. Qual é?
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    <button onClick={() => marcarDiariaEmitida(p)} disabled={salvandoEdit}
+                      style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: salvandoEdit ? "wait" : "pointer", border: "none", background: t.verde, color: "#fff", fontFamily: "inherit", opacity: salvandoEdit ? .6 : 1 }}>
+                      É diária emitida
+                    </button>
+                    <button onClick={() => decidirEFechar("ok", "frete comum — contrato não preenchido na planilha")}
+                      style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, fontFamily: "inherit" }}>
+                      É frete — contrato faltando
                     </button>
                   </div>
                 </div>

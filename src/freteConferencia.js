@@ -74,6 +74,41 @@ export function candidatosVinculo(linha, linhas) {
 export const ehCandidatoFrotaRodorrica = (l) =>
   l?.categoria === "frete" && r2(num(l?.saldo)) === 300;
 
+// ── Diária emitida (categoria 'diaria_emitida') ──────────────────────────────
+// A diária tem DOIS documentos e eles vêm em códigos de Empresa diferentes:
+//   D01/D05 -> o que a empresa PAGA ao motorista na hora (categoria 'diaria',
+//              Saldo negativo, porque nesse CTe não há receita reconhecida);
+//   código de FRETE -> o CTe emitido depois cobrando o cliente. Como o motorista
+//              já foi pago no outro documento, este vem com Contrato zerado e
+//              margem 100% — e ficava somado junto com o frete de verdade,
+//              inflando a margem do frete e escondendo o custo real da diária.
+//
+// A planilha bruta não diz qual é qual: a régua abaixo foi calibrada nos 8 meses
+// já importados (2.111 CTes de frete). Os três sinais juntos separam bem:
+//   • margem 100% (Saldo == Frete Peso): 243 casos, contra 1.868 de frete normal;
+//   • SEM nota fiscal: 96% dos de margem 100% x 1% do frete normal — diária não
+//     transporta carga, então não tem NF;
+//   • valor redondo em centenas: 95% x 17%;
+//   • teto de R$ 5.000: a maior diária PAGA (D01) em 8 meses foi R$ 3.600 — acima
+//     disso é frete sem contrato preenchido, não diária.
+// Resultado na base atual: 227 classificados direto, 10 duvidosos (vão pra fila
+// de revisão via flag_ambigua) e 6 que seguem como frete.
+export const TETO_DIARIA_EMITIDA = 5000;
+const margem100 = (l) => num(l.frete_peso) > 0 && r2(num(l.saldo)) === r2(num(l.frete_peso));
+const semNF = (l) => !String(l.nfs ?? "").trim();
+const valorRedondo = (l) => r2(num(l.frete_peso)) % 100 === 0;
+
+export function ehDiariaEmitida(l) {
+  return margem100(l) && num(l.frete_peso) <= TETO_DIARIA_EMITIDA && semNF(l) && valorRedondo(l);
+}
+// Margem 100% e dentro do teto, mas falha em UM dos dois sinais (tem NF ou valor
+// quebrado): pode ser diária emitida ou frete com contrato esquecido. Não decide
+// sozinho — vai pra fila pra uma pessoa dizer qual é.
+export function ehCandidatoDiariaEmitida(l) {
+  if (l?.categoria !== "frete" || !margem100(l) || num(l.frete_peso) > TETO_DIARIA_EMITIDA) return false;
+  return semNF(l) !== valorRedondo(l);
+}
+
 function excelDateToISO(v) {
   if (v instanceof Date && !isNaN(v)) {
     return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, "0")}-${String(v.getUTCDate()).padStart(2, "0")}`;
@@ -135,7 +170,11 @@ export function classificarLinhasCliente(rows, cli, cnpj) {
   rows.forEach((r) => {
     const emp = String(r["Empresa"] ?? "").trim().toUpperCase();
     if (emp === cli.frete_cod) {
-      classificadas.push(campoBase(r, cli, cnpj, "frete", emp));
+      // A diária emitida vem no MESMO código de Empresa do frete — só os valores
+      // do documento a distinguem (ver ehDiariaEmitida).
+      const linha = campoBase(r, cli, cnpj, "frete", emp);
+      if (ehDiariaEmitida(linha)) linha.categoria = "diaria_emitida";
+      classificadas.push(linha);
     } else if (cli.desc_local_cod && emp === cli.desc_local_cod) {
       const margem = num(r["Margem Lucro"]);
       classificadas.push(campoBase(r, cli, cnpj, margem === 0 ? "descarga" : "local", emp));
@@ -161,14 +200,20 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
     // Descarga: CTe e Contrato têm o mesmo valor por definição (margem 0) — recebido
     // via NFSe na semana/mês seguinte e conciliado depois; margem 0 não é alerta aqui.
     // Bonificação: valor bônus, não é frete propriamente dito — margem não se aplica.
-    const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga" || l.categoria === "bonificacao";
+    // Diária emitida: margem 100% por definição (o custo saiu no CTe D01), então
+    // não é "margem alta demais" nem entra em alerta.
+    const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga"
+      || l.categoria === "bonificacao" || l.categoria === "diaria_emitida";
     // Ignora a "Margem Lucro" da planilha e recalcula no app (ver margemBruta).
     l.margem_lucro = margemBruta(l.saldo, l.frete_peso);
     l.flag_negativa = !margemFlexivel && l.margem_lucro < 0;
     l.flag_baixa = !margemFlexivel && l.margem_lucro >= 0 && l.margem_lucro < 10;
     l.flag_ambigua =
-      (l.categoria === "descarga" || l.categoria === "local") &&
-      ((l.margem_lucro > 0 && l.margem_lucro < 1) || (l.valor_contrato_frete === 0 && l.total_frete > 0));
+      ((l.categoria === "descarga" || l.categoria === "local") &&
+        ((l.margem_lucro > 0 && l.margem_lucro < 1) || (l.valor_contrato_frete === 0 && l.total_frete > 0)))
+      // Frete de margem 100% que a régua não conseguiu decidir: pode ser diária
+      // emitida ou frete com contrato esquecido — quem revisa escolhe.
+      || ehCandidatoDiariaEmitida(l);
     const grupo = porChave[chaveDuplicidade(l)];
     l.flag_duplicidade = grupo.length > 1;
     l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;
@@ -417,7 +462,8 @@ export async function vincularCte(conn, id, tipo, ctrcRef, por, idRef) {
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).
 export function recalcularLinhaEditada(l) {
-  const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga" || l.categoria === "bonificacao";
+  const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga"
+    || l.categoria === "bonificacao" || l.categoria === "diaria_emitida";
   const margem = margemBruta(l.saldo, l.frete_peso);
   return {
     margem_lucro: margem,
@@ -442,7 +488,7 @@ export async function listarTodosPeriodo(conn, periodoRef) {
 // continuam na base e na tela, mas fora de qualquer total. Filtro na entrada de cada
 // função pra nenhum caller esquecer — inclusive o preview da importação.
 export function resumoPorCategoria(linhas) {
-  const cats = ["frete", "descarga", "local", "diaria", "bonificacao"];
+  const cats = ["frete", "diaria_emitida", "descarga", "local", "diaria", "bonificacao"];
   const out = {};
   const ativas = linhas.filter(ehAtivo);
   cats.forEach((c) => {
@@ -498,7 +544,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
   // com os totais da tela. O vínculo dos que entram aparece na coluna "Situação".
   const linhas = linhasTodas.filter(ehAtivo);
   const wb = XLSX.utils.book_new();
-  const CAT_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária", bonificacao: "Bonificação" };
+  const CAT_LABEL = { frete: "Frete", diaria_emitida: "Diária emitida", descarga: "Descarga", local: "Local", diaria: "Diária paga", bonificacao: "Bonificação" };
   // "Modalidade" no fim (CIF/FOB) — appendada pra não deslocar os índices posicionais das
   // linhas de subtotal/total abaixo (que ficam mais curtas, com a célula final vazia).
   const COLS = ["Cliente", "CTRC", "Empresa", "Data Emissão", "Trecho", "NFS", "Placa", "Nome do Usuário",
@@ -546,6 +592,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
   };
 
   construirAba("frete", "FRETES");
+  construirAba("diaria_emitida", "DIARIAS EMITIDAS");
   construirAba("descarga", "DESCARGAS");
   construirAba("diaria", "DIARIAS");
   construirAba("local", "LOCAL");
@@ -555,7 +602,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
   const resumoAoa = [["Cliente", "Categoria", "Registros", "Peso (kg)", "Frete Peso (R$)", "Saldo (R$)", "Margem média (%)", "Obs"]];
   const clientes = [...new Set(linhas.map((l) => l.cliente))].sort();
   clientes.forEach((cli) => {
-    ["frete", "descarga", "local", "diaria", "bonificacao"].forEach((cat) => {
+    ["frete", "diaria_emitida", "descarga", "local", "diaria", "bonificacao"].forEach((cat) => {
       const sub = linhas.filter((l) => l.cliente === cli && l.categoria === cat);
       if (!sub.length) return;
       const qtd = sub.length;
@@ -564,7 +611,8 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
       const saldo = sub.reduce((s, l) => s + num(l.saldo), 0);
       const margem = qtd ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / qtd : 0;
       const obs = cat === "descarga" ? "margem 0 por definição (CTe = Contrato)"
-        : cat === "diaria" ? "margem negativa esperada (recebido via CTe complementar depois)"
+        : cat === "diaria" ? "custo: diária paga ao motorista na hora (o CTe emitido vem depois)"
+        : cat === "diaria_emitida" ? "margem 100% por definição — o custo saiu no CTe da diária paga"
         : cat === "bonificacao" ? "valor bônus, margem não se aplica" : "";
       resumoAoa.push([cli, CAT_LABEL[cat], qtd, peso, fretePeso, saldo, r2(margem), obs]);
     });
