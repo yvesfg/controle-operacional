@@ -1,4 +1,5 @@
 import { fmtMoeda, parseData, diffDias, brToInput } from '../utils.js';
+import { nMoeda } from '../financeiroCalc.js';
 
 /**
  * Factory que recebe os dados de contexto e retorna as funções de geração de relatório.
@@ -122,10 +123,10 @@ export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual
       const toSort = s => { if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return `${p[2]}-${p[1]}-${p[0]}`} return s; };
       return toSort(da).localeCompare(toSort(db));
     });
-    const totalVlCte = viagens.reduce((s,r)=>s+(parseFloat(r.vl_cte)||0),0);
-    const totalContrato = viagens.reduce((s,r)=>s+(parseFloat(r.vl_contrato)||0),0);
-    const totalAdiant = viagens.reduce((s,r)=>s+(parseFloat(r.adiant)||0),0);
-    const totalSaldo = viagens.reduce((s,r)=>s+(parseFloat(r.saldo)||0),0);
+    const totalVlCte = viagens.reduce((s,r)=>s+nMoeda(r.vl_cte),0);
+    const totalContrato = viagens.reduce((s,r)=>s+nMoeda(r.vl_contrato),0);
+    const totalAdiant = viagens.reduce((s,r)=>s+nMoeda(r.adiant),0);
+    const totalSaldo = viagens.reduce((s,r)=>s+nMoeda(r.saldo),0);
     const comDiaria = viagens.filter(r=>{const tp=diariasMap.get(r.dt)||"";return tp==="diaria"||tp==="atraso";}).length;
     const comSGS = viagens.filter(r=>r.sgs).length;
     const statusCount = {};
@@ -190,9 +191,9 @@ export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual
             <td>${r.chegada||"—"}</td>
             <td>${r.data_desc||"—"}</td>
             <td>${statusBadge(tipo)}</td>
-            <td>${r.vl_cte?`R$ ${parseFloat(r.vl_cte).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
-            <td>${r.vl_contrato?`R$ ${parseFloat(r.vl_contrato).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
-            <td>${r.saldo?`R$ ${parseFloat(r.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+            <td>${r.vl_cte?`R$ ${nMoeda(r.vl_cte).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+            <td>${r.vl_contrato?`R$ ${nMoeda(r.vl_contrato).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
+            <td>${r.saldo?`R$ ${nMoeda(r.saldo).toLocaleString("pt-BR",{minimumFractionDigits:2})}`:"—"}</td>
             <td>${r.sgs?`<span class="badge badge-atraso">${r.sgs}</span>`:"—"}</td>
           </tr>`;
         }).join("")}
@@ -277,10 +278,10 @@ export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual
       return toSort(a.data_carr||"").localeCompare(toSort(b.data_carr||""));
     });
     const motoristasUnicos = new Set(regs.map(r=>r.nome).filter(Boolean));
-    const totalCte = regs.reduce((s,r)=>s+(parseFloat(r.vl_cte)||0),0);
-    const totalContrato = regs.reduce((s,r)=>s+(parseFloat(r.vl_contrato)||0),0);
-    const totalAdiant = regs.reduce((s,r)=>s+(parseFloat(r.adiant)||0),0);
-    const totalSaldo = regs.reduce((s,r)=>s+(parseFloat(r.saldo)||0),0);
+    const totalCte = regs.reduce((s,r)=>s+nMoeda(r.vl_cte),0);
+    const totalContrato = regs.reduce((s,r)=>s+nMoeda(r.vl_contrato),0);
+    const totalAdiant = regs.reduce((s,r)=>s+nMoeda(r.adiant),0);
+    const totalSaldo = regs.reduce((s,r)=>s+nMoeda(r.saldo),0);
     const comDiaria = regs.filter(r=>{const tp=diariasMapG.get(r.dt)||"";return tp==="diaria"||tp==="atraso";}).length;
     const comSGS = regs.filter(r=>r.sgs).length;
     // SGS items in range
@@ -306,7 +307,7 @@ export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual
       const n=r.nome||"—";
       if(!porMotorista[n]) porMotorista[n]={viagens:0,cte:0,diarias:0,diariaPrev:0,diariaPg:0};
       porMotorista[n].viagens++;
-      porMotorista[n].cte+=(parseFloat(r.vl_cte)||0);
+      porMotorista[n].cte+=nMoeda(r.vl_cte);
       const tpG=diariasMapG.get(r.dt)||"";
       if(tpG==="diaria"||tpG==="atraso"){
         porMotorista[n].diarias++;
@@ -401,10 +402,10 @@ export function criarMotoresRelatorio({ customLogo, DADOS, motoristas, baseAtual
         {k:'data_desc',h:'Descarga',    fn:r=>r.data_desc||'\u2014'},
         {k:'dias',    h:'Dias',         fn:r=>r.dias||'\u2014'},
         {k:'status',  h:'Status Oper.', fn:r=>statusOperBadge(r.status)},
-        {k:'vl_cte',  h:'Vl. CTE',      fn:r=>r.vl_cte?'R$ '+parseFloat(r.vl_cte).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'vl_contrato',h:'Vl. Contrato',fn:r=>r.vl_contrato?'R$ '+parseFloat(r.vl_contrato).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'adiant',  h:'Adiantamento', fn:r=>r.adiant?'R$ '+parseFloat(r.adiant).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
-        {k:'saldo',   h:'Saldo',        fn:r=>r.saldo?'R$ '+parseFloat(r.saldo).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
+        {k:'vl_cte',  h:'Vl. CTE',      fn:r=>r.vl_cte?'R$ '+nMoeda(r.vl_cte).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
+        {k:'vl_contrato',h:'Vl. Contrato',fn:r=>r.vl_contrato?'R$ '+nMoeda(r.vl_contrato).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
+        {k:'adiant',  h:'Adiantamento', fn:r=>r.adiant?'R$ '+nMoeda(r.adiant).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
+        {k:'saldo',   h:'Saldo',        fn:r=>r.saldo?'R$ '+nMoeda(r.saldo).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
         {k:'diaria_prev',h:'Di\u00e1ria Prev.',fn:r=>r.diaria_prev?'R$ '+parseFloat(r.diaria_prev).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
         {k:'diaria_pg',h:'Di\u00e1ria Paga',fn:r=>r.diaria_pg?'R$ '+parseFloat(r.diaria_pg).toLocaleString('pt-BR',{minimumFractionDigits:2}):'\u2014'},
         {k:'cte',     h:'CTE',          fn:r=>r.cte||'\u2014'},

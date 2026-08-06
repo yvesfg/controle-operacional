@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { nMoeda } from "./financeiroCalc.js";
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
 
@@ -683,7 +684,7 @@ export default function App() {
       grupos[mes].regs.push(r);
       grupos[mes].dts.add(dtBase(r.dt));
       if (r.nome) grupos[mes].mots.add(r.nome);
-      const v = parseFloat(r.vl_cte); if (!isNaN(v)) grupos[mes].cte += v;
+      grupos[mes].cte += nMoeda(r.vl_cte);
     });
     const meses = Object.keys(grupos).sort((a,b) => {
       const pa=a.split("/"),pb=b.split("/");
@@ -711,17 +712,14 @@ export default function App() {
     if (dashOrigem !== "todos") filtrado = filtrado.filter(r => normOrigem(r.origem) === dashOrigem);
 
     const dtsU = new Set(filtrado.filter(r=>!r._semDt).map(r=>dtBase(r.dt)));
-    let cteT = 0; filtrado.forEach(r=>{ const v=parseFloat(r.vl_cte); if(!isNaN(v)) cteT+=v; });
+    let cteT = 0; filtrado.forEach(r=>{ cteT += nMoeda(r.vl_cte); });
     // ── Financeiro AVB — excluir PENDENTES das somas ──
     let avbContratoT=0, avbAdtT=0, avbSaldoT=0;
     if (baseAtual?.id === "acailandia_avb") {
       filtrado.filter(r=>(r.status||"").toUpperCase()!=="PENDENTE").forEach(r=>{
-        const vc=parseFloat(String(r.vl_contrato||"").replace(/[R$\s.]/g,"").replace(",","."));
-        const va=parseFloat(String(r.adiant||"").replace(/[R$\s.]/g,"").replace(",","."));
-        const vs=parseFloat(String(r.saldo||"").replace(/[R$\s.]/g,"").replace(",","."));
-        if(!isNaN(vc)) avbContratoT+=vc;
-        if(!isNaN(va)) avbAdtT+=va;
-        if(!isNaN(vs)) avbSaldoT+=vs;
+        avbContratoT += nMoeda(r.vl_contrato);
+        avbAdtT       += nMoeda(r.adiant);
+        avbSaldoT     += nMoeda(r.saldo);
       });
     }
     return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem, avbContratoT, avbAdtT, avbSaldoT };

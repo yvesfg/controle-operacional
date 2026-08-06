@@ -47,16 +47,38 @@ O recorte vale para o **P&L inteiro**, não só para a despesa: receita e pago-m
 
 `origemBate()` saiu de `PainelFinanceiro.jsx` para `financeiroCalc.js` — as duas telas precisam recortar igual, senão o mesmo mês fecha diferente em duas abas do mesmo app.
 
-**07/2026, para conferência:**
+**07/2026, conferido rodando os módulos reais contra a API:**
 
 | | Viagens | Faturamento | Pago motorista | Margem | Despesa | Resultado |
 |---|---:|---:|---:|---:|---:|---:|
-| Imperatriz | 134 | R$ 1.233.910,67 | R$ 974.864,18 | R$ 259.046,49 | R$ 114.674,07 | **R$ 146.227,22** |
-| Belém | 21 | R$ 43.040,00 | R$ 32.700,00 | R$ 10.340,00 | R$ 16.672,24 | **− R$ 6.332,24** |
+| Imperatriz | 140 | R$ 1.285.390,67 | R$ 1.012.484,18 | R$ 272.906,49 | R$ 114.674,07 | **R$ 160.087,22** |
+| Belém | 21 | R$ 43.040,00 | R$ 32.700,00 | R$ 10.340,00 | R$ 7.540,28 | **R$ 2.799,72** |
+| Imp + Bel | 167 | R$ 1.330.531,67 | R$ 1.046.784,18 | R$ 283.747,49 | R$ 122.214,35 | **R$ 163.387,94** |
 
-Belém fecha negativo por causa da linha "SALDO NEGATIVO MÊS 06/2026" (R$ 9.131,96); sem ela, fecha positivo.
+Belém fecha positivo: a linha "SALDO NEGATIVO MÊS 06/2026" (R$ 9.131,96) ficou de fora na importação, e o total da aba bate com os R$ 7.540,28 que a planilha declara.
 
-**Viagem sem `origem` preenchida não entra em nenhum dos dois recortes** — em 07/2026 são 6 viagens (R$ 2.101,00), então Imperatriz + Belém dá R$ 139.894,98 contra R$ 140.395,98 de "Imp + Bel". A legenda do recorte diz quantas são e quanto valem, em vez de sumir com elas em silêncio.
+**Viagem sem `origem` preenchida não entra em nenhum dos dois recortes** — em 07/2026 são 6 viagens (R$ 2.101,00 / margem R$ 501,00), então Imperatriz + Belém dá R$ 162.886,94 contra R$ 163.387,94 de "Imp + Bel". A legenda do recorte diz quantas são e quanto valem, em vez de sumir com elas em silêncio.
+
+> Os números publicados aqui antes (134 viagens, R$ 1.233.910,67, resultado R$ 146.227,22) estavam **errados**: foram tirados de SQL direto na tabela, sem contar as cargas **sem-DT confirmadas**, que o App injeta no `DADOS` a partir de `controle_operacional_sem_dt` só nesta base (6 viagens em 07/2026, R$ 51.480,00 de CTe e R$ 37.620,00 de contrato).
+
+### BUG DE PRODUÇÃO — faturamento dividido por ~1000 (achado pelo Yves)
+
+Com o recorte de Imperatriz na tela, o card **Faturamento (CTE)** mostrou **R$ 1.285,35** para 140 viagens, e a Margem bruta ficou **− R$ 1.011.198,83 (−78670,8%)**. Não era do recorte por filial: é o **parsing do dinheiro**, e vinha de antes.
+
+`nCte` era só `parseFloat(v)`, apostando no comentário *"vl_cte já vem decimal"*. Isso vale na AVB, mas **não** na `imperatriz_belem`, cujo sync grava pt-BR: `parseFloat("11.429,48")` devolve **11.429** — corta na vírgula e lê o ponto de milhar como decimal. Somando o mês, o faturamento sai dividido por ~1000. O `Pago motorista` vinha certo porque usa `nContrato`, que já tratava pt-BR — daí a margem gigantesca e negativa.
+
+O valor certo é **R$ 1.285.390,67**: é literalmente o mesmo número com o separador de milhar comido.
+
+Levantamento nas 1176 linhas da tabela: 964 pt-BR, 30 com ponto e sem vírgula (todas decimais reais, ex.: `2101.06`), 112 só dígitos, 70 vazias. Agora existe **um** parser (`nMoeda`, em `financeiroCalc.js`) que cobre os quatro casos; `nCte` e `nContrato` são apelidos dele, mantidos porque dizem de qual coluna vem cada valor.
+
+**Telas afetadas, todas corrigidas:**
+- Resultado, Painel Financeiro e Resumo (via `financeiroCalc`);
+- **Dashboard** — `App.jsx` somava `parseFloat(r.vl_cte)` no faturamento por mês e no total do recorte: mesmo erro, mesma base;
+- **Relatórios** — `relatorioEngine.js` usava `parseFloat` cru em `vl_cte`, `vl_contrato`, `adiant` e `saldo` (16 pontos).
+
+**Segundo bug, independente, achado no caminho:** o bloco financeiro da AVB no Dashboard fazia `.replace(/[R$\s.]/g,"")`, que remove **todos** os pontos. Na AVB os valores são decimais (`435` de `464` linhas), então `"2101.06"` virava `210106` — Pago motorista, Adiantamento e Saldo da AVB inflados **100×**. Passou a usar o mesmo `nMoeda`.
+
+Fica de fora, de propósito: `App.jsx:400` (`parseFloat(r.saldo)` no alerta de cobrança) tem o mesmo parsing, mas só testa `saldo > 0` e o sinal se preserva — o alerta acerta hoje. Não mexi.
 
 ### "Selecionar todas" no modal de linhas de outro mês
 Pedido do Yves durante o teste: marcar tudo e ir desmarcando a exceção é mais rápido que clicar linha a linha. Mestre no topo da lista, com contador e estado indeterminado quando só parte está marcada.
