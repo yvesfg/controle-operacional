@@ -10,7 +10,8 @@ const GRUPOS = ["ENCARGOS", "DESPESAS C/ PESSOAL", "DESPESAS FIXAS", "DESPESAS V
 export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial, t, isMobile }) {
   const ehEdicao = !!(inicial && inicial.id);
   const [form, setForm] = React.useState({
-    grupo: "DESPESAS VARIAVEIS", dt_mov: "", valor: "", natureza: "", conta: "", historico: "", incluir: true, indevida: false,
+    grupo: "DESPESAS VARIAVEIS", dt_mov: "", valor: "", natureza: "", conta: "", historico: "",
+    incluir: true, indevida: false, classe_credito: "estorno",
   });
 
   React.useEffect(() => {
@@ -24,6 +25,9 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
       historico: inicial?.historico || "",
       incluir: inicial?.incluir !== false,
       indevida: inicial?.indevida === true,
+      // Crédito gravado antes da migration 050 não tem classe: vale estorno, que era o
+      // comportamento da época.
+      classe_credito: inicial?.classe_credito || "estorno",
     });
   }, [open, inicial]);
 
@@ -36,7 +40,9 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
 
   const salvar = () => {
     const valorNum = parseFloat(String(form.valor).replace(/[R$\s]/g, "").replace(",", "."));
-    if (isNaN(valorNum) || valorNum <= 0) { alert("Informe um valor válido."); return; }
+    // Valor negativo é crédito e sempre foi previsto aqui (o `tipo` abaixo já trata),
+    // mas a validação barrava tudo <= 0 — na prática nenhum crédito podia ser editado.
+    if (isNaN(valorNum) || valorNum === 0) { alert("Informe um valor válido."); return; }
     onSave({
       grupo: form.grupo,
       dt_mov: form.dt_mov || null,
@@ -47,6 +53,7 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
       tipo: valorNum < 0 ? "credito" : "debito",
       incluir: form.incluir,
       indevida: valorNum >= 0 ? form.indevida : false,
+      classe_credito: valorNum < 0 ? form.classe_credito : null,
     });
   };
 
@@ -112,7 +119,28 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
                 label="Despesa indevida — aguardar crédito no mês seguinte" />
             </div>
           ) : (
-            <div style={{ fontSize: 11, color: t.txt2 }}>Valor negativo = crédito (abate a despesa do mês).</div>
+            // Crédito: estorno abate a despesa; receita fica fora do cálculo (ver migration 050).
+            // Vem classificado pela natureza no import — aqui é a correção manual.
+            <div>
+              <label style={lbl}>Este crédito é</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[
+                  ["estorno", "Estorno de despesa", "Dinheiro que volta de uma despesa paga — abate a despesa do mês.", t.verde],
+                  ["receita", "Receita", "Entra por outra via (sinistro, venda, CTe) — fica fora do cálculo de despesa.", t.azul],
+                ].map(([v, titulo, ajuda, cor]) => {
+                  const ativo = form.classe_credito === v;
+                  return (
+                    <button key={v} onClick={() => set("classe_credito", v)} title={ajuda}
+                      style={{ flex: 1, textAlign: "left", padding: "9px 11px", borderRadius: 8, cursor: "pointer",
+                        fontFamily: "inherit", background: ativo ? `${cor}1a` : "transparent",
+                        border: `1.5px solid ${ativo ? cor : t.borda}` }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: ativo ? cor : t.txt }}>{titulo}</div>
+                      <div style={{ fontSize: 10, color: t.txt2, marginTop: 2, lineHeight: 1.35 }}>{ajuda}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
 

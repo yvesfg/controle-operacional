@@ -11,6 +11,7 @@ import {
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
 import KpiCard from "../components/KpiCard.jsx";
+import Toggle from "../components/Toggle.jsx";
 import { BASES } from "../constants.js";
 
 // Conferência de Faturamento — planilhas BRUTAS de faturamento (TMS/ERP), fonte
@@ -28,6 +29,9 @@ const shiftMes = (m, delta) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 const CATEGORIA_LABEL = { frete: "Frete", descarga: "Descarga", local: "Local", diaria: "Diária", bonificacao: "Bonificação" };
+// Normalização da busca de CTe: só letras/números, maiúsculo. Assim "otd9d27" acha a placa
+// OTD-9D27 e "80860" acha a NF dentro de um campo com várias ("80860/80861").
+const normBusca = (v) => String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 // Cor de sistema por categoria — realça o badge do ícone no KPI (frete = accent, e cores distintas nas demais).
 const CATEGORIA_COR = { frete: "var(--accent)", descarga: "var(--color-info)", local: "var(--cyan)", diaria: "var(--yellow)", bonificacao: "var(--green)" };
 // Rótulo humano de cada decisão possível na fila (exceto sinalizar_correcao, que tem seção própria).
@@ -78,6 +82,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [clienteFiltro, setClienteFiltro] = React.useState(""); // "" = todos os clientes
   const [usuarioFiltro, setUsuarioFiltro] = React.useState(""); // "" = todos os usuários (nome_usuario da planilha)
+  // Diária e Descarga entram nos totais por padrão (é o que a planilha bruta soma), mas não
+  // são frete vendido: a Descarga tem CTe = Contrato (saldo 0) e a Diária vem com Saldo =
+  // −Contrato no TMS (o CTe complementar entra só depois). Desligar aqui recalcula Frete,
+  // Saldo e Margem só com o frete de verdade, pra comparar os dois números lado a lado.
+  const [incluirDiariaDescarga, setIncluirDiariaDescarga] = React.useState(true);
   const [filaMes, setFilaMes] = React.useState("todos"); // "todos" | "atual" | "anterior" — recorte de mês da fila de revisão
   const [cliOpen, setCliOpen] = React.useState(false);   // dropdown custom de cliente aberto
   const [linhasPeriodo, setLinhasPeriodo] = React.useState([]);
@@ -96,6 +105,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [linhasExtra, setLinhasExtra] = React.useState([]);
   const [buscandoPar, setBuscandoPar] = React.useState(false);
   const mesesBuscados = React.useRef(new Set());
+  // Busca de CTe (CTRC / NF / placa / manifesto / contrato) — atravessa cliente e mês.
+  const [buscaCte, setBuscaCte] = React.useState("");
+  const [buscaAmpla, setBuscaAmpla] = React.useState("nao"); // 'nao' | 'buscando' | 'feita'
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
   const [sinalObs, setSinalObs] = React.useState("");
@@ -213,6 +225,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
       setPendentes(pend);
       setSinalizados(sinal);
       setLinhasComparativo({ [mesAnt1]: lAnt1, [mesAnt2]: lAnt2 });
+      // Meses carregados sob demanda (busca de CTe / par de duplicidade) são descartados
+      // aqui: depois de gravar algo, é o único jeito de não mostrar dado velho de outro mês.
+      setLinhasExtra([]);
+      mesesBuscados.current = new Set();
+      setBuscaAmpla("nao");
     } catch (e) { showToast?.("Erro ao carregar conferência: " + e.message, "erro"); }
     finally { setLoading(false); }
   }, [conn, periodoRef, showToast]);
@@ -433,9 +450,18 @@ export default function ConferenciaFrete({ ctx, conn }) {
     [sinalizados, clienteFiltro, usuarioFiltro]
   );
 
+  // Recorte de categoria dos RESUMOS (Por cliente / Evolução diária / comparativo). Os KPIs
+  // por categoria continuam sobre linhasFiltradas — são justamente eles que mostram quanto
+  // Diária e Descarga representam quando o toggle está desligado.
+  const semDiariaDescarga = React.useCallback(
+    (arr) => arr.filter((l) => l.categoria !== "diaria" && l.categoria !== "descarga"), []);
+  const linhasResumo = React.useMemo(
+    () => incluirDiariaDescarga ? linhasFiltradas : semDiariaDescarga(linhasFiltradas),
+    [linhasFiltradas, incluirDiariaDescarga, semDiariaDescarga]);
+
   const resumoCat = React.useMemo(() => resumoPorCategoria(linhasFiltradas), [linhasFiltradas]);
-  const resumoCli = React.useMemo(() => resumoPorCliente(linhasFiltradas), [linhasFiltradas]);
-  const resumoDia = React.useMemo(() => resumoPorDia(linhasFiltradas), [linhasFiltradas]);
+  const resumoCli = React.useMemo(() => resumoPorCliente(linhasResumo), [linhasResumo]);
+  const resumoDia = React.useMemo(() => resumoPorDia(linhasResumo), [linhasResumo]);
 
   // Comparativo com meses anteriores — mesmo intervalo de dias (01 até o dia de corte)
   // nos 2 meses anteriores ao periodoRef selecionado. Dia de corte = hoje, se periodoRef
@@ -443,7 +469,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const mesAnt1 = React.useMemo(() => shiftMes(periodoRef, -1), [periodoRef]);
   const mesAnt2 = React.useMemo(() => shiftMes(periodoRef, -2), [periodoRef]);
   const comparativo = React.useMemo(() => {
-    const filtrarCli = (arr) => clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
+    // Mesmo recorte do mês exibido (cliente + toggle de diária/descarga), senão o
+    // comparativo compararia bases diferentes e a variação % sairia inventada.
+    const filtrarCli = (arr) => {
+      const porCli = clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
+      return incluirDiariaDescarga ? porCli : semDiariaDescarga(porCli);
+    };
     const resumoAnt1 = resumoPorDia(filtrarCli(linhasComparativo[mesAnt1] || []));
     const resumoAnt2 = resumoPorDia(filtrarCli(linhasComparativo[mesAnt2] || []));
 
@@ -465,7 +496,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const totalAtual = somar(mapaAtual), total1 = somar(mapa1), total2 = somar(mapa2);
 
     return { diaCorte, totalAtual, total1, total2 };
-  }, [linhasComparativo, mesAnt1, mesAnt2, periodoRef, resumoDia, clienteFiltro]);
+  }, [linhasComparativo, mesAnt1, mesAnt2, periodoRef, resumoDia, clienteFiltro, incluirDiariaDescarga, semDiariaDescarga]);
   const totalMes = React.useMemo(() => Object.values(resumoCli).reduce((a, d) => ({
     registros: a.registros + d.registros, peso: a.peso + d.peso, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo,
   }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
@@ -626,6 +657,55 @@ export default function ConferenciaFrete({ ctx, conn }) {
     return () => { cancelado = true; };
   }, [revisarModal.open, revisarModal.item, conn, paresDup]);
 
+  // ── Busca de CTe ─────────────────────────────────────────────────────────────
+  // Atravessa cliente e mês (não depende de escolher o cliente antes) e casa por CTRC,
+  // NF, placa, manifesto ou nº de contrato. Procura no que já está carregado; se não
+  // achar, o botão "Procurar em todos os meses" traz o resto da base pra memória.
+  const termoBusca = normBusca(buscaCte);
+  // Relevância: o mesmo número costuma aparecer no meio do manifesto/contrato de outras
+  // linhas (buscar "2591" casa 10 registros na base real). CTRC exato vem primeiro, depois
+  // CTRC que começa com o termo, depois o resto — e dentro de cada grupo, mais recente antes.
+  const pesoBusca = (l, termo) => {
+    const c = normBusca(l.ctrc);
+    if (c === termo) return 0;
+    if (c.startsWith(termo)) return 1;
+    if (normBusca(l.placa) === termo || normBusca(l.nfs).includes(termo)) return 2;
+    return 3;
+  };
+  const resultadosBusca = React.useMemo(() => {
+    if (termoBusca.length < 2) return [];
+    return universoLinhas
+      .filter((l) => [l.ctrc, l.nfs, l.placa, l.numero_manifesto, l.numero_contrato]
+        .some((v) => normBusca(v).includes(termoBusca)))
+      .sort((a, b) => (pesoBusca(a, termoBusca) - pesoBusca(b, termoBusca))
+        || String(b.data_emissao || "").localeCompare(String(a.data_emissao || "")))
+      .slice(0, 100);
+  }, [termoBusca, universoLinhas]);
+
+  const mesesCarregados = React.useMemo(
+    () => [periodoRef, shiftMes(periodoRef, -1), shiftMes(periodoRef, -2)],
+    [periodoRef]);
+
+  // 18 meses em volta do mês exibido — a tabela inteira tem poucos milhares de linhas,
+  // então isso cobre o histórico e ainda é uma consulta só. Fica em memória (linhasExtra)
+  // até o próximo carregar(), então buscas seguintes são instantâneas.
+  const buscarEmTodosOsMeses = async () => {
+    setBuscaAmpla("buscando");
+    try {
+      const alvo = Array.from({ length: 19 }, (_, i) => shiftMes(periodoRef, i - 17))
+        .filter((m) => !mesesCarregados.includes(m) && !mesesBuscados.current.has(m));
+      if (alvo.length) {
+        alvo.forEach((m) => mesesBuscados.current.add(m));
+        const rows = await listarPorPeriodos(conn, alvo);
+        if (rows?.length) setLinhasExtra((prev) => [...prev, ...rows]);
+      }
+      setBuscaAmpla("feita");
+    } catch (e) {
+      setBuscaAmpla("nao");
+      showToast?.("Erro ao procurar nos outros meses: " + e.message, "erro");
+    }
+  };
+
   // Candidatos a par do CTe aberto no modal (substituição/complementar) — mesma NF ou
   // mesmo valor, incluindo os meses buscados sob demanda.
   const candidatosDoCTe = React.useMemo(() => {
@@ -674,6 +754,36 @@ export default function ConferenciaFrete({ ctx, conn }) {
             </>
           )}
         </div>
+        {/* Busca de CTe — mesmo desenho da busca de Créditos Pendentes (lupa + limpar). */}
+        <div style={{ position: "relative", minWidth: 210 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={buscaCte ? t.ouro : t.txt2} strokeWidth="2.5" strokeLinecap="round"
+            style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+            <circle cx="11" cy="11" r="7" /><path d="m21 21-4.35-4.35" />
+          </svg>
+          <input value={buscaCte} onChange={(e) => setBuscaCte(e.target.value)}
+            placeholder="Buscar CTe (CTRC, NF, placa…)"
+            /* Enter abre direto quando não há dúvida: resultado único, ou o primeiro é o CTRC exato. */
+            onKeyDown={(e) => {
+              const primeiro = resultadosBusca[0];
+              if (e.key === "Enter" && primeiro && (resultadosBusca.length === 1 || pesoBusca(primeiro, termoBusca) === 0)) abrirRevisar(primeiro);
+            }}
+            style={{ width: "100%", boxSizing: "border-box", paddingLeft: 31, paddingRight: buscaCte ? 28 : 12, paddingTop: 8, paddingBottom: 8,
+              fontSize: 13, borderRadius: 8, border: `1.5px solid ${buscaCte ? t.ouro : t.borda}`, background: t.card, color: t.txt, fontFamily: "inherit", outline: "none" }} />
+          {buscaCte && (
+            <button onClick={() => setBuscaCte("")} title="Limpar busca"
+              style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent",
+                color: t.txt2, cursor: "pointer", fontSize: 13, lineHeight: 1, padding: 4 }}>✕</button>
+          )}
+        </div>
+
+        {/* Mesmo desenho do "Incluir complementar" do Resultado — controle que recalcula
+            os totais da tela, não um filtro de listagem. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
+          padding: "6px 11px", border: `1px solid ${incluirDiariaDescarga ? t.borda : t.ouro}`, borderRadius: 8 }}>
+          <Toggle checked={incluirDiariaDescarga} onChange={setIncluirDiariaDescarga}
+            label="Incluir diária e descarga" />
+        </div>
+
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <button onClick={() => gerarWorkbookXLSX(linhasFiltradas, periodoRef)} disabled={!linhasFiltradas.length}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
@@ -703,6 +813,63 @@ export default function ConferenciaFrete({ ctx, conn }) {
         Fonte: planilhas brutas de faturamento (CTRC/TMS) por cliente — <b style={{ color: t.txt }}>não é o mesmo dado</b> do Operacional (Google Sheets). Os valores deveriam bater, mas ainda são conferidos separadamente.
       </div>
 
+      {/* Resultado da busca de CTe — fica acima dos KPIs porque, quando se busca, é o
+          único conteúdo que importa. Não mexe em nenhum resumo/total da tela. */}
+      {termoBusca.length >= 2 && (
+        <div style={{ ...card, marginBottom: 14 }}>
+          {sectionHead(`Busca · "${buscaCte.trim()}"`, (
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: t.txt2 }}>
+              {resultadosBusca.length} resultado(s){resultadosBusca.length === 100 ? " (100 primeiros)" : ""}
+            </span>
+          ))}
+
+          {resultadosBusca.length > 0 ? (
+            <div style={{ maxHeight: 420, overflowY: "auto", margin: "0 -4px" }}>
+              {resultadosBusca.map((r) => (
+                <div key={r.id} onClick={() => abrirRevisar(r)}
+                  style={{ padding: "8px 6px", borderRadius: 7, borderBottom: `1px solid ${hexRgb(t.borda, .2)}`, cursor: "pointer",
+                    opacity: ehAtivo(r) ? 1 : .5 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = t.card2)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      CTRC {r.ctrc} · {CATEGORIA_LABEL[r.categoria] || r.categoria} · <span style={{ color: t.txt2, fontWeight: 500 }}>{r.cliente}</span>
+                    </span>
+                    <span style={{ flexShrink: 0, fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{mesLabel(r.periodo_ref)}</span>
+                    <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
+                      {money(r.saldo)}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                    {r.data_emissao && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{r.data_emissao.split("-").reverse().join("/")}</span>}
+                    {r.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{r.placa}</span>}
+                    {r.nfs && <span style={{ fontSize: 10.5, color: t.txt2 }}>NF {r.nfs}</span>}
+                    {r.is_devolucao && badge(ICO_DEVOLUCAO, "FOB", t.azul)}
+                    {r.categoria_manual && badge(ICO_CATEGORIA_MANUAL, "CATEGORIA À MÃO", t.verde)}
+                    {badgesCiclo(r)}
+                    {r.flag_duplicidade && badge(ICO_DUPLICIDADE, "DUPLICIDADE", t.danger)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 11.5, color: t.txt2, lineHeight: 1.5 }}>
+              Nada encontrado {buscaAmpla === "feita" ? "em nenhum mês da base." : `em ${mesesCarregados.map(mesLabel).join(", ")}.`}
+            </div>
+          )}
+
+          {/* Ampliar a busca pro resto da base — uma consulta só, fica em memória depois. */}
+          {buscaAmpla !== "feita" && (
+            <button onClick={buscarEmTodosOsMeses} disabled={buscaAmpla === "buscando"}
+              style={{ marginTop: 10, fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, fontFamily: "inherit",
+                cursor: buscaAmpla === "buscando" ? "wait" : "pointer", border: `1px solid ${t.azul}`, background: "transparent", color: t.azul,
+                opacity: buscaAmpla === "buscando" ? .6 : 1 }}>
+              {buscaAmpla === "buscando" ? "Procurando…" : "Procurar em todos os meses"}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* KPIs por categoria */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap: 10, marginBottom: 14 }}>
         {["frete", "descarga", "local", "diaria", "bonificacao"].map((c) => {
@@ -722,7 +889,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {/* Resumo por cliente — tabela alinhada, clique filtra por esse cliente */}
       {Object.keys(resumoCli).length > 0 && (
         <div style={{ ...tile }}>
-          {sectionHead(`Por cliente · ${mesLabel(periodoRef)}`)}
+          {sectionHead(`Por cliente · ${mesLabel(periodoRef)}`, !incluirDiariaDescarga && (
+            <span style={{ fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, whiteSpace: "nowrap",
+              background: hexRgb(t.ouro, .12), border: `1px solid ${hexRgb(t.ouro, .3)}`, color: t.ouro }}>
+              SÓ FRETE · sem diária/descarga
+            </span>
+          ))}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
             <span style={{ flex: 1, fontFamily: "var(--font-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: t.txt2 }}>Cliente</span>

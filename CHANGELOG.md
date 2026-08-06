@@ -1,3 +1,51 @@
+## 2026-08-06 — Conferência de faturamento: o que é frete e o que só parece
+
+**Pedido do Yves:** verificar (a) se as diárias D01/D05 e as minutas de descarga estão entrando como faturamento (frete) e contabilizando no saldo, e (b) se o valor negativo da planilha de débitos mensais está entrando como "lucro". Planilha de julho anexada, ainda não importada.
+
+**Resposta: sim nos dois casos.** Segue o que foi medido e o que foi feito.
+
+### (a) Diária e descarga somando no "Frete" e no "Saldo"
+
+O resumo "Por cliente" soma `frete_peso` e `saldo` de **todas** as categorias. Em 07/2026:
+
+| Categoria | Cód. | CTes | No "Frete" | No "Saldo" |
+|---|---|---:|---:|---:|
+| Diária Imperatriz | D01 | 56 | R$ 58.042,11 | − R$ 58.000,00 |
+| Descarga Imperatriz | MAM | 126 | R$ 245.098,44 | R$ 0,00 |
+| Descarga Belém | MRM | 25 | R$ 63.386,00 | R$ 0,00 |
+| **Subtotal** | | **207** | **R$ 366.526,55** | **− R$ 58.000,00** |
+
+São **11,6% dos R$ 3.162.762,85** exibidos como faturamento. Sem elas: Frete R$ 2.796.236,30 · Saldo R$ 567.952,17. A coluna Margem não é afetada — ela amostra só a categoria `frete`.
+
+Dois pontos que **não** foram alterados, por serem da fonte:
+- **A diária é contraditória na origem.** O TMS manda `Frete Peso = Contrato` e `Saldo = −Contrato` (CTRC 314: 400 / 400 / −400). O app soma os R$ 58.042,11 como receita **e** os −R$ 58.000 como custo ao mesmo tempo.
+- **Belém não teve nenhum D05 em 07 e 08/2026**, tendo tido todo mês de 01 a 06 (1/0/5/4/3/2). O código D05 está cadastrado corretamente na embarcadora, então não é falha de classificação — pendente de conferência.
+
+**Feito:** toggle **"Incluir diária e descarga"** na faixa de controles da Conferência, ligado por padrão (mantém o número de hoje). Desligado, recalcula "Por cliente", "Evolução diária" e o comparativo dos 2 meses anteriores — o comparativo usa o **mesmo** recorte, senão a variação % sairia inventada. Os KPIs por categoria ficam intactos de propósito: são eles que mostram quanto foi retirado.
+
+### (b) Negativo da planilha de débitos virando lucro
+
+Todo valor negativo virava `tipo='credito'` e abatia despesa (`despLiq = débitos + créditos`), sem distinguir **estorno de despesa** (dinheiro que volta de algo pago) de **receita** (dinheiro que entra por outra via).
+
+Na planilha de julho: **R$ 99.554,17 de negativos, dos quais R$ 97.699,37 são receita** — R$ 93.838,50 de "Receitas com Sinistro" (Berkley), R$ 2.520,00 de venda de cinta/gancho e R$ 1.340,87 de venda de avarias. Só R$ 1.854,80 ("Devolução de fornecedor E") é estorno de verdade.
+
+Se julho fosse importado como estava, **Açailândia iria de R$ 88.250,79 de despesa para − R$ 8.174,99** (despesa negativa), jogando R$ 96.425,78 direto no Resultado. O padrão já estava gravado: 03/2026 com −R$ 58.613,19 de sinistro e 04/2026 com −R$ 285.471,08 (quase tudo em linhas "CTE .../..." de faturamento).
+
+**Migration 050** (aplicada em produção 2026-08-06, via MCP): `despesas_filial` ganha `classe_credito` (`estorno` | `receita`, NULL em débito) com CHECK; backfill dos créditos já gravados; `inserir_despesas_lote` e `atualizar_despesa` recriadas com a coluna. Default `estorno` = comportamento antigo, então nada muda sozinho.
+
+**Regra:** natureza começando com `Receita`, `Venda` ou `CTE ` é receita; todo o resto é estorno. Conservadora de propósito — os 13 créditos ambíguos já gravados (Desconto Cliente, Fretes, Peças, Manutenção, Seguro) seguem como estorno e podem ser corrigidos linha a linha.
+
+**Feito no app:** KPI "Receitas" (fora do resultado), "Créditos" virou "Créditos (estorno)", badge RECEITA na linha, subtotal do grupo exclui receita, e o modal de seleção de abas lista os negativos reconhecidos como receita **antes** de gravar. No ModalDespesa, seletor estorno × receita.
+
+### Bug de produção corrigido no caminho
+`ModalDespesa` recusava salvar qualquer valor `<= 0` ("Informe um valor válido"), embora a própria função já calculasse `tipo='credito'` para negativo — na prática **nenhum crédito podia ser editado**. Passou a recusar só NaN e zero.
+
+### Achados na planilha de julho, para conferir antes de importar
+- **`belem` linha 2 — "SALDO NEGATIVO MÊS 06/2026" R$ 9.131,96** entra como despesa sem data e sem natureza (o texto está na coluna A, que o parser só usa para detectar seção). A planilha declara `TOTAL DE DESPESAS 7.540,28`; o app somaria R$ 16.672,24. Diferença = exatamente esses R$ 9.131,96.
+- **`açai` linha 2 — salário da EDUARDA com `?` no lugar do valor** é descartado em silêncio, sem aviso.
+
+---
+
 ## 2026-07-31 — Acesso do gestor: convite por e-mail, perfil Gestor e painel configurável
 
 **Pedido do Yves:** dar ao gestor um link que abra só o Dashboard das 3 bases (Imperatriz, Maracanaú, Açailândia) + uma aba de Financeiro alimentada pelos relatórios que ele sobe, podendo escolher quais KPIs/painéis aparecem. E melhorar a tela "Gerenciar acessos", permitindo cadastrar o usuário primeiro e só depois decidir se é usuário de teste ou uma pré-aprovação por e-mail.

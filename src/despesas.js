@@ -24,6 +24,21 @@ const SECS = new Set([
 const norm = (s) => (s || "").toUpperCase().replace(/\s+/g, " ").trim();
 const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
+// ── Crédito: estorno de despesa × receita (migration 050) ────────────────────
+// Valor negativo na planilha de débitos é de dois tipos e eles NÃO podem ser somados
+// juntos: estorno é dinheiro que volta de uma despesa paga (abate a despesa, certo);
+// receita é dinheiro que entra por outra via (sinistro, venda de gancho/avaria, CTe
+// faturado) e abater despesa com isso infla o Resultado como se fosse lucro.
+// Regra conservadora de propósito: só o que é inequivocamente receita sai do cálculo,
+// o resto continua abatendo — e quem revisa corrige linha a linha no ModalDespesa.
+// A MESMA regra roda no backfill da migration 050; mudar aqui não reclassifica o passado.
+const RE_RECEITA = /^\s*(receita|venda|cte )/i;
+export const ehReceita = (natureza) => RE_RECEITA.test(natureza || "");
+// Classe efetiva de uma linha já gravada: débito não tem; crédito sem classe (import
+// anterior à 050) vale como estorno, que era o comportamento da época.
+export const classeDoCredito = (d) =>
+  d?.tipo === "credito" ? (d.classe_credito || "estorno") : null;
+
 // Aba da planilha → base operacional + rótulo de origem
 export function abaParaBase(nome) {
   const t = (nome || "").trim().toUpperCase();
@@ -71,6 +86,8 @@ export function parseDespesasXLSX(file) {
             if (SECS.has(saU)) { grupo = saU.replace("C/PESSOAL", "C/ PESSOAL"); return; }
             if (saU.startsWith("TOTAL") || saU === "FILIAL") return;
             if (typeof val === "number") {
+              const natureza = row[4] != null ? String(row[4]).trim() : null;
+              const ehCred = r2(val) < 0;
               const r = {
                 _sheetNome: nome,
                 base_id: mapa.base_id,
@@ -79,10 +96,11 @@ export function parseDespesasXLSX(file) {
                 dt_mov: dataISO(row[1]),
                 valor: r2(val),
                 nat_cod: row[3] != null ? String(row[3]) : null,
-                natureza: row[4] != null ? String(row[4]).trim() : null,
+                natureza,
                 conta: row[5] != null ? String(row[5]).trim() : null,
                 historico: row[6] != null ? String(row[6]).trim() : null,
-                tipo: r2(val) < 0 ? "credito" : "debito",
+                tipo: ehCred ? "credito" : "debito",
+                classe_credito: ehCred ? (ehReceita(natureza) ? "receita" : "estorno") : null,
                 dup_flag: false,
               };
               sheetRows.push(r);

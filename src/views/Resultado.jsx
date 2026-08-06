@@ -7,7 +7,7 @@ import {
   parseDespesasXLSX, diffImport, inserirImportadas, listarDespesas, listarDespesasBase,
   listarMesesComDespesas,
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
-  listarIndevidasPendentes,
+  listarIndevidasPendentes, classeDoCredito,
 } from "../despesas.js";
 import ConferenciaFrete from "./ConferenciaFrete.jsx";
 import { getPerfil } from "../operacao/perfil.js";
@@ -131,10 +131,17 @@ export default function Resultado({ ctx }) {
     return { receita: receitaF, custo: custoF, comp, margem, n: regs.length };
   }, [DADOS, mesRef, incluirComp, baseId]);
 
+  // Crédito tem duas classes (migration 050) e elas NÃO podem entrar no mesmo lugar:
+  // estorno é devolução de despesa paga → abate a despesa do mês; receita (sinistro,
+  // venda de gancho/avaria, CTe faturado) é dinheiro de outra origem → fica FORA do
+  // cálculo de despesa e aparece só como indicador, senão vira lucro operacional falso.
   const creditos = despesas.filter((d) => d.tipo === "credito");
+  const estornos = creditos.filter((d) => classeDoCredito(d) === "estorno");
+  const receitasCred = creditos.filter((d) => classeDoCredito(d) === "receita");
   const debitos = despesas.filter((d) => d.tipo !== "credito");
   const despDebInc = debitos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
-  const credInc = creditos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
+  const credInc = estornos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
+  const receitaInc = receitasCred.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
   const despLiq = despDebInc + credInc;
   const resultado = fin.margem - despLiq;
   const pct = (v) => (fin.receita ? (v / fin.receita * 100) : 0).toFixed(1) + "%";
@@ -402,6 +409,30 @@ export default function Resultado({ ctx }) {
               {Object.values(sheetSel.checked).filter(Boolean).length} de {sheetSel.sheetsMeta.filter(s => s.recognized).length} abas selecionadas ·{" "}
               {sheetSel.pendingRows.filter(r => sheetSel.checked[r._sheetNome]).length} linhas
             </div>
+
+            {/* Negativos classificados como receita: é o ponto onde antes entravam como
+                abatimento de despesa e viravam lucro. Mostra antes de gravar. */}
+            {(() => {
+              const rec = sheetSel.pendingRows.filter(r => sheetSel.checked[r._sheetNome] && r.classe_credito === "receita");
+              if (!rec.length) return null;
+              const porNat = {};
+              rec.forEach(r => { const k = r.natureza || "—"; porNat[k] = (porNat[k] || 0) + Number(r.valor || 0); });
+              return (
+                <div style={{ fontSize: 11, color: t.txt2, background: `${t.azul}12`, border: `1px solid ${t.azul}44`,
+                  borderRadius: 8, padding: "9px 11px", marginBottom: 14 }}>
+                  <div style={{ fontWeight: 700, color: t.azul, marginBottom: 5 }}>
+                    {rec.length} negativo(s) reconhecido(s) como RECEITA — {money(Math.abs(Object.values(porNat).reduce((s, v) => s + v, 0)))}
+                  </div>
+                  {Object.entries(porNat).sort((a, b) => a[1] - b[1]).map(([nat, v]) => (
+                    <div key={nat} style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nat}</span>
+                      <span style={{ fontFamily: "var(--font-mono)", flexShrink: 0 }}>{money(Math.abs(v))}</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 5 }}>Não abatem a despesa nem entram no Resultado. Para tratar algum como estorno, edite a linha depois de importar.</div>
+                </div>
+              );
+            })()}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               <button onClick={() => setSheetSel(s => ({ ...s, open: false }))}
                 style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
@@ -481,7 +512,8 @@ export default function Resultado({ ctx }) {
         <KpiCard label="Pago motorista" value={money(fin.custo)} sub="vl. contrato" compact={isMobile} />
         <KpiCard label="Margem bruta" value={money(fin.margem)} sub={pct(fin.margem)} color={t.ouro} compact={isMobile} />
         <KpiCard label="Despesas (débito)" value={money(despDebInc)} sub="incluídas" color={t.danger} compact={isMobile} />
-        <KpiCard label="Créditos" value={money(Math.abs(credInc))} sub="abatem despesa" color={t.verde} compact={isMobile} />
+        <KpiCard label="Créditos (estorno)" value={money(Math.abs(credInc))} sub="abatem despesa" color={t.verde} compact={isMobile} />
+        <KpiCard label="Receitas" value={money(Math.abs(receitaInc))} sub="fora do resultado" color={t.azul} compact={isMobile} />
         <KpiCard label="Resultado" value={money(resultado)} sub={pct(resultado)} color={t.verde} danger={resultado < 0} compact={isMobile} />
       </div>
 
@@ -570,7 +602,10 @@ export default function Resultado({ ctx }) {
 
         {!loading && Object.keys(porGrupo).map((g) => {
           const linhas = porGrupo[g];
-          const subt = linhas.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
+          // Subtotal do grupo = despesa do grupo, então exclui as linhas de receita pela
+          // mesma razão que o despLiq exclui (a linha fica visível com o badge RECEITA).
+          const subt = linhas.filter((d) => d.incluir && classeDoCredito(d) !== "receita")
+            .reduce((s, d) => s + Number(d.valor || 0), 0);
           return (
             <div key={g} style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700,
@@ -582,7 +617,8 @@ export default function Resultado({ ctx }) {
                 const badges = (
                   <>
                     {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "var(--cat-violet)", fontWeight: 700 }}>MANUAL</span>}
-                    {d.tipo === "credito" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
+                    {classeDoCredito(d) === "estorno" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
+                    {classeDoCredito(d) === "receita" && <span title="Receita — não abate a despesa nem entra no Resultado" style={{ marginLeft: 6, fontSize: 9, color: t.azul, fontWeight: 700 }}>RECEITA</span>}
                     {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
                     {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
                   </>
@@ -593,7 +629,8 @@ export default function Resultado({ ctx }) {
                   </span>
                 ) : null;
                 const valorSpan = (
-                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: d.tipo === "credito" ? t.verde : t.txt }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700,
+                    color: classeDoCredito(d) === "receita" ? t.azul : d.tipo === "credito" ? t.verde : t.txt }}>
                     {d.tipo === "credito" ? "− " : ""}{money(Math.abs(Number(d.valor || 0)))}
                   </span>
                 );
@@ -604,7 +641,7 @@ export default function Resultado({ ctx }) {
                 };
                 const rowBase = {
                   display: "flex", alignItems: "center", gap: 10, borderRadius: 6, background: zebra,
-                  borderLeft: `2px solid ${d.tipo === "credito" ? t.verde : "transparent"}`,
+                  borderLeft: `2px solid ${classeDoCredito(d) === "receita" ? t.azul : d.tipo === "credito" ? t.verde : "transparent"}`,
                   cursor: "pointer", opacity: d.incluir ? 1 : .45, transition: "background .12s",
                 };
 
