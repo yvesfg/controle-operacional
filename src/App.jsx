@@ -732,6 +732,16 @@ export default function App() {
     }
   }, [dashMes]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Reset dashMes quando o mes selecionado nao existe nos dados atuais (ex.: trocar
+  // o classificador papel->celulose com o mes corrente sem cargas). Sem isso o <select>
+  // caia na 1a opcao e exibia "Mes: Todos" enquanto o estado seguia no mes antigo,
+  // zerando todos os KPIs. Guarda em meses.length: no boot DADOS ainda esta vazio.
+  useEffect(() => {
+    if (dashMes !== "todos" && dashData.meses.length > 0 && !dashData.meses.includes(dashMes)) {
+      setDashMes("todos");
+    }
+  }, [dashData.meses.join(","), dashMes]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Diarias data — lógica simplificada Sessão 16:
   // REGRA 1: chegada <= agenda E descarga > agenda → COM DIÁRIA (dias = descarga - agenda)
   // REGRA 2: chegada <= agenda E descarga <= agenda → SEM DIÁRIA (chegou e descarregou no prazo)
