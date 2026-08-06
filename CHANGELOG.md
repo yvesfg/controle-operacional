@@ -43,17 +43,29 @@ Se julho fosse importado como estava, **Açailândia iria de R$ 88.250,79 de des
 
 Novo bloco na Conferência, uma linha por base — 07/2026:
 
-| Base | Saldo fretes | Débitos | Comissionável |
+| Base | Saldo fretes | Débitos (líquidos) | Comissionável |
 |---|---:|---:|---:|
-| Açailândia - AVB | R$ 171.655,88 | − R$ 88.250,79 | **R$ 83.405,09** |
-| Imperatriz / Belém | R$ 338.296,29 | − R$ 120.359,55 | **R$ 217.936,74** |
-| **Total** | **R$ 509.952,17** | **− R$ 208.610,34** | **R$ 301.341,83** |
+| Açailândia - AVB | R$ 171.655,88 | **+ R$ 8.174,99** | **R$ 179.830,87** |
+| Imperatriz / Belém | R$ 338.296,29 | − R$ 119.085,96 | **R$ 219.210,33** |
+| **Total** | **R$ 509.952,17** | **− R$ 110.910,97** | **R$ 399.041,20** |
+
+Açailândia soma em vez de descontar porque em 07/2026 os créditos (R$ 96.425,78) superaram os débitos (R$ 88.250,79). A tela diz isso em verde, com o quanto veio de recuperação — um mês assim não pode passar despercebido.
 
 O casamento das duas fontes é por `base_id` — a Conferência já traz a base em cada CTe (via cadastro da embarcadora) e a despesa é gravada por base. Não precisa de mapeamento manual **nem depende da conciliação CTe a CTe**, que segue divergindo e agora não bloqueia mais o cálculo.
 
-Só **estorno** abate; receita (sinistro, venda de avaria, venda de gancho) fica de fora — senão a comissão sairia paga sobre dinheiro que não é frete. Mesma regra da migration 050.
+**Todo crédito abate**, incluindo recuperação de sinistro/avaria/venda — ver a correção da migration 050 abaixo.
 
 Badge **"débitos não importados"** na base cujo mês ainda não recebeu a planilha — que é o caso normal, já que ela chega no mês seguinte. Sem isso o comissionável apareceria inflado como se fosse definitivo. O filtro de cliente não se aplica ao bloco (débito chega por base, não por cliente) e a tela avisa quando o filtro está ligado.
+
+### Correção da migration 050 — todo crédito volta a abater
+
+**O Yves apontou:** o crédito de R$ 93.838,50 em Açailândia não estava entrando no cálculo, e deveria. Ele está certo, e a planilha comprova de duas formas.
+
+**1. A própria planilha já entrega o total líquido.** A aba `imp` de 07/2026 declara `TOTAL DE DESPESAS = 111.545,68`, que é exatamente 114.674,07 de débito menos 3.128,39 de crédito — e esses créditos incluem "Venda de Avarias", que eu havia classificado como receita. Quem monta a planilha abate tudo; o "débito que mandam" é o líquido. (A aba `açai` não tem linha de TOTAL — por isso ninguém tinha percebido que ela fecha em −R$ 8.174,99.)
+
+**2. O sinistro tem contrapartida de despesa na mesma base.** Açailândia paga `SINISTRO AÇO VERDE 8x10`, `9x10`, `10x10` — R$ 6.851,31 por mês, com histórico "TOTAL 164.615,31 −96100,00 = 68515,31". É um prejuízo parcelado que a empresa está pagando, e o crédito da Berkley é o reembolso do seguro **desse mesmo prejuízo**. Recuperação de custo, não receita nova. Mesma lógica vale para venda de avaria e de cinta/gancho.
+
+A separação da 050 estava conceitualmente defensável e **errada na prática**. `classe_credito` continua gravada, mas agora só **rotula** a origem do abatimento: o KPI virou "Créditos" (total) mais "Dos quais, recuperações", e o badge da linha virou `RECUPERAÇÃO` em vez de `RECEITA`. Nenhuma migration nova — só mudou quem soma no cálculo.
 
 ### Card de gestão: frete × diária paga × diária emitida
 

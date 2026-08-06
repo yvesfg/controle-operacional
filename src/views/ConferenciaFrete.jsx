@@ -232,8 +232,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Saldo do relatório de fretes que ele sobe MENOS os débitos que chegam depois.
   // O casamento é por `base_id`: a Conferência traz a base em cada CTe (via cadastro
   // da embarcadora) e a despesa é gravada por base — não precisa de mapeamento manual.
-  // Receita (sinistro, venda de avaria...) NÃO abate, só estorno: mesma regra do
-  // Resultado (migration 050), senão a comissão sairia inflada por receita de outra via.
+  // TODO crédito abate — é o critério da própria planilha, que declara "TOTAL DE
+  // DESPESAS" já líquido (aba IMP 07/2026: 114.674,07 − 3.128,39 = 111.545,68).
+  // O reembolso de sinistro tem débito-contrapartida parcelado na mesma base, então
+  // é recuperação de custo, não receita nova. Ver o comentário longo em Resultado.jsx.
   const [despesasBase, setDespesasBase] = React.useState({}); // { [base_id]: {deb, est, linhas} }
   const basesDoPeriodo = React.useMemo(
     () => [...new Set(linhasPeriodo.filter(ehAtivo).map((l) => l.base_id).filter(Boolean))].sort(),
@@ -249,7 +251,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
         pares.forEach(([b, linhas]) => {
           if (!linhas) return; // falha de rede: a base fica sem despesa e a tela avisa
           const inc = (f) => linhas.filter((d) => d.incluir && f(d)).reduce((s, d) => s + (Number(d.valor) || 0), 0);
-          out[b] = { linhas: linhas.length, deb: inc((d) => d.tipo !== "credito"), est: inc((d) => classeDoCredito(d) === "estorno") };
+          out[b] = { linhas: linhas.length, deb: inc((d) => d.tipo !== "credito"), cred: inc((d) => d.tipo === "credito"),
+            recup: inc((d) => classeDoCredito(d) === "receita") };
         });
         setDespesasBase(out);
       });
@@ -264,12 +267,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
       const saldo = linhasPeriodo.filter(ehAtivo).filter((l) => l.base_id === b)
         .reduce((s, l) => s + (Number(l.saldo) || 0), 0);
       const d = despesasBase[b];
-      const despesa = d ? d.deb + d.est : 0;
-      return { base: b, label: BASES[b]?.label || b, saldo, despesa, temDespesa: !!d && d.linhas > 0, base_comissao: saldo - despesa };
+      const despesa = d ? d.deb + d.cred : 0;
+      return { base: b, label: BASES[b]?.label || b, saldo, despesa, recup: d ? d.recup : 0,
+        temDespesa: !!d && d.linhas > 0, base_comissao: saldo - despesa };
     });
     const tot = linhas.reduce((a, l) => ({
-      saldo: a.saldo + l.saldo, despesa: a.despesa + l.despesa, base_comissao: a.base_comissao + l.base_comissao,
-    }), { saldo: 0, despesa: 0, base_comissao: 0 });
+      saldo: a.saldo + l.saldo, despesa: a.despesa + l.despesa, recup: a.recup + l.recup,
+      base_comissao: a.base_comissao + l.base_comissao,
+    }), { saldo: 0, despesa: 0, recup: 0, base_comissao: 0 });
     return { linhas, tot, faltando: linhas.filter((l) => !l.temDespesa) };
   }, [basesDoPeriodo, linhasPeriodo, despesasBase]);
 
@@ -1051,8 +1056,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 )}
               </span>
               <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(l.saldo)}</span>
-              <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: l.despesa ? t.danger : t.txt2 }}>
-                {l.despesa ? `− ${money(l.despesa)}` : "—"}
+              <span title={l.recup ? `Inclui ${money(Math.abs(l.recup))} de recuperação (sinistro, avaria, venda)` : ""}
+                style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
+                  color: l.despesa > 0 ? t.danger : l.despesa < 0 ? t.verde : t.txt2 }}>
+                {l.despesa > 0 ? `− ${money(l.despesa)}` : l.despesa < 0 ? `+ ${money(Math.abs(l.despesa))}` : "—"}
               </span>
               <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 800, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: l.base_comissao < 0 ? t.danger : t.verde }}>{money(l.base_comissao)}</span>
             </div>
@@ -1071,7 +1078,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 Ainda faltam os débitos de {comissao.faltando.map((l) => l.label).join(", ")} em {mesLabel(periodoRef)} — até importar, o comissionável dessa(s) base(s) está sem o desconto.
               </div>
             )}
-            Só o <b>estorno</b> abate o débito; receita (sinistro, venda de avaria, venda de gancho) fica de fora, senão a comissão sairia paga sobre dinheiro que não é frete.
+            {/* Crédito maior que débito faz a despesa virar negativa e SOMAR no comissionável.
+                É o critério correto, mas não pode passar despercebido num mês de sinistro. */}
+            {comissao.linhas.filter((l) => l.despesa < 0).map((l) => (
+              <div key={l.base} style={{ color: t.verde, marginBottom: 4 }}>
+                Em {l.label} os créditos superaram os débitos em <b>{money(Math.abs(l.despesa))}</b>, então o mês <b>soma</b> em vez de descontar
+                {l.recup ? <> — {money(Math.abs(l.recup))} disso é recuperação (sinistro, avaria, venda)</> : null}.
+              </div>
+            ))}
+            Todo crédito abate o débito — é o mesmo critério do "TOTAL DE DESPESAS" que a planilha já traz calculado.
             {clienteFiltro && <> O filtro <b>{clienteFiltro}</b> não vale aqui: o débito chega por base, não por cliente.</>}
           </div>
         </div>

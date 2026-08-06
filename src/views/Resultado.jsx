@@ -159,17 +159,20 @@ export default function Resultado({ ctx }) {
     return { n: regs.length, receita: regs.reduce((s, r) => s + nCte(r.vl_cte), 0) };
   }, [DADOS, mesRef, temFilial]);
 
-  // Crédito tem duas classes (migration 050) e elas NÃO podem entrar no mesmo lugar:
-  // estorno é devolução de despesa paga → abate a despesa do mês; receita (sinistro,
-  // venda de gancho/avaria, CTe faturado) é dinheiro de outra origem → fica FORA do
-  // cálculo de despesa e aparece só como indicador, senão vira lucro operacional falso.
+  // TODO crédito abate a despesa — é o critério da própria planilha de débitos, que
+  // declara "TOTAL DE DESPESAS" já líquido (aba IMP 07/2026: 114.674,07 − 3.128,39 =
+  // 111.545,68, o total impresso). Chegamos a separar 'receita' pra fora do cálculo
+  // (migration 050) e estava ERRADO na prática: "Receitas com Sinistro" é o reembolso
+  // do seguro de um prejuízo que a empresa paga parcelado na MESMA base (débitos
+  // "SINISTRO AÇO VERDE 8x10/9x10/10x10", R$ 6.851,31/mês em Açailândia) — recuperação
+  // de custo, não receita nova. Mesma lógica em venda de avaria e de cinta/gancho.
+  // classe_credito continua gravada, mas agora só ROTULA a origem do abatimento.
   const creditos = despesasMes.filter((d) => d.tipo === "credito");
-  const estornos = creditos.filter((d) => classeDoCredito(d) === "estorno");
-  const receitasCred = creditos.filter((d) => classeDoCredito(d) === "receita");
+  const recuperacoes = creditos.filter((d) => classeDoCredito(d) === "receita");
   const debitos = despesasMes.filter((d) => d.tipo !== "credito");
   const despDebInc = debitos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
-  const credInc = estornos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
-  const receitaInc = receitasCred.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
+  const credInc = creditos.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // negativo
+  const recupInc = recuperacoes.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0); // subconjunto de credInc
   const despLiq = despDebInc + credInc;
   const resultado = fin.margem - despLiq;
   const pct = (v) => (fin.receita ? (v / fin.receita * 100) : 0).toFixed(1) + "%";
@@ -469,7 +472,7 @@ export default function Resultado({ ctx }) {
                 <div style={{ fontSize: 11, color: t.txt2, background: `${t.azul}12`, border: `1px solid ${t.azul}44`,
                   borderRadius: 8, padding: "9px 11px", marginBottom: 14 }}>
                   <div style={{ fontWeight: 700, color: t.azul, marginBottom: 5 }}>
-                    {rec.length} negativo(s) reconhecido(s) como RECEITA — {money(Math.abs(Object.values(porNat).reduce((s, v) => s + v, 0)))}
+                    {rec.length} crédito(s) de recuperação — {money(Math.abs(Object.values(porNat).reduce((s, v) => s + v, 0)))}
                   </div>
                   {Object.entries(porNat).sort((a, b) => a[1] - b[1]).map(([nat, v]) => (
                     <div key={nat} style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
@@ -477,7 +480,7 @@ export default function Resultado({ ctx }) {
                       <span style={{ fontFamily: "var(--font-mono)", flexShrink: 0 }}>{money(Math.abs(v))}</span>
                     </div>
                   ))}
-                  <div style={{ marginTop: 5 }}>Não abatem a despesa nem entram no Resultado. Para tratar algum como estorno, edite a linha depois de importar.</div>
+                  <div style={{ marginTop: 5 }}>Abatem a despesa como qualquer crédito — o rótulo serve só pra você enxergar quanto do abatimento veio de sinistro/avaria/venda em vez de estorno de fornecedor.</div>
                 </div>
               );
             })()}
@@ -600,8 +603,8 @@ export default function Resultado({ ctx }) {
         <KpiCard label="Pago motorista" value={money(fin.custo)} sub="vl. contrato" compact={isMobile} />
         <KpiCard label="Margem bruta" value={money(fin.margem)} sub={pct(fin.margem)} color={t.ouro} compact={isMobile} />
         <KpiCard label="Despesas (débito)" value={money(despDebInc)} sub="incluídas" color={t.danger} compact={isMobile} />
-        <KpiCard label="Créditos (estorno)" value={money(Math.abs(credInc))} sub="abatem despesa" color={t.verde} compact={isMobile} />
-        <KpiCard label="Receitas" value={money(Math.abs(receitaInc))} sub="fora do resultado" color={t.azul} compact={isMobile} />
+        <KpiCard label="Créditos" value={money(Math.abs(credInc))} sub="abatem a despesa" color={t.verde} compact={isMobile} />
+        <KpiCard label="Dos quais, recuperações" value={money(Math.abs(recupInc))} sub="sinistro, avaria, venda" color={t.azul} compact={isMobile} />
         <KpiCard label="Resultado" value={money(resultado)} sub={pct(resultado)} color={t.verde} danger={resultado < 0} compact={isMobile} />
       </div>
 
@@ -692,10 +695,7 @@ export default function Resultado({ ctx }) {
 
         {!loading && Object.keys(porGrupo).map((g) => {
           const linhas = porGrupo[g];
-          // Subtotal do grupo = despesa do grupo, então exclui as linhas de receita pela
-          // mesma razão que o despLiq exclui (a linha fica visível com o badge RECEITA).
-          const subt = linhas.filter((d) => d.incluir && classeDoCredito(d) !== "receita")
-            .reduce((s, d) => s + Number(d.valor || 0), 0);
+          const subt = linhas.filter((d) => d.incluir).reduce((s, d) => s + Number(d.valor || 0), 0);
           return (
             <div key={g} style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700,
@@ -708,7 +708,7 @@ export default function Resultado({ ctx }) {
                   <>
                     {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "var(--cat-violet)", fontWeight: 700 }}>MANUAL</span>}
                     {classeDoCredito(d) === "estorno" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
-                    {classeDoCredito(d) === "receita" && <span title="Receita — não abate a despesa nem entra no Resultado" style={{ marginLeft: 6, fontSize: 9, color: t.azul, fontWeight: 700 }}>RECEITA</span>}
+                    {classeDoCredito(d) === "receita" && <span title="Recuperação de custo (sinistro, avaria, venda) — abate a despesa como qualquer crédito" style={{ marginLeft: 6, fontSize: 9, color: t.azul, fontWeight: 700 }}>RECUPERAÇÃO</span>}
                     {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
                     {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
                   </>
