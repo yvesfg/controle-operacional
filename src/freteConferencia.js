@@ -62,6 +62,9 @@ export function candidatosVinculo(linha, linhas) {
   // (o custo que este CTe cobra do cliente). Como a planilha não liga um no outro, o app
   // ordena as diárias pagas do cliente pelos sinais que costumam casar (mesma placa, mesmo
   // valor) e quem revisa escolhe. Só sugestão, como no resto do vínculo.
+  // O código da diária é POR CLIENTE (D01 = Suzano Imperatriz, D05 = Suzano Belém, via
+  // diaria_cod no cadastro da embarcadora), então filtrar por cliente já garante que uma
+  // emitida de Belém nunca casa com um D01 de Imperatriz — não precisa olhar empresa_cod.
   if (linha.categoria === "diaria_emitida") {
     const placa = String(linha.placa || "").trim();
     const afinidade = (l) =>
@@ -494,10 +497,12 @@ export async function vincularCte(conn, id, tipo, ctrcRef, por, idRef) {
   return Array.isArray(res) ? res : [res];
 }
 
-// Mês de competência da diária emitida (migration 053): o mês das diárias PAGAS que este
-// CTe cobra, quando não é o próprio mês de emissão (o CTe sai depois, e um só pode cobrar
-// o mês inteiro). ref = "YYYY-MM" ou null pra limpar. Só vale em categoria 'diaria_emitida'
-// — o RPC recusa o resto.
+// Mês de competência da diária (migrations 053/054). Vale nas DUAS pontas, porque nenhuma
+// delas cai necessariamente no mês do espelho:
+//   'diaria' (D01/D05) → o D01 é emitido antes ou depois do espelho, então o que se pagou
+//     num mês pode se referir a dois meses de espelho diferentes;
+//   'diaria_emitida'   → o CTe que cobra sai depois, e um só pode cobrar o mês inteiro.
+// ref = "YYYY-MM" ou null pra limpar. O RPC recusa qualquer outra categoria.
 export async function definirCompetencia(conn, id, ref) {
   if (_sessionToken) {
     return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/definir_competencia_frete",
@@ -508,9 +513,10 @@ export async function definirCompetencia(conn, id, ref) {
   return Array.isArray(res) ? res[0] : res;
 }
 
-// Mês em que a diária emitida deve ser LIDA: a competência quando marcada, senão o mês de
-// emissão (comportamento de antes da migration 053). Usado pelo card frete × diária.
-export const mesDaEmitida = (l) => l?.competencia_ref || l?.periodo_ref;
+// Mês em que a linha de diária (paga ou emitida) deve ser LIDA: a competência quando
+// marcada, senão o mês de emissão (comportamento de antes da migration 053). Usado nos dois
+// lados do card frete × diária — senão a comparação erra ora no custo, ora na receita.
+export const mesCompetencia = (l) => l?.competencia_ref || l?.periodo_ref;
 
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).

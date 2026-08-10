@@ -6,7 +6,7 @@ import {
   decidir, estornarRevisao, listarTodosPeriodo, listarPorPeriodos, chaveDuplicidade,
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
-  ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesDaEmitida,
+  ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesCompetencia,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
@@ -187,8 +187,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
     setSalvandoVinc(true);
     try {
       await definirCompetencia(conn, p.id, ref);
-      showToast?.(ref ? `CTRC ${p.ctrc} passa a contar nas diárias de ${mesLabel(ref)}.`
-        : `Competência removida — CTRC ${p.ctrc} volta a contar no mês de emissão.`, "ok");
+      showToast?.(ref ? `CTRC ${p.ctrc} passa a contar na diária de ${mesLabel(ref)}.`
+        : `Competência removida — CTRC ${p.ctrc} volta a contar no mês do documento.`, "ok");
       setRevisarModal({ open: false, item: null });
       await carregar();
     } catch (e) { showToast?.("Erro ao definir competência: " + e.message, "erro"); }
@@ -607,22 +607,24 @@ export default function ConferenciaFrete({ ctx, conn }) {
       .reduce((s, l) => s + (Number(l[campo]) || 0), 0);
     const conta = (arr, cat) => ativas(arr).filter(l => l.categoria === cat).length;
     const porCli = (arr) => clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
-    // A diária emitida é lida no mês que ela COBRE (competencia_ref, migration 053), não no
-    // mês em que foi emitida — um único CTe pode cobrar as diárias do mês inteiro anterior.
-    // Por isso a busca varre os 3 meses carregados, não só o mês da coluna.
+    // As DUAS pontas da diária são lidas no mês de competência (migrations 053/054), não no
+    // mês do documento: o D01/D05 sai antes ou depois do espelho (um mês de pagamento pode
+    // se referir a dois meses de espelho) e o CTe que cobra sai depois, podendo cobrar o mês
+    // inteiro. Por isso a busca varre os 3 meses carregados, não só o mês da coluna.
     const universo3 = ativas([
       ...linhasFiltradas,
       ...[mesAnt1, mesAnt2].flatMap((m) => porCli(linhasComparativo[m] || [])),
     ]);
-    const emitidasDoMes = (m) => universo3.filter(l => l.categoria === "diaria_emitida" && mesDaEmitida(l) === m);
+    const daCategoriaNoMes = (cat, m) => universo3.filter(l => l.categoria === cat && mesCompetencia(l) === m);
     const doMes = (arr, m) => {
-      const emitidas = emitidasDoMes(m);
+      const emitidas = daCategoriaNoMes("diaria_emitida", m);
+      const pagas = daCategoriaNoMes("diaria", m);
       return {
         freteSaldo: soma(arr, "frete", "saldo"),
         fretePeso: soma(arr, "frete", "frete_peso"),
         nFrete: conta(arr, "frete"),
-        diariaPaga: soma(arr, "diaria", "valor_contrato_frete"),
-        nPaga: conta(arr, "diaria"),
+        diariaPaga: pagas.reduce((s, l) => s + (Number(l.valor_contrato_frete) || 0), 0),
+        nPaga: pagas.length,
         diariaEmitida: emitidas.reduce((s, l) => s + (Number(l.frete_peso) || 0), 0),
         nEmitida: emitidas.length,
       };
@@ -722,7 +724,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
     {p.tipo_doc === "complementar" && badge(ICO_COMPLEMENTAR,
       p.categoria === "diaria_emitida" ? `COBRA A DIÁRIA DO ${p.ctrc_ref || "?"}` : `COMPLEMENTAR DO ${p.ctrc_ref || "?"}`,
       t.verde)}
-    {p.competencia_ref && badge(ICO_COMPETENCIA, `DIÁRIAS DE ${mesLabel(p.competencia_ref)}`, t.verde)}
+    {p.competencia_ref && badge(ICO_COMPETENCIA,
+      p.categoria === "diaria" ? `ESPELHO DE ${mesLabel(p.competencia_ref)}` : `DIÁRIAS DE ${mesLabel(p.competencia_ref)}`,
+      t.verde)}
   </>);
 
   // Avatar de usuário — mesmo modelo do círculo com iniciais do rodapé da sidebar
@@ -1707,6 +1711,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
         const candidatoDiaria = ehCandidatoDiariaEmitida(p);
         const semContrato = ehFreteSemContrato(p);
         const ehDiariaEmit = p.categoria === "diaria_emitida";
+        const ehDiariaPaga = p.categoria === "diaria";
+        const temCompetencia = ehDiariaEmit || ehDiariaPaga;
         const atalhos = [
           ...(candidatoFrota ? ["Frota Rodorrica — desconto padrão de R$ 300"] : []),
           ...(semContrato ? ["Contrato conferido: esse frete não tem custo de terceiro"] : []),
@@ -1823,17 +1829,20 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </div>
               )}
 
-              {/* Competência da diária emitida (migration 053): o CTe sai depois do pagamento e
-                  um só pode cobrar o mês inteiro — aqui se diz de QUE mês são as diárias, e o
-                  card frete × diária passa a ler a cobrança nesse mês, não no da emissão. */}
-              {ehDiariaEmit && !editando && !revisando && !sinalizando && (
+              {/* Competência da diária (migrations 053/054), nas duas pontas: o D01/D05 sai antes
+                  ou depois do espelho (um mês de pagamento pode se referir a dois meses de
+                  espelho) e o CTe que cobra sai depois, podendo cobrar o mês inteiro. O card
+                  frete × diária lê a linha no mês marcado aqui, não no mês do documento. */}
+              {temCompetencia && !editando && !revisando && !sinalizando && (
                 <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
                   <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
                     Competência da diária
                   </div>
                   <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5, marginBottom: 8 }}>
-                    Cobra as diárias pagas em <b>{mesLabel(mesDaEmitida(p))}</b>
-                    {p.competencia_ref ? "" : " (mês de emissão — sem competência definida)"}.
+                    {ehDiariaPaga
+                      ? <>Pagamento referente ao espelho de <b>{mesLabel(mesCompetencia(p))}</b></>
+                      : <>Cobra as diárias pagas em <b>{mesLabel(mesCompetencia(p))}</b></>}
+                    {p.competencia_ref ? "" : " (mês do documento — sem competência definida)"}.
                   </div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                     <input type="month" value={compRef} onChange={(e) => setCompRef(e.target.value)}
@@ -1842,6 +1851,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       style={{ fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
                       mês anterior ({mesLabel(shiftMes(p.periodo_ref, -1))})
                     </button>
+                    {/* O D01/D05 também sai ANTES do espelho, então o pago precisa do atalho pro
+                        mês seguinte; a emitida, por definição, cobra o que já foi pago. */}
+                    {ehDiariaPaga && (
+                      <button onClick={() => setCompRef(shiftMes(p.periodo_ref, 1))}
+                        style={{ fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
+                        mês seguinte ({mesLabel(shiftMes(p.periodo_ref, 1))})
+                      </button>
+                    )}
                     <button onClick={() => onCompetencia(p, compRef)} disabled={salvandoVinc || !compRef || compRef === (p.competencia_ref || "")}
                       style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "inherit",
                         cursor: (!compRef || compRef === (p.competencia_ref || "")) ? "not-allowed" : "pointer", opacity: salvandoVinc || !compRef || compRef === (p.competencia_ref || "") ? .45 : 1 }}>
@@ -1915,6 +1932,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
                         </div>
                         {/* Sugestões: mesmo cliente/categoria com a mesma NF ou o mesmo valor — é onde
                             o par costuma estar. Só atalho de digitação; quem decide é quem revisa. */}
+                        {/* Diária emitida sem NENHUMA diária paga do cliente nos meses carregados:
+                            o custo não está na base (planilha sem o D01/D05 do mês, ou pago em
+                            outro código). Sem isso a pessoa fica procurando um par que não existe. */}
+                        {ehDiariaEmit && candidatosDoCTe.length === 0 && (
+                          <div style={{ marginTop: 8, fontSize: 10.5, color: t.warn, lineHeight: 1.5 }}>
+                            Nenhuma diária paga ({p.cliente?.includes("BELEM") ? "D05" : "D01"}) deste cliente nos meses carregados —
+                            o custo desta cobrança não está na base. Confira se a planilha do mês trouxe as linhas da diária.
+                          </div>
+                        )}
                         {candidatosDoCTe.length > 0 && (
                           <div style={{ marginTop: 8 }}>
                             <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 5 }}>
