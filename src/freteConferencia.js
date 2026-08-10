@@ -58,6 +58,20 @@ export const TIPO_DOC = { normal: "normal", substituto: "substituto", complement
 // de valor). É só sugestão pra quem revisa escolher — quem decide é sempre a pessoa.
 export function candidatosVinculo(linha, linhas) {
   if (!linha) return [];
+  // Diária emitida: o par NÃO está na mesma categoria — é o CTe D01/D05 da diária PAGA
+  // (o custo que este CTe cobra do cliente). Como a planilha não liga um no outro, o app
+  // ordena as diárias pagas do cliente pelos sinais que costumam casar (mesma placa, mesmo
+  // valor) e quem revisa escolhe. Só sugestão, como no resto do vínculo.
+  if (linha.categoria === "diaria_emitida") {
+    const placa = String(linha.placa || "").trim();
+    const afinidade = (l) =>
+      (placa && String(l.placa || "").trim() === placa ? 2 : 0)
+      + (r2(num(l.frete_peso)) === r2(num(linha.frete_peso)) ? 1 : 0);
+    return linhas
+      .filter((l) => l.id !== linha.id && l.cliente === linha.cliente && l.categoria === "diaria")
+      .sort((a, b) => afinidade(b) - afinidade(a)
+        || String(b.data_emissao || "").localeCompare(String(a.data_emissao || "")));
+  }
   const chave = chaveDuplicidade(linha);
   const nfs = String(linha.nfs || "").trim();
   return linhas
@@ -98,16 +112,36 @@ const margem100 = (l) => num(l.frete_peso) > 0 && r2(num(l.saldo)) === r2(num(l.
 const semNF = (l) => !String(l.nfs ?? "").trim();
 const valorRedondo = (l) => r2(num(l.frete_peso)) % 100 === 0;
 
+// Peso 0 é o sinal mais forte que existe pra diária emitida: as 227 da base têm peso_nf = 0,
+// contra 24 de 1.934 fretes (1,2%) — e nenhum desses 24 passa de R$ 3.000. Por isso, sem peso,
+// o teto não se aplica: um único CTe pode cobrar as diárias de um MÊS inteiro (caso real,
+// CTRC 34942 de 08/2026, R$ 38.800 cobrindo as diárias pagas em 07/2026). Com peso na linha o
+// teto continua valendo — aí é carga de verdade e valor alto sem contrato é outra coisa
+// (ver ehFreteSemContrato).
+const semPeso = (l) => num(l.peso_nf) === 0;
+const dentroDoTeto = (l) => semPeso(l) || num(l.frete_peso) <= TETO_DIARIA_EMITIDA;
+
 export function ehDiariaEmitida(l) {
-  return margem100(l) && num(l.frete_peso) <= TETO_DIARIA_EMITIDA && semNF(l) && valorRedondo(l);
+  return margem100(l) && dentroDoTeto(l) && semNF(l) && valorRedondo(l);
 }
 // Margem 100% e dentro do teto, mas falha em UM dos dois sinais (tem NF ou valor
 // quebrado): pode ser diária emitida ou frete com contrato esquecido. Não decide
 // sozinho — vai pra fila pra uma pessoa dizer qual é.
 export function ehCandidatoDiariaEmitida(l) {
-  if (l?.categoria !== "frete" || !margem100(l) || num(l.frete_peso) > TETO_DIARIA_EMITIDA) return false;
+  if (l?.categoria !== "frete" || !margem100(l) || !dentroDoTeto(l)) return false;
   return semNF(l) !== valorRedondo(l);
 }
+
+// ── Frete sem contrato (migration 052) ───────────────────────────────────────
+// CTe de frete que veio do TMS com Valor Contrato Frete = 0: o Saldo vira o CTe inteiro
+// e a margem sobe pra ~100%, inflando o resultado do mês sem alertar ninguém (as flags de
+// margem só olham margem BAIXA). Não é erro por definição — pode ser contrato ainda não
+// lançado — então é item de fila, não bloqueio, e não muda nenhum somatório.
+// Caso que originou (SUZANO IMPERATRIZ, 08/2026): CTRC 34942 de R$ 38.800 sem contrato =
+// 31% do saldo do cliente no mês. A régua da diária emitida não pega esses: tem teto de
+// R$ 5.000 (ver TETO_DIARIA_EMITIDA).
+export const ehFreteSemContrato = (l) =>
+  l?.categoria === "frete" && num(l?.valor_contrato_frete) === 0 && num(l?.total_frete) > 0;
 
 function excelDateToISO(v) {
   if (v instanceof Date && !isNaN(v)) {
@@ -214,6 +248,7 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
       // Frete de margem 100% que a régua não conseguiu decidir: pode ser diária
       // emitida ou frete com contrato esquecido — quem revisa escolhe.
       || ehCandidatoDiariaEmitida(l);
+    l.flag_sem_contrato = ehFreteSemContrato(l);
     const grupo = porChave[chaveDuplicidade(l)];
     l.flag_duplicidade = grupo.length > 1;
     l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;
@@ -371,7 +406,7 @@ export async function listarPendentesRevisao(conn, cliente) {
       { p_token: _sessionToken, p_cliente: cliente ?? null }));
   }
   const q = (s) => encodeURIComponent(s);
-  let path = `${TABELA}?decisao_manual=is.null&periodo_ref=gte.${q(mesAnteriorAoCorrente())}&or=(flag_negativa.eq.true,flag_baixa.eq.true,flag_ambigua.eq.true,flag_duplicidade.eq.true)&order=periodo_ref.desc,margem_lucro.asc`;
+  let path = `${TABELA}?decisao_manual=is.null&periodo_ref=gte.${q(mesAnteriorAoCorrente())}&or=(flag_negativa.eq.true,flag_baixa.eq.true,flag_ambigua.eq.true,flag_duplicidade.eq.true,flag_sem_contrato.eq.true)&order=periodo_ref.desc,margem_lucro.asc`;
   if (cliente) path += `&cliente=eq.${q(cliente)}`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
 }
@@ -459,6 +494,24 @@ export async function vincularCte(conn, id, tipo, ctrcRef, por, idRef) {
   return Array.isArray(res) ? res : [res];
 }
 
+// Mês de competência da diária emitida (migration 053): o mês das diárias PAGAS que este
+// CTe cobra, quando não é o próprio mês de emissão (o CTe sai depois, e um só pode cobrar
+// o mês inteiro). ref = "YYYY-MM" ou null pra limpar. Só vale em categoria 'diaria_emitida'
+// — o RPC recusa o resto.
+export async function definirCompetencia(conn, id, ref) {
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/definir_competencia_frete",
+      { p_token: _sessionToken, p_id: id, p_ref: ref || null }));
+  }
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${encodeURIComponent(id)}`,
+    { competencia_ref: ref || null, atualizado_em: new Date().toISOString() });
+  return Array.isArray(res) ? res[0] : res;
+}
+
+// Mês em que a diária emitida deve ser LIDA: a competência quando marcada, senão o mês de
+// emissão (comportamento de antes da migration 053). Usado pelo card frete × diária.
+export const mesDaEmitida = (l) => l?.competencia_ref || l?.periodo_ref;
+
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).
 export function recalcularLinhaEditada(l) {
@@ -471,6 +524,7 @@ export function recalcularLinhaEditada(l) {
     flag_baixa: !margemFlexivel && margem >= 0 && margem < 10,
     flag_ambigua: (l.categoria === "descarga" || l.categoria === "local") &&
       ((margem > 0 && margem < 1) || (num(l.valor_contrato_frete) === 0 && num(l.total_frete) > 0)),
+    flag_sem_contrato: ehFreteSemContrato(l),
   };
 }
 

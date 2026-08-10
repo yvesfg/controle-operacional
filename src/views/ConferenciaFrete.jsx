@@ -6,7 +6,7 @@ import {
   decidir, estornarRevisao, listarTodosPeriodo, listarPorPeriodos, chaveDuplicidade,
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
-  ehCandidatoDiariaEmitida,
+  ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesDaEmitida,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
@@ -48,7 +48,8 @@ const DECISAO_LABEL = {
 };
 
 // Justificativas prontas do "Marcar revisado" — os motivos que mais se repetem na fila.
-// A de frota só aparece quando a linha é candidata (ver ehCandidatoFrotaRodorrica).
+// A de frota só aparece quando a linha é candidata (ver ehCandidatoFrotaRodorrica); a de
+// contrato zerado, só quando a linha tem flag_sem_contrato (ver ehFreteSemContrato).
 const OBS_ATALHOS = [
   "Valor conferido com o contrato",
   "Margem baixa aprovada pela gestão",
@@ -61,6 +62,10 @@ const ICO_AMBIGUO = <><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 
 const ICO_DUPLICIDADE = <><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>;
 const ICO_FROTA = <><rect x="1" y="3" width="15" height="13" rx="2" /><path d="m16 8 4 2 3 3v4h-7" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></>;
 const ICO_DEVOLUCAO = <><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></>;
+// Mês de competência da diária emitida (migration 053) — calendário.
+const ICO_COMPETENCIA = <><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>;
+// Frete com Valor Contrato Frete = 0 (migration 052) — documento cortado.
+const ICO_SEM_CONTRATO = <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="4" y1="20" x2="20" y2="4" /></>;
 // Ciclo de vida do CTe (substituição/cancelamento/complementar) — migration 048.
 const ICO_SUBSTITUICAO = <><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>;
 const ICO_CANCELADO = <><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></>;
@@ -123,6 +128,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [vincTipo, setVincTipo] = React.useState(null);      // 'substituto' | 'complementar' | null
   const [vincCtrc, setVincCtrc] = React.useState("");
   const [salvandoVinc, setSalvandoVinc] = React.useState(false);
+  // Mês de competência da diária emitida (migration 053) — editado no modal do CTe.
+  const [compRef, setCompRef] = React.useState("");
 
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, origem: null }));
@@ -133,6 +140,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     setRevisando(false); setRevisObs("");
     setEditando(false); setEditForm(null);
     setVincTipo(null); setVincCtrc("");
+    setCompRef(p.competencia_ref || "");
     setRevisarModal({ open: true, item: p });
   };
 
@@ -170,6 +178,21 @@ export default function ConferenciaFrete({ ctx, conn }) {
       await carregar();
     } catch (e) { showToast?.("Erro ao reclassificar: " + e.message, "erro"); }
     finally { setSalvandoEdit(false); }
+  };
+
+  // Competência da diária emitida (migration 053): de que MÊS são as diárias pagas que este
+  // CTe cobra. Um CTe pode cobrar o mês inteiro anterior, então sem isso o card frete × diária
+  // só fecha no acumulado. ref vazio limpa e volta a valer o mês de emissão.
+  const onCompetencia = async (p, ref) => {
+    setSalvandoVinc(true);
+    try {
+      await definirCompetencia(conn, p.id, ref);
+      showToast?.(ref ? `CTRC ${p.ctrc} passa a contar nas diárias de ${mesLabel(ref)}.`
+        : `Competência removida — CTRC ${p.ctrc} volta a contar no mês de emissão.`, "ok");
+      setRevisarModal({ open: false, item: null });
+      await carregar();
+    } catch (e) { showToast?.("Erro ao definir competência: " + e.message, "erro"); }
+    finally { setSalvandoVinc(false); }
   };
 
   // Abre o modo edição admin: inicializa o formulário a partir do CTe.
@@ -477,7 +500,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       setLinhasPeriodo((arr) => arr.map((l) => (l.id === p.id ? voltou : l)));
       setPendentes((arr) => {
         if (arr.some((x) => x.id === p.id)) return arr;
-        const temFlag = voltou.flag_negativa || voltou.flag_baixa || voltou.flag_ambigua || voltou.flag_duplicidade;
+        const temFlag = voltou.flag_negativa || voltou.flag_baixa || voltou.flag_ambigua || voltou.flag_duplicidade || voltou.flag_sem_contrato;
         return temFlag ? [voltou, ...arr] : arr;
       });
       showToast?.("Revisão estornada.", "ok");
@@ -583,19 +606,30 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const soma = (arr, cat, campo) => ativas(arr).filter(l => l.categoria === cat)
       .reduce((s, l) => s + (Number(l[campo]) || 0), 0);
     const conta = (arr, cat) => ativas(arr).filter(l => l.categoria === cat).length;
-    const doMes = (arr) => ({
-      freteSaldo: soma(arr, "frete", "saldo"),
-      fretePeso: soma(arr, "frete", "frete_peso"),
-      nFrete: conta(arr, "frete"),
-      diariaPaga: soma(arr, "diaria", "valor_contrato_frete"),
-      nPaga: conta(arr, "diaria"),
-      diariaEmitida: soma(arr, "diaria_emitida", "frete_peso"),
-      nEmitida: conta(arr, "diaria_emitida"),
-    });
     const porCli = (arr) => clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
+    // A diária emitida é lida no mês que ela COBRE (competencia_ref, migration 053), não no
+    // mês em que foi emitida — um único CTe pode cobrar as diárias do mês inteiro anterior.
+    // Por isso a busca varre os 3 meses carregados, não só o mês da coluna.
+    const universo3 = ativas([
+      ...linhasFiltradas,
+      ...[mesAnt1, mesAnt2].flatMap((m) => porCli(linhasComparativo[m] || [])),
+    ]);
+    const emitidasDoMes = (m) => universo3.filter(l => l.categoria === "diaria_emitida" && mesDaEmitida(l) === m);
+    const doMes = (arr, m) => {
+      const emitidas = emitidasDoMes(m);
+      return {
+        freteSaldo: soma(arr, "frete", "saldo"),
+        fretePeso: soma(arr, "frete", "frete_peso"),
+        nFrete: conta(arr, "frete"),
+        diariaPaga: soma(arr, "diaria", "valor_contrato_frete"),
+        nPaga: conta(arr, "diaria"),
+        diariaEmitida: emitidas.reduce((s, l) => s + (Number(l.frete_peso) || 0), 0),
+        nEmitida: emitidas.length,
+      };
+    };
     const meses = [periodoRef, mesAnt1, mesAnt2].map((m) => ({
       mes: m,
-      ...doMes(m === periodoRef ? linhasFiltradas : porCli(linhasComparativo[m] || [])),
+      ...doMes(m === periodoRef ? linhasFiltradas : porCli(linhasComparativo[m] || []), m),
     }));
     const pagoAcum = meses.reduce((s, m) => s + m.diariaPaga, 0);
     const emitAcum = meses.reduce((s, m) => s + m.diariaEmitida, 0);
@@ -683,7 +717,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
     {p.status_doc === "substituido" && badge(ICO_SUBSTITUICAO, p.ctrc_ref ? `SUBSTITUÍDO PELO ${p.ctrc_ref}` : "SUBSTITUÍDO", t.txt2)}
     {p.status_doc === "cancelado" && badge(ICO_CANCELADO, p.ctrc_ref ? `CANCELADO · REFEITO NO ${p.ctrc_ref}` : "CANCELADO", t.danger)}
     {p.tipo_doc === "substituto" && badge(ICO_SUBSTITUICAO, `SUBSTITUI O ${p.ctrc_ref || "?"}`, t.azul)}
-    {p.tipo_doc === "complementar" && badge(ICO_COMPLEMENTAR, `COMPLEMENTAR DO ${p.ctrc_ref || "?"}`, t.verde)}
+    {/* Complementar de DIÁRIA lê diferente do complementar de valor de frete: é a cobrança
+        do que já se pagou ao motorista no D01, não um valor a mais do mesmo transporte. */}
+    {p.tipo_doc === "complementar" && badge(ICO_COMPLEMENTAR,
+      p.categoria === "diaria_emitida" ? `COBRA A DIÁRIA DO ${p.ctrc_ref || "?"}` : `COMPLEMENTAR DO ${p.ctrc_ref || "?"}`,
+      t.verde)}
+    {p.competencia_ref && badge(ICO_COMPETENCIA, `DIÁRIAS DE ${mesLabel(p.competencia_ref)}`, t.verde)}
   </>);
 
   // Avatar de usuário — mesmo modelo do círculo com iniciais do rodapé da sidebar
@@ -948,6 +987,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     {r.is_devolucao && badge(ICO_DEVOLUCAO, "FOB", t.azul)}
                     {r.categoria_manual && badge(ICO_CATEGORIA_MANUAL, "CATEGORIA À MÃO", t.verde)}
                     {badgesCiclo(r)}
+                    {r.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
                     {r.flag_duplicidade && badge(ICO_DUPLICIDADE, "DUPLICIDADE", t.danger)}
                   </div>
                 </div>
@@ -1200,6 +1240,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {badgesCiclo(p)}
                   {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                   {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
+                  {p.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
                   {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "DUPLICIDADE", t.danger)}
                   {p.decisao_manual && (
                     <span style={{ fontSize: 10, fontWeight: 700, color: t.verde }}>
@@ -1414,6 +1455,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
               {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
               {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
+              {p.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
               {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
             </div>
           </div>
@@ -1663,7 +1705,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
         const decidirEFechar = async (decisao, obs) => { await onDecidir(p.id, decisao, obs); fechar(); };
         const candidatoFrota = ehCandidatoFrotaRodorrica(p);
         const candidatoDiaria = ehCandidatoDiariaEmitida(p);
-        const atalhos = candidatoFrota ? ["Frota Rodorrica — desconto padrão de R$ 300", ...OBS_ATALHOS] : OBS_ATALHOS;
+        const semContrato = ehFreteSemContrato(p);
+        const ehDiariaEmit = p.categoria === "diaria_emitida";
+        const atalhos = [
+          ...(candidatoFrota ? ["Frota Rodorrica — desconto padrão de R$ 300"] : []),
+          ...(semContrato ? ["Contrato conferido: esse frete não tem custo de terceiro"] : []),
+          ...OBS_ATALHOS,
+        ];
         const campo = (l, v) => (
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderBottom: `1px solid ${hexRgb(t.borda, .2)}` }}>
             <span style={{ color: t.txt2 }}>{l}</span>
@@ -1701,6 +1749,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {p.flag_negativa && badge(ICO_ALERTA, "MARGEM NEGATIVA", t.danger)}
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
+                {p.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
                 {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
                 {candidatoFrota && badge(ICO_FROTA, "POSSÍVEL FROTA RODORRICA", t.azul)}
               </div>
@@ -1774,6 +1823,40 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </div>
               )}
 
+              {/* Competência da diária emitida (migration 053): o CTe sai depois do pagamento e
+                  um só pode cobrar o mês inteiro — aqui se diz de QUE mês são as diárias, e o
+                  card frete × diária passa a ler a cobrança nesse mês, não no da emissão. */}
+              {ehDiariaEmit && !editando && !revisando && !sinalizando && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
+                    Competência da diária
+                  </div>
+                  <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5, marginBottom: 8 }}>
+                    Cobra as diárias pagas em <b>{mesLabel(mesDaEmitida(p))}</b>
+                    {p.competencia_ref ? "" : " (mês de emissão — sem competência definida)"}.
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                    <input type="month" value={compRef} onChange={(e) => setCompRef(e.target.value)}
+                      style={{ padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
+                    <button onClick={() => setCompRef(shiftMes(p.periodo_ref, -1))}
+                      style={{ fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
+                      mês anterior ({mesLabel(shiftMes(p.periodo_ref, -1))})
+                    </button>
+                    <button onClick={() => onCompetencia(p, compRef)} disabled={salvandoVinc || !compRef || compRef === (p.competencia_ref || "")}
+                      style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "inherit",
+                        cursor: (!compRef || compRef === (p.competencia_ref || "")) ? "not-allowed" : "pointer", opacity: salvandoVinc || !compRef || compRef === (p.competencia_ref || "") ? .45 : 1 }}>
+                      {salvandoVinc ? "Salvando..." : "Salvar competência"}
+                    </button>
+                    {p.competencia_ref && (
+                      <button onClick={() => onCompetencia(p, null)} disabled={salvandoVinc}
+                        style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Ciclo de vida do CTe (migration 048) — substituição / cancelamento / complementar.
                   Substituição e cancelamento tiram valor do faturamento; complementar só linka. */}
               {!editando && !revisando && !sinalizando && (() => {
@@ -1781,7 +1864,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 const obrigaCtrc = vincTipo === "substituto" || vincTipo === "complementar";
                 const labelVinc = {
                   substituto: "Este CTe SUBSTITUI o CTRC:",
-                  complementar: "Este CTe é COMPLEMENTAR do CTRC:",
+                  complementar: ehDiariaEmit ? "Este CTe COBRA a diária paga no CTRC (D01/D05):" : "Este CTe é COMPLEMENTAR do CTRC:",
                   cancelado: "Este CTe foi CANCELADO. Refeito no CTRC (opcional):",
                 }[vincTipo];
                 const btn = (label, cor, onClick) => (
@@ -1803,6 +1886,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                           {p.status_doc === "substituido" ? <>Substituído pelo CTRC <b>{p.ctrc_ref || "?"}</b> — <b>fora dos totais</b>.</>
                             : p.status_doc === "cancelado" ? <>Cancelado{p.ctrc_ref ? <> (refeito no CTRC <b>{p.ctrc_ref}</b>)</> : ""} — <b>fora dos totais</b>.</>
                             : p.tipo_doc === "substituto" ? <>Substitui o CTRC <b>{p.ctrc_ref}</b>, que saiu dos totais. Este continua faturando.</>
+                            : p.categoria === "diaria_emitida" ? <>Cobra a diária paga no CTRC <b>{p.ctrc_ref}</b> (D01/D05) — lá está o custo, aqui a receita; os dois continuam nos totais.</>
                             : <>Complementar do CTRC <b>{p.ctrc_ref}</b> — os dois somam no faturamento.</>}
                         </div>
                         <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 4 }}>
@@ -1833,7 +1917,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
                             o par costuma estar. Só atalho de digitação; quem decide é quem revisa. */}
                         {candidatosDoCTe.length > 0 && (
                           <div style={{ marginTop: 8 }}>
-                            <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 5 }}>Candidatos (mesma NF ou mesmo valor):</div>
+                            <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 5 }}>
+                              {ehDiariaEmit ? "Diárias pagas (D01/D05) deste cliente — mesma placa/valor primeiro:" : "Candidatos (mesma NF ou mesmo valor):"}
+                            </div>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                               {candidatosDoCTe.slice(0, 6).map((c) => (
                                 <button key={c.id} onClick={() => setVincCtrc(String(c.ctrc))}
@@ -1850,12 +1936,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       <>
                         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           {btn("Substitui outro CTe", t.azul, () => { setVincCtrc(""); setVincTipo("substituto"); })}
-                          {btn("É complementar", t.verde, () => { setVincCtrc(""); setVincTipo("complementar"); })}
+                          {btn(ehDiariaEmit ? "Cobra uma diária paga (D01)" : "É complementar", t.verde, () => { setVincCtrc(""); setVincTipo("complementar"); })}
                           {btn("Foi cancelado", t.danger, () => { setVincCtrc(""); setVincTipo("cancelado"); })}
                         </div>
                         <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 7, lineHeight: 1.45 }}>
                           Substituição e cancelamento tiram o CTe anulado dos totais (ele continua aqui, esmaecido).
-                          Complementar mantém os dois somando — original + complementar.
+                          {ehDiariaEmit
+                            ? " O vínculo da diária emitida aponta o CTe D01/D05 onde o motorista foi pago — os dois seguem nos totais (lá o custo, aqui a receita)."
+                            : " Complementar mantém os dois somando — original + complementar."}
                         </div>
                       </>
                     )}
@@ -1973,6 +2061,28 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     <button onClick={() => decidirEFechar("ok", "frete comum — contrato não preenchido na planilha")}
                       style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, fontFamily: "inherit" }}>
                       É frete — contrato faltando
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Frete com Valor Contrato Frete = 0 (migration 052): o Saldo vira o CTe inteiro
+                  e infla a margem do mês. Normalmente é contrato ainda não lançado no TMS —
+                  quem revisa confirma. Não aparece junto do bloco da diária emitida (acima),
+                  que já trata o mesmo sintoma com teto de R$ 5.000. */}
+              {semContrato && !candidatoDiaria && !revisando && !sinalizando && !editando && (
+                <div style={{ marginTop: 12, borderRadius: 10, border: `1px solid ${hexRgb(t.ouro, .35)}`, background: hexRgb(t.ouro, .08), padding: "10px 12px" }}>
+                  <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5 }}>
+                    Frete com <b>contrato zerado</b>: o Saldo virou o CTe inteiro ({money(p.saldo)}) e a margem foi pra {Number(p.margem_lucro).toFixed(1)}%, inflando o resultado do mês. Em geral é contrato de terceiro ainda não lançado no TMS. É isso?
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    <button onClick={() => setSinalizando(true)}
+                      style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.ouro, color: "#000", fontFamily: "inherit" }}>
+                      Falta lançar o contrato
+                    </button>
+                    <button onClick={() => decidirEFechar("ok", "frete sem custo de terceiro — contrato zerado conferido")}
+                      style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, fontFamily: "inherit" }}>
+                      Não tem contrato mesmo
                     </button>
                   </div>
                 </div>
