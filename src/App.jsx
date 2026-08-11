@@ -66,6 +66,7 @@ import useMotoristas from './hooks/useMotoristas.js';
 import { setMotoristasToken } from './motoristas.js';
 import { setVeiculosToken } from './veiculos.js';
 import { setFreteToken } from './freteConferencia.js';
+import { setContratosToken } from './freteContratos.js';
 import { setDespesasToken } from './despesas.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
@@ -468,6 +469,7 @@ export default function App() {
     setMotoristasToken(sessionToken);
     setVeiculosToken(sessionToken);
     setFreteToken(sessionToken);
+    setContratosToken(sessionToken);
     setDespesasToken(sessionToken);
     if (sessionToken) recarregarMotoristas(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps

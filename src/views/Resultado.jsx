@@ -10,6 +10,7 @@ import {
   listarIndevidasPendentes, classeDoCredito,
 } from "../despesas.js";
 import ConferenciaFrete from "./ConferenciaFrete.jsx";
+import ContratosFrete from "./ContratosFrete.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import KpiCard from "../components/KpiCard.jsx";
 import { nCte, nContrato, aplicarComplementar, origemBate, semFilial } from "../financeiroCalc.js";
@@ -302,7 +303,9 @@ export default function Resultado({ ctx }) {
 
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
-      {segmento === "faturamento" ? (
+      {segmento === "contratos" ? (
+        <ContratosFrete ctx={ctx} conn={conn} />
+      ) : segmento === "faturamento" ? (
         <ConferenciaFrete ctx={ctx} conn={conn} />
       ) : (
       <>
