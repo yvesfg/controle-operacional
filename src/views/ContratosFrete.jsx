@@ -5,7 +5,7 @@ import {
   cruzarContratos, resumoCruzamento, PROBLEMA, ALIQUOTAS, esperado,
   listarRegrasTrecho, definirRegraTrecho, trechosPendentes,
 } from "../freteContratos.js";
-import { listarTodosPeriodo } from "../freteConferencia.js";
+import { listarTodosPeriodo, vincularContratoCte } from "../freteConferencia.js";
 import KpiCard from "../components/KpiCard.jsx";
 import ModalRelatorio from "../components/ModalRelatorio.jsx";
 
@@ -20,12 +20,13 @@ const dataBR = (d) => (d ? d.split("-").reverse().join("/") : "");
 
 // Ordem de exibição da fila: o encargo patronal que falta lançar é o que custa dinheiro,
 // então vem primeiro; "sem CTe na base" é informativo (o mês do CTe pode não estar importado).
-const ORDEM_PROBLEMA = ["pf_sem_custos_externos", "pf_sem_inss", "pf_sem_sest", "cte_sem_contrato", "contrato_zerado", "sem_cte_na_base", "trecho_nao_decidido"];
+const ORDEM_PROBLEMA = ["pf_sem_custos_externos", "pf_sem_inss", "pf_sem_sest", "cte_sem_contrato", "cte_contrato_vinculado", "contrato_zerado", "sem_cte_na_base", "trecho_nao_decidido"];
 const COR_PROBLEMA = {
   pf_sem_custos_externos: "var(--red)",
   pf_sem_inss: "var(--red)",
   pf_sem_sest: "var(--red)",
   cte_sem_contrato: "var(--yellow)",
+  cte_contrato_vinculado: "var(--green)",
   contrato_zerado: "var(--yellow)",
   sem_cte_na_base: "var(--text3)",
   trecho_nao_decidido: "var(--color-info)",
@@ -45,6 +46,7 @@ export default function ContratosFrete({ ctx, conn }) {
   const [filtroProblema, setFiltroProblema] = React.useState(""); // "" = todos
   const [busca, setBusca] = React.useState("");
   const [relOpen, setRelOpen] = React.useState(false);
+  const [vinculando, setVinculando] = React.useState(""); // id do CTe sendo vinculado
   const fileRef = React.useRef(null);
 
   const carregar = React.useCallback(async () => {
@@ -103,6 +105,23 @@ export default function ContratosFrete({ ctx, conn }) {
         .some((v) => String(v || "").toLowerCase().includes(q)))
       .sort((a, b) => b.falta_encargo - a.falta_encargo || String(a.contrato).localeCompare(String(b.contrato)));
   }, [cruzados, filtroProblema, busca]);
+
+  // Vincular daqui: o contrato existe e o CTe está zerado — em vez de mandar a pessoa achar
+  // esse CTe na Conferência pra fazer o mesmo clique, resolve na própria fila. Grava
+  // contrato_ref no CTe (migration 058); passar null desfaz.
+  const onVincularAoCte = async (c, desfazer) => {
+    const alvo = c.cte_alvo;
+    if (!alvo?.id) return;
+    setVinculando(alvo.id);
+    try {
+      await vincularContratoCte(conn, alvo.id, desfazer ? null : String(c.contrato), ctx.usuarioLogado);
+      showToast?.(desfazer
+        ? `Vínculo desfeito no CTe ${alvo.ctrc}.`
+        : `Contrato ${c.contrato} vinculado ao CTe ${alvo.ctrc}. Falta lançar no TMS pra margem corrigir.`, "ok");
+      await carregar();
+    } catch (e) { showToast?.("Erro ao vincular: " + e.message, "erro"); }
+    finally { setVinculando(""); }
+  };
 
   const escolherArquivo = () => fileRef.current?.click();
 
@@ -317,9 +336,34 @@ export default function ContratosFrete({ ctx, conn }) {
                   </div>
                 )}
                 {c.problemas.includes("cte_sem_contrato") && (
-                  <div style={{ marginTop: 6, fontSize: 10.5, color: t.warn, lineHeight: 1.5 }}>
-                    O CTe {c.cte_ctrc} está na conferência com contrato zerado (margem inflada). O valor real do
-                    contrato é {money(c.valor)} — lançar no TMS e reimportar o relatório de CTes.
+                  <div style={{ marginTop: 6 }}>
+                    <div style={{ fontSize: 10.5, color: t.warn, lineHeight: 1.5 }}>
+                      O CTe {c.cte_alvo?.ctrc || c.cte_ctrc} está na conferência com contrato zerado (margem inflada).
+                      O valor real do contrato é {money(c.valor)} — lançar no TMS e reimportar o relatório de CTes.
+                    </div>
+                    {/* Enquanto o TMS não é corrigido, o vínculo registra QUAL é o contrato: o
+                        CTe sai da fila de "sem contrato" e a conferência mostra a margem real. */}
+                    <button onClick={() => onVincularAoCte(c, false)} disabled={vinculando === c.cte_alvo?.id}
+                      style={{ marginTop: 7, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8,
+                        cursor: vinculando === c.cte_alvo?.id ? "wait" : "pointer", fontFamily: "inherit",
+                        border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
+                      {vinculando === c.cte_alvo?.id ? "Vinculando..." : `🔗 Vincular ao CTe ${c.cte_alvo?.ctrc || c.cte_ctrc}`}
+                    </button>
+                  </div>
+                )}
+                {c.problemas.includes("cte_contrato_vinculado") && (
+                  <div style={{ marginTop: 6 }}>
+                    <div style={{ fontSize: 10.5, color: t.txt2, lineHeight: 1.5 }}>
+                      Contrato apontado à mão no CTe {c.cte_alvo?.ctrc || c.cte_ctrc}: a conferência já lê a margem
+                      real ({money(c.frete_dos_ctes - c.valor)} de saldo). Falta lançar {money(c.valor)} no TMS e
+                      reimportar pro número vir da fonte.
+                    </div>
+                    <button onClick={() => onVincularAoCte(c, true)} disabled={vinculando === c.cte_alvo?.id}
+                      style={{ marginTop: 7, fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
+                        cursor: vinculando === c.cte_alvo?.id ? "wait" : "pointer", fontFamily: "inherit",
+                        border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                      ↩ Desfazer vínculo
+                    </button>
                   </div>
                 )}
               </div>

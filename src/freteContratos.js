@@ -154,6 +154,7 @@ export const PROBLEMA = {
   pf_sem_sest: "PF sem SEST/SENAT",
   contrato_zerado: "Contrato sem valor",
   cte_sem_contrato: "CTe sem contrato, mas o contrato existe",
+  cte_contrato_vinculado: "Vinculado à mão — falta lançar no TMS",
   sem_cte_na_base: "Contrato sem o CTe importado",
   trecho_nao_decidido: "Trecho novo — é nossa operação?",
 };
@@ -222,7 +223,12 @@ export function cruzarContratos(contratos, ctes, regras) {
     // é o caso em que o cruzamento não só aponta como RESOLVE — o valor que falta está nesta linha.
     // Só é "CTe sem contrato" se NENHUM CTe do grupo recebeu o valor — com dois CTes, o TMS
     // lança tudo em um e zera o outro, e isso é o rateio normal, não lançamento faltando.
-    if (grupo.length && valor > 0 && contratoNosCtes === 0) problemas.push("cte_sem_contrato");
+    // Se alguém já apontou este contrato no CTe à mão (contrato_ref, migration 058), o caso
+    // deixa de ser "descobrir qual é" e vira "falta lançar no TMS pro valor entrar na margem".
+    const vinculadoNoCte = grupo.some((c) => txt(c.contrato_ref) === txt(ct.contrato));
+    if (grupo.length && valor > 0 && contratoNosCtes === 0) {
+      problemas.push(vinculadoNoCte ? "cte_contrato_vinculado" : "cte_sem_contrato");
+    }
     // Sem CTe: com regra "é nossa" (ignorar=false) o que falta é importar o relatório de CTes
     // daquele mês; sem regra nenhuma, ninguém decidiu ainda de quem é esse trecho.
     if (!casou) problemas.push(regra === false ? "sem_cte_na_base" : "trecho_nao_decidido");
@@ -231,6 +237,10 @@ export function cruzarContratos(contratos, ctes, regras) {
     return {
       ...ct,
       cte: cteRef,
+      // CTe que deveria receber o valor — é nele que a tela grava o vínculo (o do grupo que
+      // está com contrato zerado; havendo só um, é ele mesmo).
+      cte_alvo: grupo.find((c) => num(c.valor_contrato_frete) === 0) || cteRef,
+      vinculado_no_cte: vinculadoNoCte,
       cliente: cteRef?.cliente || null,
       ignorado: false,
       // Grupo de CTes deste contrato — com 2+ é ele que tem a margem real.
