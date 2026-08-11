@@ -74,8 +74,9 @@ export default function Resultado({ ctx }) {
   // Recorte por filial — só nas bases cujas despesas chegam marcadas por aba (IMP/BELÉM).
   // Mesma feature e mesmos valores do Painel Financeiro, pra não existirem dois recortes.
   const temFilial = getPerfil(baseId).features.filialNasDespesas;
-  const [filial, setFilial] = React.useState("todos"); // todos | IMP | BELÉM
-  React.useEffect(() => { setFilial("todos"); }, [baseId]);
+  // A filial passou a vir do seletor do TOPBAR (ctx.filialAtiva, "todas"|"IMP"|"BELÉM") —
+  // antes cada tela tinha o seu botão, e o mesmo recorte aparecia duas vezes na mesma faixa.
+  const filial = temFilial && ctx.filialAtiva && ctx.filialAtiva !== "todas" ? ctx.filialAtiva : "todos";
   const recorteFilial = temFilial && filial !== "todos";
   const filialLabel = filial === "IMP" ? "Imperatriz" : "Belém";
   const [loading, setLoading] = React.useState(false);
@@ -327,19 +328,13 @@ export default function Resultado({ ctx }) {
               ? `Incluir complementar ${getPerfil(baseId).financeiro.complementarMargemZero ? "(margem zero)" : "(margem cheia)"}`
               : "Sem complementar lançado neste mês"} />
         </div>
-        {/* Mesmo segmento e mesmos rótulos do Painel Financeiro — as duas telas têm que
-            oferecer o mesmo recorte, senão viram números diferentes pro mesmo mês. */}
-        {temFilial && (
-          <div style={{ display: "flex", border: `1px solid ${t.borda}`, borderRadius: 8, overflow: "hidden" }}>
-            {[["todos", "Imp + Bel"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]].map(([k, l]) => (
-              <button key={k} onClick={() => setFilial(k)}
-                style={{ fontSize: 12, fontWeight: filial === k ? 700 : 500, padding: "8px 12px", cursor: "pointer",
-                  fontFamily: "inherit", border: "none", borderRight: k !== "BELÉM" ? `1px solid ${t.borda}` : "none",
-                  background: filial === k ? "var(--accent)" : "transparent", color: filial === k ? "#fff" : t.txt2 }}>
-                {l}
-              </button>
-            ))}
-          </div>
+        {/* O seletor de filial saiu daqui: agora é o do topbar (Imperatriz / Belém / as duas
+            juntas), o mesmo que o Painel Financeiro respeita — dois seletores para o mesmo
+            recorte na mesma faixa era a redundância que a tela tinha. */}
+        {temFilial && filial !== "todos" && (
+          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 11px", borderRadius: 8, background: "var(--accent)", color: "#fff" }}>
+            {filialLabel}
+          </span>
         )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />

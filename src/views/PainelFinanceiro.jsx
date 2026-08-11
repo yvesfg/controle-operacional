@@ -44,8 +44,9 @@ export default function PainelFinanceiro({ ctx }) {
   // Filtro por origem: só em operações cujas despesas vêm tagueadas por filial
   // (IMP/BELÉM na planilha). Declarado no perfil da operação.
   const temFilial = getPerfil(baseId).features.filialNasDespesas;
-  const [filial, setFilial] = React.useState("todos"); // todos | IMP | BELÉM
-  React.useEffect(() => { setFilial("todos"); }, [baseId]);
+  // Vem do seletor do topbar (ctx.filialAtiva) — mesma fonte do Resultado, pra não existirem
+  // dois recortes concorrentes pro mesmo mês.
+  const filial = temFilial && ctx.filialAtiva && ctx.filialAtiva !== "todas" ? ctx.filialAtiva : "todos";
 
   // ── Despesas da base (todos os meses) ──
   const [despesas, setDespesas] = React.useState([]);
@@ -228,17 +229,11 @@ export default function PainelFinanceiro({ ctx }) {
           {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
           {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
         </select>
-        {temFilial && (
-          <div style={{ display: "flex", border: `1px solid ${t.borda}`, borderRadius: 8, overflow: "hidden" }}>
-            {[["todos", "Imp + Bel"], ["IMP", "Imperatriz"], ["BELÉM", "Belém"]].map(([k, l]) => (
-              <button key={k} onClick={() => setFilial(k)}
-                style={{ fontSize: 12, fontWeight: filial === k ? 700 : 500, padding: "8px 12px", cursor: "pointer",
-                  border: "none", borderRight: k !== "BELÉM" ? `1px solid ${t.borda}` : "none",
-                  background: filial === k ? "var(--accent)" : "transparent", color: filial === k ? "#fff" : t.txt2 }}>
-                {l}
-              </button>
-            ))}
-          </div>
+        {/* Recorte de filial agora é o do topbar — ver comentário em temFilial. */}
+        {temFilial && filial !== "todos" && (
+          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 11px", borderRadius: 8, background: "var(--accent)", color: "#fff" }}>
+            {filial === "IMP" ? "Imperatriz" : "Belém"}
+          </span>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
           padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>

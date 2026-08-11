@@ -131,6 +131,18 @@ export default function App() {
   const [dashCfg, setDashCfg] = useState({});
   // Filtro global de tipo de carga (base Imperatriz: papel x celulose). "todos" = sem filtro.
   const [filtroTipoCarga, setFiltroTipoCarga] = useState("todos");
+  // Filial ativa da base Imperatriz/Belem: "todas" | "IMP" | "BELEM". O seletor do topbar
+  // passou a oferecer as duas filiais separadas mantendo a opcao conjunta, e cada tela aplica
+  // o recorte do seu jeito (origem da viagem, aba da despesa, filial da embarcadora). Antes
+  // isso vivia em estado local de cada tela, o que gerava dois seletores para a mesma coisa.
+  const [filialAtiva, setFilialAtivaState] = useState(() => {
+    try { return localStorage.getItem("co_filial_atual") || "todas"; } catch { return "todas"; }
+  });
+  const setFilialAtiva = (f) => {
+    const v = f || "todas";
+    try { localStorage.setItem("co_filial_atual", v); } catch {}
+    setFilialAtivaState(v);
+  };
   // Cargas SEM DT CONFIRMADAS (fila) injetadas no DADOS como linhas normais com flag
   // _semDt — "constam em todos os locais" (Planilha/Dashboard/Financeiro) com badge e
   // seguem o filtro de tipo de carga. Some sozinha ao ganhar DT (vira conciliado).
@@ -1145,6 +1157,24 @@ export default function App() {
   // "Todas as bases" e leitura pura: um registro veio de uma tabela especifica e
   // salvar dali nao teria pra onde ir (BASE_TODAS.table e null). Quem quer editar
   // troca pra base do registro.
+  // Opcoes do seletor do topbar: cada base vira uma entrada, e a base com filiais
+  // (features.filialNasDespesas, hoje so Imperatriz/Belem) vira tres — o conjunto continua
+  // existindo porque e a visao padrao da gestao.
+  const opcoesEscopo = useMemo(() => {
+    const out = basesPermitidas.length > 1 ? [{ key: `${BASE_TODAS.id}|todas`, base: BASE_TODAS, filial: "todas", label: BASE_TODAS.label }] : [];
+    basesPermitidas.forEach((b) => {
+      out.push({ key: `${b.id}|todas`, base: b, filial: "todas", label: b.label });
+      if (getPerfil(b.id)?.features?.filialNasDespesas) {
+        out.push({ key: `${b.id}|IMP`, base: b, filial: "IMP", label: "Imperatriz", sub: true });
+        out.push({ key: `${b.id}|BELÉM`, base: b, filial: "BELÉM", label: "Belém", sub: true });
+      }
+    });
+    return out;
+  }, [basesPermitidas, basesVersao]);
+  const escopoKey = baseAtual ? `${baseAtual.id}|${filialAtiva}` : null;
+  const escopoLabel = (opcoesEscopo.find((o) => o.key === escopoKey) || {}).label || baseAtual?.label || "";
+  const escolherEscopo = (o) => { setBaseAtual(o.base); setFilialAtiva(o.filial); setBaseMenuOpen(false); };
+
   const modoConsolidado = baseAtual?.consolidado === true;
   const canEdit = (isAdmin || perms.editar) && !modoConsolidado;
   const canFin = perms.financeiro;
@@ -1414,7 +1444,7 @@ export default function App() {
                 <div style={{position:"relative"}}>
                   <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
                     style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 9px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:6}}>
-                    ● {baseAtual.label}
+                    ● {escopoLabel}
                     {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}>▾</span>}
                   </button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
@@ -1422,14 +1452,14 @@ export default function App() {
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:210,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
-                        {[...(basesPermitidas.length>1?[BASE_TODAS]:[]), ...basesPermitidas].map(b=>(
-                          <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); }}
-                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:12,cursor:"pointer"}}
+                        {opcoesEscopo.map(o=>(
+                          <button key={o.key} onClick={()=>escolherEscopo(o)}
+                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:o.sub?"8px 12px 8px 26px":"10px 12px",background:o.key===escopoKey?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:o.sub?11.5:12,cursor:"pointer"}}
                             onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.16)}
-                            onMouseLeave={e=>e.currentTarget.style.background=b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent"}>
-                            <span style={{width:7,height:7,borderRadius:"50%",background:b.id===baseAtual.id?t.ouro:t.borda,flexShrink:0}}/>
-                            <span style={{flex:1}}>{b.label}</span>
-                            {b.id===baseAtual.id && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
+                            onMouseLeave={e=>e.currentTarget.style.background=o.key===escopoKey?hexRgb(t.ouro,.10):"transparent"}>
+                            <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
+                            <span style={{flex:1}}>{o.label}</span>
+                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
                           </button>
                         ))}
                       </div>
@@ -1476,7 +1506,7 @@ export default function App() {
                 <div style={{position:"relative",marginLeft:8}}>
                   <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
                     style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 8px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
-                    ● {baseAtual.label}
+                    ● {escopoLabel}
                     {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}>▾</span>}
                   </button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
@@ -1484,12 +1514,12 @@ export default function App() {
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:200,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
-                        {[...(basesPermitidas.length>1?[BASE_TODAS]:[]), ...basesPermitidas].map(b=>(
-                          <button key={b.id} onClick={()=>{ setBaseAtual(b); setBaseMenuOpen(false); }}
-                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:b.id===baseAtual.id?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:12,cursor:"pointer"}}>
-                            <span style={{width:7,height:7,borderRadius:"50%",background:b.id===baseAtual.id?t.ouro:t.borda,flexShrink:0}}/>
-                            <span style={{flex:1}}>{b.label}</span>
-                            {b.id===baseAtual.id && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
+                        {opcoesEscopo.map(o=>(
+                          <button key={o.key} onClick={()=>escolherEscopo(o)}
+                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:o.sub?"8px 12px 8px 26px":"10px 12px",background:o.key===escopoKey?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:o.sub?11.5:12,cursor:"pointer"}}>
+                            <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
+                            <span style={{flex:1}}>{o.label}</span>
+                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
                           </button>
                         ))}
                       </div>
@@ -1784,7 +1814,7 @@ export default function App() {
         {/* ═══ FINANCEIRO (Painel + Resultado + Cobranças) ═══ */}
         {activeTab === "financeiro" && (
           <FinanceiroView ctx={{
-            activeTab, baseAtual, DADOS, getConexao,
+            activeTab, baseAtual, filialAtiva, DADOS, getConexao,
             t, css, DESIGN, isMobile, showToast, canFin, hexRgb,
             usuarioLogado, perfil, perms, hIco, basesPermitidas,
           }} />

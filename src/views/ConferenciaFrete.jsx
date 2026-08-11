@@ -85,7 +85,7 @@ const ICO_CATEGORIA = {
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot, filialAtiva } = ctx;
   const isAdmin = perfil === "admin";
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
@@ -509,7 +509,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
   };
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
-  const clientesPresentes = React.useMemo(() => [...new Set(linhasPeriodo.map(l => l.cliente))].sort(), [linhasPeriodo]);
+  const clientesPresentes = React.useMemo(() => {
+    const arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
+    return [...new Set(arr.map(l => l.cliente))].sort();
+  }, [linhasPeriodo, clientesDaFilial]);
+  // Trocar a filial no topbar com um cliente da outra filial selecionado deixaria a tela
+  // vazia sem explicação — limpa o seletor.
+  React.useEffect(() => {
+    if (clienteFiltro && clientesDaFilial && !clientesDaFilial.has(clienteFiltro)) setClienteFiltro("");
+  }, [clientesDaFilial, clienteFiltro]);
 
   // Destinos possíveis pra edição admin (FOB): embarcadoras que faturam (têm base_id).
   // Ao escolher, o cliente vira o destinatário e a base acompanha (mesma lógica do import).
@@ -520,10 +528,21 @@ export default function ConferenciaFrete({ ctx, conn }) {
   }, [clientesMap]);
   const basesOpc = React.useMemo(() => Object.values(BASES).map((b) => ({ v: b.id, l: b.label })), []);
 
-  const linhasFiltradas = React.useMemo(
-    () => clienteFiltro ? linhasPeriodo.filter(l => l.cliente === clienteFiltro) : linhasPeriodo,
-    [linhasPeriodo, clienteFiltro]
-  );
+  // Filial vinda do topbar (ctx.filialAtiva). Aqui o recorte NÃO é a origem da viagem: é a
+  // embarcadora, porque a Conferência trabalha por CTe de cliente. O mapa vem do cadastro
+  // (embarcadoras.filial, migration 057) — inferir pelo nome quebraria com cliente novo.
+  // O seletor de embarcadora continua: filial escolhe a filial, o seletor escolhe UM cliente.
+  const clientesDaFilial = React.useMemo(() => {
+    if (!filialAtiva || filialAtiva === "todas") return null;
+    const nomes = Object.values(clientesMap || {}).filter((e) => e?.filial === filialAtiva).map((e) => e.nome);
+    return nomes.length ? new Set(nomes) : null;
+  }, [clientesMap, filialAtiva]);
+
+  const linhasFiltradas = React.useMemo(() => {
+    let arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
+    if (clienteFiltro) arr = arr.filter(l => l.cliente === clienteFiltro);
+    return arr;
+  }, [linhasPeriodo, clienteFiltro, clientesDaFilial]);
   // Recorte de mês da fila de revisão — relativo ao mês real corrente (não ao periodoRef,
   // que controla os resumos). A fila já vem limitada a mês anterior + corrente do backend.
   const mesCorrenteReal = React.useMemo(() => new Date().toISOString().slice(0, 7), []);
