@@ -15,6 +15,7 @@ import { listarDespesas, classeDoCredito } from "../despesas.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
 import KpiCard from "../components/KpiCard.jsx";
 import Toggle from "../components/Toggle.jsx";
+import ModalRelatorio from "../components/ModalRelatorio.jsx";
 import { BASES } from "../constants.js";
 
 // Conferência de Faturamento — planilhas BRUTAS de faturamento (TMS/ERP), fonte
@@ -117,6 +118,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Busca de CTe (CTRC / NF / placa / manifesto / contrato) — atravessa cliente e mês.
   const [buscaCte, setBuscaCte] = React.useState("");
   const [buscaAmpla, setBuscaAmpla] = React.useState("nao"); // 'nao' | 'buscando' | 'feita'
+  const [relOpen, setRelOpen] = React.useState(false); // relatório da tela (ModalRelatorio)
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
   const [sinalObs, setSinalObs] = React.useState("");
@@ -509,6 +511,38 @@ export default function ConferenciaFrete({ ctx, conn }) {
   };
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
+  // Relatório da tela: as linhas do período JÁ filtradas (filial, cliente) — o modal cuida
+  // de colunas, ordem, agrupamento e exportação. Só CTes ativos, como todo resumo daqui.
+  const relColunas = React.useMemo(() => [
+    { id: "ctrc", label: "CTRC", tipo: "texto", get: (l) => l.ctrc },
+    { id: "data", label: "Emissão", tipo: "data", get: (l) => l.data_emissao },
+    { id: "categoria", label: "Categoria", tipo: "texto", get: (l) => CATEGORIA_LABEL[l.categoria] || l.categoria },
+    { id: "cliente", label: "Cliente", tipo: "texto", get: (l) => l.cliente },
+    { id: "trecho", label: "Trecho", tipo: "texto", get: (l) => l.trecho },
+    { id: "placa", label: "Placa", tipo: "texto", get: (l) => l.placa },
+    { id: "nfs", label: "NFs", tipo: "texto", get: (l) => l.nfs },
+    { id: "contratoNum", label: "Nº contrato", tipo: "texto", get: (l) => l.numero_contrato },
+    { id: "peso", label: "Peso NF", tipo: "numero", total: true, get: (l) => l.peso_nf },
+    { id: "fretePeso", label: "Frete peso", tipo: "moeda", total: true, get: (l) => l.frete_peso },
+    { id: "total", label: "Total do frete", tipo: "moeda", total: true, get: (l) => l.total_frete },
+    { id: "contrato", label: "Contrato", tipo: "moeda", total: true, get: (l) => l.valor_contrato_frete },
+    { id: "saldo", label: "Saldo", tipo: "moeda", total: true, get: (l) => l.saldo },
+    { id: "margem", label: "Margem", tipo: "pct", get: (l) => l.margem_lucro },
+    { id: "usuario", label: "Usuário", tipo: "texto", get: (l) => l.nome_usuario },
+    { id: "situacao", label: "Situação", tipo: "texto", get: (l) => [
+      l.flag_negativa && "margem negativa", l.flag_baixa && "margem < 10%",
+      l.flag_sem_contrato && "sem contrato", l.flag_duplicidade && "possível duplicidade",
+      l.decisao_manual && (DECISAO_LABEL[l.decisao_manual] || l.decisao_manual),
+    ].filter(Boolean).join("; ") },
+  ], []);
+  const relGrupos = React.useMemo(() => [
+    { id: "categoria", label: "categoria", get: (l) => CATEGORIA_LABEL[l.categoria] || l.categoria },
+    { id: "cliente", label: "cliente", get: (l) => l.cliente },
+    { id: "dia", label: "dia", get: (l) => (l.data_emissao || "").split("-").reverse().join("/") },
+    { id: "usuario", label: "usuário", get: (l) => l.nome_usuario || "(sem usuário)" },
+  ], []);
+  const relLinhas = React.useMemo(() => linhasFiltradas.filter(ehAtivo), [linhasFiltradas]);
+
   const clientesPresentes = React.useMemo(() => {
     const arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
     return [...new Set(arr.map(l => l.cliente))].sort();
@@ -953,6 +987,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, opacity: linhasFiltradas.length ? 1 : .5 }}>
             ⬇ Baixar planilha
+          </button>
+          <button onClick={() => setRelOpen(true)} disabled={!linhasFiltradas.length}
+            style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+              border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, opacity: linhasFiltradas.length ? 1 : .5 }}>
+            Relatório
           </button>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onEscolherArquivo} style={{ display: "none" }} />
           {/* Cor azul (t.azul) em vez do accent amarelo do import de despesas (Resultado/Operacional) —
@@ -1721,6 +1760,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
         </div>
         );
       })()}
+
+      <ModalRelatorio aberto={relOpen} onFechar={() => setRelOpen(false)}
+        titulo={`Conferência de faturamento · ${mesLabel(periodoRef)}`}
+        subtitulo={[clienteFiltro || "todos os clientes", filialAtiva && filialAtiva !== "todas" ? (filialAtiva === "IMP" ? "Imperatriz" : "Belém") : null]
+          .filter(Boolean).join(" · ")}
+        linhas={relLinhas} colunas={relColunas} agrupavelPor={relGrupos}
+        t={t} hexRgb={hexRgb} isMobile={isMobile} />
 
       {/* Modal: revisar item pendente (registro completo antes de decidir) */}
       {revisarModal.open && revisarModal.item && (() => {

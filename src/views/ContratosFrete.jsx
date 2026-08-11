@@ -7,6 +7,7 @@ import {
 } from "../freteContratos.js";
 import { listarTodosPeriodo } from "../freteConferencia.js";
 import KpiCard from "../components/KpiCard.jsx";
+import ModalRelatorio from "../components/ModalRelatorio.jsx";
 
 // Contratos de Frete — o outro lado da Conferência de Faturamento (migration 055).
 // O relatório de CTes diz o que se COBRA; este diz quem LEVOU e quanto custou de encargo.
@@ -43,6 +44,7 @@ export default function ContratosFrete({ ctx, conn }) {
   const [preview, setPreview] = React.useState(null); // { linhas, novas, atualizadas, periodosEncontrados, empresas }
   const [filtroProblema, setFiltroProblema] = React.useState(""); // "" = todos
   const [busca, setBusca] = React.useState("");
+  const [relOpen, setRelOpen] = React.useState(false);
   const fileRef = React.useRef(null);
 
   const carregar = React.useCallback(async () => {
@@ -142,8 +144,38 @@ export default function ContratosFrete({ ctx, conn }) {
         style={{ fontSize: 12.5, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer", border: "none", background: "var(--accent)", color: t.onPrimary || "#181a20", fontFamily: "inherit" }}>
         {importing ? "Lendo..." : "↑ Importar contratos"}
       </button>
+      <button onClick={() => setRelOpen(true)} disabled={!contratos.length}
+        style={{ fontSize: 12.5, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: contratos.length ? "pointer" : "not-allowed", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit", opacity: contratos.length ? 1 : .5 }}>
+        Relatório
+      </button>
     </>
   );
+
+  // Relatório da tela: leva o recorte que está na frente do usuário (contratos nossos do mês,
+  // já sem os trechos ignorados), e o modal cuida de colunas/ordem/agrupamento/exportação.
+  const relLinhas = React.useMemo(() => cruzados.filter((c) => !c.ignorado), [cruzados]);
+  const relColunas = React.useMemo(() => [
+    { id: "contrato", label: "Contrato", tipo: "texto", get: (c) => c.contrato },
+    { id: "cte", label: "CTe", tipo: "texto", get: (c) => (c.ctes_do_contrato?.length > 1 ? c.ctes_do_contrato.join(" + ") : c.cte_ctrc || "") },
+    { id: "data", label: "Emissão", tipo: "data", get: (c) => c.data_emissao },
+    { id: "agregado", label: "Agregado", tipo: "texto", get: (c) => c.nome_agregado },
+    { id: "tipo", label: "Tipo", tipo: "texto", get: (c) => (c.eh_pf ? "PF" : "PJ") },
+    { id: "veiculo", label: "Veículo", tipo: "texto", get: (c) => c.veiculo },
+    { id: "trecho", label: "Trecho", tipo: "texto", get: (c) => c.trecho },
+    { id: "cliente", label: "Cliente", tipo: "texto", get: (c) => c.cliente || "" },
+    { id: "valor", label: "Contrato R$", tipo: "moeda", total: true, get: (c) => c.valor },
+    { id: "inss", label: "INSS", tipo: "moeda", total: true, get: (c) => c.valor_inss },
+    { id: "sest", label: "SEST/SENAT", tipo: "moeda", total: true, get: (c) => c.sest_senat },
+    { id: "ce", label: "Custos externos", tipo: "moeda", total: true, get: (c) => c.custos_externos },
+    { id: "falta", label: "Falta lançar", tipo: "moeda", total: true, get: (c) => c.falta_encargo },
+    { id: "pendencias", label: "Pendências", tipo: "texto", get: (c) => c.problemas.map((p) => PROBLEMA[p]).join("; ") },
+  ], []);
+  const relGrupos = React.useMemo(() => [
+    { id: "cliente", label: "cliente", get: (c) => c.cliente || "(sem CTe casado)" },
+    { id: "tipo", label: "PF/PJ", get: (c) => (c.eh_pf ? "Pessoa física" : "PJ") },
+    { id: "trecho", label: "trecho", get: (c) => c.trecho || "—" },
+    { id: "situacao", label: "situação", get: (c) => (c.problemas.length ? PROBLEMA[c.problemas[0]] : "Sem pendência") },
+  ], []);
 
   const card = { background: t.card, borderRadius: 12, border: `1px solid ${t.borda}`, padding: isMobile ? 14 : 18 };
 
@@ -309,6 +341,12 @@ export default function ContratosFrete({ ctx, conn }) {
           ))}
         </div>
       )}
+
+      <ModalRelatorio aberto={relOpen} onFechar={() => setRelOpen(false)}
+        titulo={`Contratos de frete · ${mesLabel(periodoRef)}`}
+        subtitulo={`${resumo.contratos} contrato(s) · encargo faltando ${money(resumo.encargoFaltando)}`}
+        linhas={relLinhas} colunas={relColunas} agrupavelPor={relGrupos}
+        t={t} hexRgb={hexRgb} isMobile={isMobile} />
 
       {/* Preview da importação */}
       {preview && (
