@@ -2412,7 +2412,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", marginTop: 16 }}>
+              {/* Rodapé: linha própria, separada do conteúdo, com tudo encostado à direita e
+                  alinhado no centro vertical (o traço divisor precisa disso). */}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center",
+                marginTop: 18, paddingTop: 14, borderTop: `1px solid ${hexRgb(t.borda, .45)}` }}>
                 {editando ? (
                   <>
                     <button onClick={() => { setEditando(false); setEditForm(null); }} disabled={salvandoEdit}
@@ -2426,10 +2429,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   </>
                 ) : (
                   <>
-                    {/* Dois grupos: à esquerda o que mexe no REGISTRO (fechar/editar/excluir/
-                        estornar), à direita a DECISÃO da conferência. Antes vinha tudo numa
-                        fileira só e "Excluir CTe" ficava colado em "Marcar revisado". */}
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginRight: "auto" }}>
+                    {/* Barra única encostada à direita, do menos pro mais importante: primeiro
+                        o que mexe no REGISTRO (fechar/editar/excluir/estornar), um traço, e
+                        então a DECISÃO da conferência, com o primário por último. Ancorar um
+                        grupo à esquerda e outro à direita deixava as duas linhas em cantos
+                        opostos quando o rodapé quebrava. */}
                       <button onClick={fechar}
                         style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
                         Fechar
@@ -2452,8 +2456,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
                           ↩ Estornar decisão
                         </button>
                       )}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {/* Traço separando manutenção do registro × decisão da conferência. Some
+                          quando não sobra nenhuma decisão à direita (modo "revisando"). */}
+                      {!revisando && (
+                        <span aria-hidden style={{ width: 1, alignSelf: "stretch", minHeight: 22, background: hexRgb(t.borda, .7), margin: "0 2px" }} />
+                      )}
                       {podeVincularContrato && !sinalizando && !revisando && (
                         <button onClick={() => setVincContrato((v) => ({ ...v, aberto: !v.aberto }))}
                           title="Apontar o contrato que o TMS não amarrou neste CTe"
@@ -2485,7 +2492,6 @@ export default function ConferenciaFrete({ ctx, conn }) {
                           Marcar revisado
                         </button>
                       )}
-                    </div>
                   </>
                 )}
               </div>
