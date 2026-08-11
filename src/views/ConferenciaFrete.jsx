@@ -537,6 +537,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
     } catch (e) { showToast?.("Erro ao estornar: " + e.message, "erro"); }
   };
 
+  // Filial vinda do topbar (ctx.filialAtiva). Aqui o recorte NÃO é a origem da viagem: é a
+  // embarcadora, porque a Conferência trabalha por CTe de cliente. O mapa vem do cadastro
+  // (embarcadoras.filial, migration 057) — inferir pelo nome quebraria com cliente novo.
+  // O seletor de embarcadora continua: filial escolhe a filial, o seletor escolhe UM cliente.
+  // Vem ANTES de quem usa (clientesPresentes, linhasFiltradas): `const` não sobe.
+  const clientesDaFilial = React.useMemo(() => {
+    if (!filialAtiva || filialAtiva === "todas") return null;
+    const nomes = Object.values(clientesMap || {}).filter((e) => e?.filial === filialAtiva).map((e) => e.nome);
+    return nomes.length ? new Set(nomes) : null;
+  }, [clientesMap, filialAtiva]);
+
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
   const clientesPresentes = React.useMemo(() => {
     const arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
@@ -556,16 +567,6 @@ export default function ConferenciaFrete({ ctx, conn }) {
     return [...seen.entries()].map(([nome, base_id]) => ({ nome, base_id })).sort((a, b) => a.nome.localeCompare(b.nome));
   }, [clientesMap]);
   const basesOpc = React.useMemo(() => Object.values(BASES).map((b) => ({ v: b.id, l: b.label })), []);
-
-  // Filial vinda do topbar (ctx.filialAtiva). Aqui o recorte NÃO é a origem da viagem: é a
-  // embarcadora, porque a Conferência trabalha por CTe de cliente. O mapa vem do cadastro
-  // (embarcadoras.filial, migration 057) — inferir pelo nome quebraria com cliente novo.
-  // O seletor de embarcadora continua: filial escolhe a filial, o seletor escolhe UM cliente.
-  const clientesDaFilial = React.useMemo(() => {
-    if (!filialAtiva || filialAtiva === "todas") return null;
-    const nomes = Object.values(clientesMap || {}).filter((e) => e?.filial === filialAtiva).map((e) => e.nome);
-    return nomes.length ? new Set(nomes) : null;
-  }, [clientesMap, filialAtiva]);
 
   const linhasFiltradas = React.useMemo(() => {
     let arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
