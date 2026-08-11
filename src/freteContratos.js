@@ -282,6 +282,24 @@ export function trechosPendentes(cruzados) {
     .sort((a, b) => b.contratos - a.contratos);
 }
 
+// Candidatos a contrato de UM CTe que veio sem amarração (migration 058). Ordena pelos
+// sinais que costumam bater — o TMS aponta o CTe no próprio contrato, e quando nem isso vem,
+// placa/valor/data resolvem. É só sugestão: quem decide é quem revisa.
+export function candidatosContratoDoCte(cte, contratos) {
+  if (!cte) return [];
+  const placa = txt(cte.placa).toUpperCase();
+  const emp = txt(cte.empresa_cod).toUpperCase();
+  const total = r2(num(cte.total_frete));
+  const afinidade = (c) => (txt(c.cte_ctrc) === txt(cte.ctrc) ? 8 : 0)
+    + (placa && txt(c.veiculo).toUpperCase() === placa ? 4 : 0)
+    + (r2(num(c.valor_total_frete)) === total && total > 0 ? 2 : 0)
+    + (c.data_emissao && c.data_emissao === cte.data_emissao ? 1 : 0);
+  return (contratos || [])
+    .filter((c) => txt(c.empresa_emissao).toUpperCase() === emp && afinidade(c) > 0)
+    .map((c) => ({ ...c, _afinidade: afinidade(c) }))
+    .sort((a, b) => b._afinidade - a._afinidade || String(a.contrato).localeCompare(String(b.contrato)));
+}
+
 // ── Regras de trecho (migration 056) ───────────────────────────────────────────
 export async function listarRegrasTrecho(conn) {
   if (!_sessionToken) return [];

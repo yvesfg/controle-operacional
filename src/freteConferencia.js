@@ -154,9 +154,18 @@ export const ehFreteSemContrato = (l) =>
 // Caso real: contrato 26833 (Rodorrica), CTes 34926 + 34927 — o app mostrava saldo de
 // R$ 3.109,87 e margem 52,5% em cada, quando o grupo deixa R$ 300,00 (5,1%).
 // Em 2026 são 45 grupos assim, 101 CTes, 54 deles com contrato zerado.
-const chaveGrupoContrato = (l) => {
+// O número do contrato do CTe: o do TMS quando veio preenchido, senão o apontado à mão
+// (contrato_ref, migration 058) — o TMS às vezes emite o CTe sem amarrar no contrato.
+export const numeroContratoDoCte = (l) => {
   const n = String(l?.numero_contrato ?? "").trim();
-  if (!n || n === "0") return null;
+  if (n && n !== "0") return n;
+  const ref = String(l?.contrato_ref ?? "").trim();
+  return ref || "";
+};
+
+const chaveGrupoContrato = (l) => {
+  const n = numeroContratoDoCte(l);
+  if (!n) return null;
   return `${String(l?.empresa_cod ?? "").trim().toUpperCase()}||${n}`;
 };
 
@@ -188,7 +197,7 @@ export function resumoGrupoContrato(linha, linhas) {
   const contrato = grupo.reduce((s, l) => s + num(l.valor_contrato_frete), 0);
   const saldo = r2(totalFrete - contrato);
   return {
-    numero_contrato: String(linha.numero_contrato).trim(),
+    numero_contrato: numeroContratoDoCte(linha),
     ctes: grupo.map((l) => l.ctrc),
     qtd: grupo.length,
     totalFrete: r2(totalFrete),
@@ -577,6 +586,20 @@ export async function definirCompetencia(conn, id, ref) {
 // marcada, senão o mês de emissão (comportamento de antes da migration 053). Usado nos dois
 // lados do card frete × diária — senão a comparação erra ora no custo, ora na receita.
 export const mesCompetencia = (l) => l?.competencia_ref || l?.periodo_ref;
+
+// Aponta à mão o contrato deste CTe quando o TMS emitiu sem amarrar (migration 058).
+// contrato = número do contrato, ou null pra desfazer. Não sobrescreve o numero_contrato do
+// TMS: grava em contrato_ref, e quem lê usa numeroContratoDoCte().
+export async function vincularContratoCte(conn, id, contrato, por) {
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/vincular_contrato_frete",
+      { p_token: _sessionToken, p_id: id, p_contrato: contrato || null, p_por: por || null }));
+  }
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${encodeURIComponent(id)}`,
+    { contrato_ref: contrato || null, contrato_vinculo_em: contrato ? new Date().toISOString() : null,
+      contrato_vinculo_por: contrato ? (por || null) : null, atualizado_em: new Date().toISOString() });
+  return Array.isArray(res) ? res[0] : res;
+}
 
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).

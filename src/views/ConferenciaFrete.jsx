@@ -7,9 +7,10 @@ import {
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
   ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesCompetencia,
-  resumoGrupoContrato, contratoEstaNoIrmao,
+  resumoGrupoContrato, contratoEstaNoIrmao, vincularContratoCte, numeroContratoDoCte,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
+import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import { listarDespesas, classeDoCredito } from "../despesas.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -119,6 +120,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [buscaCte, setBuscaCte] = React.useState("");
   const [buscaAmpla, setBuscaAmpla] = React.useState("nao"); // 'nao' | 'buscando' | 'feita'
   const [relOpen, setRelOpen] = React.useState(false); // relatório da tela (ModalRelatorio)
+  // Contratos do mês (tabela frete_contratos) — usados pra apontar à mão o contrato de um CTe
+  // que o TMS emitiu sem amarração (migration 058).
+  const [contratosMes, setContratosMes] = React.useState([]);
+  const [vincContrato, setVincContrato] = React.useState({ aberto: false, num: "" });
+  const [salvandoContrato, setSalvandoContrato] = React.useState(false);
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
   const [sinalObs, setSinalObs] = React.useState("");
@@ -196,6 +202,23 @@ export default function ConferenciaFrete({ ctx, conn }) {
       await carregar();
     } catch (e) { showToast?.("Erro ao definir competência: " + e.message, "erro"); }
     finally { setSalvandoVinc(false); }
+  };
+
+  // Aponta à mão o contrato deste CTe (migration 058) — o TMS às vezes emite o CTe sem
+  // amarrar no contrato, e aí ele aparece com contrato zerado e margem 100% sem ser verdade.
+  // contrato = null desfaz.
+  const onVincularContrato = async (p, contrato) => {
+    setSalvandoContrato(true);
+    try {
+      await vincularContratoCte(conn, p.id, contrato, usuarioLogado);
+      showToast?.(contrato
+        ? `CTRC ${p.ctrc} vinculado ao contrato ${contrato}.`
+        : `Vínculo de contrato desfeito no CTRC ${p.ctrc}.`, "ok");
+      setVincContrato({ aberto: false, num: "" });
+      setRevisarModal({ open: false, item: null });
+      await carregar();
+    } catch (e) { showToast?.("Erro ao vincular contrato: " + e.message, "erro"); }
+    finally { setSalvandoContrato(false); }
   };
 
   // Abre o modo edição admin: inicializa o formulário a partir do CTe.
@@ -310,13 +333,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const mesAnt1 = shiftMes(periodoRef, -1);
     const mesAnt2 = shiftMes(periodoRef, -2);
     try {
-      const [linhas, pend, sinal, lAnt1, lAnt2] = await Promise.all([
+      const [linhas, pend, sinal, lAnt1, lAnt2, cts] = await Promise.all([
         listarTodosPeriodo(conn, periodoRef),
         listarPendentesRevisao(conn),
         listarSinalizados(conn),
         listarTodosPeriodo(conn, mesAnt1),
         listarTodosPeriodo(conn, mesAnt2),
+        // Contratos dos 3 meses: o contrato de um CTe do fim do mês costuma estar no arquivo
+        // do mês seguinte, e vice-versa.
+        listarContratosPorPeriodos(conn, [periodoRef, mesAnt1, mesAnt2]).catch(() => []),
       ]);
+      setContratosMes(cts || []);
       setLinhasPeriodo(linhas);
       setPendentes(pend);
       setSinalizados(sinal);
@@ -1778,7 +1805,16 @@ export default function ConferenciaFrete({ ctx, conn }) {
         // Um contrato pode cobrir mais de um CTe (duas entregas na mesma viagem). Nesse caso o
         // TMS lança o contrato inteiro num deles, e é o GRUPO que tem a margem certa.
         const grupoContrato = resumoGrupoContrato(p, universoLinhas);
-        const semContrato = ehFreteSemContrato(p) && !contratoEstaNoIrmao(p, universoLinhas);
+        const semContrato = ehFreteSemContrato(p) && !contratoEstaNoIrmao(p, universoLinhas) && !p.contrato_ref;
+        // Vínculo de contrato: só faz sentido em frete (descarga/diária não têm contrato de
+        // terceiro). Candidatos vêm do relatório de contratos já importado.
+        const podeVincularContrato = p.categoria === "frete";
+        const candContratos = podeVincularContrato ? candidatosContratoDoCte(p, contratosMes) : [];
+        const contratoDoCte = numeroContratoDoCte(p);
+        const contratoImportado = contratoDoCte
+          ? contratosMes.find((c) => String(c.contrato) === contratoDoCte
+              && String(c.empresa_emissao).toUpperCase() === String(p.empresa_cod || "").toUpperCase())
+          : null;
         const ehDiariaEmit = p.categoria === "diaria_emitida";
         const ehDiariaPaga = p.categoria === "diaria";
         const temCompetencia = ehDiariaEmit || ehDiariaPaga;
@@ -2185,6 +2221,82 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </div>
               )}
 
+              {/* Contrato do CTe (migration 058). O TMS às vezes emite o CTe sem amarrar no
+                  contrato: aqui dá pra apontar qual é, escolhendo entre os contratos já
+                  importados (o próprio relatório de contratos costuma apontar o CTe de volta,
+                  e quando nem isso vem, placa/valor/data resolvem). */}
+              {podeVincularContrato && (p.contrato_ref || contratoImportado || vincContrato.aberto) && !editando && !revisando && !sinalizando && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
+                    Contrato do CTe
+                  </div>
+
+                  {contratoImportado ? (
+                    <div style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.verde, .3)}`, background: hexRgb(t.verde, .07), padding: "10px 12px" }}>
+                      <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.6 }}>
+                        Contrato <b>{contratoImportado.contrato}</b> · {contratoImportado.nome_agregado || "sem agregado"}
+                        {contratoImportado.eh_pf ? " (pessoa física)" : " (PJ)"} · valor <b>{money(contratoImportado.valor)}</b>
+                        {p.contrato_ref && <> · <span style={{ color: t.verde }}>vinculado à mão</span></>}
+                      </div>
+                      <div style={{ fontSize: 11, color: t.txt2, marginTop: 4 }}>
+                        Frete do CTe {money(p.total_frete)} − contrato {money(contratoImportado.valor)} ={" "}
+                        <b style={{ color: t.ouro }}>{money((Number(p.total_frete) || 0) - (Number(contratoImportado.valor) || 0))}</b>
+                        {Number(p.frete_peso) > 0 && <> · margem real {((((Number(p.total_frete) || 0) - (Number(contratoImportado.valor) || 0)) / Number(p.frete_peso)) * 100).toFixed(1)}%</>}
+                      </div>
+                      {p.contrato_ref && (
+                        <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 4 }}>
+                          {p.contrato_vinculo_por || "sem registro"}
+                          {p.contrato_vinculo_em ? ` · ${new Date(p.contrato_vinculo_em).toLocaleDateString("pt-BR")}` : ""}
+                        </div>
+                      )}
+                      {p.contrato_ref && (
+                        <button onClick={() => onVincularContrato(p, null)} disabled={salvandoContrato}
+                          style={{ marginTop: 9, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                          ↩ Desfazer vínculo
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.5, marginBottom: 8 }}>
+                        {candContratos.length
+                          ? "Contratos do relatório que combinam com este CTe (mesmo CTRC apontado, placa, valor ou data):"
+                          : "Nenhum contrato importado combina com este CTe. Digite o número se souber qual é."}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+                        {candContratos.slice(0, 5).map((c) => (
+                          <button key={c.id || c.contrato} onClick={() => onVincularContrato(p, String(c.contrato))} disabled={salvandoContrato}
+                            style={{ textAlign: "left", padding: "8px 11px", borderRadius: 9, cursor: salvandoContrato ? "wait" : "pointer", fontFamily: "inherit",
+                              border: `1px solid ${hexRgb(t.verde, .35)}`, background: hexRgb(t.verde, .06), color: t.txt }}>
+                            <div style={{ fontSize: 12, fontWeight: 700 }}>
+                              Contrato {c.contrato} · {money(c.valor)}
+                              {String(c.cte_ctrc) === String(p.ctrc) && <span style={{ color: t.verde, fontWeight: 600, fontSize: 10.5 }}> · aponta este CTe</span>}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 2 }}>
+                              {c.nome_agregado || "sem agregado"} · {c.veiculo || "sem placa"} · {c.trecho || "—"}
+                              {c.data_emissao ? ` · ${c.data_emissao.split("-").reverse().join("/")}` : ""}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                        <input value={vincContrato.num} onChange={(e) => setVincContrato((v) => ({ ...v, num: e.target.value }))}
+                          placeholder="nº do contrato"
+                          onKeyDown={(e) => { if (e.key === "Enter" && vincContrato.num.trim()) onVincularContrato(p, vincContrato.num.trim()); }}
+                          style={{ width: 150, padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "var(--font-mono)", outline: "none" }} />
+                        <button onClick={() => onVincularContrato(p, vincContrato.num.trim())} disabled={salvandoContrato || !vincContrato.num.trim()}
+                          style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, border: "none", background: "var(--accent)", color: "#fff", fontFamily: "inherit",
+                            cursor: vincContrato.num.trim() ? "pointer" : "not-allowed", opacity: salvandoContrato || !vincContrato.num.trim() ? .45 : 1 }}>
+                          {salvandoContrato ? "Salvando..." : "Vincular"}
+                        </button>
+                        <button onClick={() => setVincContrato({ aberto: false, num: "" })}
+                          style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>✕</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Frete com Valor Contrato Frete = 0 (migration 052): o Saldo vira o CTe inteiro
                   e infla a margem do mês. Normalmente é contrato ainda não lançado no TMS —
                   quem revisa confirma. Não aparece junto do bloco da diária emitida (acima),
@@ -2264,52 +2376,66 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   </>
                 ) : (
                   <>
-                    <button onClick={fechar}
-                      style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
-                      Fechar
-                    </button>
-                    {isAdmin && !sinalizando && !revisando && (
-                      <button onClick={() => abrirEdicao(p)} title="Corrigir este CTe (só admin)"
-                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.azul}`, background: "transparent", color: t.azul }}>
-                        ✎ Editar
+                    {/* Dois grupos: à esquerda o que mexe no REGISTRO (fechar/editar/excluir/
+                        estornar), à direita a DECISÃO da conferência. Antes vinha tudo numa
+                        fileira só e "Excluir CTe" ficava colado em "Marcar revisado". */}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginRight: "auto" }}>
+                      <button onClick={fechar}
+                        style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+                        Fechar
                       </button>
-                    )}
-                    {isAdmin && !sinalizando && !revisando && (
-                      <button onClick={() => onExcluir(p)} title="Apaga só ESTA linha da conferência (ex.: cópia criada por reimportação)"
-                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
-                        🗑 Excluir CTe
-                      </button>
-                    )}
-                    {p.decisao_manual && !sinalizando && !revisando && (
-                      <button onClick={() => { fechar(); onEstornar(p); }} title="Remover a decisão e devolver à fila (se ainda tiver flag)"
-                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
-                        ↩ Estornar decisão
-                      </button>
-                    )}
-                    {p.flag_ambigua && (
-                      <>
-                        <button onClick={() => decidirEFechar("confirmar_descarga", "revisado manualmente")}
-                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                          É Descarga
+                      {isAdmin && !sinalizando && !revisando && (
+                        <button onClick={() => abrirEdicao(p)} title="Corrigir este CTe (só admin)"
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.azul}`, background: "transparent", color: t.azul }}>
+                          ✎ Editar
                         </button>
-                        <button onClick={() => decidirEFechar("confirmar_local", "revisado manualmente")}
-                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
-                          É Local
+                      )}
+                      {isAdmin && !sinalizando && !revisando && (
+                        <button onClick={() => onExcluir(p)} title="Apaga só ESTA linha da conferência (ex.: cópia criada por reimportação)"
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
+                          🗑 Excluir CTe
                         </button>
-                      </>
-                    )}
-                    {!sinalizando && !revisando && (
-                      <button onClick={() => setSinalizando(true)}
-                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.ouro}`, background: "transparent", color: t.ouro }}>
-                        Sinalizar para correção
-                      </button>
-                    )}
-                    {!revisando && (
-                      <button onClick={() => { setSinalizando(false); setRevisando(true); }}
-                        style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
-                        Marcar revisado
-                      </button>
-                    )}
+                      )}
+                      {p.decisao_manual && !sinalizando && !revisando && (
+                        <button onClick={() => { fechar(); onEstornar(p); }} title="Remover a decisão e devolver à fila (se ainda tiver flag)"
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
+                          ↩ Estornar decisão
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {podeVincularContrato && !sinalizando && !revisando && (
+                        <button onClick={() => setVincContrato((v) => ({ ...v, aberto: !v.aberto }))}
+                          title="Apontar o contrato que o TMS não amarrou neste CTe"
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
+                          🔗 Vincular contrato
+                        </button>
+                      )}
+                      {p.flag_ambigua && (
+                        <>
+                          <button onClick={() => decidirEFechar("confirmar_descarga", "revisado manualmente")}
+                            style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                            É Descarga
+                          </button>
+                          <button onClick={() => decidirEFechar("confirmar_local", "revisado manualmente")}
+                            style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt }}>
+                            É Local
+                          </button>
+                        </>
+                      )}
+                      {!sinalizando && !revisando && (
+                        <button onClick={() => setSinalizando(true)}
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.ouro}`, background: "transparent", color: t.ouro }}>
+                          Sinalizar para correção
+                        </button>
+                      )}
+                      {!revisando && (
+                        <button onClick={() => { setSinalizando(false); setRevisando(true); }}
+                          style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
+                          Marcar revisado
+                        </button>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
