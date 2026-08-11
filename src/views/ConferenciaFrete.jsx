@@ -7,6 +7,7 @@ import {
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
   ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesCompetencia,
+  resumoGrupoContrato, contratoEstaNoIrmao,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
@@ -1709,7 +1710,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
         const decidirEFechar = async (decisao, obs) => { await onDecidir(p.id, decisao, obs); fechar(); };
         const candidatoFrota = ehCandidatoFrotaRodorrica(p);
         const candidatoDiaria = ehCandidatoDiariaEmitida(p);
-        const semContrato = ehFreteSemContrato(p);
+        // Um contrato pode cobrir mais de um CTe (duas entregas na mesma viagem). Nesse caso o
+        // TMS lança o contrato inteiro num deles, e é o GRUPO que tem a margem certa.
+        const grupoContrato = resumoGrupoContrato(p, universoLinhas);
+        const semContrato = ehFreteSemContrato(p) && !contratoEstaNoIrmao(p, universoLinhas);
         const ehDiariaEmit = p.categoria === "diaria_emitida";
         const ehDiariaPaga = p.categoria === "diaria";
         const temCompetencia = ehDiariaEmit || ehDiariaPaga;
@@ -1756,6 +1760,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {p.flag_baixa && !p.flag_negativa && badge(ICO_ALERTA, "MARGEM < 10%", t.warn)}
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
                 {p.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
+                {grupoContrato && badge(ICO_COMPLEMENTAR, `CONTRATO ${grupoContrato.numero_contrato} · ${grupoContrato.qtd} CTES`, t.azul)}
                 {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
                 {candidatoFrota && badge(ICO_FROTA, "POSSÍVEL FROTA RODORRICA", t.azul)}
               </div>
@@ -1825,6 +1830,29 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   <div style={{ fontSize: 10.5, color: t.txt2 }}>
                     {p.revisado_por || "sem registro"}{p.revisado_em ? ` · ${new Date(p.revisado_em).toLocaleDateString("pt-BR")}` : ""}
                     {p.revisado_obs ? ` · “${p.revisado_obs}”` : ""}
+                  </div>
+                </div>
+              )}
+
+              {/* Contrato que cobre mais de um CTe: mostra a conta do GRUPO, que é a real.
+                  Sem isso o CTe que ficou com contrato zerado parece margem 100% e o que
+                  recebeu o contrato inteiro parece prejuízo. */}
+              {grupoContrato && !editando && !revisando && !sinalizando && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
+                    Contrato {grupoContrato.numero_contrato} · {grupoContrato.qtd} CTes
+                  </div>
+                  <div style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.azul, .3)}`, background: hexRgb(t.azul, .07), padding: "10px 12px" }}>
+                    <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.6 }}>
+                      Este contrato cobre os CTes <b>{grupoContrato.ctes.join(" + ")}</b> (mesma viagem, entregas
+                      diferentes). O TMS lança o contrato inteiro em um deles, então a margem só fecha somando os dois:
+                    </div>
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8, fontSize: 11.5 }}>
+                      <span style={{ color: t.txt2 }}>Frete <b style={{ color: t.txt }}>{money(grupoContrato.totalFrete)}</b></span>
+                      <span style={{ color: t.txt2 }}>Contrato <b style={{ color: t.txt }}>{money(grupoContrato.contrato)}</b></span>
+                      <span style={{ color: t.txt2 }}>Saldo <b style={{ color: t.ouro }}>{money(grupoContrato.saldo)}</b></span>
+                      <span style={{ color: t.txt2 }}>Margem <b style={{ color: grupoContrato.margem < 10 ? t.warn : t.verde }}>{grupoContrato.margem.toFixed(1)}%</b></span>
+                    </div>
                   </div>
                 </div>
               )}

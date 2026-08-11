@@ -260,6 +260,14 @@ export default function ContratosFrete({ ctx, conn }) {
                   <span>contrato {money(c.valor)}</span>
                   {c.cliente && <span>cliente: {c.cliente}</span>}
                 </div>
+                {/* Contrato que virou mais de um CTe: a margem real é a do grupo, não a de
+                    cada CTe — o TMS lança o contrato inteiro num deles e zera o outro. */}
+                {c.ctes_do_contrato?.length > 1 && (
+                  <div style={{ marginTop: 5, fontSize: 10.5, color: t.azul, lineHeight: 1.5 }}>
+                    Cobre {c.ctes_do_contrato.length} CTes ({c.ctes_do_contrato.join(" + ")}) —
+                    frete {money(c.frete_dos_ctes)} · contrato {money(c.valor)} · saldo {money(c.frete_dos_ctes - c.valor)}
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6 }}>
                   {ORDEM_PROBLEMA.filter((k) => c.problemas.includes(k)).map((k) => (
                     <span key={k} style={{ fontSize: 9.5, fontWeight: 700, padding: "3px 8px", borderRadius: 20, whiteSpace: "nowrap",

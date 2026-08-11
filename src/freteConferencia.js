@@ -146,6 +146,64 @@ export function ehCandidatoDiariaEmitida(l) {
 export const ehFreteSemContrato = (l) =>
   l?.categoria === "frete" && num(l?.valor_contrato_frete) === 0 && num(l?.total_frete) > 0;
 
+// ── Grupo de contrato: 1 contrato, N CTes ──────────────────────────────────
+// Uma viagem com duas entregas (duas NFs, cidades diferentes) sai em DOIS CTes com o mesmo
+// Nº Contrato Frete e o mesmo manifesto — e o TMS lança o contrato inteiro em UM deles,
+// deixando o outro com contrato zerado. Olhando CTe a CTe, o segundo parece "sem contrato"
+// e a margem dos dois sai errada; a conta certa é do grupo: (Σ total do frete − contrato).
+// Caso real: contrato 26833 (Rodorrica), CTes 34926 + 34927 — o app mostrava saldo de
+// R$ 3.109,87 e margem 52,5% em cada, quando o grupo deixa R$ 300,00 (5,1%).
+// Em 2026 são 45 grupos assim, 101 CTes, 54 deles com contrato zerado.
+const chaveGrupoContrato = (l) => {
+  const n = String(l?.numero_contrato ?? "").trim();
+  if (!n || n === "0") return null;
+  return `${String(l?.empresa_cod ?? "").trim().toUpperCase()}||${n}`;
+};
+
+// Índice { chave: [linhas] } dos CTes que dividem o mesmo contrato (só grupos com 2+).
+export function gruposPorContrato(linhas) {
+  const out = {};
+  (linhas || []).filter(ehAtivo).forEach((l) => {
+    const k = chaveGrupoContrato(l);
+    if (k) (out[k] = out[k] || []).push(l);
+  });
+  Object.keys(out).forEach((k) => { if (out[k].length < 2) delete out[k]; });
+  return out;
+}
+
+// Os outros CTes do mesmo contrato (vazio quando o contrato é de um CTe só).
+export function irmaosDoContrato(linha, linhas) {
+  const k = chaveGrupoContrato(linha);
+  if (!k) return [];
+  return (linhas || []).filter((l) => l.id !== linha.id && ehAtivo(l) && chaveGrupoContrato(l) === k);
+}
+
+// Números do grupo — é isto que deve ser lido quando o contrato cobre mais de um CTe.
+export function resumoGrupoContrato(linha, linhas) {
+  const irmaos = irmaosDoContrato(linha, linhas);
+  if (!irmaos.length) return null;
+  const grupo = [linha, ...irmaos];
+  const totalFrete = grupo.reduce((s, l) => s + num(l.total_frete), 0);
+  const fretePeso = grupo.reduce((s, l) => s + num(l.frete_peso), 0);
+  const contrato = grupo.reduce((s, l) => s + num(l.valor_contrato_frete), 0);
+  const saldo = r2(totalFrete - contrato);
+  return {
+    numero_contrato: String(linha.numero_contrato).trim(),
+    ctes: grupo.map((l) => l.ctrc),
+    qtd: grupo.length,
+    totalFrete: r2(totalFrete),
+    fretePeso: r2(fretePeso),
+    contrato: r2(contrato),
+    saldo,
+    margem: fretePeso > 0 ? r2((saldo / fretePeso) * 100) : 0,
+  };
+}
+
+// Contrato zerado NESTA linha, mas lançado num irmão do mesmo contrato: não é lançamento
+// faltando, é o rateio normal do TMS — não pode ir pra fila como "SEM CONTRATO".
+export const contratoEstaNoIrmao = (linha, linhas) =>
+  irmaosDoContrato(linha, linhas).some((l) => num(l.valor_contrato_frete) > 0);
+
 function excelDateToISO(v) {
   if (v instanceof Date && !isNaN(v)) {
     return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, "0")}-${String(v.getUTCDate()).padStart(2, "0")}`;
@@ -251,7 +309,9 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
       // Frete de margem 100% que a régua não conseguiu decidir: pode ser diária
       // emitida ou frete com contrato esquecido — quem revisa escolhe.
       || ehCandidatoDiariaEmitida(l);
-    l.flag_sem_contrato = ehFreteSemContrato(l);
+    // Contrato lançado num irmão do mesmo Nº Contrato Frete não é falta de lançamento
+    // (ver gruposPorContrato) — a conta certa desses CTes é a do grupo.
+    l.flag_sem_contrato = ehFreteSemContrato(l) && !contratoEstaNoIrmao(l, linhas);
     const grupo = porChave[chaveDuplicidade(l)];
     l.flag_duplicidade = grupo.length > 1;
     l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;

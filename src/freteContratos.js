@@ -173,19 +173,39 @@ export const mapaRegras = (regras) => {
 export function cruzarContratos(contratos, ctes, regras) {
   const mapa = regras instanceof Map ? regras : mapaRegras(regras);
   const porCte = new Map();
+  // Um contrato pode virar MAIS DE UM CTe (duas entregas na mesma viagem: duas NFs, cidades
+  // diferentes, mesmo manifesto). O relatório de contratos aponta só um deles em "CTe Ctrc",
+  // e o TMS lança o contrato inteiro num CTe e zero no outro — por isso o casamento também
+  // vai pelo Nº Contrato Frete do CTe, que reúne o grupo. Caso real: contrato 26833 = CTes
+  // 34926 + 34927.
+  const porContrato = new Map();
   (ctes || []).forEach((c) => {
-    const k = `${txt(c.ctrc)}||${txt(c.empresa_cod).toUpperCase()}`;
+    const emp = txt(c.empresa_cod).toUpperCase();
+    const k = `${txt(c.ctrc)}||${emp}`;
     if (!porCte.has(k)) porCte.set(k, c);
+    const nc = txt(c.numero_contrato);
+    if (nc && nc !== "0") {
+      const kc = `${emp}||${nc}`;
+      if (!porContrato.has(kc)) porContrato.set(kc, []);
+      porContrato.get(kc).push(c);
+    }
   });
 
   return (contratos || []).map((ct) => {
-    const cte = ct.cte_ctrc ? porCte.get(`${txt(ct.cte_ctrc)}||${txt(ct.cte_empresa).toUpperCase()}`) : null;
+    const empCte = txt(ct.cte_empresa || ct.empresa_emissao).toUpperCase();
+    const cte = ct.cte_ctrc ? porCte.get(`${txt(ct.cte_ctrc)}||${empCte}`) : null;
+    // Todos os CTes que dividem este contrato (inclui o apontado pelo relatório).
+    const grupo = porContrato.get(`${empCte}||${txt(ct.contrato)}`) || (cte ? [cte] : []);
+    const contratoNosCtes = grupo.reduce((s, c) => s + num(c.valor_contrato_frete), 0);
+    const freteDosCtes = grupo.reduce((s, c) => s + num(c.total_frete), 0);
     const valor = num(ct.valor);
     const problemas = [];
     // Casou com CTe = é nossa operação, ponto: o cliente vem do CTe, seja Suzano ou qualquer
     // embarcadora futura. A regra de trecho só decide o que NÃO casou.
     const regra = mapa.get(chaveRegra(ct.empresa_emissao, ct.trecho));
-    const ignorado = !cte && regra === true;
+    // Casou = achou o CTe apontado OU qualquer CTe do mesmo Nº Contrato Frete.
+    const casou = !!cte || grupo.length > 0;
+    const ignorado = !casou && regra === true;
     if (ignorado) {
       return { ...ct, cte: null, cliente: null, ignorado: true, problemas: [], falta_encargo: 0 };
     }
@@ -200,16 +220,23 @@ export function cruzarContratos(contratos, ctes, regras) {
     if (valor === 0) problemas.push("contrato_zerado");
     // O CTe entrou sem contrato (flag_sem_contrato, migration 052) mas o contrato existe aqui:
     // é o caso em que o cruzamento não só aponta como RESOLVE — o valor que falta está nesta linha.
-    if (cte && valor > 0 && num(cte.valor_contrato_frete) === 0) problemas.push("cte_sem_contrato");
+    // Só é "CTe sem contrato" se NENHUM CTe do grupo recebeu o valor — com dois CTes, o TMS
+    // lança tudo em um e zera o outro, e isso é o rateio normal, não lançamento faltando.
+    if (grupo.length && valor > 0 && contratoNosCtes === 0) problemas.push("cte_sem_contrato");
     // Sem CTe: com regra "é nossa" (ignorar=false) o que falta é importar o relatório de CTes
     // daquele mês; sem regra nenhuma, ninguém decidiu ainda de quem é esse trecho.
-    if (!cte) problemas.push(regra === false ? "sem_cte_na_base" : "trecho_nao_decidido");
+    if (!casou) problemas.push(regra === false ? "sem_cte_na_base" : "trecho_nao_decidido");
 
+    const cteRef = cte || grupo[0] || null;
     return {
       ...ct,
-      cte: cte || null,
-      cliente: cte?.cliente || null,
+      cte: cteRef,
+      cliente: cteRef?.cliente || null,
       ignorado: false,
+      // Grupo de CTes deste contrato — com 2+ é ele que tem a margem real.
+      ctes_do_contrato: grupo.map((c) => c.ctrc),
+      frete_dos_ctes: r2(freteDosCtes),
+      contrato_nos_ctes: r2(contratoNosCtes),
       problemas,
       // Quanto de encargo de PF está faltando lançar nesta linha (0 quando está tudo certo).
       falta_encargo: r2(faltas.pf_sem_custos_externos + faltas.pf_sem_inss + faltas.pf_sem_sest),
