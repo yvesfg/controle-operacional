@@ -213,6 +213,38 @@ export function resumoGrupoContrato(linha, linhas) {
 export const contratoEstaNoIrmao = (linha, linhas) =>
   irmaosDoContrato(linha, linhas).some((l) => num(l.valor_contrato_frete) > 0);
 
+// ── Substituição de CTe de mês FECHADO ──────────────────────────────────────
+// Quando o CTe refaz um documento de mês anterior, aquele faturamento JÁ entrou no
+// fechamento e na base de comissão do mês passado. Se o substituto entrar com contrato
+// zerado, o saldo dele vira "lucro" de novo no mês corrente — o mesmo dinheiro contado duas
+// vezes. A regra (Yves, 11/08/2026): nesse caso o contrato tem que ser lançado no MESMO
+// valor do CTe SEM ICMS, pra o CTe apenas dar baixa e fechar com saldo zero.
+//
+// O valor sem ICMS não precisa de tabela: no relatório, Saldo = Total do Frete − deduções, e
+// as deduções são contrato + ICMS. Então (saldo + contrato) é exatamente o CTe menos o ICMS.
+// Caso real: CTRC 34973, total R$ 568,18, ICMS R$ 68,18 → contrato de baixa R$ 500,00.
+//
+// Mês anterior sem o par na base conta como fechado: CTe antigo cujo mês nem foi importado
+// é, por definição, de um período que já passou.
+export function substituicaoDeMesFechado(linha, linhas) {
+  if (linha?.tipo_doc !== "substituto") return null;
+  const ref = String(linha.ctrc_ref || "").trim();
+  if (!ref) return null;
+  const par = (linhas || []).find((l) => l.id !== linha.id && String(l.ctrc) === ref
+    && String(l.empresa_cod || "").toUpperCase() === String(linha.empresa_cod || "").toUpperCase());
+  const mesPar = par?.periodo_ref || null;
+  if (mesPar && mesPar >= linha.periodo_ref) return null; // substituição dentro do mês: nada a fazer
+  const contratoBaixa = r2(num(linha.saldo) + num(linha.valor_contrato_frete));
+  return {
+    ctrc_ref: ref,
+    mesPar,
+    contratoBaixa,
+    icms: r2(num(linha.total_frete) - contratoBaixa),
+    // Já lançado como baixa = contrato igual ao CTe sem ICMS (saldo zerado).
+    ok: Math.abs(num(linha.valor_contrato_frete) - contratoBaixa) < 0.02 && contratoBaixa > 0,
+  };
+}
+
 function excelDateToISO(v) {
   if (v instanceof Date && !isNaN(v)) {
     return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, "0")}-${String(v.getUTCDate()).padStart(2, "0")}`;

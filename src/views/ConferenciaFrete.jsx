@@ -8,6 +8,7 @@ import {
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
   ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesCompetencia,
   resumoGrupoContrato, contratoEstaNoIrmao, vincularContratoCte, numeroContratoDoCte,
+  substituicaoDeMesFechado,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
@@ -1808,7 +1809,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
         // Um contrato pode cobrir mais de um CTe (duas entregas na mesma viagem). Nesse caso o
         // TMS lança o contrato inteiro num deles, e é o GRUPO que tem a margem certa.
         const grupoContrato = resumoGrupoContrato(p, universoLinhas);
-        const semContrato = ehFreteSemContrato(p) && !contratoEstaNoIrmao(p, universoLinhas) && !p.contrato_ref;
+        // Substituto de CTe de mês fechado tem regra própria (contrato = CTe sem ICMS, pra dar
+        // baixa e não virar lucro de novo) — o aviso genérico de contrato zerado daria o
+        // conselho errado aqui, então sai de cena.
+        const subsMesFechado = substituicaoDeMesFechado(p, universoLinhas);
+        const semContrato = ehFreteSemContrato(p) && !contratoEstaNoIrmao(p, universoLinhas)
+          && !p.contrato_ref && !subsMesFechado;
         // Vínculo de contrato: só faz sentido em frete (descarga/diária não têm contrato de
         // terceiro). Candidatos vêm do relatório de contratos já importado.
         const podeVincularContrato = p.categoria === "frete";
@@ -2220,6 +2226,47 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, fontFamily: "inherit" }}>
                       É frete — contrato faltando
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Substituição de CTe de mês FECHADO: o faturamento do documento antigo já entrou
+                  no fechamento e na comissão daquele mês. Se o substituto entrar com contrato
+                  zerado, o saldo dele vira lucro de novo — o mesmo dinheiro contado duas vezes.
+                  O contrato tem que ser o CTe SEM ICMS, pra dar baixa e fechar em zero. */}
+              {subsMesFechado && !editando && !revisando && !sinalizando && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
+                    Substituição de mês fechado
+                  </div>
+                  <div style={{ borderRadius: 10, border: `1px solid ${hexRgb(subsMesFechado.ok ? t.verde : t.ouro, .35)}`, background: hexRgb(subsMesFechado.ok ? t.verde : t.ouro, .08), padding: "10px 12px" }}>
+                    {subsMesFechado.ok ? (
+                      <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.6 }}>
+                        Contrato de baixa lançado certo: <b>{money(subsMesFechado.contratoBaixa)}</b> (o CTe sem ICMS),
+                        saldo zerado. Este CTe substitui o CTRC <b>{subsMesFechado.ctrc_ref}</b>
+                        {subsMesFechado.mesPar ? ` de ${mesLabel(subsMesFechado.mesPar)}` : " de mês anterior"} e
+                        não entra como lucro deste mês — o faturamento já foi comissionado lá atrás.
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.6 }}>
+                          Este CTe substitui o CTRC <b>{subsMesFechado.ctrc_ref}</b>
+                          {subsMesFechado.mesPar ? ` de ${mesLabel(subsMesFechado.mesPar)}` : ", de um mês que não está na base"} —
+                          mês já fechado, cujo faturamento entrou na base de comissão. Com contrato zerado, o saldo de{" "}
+                          <b>{money(p.saldo)}</b> volta a contar como lucro agora, ou seja, o mesmo dinheiro duas vezes.
+                        </div>
+                        <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.6, marginTop: 6 }}>
+                          Lançar no TMS o contrato de <b style={{ color: t.ouro }}>{money(subsMesFechado.contratoBaixa)}</b>{" "}
+                          — o CTe ({money(p.total_frete)}) menos o ICMS ({money(subsMesFechado.icms)}). Assim ele só dá baixa e fecha com saldo zero.
+                        </div>
+                        <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                          <button onClick={() => { setSinalObs(`substituição do CTRC ${subsMesFechado.ctrc_ref} (mês fechado): lançar contrato de ${money(subsMesFechado.contratoBaixa)} — CTe sem ICMS — pra dar baixa sem virar lucro`); setSinalizando(true); }}
+                            style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.ouro, color: "#000", fontFamily: "inherit" }}>
+                            Sinalizar pra lançar a baixa
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
