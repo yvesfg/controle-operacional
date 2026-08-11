@@ -155,9 +155,23 @@ export const PROBLEMA = {
   contrato_zerado: "Contrato sem valor",
   cte_sem_contrato: "CTe sem contrato, mas o contrato existe",
   sem_cte_na_base: "Contrato sem o CTe importado",
+  trecho_nao_decidido: "Trecho novo — é nossa operação?",
 };
 
-export function cruzarContratos(contratos, ctes) {
+// Regra por (empresa de emissão, trecho), migration 056. O relatório do TMS traz TUDO que a
+// empresa rodou, não só a nossa operação: no MAR de 01-11/08/2026, 69 dos 81 contratos eram
+// de outra operação (trechos MAB*/ANN*). Filtrar por CNPJ da embarcadora travaria o app em
+// "só Suzano", então quem decide é esta regra — e trecho novo cai em `trecho_nao_decidido`,
+// que é como uma embarcadora nova avisa que chegou em vez de sumir em silêncio.
+const chaveRegra = (empresa, trecho) => `${txt(empresa).toUpperCase()}||${txt(trecho).toUpperCase()}`;
+export const mapaRegras = (regras) => {
+  const m = new Map();
+  (regras || []).forEach((r) => m.set(chaveRegra(r.empresa_emissao, r.trecho), !!r.ignorar));
+  return m;
+};
+
+export function cruzarContratos(contratos, ctes, regras) {
+  const mapa = regras instanceof Map ? regras : mapaRegras(regras);
   const porCte = new Map();
   (ctes || []).forEach((c) => {
     const k = `${txt(c.ctrc)}||${txt(c.empresa_cod).toUpperCase()}`;
@@ -168,6 +182,13 @@ export function cruzarContratos(contratos, ctes) {
     const cte = ct.cte_ctrc ? porCte.get(`${txt(ct.cte_ctrc)}||${txt(ct.cte_empresa).toUpperCase()}`) : null;
     const valor = num(ct.valor);
     const problemas = [];
+    // Casou com CTe = é nossa operação, ponto: o cliente vem do CTe, seja Suzano ou qualquer
+    // embarcadora futura. A regra de trecho só decide o que NÃO casou.
+    const regra = mapa.get(chaveRegra(ct.empresa_emissao, ct.trecho));
+    const ignorado = !cte && regra === true;
+    if (ignorado) {
+      return { ...ct, cte: null, cliente: null, ignorado: true, problemas: [], falta_encargo: 0 };
+    }
 
     // O encargo patronal é o que mais falta: no relatório de 01-06/08 estava em só 13 de 32.
     const faltas = ct.eh_pf && valor > 0 ? {
@@ -180,12 +201,15 @@ export function cruzarContratos(contratos, ctes) {
     // O CTe entrou sem contrato (flag_sem_contrato, migration 052) mas o contrato existe aqui:
     // é o caso em que o cruzamento não só aponta como RESOLVE — o valor que falta está nesta linha.
     if (cte && valor > 0 && num(cte.valor_contrato_frete) === 0) problemas.push("cte_sem_contrato");
-    if (!cte) problemas.push("sem_cte_na_base");
+    // Sem CTe: com regra "é nossa" (ignorar=false) o que falta é importar o relatório de CTes
+    // daquele mês; sem regra nenhuma, ninguém decidiu ainda de quem é esse trecho.
+    if (!cte) problemas.push(regra === false ? "sem_cte_na_base" : "trecho_nao_decidido");
 
     return {
       ...ct,
       cte: cte || null,
       cliente: cte?.cliente || null,
+      ignorado: false,
       problemas,
       // Quanto de encargo de PF está faltando lançar nesta linha (0 quando está tudo certo).
       falta_encargo: r2(faltas.pf_sem_custos_externos + faltas.pf_sem_inss + faltas.pf_sem_sest),
@@ -193,20 +217,54 @@ export function cruzarContratos(contratos, ctes) {
   });
 }
 
-// Resumo do cruzamento pra faixa de indicadores da tela.
+// Resumo do cruzamento pra faixa de indicadores da tela. Contrato de trecho ignorado (não é
+// nossa operação) fica FORA de todos os números — senão o "encargo faltando" contaria dinheiro
+// de terceiro. Ele aparece só como contagem, pra ficar claro que o arquivo trazia mais.
 export function resumoCruzamento(cruzados) {
+  const nossos = cruzados.filter((c) => !c.ignorado);
   const out = {
-    contratos: cruzados.length,
-    casaram: cruzados.filter((c) => c.cte).length,
-    pf: cruzados.filter((c) => c.eh_pf).length,
-    pj: cruzados.filter((c) => !c.eh_pf).length,
-    valorContratado: r2(cruzados.reduce((s, c) => s + num(c.valor), 0)),
-    encargoLancado: r2(cruzados.reduce((s, c) => s + num(c.valor_inss) + num(c.sest_senat) + num(c.custos_externos), 0)),
-    encargoFaltando: r2(cruzados.reduce((s, c) => s + num(c.falta_encargo), 0)),
+    contratos: nossos.length,
+    ignorados: cruzados.length - nossos.length,
+    casaram: nossos.filter((c) => c.cte).length,
+    pf: nossos.filter((c) => c.eh_pf).length,
+    pj: nossos.filter((c) => !c.eh_pf).length,
+    valorContratado: r2(nossos.reduce((s, c) => s + num(c.valor), 0)),
+    encargoLancado: r2(nossos.reduce((s, c) => s + num(c.valor_inss) + num(c.sest_senat) + num(c.custos_externos), 0)),
+    encargoFaltando: r2(nossos.reduce((s, c) => s + num(c.falta_encargo), 0)),
     porProblema: {},
   };
   Object.keys(PROBLEMA).forEach((k) => {
-    out.porProblema[k] = cruzados.filter((c) => c.problemas.includes(k)).length;
+    out.porProblema[k] = nossos.filter((c) => c.problemas.includes(k)).length;
   });
   return out;
+}
+
+// Trechos que ninguém decidiu ainda, agrupados pra tela perguntar de uma vez só (26 contratos
+// de MABCUC viram UMA pergunta, não 26).
+export function trechosPendentes(cruzados) {
+  const out = {};
+  cruzados.filter((c) => c.problemas?.includes("trecho_nao_decidido")).forEach((c) => {
+    const k = `${txt(c.empresa_emissao).toUpperCase()}||${txt(c.trecho).toUpperCase()}`;
+    out[k] = out[k] || { empresa_emissao: txt(c.empresa_emissao).toUpperCase(), trecho: txt(c.trecho).toUpperCase(), contratos: 0, valor: 0, agregados: new Set() };
+    out[k].contratos++;
+    out[k].valor += num(c.valor);
+    if (c.nome_agregado) out[k].agregados.add(c.nome_agregado);
+  });
+  return Object.values(out)
+    .map((v) => ({ ...v, valor: r2(v.valor), agregados: [...v.agregados] }))
+    .sort((a, b) => b.contratos - a.contratos);
+}
+
+// ── Regras de trecho (migration 056) ───────────────────────────────────────────
+export async function listarRegrasTrecho(conn) {
+  if (!_sessionToken) return [];
+  return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_regras_trecho",
+    { p_token: _sessionToken }));
+}
+
+// ignorar = true (não é nossa) | false (é nossa) | null (apaga a regra e volta a perguntar).
+export async function definirRegraTrecho(conn, empresa, trecho, ignorar, por) {
+  if (!_sessionToken) throw new Error("Sessão expirada.");
+  return await supaFetch(conn.url, conn.key, "POST", "rpc/definir_regra_trecho",
+    { p_token: _sessionToken, p_empresa: empresa, p_trecho: trecho, p_ignorar: ignorar, p_por: por || null });
 }

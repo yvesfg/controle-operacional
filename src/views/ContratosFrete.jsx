@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import {
   parseContratosXLSX, diffImportContratos, inserirContratos, listarContratosPorPeriodos,
   cruzarContratos, resumoCruzamento, PROBLEMA, ALIQUOTAS, esperado,
+  listarRegrasTrecho, definirRegraTrecho, trechosPendentes,
 } from "../freteContratos.js";
 import { listarTodosPeriodo } from "../freteConferencia.js";
 import KpiCard from "../components/KpiCard.jsx";
@@ -18,7 +19,7 @@ const dataBR = (d) => (d ? d.split("-").reverse().join("/") : "");
 
 // Ordem de exibição da fila: o encargo patronal que falta lançar é o que custa dinheiro,
 // então vem primeiro; "sem CTe na base" é informativo (o mês do CTe pode não estar importado).
-const ORDEM_PROBLEMA = ["pf_sem_custos_externos", "pf_sem_inss", "pf_sem_sest", "cte_sem_contrato", "contrato_zerado", "sem_cte_na_base"];
+const ORDEM_PROBLEMA = ["pf_sem_custos_externos", "pf_sem_inss", "pf_sem_sest", "cte_sem_contrato", "contrato_zerado", "sem_cte_na_base", "trecho_nao_decidido"];
 const COR_PROBLEMA = {
   pf_sem_custos_externos: "var(--red)",
   pf_sem_inss: "var(--red)",
@@ -26,6 +27,7 @@ const COR_PROBLEMA = {
   cte_sem_contrato: "var(--yellow)",
   contrato_zerado: "var(--yellow)",
   sem_cte_na_base: "var(--text3)",
+  trecho_nao_decidido: "var(--color-info)",
 };
 
 export default function ContratosFrete({ ctx, conn }) {
@@ -34,6 +36,8 @@ export default function ContratosFrete({ ctx, conn }) {
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
   const [contratos, setContratos] = React.useState([]);
   const [ctes, setCtes] = React.useState([]);
+  const [regras, setRegras] = React.useState([]);
+  const [salvandoRegra, setSalvandoRegra] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const [preview, setPreview] = React.useState(null); // { linhas, novas, atualizadas, periodosEncontrados, empresas }
@@ -45,12 +49,14 @@ export default function ContratosFrete({ ctx, conn }) {
     if (!conn) return;
     setLoading(true);
     try {
-      const [cts, ces] = await Promise.all([
+      const [cts, ces, regs] = await Promise.all([
         listarContratosPorPeriodos(conn, [periodoRef]),
         listarTodosPeriodo(conn, periodoRef),
+        listarRegrasTrecho(conn),
       ]);
       setContratos(cts || []);
       setCtes(ces || []);
+      setRegras(regs || []);
     } catch (e) { showToast?.("Erro ao carregar contratos: " + e.message, "erro"); }
     finally { setLoading(false); }
   }, [conn, periodoRef, showToast]);
@@ -59,8 +65,33 @@ export default function ContratosFrete({ ctx, conn }) {
 
   // Cruzamento é sempre recalculado na leitura — nada de problema gravado no banco, senão
   // corrigir o lançamento no TMS não limparia a fila sozinho na próxima importação.
-  const cruzados = React.useMemo(() => cruzarContratos(contratos, ctes), [contratos, ctes]);
+  const cruzados = React.useMemo(() => cruzarContratos(contratos, ctes, regras), [contratos, ctes, regras]);
   const resumo = React.useMemo(() => resumoCruzamento(cruzados), [cruzados]);
+  const pendentesTrecho = React.useMemo(() => trechosPendentes(cruzados), [cruzados]);
+  // Trechos que já foram marcados como "não é nossa" e aparecem neste mês — ficam visíveis
+  // pra decisão não virar caixa-preta: dá pra reverter num clique.
+  const ignoradosTrecho = React.useMemo(() => {
+    const out = {};
+    cruzados.filter((c) => c.ignorado).forEach((c) => {
+      const k = `${c.empresa_emissao}||${c.trecho}`;
+      out[k] = out[k] || { empresa_emissao: c.empresa_emissao, trecho: c.trecho, contratos: 0 };
+      out[k].contratos++;
+    });
+    return Object.values(out).sort((a, b) => b.contratos - a.contratos);
+  }, [cruzados]);
+
+  // Decisão de trecho: vale pra este e pros próximos meses (a regra fica gravada), então o
+  // arquivo do mês que vem já entra classificado sem ninguém repetir o trabalho.
+  const decidirTrecho = async (empresa, trecho, ignorar) => {
+    setSalvandoRegra(`${empresa}||${trecho}`);
+    try {
+      await definirRegraTrecho(conn, empresa, trecho, ignorar, ctx.usuarioLogado);
+      showToast?.(ignorar ? `${trecho}: fora da conferência (não é nossa operação).`
+        : `${trecho}: marcado como nossa operação.`, "ok");
+      await carregar();
+    } catch (e) { showToast?.("Erro ao salvar a regra: " + e.message, "erro"); }
+    finally { setSalvandoRegra(""); }
+  };
 
   const lista = React.useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -124,12 +155,55 @@ export default function ContratosFrete({ ctx, conn }) {
           esse valor não aparece em nenhum outro lugar do app e some da margem do frete. */}
       <div style={{ display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${isMobile ? 150 : 190}px, 1fr))`, gap: 12, marginBottom: 16 }}>
         <KpiCard label="Contratos" value={resumo.contratos}
-          sub={`${resumo.casaram} com CTe na base · ${resumo.pf} PF / ${resumo.pj} PJ`} />
+          sub={`${resumo.casaram} com CTe na base · ${resumo.pf} PF / ${resumo.pj} PJ${resumo.ignorados ? ` · ${resumo.ignorados} fora (outra operação)` : ""}`} />
         <KpiCard label="Valor contratado" value={money(resumo.valorContratado)} sub={mesLabel(periodoRef)} />
         <KpiCard label="Encargo lançado" value={money(resumo.encargoLancado)} sub="INSS + SEST/SENAT + custos externos" />
         <KpiCard label="Encargo faltando" value={money(resumo.encargoFaltando)} danger={resumo.encargoFaltando > 0}
           sub={`${resumo.porProblema.pf_sem_custos_externos} contrato(s) sem os ${ALIQUOTAS.custosExternos}% patronais`} />
       </div>
+
+      {/* Trechos que ninguém decidiu ainda. O relatório do TMS traz tudo o que a empresa
+          rodou, não só a nossa operação — em vez de travar num CNPJ, a pessoa decide por
+          trecho UMA vez e a regra vale pros próximos meses. Trecho novo cai aqui, então
+          embarcadora nova aparece em vez de sumir. */}
+      {pendentesTrecho.length > 0 && (
+        <div style={{ ...card, marginBottom: 16, borderColor: hexRgb(t.azul, .4), background: hexRgb(t.azul, .06) }}>
+          <div style={{ fontWeight: 800, fontSize: 13, color: t.txt, marginBottom: 4 }}>
+            {pendentesTrecho.length} trecho(s) sem decisão
+          </div>
+          <div style={{ fontSize: 11.5, color: t.txt2, lineHeight: 1.5, marginBottom: 10 }}>
+            Estes contratos não casaram com nenhum CTe da base. Diga se são da nossa operação —
+            a resposta fica gravada e vale para as próximas importações.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {pendentesTrecho.map((p) => {
+              const salvando = salvandoRegra === `${p.empresa_emissao}||${p.trecho}`;
+              return (
+                <div key={`${p.empresa_emissao}-${p.trecho}`}
+                  style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 11px", borderRadius: 9, background: t.card, border: `1px solid ${hexRgb(t.borda, .5)}` }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12.5, color: t.txt }}>
+                    {p.empresa_emissao} · {p.trecho}
+                  </span>
+                  <span style={{ fontSize: 11, color: t.txt2 }}>
+                    {p.contratos} contrato(s) · {money(p.valor)}
+                    {p.agregados.length ? ` · ${p.agregados.slice(0, 2).join(", ")}${p.agregados.length > 2 ? ` +${p.agregados.length - 2}` : ""}` : ""}
+                  </span>
+                  <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+                    <button onClick={() => decidirTrecho(p.empresa_emissao, p.trecho, false)} disabled={salvando}
+                      style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 8, cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.verde}`, background: "transparent", color: t.verde, fontFamily: "inherit" }}>
+                      É nossa operação
+                    </button>
+                    <button onClick={() => decidirTrecho(p.empresa_emissao, p.trecho, true)} disabled={salvando}
+                      style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 8, cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
+                      Não é nossa
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Filtro por tipo de pendência */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
@@ -213,6 +287,20 @@ export default function ContratosFrete({ ctx, conn }) {
           </div>
         )}
       </div>
+
+      {ignoradosTrecho.length > 0 && (
+        <div style={{ marginTop: 10, fontSize: 10.5, color: t.txt2, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <span>Fora da conferência neste mês:</span>
+          {ignoradosTrecho.map((g) => (
+            <button key={`${g.empresa_emissao}-${g.trecho}`}
+              onClick={() => decidirTrecho(g.empresa_emissao, g.trecho, null)}
+              title="Voltar a perguntar sobre este trecho"
+              style={{ fontSize: 10, fontFamily: "var(--font-mono)", padding: "3px 8px", borderRadius: 20, cursor: "pointer", border: `1px solid ${hexRgb(t.borda, .6)}`, background: "transparent", color: t.txt2 }}>
+              {g.trecho} ({g.contratos}) ✕
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Preview da importação */}
       {preview && (
