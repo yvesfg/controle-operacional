@@ -92,6 +92,7 @@ export default function Resultado({ ctx }) {
   const [busca, setBusca] = React.useState("");
   const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
   const [soRevisao, setSoRevisao] = React.useState(false); // filtro "só as marcadas pra conferir"
+  const listaRef = React.useRef(null); // âncora pra rolar até a lista ao clicar no card de revisão
   const [despesasTodas, setDespesasTodas] = React.useState([]);
   const [loadingTodas, setLoadingTodas] = React.useState(false);
 
@@ -290,6 +291,7 @@ export default function Resultado({ ctx }) {
   const buscaQ = busca.trim().toLowerCase();
   const pool = porFilial(buscaTodosMeses ? despesasTodas : despesas);
   const emRevisao = pool.filter((d) => d.em_revisao);
+  const totalEmRevisao = emRevisao.reduce((s, d) => s + Math.abs(Number(d.valor || 0)), 0);
   const poolBase = soRevisao ? emRevisao : pool;
   const despesasFiltradas = buscaQ
     ? poolBase.filter(d =>
@@ -607,6 +609,19 @@ export default function Resultado({ ctx }) {
         <KpiCard label="Créditos" value={money(Math.abs(credInc))} sub="abatem a despesa" color={t.verde} compact={isMobile} />
         <KpiCard label="Dos quais, recuperações" value={money(Math.abs(recupInc))} sub="sinistro, avaria, venda" color={t.azul} compact={isMobile} />
         <KpiCard label="Resultado" value={money(resultado)} sub={pct(resultado)} color={t.verde} danger={resultado < 0} compact={isMobile} />
+        {/* Marcadas pra conferir (migration 060): o valor em aberto tem que ficar à vista junto
+            dos outros números, senão a dúvida vira uma linha perdida no meio da lista. Clicar
+            filtra a lista e leva até ela. Só aparece quando há algo em revisão. */}
+        {emRevisao.length > 0 && (
+          <KpiCard label={soRevisao ? "Em revisão · filtrando" : "Em revisão"}
+            value={money(totalEmRevisao)}
+            sub={`${emRevisao.length} lançamento(s) · clique para ${soRevisao ? "ver todos" : "abrir"}`}
+            color={t.ouro} compact={isMobile}
+            onClick={() => {
+              setSoRevisao((v) => !v);
+              setTimeout(() => listaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+            }} />
+        )}
       </div>
 
       {/* Indevidas aguardando crédito — resumo. O vínculo (incl. cross-filial/mês) é feito
@@ -639,10 +654,11 @@ export default function Resultado({ ctx }) {
       })()}
 
       {/* Lista de despesas */}
-      <div style={{ ...card }}>
+      <div ref={listaRef} style={{ ...card, ...(soRevisao ? { borderColor: hexRgb(t.ouro, .5) } : null) }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: t.txt, flex: "0 0 auto" }}>
             Despesas · {mesLabel(mesRef)}{recorteFilial && <span style={{ color: t.ouro }}> · {filialLabel}</span>}
+            {soRevisao && <span style={{ color: t.ouro }}> · em revisão</span>}
           </div>
           <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2"
@@ -727,6 +743,13 @@ export default function Resultado({ ctx }) {
                     {d.em_revisao && (
                       <span title={d.revisao_obs || "Marcada para conferir antes de decidir"}
                         style={{ marginLeft: 6, fontSize: 9, color: t.ouro, fontWeight: 700 }}>EM REVISÃO</span>
+                    )}
+                    {/* Filtrando só as em revisão, o motivo sai do tooltip e fica na tela — é
+                        o que a pessoa precisa ler pra decidir. */}
+                    {d.em_revisao && soRevisao && d.revisao_obs && (
+                      <span style={{ marginLeft: 6, fontSize: 10, color: t.txt2, fontStyle: "italic" }}>
+                        — {d.revisao_obs}
+                      </span>
                     )}
                   </>
                 );
