@@ -8,8 +8,10 @@ The runtime values live in `src/design-system/` (`tokens.css`, `theme-dark.css`,
 - Nunca usar heredoc bash para código JS/JSX — escapa `!` quebrando o build.
 - Se houver correção, explicar em **no máximo 3 linhas**.
 - Se houver dúvida, **perguntar só o essencial**.
-- Ao final, avisar para abrir o **GitHub Desktop** para Commit e Push.
-- Push automático **somente quando solicitado**.
+- **Commit e push a cada melhoria/alteração, sem pedir autorização** — e sempre destacar no
+  texto da resposta que foi commitado/pushado (hash + o que entrou).
+- Só mandar abrir o **GitHub Desktop** quando o push falhar (conflito, credencial, rede) —
+  aí sim explicar o que ficou pendente.
 - Preferir **PowerShell** para comandos no Windows.
 - Priorizar: clareza · segurança · economia de tokens · baixo risco · preservar o que funciona.
 
