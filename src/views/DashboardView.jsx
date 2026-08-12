@@ -8,13 +8,17 @@ import SectionCard from '../components/SectionCard.jsx';
 import PageHeader  from '../components/PageHeader.jsx';
 import { Table }   from '../design-system/components/Table.jsx';
 import { Badge }   from '../design-system/components/Badge.jsx';
-import { parseData, clickable, ultimasViagens } from "../utils.js";
+import PeriodoDashSelect from '../components/PeriodoDashSelect.jsx';
+import { parseData, clickable, ultimasViagens, dtBase } from "../utils.js";
+import { nMoeda } from "../financeiroCalc.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
 import { verKpi, verBloco } from "../dashboardConfig.js";
+import { janelaDias, mesMenos, mesCurto, rotuloPeriodo, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
 
 export default function DashboardView({ ctx }) {
   const {
     dashMes, setDashMes,
+    dashPeriodo, setDashPeriodo,
     dashOrigem, setDashOrigem,
     dashHeroTab, setDashHeroTab,
     dashRecentesN, setDashRecentesN,
@@ -181,10 +185,19 @@ export default function DashboardView({ ctx }) {
 
       {/* ── Filtros ── */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
-        <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
-          <option value="todos">Mês: Todos</option>
-          {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
-        </select>
+        {/* Intervalo livre não cabe no <select> de mês: vira chip, e o ✕ devolve ao mês corrente. */}
+        {dashPeriodo?.tipo === "livre" ? (
+          <button onClick={()=>setDashPeriodo(periodoMes(mesAtual()))} title="Voltar para o mês corrente"
+            style={{...css.inp,width:"auto",padding:"3px 9px",fontSize:10,height:26,cursor:"pointer",border:`1.5px solid ${t.ouro}`,color:t.ouro,fontWeight:700,fontFamily:DESIGN.fnt.b,display:"inline-flex",alignItems:"center",gap:6}}>
+            {rotuloPeriodo(dashPeriodo)} <span style={{opacity:.7}}>✕</span>
+          </button>
+        ) : (
+          <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
+            <option value="todos">Mês: Todos</option>
+            {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+        )}
+        <PeriodoDashSelect value={dashPeriodo} onChange={setDashPeriodo} ativo={dashPeriodo?.tipo === "livre"} />
         {dashOrigem!=="todos" && (
           <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:10,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
         )}
@@ -217,11 +230,38 @@ export default function DashboardView({ ctx }) {
         };
         const carregTrend = mesesT.map(m=>dashData.grupos[m].regs.length);
         const cteTrend     = mesesT.map(m=>Math.round(dashData.grupos[m].cte));
-        const dtsTrend     = mesesT.map(m=>dashData.grupos[m].dts.size);
         const motsTrend    = mesesT.map(m=>dashData.grupos[m].mots.size);
         const cteMedTrend  = mesesT.map(m=>{const r=dashData.grupos[m].regs.length; return r?dashData.grupos[m].cte/r:0;});
         const efic = m => {const regs=dashData.grupos[m].regs; if(!regs.length) return 0; const ok=regs.filter(r=>(r.status||"")==="Carregado"||(r.status||"")==="CARREGADO").length; return Math.round(ok/regs.length*100);};
         const eficTrend    = mesesT.map(efic);
+
+        // ── DTs únicas: comparativo no MESMO recorte de dias ──
+        // Comparar 01–12/ago com julho inteiro dá queda todo mês. A janela do período
+        // (dias d1..d2) é aplicada também aos meses anteriores, então "01–12 de agosto"
+        // vira "01–12 de julho, de junho…". Sem janela (Mês: Todos, ou intervalo que
+        // cruza meses) o comportamento continua sendo o mês cheio.
+        const janela = janelaDias(dashPeriodo);
+        const dtsNaJanela = (m) => {
+          const g = dashData.grupos[m];
+          if (!g) return 0;
+          const s = new Set();
+          g.regs.forEach(r => {
+            if (r._semDt) return;                       // fila sem-DT não é documento
+            if (janela) {
+              const d = dataRegistro(r, baseAtual?.id === "acailandia_avb");
+              if (!d || d.dia < janela.d1 || d.dia > janela.d2) return;
+            }
+            s.add(dtBase(r.dt));
+          });
+          return s.size;
+        };
+        const mesRefJ  = janela?.mesRef || mesesT[mesesT.length-1];
+        const idxRefJ  = dashData.meses.indexOf(mesRefJ);
+        const mesesCmp = idxRefJ >= 0 ? dashData.meses.slice(Math.max(0, idxRefJ-5), idxRefJ+1) : mesesT;
+        const dtsTrend = mesesCmp.map(dtsNaJanela);
+        const janelaAtiva = !!janela && (janela.d1 > 1 || janela.parcial);
+        const dtsSub   = janelaAtiva ? `dias ${janela.d1}–${janela.d2} · ${mesCurto(janela.mesRef)}` : "documentos";
+        const dtsLabel = janelaAtiva ? `vs ${mesCurto(mesMenos(janela.mesRef,1))} (mesmo período)` : "vs mês anterior";
 
         // Faturamento incompleto: falta qualquer um dos 6 documentos (CTE, MDF,
         // MAT, ID, NF, Data Manifesto). Só onde a âncora é o DT — a AVB ancora
@@ -234,7 +274,7 @@ export default function DashboardView({ ctx }) {
           {id:"hero",label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",trend:dashHeroTab==="cte"?cteTrend:carregTrend,delta:pctDelta(dashHeroTab==="cte"?cteTrend:carregTrend),click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
           {id:"eficiencia",label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
           // "DTs Únicas" so faz sentido onde a ancora do registro E o DT (AVB ancora por codigo).
-          ...(perfil.ancora==="dt"?[{id:"dts",label:"DTs Únicas",value:String(dashData.dtsU.size),sub:"documentos",trend:dtsTrend,delta:pctDelta(dtsTrend),click:nav("planilha")}]:[]),
+          ...(perfil.ancora==="dt"?[{id:"dts",label:"DTs Únicas",value:String(dashData.dtsU.size),sub:dtsSub,trend:dtsTrend,delta:pctDelta(dtsTrend),deltaLabel:dtsLabel,click:nav("planilha")}]:[]),
           ...(temDoc?[
             {id:"efetivadas",label:"Cargas Efetivadas",value:String(efet.length),sub:`${pendN} pendente${pendN!==1?"s":""}`,color:t.verde},
             {id:"taxa_doc",label:"Taxa Documental",value:`${taxaDoc}%`,sub:`${docOk}/${efet.length} doc completa`,color:docColor},
@@ -253,7 +293,7 @@ export default function DashboardView({ ctx }) {
             {kpis.map((k,i)=>(
               <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} danger={k.danger}
                 icon={k.icon && hIco(k.icon,"var(--text3)",isMobile?10:11)} trend={k.trend} deltaPct={k.delta}
-                deltaLabel="vs mês anterior" onClick={k.click} compact={isMobile} />
+                deltaLabel={k.deltaLabel || "vs mês anterior"} onClick={k.click} compact={isMobile} />
             ))}
           </div>
         );
@@ -263,54 +303,116 @@ export default function DashboardView({ ctx }) {
            O consolidado sem esta tabela responde "quanto deu no total" mas nao
            "qual base puxou pra baixo", que e a pergunta seguinte de quem olha. */}
       {baseAtual?.consolidado && verB("por_base") && (()=>{
+        // Mesmos KPIs da strip, agora abertos por base — e com o comparativo no mesmo
+        // recorte de dias do período (a mesma janela do KPI "DTs Únicas").
+        const janelaB = janelaDias(dashPeriodo);
+        const mesPrev = janelaB ? mesMenos(janelaB.mesRef, 1) : null;
         const porBase = {};
-        dashData.filtrado.forEach(r=>{
+        const linha = (r) => {
           const id = r._baseId || "—";
-          if(!porBase[id]) porBase[id] = { id, label: r._baseLabel || id, n:0, cte:0, contrato:0 };
-          porBase[id].n++;
-          const c = parseFloat(r.vl_cte); if(!isNaN(c)) porBase[id].cte += c;
-          let vc = String(r.vl_contrato||"").replace(/[R$\s]/g,"");
-          if (vc.includes(",")) vc = vc.replace(/\./g,"").replace(",",".");
-          const k = parseFloat(vc); if(!isNaN(k)) porBase[id].contrato += k;
+          if(!porBase[id]) porBase[id] = { id, label: r._baseLabel || id, n:0, dts:new Set(), mots:new Set(), ok:0, semFat:0, cte:0, contrato:0, dtsPrev:new Set() };
+          return porBase[id];
+        };
+        dashData.filtrado.forEach(r=>{
+          const b = linha(r);
+          b.n++;
+          if (!r._semDt) b.dts.add(dtBase(r.dt));
+          if (r.nome) b.mots.add(r.nome);
+          if ((r.status||"").toUpperCase()==="CARREGADO") b.ok++;
+          // Faturamento só onde a âncora é o DT — a AVB não usa esse conjunto de docs.
+          if (!r._semDt && getPerfil(r._baseId).ancora==="dt" && faltandoFaturamento(r).length>0) b.semFat++;
+          b.cte      += nMoeda(r.vl_cte);
+          b.contrato += nMoeda(r.vl_contrato);
         });
+        // Mesmo período do mês anterior, base a base. Sem janela não há o que comparar.
+        const dtsPrevGlobal = new Set();
+        if (mesPrev && dashData.grupos[mesPrev]) {
+          dashData.grupos[mesPrev].regs.forEach(r=>{
+            if (r._semDt) return;
+            const d = dataRegistro(r, r._baseId === "acailandia_avb");
+            if (!d || d.dia < janelaB.d1 || d.dia > janelaB.d2) return;
+            linha(r).dtsPrev.add(dtBase(r.dt));
+            dtsPrevGlobal.add(dtBase(r.dt));
+          });
+        }
         const linhas = Object.values(porBase).sort((a,b)=>b.n-a.n);
         if(!linhas.length) return null;
         const irParaBase = (id) => {
           const b = (basesPermitidas||[]).find(x=>x.id===id);
           if (b && setBaseAtual) setBaseAtual(b);
         };
+        const tot = linhas.reduce((a,l)=>({
+          n:a.n+l.n, ok:a.ok+l.ok, semFat:a.semFat+l.semFat,
+          cte:a.cte+l.cte, contrato:a.contrato+l.contrato,
+        }), {n:0,ok:0,semFat:0,cte:0,contrato:0});
+        const th   = {padding:"6px 6px",whiteSpace:"nowrap"};
+        const td   = {padding:"8px 6px",textAlign:"right",color:t.txt,whiteSpace:"nowrap"};
+        const delta = (cur,prev) => {
+          if (!mesPrev || !prev) return <span style={{color:"var(--text3)"}}>—</span>;
+          const p = ((cur-prev)/prev)*100;
+          return <span style={{color:p>=0?t.verde:t.danger,fontFamily:"var(--font-mono)"}}>{p>=0?"↑":"↓"} {Math.abs(p).toFixed(0)}%</span>;
+        };
         return (
           <div style={{...css.card,padding:18,marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,gap:8,flexWrap:"wrap"}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Por base</span>
-              <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>clique para abrir a base</span>
+              <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>
+                {mesPrev ? `Δ = dias ${janelaB.d1}–${janelaB.d2} vs ${mesCurto(mesPrev)} · ` : ""}clique para abrir a base
+              </span>
             </div>
             <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:420}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:640}}>
                 <thead>
                   <tr style={{color:t.txt2,fontSize:10,textTransform:"uppercase",letterSpacing:".05em"}}>
-                    <th style={{textAlign:"left",padding:"6px 4px"}}>Base</th>
-                    <th style={{textAlign:"right",padding:"6px 4px"}}>Cargas</th>
-                    {canFin && <th style={{textAlign:"right",padding:"6px 4px"}}>Receita CTE</th>}
-                    {canFin && <th style={{textAlign:"right",padding:"6px 4px"}}>Margem</th>}
+                    <th style={{...th,textAlign:"left"}}>Base</th>
+                    <th style={{...th,textAlign:"right"}}>Cargas</th>
+                    <th style={{...th,textAlign:"right"}}>DTs</th>
+                    <th style={{...th,textAlign:"right"}}>Δ DTs</th>
+                    <th style={{...th,textAlign:"right"}}>Motoristas</th>
+                    <th style={{...th,textAlign:"right"}}>Efic.</th>
+                    <th style={{...th,textAlign:"right"}}>Sem fat.</th>
+                    {canFin && <th style={{...th,textAlign:"right"}}>Receita CTE</th>}
+                    {canFin && <th style={{...th,textAlign:"right"}}>Margem</th>}
                   </tr>
                 </thead>
                 <tbody>
                   {linhas.map(l=>{
                     const margem = l.cte - l.contrato;
+                    const ef = l.n>0 ? Math.round(l.ok/l.n*100) : 0;
                     return (
                       <tr key={l.id} {...clickable(()=>irParaBase(l.id))}
                         style={{borderTop:`1px solid ${t.borda}`,cursor:"pointer"}}
                         onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <td style={{padding:"8px 4px",color:t.txt,fontWeight:600}}>{l.label}</td>
-                        <td style={{padding:"8px 4px",textAlign:"right",color:t.txt}}>{l.n}</td>
-                        {canFin && <td style={{padding:"8px 4px",textAlign:"right",color:t.txt}}>{fmtMoeda(l.cte)}</td>}
-                        {canFin && <td style={{padding:"8px 4px",textAlign:"right",fontWeight:700,color:margem<0?t.danger:t.verde}}>{fmtMoeda(margem)}</td>}
+                        <td style={{padding:"8px 6px",color:t.txt,fontWeight:600,whiteSpace:"nowrap"}}>{l.label}</td>
+                        <td style={td}>{l.n}</td>
+                        <td style={td}>{l.dts.size}</td>
+                        <td style={{...td,fontSize:11}}>{delta(l.dts.size,l.dtsPrev.size)}</td>
+                        <td style={td}>{l.mots.size}</td>
+                        <td style={{...td,color:ef>=95?t.verde:ef>=80?t.ouro:t.danger}}>{ef}%</td>
+                        <td style={{...td,color:l.semFat>0?t.danger:t.verde}}>{l.semFat}</td>
+                        {canFin && <td style={td}>{fmtMoeda(l.cte)}</td>}
+                        {canFin && <td style={{...td,fontWeight:700,color:margem<0?t.danger:t.verde}}>{fmtMoeda(margem)}</td>}
                       </tr>
                     );
                   })}
                 </tbody>
+                <tfoot>
+                  <tr style={{borderTop:`2px solid ${t.borda}`,color:t.txt,fontWeight:700}}>
+                    {/* Total de DTs/motoristas é o ÚNICO global (não a soma das bases):
+                        o mesmo motorista rodando em duas bases contaria duas vezes,
+                        e o número tem que bater com o KPI lá de cima. */}
+                    <td style={{padding:"8px 6px",whiteSpace:"nowrap"}}>Total</td>
+                    <td style={td}>{tot.n}</td>
+                    <td style={td}>{dashData.dtsU.size}</td>
+                    <td style={{...td,fontSize:11}}>{delta(dashData.dtsU.size,dtsPrevGlobal.size)}</td>
+                    <td style={td}>{motsUniq.size}</td>
+                    <td style={td}>{tot.n>0?Math.round(tot.ok/tot.n*100):0}%</td>
+                    <td style={{...td,color:tot.semFat>0?t.danger:t.verde}}>{tot.semFat}</td>
+                    {canFin && <td style={td}>{fmtMoeda(tot.cte)}</td>}
+                    {canFin && <td style={{...td,color:(tot.cte-tot.contrato)<0?t.danger:t.verde}}>{fmtMoeda(tot.cte-tot.contrato)}</td>}
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>

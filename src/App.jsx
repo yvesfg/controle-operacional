@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { nMoeda } from "./financeiroCalc.js";
+import { PERIODO_TODOS, periodoMes, dataRegistro } from "./periodoDash.js";
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
 
@@ -203,11 +204,16 @@ export default function App() {
   } = useBuscaState();
 
   const {
-    dashMes, setDashMes, dashOrigem, setDashOrigem,
+    dashPeriodo, setDashPeriodo, dashOrigem, setDashOrigem,
     dashChartType, setDashChartType, dashGroupBy, setDashGroupBy,
     dashDrillModal, setDashDrillModal, dashHeroTab, setDashHeroTab,
     dashRecentesN, setDashRecentesN, dashRecCardRef,
   } = useDashboardState();
+  // `dashMes` segue sendo a chave de mes que o resto do app usa (grafico, fila
+  // sem-DT, resets), mas agora e DERIVADA do periodo. Periodo livre nao tem mes
+  // unico, entao cai em "todos" e o recorte real vem do intervalo.
+  const dashMes = dashPeriodo.tipo === "mes" ? dashPeriodo.mes : "todos";
+  const setDashMes = (m) => setDashPeriodo(m === "todos" ? PERIODO_TODOS : periodoMes(m));
 
   const {
     dFiltro, setDFiltro, dSubTab, setDSubTab,
@@ -695,9 +701,8 @@ export default function App() {
       if (/^\d{2}\/\d{2}\/\d{4}/.test(dc)) { const p = dc.split("/"); mes = p[1]+"/"+p[2]; }
       else if (/^\d{4}-\d{2}/.test(dc)) { const p = dc.split("-"); mes = p[1]+"/"+p[0]; }
       if (!mes) return;
-      if (!grupos[mes]) grupos[mes] = {regs:[],dts:new Set(),mots:new Set(),cte:0};
+      if (!grupos[mes]) grupos[mes] = {regs:[],mots:new Set(),cte:0};
       grupos[mes].regs.push(r);
-      grupos[mes].dts.add(dtBase(r.dt));
       if (r.nome) grupos[mes].mots.add(r.nome);
       grupos[mes].cte += nMoeda(r.vl_cte);
     });
@@ -716,14 +721,24 @@ export default function App() {
       { norm: "BELEM",      label: "BELEM-PA" },
       { norm: "IMPERATRIZ", label: "IMPERATRIZ-MA" },
     ];
-    // Filtra cidades pelo mês selecionado — mês seletor como origem dos filtros disponíveis
-    const mesRegs = dashMes === "todos" ? DADOS : (grupos[dashMes]?.regs || []);
+    // Recorte do período: mês (grupos), intervalo livre (data a data) ou tudo.
+    const avb = baseAtual?.id === "acailandia_avb";
+    const noIntervalo = (r) => {
+      const d = dataRegistro(r, avb);
+      if (!d) return false;
+      const iso = `${d.ano}-${String(d.mes).padStart(2,"0")}-${String(d.dia).padStart(2,"0")}`;
+      return iso >= dashPeriodo.inicio && iso <= dashPeriodo.fim;
+    };
+    const periodoRegs = dashPeriodo.tipo === "livre" ? DADOS.filter(noIntervalo)
+      : dashMes === "todos" ? DADOS : (grupos[dashMes]?.regs || []);
+    // Cidades disponíveis seguem o recorte — origem do filtro de origem.
+    const mesRegs = periodoRegs;
     const cidades = baseAtual?.id === "acailandia_avb"
       ? [...new Set(mesRegs.map(r => normOrigem(r.origem)).filter(Boolean))]
       : ORIGENS_PERMITIDAS.filter(o => mesRegs.some(r => normOrigem(r.origem) === o.norm)).map(o => o.norm);
 
-    // Aplica filtros: mês + cidade origem
-    let filtrado = dashMes==="todos" ? DADOS : (grupos[dashMes]?.regs||[]);
+    // Aplica filtros: período + cidade origem
+    let filtrado = periodoRegs;
     if (dashOrigem !== "todos") filtrado = filtrado.filter(r => normOrigem(r.origem) === dashOrigem);
 
     const dtsU = new Set(filtrado.filter(r=>!r._semDt).map(r=>dtBase(r.dt)));
@@ -738,14 +753,14 @@ export default function App() {
       });
     }
     return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem, avbContratoT, avbAdtT, avbSaldoT };
-  }, [DADOS, dashMes, dashOrigem, baseAtual]);
+  }, [DADOS, dashMes, dashPeriodo, dashOrigem, baseAtual]);
 
   // Reset dashOrigem quando o mês selecionado não contém a cidade atual
   useEffect(() => {
     if (dashOrigem !== "todos" && !dashData.cidades.includes(dashOrigem)) {
       setDashOrigem("todos");
     }
-  }, [dashMes]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dashMes, dashPeriodo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset dashMes quando o mes selecionado nao existe nos dados atuais (ex.: trocar
   // o classificador papel->celulose com o mes corrente sem cargas). Sem isso o <select>
@@ -1612,6 +1627,7 @@ export default function App() {
         {activeTab === "dashboard" && (
           <DashboardView ctx={{
             dashMes, setDashMes,
+            dashPeriodo, setDashPeriodo,
             dashOrigem, setDashOrigem,
             dashHeroTab, setDashHeroTab,
             dashRecentesN, setDashRecentesN,

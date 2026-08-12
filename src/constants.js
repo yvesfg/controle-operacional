@@ -164,6 +164,16 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-08-12", sessao: "Sessao 55",
+    itens: [
+      "FEAT (pedido Yves) · SELETOR DE PERIODO no Dashboard, ao lado do <select> de mes: botao 'Periodo' abre mes / trimestre / ano / intervalo livre (De-Ate). O periodo virou a fonte de verdade unica (dashPeriodo em useDashboardState); dashMes continua existindo mas DERIVADO dele, entao o grafico, a fila sem-DT e os resets nao precisaram mudar. Intervalo livre nao cabe no <select>, entao vira um chip com o rotulo (ex.: '01/ago-12/ago') e o X devolve pro mes corrente. Novo src/periodoDash.js com os helpers (periodoMes/Trimestre/Ano/Livre, rotuloPeriodo, dataRegistro, janelaDias, mesMenos).",
+      "FEAT (pedido Yves) · KPI 'DTs Unicas' passou a comparar o MESMO recorte de dias: 01-12 de agosto contra 01-12 de julho, junho... Antes o sparkline e o delta comparavam o mes em andamento com meses FECHADOS, entao todo dia 1 o painel mostrava queda inventada. A janela sai do periodo selecionado (mes corrente = 1..hoje; intervalo livre dentro de um mes = os dias dele) e e aplicada aos 6 meses. Sem janela comparavel (Mes: Todos, ou intervalo que cruza meses) o comportamento antigo continua, com o rotulo 'vs mes anterior'. O card diz qual recorte esta usando ('dias 1-12 · ago') e o delta diz contra o que ('vs jul (mesmo periodo)').",
+      "FEAT (pedido Yves) · VISAO GERAL DE TODAS AS BASES: nao nasceu tela nova -- o modo 'Todas as bases' ja mostra a mesma faixa de KPIs somada, e o que faltava era abrir por base. A tabela 'Por base' saiu de 4 colunas (Base/Cargas/Receita/Margem) para Cargas, DTs unicas, delta DTs no mesmo periodo do mes anterior, Motoristas, Eficiencia, Sem faturamento, Receita CTE e Margem, com linha de Total. No Total, DTs e Motoristas sao o unico GLOBAL (nao a soma das bases: motorista que roda em duas contaria duas vezes) pra bater com o KPI do topo.",
+      "FIX (de passagem, regra de moeda) · A tabela por base somava vl_cte com parseFloat e vl_contrato com um replace proprio -- os dois formatos de moeda da base (pt-BR e decimal) nao sobrevivem a isso. Passou a usar nMoeda(), como o resto do app.",
+      "VERIFICADO · Build ok e helpers de periodo testados fora do app (mes corrente recorta 1..12, mes fechado 1..31, intervalo que cruza meses nao gera comparativo, mesMenos vira o ano em janeiro). A tela em si NAO foi validada logada -- o dev server sobe e carrega sem erro de console, mas o login pede credencial.",
+    ],
+  },
+  {
     data: "2026-08-12", sessao: "Sessao 54",
     itens: [
       "FEAT (ideia do colaborador do Yves) · COLAR FATURAMENTO -- o caminho inverso do card do WhatsApp. O analista cola o bloco que ja digita hoje (DT/CTE/MDF/MAT/ID/NF), o app acha a DT, mostra campo a campo o que preenche / o que ja esta igual / o que CONFLITA (conflito so grava com 'SOBRESCREVER' ligado) e grava. Parser em src/faturamentoParse.js aceita rotulos com ou sem ':' e, se vier so numero, le na ordem da equipe avisando na tela.",

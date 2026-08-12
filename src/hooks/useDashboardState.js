@@ -1,7 +1,11 @@
 import { useState, useRef } from "react";
+import { periodoMes, mesAtual } from "../periodoDash.js";
 
 export function useDashboardState() {
-  const [dashMes, setDashMes]               = useState(()=>String(new Date().getMonth()+1).padStart(2,"0")+"/"+new Date().getFullYear());
+  // Fonte de verdade do recorte do Dashboard. O antigo `dashMes` continua existindo,
+  // mas derivado deste objeto (App.jsx) — assim o <select> de mês e o seletor de
+  // período não viram dois filtros brigando pelo mesmo resultado.
+  const [dashPeriodo, setDashPeriodo]       = useState(() => periodoMes(mesAtual()));
   const [dashOrigem, setDashOrigem]         = useState("todos");
   const [dashChartType, setDashChartType]   = useState("bar");
   const [dashGroupBy, setDashGroupBy]       = useState("mes");
@@ -11,7 +15,7 @@ export function useDashboardState() {
   const dashRecCardRef                       = useRef(null);
 
   return {
-    dashMes, setDashMes, dashOrigem, setDashOrigem,
+    dashPeriodo, setDashPeriodo, dashOrigem, setDashOrigem,
     dashChartType, setDashChartType, dashGroupBy, setDashGroupBy,
     dashDrillModal, setDashDrillModal, dashHeroTab, setDashHeroTab,
     dashRecentesN, setDashRecentesN, dashRecCardRef,
