@@ -402,8 +402,13 @@ export default function App() {
     const list = [];
     DADOS.forEach(r => {
       if (!r.nome?.trim()) return;
+      // No consolidado cada linha traz sua base (_baseId), e o motor de alerta é da
+      // OPERAÇÃO: sem isto, linha da AVB caía nos alertas padrão (descarga/saldo),
+      // que aquela base nem tem. Fora do consolidado `_baseId` não existe e o perfil
+      // segue sendo o da base aberta.
+      const pf = r._baseId ? getPerfil(r._baseId) : perfilAtual;
       // ── Alertas da operação AVB (perfil.alertas === "avb") ──
-      if (perfilAtual.alertas === "avb") {
+      if (pf.alertas === "avb") {
         const camposDatas = [r.data_carr, r.data_homerico, r.data_liberacao, r.data_manifesto];
         const dataInvalida = camposDatas.some(d => d && !/^\d{2}\/\d{2}\/\d{4}/.test(d) && !/^\d{4}-\d{2}-\d{2}/.test(d));
         if (dataInvalida) list.push({tipo:"warn",cat:"data_avb",txt:`Data inválida: ${r.contratante||r.nome} · Cód ${r.codigo||"—"}`,reg:r});
@@ -416,10 +421,10 @@ export default function App() {
       // ── Alertas padrão (Imperatriz/Belém / Maracanau) ──
       const da = parseData(r.data_agenda), dd = parseData(r.data_desc);
       // Alerta de atraso na descarga — inclui ref. ao registro para botão de calendário
-      if (perfilAtual.features.descargaAgendada && da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
+      if (pf.features.descargaAgendada && da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
       // Alerta de cobrança — saldo pendente após descarga
       const saldo = parseFloat(r.saldo);
-      if (perfilAtual.features.cobrancaSaldo && !isNaN(saldo) && saldo > 0 && dd) {
+      if (pf.features.cobrancaSaldo && !isNaN(saldo) && saldo > 0 && dd) {
         list.push({tipo:"warn",cat:"cobranca",txt:`💰 Cobrança pendente: ${r.nome} · DT ${r.dt} · Saldo ${fmtMoeda(r.saldo)}`,reg:r});
       }
     });

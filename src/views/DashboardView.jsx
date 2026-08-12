@@ -61,6 +61,9 @@ export default function DashboardView({ ctx }) {
   // Lê a fila controle_operacional_sem_dt (pendente+confirmado) SEM tocar no DADOS global.
   // Só na base Imperatriz/Belém (única com a fila); segue o filtro de tipo de carga do topo.
   const [semDtAguardando, setSemDtAguardando] = React.useState(0);
+  // Ordenação da tabela "Por base" (modo consolidado). Com 4+ bases a ordem fixa
+  // por volume esconde a pergunta do dia ("quem tem mais alerta", "quem perdeu margem").
+  const [ordemBase, setOrdemBase] = React.useState({ k: "n", dir: -1 });
   React.useEffect(() => {
     if (!getPerfil(baseAtual?.id).features.semDt || !getConexao) { setSemDtAguardando(0); return; }
     const conn = getConexao();
@@ -310,7 +313,8 @@ export default function DashboardView({ ctx }) {
         const porBase = {};
         const linha = (r) => {
           const id = r._baseId || "—";
-          if(!porBase[id]) porBase[id] = { id, label: r._baseLabel || id, n:0, dts:new Set(), mots:new Set(), ok:0, semFat:0, cte:0, contrato:0, dtsPrev:new Set() };
+          if(!porBase[id]) porBase[id] = { id, label: r._baseLabel || id, n:0, dts:new Set(), mots:new Set(), ok:0, semFat:0, cte:0, contrato:0,
+                                           nPrev:0, dtsPrev:new Set(), ctePrev:0, contratoPrev:0, alertas:0 };
           return porBase[id];
         };
         dashData.filtrado.forEach(r=>{
@@ -324,55 +328,90 @@ export default function DashboardView({ ctx }) {
           b.cte      += nMoeda(r.vl_cte);
           b.contrato += nMoeda(r.vl_contrato);
         });
+        // Alerta é do topo (lista global) mas cada item carrega o registro, então dá
+        // pra dizer DE QUAL BASE ele veio — que é a pergunta de quem vai apagar o fogo.
+        (alertas||[]).forEach(a=>{ if (a?.reg) linha(a.reg).alertas++; });
         // Mesmo período do mês anterior, base a base. Sem janela não há o que comparar.
-        const dtsPrevGlobal = new Set();
+        const prevG = { n:0, dts:new Set(), cte:0, contrato:0 };
         if (mesPrev && dashData.grupos[mesPrev]) {
           dashData.grupos[mesPrev].regs.forEach(r=>{
-            if (r._semDt) return;
             const d = dataRegistro(r, r._baseId === "acailandia_avb");
             if (!d || d.dia < janelaB.d1 || d.dia > janelaB.d2) return;
-            linha(r).dtsPrev.add(dtBase(r.dt));
-            dtsPrevGlobal.add(dtBase(r.dt));
+            const b = linha(r); // cria a linha mesmo se a base só teve carga no mês passado
+            b.nPrev++;          prevG.n++;
+            b.ctePrev      += nMoeda(r.vl_cte);      prevG.cte      += nMoeda(r.vl_cte);
+            b.contratoPrev += nMoeda(r.vl_contrato); prevG.contrato += nMoeda(r.vl_contrato);
+            if (!r._semDt) { b.dtsPrev.add(dtBase(r.dt)); prevG.dts.add(dtBase(r.dt)); }
           });
         }
-        const linhas = Object.values(porBase).sort((a,b)=>b.n-a.n);
-        if(!linhas.length) return null;
         const irParaBase = (id) => {
           const b = (basesPermitidas||[]).find(x=>x.id===id);
           if (b && setBaseAtual) setBaseAtual(b);
         };
-        const tot = linhas.reduce((a,l)=>({
-          n:a.n+l.n, ok:a.ok+l.ok, semFat:a.semFat+l.semFat,
+        const tot = Object.values(porBase).reduce((a,l)=>({
+          n:a.n+l.n, ok:a.ok+l.ok, semFat:a.semFat+l.semFat, alertas:a.alertas+l.alertas,
           cte:a.cte+l.cte, contrato:a.contrato+l.contrato,
-        }), {n:0,ok:0,semFat:0,cte:0,contrato:0});
-        const th   = {padding:"6px 6px",whiteSpace:"nowrap"};
-        const td   = {padding:"8px 6px",textAlign:"right",color:t.txt,whiteSpace:"nowrap"};
-        const delta = (cur,prev) => {
-          if (!mesPrev || !prev) return <span style={{color:"var(--text3)"}}>—</span>;
-          const p = ((cur-prev)/prev)*100;
-          return <span style={{color:p>=0?t.verde:t.danger,fontFamily:"var(--font-mono)"}}>{p>=0?"↑":"↓"} {Math.abs(p).toFixed(0)}%</span>;
+        }), {n:0,ok:0,semFat:0,alertas:0,cte:0,contrato:0});
+
+        // Colunas declaradas como dado: o cabeçalho, a ordenação e a célula saem daqui,
+        // senão cada coluna nova tinha que ser escrita em três lugares.
+        const val = {
+          label:  l => l.label.toLowerCase(),
+          n:      l => l.n,
+          dts:    l => l.dts.size,
+          mots:   l => l.mots.size,
+          ef:     l => l.n>0 ? l.ok/l.n : 0,
+          semFat: l => l.semFat,
+          alertas:l => l.alertas,
+          cte:    l => l.cte,
+          margem: l => l.cte - l.contrato,
+        };
+        const linhas = Object.values(porBase).sort((a,b)=>{
+          const va = val[ordemBase.k]?.(a), vb = val[ordemBase.k]?.(b);
+          if (va === vb) return b.n - a.n;
+          return (va > vb ? 1 : -1) * ordemBase.dir;
+        });
+        if(!linhas.length) return null;
+
+        const th = {padding:"6px 6px",whiteSpace:"nowrap",cursor:"pointer",userSelect:"none"};
+        const td = {padding:"8px 6px",textAlign:"right",color:t.txt,whiteSpace:"nowrap"};
+        const ordenar = (k) => setOrdemBase(o => o.k===k ? {k,dir:-o.dir} : {k, dir: k==="label" ? 1 : -1});
+        const Th = ({k,children,left}) => (
+          <th style={{...th,textAlign:left?"left":"right",color:ordemBase.k===k?t.ouro:t.txt2}} onClick={()=>ordenar(k)}>
+            {children}{ordemBase.k===k ? (ordemBase.dir>0?" ↑":" ↓") : ""}
+          </th>
+        );
+        // Δ mora embaixo do próprio número, em vez de virar uma coluna por métrica —
+        // com 4 comparativos a tabela dobraria de largura sem dizer nada a mais.
+        const delta = (cur, prev) => {
+          if (!mesPrev || !prev) return null;
+          // Denominador em módulo: margem anterior NEGATIVA invertia o sinal do delta
+          // (sair de -100 para -50 é melhora, e aparecia como queda).
+          const p = ((cur-prev)/Math.abs(prev))*100;
+          if (!isFinite(p)) return null;
+          return <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:p>=0?t.verde:t.danger,marginTop:2}}>{p>=0?"↑":"↓"} {Math.abs(p).toFixed(0)}%</div>;
         };
         return (
           <div style={{...css.card,padding:18,marginBottom:14}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,gap:8,flexWrap:"wrap"}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Por base</span>
               <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>
-                {mesPrev ? `Δ = dias ${janelaB.d1}–${janelaB.d2} vs ${mesCurto(mesPrev)} · ` : ""}clique para abrir a base
+                {mesPrev ? `↑↓ = dias ${janelaB.d1}–${janelaB.d2} vs ${mesCurto(mesPrev)} · ` : ""}ordene pelo cabeçalho · clique na linha para abrir a base
               </span>
             </div>
             <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:640}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:680}}>
                 <thead>
                   <tr style={{color:t.txt2,fontSize:10,textTransform:"uppercase",letterSpacing:".05em"}}>
-                    <th style={{...th,textAlign:"left"}}>Base</th>
-                    <th style={{...th,textAlign:"right"}}>Cargas</th>
-                    <th style={{...th,textAlign:"right"}}>DTs</th>
-                    <th style={{...th,textAlign:"right"}}>Δ DTs</th>
-                    <th style={{...th,textAlign:"right"}}>Motoristas</th>
-                    <th style={{...th,textAlign:"right"}}>Efic.</th>
-                    <th style={{...th,textAlign:"right"}}>Sem fat.</th>
-                    {canFin && <th style={{...th,textAlign:"right"}}>Receita CTE</th>}
-                    {canFin && <th style={{...th,textAlign:"right"}}>Margem</th>}
+                    <Th k="label" left>Base</Th>
+                    <Th k="n">Cargas</Th>
+                    <Th k="dts">DTs</Th>
+                    <Th k="mots">Motoristas</Th>
+                    <Th k="ef">Efic.</Th>
+                    <Th k="semFat">Sem fat.</Th>
+                    <Th k="alertas">Alertas</Th>
+                    {canFin && <Th k="cte">Receita CTE</Th>}
+                    {canFin && <Th k="margem">Margem</Th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -385,14 +424,14 @@ export default function DashboardView({ ctx }) {
                         onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <td style={{padding:"8px 6px",color:t.txt,fontWeight:600,whiteSpace:"nowrap"}}>{l.label}</td>
-                        <td style={td}>{l.n}</td>
-                        <td style={td}>{l.dts.size}</td>
-                        <td style={{...td,fontSize:11}}>{delta(l.dts.size,l.dtsPrev.size)}</td>
+                        <td style={td}>{l.n}{delta(l.n,l.nPrev)}</td>
+                        <td style={td}>{l.dts.size}{delta(l.dts.size,l.dtsPrev.size)}</td>
                         <td style={td}>{l.mots.size}</td>
                         <td style={{...td,color:ef>=95?t.verde:ef>=80?t.ouro:t.danger}}>{ef}%</td>
                         <td style={{...td,color:l.semFat>0?t.danger:t.verde}}>{l.semFat}</td>
-                        {canFin && <td style={td}>{fmtMoeda(l.cte)}</td>}
-                        {canFin && <td style={{...td,fontWeight:700,color:margem<0?t.danger:t.verde}}>{fmtMoeda(margem)}</td>}
+                        <td style={{...td,color:l.alertas>0?t.danger:t.verde}}>{l.alertas}</td>
+                        {canFin && <td style={td}>{fmtMoeda(l.cte)}{delta(l.cte,l.ctePrev)}</td>}
+                        {canFin && <td style={{...td,fontWeight:700,color:margem<0?t.danger:t.verde}}>{fmtMoeda(margem)}{delta(margem,l.ctePrev-l.contratoPrev)}</td>}
                       </tr>
                     );
                   })}
@@ -403,14 +442,14 @@ export default function DashboardView({ ctx }) {
                         o mesmo motorista rodando em duas bases contaria duas vezes,
                         e o número tem que bater com o KPI lá de cima. */}
                     <td style={{padding:"8px 6px",whiteSpace:"nowrap"}}>Total</td>
-                    <td style={td}>{tot.n}</td>
-                    <td style={td}>{dashData.dtsU.size}</td>
-                    <td style={{...td,fontSize:11}}>{delta(dashData.dtsU.size,dtsPrevGlobal.size)}</td>
+                    <td style={td}>{tot.n}{delta(tot.n,prevG.n)}</td>
+                    <td style={td}>{dashData.dtsU.size}{delta(dashData.dtsU.size,prevG.dts.size)}</td>
                     <td style={td}>{motsUniq.size}</td>
                     <td style={td}>{tot.n>0?Math.round(tot.ok/tot.n*100):0}%</td>
                     <td style={{...td,color:tot.semFat>0?t.danger:t.verde}}>{tot.semFat}</td>
-                    {canFin && <td style={td}>{fmtMoeda(tot.cte)}</td>}
-                    {canFin && <td style={{...td,color:(tot.cte-tot.contrato)<0?t.danger:t.verde}}>{fmtMoeda(tot.cte-tot.contrato)}</td>}
+                    <td style={{...td,color:tot.alertas>0?t.danger:t.verde}}>{tot.alertas}</td>
+                    {canFin && <td style={td}>{fmtMoeda(tot.cte)}{delta(tot.cte,prevG.cte)}</td>}
+                    {canFin && <td style={{...td,color:(tot.cte-tot.contrato)<0?t.danger:t.verde}}>{fmtMoeda(tot.cte-tot.contrato)}{delta(tot.cte-tot.contrato,prevG.cte-prevG.contrato)}</td>}
                   </tr>
                 </tfoot>
               </table>
@@ -728,22 +767,26 @@ export default function DashboardView({ ctx }) {
             dashData.filtrado.forEach(r=>{
               if(!r.destino) return;
               const d=r.destino.trim().toUpperCase();
-              destMap[d]=(destMap[d]||0)+1;
+              if(!destMap[d]) destMap[d]={ct:0,bases:{}};
+              destMap[d].ct++;
+              // No consolidado o destino sozinho não diz de onde saiu a carga.
+              if(r._baseLabel) destMap[d].bases[r._baseLabel]=(destMap[d].bases[r._baseLabel]||0)+1;
             });
-            const topDestinos=Object.entries(destMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            const topDestinos=Object.entries(destMap).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
             if(!topDestinos.length) return null;
-            const maxDest=topDestinos[0][1]||1;
+            const maxDest=topDestinos[0][1].ct||1;
             return (
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Destinos</span>
                   <span style={{fontSize:10,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topDestinos.length} destinos</span>
                 </div>
-                {topDestinos.map(([dest,ct],i)=>{
+                {topDestinos.map(([dest,{ct,bases}],i)=>{
                   const pct=Math.round(ct/maxDest*100);
                   const partes=dest.split(/\s*[-–,]\s*/);
                   const destCurto=partes[0].trim();
                   const uf=partes[1]?.trim()||"";
+                  const porBaseDest=Object.entries(bases).sort((a,b)=>b[1]-a[1]);
                   const handleClick=()=>{ setPlanilhaFiltroDestino(dest); setActiveTab("planilha"); };
                   return (
                     <div key={dest} {...clickable(handleClick)} title={`Ver cargas para ${destCurto}`}
@@ -757,6 +800,11 @@ export default function DashboardView({ ctx }) {
                         </div>
                         <span style={{fontSize:11,fontWeight:600,color:t.txt,fontFamily:"var(--font-mono)",flexShrink:0}}>{ct}</span>
                       </div>
+                      {porBaseDest.length>0 && (
+                        <div style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b,marginLeft:20,marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          {porBaseDest.slice(0,2).map(([b,n])=>`${b} ${n}`).join(" · ")}{porBaseDest.length>2?` · +${porBaseDest.length-2}`:""}
+                        </div>
+                      )}
                       <div style={{height:3,borderRadius:2,background:t.card2,overflow:"hidden"}}>
                         <div style={{height:"100%",width:`${pct}%`,background:t.ouro,borderRadius:2}}/>
                       </div>
