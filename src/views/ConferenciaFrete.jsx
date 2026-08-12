@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
-  parseFreteXLSX, diffImportFrete, inserirFrete, listarPendentesRevisao, listarSinalizados,
+  parseFreteXLSX, diffImportFrete, inserirFrete, atualizarFreteLote, listarPendentesRevisao, listarSinalizados,
   decidir, estornarRevisao, listarTodosPeriodo, listarPorPeriodos, chaveDuplicidade,
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
@@ -486,18 +486,29 @@ export default function ConferenciaFrete({ ctx, conn }) {
     if (!preview) return;
     setImporting(true);
     try {
-      const { novas, jaExistem, protegidas, protegidasCtrcs } = await diffImportFrete(conn, preview.linhas);
+      const { novas, divergentes, jaExistem, protegidas, protegidasCtrcs } = await diffImportFrete(conn, preview.linhas);
       // Categoria definida à mão não é recriada pela planilha (migration 049) — avisa quais.
       const avisoProt = protegidas
         ? ` — ${protegidas} mantiveram a categoria definida à mão (CTRC ${protegidasCtrcs.slice(0, 4).join(", ")}${protegidasCtrcs.length > 4 ? "…" : ""})`
         : "";
+      // Linha que já existe mas veio diferente na planilha é CORRIGIDA (migration 059): é o
+      // caso de um arquivo incompleto ter entrado antes do certo. Só campos do documento —
+      // revisão, categoria à mão e vínculos ficam de pé.
+      if (divergentes.length) await atualizarFreteLote(conn, divergentes);
+      const avisoUpd = divergentes.length
+        ? ` — ${divergentes.length} linha(s) tiveram os dados atualizados pela planilha (CTRC ${[...new Set(divergentes.map(l => l.ctrc))].slice(0, 4).join(", ")}${divergentes.length > 4 ? "…" : ""})`
+        : "";
       if (novas.length === 0) {
-        showToast?.(`Nada novo — todos os CTRCs desse período já estavam importados${avisoProt}.`, "ok");
-        setPreview(null); return;
+        showToast?.(divergentes.length
+          ? `Nenhum CTRC novo${avisoUpd}${avisoProt}.`
+          : `Nada novo — todos os CTRCs desse período já estavam importados${avisoProt}.`, "ok");
+        setPreview(null);
+        if (divergentes.length) { setPeriodoRef(preview.periodoRef); await carregar(); }
+        return;
       }
       await inserirFrete(conn, novas);
       const nomesClientes = [...new Set(novas.map(l => l.cliente))];
-      showToast?.(`${novas.length} registro(s) novo(s) importado(s) (${nomesClientes.join(", ")})${jaExistem ? ` — ${jaExistem} já existiam` : ""}${avisoProt}.`, "ok");
+      showToast?.(`${novas.length} registro(s) novo(s) importado(s) (${nomesClientes.join(", ")})${jaExistem ? ` — ${jaExistem} já existiam` : ""}${avisoUpd}${avisoProt}.`, "ok");
       setPreview(null);
       setPeriodoRef(preview.periodoRef);
       await carregar();

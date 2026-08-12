@@ -382,6 +382,21 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
 // `clientesMap` = mapaClientes(await listarClientes(conn)), carregado por quem chama.
 // CNPJs que não estão no cadastro voltam em `desconhecidos` (não em erro) — a tela
 // oferece cadastrar na hora ou ignorar essas linhas.
+// Colunas sem as quais a linha não tem como ser conferida. O parser lê por NOME, então um
+// arquivo com outro layout não dá erro: cada coluna que falta vira "" ou 0 e a linha entra
+// mutilada — foi o que aconteceu com um export reduzido do TMS (15 colunas, sem Data Emissão,
+// Total do Frete, Trecho, NFS, Placa, Peso NF, Valor NF, Manifesto e Contrato), que gravou
+// CTes sem data e com total zerado. Melhor recusar o arquivo do que sujar a base.
+export const COLUNAS_OBRIGATORIAS = [
+  "Empresa", "CTRC", "CNPJ Remetente", "Data Emissão",
+  "Frete Peso", "Total do Frete", "Valor Contrato Frete", "Saldo",
+];
+
+export function colunasFaltando(primeiraLinha) {
+  const presentes = new Set(Object.keys(primeiraLinha || {}));
+  return COLUNAS_OBRIGATORIAS.filter((c) => !presentes.has(c));
+}
+
 export function parseFreteXLSX(file, clientesMap) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -392,6 +407,14 @@ export function parseFreteXLSX(file, clientesMap) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(ws, { header: 0, defval: null, raw: true });
         if (!json.length) return resolve({ linhas: [], naoClassificadas: [], desconhecidos: {}, periodoRef: null, periodosEncontrados: [], erro: "Planilha vazia" });
+        const faltando = colunasFaltando(json[0]);
+        if (faltando.length) {
+          return resolve({
+            linhas: [], naoClassificadas: [], desconhecidos: {}, periodoRef: null, periodosEncontrados: [],
+            erro: `Esta planilha não é o relatório de faturamento completo — faltam as colunas: ${faltando.join(", ")}. `
+              + `Gere o relatório de novo com todas as colunas e importe outra vez.`,
+          });
+        }
 
         const porCnpj = {};
         json.forEach((r) => {
@@ -468,20 +491,78 @@ export async function listarPorPeriodos(conn, periodoRefs, cliente) {
 // Bonificação, que NUNCA vem da planilha), reimportar criava uma SEGUNDA linha do mesmo
 // CTRC na categoria que a planilha sugere — o CTe "voltava a aparecer" e a correção batia
 // na UNIQUE. Agora o documento inteiro é pulado, e o diff reporta quantos foram protegidos.
+// Campos que pertencem ao DOCUMENTO (vêm do TMS a cada exportação). São os únicos que uma
+// reimportação pode sobrescrever — decisão de revisão, categoria definida à mão, vínculo de
+// ciclo de vida, competência e contrato apontado à mão são do app e ficam intocados.
+export const CAMPOS_DA_PLANILHA = [
+  "data_emissao", "trecho", "nfs", "placa", "nome_usuario", "numero_manifesto", "numero_contrato",
+  "valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo",
+];
+const NUMERICOS = new Set(["valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo"]);
+
+// Diferença real entre o que está gravado e o que veio na planilha — usada pra oferecer a
+// correção quando um arquivo errado/incompleto já foi importado antes (caso real: export de
+// 15 colunas gravou CTes sem data, sem placa e com Total do Frete zerado).
+export function camposDivergentes(atual, nova) {
+  return CAMPOS_DA_PLANILHA.filter((c) => {
+    if (NUMERICOS.has(c)) return Math.abs(num(atual?.[c]) - num(nova?.[c])) > 0.01;
+    return String(atual?.[c] ?? "").trim() !== String(nova?.[c] ?? "").trim();
+  });
+}
+
 export async function diffImportFrete(conn, linhas) {
   const periodos = [...new Set(linhas.map(l => l.periodo_ref))];
   const existentes = periodos.length ? await listarPorPeriodos(conn, periodos) : [];
-  const existKeys = new Set(existentes.map(chaveLinha));
+  const porChave = new Map(existentes.map((l) => [chaveLinha(l), l]));
+  const existKeys = new Set(porChave.keys());
   const docsManuais = new Set(existentes.filter(l => l.categoria_manual).map(chaveDoc));
   const protegidas = linhas.filter(l => !existKeys.has(chaveLinha(l)) && docsManuais.has(chaveDoc(l)));
   const novas = linhas.filter(l => !existKeys.has(chaveLinha(l)) && !docsManuais.has(chaveDoc(l)));
+  // Já existe, mas o conteúdo do documento mudou: leva o id junto pra poder atualizar.
+  const divergentes = linhas
+    .filter((l) => existKeys.has(chaveLinha(l)))
+    .map((l) => {
+      const atual = porChave.get(chaveLinha(l));
+      const campos = camposDivergentes(atual, l);
+      return campos.length ? { ...l, id: atual.id, _campos: campos } : null;
+    })
+    .filter(Boolean);
   return {
     novas,
+    divergentes,
     jaExistem: linhas.length - novas.length - protegidas.length,
     protegidas: protegidas.length,
     protegidasCtrcs: [...new Set(protegidas.map(l => l.ctrc))],
     existentesTotal: existentes.length,
   };
+}
+
+// Reimportação corretiva: sobrescreve só CAMPOS_DA_PLANILHA + as flags automáticas das linhas
+// que já estão na base. Serve pra consertar import feito com arquivo incompleto sem perder o
+// que já foi revisado/decidido.
+export async function atualizarFreteLote(conn, linhas) {
+  if (!linhas.length) return [];
+  const rows = linhas.map((l) => ({
+    id: l.id,
+    ...Object.fromEntries(CAMPOS_DA_PLANILHA.map((c) => [c, l[c]])),
+    margem_lucro: l.margem_lucro,
+    flag_negativa: !!l.flag_negativa, flag_baixa: !!l.flag_baixa, flag_ambigua: !!l.flag_ambigua,
+    flag_sem_contrato: !!l.flag_sem_contrato, flag_duplicidade: !!l.flag_duplicidade,
+    dup_grupo_chave: l.dup_grupo_chave ?? null,
+  }));
+  if (_sessionToken) {
+    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/atualizar_frete_lote",
+      { p_token: _sessionToken, p_rows: rows }));
+  }
+  // Fallback anon (pré go-live): uma requisição por linha, mesmo efeito.
+  const out = [];
+  for (const r of rows) {
+    const { id, ...patch } = r;
+    const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${encodeURIComponent(id)}`,
+      { ...patch, atualizado_em: new Date().toISOString() });
+    out.push(Array.isArray(res) ? res[0] : res);
+  }
+  return out;
 }
 
 export async function inserirFrete(conn, linhas) {
