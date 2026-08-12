@@ -7,11 +7,12 @@ import Toggle from "../components/Toggle.jsx";
 
 const GRUPOS = ["ENCARGOS", "DESPESAS C/ PESSOAL", "DESPESAS FIXAS", "DESPESAS VARIAVEIS"];
 
-export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial, t, isMobile }) {
+export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial, t, isMobile, usuarioLogado }) {
   const ehEdicao = !!(inicial && inicial.id);
   const [form, setForm] = React.useState({
     grupo: "DESPESAS VARIAVEIS", dt_mov: "", valor: "", natureza: "", conta: "", historico: "",
     incluir: true, indevida: false, classe_credito: "estorno",
+    em_revisao: false, revisao_obs: "",
   });
 
   React.useEffect(() => {
@@ -28,6 +29,8 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
       // Crédito gravado antes da migration 050 não tem classe: vale estorno, que era o
       // comportamento da época.
       classe_credito: inicial?.classe_credito || "estorno",
+      em_revisao: inicial?.em_revisao === true,
+      revisao_obs: inicial?.revisao_obs || "",
     });
   }, [open, inicial]);
 
@@ -54,6 +57,11 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
       incluir: form.incluir,
       indevida: valorNum >= 0 ? form.indevida : false,
       classe_credito: valorNum < 0 ? form.classe_credito : null,
+      // Marcar indevida É a decisão, então encerra a revisão (ver toggle abaixo).
+      em_revisao: form.em_revisao,
+      revisao_obs: form.em_revisao ? (form.revisao_obs.trim() || null) : null,
+      revisao_em: form.em_revisao ? (inicial?.revisao_em || new Date().toISOString()) : null,
+      revisao_por: form.em_revisao ? (inicial?.revisao_por || usuarioLogado || null) : null,
     });
   };
 
@@ -115,7 +123,8 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
           {ehDebito ? (
             <div style={{ fontSize: 13, color: t.danger }}>
               <Toggle checked={form.indevida} color={t.danger}
-                onChange={(v) => setForm((f) => ({ ...f, indevida: v, incluir: v ? false : f.incluir }))}
+                // Marcar indevida É a decisão: encerra a revisão junto.
+                onChange={(v) => setForm((f) => ({ ...f, indevida: v, incluir: v ? false : f.incluir, em_revisao: v ? false : f.em_revisao }))}
                 label="Despesa indevida — aguardar crédito no mês seguinte" />
             </div>
           ) : (
@@ -142,6 +151,26 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
               </div>
             </div>
           )}
+
+          {/* Estado intermediário (migration 060): "achei estranho, decido depois". Não muda
+              o cálculo — a despesa segue como está — mas fica marcada na lista e some quando
+              alguém decide (correta ou indevida). */}
+          <div style={{ borderTop: `1px solid ${t.borda}`, paddingTop: 12, fontSize: 13, color: t.ouro }}>
+            <Toggle checked={form.em_revisao} color={t.ouro}
+              onChange={(v) => setForm((f) => ({ ...f, em_revisao: v, revisao_obs: v ? f.revisao_obs : "" }))}
+              label="Em revisão — conferir antes de decidir" />
+            {form.em_revisao && (
+              <>
+                <input type="text" value={form.revisao_obs} onChange={(e) => set("revisao_obs", e.target.value)}
+                  placeholder="O que precisa ser conferido? (ex.: parece duplicada, confirmar com o financeiro)"
+                  style={{ ...inp, marginTop: 8 }} />
+                <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 6, lineHeight: 1.45 }}>
+                  Não altera o resultado do mês: a despesa continua {form.incluir ? "entrando" : "fora"} do cálculo.
+                  Ao decidir depois, marque como indevida (aguarda crédito) ou desligue este aviso.
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div style={{ padding: "14px 20px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 10, justifyContent: "space-between" }}>

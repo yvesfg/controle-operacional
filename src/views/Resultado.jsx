@@ -29,7 +29,7 @@ const dupKeyOf = (d) => `${Math.round((Number(d.valor) + Number.EPSILON) * 100) 
 
 export default function Resultado({ ctx }) {
   const {
-    activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin,
+    activeTab, baseAtual, DADOS, getConexao, t, isMobile, showToast, canFin, hexRgb,
     mesRefFin: mesRef, setMesRefFin: setMesRef, incluirCompFin: incluirComp, setIncluirCompFin: setIncluirComp,
     irParaCreditos, segmento,
   } = ctx;
@@ -91,6 +91,7 @@ export default function Resultado({ ctx }) {
   const [foraMesSel, setForaMesSel] = React.useState({ open: false, linhas: [], foraMes: [], checked: {}, avisoVazio: false });
   const [busca, setBusca] = React.useState("");
   const [buscaTodosMeses, setBuscaTodosMeses] = React.useState(false);
+  const [soRevisao, setSoRevisao] = React.useState(false); // filtro "só as marcadas pra conferir"
   const [despesasTodas, setDespesasTodas] = React.useState([]);
   const [loadingTodas, setLoadingTodas] = React.useState(false);
 
@@ -288,15 +289,17 @@ export default function Resultado({ ctx }) {
   // Agrupa despesas por grupo p/ exibição (com filtro de busca)
   const buscaQ = busca.trim().toLowerCase();
   const pool = porFilial(buscaTodosMeses ? despesasTodas : despesas);
+  const emRevisao = pool.filter((d) => d.em_revisao);
+  const poolBase = soRevisao ? emRevisao : pool;
   const despesasFiltradas = buscaQ
-    ? pool.filter(d =>
+    ? poolBase.filter(d =>
         (d.natureza || "").toLowerCase().includes(buscaQ) ||
         (d.historico || "").toLowerCase().includes(buscaQ) ||
         (d.grupo || "").toLowerCase().includes(buscaQ) ||
         (d.conta || "").toLowerCase().includes(buscaQ) ||
         String(Math.abs(Number(d.valor || 0)).toFixed(2)).includes(buscaQ)
       )
-    : pool;
+    : poolBase;
   const porGrupo = {};
   despesasFiltradas.forEach((d) => { (porGrupo[d.grupo || "—"] = porGrupo[d.grupo || "—"] || []).push(d); });
 
@@ -665,6 +668,17 @@ export default function Resultado({ ctx }) {
             <Toggle checked={buscaTodosMeses} onChange={v => { setBuscaTodosMeses(v); }}
               label="Todos os meses" size={0.82} />
           </div>
+          {/* Atalho pra achar o que ficou pendente de conferência (migration 060). Só aparece
+              quando há alguma — chip morto em tela cheia de dado só atrapalha. */}
+          {(emRevisao.length > 0 || soRevisao) && (
+            <button onClick={() => setSoRevisao(v => !v)} title="Mostrar só as despesas marcadas para conferir"
+              style={{ flex: "0 0 auto", fontSize: 10.5, fontWeight: 700, padding: "5px 10px", borderRadius: 20,
+                cursor: "pointer", fontFamily: "inherit",
+                border: `1px solid ${soRevisao ? t.ouro : hexRgb(t.ouro, .45)}`,
+                background: soRevisao ? hexRgb(t.ouro, .16) : "transparent", color: t.ouro }}>
+              Em revisão ({emRevisao.length})
+            </button>
+          )}
           <div style={{ fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)", flex: "0 0 auto" }}>
             {buscaQ ? `${despesasFiltradas.length} de ${pool.length}` : `${pool.length}`} lançamentos
             {loadingTodas && " ⏳"}
@@ -709,6 +723,11 @@ export default function Resultado({ ctx }) {
                     {classeDoCredito(d) === "receita" && <span title="Recuperação de custo (sinistro, avaria, venda) — abate a despesa como qualquer crédito" style={{ marginLeft: 6, fontSize: 9, color: t.azul, fontWeight: 700 }}>RECUPERAÇÃO</span>}
                     {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
                     {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
+                    {/* Estado intermediário (migration 060): marcada pra conferir, sem decisão ainda. */}
+                    {d.em_revisao && (
+                      <span title={d.revisao_obs || "Marcada para conferir antes de decidir"}
+                        style={{ marginLeft: 6, fontSize: 9, color: t.ouro, fontWeight: 700 }}>EM REVISÃO</span>
+                    )}
                   </>
                 );
                 const toggleDup = d.dup_flag ? (
@@ -860,7 +879,7 @@ export default function Resultado({ ctx }) {
         );
       })()}
 
-      <ModalDespesa open={modal.open} inicial={modal.inicial} t={t} isMobile={isMobile}
+      <ModalDespesa open={modal.open} inicial={modal.inicial} t={t} isMobile={isMobile} usuarioLogado={ctx.usuarioLogado}
         onClose={() => setModal({ open: false, inicial: null })} onSave={salvar} onDelete={excluir} />
       </>
       )}
