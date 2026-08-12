@@ -257,6 +257,10 @@ function mapearColunaMaracanau(n) {
     // ── Motorista ──
     'motorista': 'nome', 'nome': 'nome',
     'cpf': 'cpf',
+    // Telefone da planilha (mesma regra da base Imperatriz/Belem) — sem isto o
+    // WhatsApp so acha numero se o motorista estiver no cadastro do app.
+    'telefone': 'telefone', 'tel': 'telefone', 'fone': 'telefone',
+    'celular': 'telefone', 'whatsapp': 'telefone',
     'placa': 'placa', 'placa 01': 'placa', 'placa01': 'placa',
     'placa 02': 'placa2', 'placa02': 'placa2', 'placa 2': 'placa2',
     'placa 03': 'placa3', 'placa03': 'placa3', 'placa 3': 'placa3',
