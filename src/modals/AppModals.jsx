@@ -31,7 +31,7 @@ export default function AppModals({ ctx }) {
     motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
     motExcluirLoteOpen, setMotExcluirLoteOpen, motExcluirLoteTexto, setMotExcluirLoteTexto,
     motSelecionados, setMotSelecionados, setDadosBase, dadosExtras,
-    saveMotoristasLS, registrarLog, showToast,
+    saveMotoristasLS, recarregarMotoristas, registrarLog, showToast,
     motImportPrefOpen, setMotImportPrefOpen, motImportRaw,
     motImportPrefBusca, setMotImportPrefBusca, motImportPrefSel, setMotImportPrefSel,
     conexoes, saveConexoesLS,
@@ -238,6 +238,7 @@ export default function AppModals({ ctx }) {
   wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
   wppConfirmModal, setWppConfirmModal, DADOS, motoristas,
   t, css, hIco, fmtMoeda, showToast, DESIGN, abrirWppPagModal, canFin,
+  getConexao, recarregarMotoristas,
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}

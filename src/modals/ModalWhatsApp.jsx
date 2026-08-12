@@ -1,6 +1,7 @@
 import React from "react";
 import { getPerfil } from "../operacao/perfil.js";
 import { clickable, saveJSON } from "../utils.js";
+import { criarMotorista, atualizarMotorista } from "../motoristas.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalWhatsApp({ ctx }) {
@@ -29,7 +30,64 @@ export default function ModalWhatsApp({ ctx }) {
     DADOS, motoristas,
     t, css, hIco, fmtMoeda, showToast, DESIGN,
     abrirWppPagModal, canFin,
+    getConexao, recarregarMotoristas,
   } = ctx;
+
+  // ── Cadastro de conta bancária SEM sair do modal ──
+  // Escolher "Conta" com motorista sem dados bancários mandava o usuário pra aba
+  // Motoristas e perder a mensagem que estava montando. Agora o formulário abre aqui
+  // e o modal ALARGA (não cresce em altura) pra caber sem rolagem.
+  const [bankForm, setBankForm] = React.useState(null);   // null = fechado
+  const [bankSaving, setBankSaving] = React.useState(false);
+
+  const motAtual = wppModal?.mot || null;
+  const temContaAtual = !!(motAtual?.banco || motAtual?.conta || motAtual?.pix_chave);
+
+  React.useEffect(() => {
+    if (!wppModal) { setBankForm(null); return; }
+    if ((wppPgto === "conta" || wppPgto === "ambos") && !temContaAtual) {
+      setBankForm(f => f || {
+        banco: "", agencia: "", conta: "",
+        favorecido: motAtual?.nome || wppModal.reg?.nome || "",
+        pix_tipo: "", pix_chave: "",
+      });
+    }
+  }, [wppModal, wppPgto, temContaAtual]);
+
+  const salvarDadosBancarios = async () => {
+    if (!wppModal || !bankForm) return;
+    const { reg, mot } = wppModal;
+    const f = bankForm;
+    if (!f.banco.trim() && !f.pix_chave.trim()) {
+      showToast("⚠️ Informe ao menos o banco ou a chave PIX", "warn"); return;
+    }
+    const patch = {
+      banco: f.banco.trim(), agencia: f.agencia.trim(), conta: f.conta.trim(),
+      favorecido: (f.favorecido || "").trim(),
+      pix_tipo: f.pix_tipo || "", pix_chave: (f.pix_chave || "").trim(),
+    };
+    setBankSaving(true);
+    try {
+      const conn = getConexao();
+      // Motorista que não está no cadastro (caso comum: só existe na planilha) é
+      // criado aqui, já com o telefone que está na tela.
+      const salvo = mot?.id
+        ? await atualizarMotorista(conn, mot.id, patch)
+        : await criarMotorista(conn, {
+            nome: reg.nome || "", cpf: reg.cpf || "",
+            tel: wppTel || reg.telefone || "", ...patch,
+          });
+      const novoMot = { ...(mot || {}), ...(salvo && typeof salvo === "object" ? salvo : {}), ...patch };
+      setWppModal(m => (m ? { ...m, mot: novoMot } : m));
+      setBankForm(null);
+      showToast(mot?.id ? "✅ Dados bancários salvos no cadastro" : "✅ Motorista cadastrado com os dados bancários", "ok");
+      if (recarregarMotoristas) recarregarMotoristas(true);
+    } catch (e) {
+      showToast("❌ Erro ao salvar: " + (e?.message || e), "err");
+    } finally {
+      setBankSaving(false);
+    }
+  };
 
   return (
     <>
@@ -115,7 +173,7 @@ export default function ModalWhatsApp({ ctx }) {
                   const mot=motoristas.find(m=>(_reg.cpf&&m.cpf?.replace(/\D/g,"")===_reg.cpf?.replace(/\D/g,""))||(_reg.nome&&m.nome===_reg.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===_reg.placa));
                   setWppTipoOpen(false);setWppSearchTxt("");setWppSearchReg(null);
                   if(op.k==="faturamento"){setWppFatModal({reg:_reg,mot:mot||null});}
-                  else if(op.k==="contratacao"){setWppModal({reg:_reg,mot:mot||null});setWppTel((mot?.tel||_reg.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
+                  else if(op.k==="contratacao"){setWppModal({reg:_reg,mot:mot||null});setWppTel((mot?.tel||_reg.telefone||_reg.tel||""));setWppPgto("cheque");setWppValCheque("");setWppValConta("");setWppObs("");}
                   else if(op.k==="descarga"){abrirWppPagModal(_reg,mot,"descarga");}
                   else if(op.k==="diarias"){abrirWppPagModal(_reg,mot,"diarias");}
                 }}
@@ -205,7 +263,9 @@ export default function ModalWhatsApp({ ctx }) {
 
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal(null)}>
-            <div style={{...css.modal,maxHeight:"96vh"}}>
+            {/* Com o cadastro de conta aberto o modal ALARGA (520 → 760): os campos entram
+                em 2 colunas e o conteúdo continua cabendo sem rolar. */}
+            <div style={{...css.modal,maxHeight:"96vh",maxWidth:bankForm?760:css.modal.maxWidth,transition:"max-width .22s cubic-bezier(.34,1.1,.64,1)"}}>
               {/* Header */}
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.06)"}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>
@@ -279,12 +339,57 @@ export default function ModalWhatsApp({ ctx }) {
                   </div>
                 </div>
 
-                {/* Conta — verificar dados bancários */}
+                {/* Conta — dados bancários (com cadastro inline quando faltam) */}
                 {(wppPgto==="conta" || wppPgto==="ambos") && (
-                  <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${temConta?t.verde:t.warn}`}}>
-                    {temConta ? (
+                  <div style={{background:t.card2,borderRadius:10,padding:12,border:`1px solid ${bankForm?t.azulLt:(temConta?t.verde:t.warn)}`}}>
+                    {bankForm ? (
                       <>
-                        <div style={{fontSize:10,fontWeight:700,color:t.verde,marginBottom:6,display:"flex",alignItems:"center",gap:5}}><Icon n="check-circle" s={12} c={t.verde}/> Conta bancária cadastrada</div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:9}}>
+                          <Icon n="bank" s={13} c={t.azulLt}/>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:11,fontWeight:700,color:t.azulLt}}>{mot?.id?"Editar dados bancários":"Cadastrar conta do motorista"}</div>
+                            <div style={{fontSize:9,color:t.txt2,marginTop:1}}>{mot?.id?"Salva direto no cadastro do motorista.":`Cria ${reg.nome||"o motorista"} no cadastro com estes dados.`}</div>
+                          </div>
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:8}}>
+                          {[
+                            {k:"banco",l:"Banco",ph:"Ex.: 341 · Itaú"},
+                            {k:"agencia",l:"Agência",ph:"0000"},
+                            {k:"conta",l:"Conta (C/C)",ph:"00000-0"},
+                            {k:"favorecido",l:"Favorecido",ph:"Nome de quem recebe"},
+                          ].map(f=>(
+                            <div key={f.k}>
+                              <label style={labelStyle}>{f.l}</label>
+                              <input value={bankForm[f.k]} onChange={e=>setBankForm(p=>({...p,[f.k]:e.target.value}))} placeholder={f.ph} style={inpStyle} />
+                            </div>
+                          ))}
+                          <div>
+                            <label style={labelStyle}>PIX — Tipo</label>
+                            <select value={bankForm.pix_tipo} onChange={e=>setBankForm(p=>({...p,pix_tipo:e.target.value}))} style={{...inpStyle,cursor:"pointer"}}>
+                              <option value="">—</option>
+                              {["CPF","CNPJ","Telefone","E-mail","Aleatória"].map(o=><option key={o} value={o}>{o}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={labelStyle}>PIX — Chave</label>
+                            <input value={bankForm.pix_chave} onChange={e=>setBankForm(p=>({...p,pix_chave:e.target.value}))} placeholder="Chave PIX" style={inpStyle} />
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:7,marginTop:10}}>
+                          <button onClick={()=>setBankForm(null)} disabled={bankSaving} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:8,padding:"8px 12px",color:t.txt2,fontSize:10.5,fontWeight:600,cursor:bankSaving?"not-allowed":"pointer",fontFamily:"inherit"}}>AGORA NÃO</button>
+                          <button onClick={salvarDadosBancarios} disabled={bankSaving} style={{flex:1,borderRadius:8,padding:"9px 14px",cursor:bankSaving?"wait":"pointer",background:`rgba(22,119,255,.14)`,border:`1.5px solid rgba(22,119,255,.4)`,color:t.azulLt,fontWeight:700,fontSize:11.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                            <Icon n="save" s={13} c="currentColor"/> {bankSaving?"SALVANDO…":"SALVAR NO CADASTRO"}
+                          </button>
+                        </div>
+                      </>
+                    ) : temConta ? (
+                      <>
+                        <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:6}}>
+                          <Icon n="check-circle" s={12} c={t.verde}/>
+                          <div style={{flex:1,fontSize:10,fontWeight:700,color:t.verde}}>Conta bancária cadastrada</div>
+                          <button onClick={()=>setBankForm({banco:mot?.banco||"",agencia:mot?.agencia||"",conta:mot?.conta||"",favorecido:mot?.favorecido||mot?.nome||reg.nome||"",pix_tipo:mot?.pix_tipo||"",pix_chave:mot?.pix_chave||""})}
+                            style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"3px 8px",color:t.txt2,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>EDITAR</button>
+                        </div>
                         <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
                           <div>BCO: <strong style={{color:t.txt}}>{mot.banco||"—"}</strong></div>
                           <div>AGE: <strong style={{color:t.txt}}>{mot.agencia||"—"}</strong> · C/C: <strong style={{color:t.txt}}>{mot.conta||"—"}</strong></div>
@@ -293,7 +398,12 @@ export default function ModalWhatsApp({ ctx }) {
                         </div>
                       </>
                     ) : (
-                      <div style={{fontSize:10,color:t.warn,display:"flex",alignItems:"flex-start",gap:5}}><Icon n="alert" s={11} c={t.warn} style={{marginTop:1}}/><span>Motorista sem conta bancária cadastrada. Cadastre na aba Motoristas antes de enviar.</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:7}}>
+                        <Icon n="alert" s={12} c={t.warn}/>
+                        <span style={{flex:1,fontSize:10,color:t.warn}}>Motorista sem conta bancária cadastrada.</span>
+                        <button onClick={()=>setBankForm({banco:"",agencia:"",conta:"",favorecido:mot?.nome||reg.nome||"",pix_tipo:"",pix_chave:""})}
+                          style={{background:`rgba(22,119,255,.12)`,border:`1.5px solid rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>CADASTRAR</button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -347,7 +457,7 @@ export default function ModalWhatsApp({ ctx }) {
         const {reg, mot} = wppModal2;
         const nomeMotorista = mot?.nome || reg.nome || "";
         const placas = [mot?.placa1||reg.placa, mot?.placa2, mot?.placa3, mot?.placa4].filter(Boolean).join(" / ") || reg.placa || "—";
-        const telMot = mot?.tel || reg.tel || "";
+        const telMot = mot?.tel || reg.telefone || reg.tel || "";
         const roOk = wpp2Ro.trim().length > 0;
 
         const inpStyle2 = {...css.inp, fontSize:12, padding:"7px 10px"};
@@ -537,7 +647,7 @@ export default function ModalWhatsApp({ ctx }) {
                   const faltando=[];
                   if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.nf)faltando.push("NF");if(isAvb&&!reg.codigo)faltando.push("CODIGO");
                   if(faltando.length>0){if(!window.confirm(`⚠️ Campos vazios: ${faltando.join(", ")}.\nEnviar mesmo assim?`))return;}
-                  const tel=(mot?.tel||"").replace(/\D/g,"");
+                  const tel=(mot?.tel||reg.telefone||"").replace(/\D/g,"");
                   const rawMsg=gerarFat();
                   const url=tel?`https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}`:`https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
                   setWppFatModal(null);
@@ -733,7 +843,7 @@ export default function ModalWhatsApp({ ctx }) {
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
                 <button onClick={()=>setWppPagModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
                 <button onClick={()=>{
-                  const tel=(mot?.tel||"").replace(/\D/g,"");
+                  const tel=(mot?.tel||reg.telefone||"").replace(/\D/g,"");
                   const rawMsg=gerarPag();
                   const url=tel?`https://wa.me/55${tel}?text=${encodeURIComponent(rawMsg)}`:`https://wa.me/?text=${encodeURIComponent(rawMsg)}`;
                   setWppPagModal(null); setWppFortes(false); setWppDccMinutas([{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}]); setWppCteComp({cte:"",mdf:"",mat:""}); setWppDscMinutas([{tipo:"MAM",cte:"",mdf:"",num:""}]);

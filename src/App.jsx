@@ -1928,7 +1928,7 @@ export default function App() {
         motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
         motExcluirLoteOpen, setMotExcluirLoteOpen, motExcluirLoteTexto, setMotExcluirLoteTexto,
         motSelecionados, setMotSelecionados, setDadosBase, dadosExtras,
-        saveMotoristasLS, registrarLog, showToast,
+        saveMotoristasLS, recarregarMotoristas, registrarLog, showToast,
         motImportPrefOpen, setMotImportPrefOpen, motImportRaw,
         motImportPrefBusca, setMotImportPrefBusca, motImportPrefSel, setMotImportPrefSel,
         conexoes, saveConexoesLS,

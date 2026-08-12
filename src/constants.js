@@ -164,6 +164,14 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-08-12", sessao: "Sessao 54",
+    itens: [
+      "FIX (Yves: 'pq nao ta puxando o telefone se tem no google sheets?') · A planilha de Imperatriz/Belem tem coluna TELEFONE, mas mapearColuna() do SyncSupabase.gs nunca a mapeou e controle_operacional nao tinha a coluna -- o WhatsApp so achava numero pelo cadastro (motoristas.tel), que cobre 188 de 849. O caso do reporte (DT 1348169, CARLOS HENRIQUE, CPF 21297595807) nem existe no cadastro: os dois CARLOS HENRIQUE cadastrados tem outro CPF e tel nulo. Migration 061 cria telefone em controle_operacional e _maracanau (a AVB ja tinha desde a 041), o .gs passa a mapear telefone/tel/fone/celular/whatsapp e o front usa reg.telefone como fallback de mot.tel nos 4 modelos (contratacao, doc, faturamento, pagamento) e na busca. PENDENTE: colar o .gs novo no Apps Script e rodar a sync -- ate la a coluna fica vazia.",
+      "FEAT (pedido Yves) · Cadastro de conta bancaria INLINE no modal de Contratacao: escolher 'Conta'/'Ambos' sem dados bancarios abre o formulario ali mesmo (banco, agencia, conta, favorecido, PIX tipo+chave) em vez de mandar pra aba Motoristas e perder a mensagem em montagem. Motorista que nao esta no cadastro e CRIADO na hora (com o telefone da tela); quem ja existe recebe patch. Depois de salvar o bloco vira o cartao verde de sempre, agora com botao EDITAR.",
+      "UI · Com o formulario aberto o modal ALARGA de 520 para 760px (transicao suave) e os campos entram em grade auto-fit -- cresce em largura, nao em altura, entao nao aparece rolagem nova. Fechado, o modal volta ao tamanho de antes.",
+    ],
+  },
+  {
     data: "2026-08-10", sessao: "Sessao 53",
     itens: [
       "FEAT (Yves: 'como sinalizo uma despesa pra revisao antes de decidir?') · A despesa so tinha os dois estados FINAIS -- correta (incluir) ou indevida (aguardar credito). Faltava o meio do caminho: 'achei estranho, confiro e decido depois'. Migration 060: em_revisao + revisao_obs/por/em em despesas_filial (whitelist do atualizar_despesa atualizada, senao a tela salvava e nada mudava). No ModalDespesa entra o toggle 'Em revisao -- conferir antes de decidir' com campo do que precisa ser checado; marcar INDEVIDA encerra a revisao sozinho, porque a decisao foi tomada.",

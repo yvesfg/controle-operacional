@@ -456,6 +456,10 @@ function mapearColuna(n) {
     // ── Motorista ──
     'motorista': 'nome', 'nome': 'nome',
     'cpf': 'cpf',
+    // Telefone vem da planilha (coluna TELEFONE) — antes dela ser mapeada, o
+    // WhatsApp só achava número se o motorista estivesse no cadastro do app.
+    'telefone': 'telefone', 'tel': 'telefone', 'fone': 'telefone',
+    'celular': 'telefone', 'whatsapp': 'telefone',
     'placa': 'placa', 'placa 01': 'placa', 'placa01': 'placa',
     'vinculo': 'vinculo',
     'vinculo do motorista': 'vinculo',
