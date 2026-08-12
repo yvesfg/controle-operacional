@@ -69,6 +69,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   const [form, setForm] = useState(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
   const [credenciaisCriadas, setCredenciaisCriadas] = useState(null); // {username,password} — mostrado 1x
+  const [conviteCriado, setConviteCriado] = useState(null);           // {email} — passo "avise a pessoa"
   const [verTodosNegados, setVerTodosNegados] = useState(false);
   const [resetSenha, setResetSenha] = useState(null); // {userId, senha}
   const [painelAberto, setPainelAberto] = useState(null); // id do acesso com o configurador de painel aberto
@@ -224,7 +225,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     if (!r.ok) { showToast?.("Erro: " + r.error, "err"); return; }
     showToast?.(r.aplicado
       ? "Esse e-mail já tinha conta — acesso aplicado agora"
-      : "Convite criado. No 1º login com esse e-mail o acesso entra sozinho", "ok");
+      : "Convite criado — falta avisar a pessoa", "ok");
+    // Só o convite precisa do passo de aviso: quem já tinha conta ganhou o acesso agora
+    // e vai ver na próxima vez que entrar, sem depender de ninguém avisar.
+    if (!r.aplicado) setConviteCriado({ email: form.email.trim().toLowerCase() });
     setAddOpen(false); setForm(FORM_VAZIO());
     carregar();
   };
@@ -235,12 +239,25 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     if (!r.ok) { showToast?.("Erro: " + r.error, "err"); return; }
     showToast?.("Convite cancelado", "ok"); carregar();
   };
-  const copiarLink = async (email) => {
+  // O convite NÃO dispara e-mail: `hub_admin_convidar` só pré-autoriza o endereço em
+  // hub_convites, e o acesso entra no 1º login com o Google. Quem avisa a pessoa é o
+  // admin — então o aviso pronto mora aqui, em vez de virar serviço de e-mail.
+  const AVISO_ASSUNTO = "Seu acesso ao YFGroup";
+  const avisoDe = (email) => {
     const url = window.location.origin + window.location.pathname;
-    const msg = `Seu acesso ao YFGroup está liberado.\nEntre em ${url} e clique em "Entrar com Google" usando o e-mail ${email}.`;
-    try { await navigator.clipboard.writeText(msg); showToast?.("Aviso copiado — é só colar pro usuário", "ok"); }
+    return { url, texto: `Seu acesso ao YFGroup está liberado.\nEntre em ${url} e clique em "Entrar com Google" usando o e-mail ${email}.` };
+  };
+  const copiarLink = async (email) => {
+    const { texto, url } = avisoDe(email);
+    try { await navigator.clipboard.writeText(texto); showToast?.("Aviso copiado — é só colar pro usuário", "ok"); }
     catch { showToast?.("Não consegui copiar. Link: " + url, "warn"); }
   };
+  // wa.me sem número: abre o WhatsApp com o texto pronto e você escolhe o contato.
+  const abrirWpp = (email) => window.open(`https://wa.me/?text=${encodeURIComponent(avisoDe(email).texto)}`, "_blank");
+  // Compose do Gmail já preenchido — quem clica em Enviar é você, o app não manda nada.
+  const abrirGmail = (email) => window.open(
+    `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodeURIComponent(AVISO_ASSUNTO)}&body=${encodeURIComponent(avisoDe(email).texto)}`,
+    "_blank");
 
   // ── Estilos ───────────────────────────────────────────────────────────────
   const card = { background:t.card, border:`1px solid ${t.borda}`, borderRadius:12, overflow:"hidden" };
@@ -463,6 +480,14 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   };
 
   // ── Card de convite ───────────────────────────────────────────────────────
+  const BotoesAviso = ({ email }) => (
+    <>
+      <button onClick={()=>copiarLink(email)} style={btnAcao(t.azulLt)}>Copiar aviso</button>
+      <button onClick={()=>abrirWpp(email)}   style={btnAcao(t.verde)}>WhatsApp</button>
+      <button onClick={()=>abrirGmail(email)} style={btnAcao(t.ouro)}>Gmail</button>
+    </>
+  );
+
   const renderConvite = (c) => {
     const cfgCO = (c.modulos || []).find(m => m.slug === "controle_op")?.config || {};
     const bases = Array.isArray(cfgCO.bases) ? cfgCO.bases : [];
@@ -482,8 +507,8 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             </div>
           </div>
           <span style={{fontSize:10,color:t.azulLt,fontStyle:"italic",whiteSpace:"nowrap"}}>aguardando 1º login</span>
-          <div style={{display:"flex",gap:6}}>
-            <button onClick={()=>copiarLink(c.email)} style={btnAcao(t.azulLt)}>Copiar aviso</button>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            <BotoesAviso email={c.email}/>
             <button onClick={()=>cancelarConvite(c.email)} style={btnAcao(t.danger)}>Cancelar</button>
           </div>
         </div>
@@ -642,7 +667,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             <div style={{fontFamily:"var(--font-heading)",fontSize:17,fontWeight:700,color:t.txt}}>Gerenciar acessos</div>
             <div style={{fontSize:11,color:t.txt2}}>Libere módulos e defina permissões por usuário</div>
           </div>
-          <button onClick={()=>{setAddOpen(v=>!v); setCredenciaisCriadas(null);}}
+          <button onClick={()=>{setAddOpen(v=>!v); setCredenciaisCriadas(null); setConviteCriado(null);}}
             style={{background:addOpen?"transparent":t.ouro,color:addOpen?t.txt2:t.onPrimary,border:addOpen?`1px solid ${t.borda2}`:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
             {addOpen ? "Fechar" : "+ Adicionar usuário"}
           </button>
@@ -658,6 +683,24 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
         </div>
 
         {addOpen && painelAdicionar}
+
+        {/* Passo que faltava: o convite era criado e a tela dava "ok", mas ninguém
+            avisava a pessoa — e o app não envia e-mail. Agora o aviso pronto aparece
+            junto com a confirmação, no momento em que dá pra mandar. */}
+        {conviteCriado && (
+          <div style={{...card,padding:"14px",marginBottom:16,border:`1px solid ${hexRgb(t.azulLt,.4)}`,background:hexRgb(t.azulLt,.06)}}>
+            <div style={{fontSize:12,fontWeight:700,color:t.azulLt,marginBottom:6}}>✓ Convite criado para {conviteCriado.email} — falta avisar a pessoa</div>
+            <div style={{fontSize:11,color:t.txt2,lineHeight:1.5,marginBottom:8}}>
+              O sistema <b>não envia e-mail</b>: o convite libera esse endereço aqui dentro e o acesso entra no 1º login —
+              e só se ela entrar com o Google <b>desse mesmo e-mail</b>. Mande o aviso abaixo:
+            </div>
+            <div style={{fontFamily:"var(--font-mono)",fontSize:11,color:t.txt,background:t.inputBg,border:`1px solid ${t.borda}`,borderRadius:8,padding:"8px 10px",whiteSpace:"pre-wrap",marginBottom:8}}>
+              {avisoDe(conviteCriado.email).texto}
+            </div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><BotoesAviso email={conviteCriado.email}/></div>
+            <button onClick={()=>setConviteCriado(null)} style={{marginTop:8,background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Fechar</button>
+          </div>
+        )}
 
         {credenciaisCriadas && (
           <div style={{...card,padding:"14px",marginBottom:16,border:`1px solid ${hexRgb(t.verde,.4)}`,background:hexRgb(t.verde,.06)}}>
@@ -680,6 +723,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           {convitesFiltrados.length > 0 && (
             <div>
               {secTitulo(t.azulLt, `Convites — acesso já definido (${convitesFiltrados.length})`)}
+              <div style={{fontSize:10.5,color:t.txt2,marginTop:-4,marginBottom:8,lineHeight:1.5}}>
+                O app não envia e-mail — quem avisa é você. Se a pessoa disser que não recebeu nada, é isto: mande o aviso por WhatsApp ou Gmail.
+              </div>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{convitesFiltrados.map(renderConvite)}</div>
             </div>
           )}
