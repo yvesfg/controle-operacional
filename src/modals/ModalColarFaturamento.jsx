@@ -41,8 +41,12 @@ export default function ModalColarFaturamento({ ctx }) {
   // Data do manifesto: vem da tela, não do texto. Começa na data do lançamento
   // (ou na que o registro já tem) e fica editável pra quando o faturamento foi
   // feito em outro dia.
+  // Abre com o texto que veio de onde chamou (bloco colado na busca do WhatsApp
+  // ou só "DT: xxxx" quando a DT já estava selecionada lá).
   React.useEffect(() => {
-    if (!faturaColarOpen) { setTexto(""); setManifestoISO(""); setSobrescrever(false); return; }
+    setTexto(faturaColarOpen?.texto || "");
+    setManifestoISO("");
+    setSobrescrever(false);
   }, [faturaColarOpen]);
 
   React.useEffect(() => {
@@ -84,7 +88,7 @@ export default function ModalColarFaturamento({ ctx }) {
       }
       const extra = res.ignorados?.length ? ` (sem coluna na planilha: ${res.ignorados.join(", ")})` : "";
       showToast(`✅ DT ${reg.dt} atualizada na planilha (${res.aba}, linha ${res.linha}) e no app${extra}`, "ok");
-      setFaturaColarOpen(false);
+      setFaturaColarOpen(null);
     } catch (e) {
       showToast("❌ " + (e.message || e), "err");
     } finally {
@@ -95,7 +99,7 @@ export default function ModalColarFaturamento({ ctx }) {
   const lbl = { fontSize: 8, textTransform: "uppercase", letterSpacing: 1.2, color: t.txt2, fontWeight: 600, display: "block", marginBottom: 3 };
 
   return (
-    <div style={css.overlay} onClick={e => e.target === e.currentTarget && !salvando && setFaturaColarOpen(false)}>
+    <div style={css.overlay} onClick={e => e.target === e.currentTarget && !salvando && setFaturaColarOpen(null)}>
       <div style={{ ...css.modal, maxWidth: 640, maxHeight: "96vh" }}>
         {/* Header */}
         <div style={{ padding: "13px 16px 10px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${t.borda}`, flexShrink: 0, background: "rgba(217,98,43,.06)" }}>
@@ -106,7 +110,7 @@ export default function ModalColarFaturamento({ ctx }) {
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: 2, color: t.ouro }}>COLAR FATURAMENTO</div>
             <div style={{ fontSize: 9, color: t.txt2 }}>Cole o bloco do WhatsApp — o app preenche a DT e grava na planilha</div>
           </div>
-          <button onClick={() => setFaturaColarOpen(false)} disabled={salvando} style={{ background: "rgba(128,128,128,.1)", border: "none", borderRadius: 7, width: 44, height: 44, cursor: salvando ? "not-allowed" : "pointer", color: t.txt2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} style={{ background: "rgba(128,128,128,.1)", border: "none", borderRadius: 7, width: 44, height: 44, cursor: salvando ? "not-allowed" : "pointer", color: t.txt2, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon n="x" s={16} c={t.txt2} sw={2} />
           </button>
         </div>
@@ -184,7 +188,7 @@ export default function ModalColarFaturamento({ ctx }) {
 
         {/* Rodapé */}
         <div style={{ padding: "10px 14px 18px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 8, flexShrink: 0 }}>
-          <button onClick={() => setFaturaColarOpen(false)} disabled={salvando} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid ${t.borda}`, borderRadius: 9, padding: "10px 14px", color: t.txt2, fontSize: 11, fontWeight: 600, cursor: salvando ? "not-allowed" : "pointer", fontFamily: "inherit" }}>CANCELAR</button>
+          <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid ${t.borda}`, borderRadius: 9, padding: "10px 14px", color: t.txt2, fontSize: 11, fontWeight: 600, cursor: salvando ? "not-allowed" : "pointer", fontFamily: "inherit" }}>CANCELAR</button>
           <button
             onClick={gravar}
             disabled={salvando || !reg || !aGravar.length}

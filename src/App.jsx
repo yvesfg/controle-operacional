@@ -1411,8 +1411,6 @@ export default function App() {
         hIco={hIco}
         tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab}
         setWppTipoOpen={setWppTipoOpen}
-        setFaturaColarOpen={setFaturaColarOpen}
-        mostrarColarFaturamento={perfilAtual?.ancora !== "codigo"}
         theme={theme} setTheme={setTheme}
         isAdmin={isAdmin} setModalOpen={setModalOpen}
         usuarioLogado={usuarioLogado} perfil={perfil}
@@ -1956,7 +1954,7 @@ export default function App() {
         wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppFortes, setWppFortes,
         wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
         wppConfirmModal, setWppConfirmModal, abrirWppPagModal,
-        faturaColarOpen, setFaturaColarOpen, patchOperacional,
+        faturaColarOpen, setFaturaColarOpen, patchOperacional, perfilAtual,
         dashDrillModal, setDashDrillModal, parseData, abrirDetalhe,
         relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
         relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,

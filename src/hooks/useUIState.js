@@ -9,8 +9,9 @@ export function useUIState() {
   const [contatosAdminOpen, setContatosAdminOpen] = useState(false);
   const [gsheetsOpen, setGsheetsOpen] = useState(false);
   const [oauthAccessOpen, setOauthAccessOpen] = useState(false);
-  // "Colar faturamento" — caminho inverso do card do WhatsApp
-  const [faturaColarOpen, setFaturaColarOpen] = useState(false);
+  // "Colar faturamento" — caminho inverso do card do WhatsApp.
+  // null = fechado; { texto } = aberto com o bloco que veio de quem chamou.
+  const [faturaColarOpen, setFaturaColarOpen] = useState(null);
   const [syncStatus, setSyncStatus] = useState(null);
   const [syncStatusLoading, setSyncStatusLoading] = useState(false);
   const [adminEmailVal, setAdminEmailVal] = useState(() => loadJSON("co_admin_email", "yvesfg@gmail.com"));

@@ -57,7 +57,7 @@ export default function AppModals({ ctx }) {
     wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppFortes, setWppFortes,
     wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
     wppConfirmModal, setWppConfirmModal, abrirWppPagModal,
-    faturaColarOpen, setFaturaColarOpen, patchOperacional,
+    faturaColarOpen, setFaturaColarOpen, patchOperacional, perfilAtual,
     dashDrillModal, setDashDrillModal, parseData, abrirDetalhe,
     relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
     relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,
@@ -241,6 +241,7 @@ export default function AppModals({ ctx }) {
   wppConfirmModal, setWppConfirmModal, DADOS, motoristas,
   t, css, hIco, fmtMoeda, showToast, DESIGN, abrirWppPagModal, canFin,
   getConexao, recarregarMotoristas,
+  setFaturaColarOpen, perfilAtual,
 }} />
 
 <ModalColarFaturamento ctx={{

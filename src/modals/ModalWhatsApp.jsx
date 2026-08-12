@@ -2,6 +2,7 @@ import React from "react";
 import { getPerfil } from "../operacao/perfil.js";
 import { clickable, saveJSON } from "../utils.js";
 import { criarMotorista, atualizarMotorista } from "../motoristas.js";
+import { parseFaturamento } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalWhatsApp({ ctx }) {
@@ -31,7 +32,25 @@ export default function ModalWhatsApp({ ctx }) {
     t, css, hIco, fmtMoeda, showToast, DESIGN,
     abrirWppPagModal, canFin,
     getConexao, recarregarMotoristas,
+    setFaturaColarOpen, perfilAtual,
   } = ctx;
+
+  // Colar faturamento vive AQUI, no mesmo lugar de onde o card sai: é a mesma
+  // DT e os mesmos campos (CTE/MDF/MAT/ID/NF), só que no sentido inverso.
+  const podeColar = perfilAtual?.ancora !== "codigo" && !!setFaturaColarOpen;
+
+  // Colar o bloco inteiro na busca já abre o preenchimento — a DT vem do texto,
+  // então não faz sentido exigir que a pessoa busque antes.
+  const aoColarNaBusca = (e) => {
+    if (!podeColar) return;
+    const txt = e.clipboardData?.getData("text") || "";
+    if (!/\n/.test(txt.trim())) return;
+    const { campos } = parseFaturamento(txt);
+    if (!campos.dt) return;
+    e.preventDefault();
+    setWppTipoOpen(false); setWppSearchTxt("");
+    setFaturaColarOpen({ texto: txt });
+  };
 
   // ── Cadastro de conta bancária SEM sair do modal ──
   // Escolher "Conta" com motorista sem dados bancários mandava o usuário pra aba
@@ -134,7 +153,8 @@ export default function ModalWhatsApp({ ctx }) {
                     <input
                       value={wppSearchTxt}
                       onChange={e=>setWppSearchTxt(e.target.value)}
-                      placeholder="DT, motorista ou placa…"
+                      onPaste={aoColarNaBusca}
+                      placeholder={podeColar?"DT, motorista, placa — ou cole o bloco":"DT, motorista ou placa…"}
                       style={{width:"100%",padding:"9px 10px 9px 34px",border:`1px solid ${t.borda}`,borderRadius:9,background:t.card2,color:t.txt,fontSize:13,fontFamily:"inherit",outline:"none"}}
                       onFocus={e=>{e.target.style.borderColor=t.azulLt;}}
                       onBlur={e=>{e.target.style.borderColor=t.borda;}}
@@ -166,9 +186,17 @@ export default function ModalWhatsApp({ ctx }) {
               {[
                 {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:t.ouro, l:"Faturamento", sub:"CTE · MDF · MAT · CODIGO · NF"},
                 {k:"contratacao",ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, color:t.azulLt, l:"Contratação", sub:"Modelo completo de pagamento"},
+                // Sentido inverso do "Faturamento": em vez de gerar o texto, lê o texto.
+                ...(podeColar?[{k:"preencher", ico:<><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13h6M9 17h4"/></>, color:t.verde, l:"Preencher faturamento", sub:"Cole o bloco — grava na DT e na planilha"}]:[]),
               ].map((op)=>(
                 <button key={op.k} onClick={()=>{
                   const _reg=wppSearchReg||buscaResult;
+                  // "preencher" não exige busca: a DT vem do texto colado.
+                  if(op.k==="preencher"){
+                    setWppTipoOpen(false);setWppSearchTxt("");setWppSearchReg(null);
+                    setFaturaColarOpen({texto:_reg?.dt?`DT: ${_reg.dt}\n`:""});
+                    return;
+                  }
                   if(!_reg){showToast("Busque um registro primeiro","warn");return;}
                   const mot=motoristas.find(m=>(_reg.cpf&&m.cpf?.replace(/\D/g,"")===_reg.cpf?.replace(/\D/g,""))||(_reg.nome&&m.nome===_reg.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===_reg.placa));
                   setWppTipoOpen(false);setWppSearchTxt("");setWppSearchReg(null);
