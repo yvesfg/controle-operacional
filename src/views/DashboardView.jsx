@@ -1,5 +1,6 @@
 import React from "react";
 import { getPerfil } from "../operacao/perfil.js";
+import { faltandoFaturamento } from "../faturamentoParse.js";
 import KpiCard     from '../components/KpiCard.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import DataRow     from '../components/DataRow.jsx';
@@ -222,6 +223,13 @@ export default function DashboardView({ ctx }) {
         const efic = m => {const regs=dashData.grupos[m].regs; if(!regs.length) return 0; const ok=regs.filter(r=>(r.status||"")==="Carregado"||(r.status||"")==="CARREGADO").length; return Math.round(ok/regs.length*100);};
         const eficTrend    = mesesT.map(efic);
 
+        // Faturamento incompleto: falta qualquer um dos 6 documentos (CTE, MDF,
+        // MAT, ID, NF, Data Manifesto). Só onde a âncora é o DT — a AVB ancora
+        // por código e não usa esse conjunto.
+        const semFat = perfil.ancora === "dt"
+          ? dashData.filtrado.filter(r => !r._semDt && faltandoFaturamento(r).length > 0)
+          : [];
+
         const kpis = [
           {id:"hero",label:dashHeroTab==="cte"?"Receita CTE":"Carregamentos",value:heroNum,sub:"no período",trend:dashHeroTab==="cte"?cteTrend:carregTrend,delta:pctDelta(dashHeroTab==="cte"?cteTrend:carregTrend),click:()=>setDashHeroTab(dashHeroTab==="cte"?"carr":"cte")},
           {id:"eficiencia",label:"Taxa Eficiência",value:`${taxaEfic}%`,sub:`${carregadoN} carregados`,trend:eficTrend,delta:pctDelta(eficTrend)},
@@ -233,6 +241,7 @@ export default function DashboardView({ ctx }) {
           ]:[]),
           // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
           ...(getPerfil(baseAtual?.id).features.semDt && semDtAguardando>0 ? [{id:"sem_dt",label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:nav("planilha")}]:[]),
+          ...(perfil.ancora==="dt"?[{id:"sem_faturamento",label:"Sem Faturamento",value:String(semFat.length),sub:semFat.length?"clique p/ ver o que falta":"✓ tudo faturado",danger:semFat.length>0,icon:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,click:()=>setDashDrillModal({type:"faturamento",label:"DTs sem dados de faturamento",regs:semFat})}]:[]),
           {id:"motoristas",label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:nav("cadastros")},
           ...(canFin?[{id:"cte_medio",label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
           ...(canFin && perfil.features.diarias?[{id:"diarias",label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:nav("diarias")}]:[]),

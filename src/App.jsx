@@ -264,6 +264,7 @@ export default function App() {
     alertasOpen, setAlertasOpen, baseMenuOpen, setBaseMenuOpen,
     conexoesOpen, setConexoesOpen, contatosAdminOpen, setContatosAdminOpen,
     gsheetsOpen, setGsheetsOpen, oauthAccessOpen, setOauthAccessOpen,
+    faturaColarOpen, setFaturaColarOpen,
     syncStatus, setSyncStatus, syncStatusLoading, setSyncStatusLoading,
     adminEmailVal, setAdminEmailVal,
     isMobile, setIsMobile, isWide, setIsWide,
@@ -1139,7 +1140,7 @@ export default function App() {
   const saveConexoesLS = (c) => { setConexoes(c); saveJSON("co_conexoes",c); };
 
   // supaUpsert / salvarRegistro / deletarRegistro / salvarMinutasDetalhe — via useDTHandlers
-  const { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe } = useDTHandlers({
+  const { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe, patchOperacional } = useDTHandlers({
     getConexao, showToast, sessionToken, setSessionToken, baseAtual, registrarLog,
     DADOS, formData, editIdx, dadosBase, dadosExtras,
     setDadosBase, setDadosExtras, setModalOpen,
@@ -1410,6 +1411,8 @@ export default function App() {
         hIco={hIco}
         tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab}
         setWppTipoOpen={setWppTipoOpen}
+        setFaturaColarOpen={setFaturaColarOpen}
+        mostrarColarFaturamento={perfilAtual?.ancora !== "codigo"}
         theme={theme} setTheme={setTheme}
         isAdmin={isAdmin} setModalOpen={setModalOpen}
         usuarioLogado={usuarioLogado} perfil={perfil}
@@ -1953,6 +1956,7 @@ export default function App() {
         wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppFortes, setWppFortes,
         wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
         wppConfirmModal, setWppConfirmModal, abrirWppPagModal,
+        faturaColarOpen, setFaturaColarOpen, patchOperacional,
         dashDrillModal, setDashDrillModal, parseData, abrirDetalhe,
         relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
         relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,

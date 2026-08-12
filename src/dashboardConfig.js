@@ -21,6 +21,7 @@ export const DASH_KPIS = [
   { k: "efetivadas", l: "Cargas efetivadas",       d: "Saíram de PENDENTE.", req: "rastreamentoDocumental" },
   { k: "taxa_doc",   l: "Taxa documental",         d: "% com CTE + MDF + NF.", req: "rastreamentoDocumental" },
   { k: "sem_dt",     l: "Sem DT · revisar",        d: "Fila de cargas que rodaram sem DT.", req: "semDt" },
+  { k: "sem_faturamento", l: "DTs sem faturamento", d: "Falta CTE, MDF, MAT, ID, NF ou Data Manifesto." },
   { k: "motoristas", l: "Motoristas ativos",       d: "Quantos rodaram no período." },
   { k: "cte_medio",  l: "CTE médio por viagem",    d: "Receita média por carregamento.", fin: true },
   { k: "diarias",    l: "Diárias a pagar",         d: "Saldo devido de diária.", fin: true, req: "diarias" },

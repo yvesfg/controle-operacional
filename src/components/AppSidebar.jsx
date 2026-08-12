@@ -9,6 +9,7 @@ export default function AppSidebar({
   hIco,
   tabs, activeTab, setActiveTab,
   setWppTipoOpen,
+  setFaturaColarOpen, mostrarColarFaturamento,
   theme, setTheme,
   isAdmin, setModalOpen,
   usuarioLogado, perfil,
@@ -77,6 +78,21 @@ export default function AppSidebar({
                 </span>
                 <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
               </button>
+              {/* Caminho inverso do card do WhatsApp: cola o bloco de faturamento
+                  e o app preenche a DT. Só em base ancorada por DT. */}
+              {mostrarColarFaturamento && (
+                <button
+                  className="co-sidebar__item"
+                  onClick={()=>{ setFaturaColarOpen(true); if(!isWide) setMobileSidebarExpanded(false); }}
+                  style={{border:`1px solid ${t.ouro}2e`,borderRadius:DESIGN.r.sidebar,color:t.ouro,gap:10}}
+                  title={!isWide||sidebarCollapsed?"Colar faturamento":undefined}
+                >
+                  <span className="co-sidebar__ico">
+                    {hIco(<><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14h6M9 17h4"/></>,t.ouro,16)}
+                  </span>
+                  <span className="co-sidebar__item-lbl" style={{color:t.ouro,fontWeight:600}}>Colar faturamento</span>
+                </button>
+              )}
               <div className="co-sidebar__section-lbl">PÓS CARGA</div>
               <div className="co-sidebar__section-line"/>
               {pcTabs.map(renderItem)}

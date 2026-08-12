@@ -9,6 +9,7 @@ import ModalDetalhe          from './ModalDetalhe.jsx';
 import ModalUsuario          from './ModalUsuario.jsx';
 import ModalConfigDB         from './ModalConfigDB.jsx';
 import ModalWhatsApp         from './ModalWhatsApp.jsx';
+import ModalColarFaturamento from './ModalColarFaturamento.jsx';
 import ModalNFD              from './ModalNFD.jsx';
 import ModalRelatorios       from './ModalRelatorios.jsx';
 import ModalCtrlFinanceiro   from './ModalCtrlFinanceiro.jsx';
@@ -56,6 +57,7 @@ export default function AppModals({ ctx }) {
     wppFatModal, setWppFatModal, wppPagModal, setWppPagModal, wppFortes, setWppFortes,
     wppDccMinutas, setWppDccMinutas, wppCteComp, setWppCteComp, wppDscMinutas, setWppDscMinutas,
     wppConfirmModal, setWppConfirmModal, abrirWppPagModal,
+    faturaColarOpen, setFaturaColarOpen, patchOperacional,
     dashDrillModal, setDashDrillModal, parseData, abrirDetalhe,
     relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
     relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,
@@ -239,6 +241,12 @@ export default function AppModals({ ctx }) {
   wppConfirmModal, setWppConfirmModal, DADOS, motoristas,
   t, css, hIco, fmtMoeda, showToast, DESIGN, abrirWppPagModal, canFin,
   getConexao, recarregarMotoristas,
+}} />
+
+<ModalColarFaturamento ctx={{
+  faturaColarOpen, setFaturaColarOpen,
+  DADOS, baseAtual, t, css, showToast,
+  patchOperacional, registrarLog,
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}

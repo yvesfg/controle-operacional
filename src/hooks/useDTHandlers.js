@@ -207,5 +207,22 @@ export function useDTHandlers({
     }
   };
 
-  return { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe };
+  // Patch parcial por DT — grava SÓ os campos informados, sem reescrever o
+  // registro inteiro. Usado pelo "Colar faturamento", onde o bloco traz 6 campos
+  // e o resto da linha não pode ser tocado.
+  const patchOperacional = async (dt, dados) => {
+    const conn = getConexao();
+    if (!conn) throw new Error("Sem conexão");
+    const tok = await garantirSessionToken(conn);
+    if (!tok) throw new Error("Sessão não autenticada — saia e entre novamente para continuar sincronizando.");
+    await supaFetch(conn.url, conn.key, "POST", "rpc/patch_operacional", {
+      p_token: tok,
+      p_base:  baseAtual?.id ?? "imperatriz_belem",
+      p_dt:    dt,
+      p_dados: dados,
+    });
+    setDadosBase(prev => prev.map(r => (r.dt === dt ? { ...r, ...dados } : r)));
+  };
+
+  return { supaUpsert, salvarRegistro, deletarRegistro, salvarMinutasDetalhe, patchOperacional };
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import { clickable, ultimasViagens } from "../utils.js";
+import { faltandoFaturamento } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalDashDrill({ ctx }) {
@@ -77,9 +78,18 @@ export default function ModalDashDrill({ ctx }) {
                     {dashDrillModal.type==="motorista"&&<span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</span>}
                     {r.status&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
                   </div>
-                  <div style={{fontSize:9,color:t.txt2,lineHeight:1.5,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
-                    <Icon n="map-pin" s={10} c={t.txt2}/> {r.destino||"—"} · <Icon n="package" s={10} c={t.txt2}/> {r.data_carr||"—"} · {r.data_desc?<><Icon n="check-circle" s={10} c={t.verde}/> {r.data_desc}</>:<><Icon n="clock" s={10} c={t.txt2}/> Pendente</>}
-                  </div>
+                  {dashDrillModal.type==="faturamento" ? (
+                    <div style={{fontSize:9,color:t.txt2,lineHeight:1.5,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                      <span>{r.nome||"—"} · {r.data_carr||"—"} · falta:</span>
+                      {faltandoFaturamento(r).map(f=>(
+                        <span key={f} style={{fontSize:8.5,fontWeight:700,color:t.warn,background:"rgba(217,98,43,.1)",border:"1px solid rgba(217,98,43,.28)",borderRadius:4,padding:"1px 5px"}}>{f}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{fontSize:9,color:t.txt2,lineHeight:1.5,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+                      <Icon n="map-pin" s={10} c={t.txt2}/> {r.destino||"—"} · <Icon n="package" s={10} c={t.txt2}/> {r.data_carr||"—"} · {r.data_desc?<><Icon n="check-circle" s={10} c={t.verde}/> {r.data_desc}</>:<><Icon n="clock" s={10} c={t.txt2}/> Pendente</>}
+                    </div>
+                  )}
                 </div>
                 <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>
               </div>

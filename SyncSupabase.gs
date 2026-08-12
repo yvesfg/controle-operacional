@@ -363,6 +363,118 @@ function gravarStatus(status) {
 }
 
 // ============================================================
+// WRITE-BACK — o app preenche o faturamento e escreve AQUI
+//
+// Por que existe: a sincronizacao e planilha -> Supabase e sobrescreve por DT a
+// cada 15 min. Se o app gravasse so no Supabase, esta rodada apagaria o que foi
+// preenchido (celula vazia vira '' no upsert). Entao o app escreve PRIMEIRO na
+// planilha, por aqui, e so depois no Supabase.
+//
+// COMO PUBLICAR (uma vez):
+//   1) Defina WEBAPP_TOKEN abaixo (qualquer segredo longo).
+//   2) Implantar > Nova implantacao > Tipo: App da Web
+//      Executar como: Eu · Quem tem acesso: Qualquer pessoa
+//   3) Copie a URL /exec e ponha na Vercel:
+//        SHEETS_WEBAPP_URL_IMPERATRIZ_BELEM = <URL>
+//        SHEETS_WEBAPP_TOKEN                = <mesmo token daqui>
+//   Ao alterar este arquivo, publique NOVA VERSAO da implantacao (senao o /exec
+//   continua servindo o codigo antigo).
+// ============================================================
+var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedido)
+
+// So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
+var CAMPOS_WRITEBACK = ['cte', 'mdf', 'mat', 'id_doc', 'nf', 'data_manifesto'];
+
+function doPost(e) {
+  try {
+    var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (!WEBAPP_TOKEN) return _json({ ok: false, error: 'WEBAPP_TOKEN nao definido no Apps Script' });
+    if (body.token !== WEBAPP_TOKEN) return _json({ ok: false, error: 'Token invalido' });
+
+    var dt = String(body.dt || '').trim();
+    if (!dt) return _json({ ok: false, error: 'DT obrigatorio' });
+
+    var lock = LockService.getScriptLock();
+    lock.waitLock(20000);   // duas pessoas gravando a mesma linha ao mesmo tempo
+    try {
+      return _json(escreverCamposPorDT(dt, body.campos || {}, String(body.aba || '')));
+    } finally {
+      lock.releaseLock();
+    }
+  } catch (err) {
+    return _json({ ok: false, error: err.message });
+  }
+}
+
+function _json(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Acha a linha do DT e escreve os campos nas colunas correspondentes.
+// Usa o MESMO mapearColuna() da leitura — se a coluna nao existe na aba, o campo
+// volta em `ignorados` em vez de ser inventado numa coluna nova.
+function escreverCamposPorDT(dt, campos, abaPreferida) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var abas = ss.getSheets();
+
+  // A aba que o app mandou (coluna `sheet` do registro) vem primeiro — evita
+  // varrer 12 abas quando ja se sabe onde esta.
+  if (abaPreferida) {
+    abas.sort(function(a, b) {
+      return (b.getName() === abaPreferida ? 1 : 0) - (a.getName() === abaPreferida ? 1 : 0);
+    });
+  }
+
+  for (var s = 0; s < abas.length; s++) {
+    var sheet = abas[s];
+    var nomAba = sheet.getName();
+    if (nomAba.toLowerCase().indexOf('config') >= 0) continue;
+
+    var ultimaCol = sheet.getLastColumn();
+    var ultimaLin = sheet.getLastRow();
+    if (ultimaCol === 0 || ultimaLin < 2) continue;
+
+    // Cabecalho: mesma deteccao da leitura (testa as 5 primeiras linhas)
+    var topo = sheet.getRange(1, 1, Math.min(5, ultimaLin), ultimaCol).getValues();
+    var mapa = {}, linhaCab = 0, melhor = 0;
+    for (var tentativa = 0; tentativa < topo.length; tentativa++) {
+      var mapaTemp = {}, cont = 0;
+      for (var c = 0; c < topo[tentativa].length; c++) {
+        var campo = mapearColuna(topo[tentativa][c].toString().toLowerCase().trim());
+        if (campo && mapaTemp[campo] === undefined) { mapaTemp[campo] = c + 1; cont++; }
+      }
+      if (cont > melhor) { melhor = cont; mapa = mapaTemp; linhaCab = tentativa + 1; }
+    }
+    if (!mapa.dt) continue;
+
+    // Procura o DT na coluna DT
+    var colDT = mapa.dt;
+    var valoresDT = sheet.getRange(linhaCab + 1, colDT, ultimaLin - linhaCab, 1).getValues();
+    var linhaAlvo = 0;
+    for (var i = 0; i < valoresDT.length; i++) {
+      if (String(valoresDT[i][0]).trim() === dt) { linhaAlvo = linhaCab + 1 + i; break; }
+    }
+    if (!linhaAlvo) continue;
+
+    var escritos = [], ignorados = [];
+    for (var j = 0; j < CAMPOS_WRITEBACK.length; j++) {
+      var k = CAMPOS_WRITEBACK[j];
+      if (campos[k] === undefined || campos[k] === null || String(campos[k]).trim() === '') continue;
+      if (!mapa[k]) { ignorados.push(k + ' (coluna nao existe na aba)'); continue; }
+      // Texto explicito: NF pode ser "360525, 360526" e numero longo vira notacao
+      // cientifica se o Sheets resolver interpretar sozinho.
+      sheet.getRange(linhaAlvo, mapa[k]).setValue(String(campos[k]).trim());
+      escritos.push(k);
+    }
+    SpreadsheetApp.flush();
+    return { ok: true, aba: nomAba, linha: linhaAlvo, escritos: escritos, ignorados: ignorados };
+  }
+
+  return { ok: false, error: 'DT ' + dt + ' nao encontrado em nenhuma aba' };
+}
+
+// ============================================================
 // EQUALIZAR COLUNAS
 // Usa ABA_BASE como referencia e adiciona colunas faltantes
 // nas outras abas. Rodar UMA UNICA VEZ.
