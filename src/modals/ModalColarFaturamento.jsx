@@ -11,8 +11,8 @@ const EXEMPLO = `DT: 1348169
 CTE: 34978
 MDF: 29735
 MAT: 26884
-ID: 8678252
-NF: 360525, 360526`;
+NF: 360525, 360526
+CLIENTE: SUZANO`;
 
 const isoParaBR = (iso) => (iso ? paraDataBR(iso) : "");
 const brParaISO = (br) => {
@@ -126,7 +126,7 @@ export default function ModalColarFaturamento({ ctx }) {
               autoFocus
               style={{ ...css.inp, fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.7, resize: "vertical" }}
             />
-            <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>Ordem esperada: DT · CTE · MDF · MAT · ID · NF. A data do manifesto é preenchida abaixo, não no texto.</div>
+            <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>Ordem esperada: DT · CTE · MDF · MAT · NF · CLIENTE. A data do manifesto é preenchida abaixo, não no texto. ID saiu do bloco — quem preenche é o contratante.</div>
           </div>
 
           {avisos.map((a, i) => (

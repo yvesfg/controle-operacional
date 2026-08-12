@@ -18,7 +18,8 @@
 //    SHEETS_WEBAPP_TOKEN                  igual ao WEBAPP_TOKEN do .gs
 // ─────────────────────────────────────────────────────────
 
-const CAMPOS_PERMITIDOS = ["cte", "mdf", "mat", "id_doc", "nf", "data_manifesto"];
+// ID saiu em 12/08/2026 (passou a ser preenchido pelo contratante); entrou cliente.
+const CAMPOS_PERMITIDOS = ["cte", "mdf", "mat", "nf", "cliente", "data_manifesto"];
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

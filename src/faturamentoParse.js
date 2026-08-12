@@ -8,8 +8,12 @@
 //   CTE: 34978
 //   MDF: 29735
 //   MAT: 26884
-//   ID: 8678252
 //   NF: 360525, 360526
+//   CLIENTE: SUZANO
+//
+// ID saiu do bloco em 12/08/2026: quem preenche agora é o contratante, então
+// exigir aqui só criaria pendência falsa. Rótulo continua reconhecido, para
+// avisar quem colar o formato antigo em vez de ignorar em silêncio.
 //
 // DATA MANIFESTO não vem no texto de propósito — quem preenche é a tela, com a
 // data do lançamento (editável, pra quando o faturamento foi feito em outro dia).
@@ -21,13 +25,21 @@
 // Campos do bloco, na ordem em que a equipe digita. `rotulos` são as variações
 // aceitas já normalizadas (sem acento, minúsculas).
 export const CAMPOS_FATURAMENTO = [
-  { k: "dt",     l: "DT",  rotulos: ["dt", "dt espelho", "espelho"] },
-  { k: "cte",    l: "CTE", rotulos: ["cte", "ct-e", "ctrc"] },
-  { k: "mdf",    l: "MDF", rotulos: ["mdf", "mdfe", "mdf-e"] },
-  { k: "mat",    l: "MAT", rotulos: ["mat", "mar", "mat/mar", "contrato"] },
-  { k: "id_doc", l: "ID",  rotulos: ["id", "id doc", "shipment id", "shipmente id"] },
-  { k: "nf",     l: "NF",  rotulos: ["nf", "nfs", "nota", "nota fiscal"] },
+  { k: "dt",      l: "DT",      rotulos: ["dt", "dt espelho", "espelho"] },
+  { k: "cte",     l: "CTE",     rotulos: ["cte", "ct-e", "ctrc"] },
+  { k: "mdf",     l: "MDF",     rotulos: ["mdf", "mdfe", "mdf-e"] },
+  { k: "mat",     l: "MAT",     rotulos: ["mat", "mar", "mat/mar", "contrato"] },
+  { k: "nf",      l: "NF",      rotulos: ["nf", "nfs", "nota", "nota fiscal"] },
+  { k: "cliente", l: "Cliente", rotulos: ["cliente", "tomador", "embarcadora", "embarcador"], texto: true },
 ];
+
+// Rótulos que a equipe ainda pode colar mas que o app não grava mais.
+const ROTULOS_IGNORADOS = {
+  id: "ID não entra mais no bloco — quem preenche é o contratante",
+  "id doc": "ID não entra mais no bloco — quem preenche é o contratante",
+  "shipment id": "ID não entra mais no bloco — quem preenche é o contratante",
+  "shipmente id": "ID não entra mais no bloco — quem preenche é o contratante",
+};
 
 // Preenchido pela tela, não pelo texto colado — mas aceito se alguém colar mesmo assim.
 export const CAMPO_MANIFESTO = {
@@ -46,7 +58,9 @@ const norm = (s) => String(s || "")
 const limpar = (valor, campo) => {
   const v = String(valor || "").trim().replace(/\s+/g, " ");
   if (campo === "nf") return v.replace(/\s*,\s*/g, ", ");
-  if (campo === "data_manifesto") return v;
+  // Cliente e data são texto de verdade (espaço, acento, barra) — não passam
+  // pelo filtro que existe pra tirar lixo de número de documento.
+  if (campo === "cliente" || campo === "data_manifesto") return v;
   return v.replace(/[^\dA-Za-z\-/]/g, "");
 };
 
@@ -94,6 +108,8 @@ export function parseFaturamento(texto) {
       valor  = partes.slice(1).join(" ").trim();
     }
 
+    if (ROTULOS_IGNORADOS[rotulo]) { avisos.push(ROTULOS_IGNORADOS[rotulo]); continue; }
+
     const campo = TODOS.find(c => c.rotulos.includes(rotulo));
     if (!campo || !valor) {
       if (/^[\d.\-/]+$/.test(linha)) semRotulo.push(linha);
@@ -106,13 +122,15 @@ export function parseFaturamento(texto) {
   }
 
   // Colagem só com números, sem rótulo nenhum: assume a ordem que a equipe usa.
+  // Cliente fica de fora — é texto, só entra com rótulo.
   if (!achados.length && semRotulo.length) {
-    semRotulo.slice(0, CAMPOS_FATURAMENTO.length).forEach((v, i) => {
-      const campo = CAMPOS_FATURAMENTO[i];
+    const ordemNumerica = CAMPOS_FATURAMENTO.filter(c => !c.texto);
+    semRotulo.slice(0, ordemNumerica.length).forEach((v, i) => {
+      const campo = ordemNumerica[i];
       campos[campo.k] = limpar(v, campo.k);
       achados.push(campo.k);
     });
-    avisos.push("Texto sem rótulos — li na ordem DT, CTE, MDF, MAT, ID, NF. Confira antes de gravar.");
+    avisos.push(`Texto sem rótulos — li na ordem ${ordemNumerica.map(c => c.l).join(", ")}. Confira antes de gravar.`);
   }
 
   return { campos, achados, avisos };

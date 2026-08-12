@@ -383,7 +383,8 @@ function gravarStatus(status) {
 var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedido)
 
 // So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
-var CAMPOS_WRITEBACK = ['cte', 'mdf', 'mat', 'id_doc', 'nf', 'data_manifesto'];
+// ID saiu em 12/08/2026 (quem preenche e o contratante); entrou cliente.
+var CAMPOS_WRITEBACK = ['cte', 'mdf', 'mat', 'nf', 'cliente', 'data_manifesto'];
 
 function doPost(e) {
   try {
