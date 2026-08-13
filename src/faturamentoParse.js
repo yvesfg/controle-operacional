@@ -42,7 +42,14 @@ const F = {
   nome:        { k: "nome",         l: "Motorista",    rotulos: ["nome", "motorista", "mot"], tipo: "texto" },
   cpf:         { k: "cpf",          l: "CPF",          rotulos: ["cpf"], tipo: "texto" },
   telefone:    { k: "telefone",     l: "Telefone",     rotulos: ["telefone", "tel", "fone", "celular", "whatsapp"], tipo: "texto" },
-  placas:      { k: "placa",        l: "Placas",       rotulos: ["placas", "placa", "placa 01", "placa01"], tipo: "placas" },
+  // A planilha tem TRÊS colunas (PLACA 01/02/03) e o banco também (placa/placa2/
+  // placa3). O card antigo mandava tudo junto em "PLACAS: A / B"; esse formato
+  // continua sendo aceito (tipo "placas" quebra na barra), mas o card passou a
+  // escrever uma linha por placa, que é o que casa 1:1 com a planilha.
+  placa:       { k: "placa",        l: "Placa 01",     rotulos: ["placa 01", "placa01", "placa 1", "placa1"], tipo: "placa" },
+  placa2:      { k: "placa2",       l: "Placa 02",     rotulos: ["placa 02", "placa02", "placa 2", "placa2", "carreta"], tipo: "placa" },
+  placa3:      { k: "placa3",       l: "Placa 03",     rotulos: ["placa 03", "placa03", "placa 3", "placa3"], tipo: "placa" },
+  placas:      { k: "placa",        l: "Placas",       rotulos: ["placas", "placa"], tipo: "placas" },
   destino:     { k: "destino",      l: "Destino",      rotulos: ["destino"], tipo: "texto" },
   data_carr:   { k: "data_carr",    l: "Carregar",     rotulos: ["carregar", "data carregamento", "data carr", "carregamento"], tipo: "data" },
   data_agenda: { k: "data_agenda",  l: "Ag. Descarga", rotulos: ["ag descarga", "ag. descarga", "agenda", "data agenda", "agendamento"], tipo: "data" },
@@ -74,9 +81,9 @@ export const BLOCOS = {
   contratacao: {
     l: "Contratação",
     sub: "DT · ID · motorista · placas · datas · valores",
-    campos: [F.dt, F.id_doc, F.nome, F.cpf, F.telefone, F.placas, F.destino, F.data_carr, F.data_agenda, F.vl_cte, F.vl_contrato, F.adiant, F.forma_pgto],
+    campos: [F.dt, F.id_doc, F.nome, F.cpf, F.telefone, F.placa, F.placa2, F.placa3, F.placas, F.destino, F.data_carr, F.data_agenda, F.vl_cte, F.vl_contrato, F.adiant, F.forma_pgto],
     perguntaManifesto: false,
-    exemplo: "DT: 1348169\nID: 8678252\nNOME: CARLOS HENRIQUE\nCPF: 212.975.958-07\nTELEFONE: 94 9979-5640\nPLACAS: KEW9943 / KQW5I51\nDESTINO: BRASILIA-DF\nCARREGAR: 07/08/2026\nAG DESCARGA: 12/08/2026\nVLR EMPRESA: 12.342,47\nVLR MOT: 10.762,58\nADT: 7.533,80\nPGTO: CHEQUE",
+    exemplo: "DT: 1348169\nID: 8678252\nNOME: CARLOS HENRIQUE\nCPF: 212.975.958-07\nTELEFONE: 94 9979-5640\nPLACA 01: KEW9943\nPLACA 02: KQW5I51\nDESTINO: BRASILIA-DF\nCARREGAR: 07/08/2026\nAG DESCARGA: 12/08/2026\nVLR EMPRESA: 12.342,47\nVLR MOT: 10.762,58\nADT: 7.533,80\nPGTO: CHEQUE",
   },
 };
 
@@ -130,6 +137,7 @@ const limpar = (valor, tipo) => {
   if (tipo === "data")  return paraDataBR(v);
   if (tipo === "moeda") return limparMoeda(v);
   if (tipo === "pgto")  return normalizarPgto(v);
+  if (tipo === "placa") return v.toUpperCase().replace(/[^A-Z0-9]/g, "");
   return v.replace(/[^\dA-Za-z\-/]/g, "");
 };
 
@@ -208,6 +216,12 @@ export function parseBloco(texto, modo = MODO_PADRAO) {
     const { rotulo, valor } = separar(linha, conhecidos);
 
     // Rótulo que existe no OUTRO bloco: avisa em vez de descartar calado.
+    // Planilha e banco têm 3 colunas de placa; motorista com 4 existe no cadastro.
+    if (/^placa\s*0?4$/.test(rotulo)) {
+      avisos.push("PLACA 04 ignorada — planilha e banco têm só três colunas de placa");
+      continue;
+    }
+
     const campo = conhecidos.find(c => c.rotulos.includes(rotulo));
     if (!campo) {
       const outro = Object.entries(BLOCOS).find(([m, d]) => m !== modo && d.campos.some(c => c.rotulos.includes(rotulo)));
@@ -257,11 +271,11 @@ export function camposDoBloco(modo) {
   const def = BLOCOS[modo] || BLOCOS[MODO_PADRAO];
   const lista = [];
   def.campos.forEach(c => {
-    if (c.tipo === "placas") {
-      lista.push({ k: "placa", l: "Placa 1" }, { k: "placa2", l: "Placa 2" }, { k: "placa3", l: "Placa 3" });
-    } else if (c.k !== "dt") {
-      lista.push({ k: c.k, l: c.l });
-    }
+    // "placas" (plural) é só um formato de entrada — escreve nas mesmas colunas
+    // de placa/placa2/placa3, então não vira linha própria na conferência.
+    if (c.tipo === "placas" || c.k === "dt") return;
+    if (lista.some(x => x.k === c.k)) return;
+    lista.push({ k: c.k, l: c.l });
   });
   if (def.perguntaManifesto) lista.push({ k: CAMPO_MANIFESTO.k, l: CAMPO_MANIFESTO.l });
   return lista;

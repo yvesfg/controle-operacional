@@ -233,7 +233,11 @@ export default function ModalWhatsApp({ ctx }) {
         const contaNum = parseFloat(wppValConta||0)||0;
         const somaExcede = wppPgto==="ambos" && (chequeNum+contaNum) > adtNum && adtNum > 0;
         const temConta = !!(mot?.banco || mot?.conta);
-        const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ") || reg.placa || "—";
+        // Uma linha por placa: a planilha tem PLACA 01/02/03 em colunas separadas
+        // (e o banco, placa/placa2/placa3). Mandar "A / B" numa linha só obrigava
+        // quem recebe a separar de novo na hora de lançar.
+        const listaPlacas = [mot?.placa1||reg.placa,mot?.placa2||reg.placa2,mot?.placa3||reg.placa3,mot?.placa4].filter(Boolean);
+        const placas = listaPlacas.join(" / ") || reg.placa || "—";
 
         const gerarMsg = () => {
           const ln = "\n";
@@ -241,7 +245,11 @@ export default function ModalWhatsApp({ ctx }) {
           msg += `NOME: ${reg.nome||"—"}${ln}`;
           msg += `CPF: ${reg.cpf||"—"}${ln}`;
           msg += `TELEFONE: ${wppTel||"—"}${ln}`;
-          msg += `PLACAS: ${placas}${ln}`;
+          if (listaPlacas.length) {
+            listaPlacas.forEach((p,i)=>{ msg += `PLACA 0${i+1}: ${p}${ln}`; });
+          } else {
+            msg += `PLACA 01: —${ln}`;
+          }
           msg += `CARREGAR: ${reg.data_carr||"—"}${ln}`;
           msg += `AG DESCARGA: ${reg.data_agenda||"—"}${ln}`;
           msg += `VLR EMPRESA: ${fmtMoeda(reg.vl_cte)}${ln}`;
