@@ -1,18 +1,15 @@
 // ── ModalColarFaturamento.jsx ──
-// Caminho INVERSO do card do WhatsApp: o analista cola o bloco que ele já digita
-// hoje, o app acha a DT, mostra o que vai mudar e grava — primeiro na planilha
-// (senão a sync de 15 min apagaria), depois no Supabase.
+// Caminho INVERSO dos cards do WhatsApp: o analista cola o bloco que já digita
+// hoje (faturamento ou contratação), o app acha a DT, mostra o que vai mudar e
+// grava — primeiro na planilha (senão a sync de 15 min apagaria), depois no
+// Supabase. Qual bloco é, o app reconhece pelo próprio texto.
 import React from "react";
 import Icon from "../components/Icon.jsx";
-import { parseFaturamento, compararComRegistro, paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO } from "../faturamentoParse.js";
+import {
+  BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
+  paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO,
+} from "../faturamentoParse.js";
 import { escreverFaturamentoNaPlanilha } from "../faturamentoSheets.js";
-
-const EXEMPLO = `DT: 1348169
-CTE: 34978
-MDF: 29735
-MAT: 26884
-NF: 360525, 360526
-CLIENTE: SUZANO`;
 
 const isoParaBR = (iso) => (iso ? paraDataBR(iso) : "");
 const brParaISO = (br) => {
@@ -28,39 +25,50 @@ export default function ModalColarFaturamento({ ctx }) {
   } = ctx;
 
   const [texto, setTexto] = React.useState("");
+  const [modo, setModo] = React.useState(MODO_PADRAO);
+  const [modoManual, setModoManual] = React.useState(false);
   const [manifestoISO, setManifestoISO] = React.useState("");
   const [sobrescrever, setSobrescrever] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
 
-  const { campos, avisos } = React.useMemo(() => parseFaturamento(texto), [texto]);
+  // Abre com o texto que veio de quem chamou (bloco colado na busca do WhatsApp
+  // ou só "DT: xxxx" quando a DT já estava selecionada lá).
+  React.useEffect(() => {
+    setTexto(faturaColarOpen?.texto || "");
+    setModo(faturaColarOpen?.modo || MODO_PADRAO);
+    setModoManual(!!faturaColarOpen?.modo);
+    setManifestoISO("");
+    setSobrescrever(false);
+  }, [faturaColarOpen]);
+
+  // Enquanto ninguém escolher na mão, o modo segue o que o texto parece ser.
+  React.useEffect(() => {
+    if (modoManual) return;
+    const det = detectarModo(texto);
+    if (det && det !== modo) setModo(det);
+  }, [texto, modoManual, modo]);
+
+  const def = BLOCOS[modo] || BLOCOS[MODO_PADRAO];
+  const { campos, avisos } = React.useMemo(() => parseBloco(texto, modo), [texto, modo]);
   const reg = React.useMemo(
     () => (campos.dt ? DADOS.find(r => String(r.dt).trim() === String(campos.dt).trim()) : null),
     [campos.dt, DADOS]
   );
 
-  // Data do manifesto: vem da tela, não do texto. Começa na data do lançamento
-  // (ou na que o registro já tem) e fica editável pra quando o faturamento foi
-  // feito em outro dia.
-  // Abre com o texto que veio de onde chamou (bloco colado na busca do WhatsApp
-  // ou só "DT: xxxx" quando a DT já estava selecionada lá).
+  // Data do manifesto (só no faturamento): vem da tela, não do texto. Começa na
+  // data do lançamento (ou na que o registro já tem) e fica editável.
   React.useEffect(() => {
-    setTexto(faturaColarOpen?.texto || "");
-    setManifestoISO("");
-    setSobrescrever(false);
-  }, [faturaColarOpen]);
-
-  React.useEffect(() => {
-    if (!reg) return;
+    if (!reg || !def.perguntaManifesto) return;
     setManifestoISO(prev => prev || brParaISO(campos.data_manifesto || reg.data_manifesto || dataDeHojeBR()));
-  }, [reg, campos.data_manifesto]);
+  }, [reg, campos.data_manifesto, def.perguntaManifesto]);
 
   if (!faturaColarOpen) return null;
 
-  const manifestoBR = isoParaBR(manifestoISO);
+  const manifestoBR = def.perguntaManifesto ? isoParaBR(manifestoISO) : "";
   const camposFinais = { ...campos, ...(manifestoBR ? { data_manifesto: manifestoBR } : {}) };
   delete camposFinais.dt;
 
-  const linhas = reg ? compararComRegistro(reg, camposFinais) : [];
+  const linhas = reg ? compararComRegistro(reg, camposFinais, modo) : [];
   const conflitos = linhas.filter(l => l.estado === "conflito");
   const aGravar = linhas.filter(l => l.estado === "preenche" || (l.estado === "conflito" && sobrescrever));
 
@@ -84,7 +92,7 @@ export default function ModalColarFaturamento({ ctx }) {
         : payload;
       await patchOperacional(reg.dt, gravados);
       if (registrarLog) {
-        await registrarLog("FATURAMENTO_COLADO", `DT ${reg.dt} — ${Object.keys(gravados).join(", ")}`, reg, { ...reg, ...gravados });
+        await registrarLog(`BLOCO_${modo.toUpperCase()}_COLADO`, `DT ${reg.dt} — ${Object.keys(gravados).join(", ")}`, reg, { ...reg, ...gravados });
       }
       const extra = res.ignorados?.length ? ` (sem coluna na planilha: ${res.ignorados.join(", ")})` : "";
       showToast(`✅ DT ${reg.dt} atualizada na planilha (${res.aba}, linha ${res.linha}) e no app${extra}`, "ok");
@@ -107,8 +115,8 @@ export default function ModalColarFaturamento({ ctx }) {
             <Icon n="clipboard" s={18} c={t.ouro} />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: 2, color: t.ouro }}>COLAR FATURAMENTO</div>
-            <div style={{ fontSize: 9, color: t.txt2 }}>Cole o bloco do WhatsApp — o app preenche a DT e grava na planilha</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: 2, color: t.ouro }}>PREENCHER PELO BLOCO</div>
+            <div style={{ fontSize: 9, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
           </div>
           <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} style={{ background: "rgba(128,128,128,.1)", border: "none", borderRadius: 7, width: 44, height: 44, cursor: salvando ? "not-allowed" : "pointer", color: t.txt2, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon n="x" s={16} c={t.txt2} sw={2} />
@@ -116,17 +124,35 @@ export default function ModalColarFaturamento({ ctx }) {
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Modo — detectado pelo texto, trocável na mão */}
+          <div>
+            <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              {Object.entries(BLOCOS).map(([k, b]) => (
+                <button key={k} onClick={() => { setModo(k); setModoManual(true); }}
+                  style={{ padding: "8px 10px", borderRadius: 9, border: `1.5px solid ${modo === k ? t.ouro : t.borda}`, background: modo === k ? "rgba(217,98,43,.1)" : t.card2, color: modo === k ? t.ouro : t.txt2, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700 }}>{b.l}</div>
+                  <div style={{ fontSize: 9, color: t.txt2, marginTop: 1 }}>{b.sub}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label style={lbl}>Bloco colado</label>
             <textarea
               value={texto}
               onChange={e => setTexto(e.target.value)}
-              rows={7}
-              placeholder={EXEMPLO}
+              rows={modo === "contratacao" ? 9 : 7}
+              placeholder={def.exemplo}
               autoFocus
               style={{ ...css.inp, fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.7, resize: "vertical" }}
             />
-            <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>Ordem esperada: DT · CTE · MDF · MAT · NF · CLIENTE. A data do manifesto é preenchida abaixo, não no texto. ID saiu do bloco — quem preenche é o contratante.</div>
+            <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>
+              {def.perguntaManifesto
+                ? "A data do manifesto é preenchida abaixo, não no texto. ID saiu do faturamento — agora é campo da contratação."
+                : "Placas podem vir juntas (KEW9943 / KQW5I51). Valores entram como estão no texto — o app não reformata dinheiro."}
+            </div>
           </div>
 
           {avisos.map((a, i) => (
@@ -138,7 +164,7 @@ export default function ModalColarFaturamento({ ctx }) {
           {/* Registro encontrado */}
           {campos.dt && !reg && (
             <div style={{ background: "rgba(246,70,93,.07)", border: "1px solid rgba(246,70,93,.3)", borderRadius: 10, padding: "10px 12px", fontSize: 11, color: t.danger, display: "flex", alignItems: "center", gap: 6 }}>
-              <Icon n="alert" s={12} c={t.danger} /> DT {campos.dt} não existe nesta base ({baseAtual?.nome || baseAtual?.id || "—"}).
+              <Icon n="alert" s={12} c={t.danger} /> DT {campos.dt} não existe nesta base ({baseAtual?.nome || baseAtual?.id || "—"}). A DT nasce na planilha ou no "Nova DT".
             </div>
           )}
 
@@ -153,8 +179,8 @@ export default function ModalColarFaturamento({ ctx }) {
             </div>
           )}
 
-          {/* Data do manifesto — vem da tela */}
-          {reg && (
+          {/* Data do manifesto — vem da tela, só no faturamento */}
+          {reg && def.perguntaManifesto && (
             <div>
               <label style={lbl}>{CAMPO_MANIFESTO.l} <span style={{ color: t.verde, fontSize: 8 }}>(data do lançamento — editável)</span></label>
               <input type="date" value={manifestoISO} onChange={e => setManifestoISO(e.target.value)} style={{ ...css.inp, fontSize: 12, padding: "7px 10px" }} />
@@ -166,8 +192,8 @@ export default function ModalColarFaturamento({ ctx }) {
             <div style={{ background: t.card2, borderRadius: 10, border: `1px solid ${t.borda}`, overflow: "hidden" }}>
               <div style={{ padding: "8px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 8, textTransform: "uppercase", letterSpacing: 1, color: t.txt2, fontWeight: 700 }}>Conferência</div>
               {linhas.map(l => (
-                <div key={l.k} style={{ display: "grid", gridTemplateColumns: "58px 1fr 1fr 78px", gap: 8, alignItems: "center", padding: "7px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 11 }}>
-                  <div style={{ fontWeight: 700, color: t.txt2 }}>{l.l}</div>
+                <div key={l.k} style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr 78px", gap: 8, alignItems: "center", padding: "7px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 11 }}>
+                  <div style={{ fontWeight: 700, color: t.txt2, fontSize: 10 }}>{l.l}</div>
                   <div style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis" }}>{l.atual || "—"}</div>
                   <div style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>{l.novo}</div>
                   <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: .5, color: corEstado[l.estado], textAlign: "right" }}>{rotuloEstado[l.estado]}</div>

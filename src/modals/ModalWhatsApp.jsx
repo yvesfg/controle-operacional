@@ -2,7 +2,7 @@ import React from "react";
 import { getPerfil } from "../operacao/perfil.js";
 import { clickable, saveJSON } from "../utils.js";
 import { criarMotorista, atualizarMotorista } from "../motoristas.js";
-import { parseFaturamento } from "../faturamentoParse.js";
+import { parseBloco, detectarModo, MODO_PADRAO } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalWhatsApp({ ctx }) {
@@ -45,7 +45,7 @@ export default function ModalWhatsApp({ ctx }) {
     if (!podeColar) return;
     const txt = e.clipboardData?.getData("text") || "";
     if (!/\n/.test(txt.trim())) return;
-    const { campos } = parseFaturamento(txt);
+    const { campos } = parseBloco(txt, detectarModo(txt) || MODO_PADRAO);
     if (!campos.dt) return;
     e.preventDefault();
     setWppTipoOpen(false); setWppSearchTxt("");
@@ -187,7 +187,7 @@ export default function ModalWhatsApp({ ctx }) {
                 {k:"faturamento", ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>, color:t.ouro, l:"Faturamento", sub:"CTE · MDF · MAT · CODIGO · NF"},
                 {k:"contratacao",ico:<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, color:t.azulLt, l:"Contratação", sub:"Modelo completo de pagamento"},
                 // Sentido inverso do "Faturamento": em vez de gerar o texto, lê o texto.
-                ...(podeColar?[{k:"preencher", ico:<><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13h6M9 17h4"/></>, color:t.verde, l:"Preencher faturamento", sub:"Cole o bloco — grava na DT e na planilha"}]:[]),
+                ...(podeColar?[{k:"preencher", ico:<><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13h6M9 17h4"/></>, color:t.verde, l:"Preencher pelo bloco", sub:"Faturamento ou contratação — grava na DT e na planilha"}]:[]),
               ].map((op)=>(
                 <button key={op.k} onClick={()=>{
                   const _reg=wppSearchReg||buscaResult;

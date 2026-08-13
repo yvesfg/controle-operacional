@@ -18,8 +18,16 @@
 //    SHEETS_WEBAPP_TOKEN                  igual ao WEBAPP_TOKEN do .gs
 // ─────────────────────────────────────────────────────────
 
-// ID saiu em 12/08/2026 (passou a ser preenchido pelo contratante); entrou cliente.
-const CAMPOS_PERMITIDOS = ["cte", "mdf", "mat", "nf", "cliente", "data_manifesto"];
+// Campos dos dois blocos colados (faturamento + contratação). Whitelist existe
+// pra este endpoint não virar porta genérica de escrita na planilha — quem manda
+// no que a tela oferece é BLOCOS em src/faturamentoParse.js.
+const CAMPOS_PERMITIDOS = [
+  // faturamento
+  "cte", "mdf", "mat", "nf", "cliente", "data_manifesto",
+  // contratação
+  "id_doc", "nome", "cpf", "telefone", "placa", "placa2", "placa3",
+  "destino", "data_carr", "data_agenda", "vl_cte", "vl_contrato", "adiant",
+];
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

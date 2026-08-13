@@ -383,8 +383,13 @@ function gravarStatus(status) {
 var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedido)
 
 // So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
-// ID saiu em 12/08/2026 (quem preenche e o contratante); entrou cliente.
-var CAMPOS_WRITEBACK = ['cte', 'mdf', 'mat', 'nf', 'cliente', 'data_manifesto'];
+// Cobre os dois blocos colados: faturamento e contratacao (esta traz o ID, que
+// saiu do faturamento em 12/08/2026 porque quem preenche e o contratante).
+var CAMPOS_WRITEBACK = [
+  'cte', 'mdf', 'mat', 'nf', 'cliente', 'data_manifesto',
+  'id_doc', 'nome', 'cpf', 'telefone', 'placa', 'placa2', 'placa3',
+  'destino', 'data_carr', 'data_agenda', 'vl_cte', 'vl_contrato', 'adiant'
+];
 
 function doPost(e) {
   try {
@@ -574,6 +579,10 @@ function mapearColuna(n) {
     'telefone': 'telefone', 'tel': 'telefone', 'fone': 'telefone',
     'celular': 'telefone', 'whatsapp': 'telefone',
     'placa': 'placa', 'placa 01': 'placa', 'placa01': 'placa',
+    // PLACA 02/03 existiam na planilha e no banco, mas nunca eram mapeadas — sem
+    // isto o write-back da contratacao nao acha a coluna pra escrever a carreta.
+    'placa 02': 'placa2', 'placa02': 'placa2', 'placa 2': 'placa2',
+    'placa 03': 'placa3', 'placa03': 'placa3', 'placa 3': 'placa3',
     'vinculo': 'vinculo',
     'vinculo do motorista': 'vinculo',
     'status': 'status',
