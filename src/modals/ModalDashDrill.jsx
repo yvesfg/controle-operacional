@@ -16,11 +16,10 @@ export default function ModalDashDrill({ ctx }) {
 
   return (
     <div
-      className="co-modal-overlay"
-      style={{padding:"0 0 68px"}}
+      className="co-modal-overlay co-modal-overlay--center"
       onClick={()=>setDashDrillModal(null)}
     >
-      <div style={{background:t.card,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:640,border:`1px solid ${t.borda}`,boxShadow:"0 -12px 48px rgba(0,0,0,.5)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:t.card,borderRadius:18,width:"100%",maxWidth:640,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.45)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
           <div style={{width:36,height:36,borderRadius:9,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>

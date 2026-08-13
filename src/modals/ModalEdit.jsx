@@ -268,7 +268,7 @@ function ModalEditComponent({ ctx }) {
 
   // ── ESTILOS DO MODAL ──────────────────────────────────────────────────
   const modalStyle = isWide
-    ? {...css.modal, width:"min(920px, 95vw)", maxWidth:"95vw", maxHeight:"96vh", display:"flex", flexDirection:"column"}
+    ? {...css.modal, width:"min(920px, 95vw)", maxWidth:"95vw", display:"flex", flexDirection:"column"}
     : css.modal;
 
   return (

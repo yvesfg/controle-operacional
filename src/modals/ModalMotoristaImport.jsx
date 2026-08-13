@@ -65,7 +65,7 @@ export default function ModalMotoristaImport({ ctx }) {
 
   return (
     <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotImportOpen(false)}>
-      <div style={{...css.modal, maxHeight:"94vh"}}>
+      <div style={{...css.modal}}>
         {/* Header */}
         <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
           <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="download" s={18} c={t.azulLt}/></div>

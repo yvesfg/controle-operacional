@@ -293,7 +293,7 @@ export default function ModalWhatsApp({ ctx }) {
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal(null)}>
             {/* Com o cadastro de conta aberto o modal ALARGA (520 → 760): os campos entram
                 em 2 colunas e o conteúdo continua cabendo sem rolar. */}
-            <div style={{...css.modal,maxHeight:"96vh",maxWidth:bankForm?760:css.modal.maxWidth,transition:"max-width .22s cubic-bezier(.34,1.1,.64,1)"}}>
+            <div style={{...css.modal,maxWidth:bankForm?760:css.modal.maxWidth,transition:"max-width .22s cubic-bezier(.34,1.1,.64,1)"}}>
               {/* Header */}
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.06)"}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>
@@ -304,7 +304,7 @@ export default function ModalWhatsApp({ ctx }) {
                 <button onClick={()=>setWppModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}}>
 
                 {/* Linha DT + DESTINO */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
@@ -524,7 +524,7 @@ export default function ModalWhatsApp({ ctx }) {
 
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal2(null)}>
-            <div style={{...css.modal, maxHeight:"96vh"}}>
+            <div style={{...css.modal}}>
               {/* Header */}
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="file-text" s={18} c={t.azulLt}/></div>
@@ -535,7 +535,7 @@ export default function ModalWhatsApp({ ctx }) {
                 <button onClick={()=>setWppModal2(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
 
-              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}}>
 
                 {/* Motorista + Placas */}
                 <div style={{background:t.card2,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
@@ -643,13 +643,13 @@ export default function ModalWhatsApp({ ctx }) {
 
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppFatModal(null)}>
-            <div style={{...css.modal,maxHeight:"90vh"}}>
+            <div style={{...css.modal}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.05)"}}>
                 <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="receipt" s={18} c="#25D366"/></div>
                 <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>{isAvb ? "CTE · MDF · MAT · CODIGO · NF" : "CTE · MDF · MAT · DT · NF · ID"}</div></div>
                 <button onClick={()=>setWppFatModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
               </div>
-              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
+              <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}}>
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
                   <div style={{fontFamily:"monospace",fontSize:11,color:t.txt,lineHeight:2,whiteSpace:"pre"}}>
@@ -751,7 +751,7 @@ export default function ModalWhatsApp({ ctx }) {
 
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppPagModal(null)}>
-            <div style={{...css.modal,maxHeight:"96vh"}}>
+            <div style={{...css.modal}}>
               <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:headerBg}}>
                 <div style={{width:36,height:36,borderRadius:9,background:`${headerColor}22`,border:`1px solid ${headerColor}44`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n={isDiaria?"bed":"package"} s={18} c={headerColor}/></div>
                 <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:headerColor}}>{nomeLabel}</div><div style={{fontSize:9,color:t.txt2}}>Solicitar pagamento · {reg.nome||"—"}</div></div>

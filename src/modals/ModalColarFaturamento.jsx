@@ -7,7 +7,7 @@ import React from "react";
 import Icon from "../components/Icon.jsx";
 import {
   BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
-  paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO,
+  paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO, CAMPOS_SO_APP,
 } from "../faturamentoParse.js";
 import { escreverFaturamentoNaPlanilha } from "../faturamentoSheets.js";
 
@@ -79,17 +79,26 @@ export default function ModalColarFaturamento({ ctx }) {
     if (!reg || !aGravar.length) return;
     const payload = {};
     aGravar.forEach(l => { payload[l.k] = l.novo; });
+    // Campos que a planilha não tem (hoje: forma de pagamento) vão direto pro
+    // Supabase. É seguro: o sync só sobrescreve coluna que existe na planilha.
+    const soApp = {}, paraPlanilha = {};
+    Object.entries(payload).forEach(([k, v]) => {
+      (CAMPOS_SO_APP.includes(k) ? soApp : paraPlanilha)[k] = v;
+    });
     setSalvando(true);
     try {
       // 1) Planilha primeiro. Se ela não receber, NÃO grava no app: a sync de 15
       //    min traria a célula vazia por cima e o trabalho sumiria sem aviso.
-      const res = await escreverFaturamentoNaPlanilha({
-        base: baseAtual?.id, dt: reg.dt, aba: reg.sheet || "", campos: payload,
-      });
-      // 2) Supabase — só os campos que a planilha aceitou.
-      const gravados = Array.isArray(res.escritos) && res.escritos.length
-        ? Object.fromEntries(res.escritos.map(k => [k, payload[k]]))
-        : payload;
+      const res = Object.keys(paraPlanilha).length
+        ? await escreverFaturamentoNaPlanilha({ base: baseAtual?.id, dt: reg.dt, aba: reg.sheet || "", campos: paraPlanilha })
+        : { ok: true, aba: reg.sheet || "—", linha: "—", escritos: [], ignorados: [] };
+      // 2) Supabase — o que a planilha aceitou + o que só existe aqui.
+      const gravados = {
+        ...(Array.isArray(res.escritos) && res.escritos.length
+          ? Object.fromEntries(res.escritos.map(k => [k, paraPlanilha[k]]))
+          : paraPlanilha),
+        ...soApp,
+      };
       await patchOperacional(reg.dt, gravados);
       if (registrarLog) {
         await registrarLog(`BLOCO_${modo.toUpperCase()}_COLADO`, `DT ${reg.dt} — ${Object.keys(gravados).join(", ")}`, reg, { ...reg, ...gravados });
@@ -108,7 +117,7 @@ export default function ModalColarFaturamento({ ctx }) {
 
   return (
     <div style={css.overlay} onClick={e => e.target === e.currentTarget && !salvando && setFaturaColarOpen(null)}>
-      <div style={{ ...css.modal, maxWidth: 640, maxHeight: "96vh" }}>
+      <div style={{ ...css.modal, maxWidth: 640 }}>
         {/* Header */}
         <div style={{ padding: "13px 16px 10px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${t.borda}`, flexShrink: 0, background: "rgba(217,98,43,.06)" }}>
           <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(217,98,43,.15)", border: "1px solid rgba(217,98,43,.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -151,7 +160,7 @@ export default function ModalColarFaturamento({ ctx }) {
             <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>
               {def.perguntaManifesto
                 ? "A data do manifesto é preenchida abaixo, não no texto. ID saiu do faturamento — agora é campo da contratação."
-                : "Placas podem vir juntas (KEW9943 / KQW5I51). Valores entram como estão no texto — o app não reformata dinheiro."}
+                : "Placas podem vir juntas (KEW9943 / KQW5I51). Valores entram como estão no texto. PGTO aceita cheque, conta ou ambos — e fica só no app, porque a planilha não tem essa coluna."}
             </div>
           </div>
 

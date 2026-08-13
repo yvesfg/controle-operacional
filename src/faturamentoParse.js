@@ -49,7 +49,12 @@ const F = {
   vl_cte:      { k: "vl_cte",       l: "Vlr Empresa",  rotulos: ["vlr empresa", "valor empresa", "vl cte", "valor cte"], tipo: "moeda" },
   vl_contrato: { k: "vl_contrato",  l: "Vlr Mot",      rotulos: ["vlr mot", "valor mot", "vlr motorista", "vl contrato", "valor contrato"], tipo: "moeda" },
   adiant:      { k: "adiant",       l: "ADT",          rotulos: ["adt", "adiantamento", "adiant"], tipo: "moeda" },
+  forma_pgto:  { k: "forma_pgto",   l: "Forma de pgto", rotulos: ["pgto", "pagamento", "forma de pagamento", "forma pgto"], tipo: "pgto", soApp: true },
 };
+
+// Campos que existem SÓ no app: a planilha não tem coluna pra eles, então não vão
+// pro write-back (e por isso mesmo a sync de 15 min nunca os sobrescreve).
+export const CAMPOS_SO_APP = Object.values(F).filter(c => c.soApp).map(c => c.k);
 
 // Preenchido pela tela, não pelo texto — mas aceito se alguém colar mesmo assim.
 export const CAMPO_MANIFESTO = {
@@ -69,9 +74,9 @@ export const BLOCOS = {
   contratacao: {
     l: "Contratação",
     sub: "DT · ID · motorista · placas · datas · valores",
-    campos: [F.dt, F.id_doc, F.nome, F.cpf, F.telefone, F.placas, F.destino, F.data_carr, F.data_agenda, F.vl_cte, F.vl_contrato, F.adiant],
+    campos: [F.dt, F.id_doc, F.nome, F.cpf, F.telefone, F.placas, F.destino, F.data_carr, F.data_agenda, F.vl_cte, F.vl_contrato, F.adiant, F.forma_pgto],
     perguntaManifesto: false,
-    exemplo: "DT: 1348169\nID: 8678252\nNOME: CARLOS HENRIQUE\nCPF: 212.975.958-07\nTELEFONE: 94 9979-5640\nPLACAS: KEW9943 / KQW5I51\nDESTINO: BRASILIA-DF\nCARREGAR: 07/08/2026\nAG DESCARGA: 12/08/2026\nVLR EMPRESA: 12.342,47\nVLR MOT: 10.762,58\nADT: 7.533,80",
+    exemplo: "DT: 1348169\nID: 8678252\nNOME: CARLOS HENRIQUE\nCPF: 212.975.958-07\nTELEFONE: 94 9979-5640\nPLACAS: KEW9943 / KQW5I51\nDESTINO: BRASILIA-DF\nCARREGAR: 07/08/2026\nAG DESCARGA: 12/08/2026\nVLR EMPRESA: 12.342,47\nVLR MOT: 10.762,58\nADT: 7.533,80\nPGTO: CHEQUE",
   },
 };
 
@@ -105,12 +110,26 @@ export function dataDeHojeBR() {
 // base (ver financeiroCalc/nMoeda). Reescrever aqui seria inventar um número.
 const limparMoeda = (v) => String(v || "").replace(/R\$/gi, "").trim();
 
+// O card imprime "PGTO: ✅ CHEQUE" / "✅ CHEQUE + CONTA" — vira o mesmo vocabulário
+// dos 3 botões do card (cheque | conta | ambos), que é o que a coluna guarda.
+export function normalizarPgto(valor) {
+  const v = norm(valor).replace(/[^a-z+ ]/g, " ").replace(/\s+/g, " ").trim();
+  if (!v) return "";
+  const temCheque = /cheque/.test(v);
+  const temConta  = /conta|deposito|transferencia|pix/.test(v);
+  if (/ambos/.test(v) || (temCheque && temConta)) return "ambos";
+  if (temCheque) return "cheque";
+  if (temConta)  return "conta";
+  return "";
+}
+
 const limpar = (valor, tipo) => {
   const v = String(valor || "").trim().replace(/\s+/g, " ");
   if (tipo === "nf")    return v.replace(/\s*,\s*/g, ", ");
   if (tipo === "texto") return v;
   if (tipo === "data")  return paraDataBR(v);
   if (tipo === "moeda") return limparMoeda(v);
+  if (tipo === "pgto")  return normalizarPgto(v);
   return v.replace(/[^\dA-Za-z\-/]/g, "");
 };
 
@@ -206,7 +225,12 @@ export function parseBloco(texto, modo = MODO_PADRAO) {
       continue;
     }
     if (campos[campo.k]) { avisos.push(`${campo.l} apareceu mais de uma vez — usei o primeiro`); continue; }
-    campos[campo.k] = limpar(valor, campo.tipo);
+    const limpo = limpar(valor, campo.tipo);
+    if (!limpo) {
+      if (campo.tipo === "pgto") avisos.push(`Forma de pagamento "${valor}" não reconhecida — use cheque, conta ou ambos`);
+      continue;
+    }
+    campos[campo.k] = limpo;
     achados.push(campo.k);
   }
 

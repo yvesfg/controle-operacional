@@ -34,10 +34,12 @@ export function useCss(t) {
     secTitle:  { fontSize:11, textTransform:"uppercase", letterSpacing:DESIGN.ls.label, color:t.ouro, marginBottom:12, fontWeight:700, display:"flex", alignItems:"center", gap:8 },
     badge:     (c,bg,bc) => ({ padding:"2px 8px", borderRadius:DESIGN.r.badge, fontSize:9, fontWeight:700, letterSpacing:DESIGN.ls.badge, textTransform:"uppercase", color:c, background:bg, border:`1px solid ${bc}` }),
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
-    // Overlay com blur mais pronunciado para foco no modal
-    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"flex-end", justifyContent:"center" },
-    // Modal — borda fina define a separação do overlay
-    modal:     { width:"100%", maxWidth:520, maxHeight:"94vh", background:t.modalBg, borderRadius:"16px 16px 0 0", border:`1px solid ${t.borda}`, borderBottom:"none", display:"flex", flexDirection:"column", overflow:"hidden", animation:"mslide .26s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
+    // Overlay — modal CENTRALIZADO (antes era bottom-sheet colado no rodapé, o que
+    // no desktop jogava o conteúdo pro pé da tela e deixava o topo vazio).
+    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px 16px" },
+    // Modal — flutua com as 4 bordas arredondadas; a altura respeita o padding do
+    // overlay (por isso 100vh - 40px, não 94vh) pra nunca encostar nas beiradas.
+    modal:     { width:"100%", maxWidth:520, maxHeight:"calc(100vh - 40px)", background:t.modalBg, borderRadius:16, border:`1px solid ${t.borda}`, display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"0 24px 64px rgba(0,0,0,.45)", animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
   };
 
   return { css, statusBorderColor };
