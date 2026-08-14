@@ -82,6 +82,13 @@ export default function ModalColarFaturamento({ ctx }) {
   const corEstado = { preenche: t.verde, igual: t.txt2, conflito: t.warn };
   const rotuloEstado = { preenche: "PREENCHE", igual: "JÁ IGUAL", conflito: "DIFERENTE" };
 
+  // "NADA A GRAVAR" com conflitos na lista fazia parecer que não havia o que
+  // fazer, quando na verdade há uma decisão esperando o SOBRESCREVER.
+  const rotuloGravar = salvando ? "GRAVANDO…"
+    : aGravar.length ? `GRAVAR ${aGravar.length} CAMPO${aGravar.length > 1 ? "S" : ""}`
+    : conflitos.length ? `${conflitos.length} CAMPO${conflitos.length > 1 ? "S DIFERENTES" : " DIFERENTE"} — MARQUE SOBRESCREVER`
+    : "NADA A GRAVAR";
+
   // Zera o formulário SEM fechar: quem lança várias DTs seguidas cola a próxima
   // aqui mesmo. modoManual volta a false de propósito — assim colar um bloco de
   // Faturamento depois de um de Contratação troca o tipo sozinho.
@@ -265,13 +272,17 @@ export default function ModalColarFaturamento({ ctx }) {
                         <span style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.atual || "—"}</span>
                         <span style={{ color: t.txt2, flexShrink: 0 }}>→</span>
                         <span style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.novo}</span>
+                        {l.anoAssumido && <span title="O texto veio sem o ano e a DT não tinha data gravada — assumi o ano corrente" style={{ color: t.warn, fontSize: 9, flexShrink: 0 }}>ano assumido</span>}
                       </div>
                     </div>
                   ) : (
                     <div key={l.k} style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr 78px", gap: 8, alignItems: "center", padding: "7px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 11 }}>
                       <div style={{ fontWeight: 700, color: t.txt2, fontSize: 10 }}>{l.l}</div>
                       <div style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis" }}>{l.atual || "—"}</div>
-                      <div style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>{l.novo}</div>
+                      <div style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {l.novo}
+                        {l.anoAssumido && <span title="O texto veio sem o ano e a DT não tinha data gravada — assumi o ano corrente" style={{ color: t.warn, fontSize: 9, fontWeight: 600, marginLeft: 5 }}>ano assumido</span>}
+                      </div>
                       <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: .5, color: corEstado[l.estado], textAlign: "right" }}>{rotuloEstado[l.estado]}</div>
                     </div>
                   )
@@ -304,7 +315,7 @@ export default function ModalColarFaturamento({ ctx }) {
             style={{ flex: 1, borderRadius: 10, padding: "12px 18px", cursor: salvando ? "wait" : (!reg || !aGravar.length ? "not-allowed" : "pointer"), background: !reg || !aGravar.length ? "rgba(128,128,128,.15)" : "rgba(2,192,118,.15)", border: `1.5px solid ${!reg || !aGravar.length ? t.borda : "rgba(2,192,118,.4)"}`, color: !reg || !aGravar.length ? t.txt2 : t.verde, fontWeight: 700, fontSize: 13, letterSpacing: .5, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
           >
             <Icon n="save" s={15} c="currentColor" />
-            {salvando ? "GRAVANDO…" : aGravar.length ? `GRAVAR ${aGravar.length} CAMPO${aGravar.length > 1 ? "S" : ""}` : "NADA A GRAVAR"}
+            {rotuloGravar}
           </button>
         </div>
       </div>

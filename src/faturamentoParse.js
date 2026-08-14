@@ -46,9 +46,11 @@ const F = {
   // placa3). O card antigo mandava tudo junto em "PLACAS: A / B"; esse formato
   // continua sendo aceito (tipo "placas" quebra na barra), mas o card passou a
   // escrever uma linha por placa, que é o que casa 1:1 com a planilha.
-  placa:       { k: "placa",        l: "Placa 01",     rotulos: ["placa 01", "placa01", "placa 1", "placa1"], tipo: "placa" },
-  placa2:      { k: "placa2",       l: "Placa 02",     rotulos: ["placa 02", "placa02", "placa 2", "placa2", "carreta"], tipo: "placa" },
-  placa3:      { k: "placa3",       l: "Placa 03",     rotulos: ["placa 03", "placa03", "placa 3", "placa3"], tipo: "placa" },
+  // Os rótulos no PLURAL ("PLACAS 01") são os que a equipe realmente digita —
+  // sem eles a linha caía em "Linha ignorada" e a placa não entrava.
+  placa:       { k: "placa",        l: "Placa 01",     rotulos: ["placa 01", "placa01", "placa 1", "placa1", "placas 01", "placas01", "placas 1", "placas1", "cavalo"], tipo: "placa" },
+  placa2:      { k: "placa2",       l: "Placa 02",     rotulos: ["placa 02", "placa02", "placa 2", "placa2", "placas 02", "placas02", "placas 2", "placas2", "carreta"], tipo: "placa" },
+  placa3:      { k: "placa3",       l: "Placa 03",     rotulos: ["placa 03", "placa03", "placa 3", "placa3", "placas 03", "placas03", "placas 3", "placas3"], tipo: "placa" },
   placas:      { k: "placa",        l: "Placas",       rotulos: ["placas", "placa"], tipo: "placas" },
   destino:     { k: "destino",      l: "Destino",      rotulos: ["destino"], tipo: "texto" },
   data_carr:   { k: "data_carr",    l: "Carregar",     rotulos: ["carregar", "data carregamento", "data carr", "carregamento"], tipo: "data" },
@@ -106,6 +108,15 @@ export function paraDataBR(valor) {
     return `${m[1].padStart(2, "0")}/${m[2].padStart(2, "0")}/${ano}`;
   }
   return s;
+}
+
+// "15/08" ou "15/8" → "15/08" (só dia/mês, sem ano). null se não for esse caso.
+// A equipe digita a data sem o ano no WhatsApp; guardar assim deixava o campo
+// mais pobre que o que já estava gravado ("15/08/2026") e ainda marcava
+// DIFERENTE na conferência, como se fossem datas distintas.
+export function diaMesSemAno(valor) {
+  const m = String(valor || "").trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+  return m ? `${m[1].padStart(2, "0")}/${m[2].padStart(2, "0")}` : null;
 }
 
 export function dataDeHojeBR() {
@@ -217,7 +228,7 @@ export function parseBloco(texto, modo = MODO_PADRAO) {
 
     // Rótulo que existe no OUTRO bloco: avisa em vez de descartar calado.
     // Planilha e banco têm 3 colunas de placa; motorista com 4 existe no cadastro.
-    if (/^placa\s*0?4$/.test(rotulo)) {
+    if (/^placas?\s*0?4$/.test(rotulo)) {
       avisos.push("PLACA 04 ignorada — planilha e banco têm só três colunas de placa");
       continue;
     }
@@ -275,9 +286,9 @@ export function camposDoBloco(modo) {
     // de placa/placa2/placa3, então não vira linha própria na conferência.
     if (c.tipo === "placas" || c.k === "dt") return;
     if (lista.some(x => x.k === c.k)) return;
-    lista.push({ k: c.k, l: c.l });
+    lista.push({ k: c.k, l: c.l, tipo: c.tipo });
   });
-  if (def.perguntaManifesto) lista.push({ k: CAMPO_MANIFESTO.k, l: CAMPO_MANIFESTO.l });
+  if (def.perguntaManifesto) lista.push({ k: CAMPO_MANIFESTO.k, l: CAMPO_MANIFESTO.l, tipo: CAMPO_MANIFESTO.tipo });
   return lista;
 }
 
@@ -294,13 +305,31 @@ export function faltandoFaturamento(reg) {
 
 // Compara o que foi lido com o registro que já está no app.
 // estado: "preenche" (estava vazio) · "igual" · "conflito" (tem outro valor lá)
+//
+// Data sem ano é completada AQUI, e não no parser, porque só neste ponto se
+// conhece o registro: o ano vem do que a própria DT já tem naquele campo, então
+// "15/08" colado sobre "15/08/2026" vira igual em vez de sobrescrever com uma
+// data mais pobre. Campo vazio não tem de onde tirar o ano — usa o corrente e
+// marca anoAssumido pra tela avisar.
 export function compararComRegistro(reg, campos, modo = MODO_PADRAO) {
+  const anoCorrente = new Date().getFullYear();
   return camposDoBloco(modo)
     .filter(c => campos[c.k] !== undefined && campos[c.k] !== "")
     .map(c => {
       const atual = String(reg?.[c.k] ?? "").trim();
-      const novo  = String(campos[c.k]).trim();
+      let novo = String(campos[c.k]).trim();
+      let anoAssumido = false;
+
+      if (c.tipo === "data") {
+        const semAno = diaMesSemAno(novo);
+        if (semAno) {
+          const anoDoRegistro = (atual.match(/^\d{2}\/\d{2}\/(\d{4})$/) || [])[1];
+          novo = `${semAno}/${anoDoRegistro || anoCorrente}`;
+          anoAssumido = !anoDoRegistro;
+        }
+      }
+
       const estado = !atual ? "preenche" : (atual === novo ? "igual" : "conflito");
-      return { k: c.k, l: c.l, atual, novo, estado };
+      return { k: c.k, l: c.l, atual, novo, estado, anoAssumido };
     });
 }
