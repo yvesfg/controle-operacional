@@ -21,7 +21,7 @@ export default function AppSidebar({
           <div style={{width:36,height:36,borderRadius:8,background:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="m16 8 4 2 3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
           </div>
-          <div style={{overflow:"hidden",flex:1,minWidth:0}}>
+          <div className="co-sidebar__logo-txt" style={{overflow:"hidden",flex:1,minWidth:0}}>
               <div className="co-sidebar__logo-name">YFGroup</div>
               <div className="co-sidebar__logo-sub">CTRL OPERACIONAL</div>
             </div>
