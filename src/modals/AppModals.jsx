@@ -23,7 +23,7 @@ import Toast                 from '../components/Toast.jsx';
 export default function AppModals({ ctx }) {
   const {
     reportBuilderOpen, setReportBuilderOpen, DADOS, motoristas, apontItems, sgsItems,
-    t, DESIGN, isMobile, hIco, hexRgb, css, fmtMoeda,
+    t, DESIGN, isMobile, isDesktop, hIco, hexRgb, css, fmtMoeda,
     formData, setFormData, modalOpen, setModalOpen, editIdx, setEditIdx,
     excluirConfirm, setExcluirConfirm, excluirTexto, setExcluirTexto,
     canFin, brToInput, brToInputDT, inputToBr, inputToBrDT,
@@ -247,7 +247,7 @@ export default function AppModals({ ctx }) {
 <ModalColarFaturamento ctx={{
   faturaColarOpen, setFaturaColarOpen,
   DADOS, baseAtual, t, css, showToast,
-  patchOperacional, registrarLog,
+  patchOperacional, registrarLog, isMobile, isDesktop,
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}

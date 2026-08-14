@@ -273,7 +273,7 @@ export default function App() {
     faturaColarOpen, setFaturaColarOpen,
     syncStatus, setSyncStatus, syncStatusLoading, setSyncStatusLoading,
     adminEmailVal, setAdminEmailVal,
-    isMobile, setIsMobile, isWide, setIsWide,
+    isMobile, setIsMobile, isWide, setIsWide, isDesktop, setIsDesktop,
     sidebarCollapsed, setSidebarCollapsed, mobileSidebarExpanded, setMobileSidebarExpanded,
   } = useUIState();
 
@@ -1941,7 +1941,7 @@ export default function App() {
 
       <AppModals ctx={{
         reportBuilderOpen, setReportBuilderOpen, DADOS, motoristas, apontItems, sgsItems,
-        t, DESIGN, isMobile, hIco, hexRgb, css, fmtMoeda,
+        t, DESIGN, isMobile, isDesktop, hIco, hexRgb, css, fmtMoeda,
         formData, setFormData, modalOpen, setModalOpen, editIdx, setEditIdx,
         excluirConfirm, setExcluirConfirm, excluirTexto, setExcluirTexto,
         canFin, brToInput, brToInputDT, inputToBr, inputToBrDT,

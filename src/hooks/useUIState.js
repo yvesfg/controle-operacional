@@ -19,11 +19,19 @@ export function useUIState() {
   // Dimensões e sidebar
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 600);
   const [isWide, setIsWide] = useState(() => window.innerWidth >= 768);
+  // Terceira faixa, acima de isWide: largura em que um modal cabe em DUAS colunas
+  // lado a lado sem espremer nenhuma. Em 768 (isWide) daria ~370px por coluna,
+  // estreito demais pra tabela de conferência — por isso 1024 e não 768.
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => loadJSON("co_sidebar_collapsed", window.innerWidth >= 768 && window.innerWidth < 1200));
   const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
 
   useEffect(() => {
-    const fn = () => { setIsMobile(window.innerWidth <= 600); setIsWide(window.innerWidth >= 768); };
+    const fn = () => {
+      setIsMobile(window.innerWidth <= 600);
+      setIsWide(window.innerWidth >= 768);
+      setIsDesktop(window.innerWidth >= 1024);
+    };
     window.addEventListener("resize", fn);
     return () => window.removeEventListener("resize", fn);
   }, []);
@@ -37,7 +45,7 @@ export function useUIState() {
     faturaColarOpen, setFaturaColarOpen,
     syncStatus, setSyncStatus, syncStatusLoading, setSyncStatusLoading,
     adminEmailVal, setAdminEmailVal,
-    isMobile, setIsMobile, isWide, setIsWide,
+    isMobile, setIsMobile, isWide, setIsWide, isDesktop, setIsDesktop,
     sidebarCollapsed, setSidebarCollapsed, mobileSidebarExpanded, setMobileSidebarExpanded,
   };
 }

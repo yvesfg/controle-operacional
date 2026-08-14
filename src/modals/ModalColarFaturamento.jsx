@@ -3,6 +3,12 @@
 // hoje (faturamento ou contratação), o app acha a DT, mostra o que vai mudar e
 // grava — primeiro na planilha (senão a sync de 15 min apagaria), depois no
 // Supabase. Qual bloco é, o app reconhece pelo próprio texto.
+//
+// LAYOUT — as duas metades (colar × conferir) rolam SEPARADAS, nunca a página
+// inteira, pra você não perder o texto colado de vista ao conferir os campos:
+//   desktop (≥1024)  lado a lado, cada coluna com sua rolagem
+//   tablet / mobile  empilhado, o painel de cima limitado a ~metade da altura
+//                    pra nunca empurrar a conferência pra fora da tela
 import React from "react";
 import Icon from "../components/Icon.jsx";
 import {
@@ -21,7 +27,7 @@ export default function ModalColarFaturamento({ ctx }) {
   const {
     faturaColarOpen, setFaturaColarOpen,
     DADOS, baseAtual, t, css, showToast,
-    patchOperacional, registrarLog,
+    patchOperacional, registrarLog, isMobile, isDesktop,
   } = ctx;
 
   const [texto, setTexto] = React.useState("");
@@ -30,6 +36,7 @@ export default function ModalColarFaturamento({ ctx }) {
   const [manifestoISO, setManifestoISO] = React.useState("");
   const [sobrescrever, setSobrescrever] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
+  const txtRef = React.useRef(null);
 
   // Abre com o texto que veio de quem chamou (bloco colado na busca do WhatsApp
   // ou só "DT: xxxx" quando a DT já estava selecionada lá).
@@ -75,6 +82,17 @@ export default function ModalColarFaturamento({ ctx }) {
   const corEstado = { preenche: t.verde, igual: t.txt2, conflito: t.warn };
   const rotuloEstado = { preenche: "PREENCHE", igual: "JÁ IGUAL", conflito: "DIFERENTE" };
 
+  // Zera o formulário SEM fechar: quem lança várias DTs seguidas cola a próxima
+  // aqui mesmo. modoManual volta a false de propósito — assim colar um bloco de
+  // Faturamento depois de um de Contratação troca o tipo sozinho.
+  const limpar = () => {
+    setTexto("");
+    setModoManual(false);
+    setManifestoISO("");
+    setSobrescrever(false);
+    txtRef.current?.focus();
+  };
+
   const gravar = async () => {
     if (!reg || !aGravar.length) return;
     const payload = {};
@@ -105,7 +123,8 @@ export default function ModalColarFaturamento({ ctx }) {
       }
       const extra = res.ignorados?.length ? ` (sem coluna na planilha: ${res.ignorados.join(", ")})` : "";
       showToast(`✅ DT ${reg.dt} atualizada na planilha (${res.aba}, linha ${res.linha}) e no app${extra}`, "ok");
-      setFaturaColarOpen(null);
+      // Fica aberto e limpo pro próximo bloco — fechar é no X do cabeçalho.
+      limpar();
     } catch (e) {
       showToast("❌ " + (e.message || e), "err");
     } finally {
@@ -115,115 +134,170 @@ export default function ModalColarFaturamento({ ctx }) {
 
   const lbl = { fontSize: 8, textTransform: "uppercase", letterSpacing: 1.2, color: t.txt2, fontWeight: 600, display: "block", marginBottom: 3 };
 
+  // Cada painel rola por conta própria. minHeight:0 é o que permite isso dentro
+  // de flex/grid — sem ele o painel cresce e quem rola vira a página toda.
+  const painel = { minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: 14, display: "flex", flexDirection: "column", gap: 10 };
+  // Empilhado, quando os dois juntos não cabem: quem cede é o painel de cima.
+  // (maxHeight em % não resolve aqui — a altura do corpo é indefinida no flex,
+  // então a porcentagem é ignorada e o painel fica com a altura natural.)
+  const painelEsq = isDesktop
+    ? { ...painel }
+    : { ...painel, flex: "0 1 auto", minHeight: 96 };
+  const painelDir = isDesktop
+    ? { ...painel, borderLeft: `1px solid ${t.borda}` }
+    : { ...painel, flex: "1 1 auto", minHeight: 140, borderTop: `1px solid ${t.borda}` };
+  const alturaTexto = isDesktop ? "clamp(220px, 34vh, 420px)" : (isMobile ? 150 : 190);
+
   return (
     <div style={css.overlay} onClick={e => e.target === e.currentTarget && !salvando && setFaturaColarOpen(null)}>
-      <div style={{ ...css.modal, maxWidth: 640 }}>
+      <div style={{ ...css.modal, maxWidth: isDesktop ? 1040 : 640 }}>
         {/* Header */}
         <div style={{ padding: "13px 16px 10px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${t.borda}`, flexShrink: 0, background: "rgba(217,98,43,.06)" }}>
           <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(217,98,43,.15)", border: "1px solid rgba(217,98,43,.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Icon n="clipboard" s={18} c={t.ouro} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: 2, color: t.ouro }}>PREENCHER PELO BLOCO</div>
             <div style={{ fontSize: 9, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
           </div>
-          <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} style={{ background: "rgba(128,128,128,.1)", border: "none", borderRadius: 7, width: 44, height: 44, cursor: salvando ? "not-allowed" : "pointer", color: t.txt2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" style={{ background: "rgba(128,128,128,.1)", border: "none", borderRadius: 7, width: 44, height: 44, cursor: salvando ? "not-allowed" : "pointer", color: t.txt2, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <Icon n="x" s={16} c={t.txt2} sw={2} />
           </button>
         </div>
 
-        <div style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* Modo — detectado pelo texto, trocável na mão */}
-          <div>
-            <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              {Object.entries(BLOCOS).map(([k, b]) => (
-                <button key={k} onClick={() => { setModo(k); setModoManual(true); }}
-                  style={{ padding: "8px 10px", borderRadius: 9, border: `1.5px solid ${modo === k ? t.ouro : t.borda}`, background: modo === k ? "rgba(217,98,43,.1)" : t.card2, color: modo === k ? t.ouro : t.txt2, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700 }}>{b.l}</div>
-                  <div style={{ fontSize: 9, color: t.txt2, marginTop: 1 }}>{b.sub}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label style={lbl}>Bloco colado</label>
-            <textarea
-              value={texto}
-              onChange={e => setTexto(e.target.value)}
-              rows={modo === "contratacao" ? 9 : 7}
-              placeholder={def.exemplo}
-              autoFocus
-              style={{ ...css.inp, fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.7, resize: "vertical" }}
-            />
-            <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>
-              {def.perguntaManifesto
-                ? "A data do manifesto é preenchida abaixo, não no texto. ID saiu do faturamento — agora é campo da contratação."
-                : "Placas podem vir juntas (KEW9943 / KQW5I51). Valores entram como estão no texto. PGTO aceita cheque, conta ou ambos — e fica só no app, porque a planilha não tem essa coluna."}
-            </div>
-          </div>
-
-          {avisos.map((a, i) => (
-            <div key={i} style={{ fontSize: 10, color: t.warn, display: "flex", alignItems: "center", gap: 5 }}>
-              <Icon n="alert" s={11} c={t.warn} /> {a}
-            </div>
-          ))}
-
-          {/* Registro encontrado */}
-          {campos.dt && !reg && (
-            <div style={{ background: "rgba(246,70,93,.07)", border: "1px solid rgba(246,70,93,.3)", borderRadius: 10, padding: "10px 12px", fontSize: 11, color: t.danger, display: "flex", alignItems: "center", gap: 6 }}>
-              <Icon n="alert" s={12} c={t.danger} /> DT {campos.dt} não existe nesta base ({baseAtual?.nome || baseAtual?.id || "—"}). A DT nasce na planilha ou no "Nova DT".
-            </div>
-          )}
-
-          {reg && (
-            <div style={{ background: t.card2, borderRadius: 10, padding: "10px 12px", border: `1px solid ${t.borda}` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 16, letterSpacing: 2, color: t.ouro }}>DT {reg.dt}</div>
-                <div style={{ flex: 1, fontSize: 11, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reg.nome || "—"}</div>
-                <div style={{ fontSize: 10, color: t.txt2, fontFamily: "var(--font-mono)" }}>{reg.placa || "—"}</div>
-              </div>
-              <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{reg.origem || "—"} → {reg.destino || "—"} · aba {reg.sheet || "?"}</div>
-            </div>
-          )}
-
-          {/* Data do manifesto — vem da tela, só no faturamento */}
-          {reg && def.perguntaManifesto && (
+        {/* Corpo — 2 colunas no desktop, empilhado abaixo disso */}
+        <div style={{
+          flex: "1 1 auto", minHeight: 0, display: isDesktop ? "grid" : "flex",
+          ...(isDesktop ? { gridTemplateColumns: "minmax(0,1fr) minmax(0,1.1fr)" } : { flexDirection: "column" }),
+        }}>
+          {/* ── Coluna 1: o que se cola ── */}
+          <div style={painelEsq}>
+            {/* Modo — detectado pelo texto, trocável na mão */}
             <div>
-              <label style={lbl}>{CAMPO_MANIFESTO.l} <span style={{ color: t.verde, fontSize: 8 }}>(data do lançamento — editável)</span></label>
-              <input type="date" value={manifestoISO} onChange={e => setManifestoISO(e.target.value)} style={{ ...css.inp, fontSize: 12, padding: "7px 10px" }} />
-            </div>
-          )}
-
-          {/* Conferência */}
-          {reg && linhas.length > 0 && (
-            <div style={{ background: t.card2, borderRadius: 10, border: `1px solid ${t.borda}`, overflow: "hidden" }}>
-              <div style={{ padding: "8px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 8, textTransform: "uppercase", letterSpacing: 1, color: t.txt2, fontWeight: 700 }}>Conferência</div>
-              {linhas.map(l => (
-                <div key={l.k} style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr 78px", gap: 8, alignItems: "center", padding: "7px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 11 }}>
-                  <div style={{ fontWeight: 700, color: t.txt2, fontSize: 10 }}>{l.l}</div>
-                  <div style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis" }}>{l.atual || "—"}</div>
-                  <div style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>{l.novo}</div>
-                  <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: .5, color: corEstado[l.estado], textAlign: "right" }}>{rotuloEstado[l.estado]}</div>
-                </div>
-              ))}
-              {conflitos.length > 0 && (
-                <div style={{ padding: "9px 12px", display: "flex", alignItems: "center", gap: 8, background: "rgba(217,98,43,.06)" }}>
-                  <Icon n="alert" s={12} c={t.warn} />
-                  <span style={{ flex: 1, fontSize: 10, color: t.warn }}>{conflitos.length} campo{conflitos.length > 1 ? "s já têm" : " já tem"} outro valor gravado.</span>
-                  <button onClick={() => setSobrescrever(v => !v)} style={{ background: sobrescrever ? "rgba(246,70,93,.12)" : "transparent", border: `1.5px solid ${sobrescrever ? t.danger : t.borda}`, borderRadius: 7, padding: "4px 9px", color: sobrescrever ? t.danger : t.txt2, fontSize: 9.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                    {sobrescrever ? "SOBRESCREVENDO" : "SOBRESCREVER"}
+              <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {Object.entries(BLOCOS).map(([k, b]) => (
+                  <button key={k} onClick={() => { setModo(k); setModoManual(true); }}
+                    style={{ padding: "8px 10px", borderRadius: 9, border: `1.5px solid ${modo === k ? t.ouro : t.borda}`, background: modo === k ? "rgba(217,98,43,.1)" : t.card2, color: modo === k ? t.ouro : t.txt2, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700 }}>{b.l}</div>
+                    <div style={{ fontSize: 9, color: t.txt2, marginTop: 1 }}>{b.sub}</div>
                   </button>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-          )}
+
+            <div>
+              <label style={lbl}>Bloco colado</label>
+              <textarea
+                ref={txtRef}
+                value={texto}
+                onChange={e => setTexto(e.target.value)}
+                placeholder={def.exemplo}
+                autoFocus
+                style={{ ...css.inp, fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.7, resize: "vertical", height: alturaTexto, overflowY: "auto" }}
+              />
+              <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>
+                {def.perguntaManifesto
+                  ? "A data do manifesto é preenchida ao lado, não no texto. ID saiu do faturamento — agora é campo da contratação."
+                  : "Placas podem vir juntas (KEW9943 / KQW5I51). Valores entram como estão no texto. PGTO aceita cheque, conta ou ambos — e fica só no app, porque a planilha não tem essa coluna."}
+              </div>
+            </div>
+
+            {avisos.map((a, i) => (
+              <div key={i} style={{ fontSize: 10, color: t.warn, display: "flex", alignItems: "flex-start", gap: 5 }}>
+                <span style={{ flexShrink: 0, marginTop: 1 }}><Icon n="alert" s={11} c={t.warn} /></span>
+                <span>{a}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Coluna 2: o que vai ser gravado ── */}
+          <div style={painelDir}>
+            {!campos.dt && (
+              <div style={{ margin: "auto", textAlign: "center", padding: "18px 12px", color: t.txt2 }}>
+                <Icon n="clipboard" s={22} c={t.txt2} />
+                <div style={{ fontSize: 11, marginTop: 8, lineHeight: 1.6 }}>
+                  {isDesktop ? "Cole o bloco ao lado." : "Cole o bloco acima."}<br />
+                  A DT e a conferência campo a campo aparecem aqui.
+                </div>
+              </div>
+            )}
+
+            {campos.dt && !reg && (
+              <div style={{ background: "rgba(246,70,93,.07)", border: "1px solid rgba(246,70,93,.3)", borderRadius: 10, padding: "10px 12px", fontSize: 11, color: t.danger, display: "flex", alignItems: "center", gap: 6 }}>
+                <Icon n="alert" s={12} c={t.danger} /> DT {campos.dt} não existe nesta base ({baseAtual?.nome || baseAtual?.id || "—"}). A DT nasce na planilha ou no "Nova DT".
+              </div>
+            )}
+
+            {reg && (
+              <div style={{ background: t.card2, borderRadius: 10, padding: "10px 12px", border: `1px solid ${t.borda}`, flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 16, letterSpacing: 2, color: t.ouro }}>DT {reg.dt}</div>
+                  <div style={{ flex: 1, fontSize: 11, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reg.nome || "—"}</div>
+                  <div style={{ fontSize: 10, color: t.txt2, fontFamily: "var(--font-mono)" }}>{reg.placa || "—"}</div>
+                </div>
+                <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{reg.origem || "—"} → {reg.destino || "—"} · aba {reg.sheet || "?"}</div>
+              </div>
+            )}
+
+            {/* Data do manifesto — vem da tela, só no faturamento */}
+            {reg && def.perguntaManifesto && (
+              <div style={{ flexShrink: 0 }}>
+                <label style={lbl}>{CAMPO_MANIFESTO.l} <span style={{ color: t.verde, fontSize: 8 }}>(data do lançamento — editável)</span></label>
+                <input type="date" value={manifestoISO} onChange={e => setManifestoISO(e.target.value)} style={{ ...css.inp, fontSize: 12, padding: "7px 10px" }} />
+              </div>
+            )}
+
+            {/* Conferência */}
+            {reg && linhas.length > 0 && (
+              <div style={{ background: t.card2, borderRadius: 10, border: `1px solid ${t.borda}`, overflow: "hidden", flexShrink: 0 }}>
+                <div style={{ padding: "8px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 8, textTransform: "uppercase", letterSpacing: 1, color: t.txt2, fontWeight: 700 }}>Conferência</div>
+                {linhas.map(l => (
+                  isMobile ? (
+                    // Telas estreitas: rótulo + estado em cima, atual → novo embaixo.
+                    // Em 4 colunas os valores viravam reticências e a linha não dizia nada.
+                    <div key={l.k} style={{ padding: "7px 12px", borderBottom: `1px solid ${t.borda}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ flex: 1, fontWeight: 700, color: t.txt2, fontSize: 10 }}>{l.l}</div>
+                        <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: .5, color: corEstado[l.estado] }}>{rotuloEstado[l.estado]}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2, fontSize: 11 }}>
+                        <span style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.atual || "—"}</span>
+                        <span style={{ color: t.txt2, flexShrink: 0 }}>→</span>
+                        <span style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.novo}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={l.k} style={{ display: "grid", gridTemplateColumns: "72px 1fr 1fr 78px", gap: 8, alignItems: "center", padding: "7px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 11 }}>
+                      <div style={{ fontWeight: 700, color: t.txt2, fontSize: 10 }}>{l.l}</div>
+                      <div style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis" }}>{l.atual || "—"}</div>
+                      <div style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" }}>{l.novo}</div>
+                      <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: .5, color: corEstado[l.estado], textAlign: "right" }}>{rotuloEstado[l.estado]}</div>
+                    </div>
+                  )
+                ))}
+                {conflitos.length > 0 && (
+                  <div style={{ padding: "9px 12px", display: "flex", alignItems: "center", gap: 8, background: "rgba(217,98,43,.06)", flexWrap: "wrap" }}>
+                    <Icon n="alert" s={12} c={t.warn} />
+                    <span style={{ flex: 1, minWidth: 140, fontSize: 10, color: t.warn }}>{conflitos.length} campo{conflitos.length > 1 ? "s já têm" : " já tem"} outro valor gravado.</span>
+                    <button onClick={() => setSobrescrever(v => !v)} style={{ background: sobrescrever ? "rgba(246,70,93,.12)" : "transparent", border: `1.5px solid ${sobrescrever ? t.danger : t.borda}`, borderRadius: 7, padding: "4px 9px", color: sobrescrever ? t.danger : t.txt2, fontSize: 9.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                      {sobrescrever ? "SOBRESCREVENDO" : "SOBRESCREVER"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Rodapé */}
         <div style={{ padding: "10px 14px 18px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 8, flexShrink: 0 }}>
-          <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid ${t.borda}`, borderRadius: 9, padding: "10px 14px", color: t.txt2, fontSize: 11, fontWeight: 600, cursor: salvando ? "not-allowed" : "pointer", fontFamily: "inherit" }}>CANCELAR</button>
+          <button
+            onClick={limpar}
+            disabled={salvando || !texto.trim()}
+            title="Esvazia o bloco pra colar o próximo — não fecha a tela"
+            style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid ${t.borda}`, borderRadius: 9, padding: "10px 14px", color: t.txt2, fontSize: 11, fontWeight: 600, cursor: salvando || !texto.trim() ? "not-allowed" : "pointer", opacity: salvando || !texto.trim() ? .5 : 1, fontFamily: "inherit" }}
+          >LIMPAR</button>
           <button
             onClick={gravar}
             disabled={salvando || !reg || !aGravar.length}
