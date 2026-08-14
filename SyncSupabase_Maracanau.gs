@@ -46,7 +46,10 @@ function sincronizarMaracanau() {
   var statusGlobal = {
     timestamp: Utilities.formatDate(inicio, 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm:ss'),
     total_planilha: 0, sincronizados: 0, ignorados: 0,
-    erros_http: 0, motivos_ignorados: [], erros_detalhes: [], info: [], ok: false
+    erros_http: 0, motivos_ignorados: [], erros_detalhes: [], info: [],
+    // Quanto do enviado virou escrita. Em regime normal quase tudo cai em
+    // `sem_mudanca`; `atualizados` alto todo ciclo = campo oscilando.
+    inseridos: 0, atualizados: 0, sem_mudanca: 0, ok: false
   };
 
   var todosDts = [];
@@ -153,21 +156,29 @@ function sincronizarMaracanau() {
         var lote = registros.slice(i, i + 50);
         var numLote = Math.floor(i / 50) + 1;
         try {
-          var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TABELA + '?on_conflict=dt', {
+          // RPC em vez de POST direto: mesmo upsert (conflito por DT), mas so
+          // grava quando a linha mudou. Ver migration 063 — o merge-duplicates
+          // reescrevia as ~515 linhas a cada 15 min sem nada ter mudado.
+          var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_co_lote', {
             method: 'POST',
             headers: {
               apikey: SUPA_KEY,
               Authorization: 'Bearer ' + SUPA_KEY,
-              'Content-Type': 'application/json',
-              Prefer: 'return=minimal,resolution=merge-duplicates'
+              'Content-Type': 'application/json'
             },
-            payload: JSON.stringify(lote),
+            payload: JSON.stringify({ p_tabela: TABELA, p_rows: lote }),
             muteHttpExceptions: true
           });
 
           var code = resp.getResponseCode();
           if (code >= 200 && code < 300) {
             statusGlobal.sincronizados += lote.length;
+            try {
+              var r = JSON.parse(resp.getContentText() || '{}');
+              statusGlobal.inseridos   += (r.inseridos   || 0);
+              statusGlobal.atualizados += (r.atualizados || 0);
+              statusGlobal.sem_mudanca += (r.sem_mudanca || 0);
+            } catch (cntErr) {}
           } else {
             statusGlobal.erros_http++;
             var msg = 'Aba ' + nomAba + ' Lote ' + numLote + '/' + totalLotes + ': HTTP ' + code;
