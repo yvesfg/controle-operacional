@@ -1,5 +1,12 @@
 import { DESIGN, hexRgb } from "../constants.js";
 
+// 100vh no celular conta a barra do navegador que aparece/some: o modal ficava
+// mais alto que a área visível, o rodapé saía da tela e a lista NÃO rolava (o
+// conteúdo "cabia" no elemento, só não na tela). dvh mede a área realmente
+// visível; vh fica de reserva pra navegador antigo.
+const UNIDADE_ALTURA =
+  typeof CSS !== "undefined" && CSS.supports?.("height: 100dvh") ? "dvh" : "vh";
+
 export function useCss(t) {
   const statusBorderColor = (tipo) => {
     if(tipo==="sem_diaria"||tipo==="ok") return t.verde;
@@ -36,10 +43,12 @@ export function useCss(t) {
     empty:     { textAlign:"center", padding:"48px 20px", color:t.txt2 },
     // Overlay — modal CENTRALIZADO (antes era bottom-sheet colado no rodapé, o que
     // no desktop jogava o conteúdo pro pé da tela e deixava o topo vazio).
-    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px 16px" },
+    overlay:   { position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,.82)", backdropFilter:"blur(14px)", display:"flex", alignItems:"center", justifyContent:"center", padding:"20px 16px", overflowY:"auto" },
     // Modal — flutua com as 4 bordas arredondadas; a altura respeita o padding do
     // overlay (por isso 100vh - 40px, não 94vh) pra nunca encostar nas beiradas.
-    modal:     { width:"100%", maxWidth:520, maxHeight:"calc(100vh - 40px)", background:t.modalBg, borderRadius:16, border:`1px solid ${t.borda}`, display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"0 24px 64px rgba(0,0,0,.45)", animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
+    // margin:auto mantém o modal centrado mesmo quando o overlay precisa rolar
+    // (com alignItems:center puro, conteúdo alto corta o topo e fica inalcançável).
+    modal:     { width:"100%", maxWidth:520, maxHeight:`calc(100${UNIDADE_ALTURA} - 40px)`, margin:"auto", background:t.modalBg, borderRadius:16, border:`1px solid ${t.borda}`, display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"0 24px 64px rgba(0,0,0,.45)", animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
   };
 
   return { css, statusBorderColor };

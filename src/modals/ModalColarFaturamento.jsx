@@ -132,7 +132,7 @@ export default function ModalColarFaturamento({ ctx }) {
           </button>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
           {/* Modo — detectado pelo texto, trocável na mão */}
           <div>
             <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
