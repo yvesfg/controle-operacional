@@ -15,6 +15,9 @@ import ModalRelatorio from "../components/ModalRelatorio.jsx";
 // mesma empresa de emissão — nunca por cliente, porque MAT é a matriz e mistura Imperatriz,
 // Açailândia e Maranhão Ind. de Couros no mesmo arquivo.
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// A regra de trecho é gravada em CAIXA ALTA (chaveRegra em freteContratos.js), então a
+// linha precisa normalizar igual pra casar com o grupo e com o estado de "salvando".
+const up = (s) => String(s || "").toUpperCase();
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
 const dataBR = (d) => (d ? d.split("-").reverse().join("/") : "");
 
@@ -72,6 +75,13 @@ export default function ContratosFrete({ ctx, conn }) {
   const cruzados = React.useMemo(() => cruzarContratos(contratos, ctes, regras), [contratos, ctes, regras]);
   const resumo = React.useMemo(() => resumoCruzamento(cruzados), [cruzados]);
   const pendentesTrecho = React.useMemo(() => trechosPendentes(cruzados), [cruzados]);
+  // Mesmo grupo do bloco do topo, indexado por (empresa||trecho): a linha lá embaixo usa
+  // isto pra dizer quantos contratos a decisão dela vai arrastar junto.
+  const pendentePorTrecho = React.useMemo(() => {
+    const m = new Map();
+    pendentesTrecho.forEach((p) => m.set(`${p.empresa_emissao}||${p.trecho}`, p));
+    return m;
+  }, [pendentesTrecho]);
   // Trechos que já foram marcados como "não é nossa" e aparecem neste mês — ficam visíveis
   // pra decisão não virar caixa-preta: dá pra reverter num clique.
   const ignoradosTrecho = React.useMemo(() => {
@@ -366,6 +376,38 @@ export default function ContratosFrete({ ctx, conn }) {
                     </button>
                   </div>
                 )}
+                {/* A decisão do trecho também mora aqui, e não só no bloco do topo: o badge
+                    "trecho novo" aparece NESTA linha, e obrigar a rolar até o topo pra achar
+                    o botão fazia o aviso parecer morto. É a mesma regra por (empresa, trecho)
+                    dos dois blocos acima — por isso o texto diz quantos contratos ela arrasta. */}
+                {c.problemas.includes("trecho_nao_decidido") && (() => {
+                  const chave = `${up(c.empresa_emissao)}||${up(c.trecho)}`;
+                  const grupo = pendentePorTrecho.get(chave);
+                  const salvando = salvandoRegra === chave;
+                  return (
+                    <div style={{ marginTop: 6 }}>
+                      <div style={{ fontSize: 10.5, color: t.txt2, lineHeight: 1.5 }}>
+                        Não casou com nenhum CTe da base. A resposta vale para o trecho{" "}
+                        <span style={{ fontFamily: "var(--font-mono)", color: t.txt }}>{up(c.trecho) || "—"}</span>
+                        {grupo && grupo.contratos > 1
+                          ? ` inteiro (${grupo.contratos} contratos, ${money(grupo.valor)})`
+                          : " inteiro"} e para as próximas importações.
+                      </div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 7, flexWrap: "wrap" }}>
+                        <button onClick={() => decidirTrecho(up(c.empresa_emissao), up(c.trecho), false)} disabled={salvando}
+                          style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, fontFamily: "inherit",
+                            cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
+                          {salvando ? "Salvando..." : "É nossa operação"}
+                        </button>
+                        <button onClick={() => decidirTrecho(up(c.empresa_emissao), up(c.trecho), true)} disabled={salvando}
+                          style={{ fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8, fontFamily: "inherit",
+                            cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                          Não é nossa
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
           </div>
