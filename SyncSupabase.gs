@@ -417,6 +417,11 @@ function doPost(e) {
     var dt = String(body.dt || '').trim();
     if (!dt) return _json({ ok: false, error: 'DT obrigatorio' });
 
+    // acao 'sincronizar_dt': DT recem-digitada na planilha que o app ainda nao
+    // enxerga (a rodada automatica e de 15 em 15 min). Puxa SO essa linha, na
+    // hora, em vez de reprocessar a planilha inteira.
+    if (body.acao === 'sincronizar_dt') return _json(sincronizarUmDT(dt));
+
     var lock = LockService.getScriptLock();
     lock.waitLock(20000);   // duas pessoas gravando a mesma linha ao mesmo tempo
     try {
@@ -437,7 +442,9 @@ function _json(obj) {
 // Acha a linha do DT e escreve os campos nas colunas correspondentes.
 // Usa o MESMO mapearColuna() da leitura — se a coluna nao existe na aba, o campo
 // volta em `ignorados` em vez de ser inventado numa coluna nova.
-function escreverCamposPorDT(dt, campos, abaPreferida) {
+// Varre as abas ate achar a linha daquele DT. Devolve tambem o mapa coluna->campo
+// (mesma deteccao de cabecalho da leitura) pra quem chamou ler ou escrever.
+function localizarLinhaPorDT(dt, abaPreferida) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var abas = ss.getSheets();
 
@@ -472,14 +479,76 @@ function escreverCamposPorDT(dt, campos, abaPreferida) {
     if (!mapa.dt) continue;
 
     // Procura o DT na coluna DT
-    var colDT = mapa.dt;
-    var valoresDT = sheet.getRange(linhaCab + 1, colDT, ultimaLin - linhaCab, 1).getValues();
-    var linhaAlvo = 0;
+    var valoresDT = sheet.getRange(linhaCab + 1, mapa.dt, ultimaLin - linhaCab, 1).getValues();
     for (var i = 0; i < valoresDT.length; i++) {
-      if (String(valoresDT[i][0]).trim() === dt) { linhaAlvo = linhaCab + 1 + i; break; }
+      if (String(valoresDT[i][0]).trim() === dt) {
+        return { sheet: sheet, aba: nomAba, mapa: mapa, ultimaCol: ultimaCol, linha: linhaCab + 1 + i };
+      }
     }
-    if (!linhaAlvo) continue;
+  }
+  return null;
+}
 
+// Puxa UMA linha da planilha pro Supabase, na hora. Existe porque a rodada
+// automatica e de 15 em 15 min: DT digitada agora nao aparece no app, e quem
+// esta contratando/faturando nao pode esperar. A proxima rodada completa passa
+// por cima desta linha de qualquer jeito — entao aqui basta o basico (mapa de
+// colunas + data/moeda), sem as regras de fila sem-DT e de celulose.
+function sincronizarUmDT(dt) {
+  var achado = localizarLinhaPorDT(dt, '');
+  if (!achado) return { ok: false, error: 'DT ' + dt + ' nao encontrado em nenhuma aba da planilha' };
+
+  var valores = achado.sheet.getRange(achado.linha, 1, 1, achado.ultimaCol).getValues()[0];
+  var reg = { fora_planilha: false };
+  for (var campo in achado.mapa) {
+    var v = valores[achado.mapa[campo] - 1];
+    if (v instanceof Date) {
+      v = Utilities.formatDate(v, 'America/Sao_Paulo', 'dd/MM/yyyy');
+    } else if (typeof v === 'number' && CAMPOS_FINANCEIROS.indexOf(campo) >= 0) {
+      v = v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    reg[campo] = v ? v.toString().trim() : '';
+  }
+  if (!reg.dt) return { ok: false, error: 'Linha encontrada mas sem DT preenchido' };
+
+  // Mesmo tratamento de origem/produto da rodada completa (a origem invalida
+  // seria recusada pelo app depois).
+  reg.tipo_carga = 'papel';
+  if (reg.origem) {
+    var origemUp = reg.origem.toString().toUpperCase();
+    if (/CELULOSE/.test(origemUp)) reg.tipo_carga = 'celulose';
+    reg.origem = origemUp.replace(/,?\s*CELULOSE\s*/g, '').replace(/,?\s*PAPEL\s*/g, '')
+                         .replace(/\s*-\s*/g, '-').replace(/,\s*$/, '').trim();
+  }
+  reg.sheet = achado.aba;
+
+  var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TABELA + '?on_conflict=dt', {
+    method: 'POST',
+    headers: {
+      apikey: SUPA_KEY,
+      Authorization: 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal,resolution=merge-duplicates'
+    },
+    payload: JSON.stringify([reg]),
+    muteHttpExceptions: true
+  });
+  var code = resp.getResponseCode();
+  if (code < 200 || code >= 300) {
+    return { ok: false, error: 'Supabase HTTP ' + code + ' - ' + resp.getContentText().slice(0, 200) };
+  }
+  return { ok: true, aba: achado.aba, linha: achado.linha, registro: reg };
+}
+
+// Acha a linha do DT e escreve os campos nas colunas correspondentes.
+// Usa o MESMO mapearColuna() da leitura — se a coluna nao existe na aba, o campo
+// volta em `ignorados` em vez de ser inventado numa coluna nova.
+function escreverCamposPorDT(dt, campos, abaPreferida) {
+  var achado = localizarLinhaPorDT(dt, abaPreferida);
+  if (!achado) return { ok: false, error: 'DT ' + dt + ' nao encontrado em nenhuma aba' };
+
+  var sheet = achado.sheet, mapa = achado.mapa, linhaAlvo = achado.linha, nomAba = achado.aba;
+  {
     var escritos = [], ignorados = [];
     for (var j = 0; j < CAMPOS_WRITEBACK.length; j++) {
       var k = CAMPOS_WRITEBACK[j];
@@ -493,8 +562,6 @@ function escreverCamposPorDT(dt, campos, abaPreferida) {
     SpreadsheetApp.flush();
     return { ok: true, aba: nomAba, linha: linhaAlvo, escritos: escritos, ignorados: ignorados };
   }
-
-  return { ok: false, error: 'DT ' + dt + ' nao encontrado em nenhuma aba' };
 }
 
 // ============================================================

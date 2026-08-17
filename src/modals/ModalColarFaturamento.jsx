@@ -15,7 +15,7 @@ import {
   BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
   paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO, CAMPOS_SO_APP,
 } from "../faturamentoParse.js";
-import { escreverFaturamentoNaPlanilha } from "../faturamentoSheets.js";
+import { escreverFaturamentoNaPlanilha, sincronizarDTDaPlanilha } from "../faturamentoSheets.js";
 
 const isoParaBR = (iso) => (iso ? paraDataBR(iso) : "");
 const brParaISO = (br) => {
@@ -27,7 +27,7 @@ export default function ModalColarFaturamento({ ctx }) {
   const {
     faturaColarOpen, setFaturaColarOpen,
     DADOS, baseAtual, t, css, showToast,
-    patchOperacional, registrarLog, isMobile, isDesktop,
+    patchOperacional, registrarLog, isMobile, isDesktop, setDadosBase,
   } = ctx;
 
   const [texto, setTexto] = React.useState("");
@@ -36,6 +36,7 @@ export default function ModalColarFaturamento({ ctx }) {
   const [manifestoISO, setManifestoISO] = React.useState("");
   const [sobrescrever, setSobrescrever] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
+  const [buscandoDT, setBuscandoDT] = React.useState(false);
   const txtRef = React.useRef(null);
 
   // Abre com o texto que veio de quem chamou (bloco colado na busca do WhatsApp
@@ -98,6 +99,28 @@ export default function ModalColarFaturamento({ ctx }) {
     setManifestoISO("");
     setSobrescrever(false);
     txtRef.current?.focus();
+  };
+
+  // DT digitada na planilha há pouco: a rodada automática é de 15 em 15 min, então
+  // ela ainda não existe aqui. Puxa SÓ essa linha na hora, em vez de esperar (ou
+  // de reprocessar as ~850 linhas da planilha).
+  const buscarDTNaPlanilha = async () => {
+    if (!campos.dt) return;
+    setBuscandoDT(true);
+    try {
+      const res = await sincronizarDTDaPlanilha({ base: baseAtual?.id, dt: campos.dt });
+      const novo = res.registro || {};
+      if (!novo.dt) throw new Error("A planilha respondeu sem DT");
+      setDadosBase?.(prev => {
+        const semEla = prev.filter(r => String(r.dt).trim() !== String(novo.dt).trim());
+        return [...semEla, novo];
+      });
+      showToast(`✅ DT ${novo.dt} trazida da planilha (${res.aba}, linha ${res.linha})`, "ok");
+    } catch (e) {
+      showToast("❌ " + (e.message || e), "err");
+    } finally {
+      setBuscandoDT(false);
+    }
   };
 
   const gravar = async () => {
@@ -231,8 +254,16 @@ export default function ModalColarFaturamento({ ctx }) {
             )}
 
             {campos.dt && !reg && (
-              <div style={{ background: "rgba(246,70,93,.07)", border: "1px solid rgba(246,70,93,.3)", borderRadius: 10, padding: "10px 12px", fontSize: 11, color: t.danger, display: "flex", alignItems: "center", gap: 6 }}>
-                <Icon n="alert" s={12} c={t.danger} /> DT {campos.dt} não existe nesta base ({baseAtual?.nome || baseAtual?.id || "—"}). A DT nasce na planilha ou no "Nova DT".
+              <div style={{ background: "rgba(246,70,93,.07)", border: "1px solid rgba(246,70,93,.3)", borderRadius: 10, padding: "10px 12px", flexShrink: 0 }}>
+                <div style={{ fontSize: 11, color: t.danger, display: "flex", alignItems: "flex-start", gap: 6 }}>
+                  <span style={{ flexShrink: 0, marginTop: 1 }}><Icon n="alert" s={12} c={t.danger} /></span>
+                  <span>DT {campos.dt} ainda não está nesta base ({baseAtual?.nome || baseAtual?.id || "—"}). Se você acabou de lançá-la na planilha, a rodada automática é de 15 em 15 min.</span>
+                </div>
+                <button onClick={buscarDTNaPlanilha} disabled={buscandoDT}
+                  style={{ marginTop: 9, width: "100%", padding: "9px 12px", borderRadius: 8, cursor: buscandoDT ? "wait" : "pointer", background: "rgba(217,98,43,.12)", border: `1.5px solid ${t.ouro}`, color: t.ouro, fontWeight: 700, fontSize: 11.5, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                  <Icon n={buscandoDT ? "clock" : "download"} s={13} c="currentColor" />
+                  {buscandoDT ? "BUSCANDO NA PLANILHA…" : "BUSCAR ESTA DT NA PLANILHA AGORA"}
+                </button>
               </div>
             )}
 

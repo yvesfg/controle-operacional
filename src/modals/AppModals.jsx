@@ -247,7 +247,7 @@ export default function AppModals({ ctx }) {
 <ModalColarFaturamento ctx={{
   faturaColarOpen, setFaturaColarOpen,
   DADOS, baseAtual, t, css, showToast,
-  patchOperacional, registrarLog, isMobile, isDesktop,
+  patchOperacional, registrarLog, isMobile, isDesktop, setDadosBase,
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}

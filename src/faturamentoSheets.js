@@ -3,16 +3,26 @@
 // do Apps Script). Ver o cabeçalho de api/sheets-write.js pro porquê da ordem
 // "planilha primeiro, Supabase depois".
 
-export async function escreverFaturamentoNaPlanilha({ base, dt, aba, campos }) {
+async function chamar(corpo) {
   const r = await fetch("/api/sheets-write", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ base, dt, aba, campos }),
+    body: JSON.stringify(corpo),
   });
-  let corpo = {};
-  try { corpo = await r.json(); } catch { /* resposta sem JSON cai no erro abaixo */ }
-  if (!r.ok || corpo.ok === false) {
-    throw new Error(corpo.error || `Planilha respondeu HTTP ${r.status}`);
+  let resposta = {};
+  try { resposta = await r.json(); } catch { /* resposta sem JSON cai no erro abaixo */ }
+  if (!r.ok || resposta.ok === false) {
+    throw new Error(resposta.error || `Planilha respondeu HTTP ${r.status}`);
   }
-  return corpo; // { ok, aba, linha, escritos:[], ignorados:[] }
+  return resposta;
+}
+
+export function escreverFaturamentoNaPlanilha({ base, dt, aba, campos }) {
+  return chamar({ base, dt, aba, campos }); // { ok, aba, linha, escritos:[], ignorados:[] }
+}
+
+// DT digitada na planilha agora mesmo: a rodada automática é de 15 em 15 min, e
+// quem está contratando não pode esperar. Puxa SÓ essa linha pro Supabase.
+export function sincronizarDTDaPlanilha({ base, dt }) {
+  return chamar({ acao: "sincronizar_dt", base, dt }); // { ok, aba, linha, registro }
 }

@@ -35,9 +35,16 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { base, dt, aba, campos } = req.body || {};
+  const { base, dt, aba, campos, acao } = req.body || {};
   if (!dt || typeof dt !== "string") {
     res.status(400).json({ ok: false, error: "DT obrigatório" });
+    return;
+  }
+  // acao "sincronizar_dt": puxa a linha da planilha pro Supabase na hora, para a
+  // DT recém-digitada que a rodada de 15 min ainda não trouxe. Não escreve nada
+  // na planilha, então não passa pela whitelist de campos.
+  if (acao === "sincronizar_dt") {
+    await encaminhar(res, { base, corpo: { acao, dt } });
     return;
   }
   // Só os campos de faturamento passam: este endpoint não é uma porta genérica
@@ -52,26 +59,30 @@ export default async function handler(req, res) {
     return;
   }
 
+  await encaminhar(res, { base, corpo: { dt, aba: aba || "", campos: limpos } });
+}
+
+// Encaminha pro Web App do Apps Script da base, com o token que só existe aqui.
+async function encaminhar(res, { base, corpo }) {
   const chaveBase = String(base || "").toUpperCase().replace(/[^A-Z0-9]/g, "_");
   const url = process.env[`SHEETS_WEBAPP_URL_${chaveBase}`] || process.env.SHEETS_WEBAPP_URL;
   if (!url) {
     res.status(501).json({ ok: false, error: `Write-back não configurado para a base "${base || "?"}" (falta SHEETS_WEBAPP_URL_${chaveBase} na Vercel)` });
     return;
   }
-
   try {
     // text/plain evita preflight/CORS no Apps Script; o corpo continua sendo JSON.
     const r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ token: process.env.SHEETS_WEBAPP_TOKEN || "", dt, aba: aba || "", campos: limpos }),
+      body: JSON.stringify({ token: process.env.SHEETS_WEBAPP_TOKEN || "", ...corpo }),
       redirect: "follow",
     });
     const texto = await r.text();
-    let corpo;
-    try { corpo = JSON.parse(texto); }
-    catch { corpo = { ok: false, error: "Resposta inesperada do Apps Script: " + texto.slice(0, 200) }; }
-    res.status(r.ok && corpo.ok ? 200 : 502).json(corpo);
+    let resposta;
+    try { resposta = JSON.parse(texto); }
+    catch { resposta = { ok: false, error: "Resposta inesperada do Apps Script: " + texto.slice(0, 200) }; }
+    res.status(r.ok && resposta.ok ? 200 : 502).json(resposta);
   } catch (e) {
     res.status(502).json({ ok: false, error: e.message || "Falha ao falar com a planilha" });
   }
