@@ -67,6 +67,24 @@ export default async function handler(req, res) {
   await encaminhar(res, { base, corpo: { dt, aba: aba || "", campos: limpos } });
 }
 
+// Lê a página HTML que o Google devolveu e diz o que ela realmente significa.
+function diagnosticarHtml(html, url) {
+  const semTags = (s) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const urlCurta = url.replace(/\/[^/]*$/, "/…");
+
+  // Página de erro do Apps Script: o script executou e lançou exceção.
+  const erroScript = html.match(/errorMessage[^>]*>([\s\S]{0,400}?)<\/div>/i);
+  if (erroScript) {
+    const msg = semTags(erroScript[1]).replace(/&quot;/g, '"');
+    if (msg) return `O Apps Script executou e falhou: ${msg}. Corrija no editor do script e publique NOVA VERSÃO da implantação.`;
+  }
+  // Página de login/consentimento: o pedido não chegou ao script.
+  if (/ServiceLogin|accounts\.google\.com|Fazer login|Sign in/i.test(html)) {
+    return `O Google pediu login em vez de responder. Na implantação: "Quem pode acessar" = Qualquer pessoa, e a URL tem de terminar em /exec (a /dev exige estar logado). URL usada: ${urlCurta}`;
+  }
+  return `Resposta inesperada do Apps Script (${urlCurta}): ${semTags(html).slice(0, 200)}`;
+}
+
 // Encaminha pro Web App do Apps Script da base, com o token que só existe aqui.
 async function encaminhar(res, { base, corpo }) {
   const chaveBase = String(base || "").toUpperCase().replace(/[^A-Z0-9]/g, "_");
@@ -87,15 +105,11 @@ async function encaminhar(res, { base, corpo }) {
     let resposta;
     try { resposta = JSON.parse(texto); }
     catch {
-      // HTML = o pedido nem chegou ao script: o Google devolveu tela de login ou
-      // de permissão. Diagnóstico direto em vez de despejar o HTML na tela.
-      const ehHtml = /^\s*<(!doctype|html)/i.test(texto);
-      resposta = {
-        ok: false,
-        error: ehHtml
-          ? `O Google respondeu uma página de login/permissão em vez de dados. Confira na implantação do Apps Script: "Quem pode acessar" = Qualquer pessoa, e se a URL cadastrada termina em /exec (a /dev exige estar logado). URL usada: ${url.replace(/\/[^/]*$/, "/…")}`
-          : "Resposta inesperada do Apps Script: " + texto.slice(0, 200),
-      };
+      // HTML pode ser DUAS coisas bem diferentes: a página de login (o pedido nem
+      // chegou ao script) ou a página de erro do próprio Apps Script (o script
+      // rodou e quebrou). A segunda traz a mensagem e a LINHA do erro — que é o
+      // que resolve o problema. Sem extrair isso, o 502 não dizia nada.
+      resposta = { ok: false, error: diagnosticarHtml(texto, url) };
     }
     res.status(r.ok && resposta.ok ? 200 : 502).json(resposta);
   } catch (e) {
