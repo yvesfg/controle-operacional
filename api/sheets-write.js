@@ -72,11 +72,12 @@ function diagnosticarHtml(html, url) {
   const semTags = (s) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   const urlCurta = url.replace(/\/[^/]*$/, "/…");
 
-  // Página de erro do Apps Script: o script executou e lançou exceção.
-  const erroScript = html.match(/errorMessage[^>]*>([\s\S]{0,400}?)<\/div>/i);
-  if (erroScript) {
-    const msg = semTags(erroScript[1]).replace(/&quot;/g, '"');
-    if (msg) return `O Apps Script executou e falhou: ${msg}. Corrija no editor do script e publique NOVA VERSÃO da implantação.`;
+  // Página de erro do Apps Script: o script executou e lançou exceção. A mensagem
+  // fica no <body> (procurar por "errorMessage" cai no bloco <style> da página).
+  const corpo = html.match(/<body[\s\S]*?>([\s\S]*?)<\/body>/i);
+  const textoCorpo = corpo ? semTags(corpo[1]).replace(/&quot;/g, '"') : "";
+  if (textoCorpo && textoCorpo.length < 400 && /(Error|Erro|linha \d+|exce)/i.test(textoCorpo)) {
+    return `O Apps Script executou e falhou: ${textoCorpo}. Corrija no editor e publique NOVA VERSÃO da MESMA implantação (implantação nova gera outra URL, e a Vercel continuaria chamando a antiga).`;
   }
   // Página de login/consentimento: o pedido não chegou ao script.
   if (/ServiceLogin|accounts\.google\.com|Fazer login|Sign in/i.test(html)) {
