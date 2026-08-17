@@ -36,6 +36,11 @@ export default async function handler(req, res) {
   }
 
   const { base, dt, aba, campos, acao } = req.body || {};
+  // "ping" confere URL, token e a versão do código publicado no Apps Script.
+  if (acao === "ping") {
+    await encaminhar(res, { base, corpo: { acao } });
+    return;
+  }
   if (!dt || typeof dt !== "string") {
     res.status(400).json({ ok: false, error: "DT obrigatório" });
     return;
@@ -81,7 +86,17 @@ async function encaminhar(res, { base, corpo }) {
     const texto = await r.text();
     let resposta;
     try { resposta = JSON.parse(texto); }
-    catch { resposta = { ok: false, error: "Resposta inesperada do Apps Script: " + texto.slice(0, 200) }; }
+    catch {
+      // HTML = o pedido nem chegou ao script: o Google devolveu tela de login ou
+      // de permissão. Diagnóstico direto em vez de despejar o HTML na tela.
+      const ehHtml = /^\s*<(!doctype|html)/i.test(texto);
+      resposta = {
+        ok: false,
+        error: ehHtml
+          ? `O Google respondeu uma página de login/permissão em vez de dados. Confira na implantação do Apps Script: "Quem pode acessar" = Qualquer pessoa, e se a URL cadastrada termina em /exec (a /dev exige estar logado). URL usada: ${url.replace(/\/[^/]*$/, "/…")}`
+          : "Resposta inesperada do Apps Script: " + texto.slice(0, 200),
+      };
+    }
     res.status(r.ok && resposta.ok ? 200 : 502).json(resposta);
   } catch (e) {
     res.status(502).json({ ok: false, error: e.message || "Falha ao falar com a planilha" });

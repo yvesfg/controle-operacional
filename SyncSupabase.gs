@@ -399,6 +399,10 @@ function gravarStatus(status) {
 // ============================================================
 var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedido)
 
+// Muda quando este arquivo muda. Serve pra saber se o /exec ja esta servindo o
+// codigo novo — publicar NOVA VERSAO da implantacao e o passo mais esquecido.
+var WEBAPP_VERSAO = '2026-08-17-c';
+
 // So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
 // Cobre os dois blocos colados: faturamento e contratacao (esta traz o ID, que
 // saiu do faturamento em 12/08/2026 porque quem preenche e o contratante).
@@ -413,6 +417,12 @@ function doPost(e) {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (!WEBAPP_TOKEN) return _json({ ok: false, error: 'WEBAPP_TOKEN nao definido no Apps Script' });
     if (body.token !== WEBAPP_TOKEN) return _json({ ok: false, error: 'Token invalido' });
+
+    // 'ping': confere se a URL responde, se o token bate e QUAL versao do codigo
+    // o /exec esta servindo. Nao le nem escreve nada.
+    if (body.acao === 'ping') {
+      return _json({ ok: true, acao: 'ping', versao: WEBAPP_VERSAO, planilha: SpreadsheetApp.getActiveSpreadsheet().getName() });
+    }
 
     var dt = String(body.dt || '').trim();
     if (!dt) return _json({ ok: false, error: 'DT obrigatorio' });
