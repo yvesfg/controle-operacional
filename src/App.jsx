@@ -1977,6 +1977,7 @@ export default function App() {
         wppConfirmModal, setWppConfirmModal, abrirWppPagModal,
         faturaColarOpen, setFaturaColarOpen, patchOperacional, perfilAtual,
         dashDrillModal, setDashDrillModal, parseData, abrirDetalhe,
+        setPlanilhaFiltroDestino,
         relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
         relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,
         relGeralOrigem, setRelGeralOrigem, relGeralDestino, setRelGeralDestino,

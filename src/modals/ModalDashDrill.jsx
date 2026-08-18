@@ -2,9 +2,11 @@ import React from "react";
 import { clickable, ultimasViagens } from "../utils.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
+import DestinosAccordion from "./DestinosAccordion.jsx";
 
 export default function ModalDashDrill({ ctx }) {
-  const { dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe } = ctx;
+  const { dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe,
+          isMobile, setActiveTab, setPlanilhaFiltroDestino } = ctx;
 
   if (!dashDrillModal) return null;
 
@@ -14,21 +16,29 @@ export default function ModalDashDrill({ ctx }) {
     setDashDrillModal({ type: "motorista", label: nome, regs: ultimas });
   };
 
+  // "destinos" (plural) = lista completa em accordion; "destino" (singular) = uma rota só.
+  const ehLista = dashDrillModal.type === "destinos";
+  const nDestinos = ehLista
+    ? new Set(dashDrillModal.regs.filter(r => r.destino).map(r => r.destino.trim().toUpperCase())).size
+    : 0;
+
   return (
     <div
       className="co-modal-overlay co-modal-overlay--center"
       onClick={()=>setDashDrillModal(null)}
     >
-      <div style={{background:t.card,borderRadius:18,width:"100%",maxWidth:640,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.45)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:t.card,borderRadius:18,width:"100%",maxWidth:ehLista?860:640,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.45)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
           <div style={{width:36,height:36,borderRadius:9,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <Icon n={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":dashDrillModal.type==="destino"?"map-pin":"chart"} s={18} c={t.ouro}/>
+            <Icon n={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":(dashDrillModal.type==="destino"||ehLista)?"map-pin":"chart"} s={18} c={t.ouro}/>
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
             <div style={{fontSize:9,color:t.txt2,marginTop:2}}>
-              {dashDrillModal.type==="motoristas"
+              {ehLista
+                ? `${nDestinos} destino${nDestinos!==1?"s":""} no período · toque para ver os motoristas`
+                : dashDrillModal.type==="motoristas"
                 ? `${new Set(dashDrillModal.regs.map(r=>r.nome).filter(Boolean)).size} motoristas no período`
                 : `${dashDrillModal.regs.length} viagem${dashDrillModal.regs.length!==1?"s":""} · ${dashDrillModal.type==="motorista"?"Histórico recente":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
             </div>
@@ -37,7 +47,16 @@ export default function ModalDashDrill({ ctx }) {
         </div>
         {/* Conteúdo */}
         <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"10px 14px 14px",maxHeight:"calc(96vh - 120px)"}}>
-          {dashDrillModal.type==="destino"?(
+          {ehLista?(
+            <DestinosAccordion
+              regs={dashDrillModal.regs}
+              destaque={dashDrillModal.destaque}
+              t={t}
+              isMobile={isMobile}
+              onMotorista={abrirMotorista}
+              onPlanilha={setPlanilhaFiltroDestino&&setActiveTab?(dest)=>{setDashDrillModal(null);setPlanilhaFiltroDestino(dest);setActiveTab("planilha");}:undefined}
+            />
+          ):dashDrillModal.type==="destino"?(
             (() => {
               const motMap = {};
               dashDrillModal.regs.forEach(r=>{if(r.nome){if(!motMap[r.nome])motMap[r.nome]={count:0,dts:[],destinos:new Set()};motMap[r.nome].count++;motMap[r.nome].dts.push(r.dt);motMap[r.nome].destinos.add(r.destino||"—");}});

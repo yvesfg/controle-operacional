@@ -36,7 +36,6 @@ export default function DashboardView({ ctx }) {
     setDashDrillModal,
     descargaData,
     setPlanilhaFiltroStatus,
-    setPlanilhaFiltroDestino,
     setBuscaInput, setBuscaTipo, setBuscaModalOpen,
     baseAtual, filtroTipoCarga, getConexao,
     setPlanilhaFiltroContratante,
@@ -779,7 +778,8 @@ export default function DashboardView({ ctx }) {
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Destinos</span>
-                  <span style={{fontSize:10,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topDestinos.length} destinos</span>
+                  <button onClick={()=>setDashDrillModal({type:"destinos",label:"Destinos",regs:dashData.filtrado})}
+                    style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
                 </div>
                 {topDestinos.map(([dest,{ct,bases}],i)=>{
                   const pct=Math.round(ct/maxDest*100);
@@ -787,9 +787,11 @@ export default function DashboardView({ ctx }) {
                   const destCurto=partes[0].trim();
                   const uf=partes[1]?.trim()||"";
                   const porBaseDest=Object.entries(bases).sort((a,b)=>b[1]-a[1]);
-                  const handleClick=()=>{ setPlanilhaFiltroDestino(dest); setActiveTab("planilha"); };
+                  // Abre a lista completa (accordion) com o destino clicado ja expandido.
+                  // "Ver na planilha" continua disponivel dentro do modal.
+                  const handleClick=()=>setDashDrillModal({type:"destinos",label:"Destinos",regs:dashData.filtrado,destaque:dest});
                   return (
-                    <div key={dest} {...clickable(handleClick)} title={`Ver cargas para ${destCurto}`}
+                    <div key={dest} {...clickable(handleClick)} title={`Ver motoristas de ${destCurto}`}
                       style={{marginBottom:i<topDestinos.length-1?10:0,cursor:"pointer",borderRadius:6,padding:"4px 6px",margin:i<topDestinos.length-1?"0 -6px 4px -6px":"0 -6px",transition:"background .15s"}}
                       onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.06)}
                       onMouseLeave={e=>e.currentTarget.style.background="transparent"}>

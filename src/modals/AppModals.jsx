@@ -59,6 +59,7 @@ export default function AppModals({ ctx }) {
     wppConfirmModal, setWppConfirmModal, abrirWppPagModal,
     faturaColarOpen, setFaturaColarOpen, patchOperacional, perfilAtual,
     dashDrillModal, setDashDrillModal, parseData, abrirDetalhe,
+    setPlanilhaFiltroDestino,
     relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
     relGeralMotorista, setRelGeralMotorista, relGeralStatus, setRelGeralStatus,
     relGeralOrigem, setRelGeralOrigem, relGeralDestino, setRelGeralDestino,
@@ -251,7 +252,7 @@ export default function AppModals({ ctx }) {
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
-<ModalDashDrill ctx={{ dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe }} />
+<ModalDashDrill ctx={{ dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe, isMobile, setActiveTab, setPlanilhaFiltroDestino }} />
 
 <ModalRelatorios ctx={{
   relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,
