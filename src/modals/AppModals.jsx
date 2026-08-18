@@ -252,7 +252,7 @@ export default function AppModals({ ctx }) {
 }} />
 
 {/* ═══ MODAL: DASHBOARD DRILL-DOWN ═══ */}
-<ModalDashDrill ctx={{ dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe, isMobile, setActiveTab, setPlanilhaFiltroDestino }} />
+<ModalDashDrill ctx={{ dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe, isMobile, setActiveTab, setPlanilhaFiltroDestino, DADOS }} />
 
 <ModalRelatorios ctx={{
   relGeralOpen, setRelGeralOpen, relGeralFrom, setRelGeralFrom, relGeralTo, setRelGeralTo,

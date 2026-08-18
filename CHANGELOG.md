@@ -1,3 +1,11 @@
+## 2026-08-18 — Drill do motorista: botao Voltar e historico completo paginado
+
+**Pedido:** botao para voltar a tela anterior depois de clicar no motorista; e a duvida se as viagens listadas eram do mes ou todas — o ideal seriam todas, 10 por tela.
+
+**Como estava:** o clique no motorista mostrava no maximo 5 viagens e so as do periodo filtrado no dashboard (`dashData.filtrado`), sem volta.
+
+**Feito:** o historico agora sai de `DADOS` (a base inteira carregada, sem recorte de mes), ordenado da viagem mais recente para a mais antiga, exibindo 10 por vez com "Ver mais 10 ›" e o contador "10 de 40". O modal guarda a tela anterior em `voltar` e mostra um botao ‹ Voltar no cabecalho (so o icone no mobile) que devolve a lista de destinos com a rota que estava aberta. Vale tambem para o drill de motoristas e de rota, nao so para o accordion. De quebra, "40 viagems" virou "40 viagens".
+
 ## 2026-08-18 — Top Destinos clicavel: todos os destinos + motoristas
 
 **Pedido:** no Dashboard, o bloco Top Destinos devia ser clicavel e mostrar todos os destinos com os motoristas que rodaram cada um, em formato colapsavel e responsivo (desktop, tablet e mobile).

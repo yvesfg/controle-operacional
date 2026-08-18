@@ -116,7 +116,7 @@ export default function DestinosAccordion({ regs, destaque, t, isMobile, onMotor
                 ) : (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(210px,1fr))", gap: 7 }}>
                     {mots.map(([nome, { count, dts, placa }]) => (
-                      <div key={nome} {...clickable(onMotorista ? () => onMotorista(nome) : undefined)}
+                      <div key={nome} {...clickable(onMotorista ? () => onMotorista(nome, dest) : undefined)}
                         title={onMotorista ? `Histórico de ${nome}` : undefined}
                         style={{
                           background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 10,

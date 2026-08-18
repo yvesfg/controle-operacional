@@ -1,20 +1,32 @@
 import React from "react";
-import { clickable, ultimasViagens } from "../utils.js";
+import { clickable } from "../utils.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
 import DestinosAccordion from "./DestinosAccordion.jsx";
 
+const PAGINA = 10;
+
 export default function ModalDashDrill({ ctx }) {
   const { dashDrillModal, setDashDrillModal, t, parseData, abrirDetalhe,
-          isMobile, setActiveTab, setPlanilhaFiltroDestino } = ctx;
+          isMobile, setActiveTab, setPlanilhaFiltroDestino, DADOS } = ctx;
+
+  // Lista de registros longa (histórico do motorista) sai em páginas de 10.
+  const [visiveis, setVisiveis] = React.useState(PAGINA);
+  React.useEffect(() => { setVisiveis(PAGINA); }, [dashDrillModal]);
 
   if (!dashDrillModal) return null;
 
-  const abrirMotorista = (nome) => {
-    const ultimas = ultimasViagens(dashDrillModal.regs, nome, 5);
-    if (!ultimas.length) return;
-    setDashDrillModal({ type: "motorista", label: nome, regs: ultimas });
+  // Histórico do motorista = TODAS as viagens da base carregada, não só as do
+  // período do dashboard. `voltar` guarda a tela anterior pro botão Voltar.
+  const abrirMotorista = (nome, destaque) => {
+    const fonte = Array.isArray(DADOS) && DADOS.length ? DADOS : dashDrillModal.regs;
+    const todas = fonte.filter(r => r.nome === nome)
+      .sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});
+    if (!todas.length) return;
+    setDashDrillModal({ type:"motorista", label:nome, regs:todas,
+      voltar: destaque!==undefined ? {...dashDrillModal, destaque} : dashDrillModal });
   };
+  const voltar = dashDrillModal.voltar;
 
   // "destinos" (plural) = lista completa em accordion; "destino" (singular) = uma rota só.
   const ehLista = dashDrillModal.type === "destinos";
@@ -30,6 +42,13 @@ export default function ModalDashDrill({ ctx }) {
       <div style={{background:t.card,borderRadius:18,width:"100%",maxWidth:ehLista?860:640,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.45)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
+          {voltar&&(
+            <button onClick={()=>setDashDrillModal(voltar)} title="Voltar"
+              style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,minWidth:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,fontFamily:"inherit",fontSize:11,padding:"0 10px"}}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              {!isMobile&&"Voltar"}
+            </button>
+          )}
           <div style={{width:36,height:36,borderRadius:9,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <Icon n={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":(dashDrillModal.type==="destino"||ehLista)?"map-pin":"chart"} s={18} c={t.ouro}/>
           </div>
@@ -40,7 +59,7 @@ export default function ModalDashDrill({ ctx }) {
                 ? `${nDestinos} destino${nDestinos!==1?"s":""} no período · toque para ver os motoristas`
                 : dashDrillModal.type==="motoristas"
                 ? `${new Set(dashDrillModal.regs.map(r=>r.nome).filter(Boolean)).size} motoristas no período`
-                : `${dashDrillModal.regs.length} viagem${dashDrillModal.regs.length!==1?"s":""} · ${dashDrillModal.type==="motorista"?"Histórico recente":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
+                : `${dashDrillModal.regs.length} ${dashDrillModal.regs.length!==1?"viagens":"viagem"} · ${dashDrillModal.type==="motorista"?"Histórico completo":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
             </div>
           </div>
           <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
@@ -88,7 +107,7 @@ export default function ModalDashDrill({ ctx }) {
               ));
             })()
           ):(
-            dashDrillModal.regs.sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;}).map((r,i)=>(
+            [...dashDrillModal.regs].sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;}).slice(0,visiveis).map((r,i)=>(
               <div key={i} {...clickable(()=>{setDashDrillModal(null);abrirDetalhe(r);})} style={{background:t.card2,borderRadius:10,padding:"9px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=`rgba(217,98,43,.06)`} onMouseLeave={e=>e.currentTarget.style.background=t.card2}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
@@ -112,6 +131,15 @@ export default function ModalDashDrill({ ctx }) {
                 <span style={{fontSize:9,color:t.txt2,flexShrink:0}}>›</span>
               </div>
             ))
+          )}
+          {!ehLista&&dashDrillModal.type!=="destino"&&dashDrillModal.type!=="motoristas"&&dashDrillModal.regs.length>visiveis&&(
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,paddingTop:4}}>
+              <span style={{fontSize:9,color:"var(--text3)",fontFamily:"var(--font-mono)"}}>{visiveis} de {dashDrillModal.regs.length}</span>
+              <button onClick={()=>setVisiveis(v=>v+PAGINA)}
+                style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:8,color:t.txt2,fontSize:11,fontFamily:"inherit",cursor:"pointer",padding:isMobile?"12px 16px":"8px 14px"}}>
+                Ver mais {Math.min(PAGINA,dashDrillModal.regs.length-visiveis)} ›
+              </button>
+            </div>
           )}
           {dashDrillModal.regs.length===0&&<div style={{textAlign:"center",color:t.txt2,fontSize:12,padding:20}}>Nenhum registro encontrado.</div>}
         </div>
