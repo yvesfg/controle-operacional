@@ -2,9 +2,9 @@
 
 **Pedido:** no Dashboard, o bloco Top Destinos devia ser clicavel e mostrar todos os destinos com os motoristas que rodaram cada um, em formato colapsavel e responsivo (desktop, tablet e mobile).
 
-**Feito:** clicar em qualquer linha do Top Destinos (ou no "Ver todos") abre o modal de drill-down do dashboard num modo novo (), que lista TODOS os destinos do periodo em accordion. Cada destino mostra volume, barra relativa, quebra por base e, ao abrir, os motoristas da rota (viagens, placa e DTs) num grid que vira 1 coluna no mobile e 2-3 colunas em tablet/desktop. Clicar no motorista abre o historico recente dele; "Ver na planilha" mantem o atalho antigo de filtrar a Planilha pelo destino.
+**Feito:** clicar em qualquer linha do Top Destinos (ou no "Ver todos") abre o modal de drill-down do dashboard num modo novo (`type: "destinos"`), que lista TODOS os destinos do periodo em accordion. Cada destino mostra volume, barra relativa, quebra por base e, ao abrir, os motoristas da rota (viagens, placa e DTs) num grid que vira 1 coluna no mobile e 2-3 colunas em tablet/desktop. Clicar no motorista abre o historico recente dele; "Ver na planilha" mantem o atalho antigo de filtrar a Planilha pelo destino.
 
-- Novo componente ;  so ganhou o desvio para ele (largura 860 nesse modo).
+- Novo componente `src/modals/DestinosAccordion.jsx`; o `ModalDashDrill` so ganhou o desvio para ele (largura 860 nesse modo).
 - Nenhuma aba ou botao novo no dashboard: o contador "5 destinos" do cabecalho virou o link "Ver todos".
 
 ## 2026-08-06 — Conferência de faturamento: o que é frete e o que só parece
