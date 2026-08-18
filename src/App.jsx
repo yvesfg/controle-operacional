@@ -94,7 +94,7 @@ import OcorrModal from './components/OcorrModal.jsx';
 import AprovacaoScreen    from './screens/AprovacaoScreen.jsx';
 import LoginScreen        from './screens/LoginScreen.jsx';
 import HubScreen          from './screens/HubScreen.jsx';
-import { getSupaAuth } from './supabaseAuth.js';
+import { getSupaAuth, salvarMeuDash } from './supabaseAuth.js';
 import BaseSelectorScreen from './screens/BaseSelectorScreen.jsx';
 import PrimeiroLoginScreen from './screens/PrimeiroLoginScreen.jsx';
 import AppSidebar from './components/AppSidebar.jsx';
@@ -437,6 +437,15 @@ export default function App() {
     setToast({msg,type,visible:true});
     setTimeout(() => setToast(p => ({...p,visible:false})), 2800);
   }, []);
+
+  // Layout do Dashboard editado pelo proprio usuario (arrastar/ocultar KPIs).
+  // Otimista: a tela responde na hora e o Supabase confirma depois -- se a
+  // gravacao falhar, avisa em vez de silenciosamente perder o arranjo.
+  const salvarDashCfg = useCallback(async (novoDash) => {
+    setDashCfg(novoDash);
+    const r = await salvarMeuDash("controle_op", novoDash);
+    if (!r.ok) showToast(`Painel nao foi salvo: ${r.error}`, "err");
+  }, [showToast]);
 
   // Connection — env vars têm PRIORIDADE (funcionam em todos os dispositivos sem config local)
   const getConexao = useCallback(() => {
@@ -1656,7 +1665,7 @@ export default function App() {
             setBuscaInput, setBuscaTipo, setBuscaModalOpen,
             setDashDrillModal,
             baseAtual, filtroTipoCarga, getConexao,
-            perms, dashCfg, setBaseAtual, basesPermitidas,
+            perms, dashCfg, salvarDashCfg, setBaseAtual, basesPermitidas,
           }} />
         )}
 

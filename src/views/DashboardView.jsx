@@ -13,6 +13,7 @@ import { parseData, clickable, ultimasViagens, dtBase } from "../utils.js";
 import { nMoeda } from "../financeiroCalc.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
 import { verKpi, verBloco } from "../dashboardConfig.js";
+import GradeEditavel from '../components/GradeEditavel.jsx';
 import { janelaDias, mesMenos, mesCurto, rotuloPeriodo, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
 
 export default function DashboardView({ ctx }) {
@@ -39,8 +40,12 @@ export default function DashboardView({ ctx }) {
     setBuscaInput, setBuscaTipo, setBuscaModalOpen,
     baseAtual, filtroTipoCarga, getConexao,
     setPlanilhaFiltroContratante,
-    perms, dashCfg, setBaseAtual, basesPermitidas,
+    perms, dashCfg, salvarDashCfg, setBaseAtual, basesPermitidas,
   } = ctx;
+
+  // Modo "organizar painel": arrastar/ocultar os cards. Só liga a edição —
+  // o que fica salvo é o config.dash do usuário (ver dashboardConfig.js).
+  const [editandoPainel, setEditandoPainel] = React.useState(false);
 
   // Painel por usuario (hub_user_modulos.config.dash) -- ver dashboardConfig.js.
   // Chave ausente = visivel, entao quem nao tem config segue com o painel cheio.
@@ -209,6 +214,15 @@ export default function DashboardView({ ctx }) {
             {dashData.cidades.map(c=><option key={c} value={c}>{c==="BELEM"?"BELEM-PA":c==="IMPERATRIZ"?"IMPERATRIZ-MA":c}</option>)}
           </select>
         )}
+        {salvarDashCfg && (
+          <button onClick={()=>setEditandoPainel(v=>!v)} title="Arrastar, tirar ou devolver cards do painel"
+            style={{...css.inp,width:"auto",marginLeft:"auto",padding:"3px 10px",fontSize:10,height:26,cursor:"pointer",
+                    border:`1.5px solid ${editandoPainel?t.ouro:t.borda}`,color:editandoPainel?t.ouro:t.txt2,
+                    fontWeight:700,fontFamily:DESIGN.fnt.b,display:"inline-flex",alignItems:"center",gap:6}}>
+            {hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,editandoPainel?t.ouro:t.txt2,12,2)}
+            {editandoPainel?"Concluir":"Organizar painel"}
+          </button>
+        )}
       </div>
 
       {/* ── KPI Strip ── */}
@@ -288,16 +302,25 @@ export default function DashboardView({ ctx }) {
           ...(canFin?[{id:"cte_medio",label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
           ...(canFin && perfil.features.diarias?[{id:"diarias",label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:nav("diarias")}]:[]),
           {id:"alertas",label:"Alertas Ativos",value:String(alertas.length),sub:alertas.length===0?"tudo em ordem":"atenção necessária",danger:alertas.length>0,icon:<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,click:()=>setAlertasOpen(!alertasOpen)},
-        ].filter(k=>verK(k.id));
+        ];
+        // Nada de .filter(verK) aqui: a Grade precisa da lista COMPLETA do
+        // contexto pra saber o que oferecer de volta na gaveta "fora do painel".
         if (!kpis.length) return null;
+        const nCols = kpis.filter(k=>verK(k.id)).length || 1;
         return (
-          <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${kpis.length},1fr)`,gap:isMobile?6:10,marginBottom:14}}>
-            {kpis.map((k,i)=>(
-              <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} danger={k.danger}
-                icon={k.icon && hIco(k.icon,"var(--text3)",isMobile?10:11)} trend={k.trend} deltaPct={k.delta}
-                deltaLabel={k.deltaLabel || "vs mês anterior"} onClick={k.click} compact={isMobile} />
-            ))}
-          </div>
+          <GradeEditavel
+            tipo="kpis" cfg={dashCfg} editando={editandoPainel} onSalvar={salvarDashCfg}
+            t={t} isMobile={isMobile}
+            gridStyle={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${nCols},1fr)`,gap:isMobile?6:10,marginBottom:14}}
+            itens={kpis.map(k=>({
+              id:k.id, label:k.label,
+              node:(
+                <KpiCard label={k.label} value={k.value} sub={k.sub} danger={k.danger}
+                  icon={k.icon && hIco(k.icon,"var(--text3)",isMobile?10:11)} trend={k.trend} deltaPct={k.delta}
+                  deltaLabel={k.deltaLabel || "vs mês anterior"} onClick={editandoPainel?undefined:k.click} compact={isMobile} />
+              ),
+            }))}
+          />
         );
       })()}
 

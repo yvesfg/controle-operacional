@@ -45,3 +45,31 @@ export const DASH_BLOCOS = [
 // Leitores. `cfg` é o config.dash do usuário; ausência = visível.
 export const verKpi   = (cfg, k) => cfg?.kpis?.[k]   !== false;
 export const verBloco = (cfg, k) => cfg?.blocos?.[k] !== false;
+
+// ── Ordem (config.dash.ordem = { kpis:[ids], blocos:[ids] }) ─────────────────
+// Quem arrasta os cards no Dashboard grava a ordem aqui. Id que não está na
+// lista salva (KPI novo numa versão futura, ou card que a base não tinha)
+// vai pro FIM, na ordem natural do código — nunca some por falta de registro.
+export function ordenar(cfg, tipo, itens, getId = (x) => x.id) {
+  const ordem = cfg?.ordem?.[tipo];
+  if (!Array.isArray(ordem) || !ordem.length) return itens;
+  const pos = new Map(ordem.map((id, i) => [id, i]));
+  return [...itens].sort((a, b) => {
+    const ia = pos.has(getId(a)) ? pos.get(getId(a)) : Infinity;
+    const ib = pos.has(getId(b)) ? pos.get(getId(b)) : Infinity;
+    return ia - ib;
+  });
+}
+
+// Escritores — devolvem um config.dash NOVO (nunca mutam o atual).
+export const setOrdem = (cfg, tipo, ids) => ({
+  ...cfg, ordem: { ...(cfg?.ordem || {}), [tipo]: ids },
+});
+
+// `visivel:false` grava a chave; voltar a visível REMOVE a chave, mantendo a
+// regra "só o que está desligado aparece no config".
+export function setVisivel(cfg, tipo, id, visivel) {
+  const atual = { ...(cfg?.[tipo] || {}) };
+  if (visivel) delete atual[id]; else atual[id] = false;
+  return { ...cfg, [tipo]: atual };
+}

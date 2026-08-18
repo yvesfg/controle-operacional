@@ -87,6 +87,17 @@ export async function fetchMeuAcesso(slug) {
   return data;
 }
 
+// Salva o layout do Dashboard do PRÓPRIO usuário (migration 064). Só a chave
+// `dash` do config é trocada — perfil/perms/bases ficam intactos, por isso a
+// escrita passa por RPC e não por UPDATE direto na tabela.
+export async function salvarMeuDash(slug, dash) {
+  const sb = getSupaAuth();
+  if (!sb) return { ok: false, error: "Supabase nao configurado" };
+  const { data, error } = await sb.rpc("hub_set_meu_dash", { p_slug: slug, p_dash: dash });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, dash: data };
+}
+
 // Cria um usuario de teste (usuario+senha, sem email real) com acesso
 // SOMENTE LEITURA (perfil "visualizador") a um modulo. Usa um client
 // temporario (nao o singleton) pra nao derrubar a sessao do admin logado.
