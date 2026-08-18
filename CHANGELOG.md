@@ -1,3 +1,20 @@
+## 2026-08-18 — Organizar painel: arrastar, tirar e devolver cards do Dashboard
+
+**Pedido:** poder clicar e arrastar para reorganizar, tirar ou adicionar um KPI no Dashboard. Escolhido: valer tambem para os blocos maiores, com o layout salvo no Supabase por usuario.
+
+**Como ficou.** Botao "Organizar painel" no fim da barra de filtros liga o modo edicao. Nele:
+- **KPIs** (faixa do topo): arrasta para reordenar, ✕ tira, e a gaveta logo abaixo devolve o que saiu.
+- **Blocos**: a linha do meio (Evolucao / Status / Top motoristas) e a coluna da direita (Diarias / Descargas / Top destinos / Diarias pendentes) reordenam por arrasto entre si. Os cards de largura cheia — Comparativo por base, Rastreamento documental, Ranking por cliente e Registros recentes — tem ✕ mas nao arrastam: eles ocupam pontos fixos da pagina, entao mudar a ordem deles exigiria remontar o layout, o que ficou de fora. Uma gaveta unica, logo abaixo dos KPIs, lista todos os blocos que sairam.
+
+**Onde salva.** `config.dash` do proprio usuario em `hub_user_modulos`, agora com a chave `ordem: { kpis:[ids], blocos:[ids] }` alem do `kpis/blocos: {id:false}` que ja existia. A escrita passa pela RPC nova `hub_set_meu_dash` (migration 064), que troca SO a chave `dash` — perfil, perms e bases continuam so na mao do admin. Sem policy de UPDATE aberta na tabela.
+
+**Detalhes que importam.**
+- Arrasto proprio com Pointer Events (`src/hooks/useDragOrdem.js`): a API de drag-and-drop do HTML5 nao dispara em toque, e metade do uso do app e no celular. A ordem e marcada em ref, nao em state: o React 18 so roda o updater do setState no render seguinte, e o `pointerup` do mesmo gesto leria o valor velho — o arrasto reordenava na tela mas nao salvava.
+- Card que a base nao tem nao aparece na gaveta (KPI financeiro para quem nao ve valores, diaria pendente quando nao ha saldo).
+- Id que nao esta na ordem salva vai pro fim, na ordem do codigo — KPI novo numa versao futura nao some por falta de registro.
+
+**Pendente:** rodar a migration 064 no Supabase.
+
 ## 2026-08-18 — Hotfix: tela em branco (ErrorBoundary) ao abrir qualquer modulo em producao
 
 **Sintoma:** apos logar e clicar no modulo, "Algo deu errado nesta tela" em todo lugar. Console: `ReferenceError: buscaMesmaPlaca is not defined`.

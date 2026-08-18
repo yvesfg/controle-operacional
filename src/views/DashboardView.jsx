@@ -13,7 +13,7 @@ import { parseData, clickable, ultimasViagens, dtBase } from "../utils.js";
 import { nMoeda } from "../financeiroCalc.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
 import { verKpi, verBloco } from "../dashboardConfig.js";
-import GradeEditavel from '../components/GradeEditavel.jsx';
+import GradeEditavel, { CardEditavel, GavetaOcultos } from '../components/GradeEditavel.jsx';
 import { janelaDias, mesMenos, mesCurto, rotuloPeriodo, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
 
 export default function DashboardView({ ctx }) {
@@ -324,6 +324,29 @@ export default function DashboardView({ ctx }) {
         );
       })()}
 
+      {/* Gaveta unica dos blocos: os cards grandes moram em pontos diferentes da
+          pagina, entao a lista do que saiu fica aqui, num lugar so. */}
+      {editandoPainel && (()=>{
+        const disponiveis = [
+          ...(baseAtual?.consolidado ? [{id:"por_base",   label:"Comparativo por base"}] : []),
+          {id:"grafico",   label:"Evolução do período"},
+          {id:"status",    label:"Status das cargas"},
+          {id:"motoristas",label:"Top motoristas"},
+          ...(temDoc ? [{id:"documental", label:"Rastreamento documental"}] : []),
+          ...(perfil.features.rankingCliente ? [{id:"ranking", label:"Ranking por cliente"}] : []),
+          {id:"recentes",  label:"Registros recentes"},
+          ...(perfil.features.diarias ? [{id:"diarias", label:"Painel de diárias"}] : []),
+          {id:"descargas", label:"Painel de descargas"},
+          {id:"destinos",  label:"Top destinos"},
+          ...(canFin && perfil.features.diarias ? [{id:"diarias_pend", label:"Diárias pendentes"}] : []),
+        ];
+        return (
+          <GavetaOcultos ocultos={disponiveis.filter(b=>!verB(b.id))} tipo="blocos" cfg={dashCfg}
+            onSalvar={salvarDashCfg} t={t} isMobile={isMobile}
+            vazioTexto={"Arraste os cards para reordenar · ✕ tira do painel"} />
+        );
+      })()}
+
       {/* -- Comparativo por base (so no modo "Todas as bases") --
            O consolidado sem esta tabela responde "quanto deu no total" mas nao
            "qual base puxou pra baixo", que e a pergunta seguinte de quem olha. */}
@@ -414,7 +437,9 @@ export default function DashboardView({ ctx }) {
           return <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:p>=0?t.verde:t.danger,marginTop:2}}>{p>=0?"↑":"↓"} {Math.abs(p).toFixed(0)}%</div>;
         };
         return (
-          <div style={{...css.card,padding:18,marginBottom:14}}>
+          <CardEditavel id="por_base" label="Comparativo por base" tipo="blocos" cfg={dashCfg}
+            editando={editandoPainel} onSalvar={salvarDashCfg} t={t} style={{marginBottom:14}}>
+          <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,gap:8,flexWrap:"wrap"}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Por base</span>
               <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>
@@ -477,6 +502,7 @@ export default function DashboardView({ ctx }) {
               </table>
             </div>
           </div>
+          </CardEditavel>
         );
       })()}
 
@@ -486,11 +512,12 @@ export default function DashboardView({ ctx }) {
         dashData.filtrado.forEach(r=>{if(r.nome){if(!motCount[r.nome])motCount[r.nome]={ct:0,placa:r.placa||""};motCount[r.nome].ct++;if(!motCount[r.nome].placa&&r.placa)motCount[r.nome].placa=r.placa;}});
         const topMot=Object.entries(motCount).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
         const maxMot=topMot[0]?.[1]?.ct||1;
-        return (
-          <div style={{display:"flex",flexDirection:isMobile?"column":"row",alignItems:"stretch",gap:14,marginBottom:14}}>
-
-            {/* ─ Area Chart ─ */}
-            {verB("grafico")&&<div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"2 1 0"}}>
+        // Linha do meio: os tres cards trocam de lugar entre si no modo edicao.
+        // O flex sai do card e vai pro wrapper da grade (senao o card arrastado
+        // perderia a proporcao 2:1 do grafico).
+        const meio = [];
+        meio.push({ id:"grafico", label:"Evolução do período", style:{minWidth:0,flex:isMobile?"none":"2 1 0",display:"flex"}, node:(
+            <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
                 <div>
                   <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Evolução do Período</div>
@@ -505,10 +532,10 @@ export default function DashboardView({ ctx }) {
                 </div>
               </div>
               <div style={{height:200}}><canvas ref={chartAreaRef} /></div>
-            </div>}
-
-            {/* ─ Status DTs — barra horizontal stacked ─ */}
-            {verB("status")&&<div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
+            </div>
+        )});
+        meio.push({ id:"status", label:"Status das cargas", style:{minWidth:0,flex:isMobile?"none":"1 1 0",display:"flex"}, node:(
+            <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.ancora==="dt"?"Status das DTs":"Status das Cargas"}</span>
                 <span style={{fontFamily:DESIGN.fnt.h,fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-0.02em"}}>{totalStatusDash}</span>
@@ -530,10 +557,10 @@ export default function DashboardView({ ctx }) {
                   ))}
                 </div>
               </div>
-            </div>}
-
-            {/* ─ Top Motoristas ─ */}
-            {verB("motoristas")&&<div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,flex:isMobile?"none":"1 1 0"}}>
+            </div>
+        )});
+        meio.push({ id:"motoristas", label:"Top motoristas", style:{minWidth:0,flex:isMobile?"none":"1 1 0",display:"flex"}, node:(
+            <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
                 <button onClick={()=>setDashDrillModal({type:"motoristas",label:"Todos os Motoristas",regs:dashData.filtrado})} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
@@ -565,9 +592,14 @@ export default function DashboardView({ ctx }) {
                   </div>
                 );
               })}
-            </div>}
-
-          </div>
+            </div>
+        )});
+        return (
+          <GradeEditavel
+            tipo="blocos" cfg={dashCfg} editando={editandoPainel} onSalvar={salvarDashCfg}
+            t={t} isMobile={isMobile} gaveta={false} itens={meio}
+            gridStyle={{display:"flex",flexDirection:isMobile?"column":"row",alignItems:"stretch",gap:14,marginBottom:14}}
+          />
         );
       })()}
 
@@ -575,7 +607,9 @@ export default function DashboardView({ ctx }) {
            Painel CTE/MDF/NF: nasceu na tela exclusiva da AVB e virou feature, porque
            qualquer operacao documental precisa disso. */}
       {temDoc && verB("documental") && (
-        <div style={{...css.card,padding:18,marginBottom:14,border:`1px solid ${hexRgb(docColor,.5)}`}}>
+        <CardEditavel id="documental" label="Rastreamento documental" tipo="blocos" cfg={dashCfg}
+          editando={editandoPainel} onSalvar={salvarDashCfg} t={t} style={{marginBottom:14}}>
+        <div style={{...css.card,padding:18,border:`1px solid ${hexRgb(docColor,.5)}`}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <div>
               <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Rastreamento Documental</div>
@@ -631,11 +665,14 @@ export default function DashboardView({ ctx }) {
             </div>
           )}
         </div>
+        </CardEditavel>
       )}
 
       {/* -- Ranking por cliente/contratante (feature rankingCliente) -- */}
       {perfil.features.rankingCliente && verB("ranking") && topCli.length > 0 && (
-        <div style={{...css.card,padding:18,marginBottom:14}}>
+        <CardEditavel id="ranking" label="Ranking por cliente" tipo="blocos" cfg={dashCfg}
+          editando={editandoPainel} onSalvar={salvarDashCfg} t={t} style={{marginBottom:14}}>
+        <div style={{...css.card,padding:18}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
             <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.rotuloCliente}s</span>
             <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>{topCli.length} ativos</span>
@@ -682,13 +719,16 @@ export default function DashboardView({ ctx }) {
             );
           })}
         </div>
+        </CardEditavel>
       )}
 
       {/* ── Bottom: Registros Recentes + Painel Operacional ── */}
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:14,alignItems:"start"}}>
 
         {/* Registros Recentes */}
-        {verB("recentes")&&<div ref={dashRecCardRef} style={{display:"flex",flexDirection:"column",minHeight:0}}>
+        {verB("recentes")&&<CardEditavel id="recentes" label="Registros recentes" tipo="blocos" cfg={dashCfg}
+          editando={editandoPainel} onSalvar={salvarDashCfg} t={t}>
+        <div ref={dashRecCardRef} style={{display:"flex",flexDirection:"column",minHeight:0}}>
           <Table
             columns={recentesColumns}
             data={recentesDash.slice(0,dashRecentesN)}
@@ -702,14 +742,15 @@ export default function DashboardView({ ctx }) {
               </div>
             }
           />
-        </div>}
+        </div>
+        </CardEditavel>}
 
-        {/* Painel Operacional: Diárias + Descargas + Top Pendentes */}
-        <div style={{display:"flex",flexDirection:"column",gap:14}}>
-
-          <>
-          {/* Diárias */}
-          {verB("diarias")&&<div style={{...css.card,padding:18}}>
+        {/* Painel Operacional: Diárias + Descargas + Top Pendentes.
+            Os quatro cards da coluna trocam de lugar entre si no modo edição. */}
+        {(()=>{
+          const lado = [];
+          lado.push({ id:"diarias", label:"Painel de diárias", node:(
+          <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Diárias</span>
               <button onClick={()=>setActiveTab("diarias")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
@@ -749,10 +790,10 @@ export default function DashboardView({ ctx }) {
                 </div>
               );
             })()}
-          </div>}
-
-          {/* Descargas */}
-          {verB("descargas")&&<div style={{...css.card,padding:18}}>
+          </div>
+          )});
+          lado.push({ id:"descargas", label:"Painel de descargas", node:(
+          <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Descargas</span>
               <button onClick={()=>setActiveTab("descarga")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
@@ -781,10 +822,9 @@ export default function DashboardView({ ctx }) {
                 ))}
               </div>
             )}
-          </div>}
-
-          {/* Top Destinos */}
-          {verB("destinos")&&(()=>{
+          </div>
+          )});
+          lado.push({ id:"destinos", label:"Top destinos", node:(()=>{
             const destMap={};
             dashData.filtrado.forEach(r=>{
               if(!r.destino) return;
@@ -838,10 +878,8 @@ export default function DashboardView({ ctx }) {
                 })}
               </div>
             );
-          })()}
-
-          {/* Top Diárias Pendentes */}
-          {canFin&&verB("diarias_pend")&&(()=>{
+          })()});
+          if (canFin) lado.push({ id:"diarias_pend", label:"Diárias pendentes", node:(()=>{
             const pendMap={};
             diariasData.items.filter(i=>i.tipo==="diaria"||i.tipo==="atraso").forEach(({r})=>{
               if(!r.nome)return;
@@ -883,10 +921,18 @@ export default function DashboardView({ ctx }) {
                 })}
               </div>
             );
-          })()}
-            </>
-
-        </div>
+          })()});
+          // Card que a base nao tem (ex.: sem diaria pendente hoje) volta null;
+          // filtrar aqui evita oferecer na gaveta algo que nao renderiza nada.
+          const visiveisLado = lado.filter(x => x.node);
+          return (
+            <GradeEditavel
+              tipo="blocos" cfg={dashCfg} editando={editandoPainel} onSalvar={salvarDashCfg}
+              t={t} isMobile={isMobile} gaveta={false} itens={visiveisLado}
+              gridStyle={{display:"flex",flexDirection:"column",gap:14}}
+            />
+          );
+        })()}
 
       </div>
     </div>
