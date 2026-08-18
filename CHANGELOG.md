@@ -13,7 +13,7 @@
 - Card que a base nao tem nao aparece na gaveta (KPI financeiro para quem nao ve valores, diaria pendente quando nao ha saldo).
 - Id que nao esta na ordem salva vai pro fim, na ordem do codigo — KPI novo numa versao futura nao some por falta de registro.
 
-**Pendente:** rodar a migration 064 no Supabase.
+**Migration 064 aplicada** no projeto qdrhkkjawklqfsoyxhpd em 18/08. Conferido: funcao SECURITY DEFINER, EXECUTE so para authenticated (anon revogado - o default privilege do Supabase sobrevive ao REVOKE de PUBLIC) e recusa com "Sem sessao" quando chamada sem auth.uid().
 
 ## 2026-08-18 — Hotfix: tela em branco (ErrorBoundary) ao abrir qualquer modulo em producao
 

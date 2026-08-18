@@ -56,5 +56,9 @@ BEGIN
 END;
 $function$;
 
+-- O REVOKE de PUBLIC não basta: o Supabase concede EXECUTE a anon/authenticated
+-- por default privileges do schema, e grant explícito não cai junto com o de
+-- PUBLIC. anon nunca passaria do `auth.uid() IS NULL`, mas a porta fica fechada.
 REVOKE ALL ON FUNCTION public.hub_set_meu_dash(text, jsonb) FROM public;
-GRANT EXECUTE ON FUNCTION public.hub_set_meu_dash(text, jsonb) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.hub_set_meu_dash(text, jsonb) FROM anon;
+GRANT  EXECUTE ON FUNCTION public.hub_set_meu_dash(text, jsonb) TO authenticated;
