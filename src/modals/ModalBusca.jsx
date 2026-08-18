@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { clickable } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
@@ -9,12 +9,14 @@ export default function ModalBusca({ ctx }) {
     buscaInput, setBuscaInput,
     buscaResult, setBuscaResult,
     buscaRelacionados, setBuscaRelacionados,
+    buscaMesmaPlaca, setBuscaMesmaPlaca,
+    buscaCandidatos, setBuscaCandidatos, mostrarRegistro,
     buscaError, setBuscaError,
     historico,
     buscar,
     DADOS, motoristas,
     canEdit, canFin, fmtMoeda,
-    connStatus,
+    connStatus, isMobile,
     setFormData, setEditIdx, setEditStep, setModalOpen,
     setWppFatModal, setWppModal, setWppTel, setWppPgto,
     setWppValCheque, setWppValConta, setWppObs,
@@ -24,7 +26,55 @@ export default function ModalBusca({ ctx }) {
     t, css, hIco, DESIGN,
   } = ctx;
 
+  // Listas longas saem de 10 em 10, como no drill do dashboard.
+  const PAGINA = 10;
+  const [verViagens, setVerViagens] = useState(PAGINA);
+  const [verPlaca, setVerPlaca] = useState(PAGINA);
+  useEffect(() => { setVerViagens(PAGINA); setVerPlaca(PAGINA); }, [buscaResult]);
+
   if (!buscaModalOpen) return null;
+
+  const limparBusca = () => { setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]); setBuscaMesmaPlaca?.([]); setBuscaCandidatos?.([]); };
+
+  const VerMais = ({ total, visiveis, setVisiveis }) => total <= visiveis ? null : (
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,padding:"2px 0 6px"}}>
+      <span style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)"}}>{visiveis} de {total}</span>
+      <button onClick={()=>setVisiveis(v=>v+PAGINA)}
+        style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:8,color:t.txt2,fontSize:11,fontFamily:"inherit",cursor:"pointer",padding:isMobile?"12px 16px":"8px 14px"}}>
+        Ver mais {Math.min(PAGINA,total-visiveis)} ›
+      </button>
+    </div>
+  );
+
+  // Todas as viagens da pessoa, incluindo a que esta aberta no card acima.
+  const todasViagens = buscaResult
+    ? [buscaResult, ...buscaRelacionados].sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;})
+    : [];
+
+  // Card de uma viagem — usado nas duas listas (pessoa e mesma placa).
+  const LinhaViagem = (r, i) => {
+    const statusC = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.txt2;
+    const statusL = r.data_desc ? "Descarregado" : r.data_agenda ? "Aguardando" : "—";
+    return (
+      <div key={`${r.dt}-${i}`} {...clickable(()=>mostrarRegistro?.(r))}
+        style={{background:t.card,borderRadius:10,padding:isMobile?"13px 12px":"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexWrap:"wrap"}}>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde}}>{r.placa||""}</span>
+            <span style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.destino||""}</span>
+            {buscaResult&&r.dt===buscaResult.dt&&<span style={{fontSize:8,fontWeight:700,letterSpacing:1,color:t.ouro,border:"1px solid var(--accent2)",background:"var(--accent2)",borderRadius:4,padding:"1px 5px"}}>ABERTA</span>}
+          </div>
+          <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+            <span style={{display:"flex",alignItems:"center",gap:3}}><Icon n="package" s={10} c={t.txt2}/> {r.data_carr||"—"}</span>
+            <span style={{display:"flex",alignItems:"center",gap:3}}><Icon n="calendar" s={10} c={t.txt2}/> {r.data_agenda||"—"}</span>
+            <span style={{color:statusC,fontWeight:600}}>{statusL}</span>
+          </div>
+        </div>
+        <span style={{color:t.txt2,fontSize:14,flexShrink:0}}>›</span>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -53,20 +103,21 @@ export default function ModalBusca({ ctx }) {
         </div>
         {/* Body */}
         <div style={{padding:"20px 20px 20px",maxHeight:"calc(100vh - 180px)",overflowY:"auto"}}>
-            <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center"}}>
+            <div style={{display:"flex",gap:6,marginBottom:12,justifyContent:"center",flexWrap:"wrap"}}>
               {[
                 {k:"dt",    ico:<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>,    l:"DT"},
+                {k:"nome",  ico:<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,                                         l:"NOME"},
                 {k:"cpf",   ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,                  l:"CPF"},
                 {k:"placa", ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>, l:"PLACA"},
               ].map(b => (
-                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");setBuscaResult(null);setBuscaError(null)}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.btn,cursor:"pointer",background:buscaTipo===b.k?`rgba(217,98,43,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
+                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");limparBusca();}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.btn,cursor:"pointer",background:buscaTipo===b.k?`rgba(217,98,43,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
                   {hIco(b.ico,buscaTipo===b.k?t.ouro:t.txt2,15,2)} {b.l}
                 </button>
               ))}
             </div>
 
             <div style={{display:"flex",gap:8,marginBottom:12}}>
-              <input value={buscaInput} onChange={e=>setBuscaInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&buscar()} placeholder={buscaTipo==="dt"?"00000000":buscaTipo==="cpf"?"000.000.000-00":"AAA0A00"} style={{...css.inp,flex:1,fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:3,textTransform:buscaTipo==="placa"?"uppercase":"none"}} />
+              <input value={buscaInput} onChange={e=>setBuscaInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&buscar()} placeholder={buscaTipo==="dt"?"00000000":buscaTipo==="nome"?"nome do motorista":buscaTipo==="cpf"?"000.000.000-00":"AAA0A00"} style={{...css.inp,flex:1,fontFamily:buscaTipo==="nome"?"inherit":"'Bebas Neue',sans-serif",fontSize:buscaTipo==="nome"?15:22,letterSpacing:buscaTipo==="nome"?0:3,textTransform:buscaTipo==="placa"?"uppercase":"none"}} />
               <button onClick={buscar} style={{...css.btnGold,padding:"0 20px",display:"flex",alignItems:"center"}}><Icon n="search" s={20} c="currentColor" sw={2.2}/></button>
             </div>
 
@@ -74,6 +125,32 @@ export default function ModalBusca({ ctx }) {
               <span style={{width:6,height:6,background:t.verde,borderRadius:"50%",animation:"pulse 2s infinite"}} />
               <span style={{fontSize:11,color:t.txt2,fontWeight:500}}><strong style={{color:t.verde}}>{DADOS.length}</strong> registros · <span style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:4,padding:"1px 6px",fontSize:9,color:t.azulLt,fontWeight:700,display:"inline-flex",alignItems:"center",gap:4}}>{connStatus==="online"?<><Icon n="dot" s={8} c={t.verde}/> ONLINE</>:<><Icon n="dot" s={8} c={t.txt2}/> LOCAL</>}</span></span>
             </div>
+
+            {/* ── Busca por nome que casou com vários motoristas ── */}
+            {buscaCandidatos?.length > 0 && !buscaResult && (
+              <div style={{animation:"slideUp .3s"}}>
+                <div style={{...css.secTitle,marginBottom:8}}>
+                  <Icon n="user" s={11} c={t.ouro}/>&nbsp;Motoristas encontrados
+                  <span style={{flex:1,height:1,background:t.borda}} />
+                  <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{buscaCandidatos.length}</span>
+                </div>
+                {buscaCandidatos.map((c,i)=>(
+                  <div key={i} {...clickable(()=>mostrarRegistro?.(c.reg))}
+                    style={{background:t.card,borderRadius:10,padding:isMobile?"13px 12px":"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{width:34,height:34,borderRadius:"50%",background:"var(--accent2)",border:"1.5px solid var(--accent2)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,color:t.ouro,flexShrink:0}}>{(c.nome||"?").charAt(0).toUpperCase()}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textTransform:"capitalize"}}>{(c.nome||"—").toLowerCase()}</div>
+                      <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{[c.cpf,c.placa].filter(Boolean).join(" · ")||"—"}</div>
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:t.ouro,lineHeight:1}}>{c.viagens}</div>
+                      <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>viagens</div>
+                    </div>
+                    <span style={{color:t.txt2,fontSize:14,flexShrink:0}}>›</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Result card */}
             {buscaResult && (
@@ -229,53 +306,34 @@ export default function ModalBusca({ ctx }) {
               </div>
             )}
 
-            {/* ── Outros registros (mesmo CPF / mesma Placa) ── */}
+            {/* -- Todas as viagens da pessoa (mesmo CPF/nome) -- */}
             {buscaResult && buscaRelacionados.length > 0 && (
               <div style={{marginTop:12,animation:"slideUp .3s"}}>
                 <div style={{...css.secTitle,marginBottom:8}}>
-                  {buscaTipo==="cpf"?<>{hIco(<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,t.ouro,11,2)}&nbsp;Outros DTs com este CPF</>:buscaTipo==="placa"?<>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,t.ouro,11,2)}&nbsp;Outros DTs com esta Placa</>:<>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,11,2)}&nbsp;Outros registros (mesmo CPF / Placa)</>}
+                  <Icon n="truck" s={11} c={t.ouro}/>&nbsp;Todas as viagens deste motorista
                   <span style={{flex:1,height:1,background:t.borda}} />
-                  <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{buscaRelacionados.length} registro{buscaRelacionados.length>1?"s":""}</span>
+                  <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{todasViagens.length} no total</span>
                 </div>
-                {buscaRelacionados.slice(0,10).map((r,i) => {
-                  const statusC = r.data_desc ? t.verde : r.data_agenda ? t.ouro : t.txt2;
-                  const statusL = r.data_desc ? "Descarregado" : r.data_agenda ? "Aguardando" : "—";
-                  return (
-                    <div key={i} {...clickable(()=>{
-                      setBuscaInput(r.dt);
-                      setBuscaTipo("dt");
-                      setTimeout(()=>{
-                        setBuscaResult(r);
-                        // recalcular relacionados
-                        const cpfN = r.cpf?.replace(/\D/g,"");
-                        const placaN = r.placa?.toUpperCase().replace(/\W/g,"");
-                        const rel = DADOS.filter(x =>
-                          x.dt !== r.dt && (
-                            (cpfN && x.cpf?.replace(/\D/g,"") === cpfN) ||
-                            (placaN && x.placa?.toUpperCase().replace(/\W/g,"") === placaN)
-                          )
-                        ).sort((a,b) => { const da=parseData(a.data_carr),db=parseData(b.data_carr); return da&&db?db-da:0; });
-                        setBuscaRelacionados(rel);
-                      }, 0);
-                    })} style={{background:t.card,borderRadius:10,padding:"10px 12px",marginBottom:6,border:`1px solid ${t.borda}`,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"border-color .2s"}}>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
-                          <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde}}>{r.placa||""}</span>
-                        </div>
-                        <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
-                          <span style={{display:"flex",alignItems:"center",gap:3}}>{hIco(<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,t.txt2,10,2)} {r.data_carr||"—"}</span>
-                          <span style={{display:"flex",alignItems:"center",gap:3}}>{hIco(<><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,t.txt2,10,2)} {r.data_agenda||"—"}</span>
-                          <span style={{color:statusC,fontWeight:600}}>{statusL}</span>
-                        </div>
-                      </div>
-                      <span style={{color:t.txt2,fontSize:14,flexShrink:0}}>›</span>
-                    </div>
-                  );
-                })}
-                {buscaRelacionados.length > 10 && (
-                  <div style={{fontSize:10,color:t.txt2,textAlign:"center",padding:"6px 0"}}>… e mais {buscaRelacionados.length-10} registro(s)</div>
-                )}
+                {todasViagens.slice(0,verViagens).map(LinhaViagem)}
+                <VerMais total={todasViagens.length} visiveis={verViagens} setVisiveis={setVerViagens} />
+              </div>
+            )}
+
+            {/* -- Mesma placa, outro motorista: o caminhao troca de mao -- */}
+            {buscaResult && buscaMesmaPlaca?.length > 0 && (
+              <div style={{marginTop:12,animation:"slideUp .3s"}}>
+                <div style={{...css.secTitle,marginBottom:8}}>
+                  <Icon n="truck" s={11} c={t.txt2}/>&nbsp;Mesma placa, outro motorista
+                  <span style={{flex:1,height:1,background:t.borda}} />
+                  <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{buscaMesmaPlaca.length} viagem{buscaMesmaPlaca.length>1?"s":""}</span>
+                </div>
+                {buscaMesmaPlaca.slice(0,verPlaca).map((r,i)=>(
+                  <div key={`p-${r.dt}-${i}`}>
+                    {LinhaViagem(r,i)}
+                    <div style={{fontSize:9,color:t.txt2,margin:"-4px 0 8px 12px",textTransform:"capitalize"}}>{(r.nome||"—").toLowerCase()}</div>
+                  </div>
+                ))}
+                <VerMais total={buscaMesmaPlaca.length} visiveis={verPlaca} setVisiveis={setVerPlaca} />
               </div>
             )}
 
@@ -286,12 +344,13 @@ export default function ModalBusca({ ctx }) {
                 <h3 style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.danger,marginBottom:5}}>NÃO ENCONTRADO</h3>
                 <p style={{color:t.txt2,fontSize:11,marginBottom:4}}>Nenhum registro encontrado para <strong style={{color:t.txt}}>"{buscaError}"</strong></p>
                 <p style={{color:t.txt2,fontSize:10,marginBottom:14}}>
-                  {buscaTipo==="cpf"?"Nenhum motorista com este CPF nos registros.":buscaTipo==="placa"?"Nenhuma placa com este número nos registros.":"DT não localizada no sistema."}
+                  {buscaTipo==="cpf"?"Nenhum motorista com este CPF nos registros.":buscaTipo==="placa"?"Nenhuma placa com este número nos registros.":buscaTipo==="nome"?"Nenhum motorista com este nome nos registros.":"DT não localizada no sistema."}
                 </p>
                 {canEdit && (
                   <button onClick={()=>{
                     const fd = buscaTipo==="dt" ? {dt:buscaError}
                              : buscaTipo==="cpf" ? {cpf:buscaError}
+                             : buscaTipo==="nome" ? {nome:buscaError}
                              : {placa:buscaError};
                     setFormData(fd); setEditIdx(-1); setEditStep(1); setModalOpen("edit");
                   }} style={{...css.btnGold,marginTop:4,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,color:"#fff",justifyContent:"center",width:"100%",fontSize:14}}>
@@ -308,10 +367,10 @@ export default function ModalBusca({ ctx }) {
                 {historico.map((h,i) => (
                   <div key={i} {...clickable(()=>{
                     const dt=h.dt; setBuscaInput(dt); setBuscaTipo("dt");
-                    setBuscaResult(null); setBuscaError(null); setBuscaRelacionados([]);
+                    limparBusca();
                     const c=dt.replace(/\D/g,"");
                     const found=DADOS.find(x=>x.dt?.replace(/\D/g,"")===c||dtBase(x.dt)?.replace(/\D/g,"")===c);
-                    if(found){setBuscaResult(found);const cpfN=found.cpf?.replace(/\D/g,""),placaN=found.placa?.toUpperCase().replace(/\W/g,"");const rels=DADOS.filter(x=>x.dt!==found.dt&&((cpfN&&x.cpf?.replace(/\D/g,"")===cpfN)||(placaN&&x.placa?.toUpperCase().replace(/\W/g,"")===placaN))).sort((a,b)=>{const da=parseData(a.data_carr),db=parseData(b.data_carr);return da&&db?db-da:0;});setBuscaRelacionados(rels);}else{setBuscaError(dt);}
+                    if(found){mostrarRegistro?.(found);}else{setBuscaError(dt);}
                   })} style={{background:t.card,borderRadius:10,padding:"13px 12px",display:"flex",alignItems:"center",gap:10,border:`1px solid ${t.borda}`,cursor:"pointer",marginBottom:7}}>
                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.ouro,minWidth:80}}>{h.dt}</span>
                     <span style={{fontSize:11,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:t.txt}}>{h.nome}</span>

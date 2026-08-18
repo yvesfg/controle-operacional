@@ -1,3 +1,17 @@
+## 2026-08-18 — Busca por nome e todas as viagens no modal de busca
+
+**Pedido:** buscar tambem por nome, e o modal que abre mostrar nao so os dados como todas as viagens feitas pela pessoa — valendo para qualquer tipo de busca.
+
+**Feito:**
+- **Aba NOME** (4a opcao, ao lado de DT/CPF/PLACA): busca parcial, ignorando acento e caixa. Quando o termo casa com mais de um motorista (ex.: "silva"), aparece a lista deles — nome, CPF, placa e total de viagens — para escolher; com um so, abre o resultado direto.
+- **"Todas as viagens deste motorista"** substitui o antigo "Outros DTs": a lista agora e da PESSOA (mesmo CPF, ou mesmo nome quando a linha nao tem CPF), com a viagem aberta marcada como ABERTA, contador "23 no total" e paginacao de 10 em 10 ("Ver mais 10 ›"). Antes mostrava no maximo 10 e terminava num texto morto "… e mais N".
+- **"Mesma placa, outro motorista"** e um bloco separado. Antes as viagens do caminhao com outro motorista vinham misturadas na mesma lista, como se fossem dele.
+- Vale para os quatro tipos de busca; o historico recente tambem passa pelo mesmo caminho (antes ele nao recalculava tudo).
+
+Estados novos `buscaMesmaPlaca` e `buscaCandidatos` em `useBuscaState`; a montagem das listas ficou em `useBuscarHandlers` (`mostrarRegistro`), que o modal reusa a cada clique.
+
+**Nota:** o modal de busca recebe `canFin`/`fmtMoeda` sem que o App os passe no ctx — o bloco de valores (Empresa/Motorista/Adiantamento) nunca aparece. Nao mexi, e correcao separada.
+
 ## 2026-08-18 — Drill do motorista: botao Voltar e historico completo paginado
 
 **Pedido:** botao para voltar a tela anterior depois de clicar no motorista; e a duvida se as viagens listadas eram do mes ou todas — o ideal seriam todas, 10 por tela.

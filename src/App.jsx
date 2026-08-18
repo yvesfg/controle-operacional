@@ -199,6 +199,7 @@ export default function App() {
   const {
     buscaTipo, setBuscaTipo, buscaInput, setBuscaInput,
     buscaResult, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
+    buscaMesmaPlaca, setBuscaMesmaPlaca, buscaCandidatos, setBuscaCandidatos,
     buscaError, setBuscaError, buscaModalOpen, setBuscaModalOpen,
     historico, setHistorico,
   } = useBuscaState();
@@ -688,9 +689,10 @@ export default function App() {
     // handleLogin / handleLogout / handlePrimeiroLoginSalvar — via useAuthHandlers
 
   // Search — via useBuscarHandlers
-  const { buscar } = useBuscarHandlers({
+  const { buscar, mostrarRegistro } = useBuscarHandlers({
     DADOS, buscaInput, buscaTipo,
     setBuscaResult, setBuscaError, setBuscaRelacionados,
+    setBuscaMesmaPlaca, setBuscaCandidatos,
     historico, setHistorico,
   });
 
@@ -1999,6 +2001,7 @@ export default function App() {
         ocorrModalOpen, setOcorrModalOpen, ocorrModalDT, ocorrModalRecord,
         buscaModalOpen, setBuscaModalOpen, buscaTipo, setBuscaTipo,
         buscaInput, setBuscaInput, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
+        buscaMesmaPlaca, setBuscaMesmaPlaca, buscaCandidatos, setBuscaCandidatos, mostrarRegistro,
         buscaError, setBuscaError, historico, buscar, canEdit, connStatus,
         dtBase, saveJSON,
         docIntakeOpen, setDocIntakeOpen, docIntakeTipo, setDocIntakeTipo, docIntakeCallback, setDocIntakeCallback,
