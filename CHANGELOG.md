@@ -1,3 +1,11 @@
+## 2026-08-18 — Hotfix: tela em branco (ErrorBoundary) ao abrir qualquer modulo em producao
+
+**Sintoma:** apos logar e clicar no modulo, "Algo deu errado nesta tela" em todo lugar. Console: `ReferenceError: buscaMesmaPlaca is not defined`.
+
+**Causa:** no commit anterior (busca por nome), `AppModals.jsx` passou a repassar `buscaMesmaPlaca`, `setBuscaMesmaPlaca`, `buscaCandidatos`, `setBuscaCandidatos`, `mostrarRegistro` para o `ModalBusca`, mas esses nomes nao foram acrescentados na desestruturacao do PROPRIO `ctx` do `AppModals` (topo do arquivo). Em shorthand de objeto (`{buscaMesmaPlaca, ...}`) isso vira referencia a variavel livre — o build local passou porque Vite/esbuild nao falha nisso, so estoura em runtime. `AppModals` e montado sempre (nao so quando o modal de busca abre), entao quebrava a tela inteira assim que qualquer modulo carregava.
+
+**Fix:** adicionadas as 5 variaveis na desestruturacao de `ctx` em `AppModals.jsx`. Confirmado no bundle minificado: antes havia `buscaMesmaPlaca,setBuscaMesmaPlaca,...` sem apelido (variavel nao resolvida); depois, `buscaMesmaPlaca:d` (variavel local normal).
+
 ## 2026-08-18 — Busca por nome e todas as viagens no modal de busca
 
 **Pedido:** buscar tambem por nome, e o modal que abre mostrar nao so os dados como todas as viagens feitas pela pessoa — valendo para qualquer tipo de busca.

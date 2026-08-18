@@ -81,6 +81,7 @@ export default function AppModals({ ctx }) {
     ocorrModalOpen, setOcorrModalOpen, ocorrModalDT, ocorrModalRecord,
     buscaModalOpen, setBuscaModalOpen, buscaTipo, setBuscaTipo,
     buscaInput, setBuscaInput, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
+    buscaMesmaPlaca, setBuscaMesmaPlaca, buscaCandidatos, setBuscaCandidatos, mostrarRegistro,
     buscaError, setBuscaError, historico, buscar, canEdit, connStatus,
     dtBase, saveJSON,
     docIntakeOpen, setDocIntakeOpen, docIntakeTipo, docIntakeCallback, setDocIntakeCallback,
