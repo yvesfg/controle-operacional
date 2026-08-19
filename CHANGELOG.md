@@ -1,3 +1,31 @@
+## 2026-08-19 — Ocorrencias: a linha da planilha virou linha do tempo
+
+**Pedido:** olhar a logica que ja existe na planilha, onde uma linha tem chegada, obs de chegada, descarga, obs de descarga e assim por diante, e otimizar isso pra ficar intuitivo.
+
+**O que a investigacao achou — tres sistemas de ocorrencia, os tres parados:**
+
+1. **As colunas de observacao da planilha nunca chegam no app.** `mapearColuna()` no `SyncSupabase.gs` nao tem alias para "obs chegada" nem "obs descarga", e coluna nao mapeada some em silencio (`return mapa[n] || null`, sem log). Em 565 linhas de mai–ago/2026: `obs_chegada` = 0, `obs_descarga` = 0, `desc_aguardando` = 0, `informou_analista` = 0, `comprovei` = 0. O que o analista escreve na planilha simplesmente nao existe para o app.
+2. **A tabela `co_ocorrencias` foi abandonada:** 6 registros no total, 5 DTs, o ultimo em 22/04/2026.
+3. **BUG — o badge "Ocorrencia" lia so o `localStorage`.** Ele saia de `localStorage.getItem('co_ocorr_'+dt)`, entao ocorrencia registrada por outra pessoa, ou no celular, nao aparecia para mais ninguem: o alerta so existia na maquina de quem digitou.
+
+Com isso, o filtro da tela (`obs_chegada || obs_descarga || ro || nfd`) na pratica so deixava passar RO e NFD. `ro` esta em 475 das 565 linhas — era o unico campo vivo da cadeia.
+
+**Achado extra:** a coluna `sgs` **nao existe** em `controle_operacional`, mas o badge da tela e o mapa do sync a referenciam. O badge SGS nunca disparou.
+
+**Como ficou.** A linha da planilha e uma linha do tempo, e agora a tela mostra assim: Carregou → Chegou no cliente → Obs da chegada → Aguardando descarga → Descarregou → Obs da descarga → RO/NFD. Ponto cheio = aconteceu, ponto vazado = ainda nao chegou a vez, ponto vermelho = era esperado e nao veio. O texto da observacao aparece embaixo da etapa a que pertence, em vez de numa caixa solta no rodape do card sem dizer de que momento era. As datas de carregamento/agenda/descarga sairam da linha de baixo do card: viraram etapas, com a mesma informacao em ordem.
+
+**A regra que evita alarme falso:** obs vazia so vira pendencia quando ha ocorrencia aberta (RO, NFD ou SGS). Viagem tranquila nao tem o que relatar — marcar tudo como pendencia transformaria a tela num campo de alarme. Verificado: uma DT sem RO fecha com as duas obs em "vazio", nao em "pendente".
+
+**Badge novo "Sem relato":** ha ocorrencia aberta e ninguem escreveu o que aconteceu. E a pendencia mais util da tela e nao existia. Em julho/2026, 126 das 126 DTs com RO caem nele — consequencia direta do item 1. Para isso nao parecer defeito da tela, um aviso no topo explica a causa quando nenhuma observacao chegou; ele some sozinho quando o sync for corrigido.
+
+**Ordenacao:** quem tem pendencia sobe, e mais dias de atraso sobem mais.
+
+**Somente leitura nos campos da planilha**, porque a planilha e a fonte: o app nao tem write-back para o Sheets, entao gravar obs aqui seria sobrescrito na proxima sincronizacao.
+
+**Verificado** contra as linhas reais de julho: 126 DTs com RO, atraso calculado certo (agenda 05/07 contra 19/08 = 45 dias), e os estados "feito/pendente/vazio" caindo onde deviam nos dois casos sinteticos (viagem limpa e viagem atrasada).
+
+**PENDENTE — falta o Yves passar os nomes exatos das colunas** de obs na planilha (ex.: "OBS CHEGADA", "OBSERVACAO DA DESCARGA") para eu fechar o mapeamento no `SyncSupabase.gs`. Enquanto isso, a trilha mostra corretamente que o dado nao existe.
+
 ## 2026-08-19 — Conciliação planilha × TMS — Fase 1
 
 **Pedido:** conciliar a planilha que vem do Sheets com a que é exportada do TMS, para ter controle sobre como estao preenchendo e como esta sendo lancado no TMS.

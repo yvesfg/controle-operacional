@@ -4,6 +4,8 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import OcorrModal from "../components/OcorrModal.jsx";
 import { clickable } from "../utils.js";
+import LinhaDoTempoDt from "../components/LinhaDoTempoDt.jsx";
+import { resumoDt, temOcorrencia } from "../ocorrenciaEtapas.js";
 
 const Ico = ({ size=16, color="currentColor", sw=1.8, children, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -24,8 +26,8 @@ function OcorrBadge({ label, color }) {
   );
 }
 
-function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
-  const { r, badges } = entry;
+function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia, isMobile }) {
+  const { r, badges, resumo } = entry;
   const topBadge = badges[0];
   const hasChegada  = !!r.obs_chegada;
   const hasDescarga = !!r.obs_descarga;
@@ -67,46 +69,25 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
         </div>
       </div>
 
-      {/* Row 2: obs + add button */}
-      {(showObs || onAddOcorrencia) && (
-        <div style={{
-          display:"grid",
-          gridTemplateColumns:
-            showObs && onAddOcorrencia
-              ? (hasChegada && hasDescarga ? "1fr 1fr auto" : "1fr auto")
-              : (hasChegada && hasDescarga ? "1fr 1fr" : "1fr"),
-          gap:8, borderTop:"1px solid var(--border)", paddingTop:10, alignItems:"stretch",
-        }}>
-          {hasChegada && (
-            <div style={{background:"var(--card2)",borderRadius:7,border:"1px solid var(--border)",padding:"6px 8px"}}>
-              <div style={{fontSize:8,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--cyan)",marginBottom:3,fontWeight:500}}>Obs Chegada</div>
-              <div style={{fontSize:10,color:"var(--text2)",lineHeight:1.35}}>
-                {(r.obs_chegada||"").length>70 ? r.obs_chegada.slice(0,70)+"…" : r.obs_chegada}
-              </div>
-            </div>
-          )}
-          {hasDescarga && (
-            <div style={{background:"var(--card2)",borderRadius:7,border:"1px solid var(--border)",padding:"6px 8px"}}>
-              <div style={{fontSize:8,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",color:"var(--green)",marginBottom:3,fontWeight:500}}>Obs Descarga</div>
-              <div style={{fontSize:10,color:"var(--text2)",lineHeight:1.35}}>
-                {(r.obs_descarga||"").length>70 ? r.obs_descarga.slice(0,70)+"…" : r.obs_descarga}
-              </div>
-            </div>
-          )}
-          {onAddOcorrencia && (
-            <button
-              onClick={e => { e.stopPropagation(); onAddOcorrencia(r); }}
-              title="Nova Ocorrência"
-              style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,background:"var(--accent2,rgba(124,58,237,0.08))",border:"1.5px dashed var(--accent)",borderRadius:8,padding:"8px 12px",cursor:"pointer",color:"var(--accent)",minWidth:44,transition:"all 0.12s"}}
-              onMouseEnter={e=>{e.currentTarget.style.background="rgba(124,58,237,0.16)"}}
-              onMouseLeave={e=>{e.currentTarget.style.background="var(--accent2,rgba(124,58,237,0.08))"}}
-            >
-              <Ico size={16} color="var(--accent)" sw={2.5}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
-              <span style={{fontSize:8,fontFamily:"var(--font-mono)",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Ocorr.</span>
-            </button>
-          )}
-        </div>
-      )}
+      {/* Row 2: a viagem como linha do tempo (substitui as duas caixas de obs
+          soltas, que não diziam de que momento eram) + botão de ocorrência */}
+      <div style={{
+        display:"grid",
+        gridTemplateColumns: onAddOcorrencia ? "1fr auto" : "1fr",
+        gap:10, borderTop:"1px solid var(--border)", paddingTop:10, alignItems:"start",
+      }}>
+        <LinhaDoTempoDt etapas={resumo.etapas} isMobile={isMobile} />
+        {onAddOcorrencia && (
+          <button
+            onClick={e => { e.stopPropagation(); onAddOcorrencia(r); }}
+            title="Nova Ocorrência"
+            style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,background:"var(--accent2,rgba(124,58,237,0.08))",border:"1.5px dashed var(--accent)",borderRadius:8,padding:"8px 12px",cursor:"pointer",color:"var(--accent)",minWidth:44,alignSelf:"center"}}
+          >
+            <Ico size={16} color="var(--accent)" sw={2.5}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
+            <span style={{fontSize:8,fontFamily:"var(--font-mono)",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Ocorr.</span>
+          </button>
+        )}
+      </div>
 
       {/* Row 3: RO / NFD */}
       {(r.ro||r.nfd?.numero)&&(
@@ -121,15 +102,8 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia }) {
           {r.nfd?.numero&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,padding:"2px 8px",color:"var(--red)",fontWeight:700}}>NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</span>)}
         </div>
       )}
-      {/* Row 4: datas */}
-      <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-        {r.data_carr && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"var(--font-mono)"}}><span style={{color:"var(--text3)",marginRight:4}}>CARR.</span><span style={{color:"var(--text2)"}}>{r.data_carr}</span></span>}
-        {r.data_agenda && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"var(--font-mono)"}}><span style={{color:"var(--text3)",marginRight:4}}>AGENDA</span><span style={{color:"var(--text2)"}}>{r.data_agenda}</span></span>}
-        {r.data_desc && <span style={{fontSize:10,color:"var(--text3)",fontFamily:"var(--font-mono)"}}><span style={{color:"var(--text3)",marginRight:4}}>DESC.</span><span style={{color:"var(--green)"}}>{r.data_desc}</span></span>}
-        <span style={{marginLeft:"auto",fontSize:10,color:"var(--text3)"}}>
-          <Ico size={12} color="var(--text3)"><polyline points="9 18 15 12 9 6"/></Ico>
-        </span>
-      </div>
+      {/* As datas de carregamento/agenda/descarga saíram daqui: viraram etapas
+          da linha do tempo acima, com a mesma informação em ordem. */}
     </div>
   );
 }
@@ -172,6 +146,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
     RO:               "var(--cat-orange)",
     NFD:              "var(--red)",
     Sobra:            "var(--cat-purple)",
+    "Sem relato":     "var(--red)",
   };
 
   const { entries, stats } = useMemo(() => {
@@ -185,29 +160,34 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
 
     const prioScore=b=>{
       if(b.label.startsWith("Atraso")||b.label==="Diária") return 0;
-      if(b.label.startsWith("NFD:")) return 1;
-      if(b.label.startsWith("RO:"))  return 2;
-      if(b.label.startsWith("SGS")) return 3;
-      if(b.label==="DCC") return 4;
-      return 5;
+      if(b.label==="Sem relato") return 1;
+      if(b.label.startsWith("NFD:")) return 2;
+      if(b.label.startsWith("RO:"))  return 3;
+      if(b.label.startsWith("SGS")) return 4;
+      if(b.label==="DCC") return 5;
+      return 6;
     };
 
     const raw=dados
-      .filter(r=>(r.status||"").toUpperCase()!=="CANCELADA"&&(r.obs_chegada||r.obs_descarga||r.ro||(r.nfd&&r.nfd.numero)))
+      // SGS entrou no filtro: e ocorrencia aberta igual a RO/NFD e ficava de fora.
+      // As duas colunas de obs continuam aqui, mas hoje nao trazem ninguem — o
+      // sync nao mapeia essas colunas da planilha (ver ocorrenciaEtapas.js).
+      .filter(r=>(r.status||"").toUpperCase()!=="CANCELADA"&&(r.obs_chegada||r.obs_descarga||r.ro||r.sgs||(r.nfd&&r.nfd.numero)))
       .map(r=>{
         const badges=[];
-        const hasOcorrLocal=(()=>{
-          try{ const v=localStorage.getItem(`co_ocorr_${r.dt}`); if(!v) return false; const a=JSON.parse(v); return Array.isArray(a)&&a.length>0; }
-          catch{ return false; }
-        })();
+        // ANTES: este badge saia de localStorage.getItem(`co_ocorr_${dt}`), entao
+        // uma ocorrencia registrada por outra pessoa (ou no celular) nao aparecia
+        // pra mais ninguem — o alerta so existia na maquina de quem digitou.
+        // Agora sai do proprio registro, que e o que todo mundo enxerga.
+        const resumo = resumoDt(r);
+        const hasRelato = !!(r.obs_chegada || r.obs_descarga);
         if(r.ro)                   badges.push({label:`RO: ${r.ro}`,     color:BADGE_COLORS.RO});
         if(r.nfd?.numero)          badges.push({label:`NFD: ${(r.nfd.tipo||"NFD").toUpperCase()}`, color:BADGE_COLORS.NFD});
         if(r.sgs)                  badges.push({label:`SGS: ${r.sgs}`,   color:BADGE_COLORS.SGS});
-        if(hasOcorrLocal){
-          const hasSobra=(()=>{try{const v=localStorage.getItem(`co_ocorr_${r.dt}`);if(!v)return false;const a=JSON.parse(v);return Array.isArray(a)&&a.some(o=>o.tipo==="sobra");}catch{return false;}})();
-          if(hasSobra) badges.push({label:"Sobra", color:BADGE_COLORS.Sobra});
-          badges.push({label:"Ocorrência",  color:BADGE_COLORS["Ocorrência"]});
-        }
+        if(hasRelato) badges.push({label:"Ocorrência", color:BADGE_COLORS["Ocorrência"]});
+        // Ocorrencia aberta (RO/NFD/SGS) e ninguem escreveu o que aconteceu:
+        // e a pendencia mais util da tela e nao existia antes.
+        if(resumo.semRelato) badges.push({label:"Sem relato", color:BADGE_COLORS["Sem relato"]});
         if(diariasSet.has(r.dt))   badges.push({label:"Diária",      color:BADGE_COLORS["Diária"]});
         if(dccSet.has(r.dt))       badges.push({label:"DCC",              color:BADGE_COLORS.DCC});
         if(r.data_agenda&&!r.data_desc){
@@ -216,10 +196,11 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
         }
         if(badges.length===0) return null;
         badges.sort((a,b)=>prioScore(a)-prioScore(b));
-        return {r,badges};
+        return {r,badges,resumo};
       }).filter(Boolean);
 
-    raw.sort((a,b)=>prioScore(a.badges[0])-prioScore(b.badges[0]));
+    // Quem tem pendencia sobe; entre iguais, vale a prioridade do badge.
+    raw.sort((a,b)=>(b.resumo.peso-a.resumo.peso)||(prioScore(a.badges[0])-prioScore(b.badges[0])));
 
     const stats={
       total:raw.length,
@@ -230,6 +211,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
       ro:raw.filter(e=>e.badges.some(b=>b.label.startsWith("RO:"))).length,
       nfd:raw.filter(e=>e.badges.some(b=>b.label.startsWith("NFD:"))).length,
       sobra:raw.filter(e=>e.badges.some(b=>b.label==="Sobra")).length,
+      semRelato:raw.filter(e=>e.resumo.semRelato).length,
       obsChegada:raw.filter(e=>!!e.r.obs_chegada).length,
       obsDescarga:raw.filter(e=>!!e.r.obs_descarga).length,
     };
@@ -240,6 +222,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
     {k:null,               l:"Todos",          color:"var(--text2)"},
     {k:"RO",               l:"RO",             color:"var(--cat-tangerine)"},
     {k:"NFD",              l:"NFD",            color:"var(--red)"},
+    {k:"Sem relato",       l:"Sem relato",     color:"var(--red)"},
     {k:"Sobra",            l:"Sobra",          color:"var(--cat-violet)"},
     {k:"SGS",              l:"SGS",            color:"var(--yellow)"},
     {k:"Ocorrência",  l:"Ocorrência",color:"var(--orange)"},
@@ -249,6 +232,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
   const labelMap={
     "RO":b=>b.label.startsWith("RO:"),
     "NFD":b=>b.label.startsWith("NFD:"),
+    "Sem relato":b=>b.label==="Sem relato",
     "Sobra":b=>b.label==="Sobra",
     "SGS":b=>b.label.startsWith("SGS"),
     "Ocorrência":b=>b.label==="Ocorrência",
@@ -289,6 +273,24 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
           dtRecord={ocorrModalState.record}
           t={t} hIco={null} css={css}
         />
+      )}
+
+      {/* Sem isto, "126 de 126 sem relato" parece defeito da tela. A causa e
+          conhecida e fica escrita: as colunas de observacao da planilha nao sobem. */}
+      {stats.semRelato>0 && stats.obsChegada===0 && stats.obsDescarga===0 && (
+        <div style={{
+          display:"flex",gap:9,alignItems:"flex-start",marginBottom:14,padding:"10px 12px",
+          borderRadius:10,background:"var(--chip-warning-bg)",border:"1px solid var(--chip-warning-border)",
+        }}>
+          <span style={{color:"var(--chip-warning-text)",fontSize:13,lineHeight:1.1}}>!</span>
+          <div style={{fontSize:11,color:"var(--text2)",lineHeight:1.5}}>
+            <b style={{color:"var(--text)"}}>Nenhuma observacao da planilha chegou ao app.</b>{" "}
+            As {stats.semRelato} ocorrencias abaixo aparecem sem relato porque a sincronizacao
+            nao mapeia as colunas de <i>obs da chegada</i> e <i>obs da descarga</i> — o que a
+            equipe escreve na planilha nao sobe. Corrigido o mapeamento, o texto aparece
+            sozinho na etapa a que pertence.
+          </div>
+        </div>
       )}
 
       {/* Header */}
@@ -377,7 +379,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
         <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?Math.min(ocorrCols,2):ocorrCols},minmax(0,1fr))`,gap:isMobile?6:8}}>
           {filtered.map((entry,i)=>{
             const motInfo=motoristas.find(m=>(entry.r.cpf&&m.cpf?.replace(/\D/g,"")===entry.r.cpf?.replace(/\D/g,""))||(entry.r.nome&&m.nome===entry.r.nome)||[m.placa1,m.placa2,m.placa3,m.placa4].some(p=>p&&p===entry.r.placa));
-            return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} onAddOcorrencia={onSalvarOcorrencia?r=>openModal(r):null}/>;
+            return <OcorrCard key={i} entry={entry} onOpen={abrirDetalhe} motInfo={motInfo} onAddOcorrencia={onSalvarOcorrencia?r=>openModal(r):null} isMobile={isMobile}/>;
           })}
         </div>
       )}
