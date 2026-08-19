@@ -1,3 +1,19 @@
+## 2026-08-19 — Conferencia responde na hora depois de cada decisao — Fase 4b
+
+**O que estava acontecendo.** Seis escritas da Conferencia de Faturamento (vincular ciclo de vida, marcar diaria emitida, definir competencia, vincular contrato, editar CTe, excluir linha) terminavam em `await carregar()`: quatro requisicoes e os tres meses inteiros de volta a cada clique. Pior, `loading` esconde a fila de revisao enquanto isso, entao a lista sumia e voltava — a sensacao de lentidao vinha mais dai do que do tempo em si.
+
+**Como ficou.** `aplicarLinhas(rows)` aplica no estado a(s) linha(s) que a RPC devolveu e a tela responde na hora; logo atras vai um `carregar({ silencioso: true })`, que confere com o servidor em segundo plano sem esconder nada. Nao e um padrao novo no arquivo: `onDecidir` e `onEstornar` ja faziam exatamente isso e nunca recarregaram.
+
+**Duas checagens feitas antes de mexer, porque o risco aqui e perder dado na tela:**
+
+1. **As RPCs devolvem a linha inteira?** Sim — `patch_frete`, `editar_frete`, `definir_competencia_frete` e `vincular_contrato_frete` fazem `RETURNING * INTO v_row; RETURN row_to_json(v_row)`, e `vincular_cte` devolve por `RETURN QUERY` o CTe, o par (`p_id_ref`) e o documento que estava vinculado antes. Se devolvessem patch parcial, substituir a linha local apagaria campos — era o unico jeito de isso dar errado, e nao e o caso. O caminho anon (PostgREST com `Prefer: return=representation`) tambem devolve a linha cheia.
+
+2. **A linha carregada ganha campo calculado no cliente?** Nao. `setLinhasPeriodo` recebe a resposta crua do servidor; `recalcularFlagsEPeriodo` so roda no preview da importacao e `recalcularLinhaEditada` e aplicado ao patch ANTES de enviar, entao a linha que volta ja vem com margem e flags certas.
+
+**Os dois recortes do servidor sao reproduzidos localmente** porque sao predicados simples e estaveis: a fila e `decisao_manual IS NULL` e Sinalizados e `decisao_manual = 'sinalizar_correcao'`. Qualquer coisa alem disso fica por conta da revalidacao.
+
+**A importacao continua com `await carregar()`** — insercao em lote muda muita linha de uma vez e nao tem "linha devolvida" que descreva o resultado.
+
 ## 2026-08-19 — Financeiro mais rapido — Fase 4
 
 **Pedido:** o Financeiro esta demorado para carregar os dados.

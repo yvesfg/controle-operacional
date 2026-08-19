@@ -145,6 +145,40 @@ export default function ConferenciaFrete({ ctx, conn }) {
   useModalEsc(dupModal.open, () => setDupModal({ open: false, origem: null }));
   useModalEsc(revisarModal.open, () => setRevisarModal({ open: false, item: null }));
 
+  // ── Estado local depois de uma escrita ──────────────────────────────────────
+  // Toda RPC de escrita devolve a(s) linha(s) que mexeu (vincular_cte devolve o
+  // CTe E o par). Aplicar isso no estado faz a tela responder na hora; o
+  // `carregar({silencioso:true})` que vem logo atrás busca do servidor em
+  // segundo plano e corrige o que o remendo local não souber.
+  //
+  // Antes cada decisão terminava em `await carregar()`: quatro requisições e os
+  // três meses inteiros de volta, com a fila de revisão sumindo da tela durante
+  // o carregamento (`loading` esconde a lista). O padrão daqui já existia em
+  // `onDecidir`, que nunca recarregou — agora vale para as outras escritas.
+  const aplicarLinhas = React.useCallback((linhas) => {
+    const rows = (Array.isArray(linhas) ? linhas : [linhas]).filter((r) => r && r.id);
+    if (!rows.length) return;
+    const porId = new Map(rows.map((r) => [r.id, r]));
+    const trocar = (arr) => arr.map((l) => porId.get(l.id) || l);
+    setLinhasPeriodo(trocar);
+    setLinhasExtra(trocar);
+    setLinhasComparativo((m) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, trocar(v)])));
+    // Os dois recortes do servidor são predicados simples e estáveis, então dá
+    // pra reproduzi-los aqui sem risco de divergir: a fila é `decisao_manual IS
+    // NULL` e Sinalizados é `decisao_manual = 'sinalizar_correcao'`.
+    setPendentes((arr) => trocar(arr).filter((l) => !porId.has(l.id) || l.decisao_manual == null));
+    setSinalizados((arr) => [
+      ...rows.filter((r) => r.decisao_manual === "sinalizar_correcao"),
+      ...arr.filter((l) => !porId.has(l.id)),
+    ]);
+  }, []);
+
+  const removerLinha = React.useCallback((id) => {
+    const fora = (arr) => arr.filter((l) => l.id !== id);
+    setLinhasPeriodo(fora); setLinhasExtra(fora); setPendentes(fora); setSinalizados(fora);
+    setLinhasComparativo((m) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, fora(v)])));
+  }, []);
+
   const abrirRevisar = (p) => {
     setSinalizando(false); setSinalObs("");
     setRevisando(false); setRevisObs("");
@@ -156,11 +190,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   // Vínculo de ciclo de vida: marca este CTe como substituto/complementar de outro CTRC,
   // como cancelado, ou desfaz ('normal'). Na substituição o RPC também derruba o CTe antigo
-  // (status_doc='substituido'), então recarrega tudo em vez de remendar o estado local.
+  // (status_doc='substituido') — e devolve OS DOIS, por isso `aplicarLinhas` dá conta do par.
+  // Se o par estiver num mês que não está carregado, quem o traz é a revalidação.
   const onVincular = async (p, tipo, ctrcRef, idRef) => {
     setSalvandoVinc(true);
     try {
-      await vincularCte(conn, p.id, tipo, ctrcRef, usuarioLogado, idRef);
+      const afetadas = await vincularCte(conn, p.id, tipo, ctrcRef, usuarioLogado, idRef);
       showToast?.(tipo === "normal" ? "Vínculo desfeito." :
         tipo === "cancelado" ? `CTRC ${p.ctrc} marcado como cancelado — fora dos totais.` :
         tipo === "substituto" ? `CTRC ${p.ctrc} substitui o ${ctrcRef} — o antigo saiu dos totais.` :
@@ -168,7 +203,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       setVincTipo(null); setVincCtrc("");
       setRevisarModal({ open: false, item: null });
       setDupModal({ open: false, origem: null });
-      await carregar();
+      aplicarLinhas(afetadas);
+      carregar({ silencioso: true });
     } catch (e) { showToast?.("Erro ao vincular CTe: " + e.message, "erro"); }
     finally { setSalvandoVinc(false); }
   };
@@ -182,10 +218,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
         categoria: "diaria_emitida", categoria_manual: true,
         ...recalcularLinhaEditada({ ...p, categoria: "diaria_emitida" }),
       });
-      await decidir(conn, p.id, "ok", "confirmado: diária emitida (cobrança da diária paga no D01)", usuarioLogado);
+      const atualizado = await decidir(conn, p.id, "ok", "confirmado: diária emitida (cobrança da diária paga no D01)", usuarioLogado);
       showToast?.(`CTRC ${p.ctrc} reclassificado como diária emitida.`, "ok");
       setRevisarModal({ open: false, item: null });
-      await carregar();
+      aplicarLinhas(atualizado);
+      carregar({ silencioso: true });
     } catch (e) { showToast?.("Erro ao reclassificar: " + e.message, "erro"); }
     finally { setSalvandoEdit(false); }
   };
@@ -196,11 +233,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const onCompetencia = async (p, ref) => {
     setSalvandoVinc(true);
     try {
-      await definirCompetencia(conn, p.id, ref);
+      const atualizado = await definirCompetencia(conn, p.id, ref);
       showToast?.(ref ? `CTRC ${p.ctrc} passa a contar na diária de ${mesLabel(ref)}.`
         : `Competência removida — CTRC ${p.ctrc} volta a contar no mês do documento.`, "ok");
       setRevisarModal({ open: false, item: null });
-      await carregar();
+      aplicarLinhas(atualizado);
+      carregar({ silencioso: true });
     } catch (e) { showToast?.("Erro ao definir competência: " + e.message, "erro"); }
     finally { setSalvandoVinc(false); }
   };
@@ -211,13 +249,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const onVincularContrato = async (p, contrato) => {
     setSalvandoContrato(true);
     try {
-      await vincularContratoCte(conn, p.id, contrato, usuarioLogado);
+      const atualizado = await vincularContratoCte(conn, p.id, contrato, usuarioLogado);
       showToast?.(contrato
         ? `CTRC ${p.ctrc} vinculado ao contrato ${contrato}.`
         : `Vínculo de contrato desfeito no CTRC ${p.ctrc}.`, "ok");
       setVincContrato({ aberto: false, num: "" });
       setRevisarModal({ open: false, item: null });
-      await carregar();
+      aplicarLinhas(atualizado);
+      carregar({ silencioso: true });
     } catch (e) { showToast?.("Erro ao vincular contrato: " + e.message, "erro"); }
     finally { setSalvandoContrato(false); }
   };
@@ -249,11 +288,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
       // o mesmo CTe na categoria que a planilha sugere (migration 049).
       if (editForm.categoria !== p.categoria) patch.categoria_manual = true;
       Object.assign(patch, recalcularLinhaEditada(patch)); // margem_lucro + flags
-      await editarFrete(conn, p.id, patch);
+      const atualizado = await editarFrete(conn, p.id, patch);
       showToast?.("CTe atualizado.", "ok");
       setEditando(false); setEditForm(null);
       setRevisarModal({ open: false, item: null });
-      await carregar(); // recarrega listas/resumos do servidor (evita estado parcial)
+      aplicarLinhas(atualizado);
+      carregar({ silencioso: true }); // confere no servidor sem esconder a tela
     } catch (e) {
       // 23505 = UNIQUE (cnpj_remetente, categoria, ctrc, periodo_ref). Acontece quando já
       // existe uma linha desse CTe na categoria escolhida — normalmente a linha ORIGINAL,
@@ -274,7 +314,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       await excluirFrete(conn, p.id);
       showToast?.(`Linha do CTRC ${p.ctrc} excluída.`, "ok");
       setRevisarModal({ open: false, item: null });
-      await carregar();
+      removerLinha(p.id);
+      carregar({ silencioso: true });
     } catch (e) { showToast?.("Erro ao excluir: " + e.message, "erro"); }
   };
 
@@ -328,9 +369,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
     return { linhas, tot, faltando: linhas.filter((l) => !l.temDespesa) };
   }, [basesDoPeriodo, linhasPeriodo, despesasBase]);
 
-  const carregar = React.useCallback(async () => {
+  // `silencioso`: revalidação em segundo plano depois de uma escrita. Sem isso,
+  // `loading` esconde a fila de revisão e a tela pisca a cada clique.
+  const carregar = React.useCallback(async (opts = {}) => {
     if (!conn) return;
-    setLoading(true);
+    if (!opts.silencioso) setLoading(true);
     const mesAnt1 = shiftMes(periodoRef, -1);
     const mesAnt2 = shiftMes(periodoRef, -2);
     try {
@@ -361,7 +404,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       mesesBuscados.current = new Set();
       setBuscaAmpla("nao");
     } catch (e) { showToast?.("Erro ao carregar conferência: " + e.message, "erro"); }
-    finally { setLoading(false); }
+    finally { if (!opts.silencioso) setLoading(false); }
   }, [conn, periodoRef, showToast]);
 
   React.useEffect(() => { carregar(); }, [carregar]);
