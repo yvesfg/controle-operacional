@@ -51,6 +51,13 @@ export default function KpiCard({
       {...clickable(onClick)}
       style={{
         position:     "relative",
+        // Coluna flex de altura cheia: numa faixa de KPIs os cards têm conteúdo
+        // de tamanhos diferentes (uns têm sub, outros têm delta) e sem isso a
+        // faixa fica com cards visivelmente desalinhados.
+        display:      "flex",
+        flexDirection:"column",
+        height:       "100%",
+        boxSizing:    "border-box",
         background:   danger ? "color-mix(in srgb, var(--red) 5%, var(--card))" : "var(--card)",
         border:       danger ? "1.5px solid color-mix(in srgb, var(--red) 45%, transparent)" : "1px solid var(--border)",
         borderRadius: compact ? 8 : "var(--radius-card)",
@@ -113,7 +120,9 @@ export default function KpiCard({
       {deltaPct != null && (
         <div style={{
           display: "flex", alignItems: "center", gap: 4,
-          marginTop: compact ? 4 : 8,
+          // `auto` gruda a variação no rodapé do card: com alturas iguais, as
+          // linhas de delta da faixa inteira ficam na mesma régua.
+          marginTop: "auto", paddingTop: compact ? 4 : 8,
           fontSize: compact ? 10 : 11,
           fontFamily: "var(--font-mono)",
           color: deltaPct >= 0 ? "var(--color-success)" : "var(--color-danger)",

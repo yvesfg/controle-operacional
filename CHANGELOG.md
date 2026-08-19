@@ -1,3 +1,23 @@
+## 2026-08-19 — Dashboard: grade de 12 colunas e tamanho por card — Fase 3
+
+**Pedido:** no Dashboard os blocos estao ficando de tamanho diferente (print), da pra reorganizar e arrastar melhor.
+
+**Causa.** A faixa de KPIs era `gridTemplateColumns: repeat(N, 1fr)`, onde N = quantos KPIs estao ligados. Com 9 indicadores numa tela de 1600px cada card ficava com ~160px: o rotulo quebrava em duas ou tres linhas ("SEM FATURAMENTO", "MOTORISTAS ATIVOS"), e como um card tem sub e outro tem variacao, as alturas nao batiam — a faixa perdia a regua.
+
+**Como ficou.** A grade agora tem 12 colunas fixas e cada card declara quantas ocupa: **P = 2**, **M = 3**, **G = 4**. Padrao P, entao 6 cards por linha. No modo "Organizar painel" aparece um seletor P/M/G no pe de cada card, ao lado do ✕ que ja existia. O tamanho e salvo em `config.dash.tamanhos.kpis` — mesma regra da ordem e da visibilidade: chave ausente = padrao, entao ninguem que ja usa o app perde o layout.
+
+No celular o tamanho e ignorado de proposito (todo card ocupa 6 de 12, dois por linha) — a tela nao tem largura pra tres larguras diferentes.
+
+**Altura igual.** `KpiCard` virou coluna flex de altura cheia e a linha de variacao gruda no rodape (`marginTop: auto`). Como o card e usado tambem no Painel Financeiro, Resumo e Relatorios, o alinhamento melhora nos quatro.
+
+**Medido no dev server** (faixa montada isolada, 9 KPIs, viewport de 1600px):
+- antes: 9 cards numa linha so, ~160px cada.
+- depois: 12 colunas, todos com 253px, 2 linhas (6 + 3), e **uma unica altura por linha** (123px e 103px) — os cards de uma linha ficam alinhados.
+- com hero em G e alertas em M: spans 4 / 3 / 2 = 513px / 383px / 252px, e o restante se acomoda sem espremer.
+- mobile (390px): span 6 em todos, 2 por linha, 184px cada.
+
+**Ainda nao mexido:** os blocos grandes (Evolucao, Status, Top motoristas, Registros recentes) continuam nos pontos fixos da pagina, com ✕ e arrasto entre vizinhos. Coloca-los na mesma grade de 12 colunas e a fase seguinte — exige remontar a regiao do meio da pagina.
+
 ## 2026-08-19 — Export .xlsx / .csv / .pdf unificado — Fase 2
 
 **Pedido:** em relatorio deve ter a possibilidade de exportar em .xlsx, .csv e .pdf.

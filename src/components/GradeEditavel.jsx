@@ -1,6 +1,6 @@
 import React from "react";
 import { useDragOrdem } from "../hooks/useDragOrdem.js";
-import { ordenar, setOrdem, setVisivel } from "../dashboardConfig.js";
+import { ordenar, setOrdem, setVisivel, getTamanho, setTamanho, TAMANHOS, TAMANHO_ROTULO } from "../dashboardConfig.js";
 import Icon from "./Icon.jsx";
 
 // Peças do modo "Organizar painel" do Dashboard: o usuário arrasta pra
@@ -61,8 +61,12 @@ export function GavetaOcultos({ ocultos, tipo, cfg, onSalvar, t, isMobile, vazio
 // `itens`: [{ id, label, node, style? }] — só os que EXISTEM no contexto atual
 // (um KPI financeiro não deve aparecer na gaveta de quem não vê valores).
 // `style` do item vai pro wrapper: é como o card do gráfico mantém o flex 2:1.
+// `redimensionavel`: a grade é de 12 colunas e cada card ocupa P (2), M (3) ou
+// G (4). No celular o tamanho é ignorado — a tela não tem largura pra três
+// larguras diferentes, e todo card ocupa metade da linha.
 export default function GradeEditavel({
   itens, tipo, cfg, editando, onSalvar, gridStyle, t, isMobile, gaveta = true,
+  redimensionavel = false, tamanhoPadrao = "p",
 }) {
   const visiveis = ordenar(cfg, tipo, itens.filter(i => cfg?.[tipo]?.[i.id] !== false));
   const ocultos  = itens.filter(i => cfg?.[tipo]?.[i.id] === false);
@@ -85,11 +89,13 @@ export default function GradeEditavel({
         {naTela.map(item => {
           const eu = arrastando === item.id;
           const props = dragProps(item.id);
+          const tam = redimensionavel ? getTamanho(cfg, tipo, item.id, tamanhoPadrao) : null;
           return (
             <div key={item.id} {...props}
               style={{
                 ...item.style,
                 ...props.style,
+                ...(redimensionavel ? { gridColumn: `span ${isMobile ? 6 : TAMANHOS[tam]}` } : null),
                 position: "relative",
                 ...(editando ? { cursor: eu ? "grabbing" : "grab" } : null),
                 ...(eu ? { opacity: .5, transform: "scale(.97)" } : null),
@@ -111,6 +117,26 @@ export default function GradeEditavel({
                     }}>
                     <Icon n="x" s={12} c={t.danger} sw={2.4} />
                   </button>
+                  {redimensionavel && !isMobile && (
+                    <div data-nodrag style={{
+                      position: "absolute", bottom: -9, left: 8, zIndex: 3, display: "flex", gap: 2,
+                      background: t.card, border: `1px solid ${t.borda}`, borderRadius: 6, padding: 1,
+                    }}>
+                      {Object.keys(TAMANHOS).map(k => (
+                        <button key={k} data-nodrag
+                          onClick={() => onSalvar(setTamanho(cfg, tipo, item.id, k))}
+                          title={`Largura ${TAMANHO_ROTULO[k]} (${TAMANHOS[k]} de 12 colunas)`}
+                          style={{
+                            width: 17, height: 15, borderRadius: 4, cursor: "pointer", border: "none",
+                            fontSize: 9, fontWeight: 700, fontFamily: "var(--font-mono)", padding: 0,
+                            background: tam === k ? "var(--accent)" : "transparent",
+                            color: tam === k ? "var(--on-primary)" : t.txt2,
+                          }}>
+                          {TAMANHO_ROTULO[k]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
               {item.node}

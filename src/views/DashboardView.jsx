@@ -12,7 +12,7 @@ import PeriodoBotao from '../components/PeriodoModal.jsx';
 import { parseData, clickable, ultimasViagens, dtBase } from "../utils.js";
 import { nMoeda } from "../financeiroCalc.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
-import { verKpi, verBloco } from "../dashboardConfig.js";
+import { verKpi, verBloco, COLUNAS_GRADE } from "../dashboardConfig.js";
 import GradeEditavel, { CardEditavel, GavetaOcultos } from '../components/GradeEditavel.jsx';
 import { janelaDias, mesMenos, mesCurto, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
 
@@ -303,12 +303,14 @@ export default function DashboardView({ ctx }) {
         // Nada de .filter(verK) aqui: a Grade precisa da lista COMPLETA do
         // contexto pra saber o que oferecer de volta na gaveta "fora do painel".
         if (!kpis.length) return null;
-        const nCols = kpis.filter(k=>verK(k.id)).length || 1;
+        // Grade de 12 colunas: cada card diz quantas ocupa (P/M/G no modo
+        // organizar). Antes era `repeat(N,1fr)` — com 9 KPIs ligados o card
+        // ficava com ~160px e o rótulo quebrava em três linhas.
         return (
           <GradeEditavel
             tipo="kpis" cfg={dashCfg} editando={editandoPainel} onSalvar={salvarDashCfg}
-            t={t} isMobile={isMobile}
-            gridStyle={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":`repeat(${nCols},1fr)`,gap:isMobile?6:10,marginBottom:14}}
+            t={t} isMobile={isMobile} redimensionavel tamanhoPadrao="p"
+            gridStyle={{display:"grid",gridTemplateColumns:`repeat(${COLUNAS_GRADE},1fr)`,gap:isMobile?6:10,marginBottom:14,alignItems:"stretch"}}
             itens={kpis.map(k=>({
               id:k.id, label:k.label,
               node:(

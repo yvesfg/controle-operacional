@@ -61,6 +61,24 @@ export function ordenar(cfg, tipo, itens, getId = (x) => x.id) {
   });
 }
 
+// ── Tamanho (config.dash.tamanhos = { kpis:{id:"p"|"m"|"g"} }) ───────────────
+// A faixa de KPIs era `repeat(N,1fr)`: com 9 indicadores ligados cada card ficava
+// com ~160px, o rótulo quebrava em três linhas e a régua da faixa sumia. Agora a
+// grade tem 12 colunas fixas e cada card declara quantas ocupa — quem quer o card
+// principal grande põe G e o resto continua P, sem espremer ninguém.
+// Chave ausente = tamanho padrão, mesma regra da visibilidade e da ordem.
+export const TAMANHOS = { p: 2, m: 3, g: 4 };       // colunas de 12
+export const TAMANHO_ROTULO = { p: "P", m: "M", g: "G" };
+export const COLUNAS_GRADE = 12;
+
+export const getTamanho = (cfg, tipo, id, padrao = "p") =>
+  (cfg?.tamanhos?.[tipo]?.[id] in TAMANHOS ? cfg.tamanhos[tipo][id] : padrao);
+
+export const setTamanho = (cfg, tipo, id, valor) => ({
+  ...cfg,
+  tamanhos: { ...(cfg?.tamanhos || {}), [tipo]: { ...(cfg?.tamanhos?.[tipo] || {}), [id]: valor } },
+});
+
 // Escritores — devolvem um config.dash NOVO (nunca mutam o atual).
 export const setOrdem = (cfg, tipo, ids) => ({
   ...cfg, ordem: { ...(cfg?.ordem || {}), [tipo]: ids },
