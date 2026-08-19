@@ -13,6 +13,8 @@ import ConferenciaFrete from "./ConferenciaFrete.jsx";
 import ContratosFrete from "./ContratosFrete.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import KpiCard from "../components/KpiCard.jsx";
+import PeriodoBotao from "../components/PeriodoModal.jsx";
+import { periodoDeMesRef, mesRefDe } from "../periodoDash.js";
 import { nCte, nContrato, aplicarComplementar, origemBate, semFilial } from "../financeiroCalc.js";
 
 // Resultado — confronta a margem operacional (Σ vl_cte − Σ vl_contrato) com as
@@ -317,11 +319,9 @@ export default function Resultado({ ctx }) {
       <>
       {/* Controles */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
-        <select value={mesRef} onChange={(e) => setMesRef(e.target.value)}
-          style={{ fontSize: 13, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.card, color: t.txt }}>
-          {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
-          {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
-        </select>
+        <PeriodoBotao value={periodoDeMesRef(mesRef)} meses={mesesDisp} modo="mes"
+          titulo="Mês do Resultado"
+          onChange={(p) => { const m = mesRefDe(p); if (m) setMesRef(m); }} />
         {/* O toggle não pode fingir que faz algo: vl_cte_comp está zerado em toda a base
             hoje (ninguém alimenta o campo), então ligá-lo não muda número nenhum.
             Desligado e explicado é honesto; some sozinho quando o campo voltar a ter valor. */}

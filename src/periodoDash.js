@@ -12,6 +12,8 @@
 
 const MES_NOME = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 
+export const MESES_CURTOS = MES_NOME;
+
 export const PERIODO_TODOS = { tipo: "todos" };
 export const periodoMes    = (mes) => ({ tipo: "mes", mes });
 export const periodoLivre  = (inicio, fim, rotulo) => ({ tipo: "livre", inicio, fim, rotulo });
@@ -34,6 +36,36 @@ export function periodoTrimestre(ano, tri) {
 export function periodoAno(ano) {
   return periodoLivre(`${ano}-01-01`, `${ano}-12-31`, String(ano));
 }
+
+// Atalhos usados pelo PeriodoModal. "Últimos N dias" cruza meses de propósito —
+// nesse caso janelaDias() devolve null e o comparativo volta a ser o mês cheio.
+export function periodoMesAnterior(hoje = new Date()) {
+  const d = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+  return periodoMes(`${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`);
+}
+export function periodoUltimosDias(n, hoje = new Date()) {
+  const ini = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - (n - 1));
+  return periodoLivre(isoDe(ini), isoDe(hoje), `últimos ${n} dias`);
+}
+export const triDe = (d = new Date()) => Math.floor(d.getMonth() / 3) + 1;
+
+// ── Ponte com as telas que falam "YYYY-MM" (Financeiro: mes_ref das despesas) ──
+// O Financeiro fecha por mês (despesas gravam mes_ref), então lá o período só
+// vale como mês: intervalo que cruza meses não tem mes_ref único e devolve "".
+export function mesRefDe(p) {
+  if (!p) return "";
+  if (p.tipo === "mes") { const [mm, aa] = String(p.mes).split("/"); return aa && mm ? `${aa}-${mm}` : ""; }
+  if (p.tipo === "livre") {
+    const a = dISO(p.inicio), b = dISO(p.fim);
+    if (!a || !b || a.getFullYear() !== b.getFullYear() || a.getMonth() !== b.getMonth()) return "";
+    return `${a.getFullYear()}-${String(a.getMonth() + 1).padStart(2, "0")}`;
+  }
+  return "";
+}
+export const periodoDeMesRef = (m) => {
+  const [aa, mm] = String(m || "").split("-");
+  return aa && mm ? periodoMes(`${mm}/${aa}`) : PERIODO_TODOS;
+};
 
 export function rotuloPeriodo(p) {
   if (!p || p.tipo === "todos") return "Todos";

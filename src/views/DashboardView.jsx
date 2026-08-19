@@ -8,17 +8,17 @@ import SectionCard from '../components/SectionCard.jsx';
 import PageHeader  from '../components/PageHeader.jsx';
 import { Table }   from '../design-system/components/Table.jsx';
 import { Badge }   from '../design-system/components/Badge.jsx';
-import PeriodoDashSelect from '../components/PeriodoDashSelect.jsx';
+import PeriodoBotao from '../components/PeriodoModal.jsx';
 import { parseData, clickable, ultimasViagens, dtBase } from "../utils.js";
 import { nMoeda } from "../financeiroCalc.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
 import { verKpi, verBloco } from "../dashboardConfig.js";
 import GradeEditavel, { CardEditavel, GavetaOcultos } from '../components/GradeEditavel.jsx';
-import { janelaDias, mesMenos, mesCurto, rotuloPeriodo, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
+import { janelaDias, mesMenos, mesCurto, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
 
 export default function DashboardView({ ctx }) {
   const {
-    dashMes, setDashMes,
+    dashMes,
     dashPeriodo, setDashPeriodo,
     dashOrigem, setDashOrigem,
     dashHeroTab, setDashHeroTab,
@@ -192,19 +192,16 @@ export default function DashboardView({ ctx }) {
 
       {/* ── Filtros ── */}
       <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
-        {/* Intervalo livre não cabe no <select> de mês: vira chip, e o ✕ devolve ao mês corrente. */}
-        {dashPeriodo?.tipo === "livre" ? (
+        {/* Um controle só para o recorte de tempo: mês, trimestre, ano ou intervalo
+            vivem todos dentro do PeriodoModal (antes eram <select> + popover). */}
+        <PeriodoBotao value={dashPeriodo} onChange={setDashPeriodo} meses={dashData.meses} compacto
+          titulo="Período do Dashboard" />
+        {dashPeriodo?.tipo !== "mes" && (
           <button onClick={()=>setDashPeriodo(periodoMes(mesAtual()))} title="Voltar para o mês corrente"
-            style={{...css.inp,width:"auto",padding:"3px 9px",fontSize:10,height:26,cursor:"pointer",border:`1.5px solid ${t.ouro}`,color:t.ouro,fontWeight:700,fontFamily:DESIGN.fnt.b,display:"inline-flex",alignItems:"center",gap:6}}>
-            {rotuloPeriodo(dashPeriodo)} <span style={{opacity:.7}}>✕</span>
+            style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1px solid ${t.borda}`,color:t.txt2,fontFamily:DESIGN.fnt.b}}>
+            ✕
           </button>
-        ) : (
-          <select value={dashMes} onChange={e=>setDashMes(e.target.value)} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1.5px solid ${dashMes!=="todos"?t.ouro:t.borda}`,color:dashMes!=="todos"?t.ouro:t.txt2,fontWeight:700,fontFamily:DESIGN.fnt.b}}>
-            <option value="todos">Mês: Todos</option>
-            {dashData.meses.map(m=><option key={m} value={m}>{m}</option>)}
-          </select>
         )}
-        <PeriodoDashSelect value={dashPeriodo} onChange={setDashPeriodo} ativo={dashPeriodo?.tipo === "livre"} />
         {dashOrigem!=="todos" && (
           <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:10,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
         )}

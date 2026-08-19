@@ -5,6 +5,8 @@ import { listarDespesasBase } from "../despesas.js";
 import { nCte, nContrato, aplicarComplementar, origemBate } from "../financeiroCalc.js";
 import Toggle from "../components/Toggle.jsx";
 import KpiCard from "../components/KpiCard.jsx";
+import PeriodoBotao from "../components/PeriodoModal.jsx";
+import { periodoDeMesRef, mesRefDe } from "../periodoDash.js";
 
 // PainelFinanceiro — visão financeira por base (faturamento → margem → despesas → resultado).
 // Escopado à base logada. Faturamento/margem vêm das viagens (DADOS); despesas da tabela
@@ -224,11 +226,9 @@ export default function PainelFinanceiro({ ctx }) {
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
       {/* Controles */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 16 }}>
-        <select value={mesRef} onChange={(e) => setMesRef(e.target.value)}
-          style={{ fontSize: 13, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.card, color: t.txt }}>
-          {mesesDisp.length === 0 && <option value="">— sem dados —</option>}
-          {mesesDisp.map((m) => <option key={m} value={m}>{mesLabel(m)}</option>)}
-        </select>
+        <PeriodoBotao value={periodoDeMesRef(mesRef)} meses={mesesDisp} modo="mes"
+          titulo="Mês do Painel Financeiro"
+          onChange={(p) => { const m = mesRefDe(p); if (m) setMesRef(m); }} />
         {/* Recorte de filial agora é o do topbar — ver comentário em temFilial. */}
         {temFilial && filial !== "todos" && (
           <span style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 11px", borderRadius: 8, background: "var(--accent)", color: "#fff" }}>

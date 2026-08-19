@@ -2,6 +2,8 @@ import React from "react";
 import KpiCard from "../components/KpiCard.jsx";
 import { listarDespesasBase } from "../despesas.js";
 import { nCte, nContrato, aplicarComplementar } from "../financeiroCalc.js";
+import PeriodoBotao from "../components/PeriodoModal.jsx";
+import { periodoDeMesRef, mesRefDe } from "../periodoDash.js";
 
 // ── ResumoFinanceiro ──
 // A resposta curta pra "a operação deu lucro esse mês?" — 5 números e o histórico.
@@ -131,7 +133,6 @@ export default function ResumoFinanceiro({ ctx }) {
     return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Sem permissão financeira.</div>;
   }
 
-  const selEstilo = { background: t.inputBg, border: `1px solid ${t.borda2}`, borderRadius: 8, padding: "6px 10px", color: t.txt, fontSize: 12 };
 
   return (
     <div style={{ padding: isMobile ? "12px 12px 28px" : "16px 18px 32px" }}>
@@ -143,10 +144,11 @@ export default function ResumoFinanceiro({ ctx }) {
             {consolidado && idsDespesas.length > 0 && ` · ${idsDespesas.length} bases somadas`}
           </div>
         </div>
-        <select value={mesRef || ""} onChange={e => setMesRef(e.target.value)} style={{ ...selEstilo, marginLeft: "auto" }}>
-          {mesesDisp.length === 0 && <option value="">—</option>}
-          {mesesDisp.map(m => <option key={m} value={m}>{mesLabel(m)}</option>)}
-        </select>
+        <div style={{ marginLeft: "auto" }}>
+          <PeriodoBotao value={periodoDeMesRef(mesRef)} meses={mesesDisp} modo="mes"
+            titulo="Mês do Resumo"
+            onChange={(p) => { const m = mesRefDe(p); if (m) setMesRef(m); }} />
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(5,1fr)", gap: 10, marginBottom: 18 }}>

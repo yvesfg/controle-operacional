@@ -1,3 +1,22 @@
+## 2026-08-19 — Seletor de periodo unico e reusavel (Dashboard + Financeiro) — Fase 1
+
+**Pedido:** o seletor de periodo do Dashboard e do Financeiro nao esta bom; criar um modal de periodo reusavel em todo o app, adaptado aos dados de cada tela.
+
+**Como ficou.** Novo `src/components/PeriodoModal.jsx`, com dois exports: `PeriodoBotao` (o gatilho, que mostra o periodo atual) e `PeriodoModal` (o modal em si). O modal tem tres partes: atalhos (Este mes, Mes passado, Ultimos 7 dias, Ultimos 30 dias, Trimestre atual, Este ano, Tudo), calendario de meses com navegacao de ano, e intervalo livre De-Ate.
+
+A tela nao descreve o controle, descreve os dados que tem:
+- `modo="completo"` (Dashboard): mes, trimestre, ano e intervalo livre.
+- `modo="mes"` (Financeiro): so mes, porque a despesa e gravada com `mes_ref` — um intervalo que cruza meses nao fecha contra `despesas_filial`. O modal explica isso na propria tela em vez de oferecer uma opcao que daria numero errado.
+- `meses={[...]}`: os meses que realmente tem dado ficam clicaveis; o resto do calendario aparece apagado e desabilitado. Aceita "MM/YYYY" (Dashboard) e "YYYY-MM" (Financeiro) na mesma prop.
+
+**O que saiu.** `src/components/PeriodoDashSelect.jsx` foi removido (substituido pelo modal). No Dashboard, o par "`<select>` de mes + botao Periodo" virou um botao so; o ✕ ao lado volta pro mes corrente quando o periodo nao e um mes. No Financeiro, os tres `<select>` de mes (Painel Financeiro, Resultado e Resumo) viraram o mesmo `PeriodoBotao`.
+
+**Sem quebrar a logica de quem consome.** O valor entra e sai no formato de `periodoDash.js`. Quem fala "YYYY-MM" converte na borda com os helpers novos `mesRefDe()` / `periodoDeMesRef()` — `mesRefFin` continua sendo uma string de mes e nenhuma conta do Financeiro mudou. No Dashboard, `dashPeriodo` ja era a fonte de verdade e `dashMes` ja era derivado dele; nada disso mudou.
+
+**Novos helpers em `periodoDash.js`:** `periodoMesAnterior()`, `periodoUltimosDias(n)`, `triDe()`, `mesRefDe()`, `periodoDeMesRef()`, `MESES_CURTOS`.
+
+**Pendente de conferencia visual:** o build passa e nao ha erro de console no carregamento, mas a tela logada nao foi aberta nesta sessao (precisa de login).
+
 ## 2026-08-18 — Organizar painel: arrastar, tirar e devolver cards do Dashboard
 
 **Pedido:** poder clicar e arrastar para reorganizar, tirar ou adicionar um KPI no Dashboard. Escolhido: valer tambem para os blocos maiores, com o layout salvo no Supabase por usuario.
