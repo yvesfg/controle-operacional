@@ -103,7 +103,7 @@ export default function FinanceiroView({ ctx }) {
         {/* Segmentado Operacional/Faturamento — só na aba Resultado, na mesma faixa */}
         {finTab === "resultado" && !consolidado && (
           <div style={{ display: "flex", gap: 4, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}` }}>
-            {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"], ["contratos", "Contratos"]].map(([id, label]) => (
+            {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"], ["contratos", "Contratos"], ["conciliacao", "Conciliação"]].map(([id, label]) => (
               <button key={id} onClick={() => setSegmento(id)}
                 style={{ fontSize: 11.5, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", border: "none",
                   background: segmento === id ? "var(--accent)" : "transparent",

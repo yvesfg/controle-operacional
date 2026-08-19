@@ -1,3 +1,28 @@
+## 2026-08-19 — Conciliação planilha × TMS — Fase 1
+
+**Pedido:** conciliar a planilha que vem do Sheets com a que é exportada do TMS, para ter controle sobre como estao preenchendo e como esta sendo lancado no TMS.
+
+**Onde ficou.** Quarto botao da faixa que ja existe no Resultado: Operacional · Conferencia de Faturamento · Contratos · **Conciliacao**. Fica entre os dois lados que compara e reusa o mes e a base ja selecionados. Carregado sob demanda (React.lazy, 11 kB).
+
+**A regra, e como ela foi decidida.** O valor comparado e `frete_peso` do TMS (frete SEM ICMS), nao `total_frete` — decisao do Yves, confirmada no dado: em 07/2026 na imperatriz_belem, contra `total_frete` batiam 41 de 126 linhas; contra `frete_peso`, 118. A razao media entre os dois campos e 1,1065, o degrau do imposto. Tolerancia de 5 centavos.
+
+**A comparacao acontece por DT, nao por linha** — e isso NAO e detalhe. A DT 1008664 saiu em dois CTes de R$ 14.972 cada e a planilha listou os dois numeros na primeira linha (`"34678, 34679"`), deixando a irma `-1` sem CTe, com o valor certo nas duas. Linha a linha, a primeira pareceria dever 29.944 e viraria acusacao errada. Somando a DT dos dois lados, ela fecha e some do relatorio — que e o certo.
+
+**Cinco classes de divergencia:**
+- `dt_fatiada` — a carga virou dois CTes e a planilha repetiu o TOTAL da DT em cada linha. Reconhecida por aritmetica, nao por suspeita: 2+ linhas com o mesmo valor E esse valor igual a soma dos CTes no TMS. Dobra o faturamento da carga.
+- `sem_valor` — o TMS emitiu e a planilha ficou em branco.
+- `valor_dif` — os dois lados discordam do valor.
+- `sem_no_tms` — a planilha aponta um CTe que nao existe no relatorio do periodo.
+- `fora_planilha` — o TMS emitiu e nenhuma linha da planilha aponta aquele CTe.
+
+**O que julho/2026 mostrou** (imperatriz_belem): 133 dos 145 CTes casaram por numero; 3 DTs com valor dobrado (1008884, 1008873, 1010228), 7 linhas com CTe emitido e valor em branco (R$ 73,5 mil), 2 diferencas de digitacao (-520,00 e -25,14) e 12 CTes apontados que nao existem no TMS.
+
+**Verificado** com uma fixture montada a partir das linhas reais dos casos dificeis: as 4 DTs fatiadas classificadas com o impacto exato, a 1008664 corretamente FORA do relatorio, os dois `sem_valor`, os dois `valor_dif` com a diferenca certa, e a celula com dois CTes reconhecida nas duas variantes.
+
+**So leitura nesta fase**, como combinado: a tela aponta e exporta em xlsx/csv/pdf pra mandar a quem preenche. Escrever a correcao de volta na planilha e outra conversa — mexe nos dois lados.
+
+**Limite conhecido:** so a categoria `frete` da base atual. Diaria, descarga e local tem outra contrapartida na planilha e ficam de fora.
+
 ## 2026-08-19 — Conferencia responde na hora depois de cada decisao — Fase 4b
 
 **O que estava acontecendo.** Seis escritas da Conferencia de Faturamento (vincular ciclo de vida, marcar diaria emitida, definir competencia, vincular contrato, editar CTe, excluir linha) terminavam em `await carregar()`: quatro requisicoes e os tres meses inteiros de volta a cada clique. Pior, `loading` esconde a fila de revisao enquanto isso, entao a lista sumia e voltava — a sensacao de lentidao vinha mais dai do que do tempo em si.

@@ -14,6 +14,7 @@ import {
 // Resumo e nunca troca de segmento.
 const ConferenciaFrete = React.lazy(() => import("./ConferenciaFrete.jsx"));
 const ContratosFrete   = React.lazy(() => import("./ContratosFrete.jsx"));
+const Conciliacao      = React.lazy(() => import("./Conciliacao.jsx"));
 import { getPerfil } from "../operacao/perfil.js";
 import KpiCard from "../components/KpiCard.jsx";
 import PeriodoBotao from "../components/PeriodoModal.jsx";
@@ -314,7 +315,11 @@ export default function Resultado({ ctx }) {
 
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
-      {segmento === "contratos" ? (
+      {segmento === "conciliacao" ? (
+        <React.Suspense fallback={<div style={{ padding: 24, color: t.txt2, fontSize: 12 }}>Carregando conciliação…</div>}>
+          <Conciliacao ctx={ctx} conn={conn} />
+        </React.Suspense>
+      ) : segmento === "contratos" ? (
         <React.Suspense fallback={<div style={{ padding: 24, color: t.txt2, fontSize: 12 }}>Carregando contratos…</div>}>
           <ContratosFrete ctx={ctx} conn={conn} />
         </React.Suspense>
