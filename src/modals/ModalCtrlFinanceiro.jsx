@@ -1,4 +1,5 @@
 import React from "react";
+import { matrizDeColunas, baixarXLSX } from "../exportacao.js";
 
 export default function ModalCtrlFinanceiro({ ctx }) {
   const pj = (v, def) => { try { return Array.isArray(v) ? v : (v ? JSON.parse(v) : def); } catch { return def; } };
@@ -149,7 +150,7 @@ export default function ModalCtrlFinanceiro({ ctx }) {
             {k:"apont_valor", l:"Valor Apont."},
           ];
           const per = `${relCtrlDccFrom}_${relCtrlDccTo}`;
-          exportODS(linhas, cols, `controle-financeiro-${per}`);
+          baixarXLSX(matrizDeColunas(linhas, cols), `controle-financeiro-${per}`);
           showToast(`✅ Planilha gerada — ${linhas.length} registro(s)`,"ok");
           setRelCtrlDccOpen(false);
         };

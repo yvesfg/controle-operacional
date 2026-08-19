@@ -1,5 +1,5 @@
 import React from "react";
-import * as XLSX from "xlsx";
+import { baixarXLSX, baixarCSV, baixarPDF } from "../exportacao.js";
 
 // ── ModalRelatorio — relatório da TELA, não do módulo ────────────────────────
 // Qualquer tela com tabela chama este modal passando o que já está filtrado na frente do
@@ -21,6 +21,7 @@ export default function ModalRelatorio({
   const [ordemId, setOrdemId] = React.useState(null);
   const [ordemDesc, setOrdemDesc] = React.useState(true);
   const [grupoId, setGrupoId] = React.useState("");
+  const [gerando, setGerando] = React.useState("");
 
   // Colunas podem mudar quando a tela muda de recorte — mantém só as que ainda existem.
   React.useEffect(() => {
@@ -30,8 +31,6 @@ export default function ModalRelatorio({
       return mantidas.length ? mantidas : ids;
     });
   }, [colunas]);
-
-  if (!aberto) return null;
 
   const cols = colunas.filter((c) => visiveis.includes(c.id));
   const grupo = agrupavelPor.find((g) => g.id === grupoId) || null;
@@ -71,6 +70,12 @@ export default function ModalRelatorio({
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([chave, ls]) => ({ chave, linhas: ls }));
   }, [ordenadas, grupo]);
 
+  // Só agora o `return null`: os dois useMemo acima estavam DEPOIS do return
+  // antecipado, então abrir o modal mudava a contagem de hooks entre um render e
+  // o seguinte — o erro clássico "rendered more hooks than during the previous
+  // render". Com o return aqui embaixo, a ordem dos hooks é sempre a mesma.
+  if (!aberto) return null;
+
   const somar = (ls, c) => ls.reduce((s, l) => s + (Number(bruto(c, l)) || 0), 0);
   const temTotal = cols.some((c) => c.total);
 
@@ -92,21 +97,16 @@ export default function ModalRelatorio({
     return aoa;
   };
 
-  const baixarXLSX = () => {
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(matriz()), "Relatório");
-    XLSX.writeFile(wb, `${(titulo || "relatorio").replace(/[^\w\-]+/g, "_")}.xlsx`);
-  };
-
-  const baixarCSV = () => {
-    const csv = matriz().map((row) => row.map((v) => {
-      const s = String(v ?? "");
-      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    }).join(";")).join("\n");
-    const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = `${(titulo || "relatorio").replace(/[^\w\-]+/g, "_")}.csv`; a.click();
-    URL.revokeObjectURL(url);
+  // Os três formatos saem da MESMA matriz (com grupos, subtotais e total) —
+  // o que aparece na tela é o que sai no arquivo, em qualquer um deles.
+  const exportar = async (formato) => {
+    setGerando(formato);
+    try {
+      const m = matriz();
+      if (formato === "csv") baixarCSV(m, titulo);
+      else if (formato === "pdf") await baixarPDF(m, { nome: titulo, titulo, subtitulo });
+      else await baixarXLSX(m, titulo);
+    } finally { setGerando(""); }
   };
 
   // Impressão em janela própria: mantém o CSS do app fora do caminho e sai igual em qualquer tema.
@@ -159,9 +159,10 @@ export default function ModalRelatorio({
               <div style={{ fontSize: 11, color: t.txt2 }}>{subtitulo} · {(linhas || []).length} linha(s)</div>
             </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: 7, flexWrap: "wrap" }}>
-              {btn("Imprimir / PDF", imprimir)}
-              {btn("CSV", baixarCSV)}
-              {btn("Baixar XLSX", baixarXLSX, true)}
+              {btn("Imprimir", imprimir)}
+              {btn(gerando === "pdf" ? "gerando…" : "PDF", () => exportar("pdf"))}
+              {btn(gerando === "csv" ? "gerando…" : "CSV", () => exportar("csv"))}
+              {btn(gerando === "xlsx" ? "gerando…" : "XLSX", () => exportar("xlsx"), true)}
               {btn("✕", onFechar)}
             </div>
           </div>

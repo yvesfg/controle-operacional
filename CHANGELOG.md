@@ -1,3 +1,26 @@
+## 2026-08-19 — Export .xlsx / .csv / .pdf unificado — Fase 2
+
+**Pedido:** em relatorio deve ter a possibilidade de exportar em .xlsx, .csv e .pdf.
+
+**O que estava errado.** Havia dois caminhos de export e nenhum completo. O `ExportMenu` (Planilha, Diarias, Descarga, PlanilhaAVB) mandava um XML do Excel 2003 com extensao `.xls` — o Excel abre reclamando de formato e o Google Sheets recusa — e o "PDF" era so uma janela de impressao. O `ModalRelatorio` (Conferencia, Contratos) fazia `.xlsx` e `.csv` corretos, mas so ele, e sem PDF baixavel. `RelatoriosView` tinha apenas "Exportar PDF" (impressao).
+
+**Como ficou.** Novo `src/exportacao.js`, um caminho so: `baixarXLSX`, `baixarCSV`, `baixarPDF` e `matrizDeColunas`. A unidade de troca e uma matriz (array de arrays, primeira linha = cabecalho) — isso preserva o que o ModalRelatorio ja fazia (grupo, subtotal e total geral sao so linhas da matriz) e aceita a lista simples de quem so tem colunas `[{k,l}]`.
+
+- **.xlsx** de verdade (SheetJS), com numero cru na celula (soma na planilha) e largura de coluna calculada — antes tudo saia com 8 caracteres.
+- **.csv** com `;` e BOM, que e o que o Excel pt-BR abre sem tela de importacao.
+- **.pdf** ARQUIVO BAIXADO, nao janela de impressao: jsPDF + autotable, A4 paisagem, cabecalho repetido por pagina, rodape com numero de pagina, coluna numerica alinhada a direita (decidido pelo conteudo, nao pelo rotulo). Metade do uso do app e no celular, onde "imprimir -> salvar como PDF" nao existe direito.
+- jsPDF entra por **import dinamico**: virou chunk proprio (399 kB / 130 kB gzip) que so baixa pra quem clicar em PDF. O bundle principal cresceu 2 kB.
+
+**Onde aparece.** `ExportMenu` agora oferece os tres formatos (mesmo botao, mesmas telas). `ModalRelatorio` ganhou botao PDF alem de Imprimir. `RelatoriosView` ganhou o `ExportMenu` dos dados ao lado do botao de relatorio por secoes — os dois rotulos dizem qual e qual.
+
+**Dois bugs achados no caminho e corrigidos.**
+1. `ModalCtrlFinanceiro.jsx:152` chamava `exportODS(...)` sem import e sem receber do `ctx` — variavel livre, `ReferenceError` garantido ao clicar em gerar planilha. Mesmo padrao do hotfix de 18/08. Agora usa `baixarXLSX`.
+2. `ModalRelatorio.jsx` tinha dois `React.useMemo` DEPOIS do `if (!aberto) return null` — abrir o modal mudava a contagem de hooks entre renders ("rendered more hooks than during the previous render"). O return desceu para depois dos hooks.
+
+**Testado no dev server** (import do modulo no contexto da pagina): `.csv` baixa com nome sanitizado (`Conferência de Faturamento · 08/2026` -> `Conferencia_de_Faturamento_08_2026`), `.xlsx` gera sem erro, `.pdf` sai com 6.438 bytes e `application/pdf` em 162 ms incluindo o carregamento do chunk do jsPDF.
+
+**Nota separada:** `npm audit` acusa 2 avisos altos no `xlsx@0.18.5` (prototype pollution / ReDoS) sem correcao no registro publico — a SheetJS parou de publicar na npm e so atualiza pelo CDN deles. Pre-existente, nao entrou nesta mudanca; vale decidir a parte se migra para o registro da SheetJS.
+
 ## 2026-08-19 — Seletor de periodo unico e reusavel (Dashboard + Financeiro) — Fase 1
 
 **Pedido:** o seletor de periodo do Dashboard e do Financeiro nao esta bom; criar um modal de periodo reusavel em todo o app, adaptado aos dados de cada tela.

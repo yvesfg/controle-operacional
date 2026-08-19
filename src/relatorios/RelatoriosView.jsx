@@ -17,6 +17,16 @@
  */
 import React, { useState, useMemo } from "react";
 import { FIELD_CATALOG, FIELD_GROUPS } from "./fieldCatalog.js";
+import { ExportMenu } from "../exportHelpers.jsx";
+
+// Colunas do export de dados desta tela — mesmo conjunto da Planilha Operacional,
+// que é a origem dos números mostrados aqui.
+const COLS_EXPORT = [
+  { k: "dt", l: "DT" }, { k: "nome", l: "Motorista" }, { k: "cpf", l: "CPF" }, { k: "placa", l: "Placa" },
+  { k: "origem", l: "Origem" }, { k: "destino", l: "Destino" }, { k: "data_carr", l: "Carregamento" },
+  { k: "data_agenda", l: "Agenda" }, { k: "data_desc", l: "Descarga" }, { k: "status", l: "Status" },
+  { k: "vl_cte", l: "VL CTE" }, { k: "vl_contrato", l: "VL Contrato" }, { k: "cte", l: "CTE" }, { k: "mdf", l: "MDF" },
+];
 
 // ── Ícone SVG ─────────────────────────────────────────────────────────────────
 const Ico = ({ size = 16, color = "currentColor", sw = 1.8, children, style }) => (
@@ -175,26 +185,32 @@ export default function RelatoriosView({
           ))}
         </div>
 
-        <button
-          onClick={() => onExportClick?.()}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            background: "var(--accent)", border: "none",
-            borderRadius: 8, padding: isMobile ? "6px 10px" : "8px 16px",
-            color: "#fff", fontSize: isMobile ? 12 : 13, fontWeight: 600,
-            fontFamily: "var(--font-heading)", cursor: "pointer",
-            transition: "opacity 0.15s", whiteSpace: "nowrap",
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-        >
-          <Ico size={14} color="#fff">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </Ico>
-          Exportar PDF
-        </button>
+        {/* Duas saídas diferentes, e o rótulo diz qual é qual: o relatório montado
+            por seções (PDF configurável) e os dados que alimentam esta tela em
+            planilha/CSV/PDF de tabela. Antes só existia o primeiro. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <ExportMenu dados={dados} cols={COLS_EXPORT} filename="relatorios-dados" titulo="Relatórios · dados do período" />
+          <button
+            onClick={() => onExportClick?.()}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "var(--accent)", border: "none",
+              borderRadius: 8, padding: isMobile ? "6px 10px" : "8px 16px",
+              color: "var(--on-primary)", fontSize: isMobile ? 12 : 13, fontWeight: 600,
+              fontFamily: "var(--font-heading)", cursor: "pointer",
+              transition: "opacity 0.15s", whiteSpace: "nowrap",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+          >
+            <Ico size={14} color="currentColor">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </Ico>
+            Relatório PDF
+          </button>
+        </div>
       </div>
 
       {/* ══════════ TAB: KPIs Gerais ══════════ */}

@@ -20,8 +20,7 @@ import { buildRodorricaRows, rodorricaAIRemap } from './utils/rodorricaParse.js'
 import { validarRegistroOperacional } from './validators.js';
 import { getPerfil } from './operacao/perfil.js';
 import { carregarBases } from './operacao/bases.js';
-import { exportCSV, exportODS, exportPDF, ExportMenu,
-  gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
+import { ExportMenu, gerarICS, abrirGoogleCalendar } from './exportHelpers.jsx';
 import Toast from './components/Toast.jsx';
 import { criarMotoresRelatorio } from './relatorios/relatorioEngine.js';
 import ModalMotoristaImport from './modals/ModalMotoristaImport.jsx';
