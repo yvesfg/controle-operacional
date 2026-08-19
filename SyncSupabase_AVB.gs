@@ -91,7 +91,7 @@ function sincronizarAVB() {
       for (var tentativa = 0; tentativa < maxTentativas; tentativa++) {
         var mapaTemp = {};
         dados[tentativa].forEach(function(col, i) {
-          var c = mapearColunaAVB(col.toString().toLowerCase().trim());
+          var c = mapearColunaAVB(normalizarCabecalho(col));
           if (c) mapaTemp[i] = c;
         });
         var contagem = Object.keys(mapaTemp).length;
@@ -234,6 +234,20 @@ function configurarGatilho() {
 // ============================================================
 // MAPEAMENTO DE COLUNAS (AVB)
 // ============================================================
+// Cabecalho da planilha -> chave do mapa de aliases.
+// `toLowerCase().trim()` sozinho NAO bastava: a coluna AK se chama "OBS  DESCARGA",
+// com DOIS espacos, e trim() so tira das pontas — a chave saia "obs  descarga" e
+// nenhum alias alcancava. A coluna sumia calada, e foi assim que as observacoes
+// ficaram meses sem subir. Aqui espaco interno vira um so, e o espaco nao-quebravel
+// (que o Sheets produz ao colar de fora) vira espaco normal antes disso.
+function normalizarCabecalho(s) {
+  return String(s == null ? '' : s)
+    .replace(/\u00a0/g, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function mapearColunaAVB(n) {
   var mapa = {
     // DT

@@ -75,7 +75,7 @@ function sincronizarMaracanau() {
       for (var tentativa = 0; tentativa < maxTentativas; tentativa++) {
         var mapaTemp = {};
         dados[tentativa].forEach(function(col, i) {
-          var c = mapearColunaMaracanau(col.toString().toLowerCase().trim());
+          var c = mapearColunaMaracanau(normalizarCabecalho(col));
           if (c) mapaTemp[i] = c;
         });
         var contagem = Object.keys(mapaTemp).length;
@@ -260,6 +260,20 @@ function configurarGatilho() {
 // abaixo de ~24, mande os nomes reais do cabeçalho (linha 1) da planilha pra
 // eu ajustar o mapa com precisão.
 // ============================================================
+// Cabecalho da planilha -> chave do mapa de aliases.
+// `toLowerCase().trim()` sozinho NAO bastava: a coluna AK se chama "OBS  DESCARGA",
+// com DOIS espacos, e trim() so tira das pontas — a chave saia "obs  descarga" e
+// nenhum alias alcancava. A coluna sumia calada, e foi assim que as observacoes
+// ficaram meses sem subir. Aqui espaco interno vira um so, e o espaco nao-quebravel
+// (que o Sheets produz ao colar de fora) vira espaco normal antes disso.
+function normalizarCabecalho(s) {
+  return String(s == null ? '' : s)
+    .replace(/\u00a0/g, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function mapearColunaMaracanau(n) {
   var mapa = {
     // ── DT / Espelho ──

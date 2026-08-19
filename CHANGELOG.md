@@ -1,3 +1,21 @@
+## 2026-08-19 — Sync: as colunas de observacao voltam a subir (causa raiz corrigida)
+
+**Nomes confirmados pelo Yves:** coluna **AI = "OBS CHEGADA"** e coluna **AK = "OBS  DESCARGA"**.
+
+**A causa raiz nao era o alias faltando — era a normalizacao do cabecalho.** "OBS  DESCARGA" tem DOIS espacos. O sync normalizava com `col.toString().toLowerCase().trim()`, e `trim()` so tira das pontas: a chave saia `"obs  descarga"` e nenhum alias alcancaria, mesmo que existisse. Foi assim que a coluna sumiu calada por meses.
+
+Novo `normalizarCabecalho()`: troca espaco nao-quebravel (o que o Sheets produz ao colar de fora) por espaco normal, minusculiza, **colapsa espaco interno** e so entao apara as pontas. Aplicado nos **tres** arquivos de sync — `SyncSupabase.gs`, `SyncSupabase_AVB.gs` e `SyncSupabase_Maracanau.gs` tinham a mesma falha, entao a mesma armadilha existia para qualquer coluna das outras bases.
+
+**Aliases adicionados** para `obs_chegada` e `obs_descarga`, com as variacoes prováveis (com e sem ponto, "obs de/da chegada", "observacao/observação da descarga").
+
+**Coluna sem mapeamento agora vira aviso no status**, com o nome dela e a aba. Antes, `mapearColuna()` devolvia `null` e a coluna desaparecia sem deixar rastro — nao havia como perceber que "OBS CHEGADA" existia na planilha e nao chegava no app. Na proxima sincronizacao o status lista o que sobrou de cada aba.
+
+**Testado** com a funcao real extraida do arquivo: `"OBS CHEGADA"` -> `obs_chegada`; `"OBS  DESCARGA"` (dois espacos) -> `obs_descarga`; a variante com espaco nao-quebravel -> `obs_descarga`; `"DT ESPELHO"` e `"Data Carr."` continuam mapeando como antes; e uma coluna inventada devolve `null` (e agora aparece no aviso).
+
+**PENDENTE — o Yves precisa colar os tres .gs no Apps Script.** So depois disso a proxima sincronizacao traz o texto das observacoes. Quando isso acontecer, na tela de Ocorrencias o texto aparece sozinho na etapa a que pertence, o badge "Sem relato" cai (hoje em 126 de 126 DTs com RO) e o aviso amarelo do topo some por conta propria.
+
+**Nao entrou no write-back:** `CAMPOS_WRITEBACK` continua sem as obs, de proposito. A planilha e a fonte (decisao do Yves), entao editar a observacao pelo app seria sobrescrito na sincronizacao seguinte.
+
 ## 2026-08-19 — Ocorrencias: a linha da planilha virou linha do tempo
 
 **Pedido:** olhar a logica que ja existe na planilha, onde uma linha tem chegada, obs de chegada, descarga, obs de descarga e assim por diante, e otimizar isso pra ficar intuitivo.

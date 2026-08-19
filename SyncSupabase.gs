@@ -84,7 +84,7 @@ function sincronizarComSupabase() {
       for (var tentativa = 0; tentativa < maxTentativas; tentativa++) {
         var mapaTemp = {};
         dados[tentativa].forEach(function(col, i) {
-          var c = mapearColuna(col.toString().toLowerCase().trim());
+          var c = mapearColuna(normalizarCabecalho(col));
           if (c) mapaTemp[i] = c;
         });
         var contagem = Object.keys(mapaTemp).length;
@@ -100,6 +100,18 @@ function sincronizarComSupabase() {
       if (!temColDT) {
         statusGlobal.info.push('Aba "' + nomAba + '" ignorada: coluna DT nao encontrada (' + melhorContagem + ' cols mapeadas)');
         continue;
+      }
+
+      // Coluna de cabecalho que nenhum alias reconheceu vira AVISO no status, em vez
+      // de sumir calada. Sem isto, "OBS CHEGADA" e "OBS  DESCARGA" ficaram meses fora
+      // do app sem nenhum sinal de que existiam.
+      var naoMapeadas = [];
+      (dados[linhaInicio - 1] || []).forEach(function(col, i) {
+        if (normalizarCabecalho(col) && !mapa[i]) naoMapeadas.push(String(col).trim());
+      });
+      if (naoMapeadas.length) {
+        statusGlobal.info.push('Aba "' + nomAba + '": ' + naoMapeadas.length +
+          ' coluna(s) sem mapeamento -> ' + naoMapeadas.slice(0, 15).join(' | '));
       }
 
       statusGlobal.info.push('Aba "' + nomAba + '": cabecalho linha ' + linhaInicio + ', ' + melhorContagem + ' cols mapeadas');
@@ -481,7 +493,7 @@ function localizarLinhaPorDT(dt, abaPreferida) {
     for (var tentativa = 0; tentativa < topo.length; tentativa++) {
       var mapaTemp = {}, cont = 0;
       for (var c = 0; c < topo[tentativa].length; c++) {
-        var campo = mapearColuna(topo[tentativa][c].toString().toLowerCase().trim());
+        var campo = mapearColuna(normalizarCabecalho(topo[tentativa][c]));
         if (campo && mapaTemp[campo] === undefined) { mapaTemp[campo] = c + 1; cont++; }
       }
       if (cont > melhor) { melhor = cont; mapa = mapaTemp; linhaCab = tentativa + 1; }
@@ -660,6 +672,20 @@ function configurarGatilho() {
 // ============================================================
 // MAPEAMENTO DE COLUNAS — nomes da planilha → campos Supabase
 // ============================================================
+// Cabecalho da planilha -> chave do mapa de aliases.
+// `toLowerCase().trim()` sozinho NAO bastava: a coluna AK se chama "OBS  DESCARGA",
+// com DOIS espacos, e trim() so tira das pontas — a chave saia "obs  descarga" e
+// nenhum alias alcancava. A coluna sumia calada, e foi assim que as observacoes
+// ficaram meses sem subir. Aqui espaco interno vira um so, e o espaco nao-quebravel
+// (que o Sheets produz ao colar de fora) vira espaco normal antes disso.
+function normalizarCabecalho(s) {
+  return String(s == null ? '' : s)
+    .replace(/\u00a0/g, ' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function mapearColuna(n) {
   var mapa = {
     // ── DT / Espelho ──
@@ -753,7 +779,20 @@ function mapearColuna(n) {
     'informou analista ate 9h': 'informou_analista',
     'informou analista até 9h': 'informou_analista',
     'desc_aguardando': 'desc_aguardando',
-    'aguardando descarga': 'desc_aguardando'
+    'aguardando descarga': 'desc_aguardando',
+
+    // ── Observacoes (coluna AI e AK da planilha) ──
+    // Estas faltavam: o que a equipe escrevia nelas nunca chegava ao app.
+    'obs chegada': 'obs_chegada', 'obs. chegada': 'obs_chegada',
+    'obs de chegada': 'obs_chegada', 'obs_chegada': 'obs_chegada',
+    'obs da chegada': 'obs_chegada',
+    'observacao chegada': 'obs_chegada', 'observação chegada': 'obs_chegada',
+    'observacao da chegada': 'obs_chegada', 'observação da chegada': 'obs_chegada',
+    'obs descarga': 'obs_descarga', 'obs. descarga': 'obs_descarga',
+    'obs de descarga': 'obs_descarga', 'obs_descarga': 'obs_descarga',
+    'obs da descarga': 'obs_descarga',
+    'observacao descarga': 'obs_descarga', 'observação descarga': 'obs_descarga',
+    'observacao da descarga': 'obs_descarga', 'observação da descarga': 'obs_descarga'
   };
   return mapa[n] || null;
 }
