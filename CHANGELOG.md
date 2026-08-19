@@ -1,3 +1,23 @@
+## 2026-08-19 — Financeiro mais rapido — Fase 4
+
+**Pedido:** o Financeiro esta demorado para carregar os dados.
+
+**Primeiro: medir.** A hipotese inicial (volume de dados) estava errada. Conferido no banco: `despesas_filial` tem 876 linhas / 368 kB no total, `frete_conferencia` 3.629 linhas / 4 MB, e os indices cobrem os filtros usados (`idx_frete_conf_periodo`, `idx_despesas_filial_base_mes`). O banco nao e o gargalo — o custo esta em **ida e volta de rede repetida** e em **bundle**.
+
+**1. Conferencia de Faturamento: 6 requisicoes viraram 4.** `carregar()` fazia tres `listarTodosPeriodo` separados (mes atual + dois anteriores) com o mesmo formato de resposta. Agora e um `listarPorPeriodos([atual, ant1, ant2])` e o recorte por mes acontece na memoria. A RPC `listar_frete_periodos` ja filtra por `periodo_ref = ANY(p_periodos)`, entao uma chamada devolve exatamente a uniao das tres — mesmo payload, duas idas a menos. Importa mais do que parece: `carregar()` roda de novo depois de CADA decisao da tela.
+
+**2. Despesas com cache (`dataCache.js`).** Painel Financeiro, Resultado, Resumo e a Conferencia leem as mesmas despesas, cada um no seu efeito — trocar de sub-aba refazia tudo. As leituras (`listarDespesas`, `listarDespesasBase`) passaram pelo `getCached`, que ja existia no projeto e nao era usado para despesas.
+
+- Chave por base e por mes; base diferente = chave diferente.
+- **Toda escrita limpa TODAS as chaves de despesa**, nao so a da base escrita: `atualizarDespesa` e `deletarDespesa` recebem so o id, e credito de uma base pode abater indevida de outra. Limpar demais custa uma busca; limpar de menos mostra numero velho.
+- `diffImport` continua **sem** cache, de proposito: ele decide o que sera inserido, e comparar contra lista velha duplicaria lancamento.
+
+Medido no dev server com `fetch` instrumentado: 3 leituras da mesma base = **1 requisicao** (era 3); +2 leituras do mesmo mes = +1; outra base = +1 (chave propria); escrita seguida de releitura = 2, ou seja, a invalidacao funciona e o dado volta fresco.
+
+**3. Conferencia e Contratos sob demanda.** `ConferenciaFrete` (2.600 linhas) e `ContratosFrete` (470) entravam no bundle do Financeiro mesmo para quem abre o Resumo e nunca troca de segmento. Agora sao `React.lazy` com `Suspense`. O chunk `FinanceiroView` caiu de **216 kB para 79 kB** (51 kB para 20 kB gzip); Conferencia (113 kB) e Contratos (18 kB) so baixam quando o segmento e aberto.
+
+**Deixado de fora, e por que.** Depois de cada decisao (`decidir`, `editarFrete`, `vincularCte`, `excluirFrete`) a tela chama `await carregar()` e rebaixa os tres meses inteiros. As RPCs ja devolvem as linhas afetadas (`vincular_cte` devolve o CTe e o par), entao daria para aplicar o patch no estado local e evitar o recarregamento — vale 1 a 2 segundos por clique. Sao seis pontos de escrita com flags derivadas recalculadas no cliente (`recalcularFlagsEPeriodo`), e o comentario no codigo diz que o reload existe justamente para evitar estado parcial. Fica como fase propria, para ser feita e conferida isolada.
+
 ## 2026-08-19 — Dashboard: grade de 12 colunas e tamanho por card — Fase 3
 
 **Pedido:** no Dashboard os blocos estao ficando de tamanho diferente (print), da pra reorganizar e arrastar melhor.

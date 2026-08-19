@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
   parseFreteXLSX, diffImportFrete, inserirFrete, atualizarFreteLote, listarPendentesRevisao, listarSinalizados,
-  decidir, estornarRevisao, listarTodosPeriodo, listarPorPeriodos, chaveDuplicidade,
+  decidir, estornarRevisao, listarPorPeriodos, chaveDuplicidade,
   resumoPorCategoria, resumoPorCliente, resumoPorDia, gerarWorkbookXLSX,
   classificarLinhasCliente, recalcularFlagsEPeriodo, ehCandidatoFrotaRodorrica, clienteEfetivo,
   ehCandidatoDiariaEmitida, ehFreteSemContrato, definirCompetencia, mesCompetencia,
@@ -334,16 +334,22 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const mesAnt1 = shiftMes(periodoRef, -1);
     const mesAnt2 = shiftMes(periodoRef, -2);
     try {
-      const [linhas, pend, sinal, lAnt1, lAnt2, cts] = await Promise.all([
-        listarTodosPeriodo(conn, periodoRef),
+      // Os três meses vêm numa chamada só. Eram três `listarTodosPeriodo`
+      // separados (mesmo payload, três idas ao servidor) — e este carregar()
+      // roda de novo depois de cada decisão, então as idas extras se pagavam
+      // a cada clique.
+      const [todas, pend, sinal, cts] = await Promise.all([
+        listarPorPeriodos(conn, [periodoRef, mesAnt1, mesAnt2]),
         listarPendentesRevisao(conn),
         listarSinalizados(conn),
-        listarTodosPeriodo(conn, mesAnt1),
-        listarTodosPeriodo(conn, mesAnt2),
         // Contratos dos 3 meses: o contrato de um CTe do fim do mês costuma estar no arquivo
         // do mês seguinte, e vice-versa.
         listarContratosPorPeriodos(conn, [periodoRef, mesAnt1, mesAnt2]).catch(() => []),
       ]);
+      const doPeriodo = (p) => (todas || []).filter((l) => l.periodo_ref === p);
+      const linhas = doPeriodo(periodoRef);
+      const lAnt1 = doPeriodo(mesAnt1);
+      const lAnt2 = doPeriodo(mesAnt2);
       setContratosMes(cts || []);
       setLinhasPeriodo(linhas);
       setPendentes(pend);

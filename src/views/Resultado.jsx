@@ -9,8 +9,11 @@ import {
   inserirManual, atualizarDespesa, deletarDespesa, deletarImportadas,
   listarIndevidasPendentes, classeDoCredito,
 } from "../despesas.js";
-import ConferenciaFrete from "./ConferenciaFrete.jsx";
-import ContratosFrete from "./ContratosFrete.jsx";
+// Carregados sob demanda: ConferenciaFrete tem 2.600 linhas e ContratosFrete
+// mais 470, e os dois entravam no bundle do Financeiro mesmo pra quem abre o
+// Resumo e nunca troca de segmento.
+const ConferenciaFrete = React.lazy(() => import("./ConferenciaFrete.jsx"));
+const ContratosFrete   = React.lazy(() => import("./ContratosFrete.jsx"));
 import { getPerfil } from "../operacao/perfil.js";
 import KpiCard from "../components/KpiCard.jsx";
 import PeriodoBotao from "../components/PeriodoModal.jsx";
@@ -312,9 +315,13 @@ export default function Resultado({ ctx }) {
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
       {segmento === "contratos" ? (
-        <ContratosFrete ctx={ctx} conn={conn} />
+        <React.Suspense fallback={<div style={{ padding: 24, color: t.txt2, fontSize: 12 }}>Carregando contratos…</div>}>
+          <ContratosFrete ctx={ctx} conn={conn} />
+        </React.Suspense>
       ) : segmento === "faturamento" ? (
-        <ConferenciaFrete ctx={ctx} conn={conn} />
+        <React.Suspense fallback={<div style={{ padding: 24, color: t.txt2, fontSize: 12 }}>Carregando conferência…</div>}>
+          <ConferenciaFrete ctx={ctx} conn={conn} />
+        </React.Suspense>
       ) : (
       <>
       {/* Controles */}

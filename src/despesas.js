@@ -3,6 +3,7 @@
 // Reaproveita a lógica validada do dashboard standalone (analise-despesas).
 import * as XLSX from "xlsx";
 import { supaFetch } from "./supabase.js";
+import { getCached, invalidar } from "./dataCache.js";
 
 const TABELA = "despesas_filial";
 
@@ -134,23 +135,44 @@ export function parseDespesasXLSX(file) {
 // ── CRUD ──────────────────────────────────────────────────
 const q = (s) => encodeURIComponent(s);
 
-export async function listarDespesas(conn, baseId, mesRef) {
+// CACHE (dataCache.js): Painel Financeiro, Resultado, Resumo e Conferência leem
+// as MESMAS despesas, cada um no seu próprio efeito. Trocar de sub-aba refazia a
+// busca inteira toda vez. Agora a primeira leitura busca e as outras reaproveitam;
+// qualquer escrita limpa tudo (ver invalidarDespesas).
+const chavesUsadas = new Set();
+const chave = (...partes) => {
+  const k = "despesas:" + partes.join(":");
+  chavesUsadas.add(k);
+  return k;
+};
+// Limpa TODAS as chaves de despesa, não só a da base escrita: atualizarDespesa e
+// deletarDespesa recebem só o id, e crédito de uma base pode abater indevida de
+// outra (ver listarCreditosGlobal). Limpar demais custa uma busca; limpar de menos
+// mostra número velho.
+export function invalidarDespesas() {
+  if (!chavesUsadas.size) return;
+  invalidar(...chavesUsadas);
+  chavesUsadas.clear();
+}
+
+const buscarDespesas = async (conn, baseId, mesRef) => {
   if (_sessionToken) {
     return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_despesas",
       { p_token: _sessionToken, p_base_id: baseId, p_mes_ref: mesRef }));
   }
-  const path = `${TABELA}?base_id=eq.${q(baseId)}&mes_ref=eq.${q(mesRef)}&order=grupo.asc,valor.desc`;
+  const path = mesRef
+    ? `${TABELA}?base_id=eq.${q(baseId)}&mes_ref=eq.${q(mesRef)}&order=grupo.asc,valor.desc`
+    : `${TABELA}?base_id=eq.${q(baseId)}&order=mes_ref.asc`;
   return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+};
+
+export function listarDespesas(conn, baseId, mesRef) {
+  return getCached(chave(baseId, mesRef), () => buscarDespesas(conn, baseId, mesRef));
 }
 
 // Todas as despesas da base (todos os meses) — usado pelo Painel Financeiro p/ evolução.
-export async function listarDespesasBase(conn, baseId) {
-  if (_sessionToken) {
-    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_despesas",
-      { p_token: _sessionToken, p_base_id: baseId, p_mes_ref: null }));
-  }
-  const path = `${TABELA}?base_id=eq.${q(baseId)}&order=mes_ref.asc`;
-  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+export function listarDespesasBase(conn, baseId) {
+  return getCached(chave(baseId, "todos"), () => buscarDespesas(conn, baseId, null));
 }
 
 // Meses distintos com despesas registradas — leve (só coluna mes_ref).
@@ -170,7 +192,9 @@ const r2num = (v) => Math.round((parseFloat(v) + Number.EPSILON) * 100) / 100;
 const chaveLinha = (x) => `${x.dt_mov || ""}|${r2num(x.valor)}|${norm(x.natureza)}|${norm(x.historico)}|${norm(x.conta)}`;
 
 export async function diffImport(conn, baseId, mesRef, linhas) {
-  const existentes = await listarDespesas(conn, baseId, mesRef);
+  // De propósito sem cache: este diff decide o que vai ser INSERIDO, e decidir
+  // isso contra uma lista velha duplicaria lançamento.
+  const existentes = await buscarDespesas(conn, baseId, mesRef);
   const existCount = {};
   existentes.forEach((x) => { const k = chaveLinha(x); existCount[k] = (existCount[k] || 0) + 1; });
   const porChave = {};
@@ -186,48 +210,59 @@ export async function diffImport(conn, baseId, mesRef, linhas) {
 export async function inserirImportadas(conn, mesRef, linhas) {
   if (!linhas.length) return [];
   const payload = linhas.map((x) => ({ ...x, mes_ref: mesRef, origem: "import" }));
-  if (_sessionToken) {
-    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_despesas_lote",
-      { p_token: _sessionToken, p_rows: payload }));
-  }
-  return await supaFetch(conn.url, conn.key, "POST", TABELA, payload);
+  const res = _sessionToken
+    ? _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_despesas_lote",
+        { p_token: _sessionToken, p_rows: payload }))
+    : await supaFetch(conn.url, conn.key, "POST", TABELA, payload);
+  invalidarDespesas();
+  return res;
 }
 
 export async function inserirManual(conn, row) {
   const payload = [{ ...row, origem: "manual" }];
+  let out;
   if (_sessionToken) {
-    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_despesas_lote",
+    out = _one(await supaFetch(conn.url, conn.key, "POST", "rpc/inserir_despesas_lote",
       { p_token: _sessionToken, p_rows: payload }));
+  } else {
+    const res = await supaFetch(conn.url, conn.key, "POST", TABELA, payload);
+    out = Array.isArray(res) ? res[0] : res;
   }
-  const res = await supaFetch(conn.url, conn.key, "POST", TABELA, payload);
-  return Array.isArray(res) ? res[0] : res;
+  invalidarDespesas();
+  return out;
 }
 
 export async function atualizarDespesa(conn, id, patch) {
+  let out;
   if (_sessionToken) {
-    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/atualizar_despesa",
+    out = _one(await supaFetch(conn.url, conn.key, "POST", "rpc/atualizar_despesa",
       { p_token: _sessionToken, p_id: id, p_patch: patch }));
+  } else {
+    const body = { ...patch, atualizado_em: new Date().toISOString() };
+    const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q(id)}`, body);
+    out = Array.isArray(res) ? res[0] : res;
   }
-  const body = { ...patch, atualizado_em: new Date().toISOString() };
-  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q(id)}`, body);
-  return Array.isArray(res) ? res[0] : res;
+  invalidarDespesas();
+  return out;
 }
 
 export async function deletarDespesa(conn, id) {
-  if (_sessionToken) {
-    return await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_despesa",
-      { p_token: _sessionToken, p_id: id });
-  }
-  return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q(id)}`);
+  const res = _sessionToken
+    ? await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_despesa",
+        { p_token: _sessionToken, p_id: id })
+    : await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=eq.${q(id)}`);
+  invalidarDespesas();
+  return res;
 }
 
 export async function deletarImportadas(conn, ids) {
   if (!ids || ids.length === 0) return;
-  if (_sessionToken) {
-    return await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_despesas",
-      { p_token: _sessionToken, p_ids: ids });
-  }
-  return await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=in.(${ids.map(q).join(",")})`);
+  const res = _sessionToken
+    ? await supaFetch(conn.url, conn.key, "POST", "rpc/excluir_despesas",
+        { p_token: _sessionToken, p_ids: ids })
+    : await supaFetch(conn.url, conn.key, "DELETE", `${TABELA}?id=in.(${ids.map(q).join(",")})`);
+  invalidarDespesas();
+  return res;
 }
 
 // ── Conciliação de despesas indevidas → crédito ──────────────
