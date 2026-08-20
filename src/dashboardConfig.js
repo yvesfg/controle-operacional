@@ -67,7 +67,11 @@ export function ordenar(cfg, tipo, itens, getId = (x) => x.id) {
 // grade tem 12 colunas fixas e cada card declara quantas ocupa — quem quer o card
 // principal grande põe G e o resto continua P, sem espremer ninguém.
 // Chave ausente = tamanho padrão, mesma regra da visibilidade e da ordem.
-export const TAMANHOS = { p: 2, m: 3, g: 4 };       // colunas de 12
+export const TAMANHOS = { p: 2, m: 3, g: 4 };       // KPIs: 6, 4 ou 3 por linha
+// Bloco é card de conteúdo (gráfico, tabela), não indicador: mesmo o menor
+// precisa de mais largura que um KPI grande. P=3 mantém a proporção 2:1:1 que a
+// linha do meio já tinha no código (gráfico 6 + status 3 + motoristas 3 = 12).
+export const TAMANHOS_BLOCO = { p: 3, m: 6, g: 12 };
 export const TAMANHO_ROTULO = { p: "P", m: "M", g: "G" };
 export const COLUNAS_GRADE = 12;
 

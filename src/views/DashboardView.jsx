@@ -12,7 +12,7 @@ import PeriodoBotao from '../components/PeriodoModal.jsx';
 import { parseData, clickable, ultimasViagens, dtBase } from "../utils.js";
 import { nMoeda } from "../financeiroCalc.js";
 import { contarSemDtAguardando } from "../cargasSemDt.js";
-import { verKpi, verBloco, COLUNAS_GRADE } from "../dashboardConfig.js";
+import { verKpi, verBloco, COLUNAS_GRADE, TAMANHOS_BLOCO } from "../dashboardConfig.js";
 import GradeEditavel, { CardEditavel, GavetaOcultos } from '../components/GradeEditavel.jsx';
 import { janelaDias, mesMenos, mesCurto, periodoMes, mesAtual, dataRegistro } from "../periodoDash.js";
 
@@ -511,11 +511,12 @@ export default function DashboardView({ ctx }) {
         dashData.filtrado.forEach(r=>{if(r.nome){if(!motCount[r.nome])motCount[r.nome]={ct:0,placa:r.placa||""};motCount[r.nome].ct++;if(!motCount[r.nome].placa&&r.placa)motCount[r.nome].placa=r.placa;}});
         const topMot=Object.entries(motCount).sort((a,b)=>b[1].ct-a[1].ct).slice(0,5);
         const maxMot=topMot[0]?.[1]?.ct||1;
-        // Linha do meio: os tres cards trocam de lugar entre si no modo edicao.
-        // O flex sai do card e vai pro wrapper da grade (senao o card arrastado
-        // perderia a proporcao 2:1 do grafico).
+        // Linha do meio: os tres cards trocam de lugar E de tamanho no modo edicao.
+        // Antes a proporcao 2:1:1 vinha de `flex` cravado no wrapper de cada card,
+        // entao ninguem podia mudar. Agora ela e so o PADRAO (6+3+3 de 12) e o
+        // seletor P/M/G decide o resto.
         const meio = [];
-        meio.push({ id:"grafico", label:"Evolução do período", style:{minWidth:0,flex:isMobile?"none":"2 1 0",display:"flex"}, node:(
+        meio.push({ id:"grafico", label:"Evolução do período", style:{minWidth:0,display:"flex"}, node:(
             <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
                 <div>
@@ -533,7 +534,7 @@ export default function DashboardView({ ctx }) {
               <div style={{height:200}}><canvas ref={chartAreaRef} /></div>
             </div>
         )});
-        meio.push({ id:"status", label:"Status das cargas", style:{minWidth:0,flex:isMobile?"none":"1 1 0",display:"flex"}, node:(
+        meio.push({ id:"status", label:"Status das cargas", style:{minWidth:0,display:"flex"}, node:(
             <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>{perfil.ancora==="dt"?"Status das DTs":"Status das Cargas"}</span>
@@ -558,7 +559,7 @@ export default function DashboardView({ ctx }) {
               </div>
             </div>
         )});
-        meio.push({ id:"motoristas", label:"Top motoristas", style:{minWidth:0,flex:isMobile?"none":"1 1 0",display:"flex"}, node:(
+        meio.push({ id:"motoristas", label:"Top motoristas", style:{minWidth:0,display:"flex"}, node:(
             <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
@@ -597,7 +598,9 @@ export default function DashboardView({ ctx }) {
           <GradeEditavel
             tipo="blocos" cfg={dashCfg} editando={editandoPainel} onSalvar={salvarDashCfg}
             t={t} isMobile={isMobile} gaveta={false} itens={meio}
-            gridStyle={{display:"flex",flexDirection:isMobile?"column":"row",alignItems:"stretch",gap:14,marginBottom:14}}
+            redimensionavel escala={TAMANHOS_BLOCO} spanMobile={12}
+            tamanhoPadrao={{grafico:"m", status:"p", motoristas:"p"}}
+            gridStyle={{display:"grid",gridTemplateColumns:`repeat(${COLUNAS_GRADE},1fr)`,alignItems:"stretch",gap:14,marginBottom:14}}
           />
         );
       })()}

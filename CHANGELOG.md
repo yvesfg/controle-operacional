@@ -1,3 +1,18 @@
+## 2026-08-19 — Dashboard: a linha do meio entrou na grade de 12 (Fase 3b)
+
+**Continuacao da Fase 3**, que tinha colocado so a faixa de KPIs na grade de 12 colunas.
+
+**O que mudou.** Os tres cards da linha do meio (Evolucao do periodo, Status das cargas, Top motoristas) tinham a proporcao 2:1:1 cravada no codigo, via `flex: 2 1 0` e `flex: 1 1 0` no wrapper de cada um — ninguem podia mudar. Agora essa proporcao e apenas o PADRAO (6+3+3 de 12) e o seletor P/M/G do modo "Organizar painel" decide o resto, com o tamanho salvo em `config.dash.tamanhos.blocos`.
+
+**Escala propria para bloco.** `TAMANHOS_BLOCO = {p:3, m:6, g:12}`, separada da escala de KPI (`{p:2, m:3, g:4}`): bloco e card de conteudo (grafico, tabela) e mesmo o menor precisa de mais largura que um KPI grande. O `GradeEditavel` passou a receber a escala de fora (`escala`), o span de celular (`spanMobile`) e um `tamanhoPadrao` que aceita string OU mapa por id — foi o mapa que permitiu preservar a proporcao existente sem ninguem precisar configurar nada.
+
+**Medido no dev server:**
+- desktop 1600px, padrao: larguras 773 / 380 / 380 = proporcao **2,03 : 1 : 1**, numa linha so — o mesmo resultado do `flex` anterior, entao quem nao mexer nao ve diferenca.
+- grafico em G: span 12, ocupa a linha inteira e os outros dois descem.
+- mobile 390px: span 12 em todos, empilhados, igual ao `flexDirection: column` de antes.
+
+**O que continua fora, e por que.** Os quatro cards de largura cheia — Comparativo por base, Rastreamento documental, Ranking por cliente e Registros recentes — seguem em pontos fixos da pagina, com ✕ mas sem arrasto e sem tamanho. Junta-los na mesma grade significa remontar as cinco regioes de `DashboardView.jsx` (939 linhas, cheio de condicionais por perfil e por base), e essa mudanca so se verifica olhando a tela — que nesta sessao nao abriu, porque exige login. Fica para quando der pra conferir junto.
+
 ## 2026-08-20 — Trechos: calculo automatico, aviso de pendencia e botoes da busca
 
 Tres perguntas do Yves viraram tres frentes.
