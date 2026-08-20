@@ -12,7 +12,10 @@ import {
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
-import { trechoRota, trechoOrigem, trechoDestino, trechoKm } from "../operacao/trechos.js";
+import {
+  trechoRota, trechoOrigem, trechoDestino, trechoKm,
+  trechosSemDePara, trechosSemKm, calcularKmFaltante,
+} from "../operacao/trechos.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import { listarDespesas, classeDoCredito } from "../despesas.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -108,6 +111,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [sinalizados, setSinalizados] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
+  // O de-para dos trechos vive num módulo, fora do React: este contador força o re-render
+  // depois de gravar distância nova, senão a coluna KM só mudaria na próxima navegação.
+  const [kmVersao, setKmVersao] = React.useState(0);
   const fileRef = React.useRef(null);
   const [preview, setPreview] = React.useState(null); // { periodoRef, periodosEncontrados, linhas, naoClassificadas, desconhecidos, resumo }
   const [formsDesconhecidos, setFormsDesconhecidos] = React.useState({}); // { [cnpj]: { nome, base_id, mapEmpresa: {codigo: categoria} } }
@@ -562,8 +568,29 @@ export default function ConferenciaFrete({ ctx, conn }) {
       setPreview(null);
       setPeriodoRef(preview.periodoRef);
       await carregar();
+      // Trecho novo entra sem distância: mede agora, para o KM do relatório não nascer
+      // vazio. Roda depois do carregar() e em silêncio — falhar aqui não invalida o
+      // import, só deixa a pendência para a faixa de avisos mostrar.
+      calcularKmDosNovos(novas);
     } catch (e) { showToast?.("Erro ao importar: " + e.message, "erro"); }
     finally { setImporting(false); }
+  };
+
+  // Mede a distância dos trechos que entraram sem km. Homônimo sem critério de UF não
+  // vira número (ver migration 068) — fica como pendência para o Yves decidir.
+  const calcularKmDosNovos = async (linhas) => {
+    const faltando = trechosSemKm(linhas).map((x) => x.codigo);
+    if (!faltando.length) return;
+    try {
+      const { gravados, pendentes } = await calcularKmFaltante(conn, faltando);
+      if (gravados) {
+        showToast?.(`Distância calculada para ${gravados} trecho(s) novo(s).`, "ok");
+        setKmVersao((v) => v + 1);
+      }
+      if (pendentes?.length) {
+        showToast?.(`${pendentes.length} trecho(s) ficaram sem distância — cidade homônima sem UF definida.`, "warn");
+      }
+    } catch { /* sem distância a tela segue igual: a coluna KM fica vazia */ }
   };
 
   const onDecidir = async (id, decisao, obs) => {
@@ -676,6 +703,47 @@ export default function ConferenciaFrete({ ctx, conn }) {
     { id: "destino_trecho", label: "destino", get: (l) => trechoDestino(l.trecho) || l.trecho || "(sem trecho)" },
   ], []);
   const relLinhas = React.useMemo(() => linhasFiltradas.filter(ehAtivo), [linhasFiltradas]);
+
+  // ── Aviso de trecho sem tradução ou sem distância ──────────────────────────
+  // Sem isto, os dois casos aparecem iguais na tela: coluna vazia. Um é praça cujo
+  // relatório "Trechos/Rotas" nunca foi importado; o outro é cidade homônima que
+  // ninguém decidiu (Conde PB ou BA?). A faixa some sozinha quando não há pendência.
+  const avisoTrechos = React.useMemo(() => {
+    const semDePara = trechosSemDePara(linhasFiltradas);
+    const semKm = trechosSemKm(linhasFiltradas);
+    if (!semDePara.length && !semKm.length) return null;
+    const linha = (titulo, itens, detalhe) => (
+      <div style={{ marginTop: 6 }}>
+        <span style={{ fontWeight: 700, color: t.txt }}>{titulo}</span>{" "}
+        <span style={{ color: t.txt2 }}>{detalhe}</span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
+          {itens.slice(0, 12).map((x) => (
+            <span key={x.codigo} style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
+              background: hexRgb(t.ouro, .1), border: `1px solid ${hexRgb(t.ouro, .3)}`,
+              borderRadius: 5, padding: "2px 7px", color: t.ouro }}>
+              {x.codigo}{x.destino ? ` · ${x.destino}` : ""} ({x.linhas})
+            </span>
+          ))}
+          {itens.length > 12 && <span style={{ fontSize: 10.5, color: t.txt2 }}>+{itens.length - 12}</span>}
+        </div>
+      </div>
+    );
+    // Sem usar `card`: aquele const nasce mais abaixo no arquivo e este memo roda antes.
+    return (
+      <div style={{ ...css.card, padding: isMobile ? 14 : 18, marginBottom: 14, borderLeft: `3px solid ${t.ouro}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}>
+          {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>, t.ouro, 15, 2)}
+          <b style={{ color: t.ouro }}>Trechos sem informação completa</b>
+        </div>
+        {semDePara.length > 0 && linha("Sem origem/destino:", semDePara,
+          "— praça cujo relatório de trechos do TMS ainda não foi importado. O número entre parênteses é a quantidade de linhas.")}
+        {semKm.length > 0 && linha("Sem distância:", semKm,
+          "— cidade com nome repetido no Brasil; falta definir a UF para poder medir.")}
+      </div>
+    );
+  // kmVersao entra de propósito: o de-para é módulo, não estado do React.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linhasFiltradas, kmVersao, t, css, isMobile, hexRgb, hIco]);
   // Recorte de mês da fila de revisão — relativo ao mês real corrente (não ao periodoRef,
   // que controla os resumos). A fila já vem limitada a mês anterior + corrente do backend.
   const mesCorrenteReal = React.useMemo(() => new Date().toISOString().slice(0, 7), []);
@@ -1114,6 +1182,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
       <div style={{ fontSize: 11, color: t.txt2, marginBottom: 14 }}>
         Fonte: planilhas brutas de faturamento (CTRC/TMS) por cliente — <b style={{ color: t.txt }}>não é o mesmo dado</b> do Operacional (Google Sheets). Os valores deveriam bater, mas ainda são conferidos separadamente.
       </div>
+
+      {avisoTrechos}
 
       {/* Resultado da busca de CTe — fica acima dos KPIs porque, quando se busca, é o
           único conteúdo que importa. Não mexe em nenhum resumo/total da tela. */}

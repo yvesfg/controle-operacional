@@ -243,14 +243,28 @@ export default function ModalBusca({ ctx }) {
                     );
                   })()}
 
-                  {canEdit && (
-                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {/* Acoes da DT numa linha so. Antes eram tres faixas de largura total
+                      empilhadas (Editar, DOC, Ocorrencias), o que esticava o card inteiro. */}
+                  <div style={{display:"grid",gridTemplateColumns:canEdit?"1fr 1fr":"1fr",gap:8}}>
+                    {canEdit && (
                       <button onClick={()=>{
                         const idx = DADOS.findIndex(r=>r.dt===buscaResult.dt);
                         setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
                       }} style={{...css.btnGold,justifyContent:"center",padding:11,width:"100%"}}>
                         {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)} EDITAR
                       </button>
+                    )}
+                    <button
+                      onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
+                      onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";}}
+                      onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";}}
+                      style={{borderRadius:DESIGN.r.btn,padding:11,cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"var(--cat-amber)",fontWeight:700,fontSize:13,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .15s"}}>
+                      {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`var(--cat-amber)`,16,2)} Ocorrências
+                    </button>
+                  </div>
+
+                  {canEdit && (
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
 
                       {/* WhatsApp - 4 modelos (css.btnCard — alteração aqui propaga para todos os tiles WPP) */}
                       <div style={{background:t.card2,borderRadius:12,padding:12,border:`1px solid rgba(37,211,102,.25)`}}>
@@ -259,7 +273,10 @@ export default function ModalBusca({ ctx }) {
                           WHATSAPP · Escolha o modelo
                           <span style={{flex:1,height:1,background:"rgba(37,211,102,.2)",marginLeft:4}}/>
                         </div>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                        {/* 4 colunas no desktop: com 2, cada tile passava de 290px para um
+                            ícone e duas linhas de texto, e o card inteiro virava uma pilha
+                            de faixas largas. No celular continua 2x2. */}
+                        <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:8}}>
                           {[
                             {l:"Faturamento", sub:"CTE · MDF · MAT",   cor:"#25D366",
                              ico:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,
@@ -294,14 +311,6 @@ export default function ModalBusca({ ctx }) {
                       </div>
                     </div>
                   )}
-                  {/* ── Botão Ocorrências (visível para todos) ── */}
-                  <button
-                    onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
-                    onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 4px 12px rgba(232,130,12,.3)";}}
-                    onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}
-                    style={{width:"100%",borderRadius:11,padding:"12px 8px",cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"var(--cat-amber)",fontWeight:700,fontSize:12,fontFamily:"inherit",textAlign:"center",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .15s"}}>
-                    {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`var(--cat-amber)`,16,2)} Ocorrências
-                  </button>
                 </div>
               </div>
             )}

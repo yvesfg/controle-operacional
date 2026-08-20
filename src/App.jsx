@@ -67,7 +67,7 @@ import { setMotoristasToken } from './motoristas.js';
 import { setVeiculosToken } from './veiculos.js';
 import { setFreteToken } from './freteConferencia.js';
 import { setContratosToken } from './freteContratos.js';
-import { setTrechosToken, carregarTrechos } from './operacao/trechos.js';
+import { setTrechosToken, carregarTrechos, registrarUfsDeDestinos } from './operacao/trechos.js';
 import { setDespesasToken } from './despesas.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
@@ -512,6 +512,11 @@ export default function App() {
     if (sessionToken) carregarTrechos(getConexao()).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionToken]);
+
+  // A UF que o destino das viagens ja traz ("BELEM - PA") e o que desempata cidade
+  // homonima quando um trecho novo precisa ter a distancia calculada. Depende de DADOS,
+  // que chega depois do token — por isso efeito proprio.
+  useEffect(() => { registrarUfsDeDestinos(DADOS); }, [DADOS]);
 
   const { sincronizar, carregarAponts, syncUsuariosRemoto, carregarPendentes } = useSyncHandlers({
     getConexao, showToast, tblRef, sessionToken, baseAtual, basesPermitidas,

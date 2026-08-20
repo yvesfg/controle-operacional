@@ -1,3 +1,21 @@
+## 2026-08-20 — Trechos: calculo automatico, aviso de pendencia e botoes da busca
+
+Tres perguntas do Yves viraram tres frentes.
+
+**1. O app nao calculava distancia — agora calcula.** Ate aqui ele so LIA a tabela `trechos`; tudo tinha sido medido por fora. Novo endpoint **`/api/trecho-km`**: recebe os trechos, resolve a cidade (lista do IBGE + a UF que as viagens ja registram) e mede a rota no OSRM. Roda no servidor de proposito — o Nominatim exige User-Agent identificavel e limita a 1 requisicao por segundo, entao disparar isso do navegador de cada usuario e caminho curto para bloqueio de IP. O endpoint nao grava nada: quem persiste e o front, pela RPC `upsert_trechos_km_calc`, com o token da sessao.
+
+**Disparo automatico no import da Conferencia:** trecho novo que entrar sem distancia e medido logo apos o `carregar()`, em silencio. Falhar ali nao invalida a importacao — a pendencia so aparece na faixa de avisos. A regra continua: **cidade homonima sem criterio nao vira numero**.
+
+**2. As pendencias agora aparecem na tela.** Faixa no topo da Conferencia separando os dois casos que antes eram indistinguiveis (coluna vazia nos dois): **sem origem/destino** (praca cujo relatorio de trechos nunca foi importado — hoje AGA, CGD, GDO, NNO) e **sem distancia** (cidade homonima esperando definicao de UF). Cada sigla mostra quantas linhas afeta. A faixa some sozinha quando nao ha pendencia.
+
+**3. Botoes do card da busca.** Os 4 modelos de WhatsApp passaram de grid 2x2 para **4 colunas no desktop** — com 2 colunas cada tile passava de 290px para um icone e duas linhas de texto. `EDITAR` e `Ocorrencias` viraram **uma linha de dois**, no lugar de duas faixas de largura total empilhadas. No celular continua 2x2 e o `DOC (com RO)` segue dentro do bloco do WhatsApp, que e onde ele pertence.
+
+**Corrigido durante a implementacao:** o memo do aviso usava a `const card`, que so e declarada 200 linhas abaixo — `const` nao sobe, entao a tela quebraria em runtime (o build passava). Trocado por `css.card` direto.
+
+**Atencao:** `/api/trecho-km` e funcao serverless, entao o calculo automatico so vale **em producao**. Rodando `npm run dev` local, o Vite nao serve `/api` e a chamada falha em silencio — a distancia continua vindo do que ja esta na tabela.
+
+**Verificado:** `npm run build` OK. Nao foi possivel abrir o app logado para conferir as telas.
+
 ## 2026-08-20 — Acailandia tambem medida: as tres pracas na mesma regua
 
 **Pedido:** "quero tudo na mesma regua" — ACL estava so com o km do TMS enquanto BEM e IMP ja usavam o medido.
