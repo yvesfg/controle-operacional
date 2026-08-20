@@ -12,7 +12,7 @@ import {
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
-import { trechoRota, trechoOrigem, trechoDestino } from "../operacao/trechos.js";
+import { trechoRota, trechoOrigem, trechoDestino, trechoKm } from "../operacao/trechos.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import { listarDespesas, classeDoCredito } from "../despesas.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -651,6 +651,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     // exporta vazio — melhor que adivinhar cidade a partir das 3 letras.
     { id: "origem_trecho", label: "Origem", tipo: "texto", get: (l) => trechoOrigem(l.trecho) },
     { id: "destino_trecho", label: "Destino", tipo: "texto", get: (l) => trechoDestino(l.trecho) },
+    { id: "km_trecho", label: "KM", tipo: "numero", get: (l) => trechoKm(l.trecho) },
     { id: "placa", label: "Placa", tipo: "texto", get: (l) => l.placa },
     { id: "nfs", label: "NFs", tipo: "texto", get: (l) => l.nfs },
     { id: "contratoNum", label: "Nº contrato", tipo: "texto", get: (l) => numeroContratoDoCte(l) },
@@ -1948,7 +1949,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {campo("Empresa (código)", p.empresa_cod)}
                 {campo("Placa", p.placa)}
                 {campo("Data emissão", p.data_emissao)}
-                {campo("Trecho", [p.trecho, trechoRota(p.trecho)].filter(Boolean).join(" · "))}
+                {campo("Trecho", [p.trecho, trechoRota(p.trecho),
+                                  trechoKm(p.trecho) ? `${trechoKm(p.trecho)} km` : ""].filter(Boolean).join(" · "))}
                 {campo("NFS", p.nfs)}
                 {campo("Nº Manifesto", p.numero_manifesto)}
                 {campo("Nº Contrato Frete", p.numero_contrato)}

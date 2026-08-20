@@ -33,7 +33,12 @@ export async function carregarTrechos(conn) {
       const m = {};
       for (const t of lista) {
         if (!t?.codigo) continue;
-        m[norm(t.codigo)] = { origem: t.origem || "", destino: t.destino || "", km: t.km ?? null };
+        m[norm(t.codigo)] = {
+          origem: t.origem || "", destino: t.destino || "",
+          km: t.km ?? null, kmCalc: t.km_calc ?? null,
+          kmFonte: t.km_calc != null ? (t.km_calc_fonte || "osrm") : (t.km != null ? "tms" : null),
+          destinoResolvido: t.destino_resolvido || "",
+        };
       }
       _mapa = m;
       return lista.length > 0;
@@ -65,4 +70,14 @@ export function trechoRota(codigo) {
 // que é onde a conciliação com a planilha acontece.
 export function trechoOrigem(codigo)  { return trechoInfo(codigo)?.origem  || ""; }
 export function trechoDestino(codigo) { return trechoInfo(codigo)?.destino || ""; }
-export function trechoKm(codigo)      { return trechoInfo(codigo)?.km ?? null; }
+
+// Distância em km. O calculado (OSRM) vem primeiro porque a coluna do TMS é inservível em
+// Belém e Imperatriz: 230 das 298 rotas vieram zeradas e várias erradas por ordem de
+// grandeza (Belém → São Luís = 1 km, Imperatriz → Olinda = 17.136 km). Em Açailândia o TMS
+// está coerente e continua valendo enquanto não houver cálculo.
+export function trechoKm(codigo) {
+  const i = trechoInfo(codigo);
+  return i ? (i.kmCalc ?? i.km ?? null) : null;
+}
+// "osrm" | "tms" | null — de onde saiu o número que trechoKm devolveu.
+export function trechoKmFonte(codigo) { return trechoInfo(codigo)?.kmFonte || null; }

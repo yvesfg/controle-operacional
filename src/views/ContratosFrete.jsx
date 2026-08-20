@@ -6,7 +6,7 @@ import {
   listarRegrasTrecho, definirRegraTrecho, trechosPendentes,
 } from "../freteContratos.js";
 import { listarTodosPeriodo, vincularContratoCte } from "../freteConferencia.js";
-import { trechoRota, trechoOrigem, trechoDestino } from "../operacao/trechos.js";
+import { trechoRota, trechoOrigem, trechoDestino, trechoKm } from "../operacao/trechos.js";
 import KpiCard from "../components/KpiCard.jsx";
 import ModalRelatorio from "../components/ModalRelatorio.jsx";
 
@@ -194,6 +194,7 @@ export default function ContratosFrete({ ctx, conn }) {
     { id: "trecho", label: "Trecho", tipo: "texto", get: (c) => c.trecho },
     { id: "origem_trecho", label: "Origem", tipo: "texto", get: (c) => trechoOrigem(c.trecho) },
     { id: "destino_trecho", label: "Destino", tipo: "texto", get: (c) => trechoDestino(c.trecho) },
+    { id: "km_trecho", label: "KM", tipo: "numero", get: (c) => trechoKm(c.trecho) },
     { id: "cliente", label: "Cliente", tipo: "texto", get: (c) => c.cliente || "" },
     { id: "valor", label: "Contrato R$", tipo: "moeda", total: true, get: (c) => c.valor },
     { id: "inss", label: "INSS", tipo: "moeda", total: true, get: (c) => c.valor_inss },

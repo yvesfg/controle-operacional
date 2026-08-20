@@ -1,3 +1,25 @@
+## 2026-08-20 — Trechos de Belem e Imperatriz + distancia medida
+
+**Pedido:** subir os trechos BEM e IMP e calcular a distancia "com a skill map-grabber" dentro do app.
+
+**A skill indicada nao faz isso.** map-grabber (mcpmarket) baixa malha viaria e edificacoes do OpenStreetMap e exporta SVG/GeoPackage/DXF para CAD/Rhino — e ferramenta de planta baixa, nao de roteamento entre cidades. O que resolve o pedido e roteamento: geocodificacao no Nominatim + rota no OSRM publico, ambos gratuitos, sem chave e sobre a mesma base OSM.
+
+**Migration 066:** 298 trechos (BEM 130, IMP 168). Com isso a cobertura dos trechos usados pela conferencia fecha em **100% nas tres pracas** (ACL 177/177, IMP 76/76, BEM 7/7). Sobram 4 siglas de outras pracas sem de-para (AGA*, CGD*, GDO*, NNO* — 1 linha cada).
+
+**O km desses dois relatorios e imprestavel** — 230 das 298 rotas vieram ZERADAS e varias das preenchidas erradas por ordem de grandeza: BEM/SLU Belem→Sao Luis = **1 km**, IMP/OLI Olinda = **17.136 km**, IMP/PDI Pedreiras = **4.682 km**, IMP/DRD Dourados = **120 km**. O relatorio de Acailandia nao tinha esse problema.
+
+**Migrations 067 e 068 · distancia medida ao lado da do TMS.** `km` continua sendo o numero do TMS como veio; o medido entra em `km_calc` com a fonte declarada. Nao sobrescrever a fonte e o que permite auditar a divergencia em vez de descobrir tarde que um "oficial" era chute. **278 trechos calculados.**
+
+**O ponto delicado foi a cidade, nao a rota.** O TMS trunca o destino em 20 caracteres e nao traz UF, entao "DAVINOPOLIS" tanto e MA quanto GO. A primeira rodada, sem UF, roteou IMP/NNO para Davinopolis-GO e devolveu 1.669 km — o certo sao 17 km, e ali o TMS (13) estava mais perto que o calculo. **Erro pego antes de gravar.** A rodada definitiva resolve a UF ANTES de geocodificar: (1) a UF que a propria operacao registra nas viagens — `controle_operacional.destino` traz "DAVINOPOLIS-MA" 197 vezes — resolveu 140 trechos; (2) municipio unico na lista do IBGE, 138 trechos; (3) sem criterio, **nao grava numero**.
+
+**Aferição:** onde o TMS tinha valor plausivel, 50 dos 66 batem dentro de 10% (Imperatriz→Sao Luis: 630 medido x 633 do TMS).
+
+**No app:** coluna **KM** no relatorio/export da Conferencia e dos Contratos, e a distancia no detalhe do CTe. `trechoKm()` prefere o medido e cai para o TMS quando nao ha calculo (caso de Acailandia, que segue so com o numero do TMS).
+
+**PENDENTE — 18 trechos de cidade homonima** sem criterio para decidir (Conde PB/BA, Valenca BA/RJ, Boa Vista RR/PB, Itabaiana PB/SE, Barauna RN/PB, Candeias BA/MG, Capanema PA/PR, Douradina PR/MS, Hidrolandia CE/GO, Floresta PE/PR, Iguatu CE/PR, Colinas MA/RS, Sao Goncalo do Amarante CE/RN). Na conferencia isso afeta **12 linhas de 3.629**. Basta o Yves dizer a UF de cada um.
+
+**Verificado:** `npm run build` OK; 730 trechos na tabela; 3.617 das 3.629 linhas de frete com km disponivel.
+
 ## 2026-08-20 — Trechos: a sigla do TMS virou origem e destino
 
 **Pedido:** subir o de-para dos trechos ACL (Acailandia) para o app interpretar origem/destino, e avaliar se vale incluir origem, destino, valor da NFS e chave do CTe no relatorio ajustado a mao.
