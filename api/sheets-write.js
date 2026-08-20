@@ -45,6 +45,12 @@ export default async function handler(req, res) {
     res.status(400).json({ ok: false, error: "DT obrigatório" });
     return;
   }
+  // "inspecionar_dt" só lê: em que aba/linha o DT está e quais cabeçalhos daquela
+  // aba o mapeamento não reconheceu.
+  if (acao === "inspecionar_dt") {
+    await encaminhar(res, { base, corpo: { acao, dt } });
+    return;
+  }
   // acao "sincronizar_dt": puxa a linha da planilha pro Supabase na hora, para a
   // DT recém-digitada que a rodada de 15 min ainda não trouxe. Não escreve nada
   // na planilha, então não passa pela whitelist de campos.

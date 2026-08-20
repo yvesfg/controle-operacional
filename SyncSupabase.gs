@@ -439,6 +439,11 @@ function doPost(e) {
     var dt = String(body.dt || '').trim();
     if (!dt) return _json({ ok: false, error: 'DT obrigatorio' });
 
+    // 'inspecionar_dt': so LE. Diz em que aba/linha o DT esta e, principalmente,
+    // quais cabecalhos daquela aba o mapeamento NAO reconheceu — foi assim que
+    // apareceu a coluna do motorista faltando na aba de celulose.
+    if (body.acao === 'inspecionar_dt') return _json(inspecionarDT(dt));
+
     // acao 'sincronizar_dt': DT recem-digitada na planilha que o app ainda nao
     // enxerga (a rodada automatica e de 15 em 15 min). Puxa SO essa linha, na
     // hora, em vez de reprocessar a planilha inteira.
@@ -494,7 +499,11 @@ function localizarLinhaPorDT(dt, abaPreferida) {
       var mapaTemp = {}, cont = 0;
       for (var c = 0; c < topo[tentativa].length; c++) {
         var campo = mapearColuna(normalizarCabecalho(topo[tentativa][c]));
-        if (campo && mapaTemp[campo] === undefined) { mapaTemp[campo] = c + 1; cont++; }
+        if (!campo) continue;
+        cont++;  // conta COLUNAS reconhecidas, igual a rodada completa faz — contar
+                 // campos distintos escolhia outra linha de cabecalho em aba com
+                 // coluna repetida, e o mapa saia diferente do que o sync usa.
+        if (mapaTemp[campo] === undefined) mapaTemp[campo] = c + 1;
       }
       if (cont > melhor) { melhor = cont; mapa = mapaTemp; linhaCab = tentativa + 1; }
     }
@@ -504,11 +513,31 @@ function localizarLinhaPorDT(dt, abaPreferida) {
     var valoresDT = sheet.getRange(linhaCab + 1, mapa.dt, ultimaLin - linhaCab, 1).getValues();
     for (var i = 0; i < valoresDT.length; i++) {
       if (String(valoresDT[i][0]).trim() === dt) {
-        return { sheet: sheet, aba: nomAba, mapa: mapa, ultimaCol: ultimaCol, linha: linhaCab + 1 + i };
+        return { sheet: sheet, aba: nomAba, mapa: mapa, ultimaCol: ultimaCol, linhaCab: linhaCab, linha: linhaCab + 1 + i };
       }
     }
   }
   return null;
+}
+
+// Diagnostico read-only: onde esta o DT e o que o mapeamento entendeu daquela aba.
+function inspecionarDT(dt) {
+  var achado = localizarLinhaPorDT(dt, '');
+  if (!achado) return { ok: false, error: 'DT ' + dt + ' nao encontrado em nenhuma aba' };
+
+  var cabecalho = achado.sheet.getRange(achado.linhaCab, 1, 1, achado.ultimaCol).getValues()[0];
+  var reconhecidos = [], ignorados = [];
+  for (var c = 0; c < cabecalho.length; c++) {
+    var titulo = String(cabecalho[c] == null ? '' : cabecalho[c]).trim();
+    if (!titulo) continue;
+    var campo = mapearColuna(normalizarCabecalho(titulo));
+    if (campo) reconhecidos.push(titulo + ' -> ' + campo);
+    else ignorados.push(titulo);
+  }
+  return {
+    ok: true, aba: achado.aba, linha: achado.linha, linha_cabecalho: achado.linhaCab,
+    reconhecidos: reconhecidos, sem_mapeamento: ignorados
+  };
 }
 
 // Puxa UMA linha da planilha pro Supabase, na hora. Existe porque a rodada
