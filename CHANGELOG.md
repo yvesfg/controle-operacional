@@ -1,3 +1,19 @@
+## 2026-08-20 — Acailandia tambem medida: as tres pracas na mesma regua
+
+**Pedido:** "quero tudo na mesma regua" — ACL estava so com o km do TMS enquanto BEM e IMP ja usavam o medido.
+
+**Migration 069: 399 rotas de Acailandia medidas** (Nominatim + OSRM). Situacao da tabela `trechos`: **677 dos 730 trechos com distancia medida**; 36 seguem so com o numero do TMS (origem = destino, onde o roteador devolve 0, e os casos de duvida); 17 sem km nenhum.
+
+**Aqui o TMS acertou.** Das 402 rotas calculadas, **325 batem dentro de 10%** do que o relatorio de Acailandia ja trazia (ACL/AGA Araguaina: 314 medido = 314 do TMS). Nada parecido com Belem e Imperatriz, onde 230 de 298 vinham zeradas. Ainda assim o numero do TMS continua em `km` e o medido em `km_calc` — a regra de nao sobrescrever a fonte vale igual.
+
+**Quatro erros do casamento automatico, pegos na revisao antes de gravar:** ACL/ACU ("ACU" casou por prefixo com Acucena/MG, mas e Assu/RN — 1.570 km contra 2.214 do casamento errado), ACL/299 (apostrofo de Olho d'Agua das Flores/AL), ACL/MJZ ("MOJI DAS CRUZES", grafia antiga de Mogi das Cruzes/SP) e ACL/SZP (Santa Izabel do Para grafada com Z no IBGE).
+
+**Divergencias fortes que sobraram sao do lado do TMS:** ACL/RII Paripiranga 100 -> 1.718; ACL/SGM Sao Goncalo dos Campos 120 -> 1.730; ACL/MUS Manaus 1.755 -> 2.966 (nao ha ligacao rodoviaria direta, a rota real sobe por Porto Velho).
+
+**PENDENTE — 12 trechos de cidade homonima COM movimento**, que o Yves vai conferir no CTe: ACL/CVL Cascavel (CE ou PR, 10 linhas), ACL/SCL Sao Carlos (SP ou SC, 8), ACL/SAB Sao Bento (MA ou PB, 7 — o km do TMS sugere MA), ACL/GML Campo Alegre (AL ou SC, 4), IMP/VLA Valenca (BA ou RJ, 3), ACL/ITB Itabaiana (PB ou SE, 2), ACL/SAN Santana (2), ACL/BVS Boa Vista (RR ou PB, 1), ACL/VLA Valenca (1), ACL/GOM Goianesia (GO ou PA, 1), ACL/RNA Redencao (PA ou CE, 1) e IMP/CDE Conde (PB ou BA, 1). Outros 38 homonimos nunca rodaram carga e ficam sem km sem prejuizo.
+
+**Verificado:** `npm run build` OK.
+
 ## 2026-08-20 — Trechos de Belem e Imperatriz + distancia medida
 
 **Pedido:** subir os trechos BEM e IMP e calcular a distancia "com a skill map-grabber" dentro do app.
