@@ -67,6 +67,7 @@ import { setMotoristasToken } from './motoristas.js';
 import { setVeiculosToken } from './veiculos.js';
 import { setFreteToken } from './freteConferencia.js';
 import { setContratosToken } from './freteContratos.js';
+import { setTrechosToken, carregarTrechos } from './operacao/trechos.js';
 import { setDespesasToken } from './despesas.js';
 
 // ── Views exclusivas AVB — isoladas para não impactar Suzano ──
@@ -504,7 +505,11 @@ export default function App() {
     setFreteToken(sessionToken);
     setContratosToken(sessionToken);
     setDespesasToken(sessionToken);
+    setTrechosToken(sessionToken);
     if (sessionToken) recarregarMotoristas(true);
+    // De-para dos trechos (sigla do TMS -> origem/destino): carga unica, silenciosa.
+    // Falhar aqui so faz a sigla continuar aparecendo crua, como antes.
+    if (sessionToken) carregarTrechos(getConexao()).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionToken]);
 

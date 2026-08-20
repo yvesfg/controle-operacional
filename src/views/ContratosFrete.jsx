@@ -6,6 +6,7 @@ import {
   listarRegrasTrecho, definirRegraTrecho, trechosPendentes,
 } from "../freteContratos.js";
 import { listarTodosPeriodo, vincularContratoCte } from "../freteConferencia.js";
+import { trechoRota, trechoOrigem, trechoDestino } from "../operacao/trechos.js";
 import KpiCard from "../components/KpiCard.jsx";
 import ModalRelatorio from "../components/ModalRelatorio.jsx";
 
@@ -191,6 +192,8 @@ export default function ContratosFrete({ ctx, conn }) {
     { id: "tipo", label: "Tipo", tipo: "texto", get: (c) => (c.eh_pf ? "PF" : "PJ") },
     { id: "veiculo", label: "Veículo", tipo: "texto", get: (c) => c.veiculo },
     { id: "trecho", label: "Trecho", tipo: "texto", get: (c) => c.trecho },
+    { id: "origem_trecho", label: "Origem", tipo: "texto", get: (c) => trechoOrigem(c.trecho) },
+    { id: "destino_trecho", label: "Destino", tipo: "texto", get: (c) => trechoDestino(c.trecho) },
     { id: "cliente", label: "Cliente", tipo: "texto", get: (c) => c.cliente || "" },
     { id: "valor", label: "Contrato R$", tipo: "moeda", total: true, get: (c) => c.valor },
     { id: "inss", label: "INSS", tipo: "moeda", total: true, get: (c) => c.valor_inss },
@@ -242,8 +245,13 @@ export default function ContratosFrete({ ctx, conn }) {
               return (
                 <div key={`${p.empresa_emissao}-${p.trecho}`}
                   style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 11px", borderRadius: 9, background: t.card, border: `1px solid ${hexRgb(t.borda, .5)}` }}>
+                  {/* A rota vem do de-para (migration 065): decidir se o trecho é nossa
+                      operação sem saber para onde a carga foi é adivinhação. */}
                   <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12.5, color: t.txt }}>
                     {p.empresa_emissao} · {p.trecho}
+                    {trechoRota(p.trecho) && (
+                      <span style={{ fontFamily: "inherit", fontWeight: 500, fontSize: 11, color: t.txt2 }}> · {trechoRota(p.trecho)}</span>
+                    )}
                   </span>
                   <span style={{ fontSize: 11, color: t.txt2 }}>
                     {p.contratos} contrato(s) · {money(p.valor)}
@@ -317,7 +325,7 @@ export default function ContratosFrete({ ctx, conn }) {
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 5, fontSize: 10.5, color: t.txt2 }}>
                   {c.data_emissao && <span style={{ fontFamily: "var(--font-mono)" }}>{dataBR(c.data_emissao)}</span>}
                   {c.veiculo && <span style={{ fontFamily: "var(--font-mono)" }}>{c.veiculo}</span>}
-                  {c.trecho && <span>{c.trecho}</span>}
+                  {c.trecho && <span>{[c.trecho, trechoRota(c.trecho)].filter(Boolean).join(" · ")}</span>}
                   <span>contrato {money(c.valor)}</span>
                   {c.cliente && <span>cliente: {c.cliente}</span>}
                 </div>

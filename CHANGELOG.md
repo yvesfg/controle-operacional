@@ -1,3 +1,23 @@
+## 2026-08-20 — Trechos: a sigla do TMS virou origem e destino
+
+**Pedido:** subir o de-para dos trechos ACL (Acailandia) para o app interpretar origem/destino, e avaliar se vale incluir origem, destino, valor da NFS e chave do CTe no relatorio ajustado a mao.
+
+**O que a sigla e:** o relatorio do TMS grava o trecho como 6 letras — 3 da praca de origem + 3 do destino (`ACLNNO`, `IMPSLU`, `BEMSZP`). Na Conferencia e nos Contratos ela aparecia crua: nao dava para saber o destino sem abrir o TMS, e o relatorio exportado nao tinha como ser conciliado por rota.
+
+**Migration 065 · tabela `trechos`** (codigo, origem, destino, km) com RLS ligado e sem policy — acesso so por RPC token-validada (`listar_trechos`, `upsert_trechos_lote`), mesmo padrao de `contratos_regras_trecho`. Seed com as **432 rotas ACL** do arquivo "TRECHOS ACL 1908" (Rodorrica, 19/08/2026). Medida antes de subir: os **177 trechos ACL\* que a frete_conferencia usa cobrem 100%** — nenhuma sigla ficou sem tradução (952 linhas).
+
+**A traducao acontece na LEITURA** (`src/operacao/trechos.js`), nao gravando origem/destino na linha do frete. Consequencia pratica: corrigir um trecho errado vale para todo o historico sem reimportar nada. Trecho sem de-para continua aparecendo como sigla crua — nunca inventamos cidade a partir das 3 letras.
+
+**Onde aparece:** Conferencia (colunas **Origem** e **Destino** no relatorio/export, agrupamento por destino, rota no detalhe do CTe e no modal de duplicidade) e Contratos (colunas no export, rota na fila de decisao de trecho e no card do contrato — decidir se o trecho e da nossa operacao sem saber o destino era adivinhacao).
+
+**Sobre o que o Yves ia digitar no relatorio:** origem e destino **nao precisam** ser incluidos (o de-para deriva os dois); o **valor da NFS ja vem** (`valor_nf` preenchido em 3.334 das 3.629 linhas). A **chave do CTe ficou de fora** por decisao dele: nao existe na planilha, so no relatorio puxado, entao nao serviria de ponte de conciliacao.
+
+**PENDENTE — faltam IMP e BEM.** Imperatriz (76 trechos, 2.316 linhas) e Belem (7 trechos, 353 linhas) seguem como sigla crua ate o Yves exportar o mesmo relatorio "Trechos/Rotas" filtrando essas pracas. A RPC de importacao em lote ja existe; so falta o arquivo.
+
+**Nao entrou:** `DISTANCIAS_AVB` (utils_avb.js) continua com as 26 distancias arredondadas de sempre, embora a tabela nova traga o km oficial de 432 rotas. Trocar isso muda o calculo de agenda prevista da AVB e ficou fora do escopo escolhido.
+
+**Verificado:** `npm run build` OK; 432 linhas na tabela; 0 trechos ACL sem de-para.
+
 ## 2026-08-20 — Busca: os botoes do card (WhatsApp, Editar, Ocorrencias) voltaram a funcionar
 
 **Pedido:** na busca por DT 23474110 o card aparece, mas clicar em "Faturamento" nao fazia nada; verificar os demais botoes.

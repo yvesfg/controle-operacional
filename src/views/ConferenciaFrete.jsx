@@ -12,6 +12,7 @@ import {
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
 } from "../freteConferencia.js";
 import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
+import { trechoRota, trechoOrigem, trechoDestino } from "../operacao/trechos.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import { listarDespesas, classeDoCredito } from "../despesas.js";
 import useEmbarcadoras from "../hooks/useEmbarcadoras.js";
@@ -645,6 +646,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
     { id: "categoria", label: "Categoria", tipo: "texto", get: (l) => CATEGORIA_LABEL[l.categoria] || l.categoria },
     { id: "cliente", label: "Cliente", tipo: "texto", get: (l) => l.cliente },
     { id: "trecho", label: "Trecho", tipo: "texto", get: (l) => l.trecho },
+    // Origem/destino saem do de-para da sigla (operacao/trechos.js), não de coluna gravada:
+    // é o que permite conciliar o relatório com a planilha por rota. Trecho sem de-para
+    // exporta vazio — melhor que adivinhar cidade a partir das 3 letras.
+    { id: "origem_trecho", label: "Origem", tipo: "texto", get: (l) => trechoOrigem(l.trecho) },
+    { id: "destino_trecho", label: "Destino", tipo: "texto", get: (l) => trechoDestino(l.trecho) },
     { id: "placa", label: "Placa", tipo: "texto", get: (l) => l.placa },
     { id: "nfs", label: "NFs", tipo: "texto", get: (l) => l.nfs },
     { id: "contratoNum", label: "Nº contrato", tipo: "texto", get: (l) => numeroContratoDoCte(l) },
@@ -666,6 +672,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     { id: "cliente", label: "cliente", get: (l) => l.cliente },
     { id: "dia", label: "dia", get: (l) => (l.data_emissao || "").split("-").reverse().join("/") },
     { id: "usuario", label: "usuário", get: (l) => l.nome_usuario || "(sem usuário)" },
+    { id: "destino_trecho", label: "destino", get: (l) => trechoDestino(l.trecho) || l.trecho || "(sem trecho)" },
   ], []);
   const relLinhas = React.useMemo(() => linhasFiltradas.filter(ehAtivo), [linhasFiltradas]);
   // Recorte de mês da fila de revisão — relativo ao mês real corrente (não ao periodoRef,
@@ -1941,7 +1948,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {campo("Empresa (código)", p.empresa_cod)}
                 {campo("Placa", p.placa)}
                 {campo("Data emissão", p.data_emissao)}
-                {campo("Trecho", p.trecho)}
+                {campo("Trecho", [p.trecho, trechoRota(p.trecho)].filter(Boolean).join(" · "))}
                 {campo("NFS", p.nfs)}
                 {campo("Nº Manifesto", p.numero_manifesto)}
                 {campo("Nº Contrato Frete", p.numero_contrato)}
@@ -2583,7 +2590,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
           ["Margem", "margem_lucro", (d) => Number(d.margem_lucro).toFixed(2) + "%"],
         ];
         const IGUAIS = [
-          ["Placa", base.placa || "—"], ["Trecho", base.trecho || "—"],
+          ["Placa", base.placa || "—"],
+          ["Trecho", [base.trecho, trechoRota(base.trecho)].filter(Boolean).join(" · ") || "—"],
           ["Valor NF", money(base.valor_nf)], ["Peso NF", pesoFmt(base.peso_nf)],
           ["Total do Frete", money(base.total_frete)],
         ];
