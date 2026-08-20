@@ -1,3 +1,15 @@
+## 2026-08-20 — Busca: os botoes do card (WhatsApp, Editar, Ocorrencias) voltaram a funcionar
+
+**Pedido:** na busca por DT 23474110 o card aparece, mas clicar em "Faturamento" nao fazia nada; verificar os demais botoes.
+
+**Causa raiz — empilhamento, nao logica.** Todos os modais usam `z-index: var(--z-modal)` (300) e o `ModalBusca` e o penultimo filho de `AppModals`. Empate de z-index e decidido pela ordem no DOM: o overlay opaco da busca (`rgba(0,0,0,.84)`) ficava POR CIMA de qualquer modal aberto a partir dela. O estado mudava, o modal montava — atras da busca. Valia para os 4 modelos de WhatsApp, o DOC (com RO), EDITAR, Cadastrar motorista e Ocorrencias; so o modal de confirmacao do WhatsApp escapava (ja usava `--z-modal + 10`).
+
+**Correcao:** nova classe `.co-modal-overlay--launcher` (`calc(var(--z-modal) - 1)`) aplicada ao overlay do `ModalBusca`. A busca e um lancador de modais, entao fica uma camada abaixo — e continua visivel embaixo quando o modal filho fecha. Isso bate com a ordem que o ESC ja usava em `fecharTopoModal()`.
+
+**Bug secundario junto:** o `ctx` do `ModalBusca` em `AppModals.jsx` nao passava `canFin` nem `fmtMoeda`, entao o bloco financeiro (Empresa / Motorista / Adiantamento) nunca renderizava no card da busca. Ambos adicionados.
+
+**Verificado:** `npm run build` OK.
+
 ## 2026-08-19 — Sync: as colunas de observacao voltam a subir (causa raiz corrigida)
 
 **Nomes confirmados pelo Yves:** coluna **AI = "OBS CHEGADA"** e coluna **AK = "OBS  DESCARGA"**.

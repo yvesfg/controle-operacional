@@ -305,7 +305,7 @@ export default function AppModals({ ctx }) {
   buscaResult, setBuscaResult, buscaRelacionados, setBuscaRelacionados,
   buscaMesmaPlaca, setBuscaMesmaPlaca, buscaCandidatos, setBuscaCandidatos, mostrarRegistro,
   buscaError, setBuscaError, historico, buscar,
-  DADOS, motoristas, canEdit, connStatus, isMobile,
+  DADOS, motoristas, canEdit, canFin, fmtMoeda, connStatus, isMobile,
   setFormData, setEditIdx, setEditStep, setModalOpen,
   setWppFatModal, setWppModal, setWppTel, setWppPgto,
   setWppValCheque, setWppValConta, setWppObs,

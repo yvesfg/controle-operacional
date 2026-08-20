@@ -619,6 +619,9 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   align-items:  flex-start;
   padding:      48px 16px 16px;
 }
+/* Modal que ABRE outros modais (busca) — fica uma camada abaixo, senão o
+   overlay dele cobre o modal que ele mesmo acabou de abrir. */
+.co-modal-overlay--launcher { z-index: calc(var(--z-modal) - 1); }
 
 /* ════════════════════════════════════════════════════════════════════
    RESPONSIVE GLOBAL

@@ -78,7 +78,7 @@ export default function ModalBusca({ ctx }) {
 
   return (
     <div
-      className="co-modal-overlay co-modal-overlay--top"
+      className="co-modal-overlay co-modal-overlay--top co-modal-overlay--launcher"
       style={{overflowY:"auto"}}
       onClick={e=>{if(e.target===e.currentTarget)setBuscaModalOpen(false);}}
     >
