@@ -15,9 +15,13 @@ export function useBuscaState() {
   const [historico, setHistorico] = useState(() => loadJSON("hist", []));
 
   useEffect(() => {
-    const onKey = (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setBuscaModalOpen(v => !v); } };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // Captura na fase de captura e aceita 'K'/'k'/code, senão o Ctrl+K vaza pro Chrome (omnibox).
+    const onKey = (e) => {
+      const ehK = e.code === 'KeyK' || (e.key || '').toLowerCase() === 'k';
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && ehK) { e.preventDefault(); setBuscaModalOpen(v => !v); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, []);
 
   return {
