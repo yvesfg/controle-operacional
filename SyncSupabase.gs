@@ -129,15 +129,7 @@ function sincronizarComSupabase() {
         var linhaVazia = true;
 
         Object.keys(mapa).forEach(function(i) {
-          var v = dados[r][i];
-          if (v instanceof Date) {
-            v = Utilities.formatDate(v, 'America/Sao_Paulo', 'dd/MM/yyyy');
-          } else if (typeof v === 'number' && CAMPOS_FINANCEIROS.indexOf(mapa[i]) >= 0) {
-            // Celula-numero (nao texto) num campo financeiro: formata em BR explicitamente
-            // (vírgula decimal, ponto de milhar) em vez de '.toString()' (ponto decimal
-            // americano) — mantém o mesmo formato que o resto do pipeline sempre usou.
-            v = v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-          }
+          var v = tratarValor(dados[r][i], mapa[i]);
           var vs = v ? v.toString().trim() : '';
           // Não sobrescreve valor existente com string vazia
           // (evita que col "DT Espelho" vazia apague o valor de "DT" preenchida)
@@ -417,7 +409,7 @@ var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedid
 
 // Muda quando este arquivo muda. Serve pra saber se o /exec ja esta servindo o
 // codigo novo — publicar NOVA VERSAO da implantacao e o passo mais esquecido.
-var WEBAPP_VERSAO = '2026-08-17-c';
+var WEBAPP_VERSAO = '2026-08-21-a';
 
 // So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
 // Cobre os dois blocos colados: faturamento e contratacao (esta traz o ID, que
@@ -556,12 +548,7 @@ function sincronizarUmDT(dt) {
   var valores = achado.sheet.getRange(achado.linha, 1, 1, achado.ultimaCol).getValues()[0];
   var reg = { fora_planilha: false };
   for (var campo in achado.mapa) {
-    var v = valores[achado.mapa[campo] - 1];
-    if (v instanceof Date) {
-      v = Utilities.formatDate(v, 'America/Sao_Paulo', 'dd/MM/yyyy');
-    } else if (typeof v === 'number' && CAMPOS_FINANCEIROS.indexOf(campo) >= 0) {
-      v = v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    var v = tratarValor(valores[achado.mapa[campo] - 1], campo);
     reg[campo] = v ? v.toString().trim() : '';
   }
   if (!reg.dt) return { ok: false, error: 'Linha encontrada mas sem DT preenchido' };
@@ -711,6 +698,29 @@ function configurarGatilho() {
 // nenhum alias alcancava. A coluna sumia calada, e foi assim que as observacoes
 // ficaram meses sem subir. Aqui espaco interno vira um so, e o espaco nao-quebravel
 // (que o Sheets produz ao colar de fora) vira espaco normal antes disso.
+// Erros de formula da planilha. Sem isto, "#VALUE!" entrava como se fosse valor —
+// e num campo de dinheiro o app tenta ler isso como numero.
+var ERROS_PLANILHA = ['#VALUE!', '#REF!', '#N/A', '#DIV/0!', '#NAME?', '#NUM!', '#NULL!', '#ERROR!'];
+
+// Uma celula da planilha vira o texto que o banco guarda. Regras, na ordem:
+//   · erro de formula  -> vazio (nao e dado);
+//   · hora pura        -> HH:mm. O Sheets guarda hora sem data como 30/12/1899, e
+//     formatar em dd/MM/yyyy jogava "30/12/1899" no banco — foi o que aconteceu com
+//     HR RO em ~660 linhas assim que a coluna passou a ser lida (20/08/2026);
+//   · data             -> dd/MM/yyyy;
+//   · numero em campo financeiro -> BR ("1.234,56"), nunca "1234.56".
+function tratarValor(v, campo) {
+  if (typeof v === 'string' && ERROS_PLANILHA.indexOf(v.trim().toUpperCase()) >= 0) return '';
+  if (v instanceof Date) {
+    var ehHoraPura = v.getFullYear() === 1899 || (v.getFullYear() === 1970 && v.getMonth() === 0 && v.getDate() === 1);
+    return Utilities.formatDate(v, 'America/Sao_Paulo', ehHoraPura ? 'HH:mm' : 'dd/MM/yyyy');
+  }
+  if (typeof v === 'number' && CAMPOS_FINANCEIROS.indexOf(campo) >= 0) {
+    return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return v;
+}
+
 function normalizarCabecalho(s) {
   return String(s == null ? '' : s)
     .replace(/\u00a0/g, ' ')
