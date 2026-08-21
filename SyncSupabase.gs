@@ -23,7 +23,11 @@ var ABA_BASE  = '0032026';            // aba referencia para estrutura de coluna
 // (que assume BR e remove TODO ponto como milhar) inflava esses valores em ~100x-1000x
 // (um saldo de R$3.702,56 virava R$37 quatrilhoes na tela). Ver controle_operacional_sem_dt
 // nao afetada por isso porque so recebe campos derivados, mas o cadastro principal sim.
-var CAMPOS_FINANCEIROS = ['vl_cte', 'vl_contrato', 'adiant', 'saldo', 'diaria_prev', 'diaria_pg'];
+var CAMPOS_FINANCEIROS = ['vl_cte', 'vl_contrato', 'adiant', 'saldo', 'diaria_prev', 'diaria_pg',
+  // Entraram em 20/08/2026 junto com o mapeamento dos cabecalhos que faltavam.
+  // Precisam estar AQUI pelo mesmo motivo dos de cima: celula-numero de verdade
+  // vira "1234.56" no toString e o parser do app, que assume BR, inflaria o valor.
+  'diaria', 'diaria_rec', 'pag_desc', 'pag_stretch', 'total'];
 
 // ============================================================
 // FUNCAO PRINCIPAL - chamada automaticamente a cada 15 min
@@ -768,6 +772,29 @@ function mapearColuna(n) {
     'diaria_pg': 'diaria_pg',
     'diarias paga': 'diaria_pg', 'diarias (paga r$)': 'diaria_pg',
     'dias': 'dias',
+
+    // ── Cabecalhos que existem na planilha e NAO eram lidos ──
+    // Achado em 20/08/2026 pelo proprio log da sync ("N colunas sem mapeamento"):
+    // essas colunas tem campo no banco, foram preenchidas um dia e estavam
+    // CONGELADAS — a planilha mudava e o banco nao acompanhava. Era so ortografia
+    // do cabecalho ('DIARIAS PAGAS' x 'diarias paga', 'QUANT.DIAS' x 'dias').
+    // Ficaram DE FORA de proposito as que o app tambem edita (FORMS, e a coluna
+    // de diaria paga ja mapeada acima): mapear faria a planilha sobrescrever o
+    // que foi digitado no app a cada 15 min.
+    'quant.dias': 'dias', 'quant dias': 'dias', 'qtd dias': 'dias',
+    'dt - espelho': 'dt',
+    'data liberação': 'data_lib', 'data liberacao': 'data_lib',
+    'data validade': 'data_val',
+    'rdo': 'rdo',
+    'cadastro fortes': 'cad_fortes',
+    'comprovei': 'comprovei',
+    'hr ro': 'hr_ro', 'hr criação da ro': 'hr_ro', 'hr criacao da ro': 'hr_ro',
+    'diaria': 'diaria',
+    'diárias recebido': 'diaria_rec', 'diarias recebido': 'diaria_rec',
+    'diárias recebidas': 'diaria_rec', 'diarias recebidas': 'diaria_rec',
+    'pag. descarga': 'pag_desc', 'pag descarga': 'pag_desc',
+    'pag. stretch': 'pag_stretch', 'pag stretch': 'pag_stretch',
+    'total': 'total',
 
     // ── Documentação ──
     'cte': 'cte', 'mdf': 'mdf',
