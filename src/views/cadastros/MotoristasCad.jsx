@@ -3,6 +3,7 @@ import useMotoristas from "../../hooks/useMotoristas.js";
 import useVeiculos from "../../hooks/useVeiculos.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
 import EmptyState from "../../components/EmptyState.jsx";
+import ExportarCadastroPanel from "./ExportarCadastroPanel.jsx";
 import {
   GENEROS, FUNCOES, UFS, normalizarGenero, normalizarFuncao, normalizarUF,
   normalizarRenavam, pendenciasCadastro, cnhVencida, cpfDigitos, formatarCPF,
@@ -64,6 +65,7 @@ export default function MotoristasCad({ ctx, conn }) {
   const [form, setForm] = React.useState(null);
   const [salvando, setSalvando] = React.useState(false);
   const [importAberto, setImportAberto] = React.useState(false);
+  const [envioAberto, setEnvioAberto] = React.useState(false);
   const [selecionados, setSelecionados] = React.useState(new Set()); // ids p/ exclusão em lote
   const [excluindoLote, setExcluindoLote] = React.useState(false);
 
@@ -307,6 +309,10 @@ export default function MotoristasCad({ ctx, conn }) {
           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}` }}>
           📥 Importar agenda (CSV)
         </button>
+        <button onClick={() => setEnvioAberto((v) => !v)} title="Gera o .xlsx no modelo da embarcadora, escolhendo as DTs"
+          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}` }}>
+          📤 Cadastro embarcadora
+        </button>
         <button onClick={exportarVCard} title="Cadastro → Google Contacts (.vcf)"
           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}` }}>
           📤 Exportar vCard
@@ -331,6 +337,11 @@ export default function MotoristasCad({ ctx, conn }) {
       {importAberto && (
         <ImportarAgenda ctx={ctx} conn={conn} motoristas={motoristas} usuarioLogado={usuarioLogado}
           onFechar={() => setImportAberto(false)} onConcluido={() => { setImportAberto(false); recarregar(); }} />
+      )}
+
+      {envioAberto && (
+        <ExportarCadastroPanel ctx={ctx} conn={conn} motoristas={motoristas} veiculos={veiculosTodos}
+          onFechar={() => setEnvioAberto(false)} />
       )}
 
       {form && (

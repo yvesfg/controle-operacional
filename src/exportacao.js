@@ -58,16 +58,31 @@ const retangular = (matriz) => {
   return matriz.map((r) => (r.length === n ? r : [...r, ...Array(n - r.length).fill("")]));
 };
 
-export function baixarXLSX(matriz, nome) {
+// Largura por coluna: sem isso tudo sai com 8 caracteres e o usuário arrasta
+// coluna por coluna antes de conseguir ler.
+const folhaDaMatriz = (matriz) => {
   const ws = XLSX.utils.aoa_to_sheet(matriz);
-  // Largura por coluna: sem isso tudo sai com 8 caracteres e o usuário arrasta
-  // coluna por coluna antes de conseguir ler.
-  const larguras = (matriz[0] || []).map((_, i) => ({
+  ws["!cols"] = (matriz[0] || []).map((_, i) => ({
     wch: Math.min(42, Math.max(10, ...matriz.map((r) => txt(r[i]).length + 2))),
   }));
-  ws["!cols"] = larguras;
+  return ws;
+};
+
+export function baixarXLSX(matriz, nome) {
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Dados");
+  XLSX.utils.book_append_sheet(wb, folhaDaMatriz(matriz), "Dados");
+  XLSX.writeFile(wb, `${nomeArquivo(nome)}.xlsx`);
+}
+
+// Arquivo com várias abas: [{nome, matriz}]. Existe pro cadastro da embarcadora,
+// cujo modelo tem uma aba por tipo de registro (MOTORISTA / VEICULOS / CARRETA).
+// O Excel recusa nome de aba com mais de 31 caracteres ou com : \ / ? * [ ].
+export function baixarXLSXAbas(abas, nome) {
+  const wb = XLSX.utils.book_new();
+  (abas || []).forEach((aba, i) => {
+    const limpo = String(aba.nome || `Aba ${i + 1}`).replace(/[:\\/?*[\]]/g, " ").slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, folhaDaMatriz(aba.matriz || []), limpo);
+  });
   XLSX.writeFile(wb, `${nomeArquivo(nome)}.xlsx`);
 }
 
