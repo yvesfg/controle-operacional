@@ -164,6 +164,18 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-08-25", sessao: "Sessao 57",
+    itens: [
+      "PEDIDO (Yves) · A embarcadora (Suzano) recebe hoje uma planilha de cadastro de motorista e veiculo preenchida a mao, em DOIS layouts: blocos empilhados (motorista / cavalo / carreta, cabecalho repetido a cada bloco) e tres abas tabulares MOTORISTA / VEICULOS / CARRETA. Objetivo: o analista vai preenchendo no app, conclui o cadastro lendo CNH e CRLV por IA, e no fim gera o .xlsx escolhendo os motoristas pela DT.",
+      "DIAGNOSTICO (arquivos reais) · O que a digitacao manual ja produziu: 'MAISCULINO'/'MAICULINO'/'MASCULINO' na mesma coluna, 'MOTRISTA'/'MOTORISTA', CPF com ponto no lugar do digito verificador (844.951.701.04), RENAVAM com 9 digitos porque o Excel comeu o zero a esquerda (549838660), capacidade do tanque como 540 / '560 LITROS' / 'XXXXX', e ESTADO CNH ora 'MA' ora 'MARANHAO'. Todos sao erros de vocabulario ou de tipo — some com campo tipado e lista fechada.",
+      "DECIDIDO · Mora no CO (/cadastros), nao no frota-pro: e no CO que vivem os motoristas terceiros/agregados, com placa vinculada, e e la que o analista trabalha. A saida sai por TEMPLATE por embarcadora (a proxima entra sem codigo novo). E a DT manda no conjunto: a exportacao le as placas DA DT (reg.placa/placa2/placa3) e so cai no cadastro como fallback — e isso que deixa trocar cavalo/carreta numa viagem sem sujar o cadastro.",
+      "FASE 1 (migration 070) · Campos que faltavam: em motoristas, cnh_numero/cnh_categoria/cnh_validade/cnh_primeira_habilitacao/cnh_uf, genero, data_nascimento, funcao, qualificacao e cadastro_concluido_em; em veiculos, marca, modelo, cor, ano, renavam, chassi, especie, tanque_litros e cpf_cnpj_responsavel. renavam e TEXT de proposito (zero a esquerda e significativo) com indice unico parcial, e genero/cnh_uf ganharam CHECK NOT VALID. tanque_litros existe porque a capacidade do tanque NAO esta no CRLV: e digitada uma vez por cavalo.",
+      "FASE 1 (migration 070) · atualizar_motorista montava o SET sempre como texto ('%I = ($1->>%L)'), o que estoura em coluna date ('column is of type date but expression is of type text'). Passou pro modelo TIPADO do atualizar_veiculo, com nullif(...,'') pra campo apagado na tela virar NULL em vez de erro de conversao. criar_motorista, criar_veiculo e atualizar_veiculo ganharam os campos novos nas whitelists (sem isso o dado se perde em silencio, igual ao PIX antes da 041).",
+      "FASE 1 (front) · ModalDocIntake ganhou o tipo 'cnh' (nome, CPF, n de registro, categoria, UF de emissao, validade, nascimento, 1a habilitacao) e o 'crlv' passou a trazer marca, modelo, cor e especie SEPARADOS — a planilha da embarcadora tem uma coluna pra cada, e 'M.BENZ/AXOR 2544 S' numa celula so obrigava a quebrar a mao. O perfil 'cnh' do yf-ai-gateway ganhou data_nascimento e uf_emissao (a CNH escreve 'IMPERATRIZ, MA'; o normalize so aceita a sigla de 2 letras, cidade lida por engano vira vazio). GENERO nao e extraido: a CNH nao imprime sexo, entao o analista escolhe — inventar seria pior que perguntar.",
+      "PENDENTE · Migration 070 ainda NAO aplicada em producao. Deploy do yf-ai-gateway necessario pro perfil cnh novo (o campo UF fica vazio ate la; o resto da CNH ja funciona). Fase 2 (ficha do motorista com Ler CNH/Ler CRLV, selo de ja-cadastrado, troca de conjunto) e Fase 3 (templates + geracao do .xlsx por DT) nao comecaram.",
+    ],
+  },
+  {
     data: "2026-08-14", sessao: "Sessao 56",
     itens: [
       "PEDIDO · Supabase avisou que o projeto estava esgotando o Disk IO Budget ('your instance may become unresponsive'). Yves perguntou qual a melhor forma de resolver, incluindo se valia so pagar o upgrade.",

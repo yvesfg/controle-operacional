@@ -13,11 +13,36 @@ const DOC_CONFIGS = {
       { key: "nome_proprietario", label: "Proprietário",        span: 2, placeholder: "Nome completo" },
       { key: "cpf_cnpj",         label: "CPF/CNPJ do Prop.",   span: 1, placeholder: "Somente dígitos" },
       { key: "chassi",           label: "Chassi",              span: 1, placeholder: "VIN" },
-      { key: "marca_modelo",     label: "Marca/Modelo",         span: 1, placeholder: "Ex: VW/17.230" },
-      { key: "ano",              label: "Ano Fab./Mod.",        span: 1, placeholder: "2020/2021" },
+      // marca/modelo/cor/espécie vêm separados do gateway porque a planilha da
+      // embarcadora tem uma coluna pra cada — "M.BENZ/AXOR 2544 S" numa célula
+      // só obrigava a quebrar à mão na hora de montar o arquivo.
+      { key: "marca",            label: "Marca",               span: 1, placeholder: "SCANIA" },
+      { key: "modelo",           label: "Modelo",              span: 1, placeholder: "R 480" },
+      { key: "cor",              label: "Cor",                 span: 1, placeholder: "BRANCA" },
+      { key: "ano",              label: "Ano Modelo",          span: 1, placeholder: "2019" },
+      { key: "especie",          label: "Espécie (CRLV)",      span: 2, placeholder: "CAMINHAO TRATOR" },
+    ],
+  },
+  cnh: {
+    title: "CNH — Habilitação do Motorista",
+    color: "var(--color-ok, #059669)",
+    accept: "image/*,.pdf",
+    fields: [
+      { key: "nome",                 label: "Nome Completo",   span: 2, placeholder: "Nome como na CNH" },
+      { key: "cpf",                  label: "CPF",             span: 1, placeholder: "Somente dígitos" },
+      { key: "numero_registro",      label: "Nº Registro CNH", span: 1, placeholder: "Somente dígitos" },
+      { key: "categoria",            label: "Categoria",       span: 1, placeholder: "AE" },
+      { key: "cnh_uf",               label: "UF de Emissão",   span: 1, placeholder: "MA" },
+      { key: "validade",             label: "Validade",        span: 1, placeholder: "AAAA-MM-DD" },
+      { key: "data_nascimento",      label: "Nascimento",      span: 1, placeholder: "AAAA-MM-DD" },
+      { key: "primeira_habilitacao", label: "1ª Habilitação",  span: 2, placeholder: "AAAA-MM-DD" },
     ],
   },
 };
+
+// O gateway devolve a UF da CNH como `uf_emissao`; o cadastro chama o campo de
+// cnh_uf. Renomear no gateway quebraria o frota-pro, que já consome o perfil.
+const ALIAS_IA = { cnh: { cnh_uf: "uf_emissao" } };
 
 function toBase64(file) {
   return new Promise((resolve, reject) => {
@@ -139,7 +164,8 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
       }
       const data = await r.json();
       const init = {};
-      cfg.fields.forEach(fl => { init[fl.key] = data[fl.key] || ""; });
+      const alias = ALIAS_IA[tipo] || {};
+      cfg.fields.forEach(fl => { init[fl.key] = data[fl.key] || data[alias[fl.key]] || ""; });
       setForm(init);
       setConfianca(typeof data.confianca === "number" ? data.confianca : null);
       setStep("review");
