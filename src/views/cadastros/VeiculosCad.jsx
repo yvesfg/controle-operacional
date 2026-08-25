@@ -3,12 +3,19 @@ import useVeiculos from "../../hooks/useVeiculos.js";
 import useMotoristas from "../../hooks/useMotoristas.js";
 import EmptyState from "../../components/EmptyState.jsx";
 import { soDigitosPlaca } from "../../veiculos.js";
+import { normalizarRenavam, renavamSuspeito } from "../../cadastroEmbarcadora.js";
 
 // Veículos — cavalos e carretas, vinculados a um motorista via motorista_id.
 // config_eixos/carroceria/capacidade_m3 só fazem sentido pra tipo=carreta
 // (ver migration 008); ficam desabilitados no form quando tipo=cavalo.
+//
+// Os campos de DOCUMENTO (marca, modelo, cor, ano, RENAVAM, chassi, tanque,
+// CPF/CNPJ do responsável — migration 070) existem porque a embarcadora os
+// exige. Dá pra chegar neles pela ficha do motorista também; aqui é o caminho
+// de quem está mexendo no veículo, não na pessoa.
 
-const VAZIO = { placa: "", tipo: "cavalo", num_eixos: "", config_eixos: "", carroceria: "", capacidade_m3: "", motorista_id: "", ativo: true };
+const VAZIO = { placa: "", tipo: "cavalo", num_eixos: "", config_eixos: "", carroceria: "", capacidade_m3: "", motorista_id: "", ativo: true,
+  marca: "", modelo: "", cor: "", ano: "", renavam: "", chassi: "", especie: "", tanque_litros: "", cpf_cnpj_responsavel: "" };
 
 // Categoria = SOMA dos eixos do cavalo + da(s) carreta(s) do mesmo motorista.
 // (cavalo 2 + carreta 3 = 5 -> SIMPLES; 3+3 = 6 -> LS; 3+4 = 7 -> LS4EIXO;
@@ -23,7 +30,7 @@ const categoriaPorEixos = (total, qtdCarretas) => {
 };
 
 export default function VeiculosCad({ ctx, conn }) {
-  const { t, showToast, hexRgb } = ctx;
+  const { t, showToast, hexRgb, openDocIntake } = ctx;
   const onErro = React.useCallback((msg) => showToast?.(msg, "erro"), [showToast]);
   const { lista, loading, criar, atualizar } = useVeiculos(conn, { onErro });
   const { motoristas } = useMotoristas(conn, { onErro });
@@ -62,6 +69,29 @@ export default function VeiculosCad({ ctx, conn }) {
     return { motorista, pecas, total, qtdCarretas: pecas.filter((p) => p.tipo === "carreta").length };
   }, [form?.motorista_id, form?.placa, form?.tipo, form?.num_eixos, lista, motoristaPorId]);
 
+  // Preenche o form com o que a IA leu do CRLV — nada é gravado antes de o
+  // usuário revisar e salvar. Em veículo JÁ cadastrado a placa não muda (é a
+  // chave); o documento serve pra completar o resto.
+  const aplicarCrlv = (d) => {
+    setForm((f) => ({
+      ...f,
+      placa: f.__novo && d.placa ? d.placa : f.placa,
+      marca: d.marca || f.marca,
+      modelo: d.modelo || f.modelo,
+      cor: d.cor || f.cor,
+      ano: d.ano || f.ano,
+      renavam: d.renavam ? normalizarRenavam(d.renavam) : f.renavam,
+      chassi: d.chassi || f.chassi,
+      especie: d.especie || f.especie,
+      cpf_cnpj_responsavel: d.cpf_cnpj || f.cpf_cnpj_responsavel,
+      // A espécie do CRLV diz o que é a peça: "CAMINHAO TRATOR" é cavalo,
+      // "SEMI-REBOQUE"/"REBOQUE" é carreta. Só ajusta em cadastro novo, pra não
+      // reclassificar um veículo que já está vinculado a um conjunto.
+      tipo: f.__novo && d.especie ? (/REBOQUE/i.test(d.especie) ? "carreta" : "cavalo") : f.tipo,
+    }));
+    showToast?.(`CRLV lido${d.placa ? ` — ${d.placa}` : ""}. Confira antes de salvar.`, "ok");
+  };
+
   const salvar = async () => {
     const placa = soDigitosPlaca(form.placa);
     if (!placa) { showToast?.("Informe a placa.", "erro"); return; }
@@ -75,6 +105,18 @@ export default function VeiculosCad({ ctx, conn }) {
       capacidade_m3: form.tipo === "carreta" && form.capacidade_m3 ? parseFloat(form.capacidade_m3) : null,
       motorista_id: form.motorista_id || null,
       ativo: !!form.ativo,
+      // Documento (migration 070). Campo vazio vira null, não "": a RPC já
+      // converte, e o RENAVAM tem índice único onde "" repetido colidiria.
+      marca: form.marca || null,
+      modelo: form.modelo || null,
+      cor: form.cor || null,
+      ano: form.ano ? parseInt(form.ano, 10) : null,
+      renavam: form.renavam ? normalizarRenavam(form.renavam) : null,
+      chassi: form.chassi || null,
+      especie: form.especie || null,
+      // Tanque só no cavalo — na carreta não há o que informar.
+      tanque_litros: form.tipo === "cavalo" && form.tanque_litros ? parseInt(form.tanque_litros, 10) : null,
+      cpf_cnpj_responsavel: form.cpf_cnpj_responsavel || null,
     };
     setSalvando(true);
     try {
@@ -105,6 +147,15 @@ export default function VeiculosCad({ ctx, conn }) {
       {form && (
         <div style={{ marginBottom: 14, border: `1.5px solid ${t.ouro}`, borderRadius: 10, background: t.card, padding: 14 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>{form.__novo ? "Novo veículo" : `Editando: ${form.placa}`}</div>
+
+          {openDocIntake && (
+            <button onClick={() => openDocIntake("crlv", aplicarCrlv)}
+              title="Envie foto ou PDF do CRLV — preenche placa, marca, modelo, cor, ano, RENAVAM e chassi"
+              style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}` }}>
+              📄 Ler CRLV (foto ou PDF)
+            </button>
+          )}
+
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
             <div style={{ flex: "1 1 120px" }}>
               <label style={lbl}>Placa</label>
@@ -166,6 +217,44 @@ export default function VeiculosCad({ ctx, conn }) {
             </div>
           </div>
 
+          {/* ── Documento (CRLV) — é o que a embarcadora exige no cadastro ── */}
+          <div style={{ fontSize: 10.5, color: t.txt2, margin: "12px 0 4px" }}>Documento do veículo</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[["marca", "Marca", "1 1 120px"], ["modelo", "Modelo", "1 1 150px"], ["cor", "Cor", "1 1 100px"],
+              ["ano", "Ano", "0 0 90px"]].map(([k, label, flex]) => (
+              <div key={k} style={{ flex }}>
+                <label style={lbl}>{label}</label>
+                <input value={form[k] ?? ""} onChange={(e) => set(k, e.target.value.toUpperCase())} style={inp} />
+              </div>
+            ))}
+            <div style={{ flex: "1 1 140px" }}>
+              <label style={lbl}>RENAVAM</label>
+              <input value={form.renavam ?? ""} placeholder="11 dígitos"
+                onChange={(e) => set("renavam", e.target.value.replace(/\D/g, ""))}
+                onBlur={(e) => set("renavam", normalizarRenavam(e.target.value))}
+                style={{ ...inp, borderColor: renavamSuspeito(form.renavam) ? t.warn : t.borda }} />
+            </div>
+            {/* Tanque só no cavalo: não vem no CRLV, é digitado uma vez e fica. */}
+            <div style={{ flex: "0 0 120px" }}>
+              <label style={lbl}>Tanque (L)</label>
+              <input value={form.tanque_litros ?? ""} placeholder="540" disabled={form.tipo !== "cavalo"}
+                onChange={(e) => set("tanque_litros", e.target.value.replace(/\D/g, ""))}
+                style={{ ...inp, opacity: form.tipo !== "cavalo" ? .5 : 1 }} />
+            </div>
+            <div style={{ flex: "1 1 150px" }}>
+              <label style={lbl}>Chassi</label>
+              <input value={form.chassi ?? ""} onChange={(e) => set("chassi", e.target.value.toUpperCase())} style={inp} />
+            </div>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={lbl}>Espécie (CRLV)</label>
+              <input value={form.especie ?? ""} placeholder="CAMINHAO TRATOR" onChange={(e) => set("especie", e.target.value.toUpperCase())} style={inp} />
+            </div>
+            <div style={{ flex: "1 1 170px" }}>
+              <label style={lbl}>CPF/CNPJ do responsável</label>
+              <input value={form.cpf_cnpj_responsavel ?? ""} onChange={(e) => set("cpf_cnpj_responsavel", e.target.value)} style={inp} />
+            </div>
+          </div>
+
           {/* Conjunto do motorista escolhido: mostra as outras peças dele e a SOMA
               dos eixos (é o que define SIMPLES/LS/LS4EIXO). Sem isso não dava pra
               saber, ao vincular, o que o motorista já tem atrelado. */}
@@ -211,7 +300,8 @@ export default function VeiculosCad({ ctx, conn }) {
               {motoristaPorId.get(v.motorista_id)?.nome || <span style={{ color: t.txt2 }}>sem vínculo</span>}
             </div>
             <div style={{ flex: "1 1 160px", fontSize: 10.5, color: t.txt2 }}>
-              {[v.num_eixos && `${v.num_eixos} eixos`, v.config_eixos, v.carroceria, v.capacidade_m3 && v.capacidade_m3 + "m³"].filter(Boolean).join(" · ")}
+              {[[v.marca, v.modelo].filter(Boolean).join(" "), v.num_eixos && `${v.num_eixos} eixos`, v.config_eixos, v.carroceria, v.capacidade_m3 && v.capacidade_m3 + "m³"].filter(Boolean).join(" · ")}
+              {!v.renavam && <span style={{ color: t.warn }}> · sem RENAVAM</span>}
             </div>
             <button onClick={() => editar(v)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Editar</button>
           </div>

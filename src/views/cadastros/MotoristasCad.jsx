@@ -461,9 +461,11 @@ export default function MotoristasCad({ ctx, conn }) {
                         style={{ ...inp, fontFamily: "var(--font-mono)", letterSpacing: 1 }} />
                     </div>
                     {conhecida && <span style={{ fontSize: 10.5, color: t.txt2, paddingBottom: 8 }}>já cadastrada</span>}
-                    {placa && openDocIntake && (
+                    {/* Sempre visível, mesmo sem placa: o CRLV É quem traz a placa —
+                        esconder o botão até digitar invertia a ordem do trabalho. */}
+                    {openDocIntake && (
                       <button onClick={() => openDocIntake("crlv", (d) => aplicarCrlv(s, d))}
-                        title="Envie foto ou PDF do CRLV desta peça"
+                        title="Envie foto ou PDF do CRLV desta peça — a placa vem do documento"
                         style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}`, marginBottom: 1 }}>
                         📄 Ler CRLV
                       </button>
