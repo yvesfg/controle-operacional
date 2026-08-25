@@ -1850,6 +1850,8 @@ export default function App() {
             DADOS, setDadosBase, dadosExtras, registrarLog,
             gerarRelatorioMotorista,
             motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
+            // Ler CNH/CRLV na ficha do motorista (cadastro da embarcadora).
+            openDocIntake,
           }} />
         )}
 

@@ -11,7 +11,11 @@ import { getCached, invalidar, inscrever, CHAVES } from "../dataCache.js";
 // Campos persistidos no cadastro. pix_tipo/pix_chave (migration 041) fecham o ciclo:
 // o formulário (ModalMotorista) e a mensagem de pagamento (ModalWhatsApp) já os usavam,
 // mas sem coluna no banco nem na whitelist da RPC o PIX se perdia ao salvar.
-const CAMPOS_MOTORISTA = ["nome", "cpf", "tel", "vinculo", "banco", "agencia", "conta", "favorecido", "status_risco", "observacao", "pix_tipo", "pix_chave"];
+// Os campos de CNH/gênero/nascimento (migration 070) existem por causa do cadastro
+// que a embarcadora exige: eram digitados de novo a cada envio, na planilha.
+const CAMPOS_MOTORISTA = ["nome", "cpf", "tel", "vinculo", "banco", "agencia", "conta", "favorecido", "status_risco", "observacao", "pix_tipo", "pix_chave",
+  "cnh_numero", "cnh_categoria", "cnh_validade", "cnh_primeira_habilitacao", "cnh_uf",
+  "genero", "data_nascimento", "funcao", "qualificacao", "cadastro_concluido_em"];
 
 // [{...motorista}] x [{...veiculo, motorista_id}] -> array achatado com placa1..placa4.
 // Cavalo(s) primeiro, depois carretas — cada grupo em ordem alfabética de placa.

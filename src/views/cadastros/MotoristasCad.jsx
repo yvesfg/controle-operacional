@@ -1,7 +1,13 @@
 import React from "react";
 import useMotoristas from "../../hooks/useMotoristas.js";
+import useVeiculos from "../../hooks/useVeiculos.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
 import EmptyState from "../../components/EmptyState.jsx";
+import {
+  GENEROS, FUNCOES, UFS, normalizarGenero, normalizarFuncao, normalizarUF,
+  normalizarRenavam, pendenciasCadastro, cnhVencida, cpfDigitos, formatarCPF,
+  viagensDoMotorista,
+} from "../../cadastroEmbarcadora.js";
 
 // Motoristas — tela ÚNICA do cadastro de motorista (a aba do sidebar foi removida:
 // era redundante, tratava vínculo num segundo lugar). Reúne tudo:
@@ -18,7 +24,25 @@ import EmptyState from "../../components/EmptyState.jsx";
 const STATUS_LABEL = { bom: "Bom", vermelho: "Vermelho", bloqueado: "Bloqueado", golpe: "Golpe" };
 const STATUS_COR = { bom: "var(--color-info)", vermelho: "var(--warn)", bloqueado: "var(--red, #e5484d)", golpe: "var(--red, #e5484d)" };
 
-const VAZIO = { nome: "", cpf: "", tel: "", vinculo: "", banco: "", agencia: "", conta: "", favorecido: "", status_risco: "", observacao: "", placa1: "", placa2: "", placa3: "", placa4: "" };
+const VAZIO = { nome: "", cpf: "", tel: "", vinculo: "", banco: "", agencia: "", conta: "", favorecido: "", status_risco: "", observacao: "", placa1: "", placa2: "", placa3: "", placa4: "",
+  cnh_numero: "", cnh_categoria: "", cnh_validade: "", cnh_primeira_habilitacao: "", cnh_uf: "", genero: "", data_nascimento: "", funcao: "", qualificacao: "" };
+
+// Os 4 lugares do conjunto. A ordem é a MESMA que useMotoristas usa ao criar o
+// veículo (1ª placa = cavalo, resto = carreta) — se divergir, o tipo gravado no
+// banco não bate com o rótulo da tela.
+const SLOTS = [
+  { k: "placa1", label: "Cavalo",    tipo: "cavalo"  },
+  { k: "placa2", label: "Carreta 1", tipo: "carreta" },
+  { k: "placa3", label: "Carreta 2", tipo: "carreta" },
+  { k: "placa4", label: "Carreta 3", tipo: "carreta" },
+];
+
+// O que o CRLV preenche, mais o tanque (que NÃO está no documento e é digitado
+// uma vez por cavalo).
+const CAMPOS_VEICULO = ["marca", "modelo", "cor", "ano", "renavam", "chassi", "especie", "tanque_litros", "cpf_cnpj_responsavel"];
+
+const normPlaca = (v) => String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const dataBR = (iso) => (iso ? String(iso).slice(0, 10).split("-").reverse().join("/") : "");
 
 export default function MotoristasCad({ ctx, conn }) {
   const {
@@ -27,9 +51,14 @@ export default function MotoristasCad({ ctx, conn }) {
     // pro relatório PDF por motorista — as duas funções que existiam só na tela antiga.
     DADOS, setDadosBase, dadosExtras, gerarRelatorioMotorista, registrarLog,
     motSugestOpen, setMotSugestOpen, motSugestData, setMotSugestData,
+    openDocIntake,
   } = ctx;
   const onErro = React.useCallback((msg) => showToast?.(msg, "erro"), [showToast]);
   const { motoristas, saveMotoristasLS, loading, recarregar } = useMotoristas(conn, { onErro });
+  // Lista completa de veículos: a placa digitada pode já existir (troca de conjunto
+  // entre motoristas), e aí os dados do CRLV dela já estão no banco.
+  const { lista: veiculosTodos, atualizar: atualizarVeiculo } = useVeiculos(conn, { onErro });
+  const veicPorPlaca = React.useMemo(() => new Map(veiculosTodos.map((v) => [v.placa, v])), [veiculosTodos]);
 
   const [busca, setBusca] = React.useState("");
   const [form, setForm] = React.useState(null);
@@ -38,6 +67,30 @@ export default function MotoristasCad({ ctx, conn }) {
   const [selecionados, setSelecionados] = React.useState(new Set()); // ids p/ exclusão em lote
   const [excluindoLote, setExcluindoLote] = React.useState(false);
 
+  // Última DT de cada motorista: a DT é como o analista chama a carga, então ela
+  // é o que ele digita na busca e o que precisa enxergar na linha. Um passo só
+  // sobre DADOS (o cruzamento por motorista é caro pra rodar por linha).
+  const dtsPorMotorista = React.useMemo(() => {
+    const porCpf = new Map(), porNome = new Map(), porPlaca = new Map();
+    motoristas.forEach((m) => {
+      const cpf = cpfDigitos(m.cpf);
+      if (cpf) porCpf.set(cpf, m.id);
+      if (m.nome) porNome.set(m.nome.toUpperCase().trim(), m.id);
+      [m.placa1, m.placa2, m.placa3, m.placa4].filter(Boolean).forEach((p) => porPlaca.set(normPlaca(p), m.id));
+    });
+    const mapa = new Map(); // id -> [{dt, data, destino}]
+    (DADOS || []).forEach((reg) => {
+      const id = porCpf.get(cpfDigitos(reg.cpf))
+        || porNome.get(String(reg.nome || "").toUpperCase().trim())
+        || porPlaca.get(normPlaca(reg.placa));
+      if (!id || !reg.dt) return;
+      const lista = mapa.get(id) || [];
+      lista.push({ dt: String(reg.dt), destino: reg.destino || "", data: reg.data_carr || reg.data || "" });
+      mapa.set(id, lista);
+    });
+    return mapa;
+  }, [motoristas, DADOS]);
+
   const filtrados = React.useMemo(() => {
     const q = busca.trim().toUpperCase();
     if (!q) return motoristas;
@@ -45,19 +98,102 @@ export default function MotoristasCad({ ctx, conn }) {
     return motoristas.filter((m) =>
       (m.nome || "").toUpperCase().includes(q) ||
       (m.cpf || "").includes(q) ||
-      [m.placa1, m.placa2, m.placa3, m.placa4].some((p) => (p || "").toUpperCase().replace(/[^A-Z0-9]/g, "").includes(qDigitos))
+      [m.placa1, m.placa2, m.placa3, m.placa4].some((p) => (p || "").toUpperCase().replace(/[^A-Z0-9]/g, "").includes(qDigitos)) ||
+      // Busca por DT: é a chave que o analista tem em mãos quando vai completar
+      // o cadastro pra enviar à embarcadora.
+      (dtsPorMotorista.get(m.id) || []).some((v) => v.dt.toUpperCase().includes(q))
     );
-  }, [motoristas, busca]);
+  }, [motoristas, busca, dtsPorMotorista]);
 
-  const editar = (m) => setForm({ ...VAZIO, ...m });
-  const novo = () => setForm({ ...VAZIO, __novo: true });
+  // Peças do conjunto que o form está editando: o que já veio do banco, coberto
+  // pelo que foi digitado/lido agora (form._veic, indexado por placa).
+  const veicDoForm = React.useCallback((placa) => {
+    const p = normPlaca(placa);
+    if (!p) return {};
+    return { ...(veicPorPlaca.get(p) || {}), ...((form?._veic || {})[p] || {}) };
+  }, [form, veicPorPlaca]);
+
+  const setVeic = (placa, patch) => {
+    const p = normPlaca(placa);
+    if (!p) return;
+    setForm((f) => ({ ...f, _veic: { ...(f._veic || {}), [p]: { ...((f._veic || {})[p] || {}), ...patch } } }));
+  };
+
+  // Conjunto do form como o resto do módulo espera: [{placa, tipo, ...campos}].
+  const conjuntoDoForm = React.useCallback(() => (
+    SLOTS.map((s) => ({ slot: s, placa: normPlaca(form?.[s.k]) }))
+      .filter((x) => x.placa)
+      .map((x) => ({ ...veicDoForm(x.placa), placa: x.placa, tipo: veicPorPlaca.get(x.placa)?.tipo || x.slot.tipo }))
+  ), [form, veicDoForm, veicPorPlaca]);
+
+  const pendencias = form ? pendenciasCadastro(form, conjuntoDoForm()) : [];
+
+  // Mesmo CPF já cadastrado = é a segunda vez que este motorista chega. Avisa e
+  // oferece abrir o cadastro que existe, em vez de criar um duplicado.
+  const jaCadastrado = React.useMemo(() => {
+    if (!form?.__novo) return null;
+    const cpf = cpfDigitos(form.cpf);
+    if (cpf.length !== 11) return null;
+    return motoristas.find((m) => cpfDigitos(m.cpf) === cpf) || null;
+  }, [form, motoristas]);
+
+  const editar = (m) => setForm({ ...VAZIO, ...m, _veic: {} });
+  const novo = () => setForm({ ...VAZIO, __novo: true, funcao: "MOTORISTA", _veic: {} });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const salvar = async () => {
+  // Preenche o form com o que a IA leu do documento. Nada é gravado aqui: o
+  // analista revisa e salva — documento borrado erra, e errar calado é pior.
+  const aplicarCnh = (d) => {
+    setForm((f) => ({
+      ...f,
+      nome:            f.nome || d.nome || "",
+      cpf:             f.cpf || (d.cpf ? formatarCPF(d.cpf) : ""),
+      cnh_numero:      d.numero_registro || f.cnh_numero,
+      cnh_categoria:   (d.categoria || f.cnh_categoria || "").toUpperCase(),
+      cnh_validade:    d.validade || f.cnh_validade,
+      cnh_primeira_habilitacao: d.primeira_habilitacao || f.cnh_primeira_habilitacao,
+      cnh_uf:          normalizarUF(d.cnh_uf) || f.cnh_uf,
+      data_nascimento: d.data_nascimento || f.data_nascimento,
+      funcao:          f.funcao || "MOTORISTA",
+    }));
+    showToast?.("CNH lida — confira os campos antes de salvar.", "ok");
+  };
+
+  const aplicarCrlv = (slot, d) => {
+    const placa = normPlaca(d.placa) || normPlaca(form?.[slot.k]);
+    if (!placa) { showToast?.("O CRLV não trouxe a placa — digite a placa antes.", "erro"); return; }
+    setForm((f) => ({
+      ...f,
+      [slot.k]: placa,
+      _veic: { ...(f._veic || {}), [placa]: {
+        ...((f._veic || {})[placa] || {}),
+        marca: d.marca || "", modelo: d.modelo || "", cor: d.cor || "",
+        ano: d.ano || "", renavam: normalizarRenavam(d.renavam),
+        chassi: d.chassi || "", especie: d.especie || "",
+        cpf_cnpj_responsavel: d.cpf_cnpj || "",
+      } },
+    }));
+    showToast?.(`CRLV lido — ${slot.label} ${placa}.`, "ok");
+  };
+
+  const salvar = async ({ concluir = false } = {}) => {
     if (!form.nome.trim()) { showToast?.("Informe o nome do motorista.", "erro"); return; }
+    if (concluir && pendencias.length) {
+      showToast?.(`Ainda falta: ${pendencias.slice(0, 3).join(", ")}${pendencias.length > 3 ? "…" : ""}`, "erro");
+      return;
+    }
     setSalvando(true);
     try {
-      const dados = { ...form, nome: form.nome.trim() };
+      const dados = {
+        ...form,
+        nome: form.nome.trim(),
+        cpf: form.cpf ? formatarCPF(form.cpf) : "",
+        genero: normalizarGenero(form.genero),
+        funcao: normalizarFuncao(form.funcao),
+        cnh_uf: normalizarUF(form.cnh_uf),
+        ...(concluir ? { cadastro_concluido_em: new Date().toISOString() } : {}),
+      };
+      delete dados._veic;
       const atualizado = form.__novo
         ? [...motoristas, dados]
         : motoristas.map((m) => (m.id === form.id ? { ...m, ...dados } : m));
@@ -67,7 +203,18 @@ export default function MotoristasCad({ ctx, conn }) {
       (r?.reatribuidas || []).forEach(({ placa, deMotorista }) => {
         showToast?.(`Placa ${placa} estava com "${deMotorista}" e passou para "${dados.nome}".`, "warn");
       });
-      showToast?.(`"${dados.nome}" ${form.__novo ? "cadastrado" : "atualizado"}.`, "ok");
+      // Os dados do CRLV vão DEPOIS: saveMotoristasLS é quem cria o veículo da
+      // placa nova (e define cavalo/carreta), então antes dele não há o que patchar.
+      for (const [placa, patch] of Object.entries(form._veic || {})) {
+        const atual = veicPorPlaca.get(placa) || {};
+        const limpo = {};
+        CAMPOS_VEICULO.forEach((k) => {
+          const v = k === "renavam" ? normalizarRenavam(patch[k]) : patch[k];
+          if (v !== undefined && String(v ?? "") !== String(atual[k] ?? "")) limpo[k] = v === "" ? null : v;
+        });
+        if (Object.keys(limpo).length) await atualizarVeiculo(placa, limpo);
+      }
+      showToast?.(`"${dados.nome}" ${concluir ? "com cadastro concluído" : form.__novo ? "cadastrado" : "atualizado"}.`, "ok");
       setForm(null);
     } catch (e) { showToast?.("Erro ao salvar: " + e.message, "erro"); }
     finally { setSalvando(false); }
@@ -150,7 +297,7 @@ export default function MotoristasCad({ ctx, conn }) {
   return (
     <div>
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CPF ou placa"
+        <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CPF, placa ou DT"
           style={{ ...inp, flex: "1 1 220px", width: "auto" }} />
         <button onClick={sugerirVinculos} title="Cruza as placas do cadastro com as viagens e sugere preencher o motorista nas DTs sem nome"
           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.verde, border: `1.5px solid ${t.verde}` }}>
@@ -188,9 +335,45 @@ export default function MotoristasCad({ ctx, conn }) {
 
       {form && (
         <div style={{ marginBottom: 14, border: `1.5px solid ${t.ouro}`, borderRadius: 10, background: t.card, padding: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>
-            {form.__novo ? "Novo motorista" : `Editando: ${form.nome}`}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>
+              {form.__novo ? "Novo motorista" : `Editando: ${form.nome}`}
+            </div>
+            {/* O selo responde a "este cadastro já está pronto pra enviar?" — é a
+                mesma conta que a exportação usa, então não há como divergir. */}
+            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
+              color: pendencias.length ? t.warn : t.verde, border: `1px solid ${pendencias.length ? t.warn : t.verde}` }}>
+              {pendencias.length ? `Falta ${pendencias.length}: ${pendencias.slice(0, 3).join(", ")}${pendencias.length > 3 ? "…" : ""}` : "Cadastro completo"}
+            </span>
+            {form.cadastro_concluido_em && (
+              <span style={{ fontSize: 10.5, color: t.txt2 }}>concluído em {dataBR(form.cadastro_concluido_em)}</span>
+            )}
+            {cnhVencida(form.cnh_validade) && (
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: t.danger }}>⚠ CNH vencida</span>
+            )}
           </div>
+
+          {/* Segunda vez que o mesmo CPF chega: o cadastro já existe. */}
+          {jaCadastrado && (
+            <div style={{ marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: t.card2, border: `1px solid ${t.warn}`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 11.5, color: t.txt, flex: "1 1 240px" }}>
+                Este CPF já está cadastrado como <strong>{jaCadastrado.nome}</strong> — completar o que existe evita duplicar o motorista.
+              </span>
+              <button onClick={() => editar(jaCadastrado)}
+                style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.warn, border: `1.5px solid ${t.warn}` }}>
+                Abrir cadastro existente
+              </button>
+            </div>
+          )}
+
+          {openDocIntake && (
+            <button onClick={() => openDocIntake("cnh", aplicarCnh)}
+              title="Envie foto ou PDF da CNH — a IA preenche número, categoria, validade, UF e nascimento"
+              style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.verde, border: `1.5px solid ${t.verde}` }}>
+              📄 Ler CNH (foto ou PDF)
+            </button>
+          )}
+
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
             {campo("Nome", "nome", { flex: "1 1 220px" })}
             {campo("CPF", "cpf", { flex: "1 1 140px" })}
@@ -203,13 +386,102 @@ export default function MotoristasCad({ ctx, conn }) {
               </select>
             </div>
           </div>
-          <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 4 }}>Placas (cavalo + carretas)</div>
+          {/* ── CNH — o bloco que a embarcadora exige e a planilha digitava à mão ── */}
+          <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 4 }}>CNH e dados pessoais</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-            {campo("Placa 1", "placa1", { flex: "1 1 100px" })}
-            {campo("Placa 2", "placa2", { flex: "1 1 100px" })}
-            {campo("Placa 3", "placa3", { flex: "1 1 100px" })}
-            {campo("Placa 4", "placa4", { flex: "1 1 100px" })}
+            {campo("Nº da CNH", "cnh_numero", { flex: "1 1 140px" })}
+            {campo("Categoria", "cnh_categoria", { flex: "1 1 80px", placeholder: "AE" })}
+            <div style={{ flex: "1 1 120px" }}>
+              <label style={lbl}>Validade</label>
+              <input type="date" value={String(form.cnh_validade || "").slice(0, 10)} onChange={(e) => set("cnh_validade", e.target.value)} style={inp} />
+            </div>
+            <div style={{ flex: "1 1 100px" }}>
+              <label style={lbl}>UF da CNH</label>
+              <select value={normalizarUF(form.cnh_uf)} onChange={(e) => set("cnh_uf", e.target.value)} style={inp}>
+                <option value="">—</option>
+                {UFS.map((u) => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: "1 1 120px" }}>
+              <label style={lbl}>Nascimento</label>
+              <input type="date" value={String(form.data_nascimento || "").slice(0, 10)} onChange={(e) => set("data_nascimento", e.target.value)} style={inp} />
+            </div>
+            {/* Gênero é escolhido, não lido: a CNH não imprime sexo. Era daqui que
+                saíam "MAISCULINO" e "MAICULINO" na planilha. */}
+            <div style={{ flex: "1 1 130px" }}>
+              <label style={lbl}>Gênero</label>
+              <select value={normalizarGenero(form.genero)} onChange={(e) => set("genero", e.target.value)} style={inp}>
+                <option value="">—</option>
+                {GENEROS.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div style={{ flex: "1 1 130px" }}>
+              <label style={lbl}>Função</label>
+              <select value={normalizarFuncao(form.funcao)} onChange={(e) => set("funcao", e.target.value)} style={inp}>
+                <option value="">—</option>
+                {FUNCOES.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+            {campo("Qualificação", "qualificacao", { flex: "1 1 120px", placeholder: "X" })}
           </div>
+
+          {/* ── Conjunto: uma peça por linha, cada uma com o próprio CRLV ──────── */}
+          <div style={{ fontSize: 10.5, color: t.txt2, marginBottom: 4 }}>
+            Conjunto — trocar a placa troca a peça; o que já estiver cadastrado nela vem junto
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+            {SLOTS.map((s) => {
+              const placa = normPlaca(form[s.k]);
+              const v = veicDoForm(placa);
+              const conhecida = placa && veicPorPlaca.has(placa);
+              return (
+                <div key={s.k} style={{ border: `1px solid ${t.borda}`, borderRadius: 9, padding: 10, background: t.card2 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", marginBottom: v.placa || placa ? 8 : 0 }}>
+                    <div style={{ flex: "0 0 130px" }}>
+                      <label style={lbl}>{s.label}</label>
+                      <input value={form[s.k] || ""} placeholder="AAA0000"
+                        onChange={(e) => set(s.k, e.target.value.toUpperCase())}
+                        style={{ ...inp, fontFamily: "var(--font-mono)", letterSpacing: 1 }} />
+                    </div>
+                    {conhecida && <span style={{ fontSize: 10.5, color: t.txt2, paddingBottom: 8 }}>já cadastrada</span>}
+                    {placa && openDocIntake && (
+                      <button onClick={() => openDocIntake("crlv", (d) => aplicarCrlv(s, d))}
+                        title="Envie foto ou PDF do CRLV desta peça"
+                        style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}`, marginBottom: 1 }}>
+                        📄 Ler CRLV
+                      </button>
+                    )}
+                  </div>
+                  {placa && (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {[["marca", "Marca", "1 1 120px"], ["modelo", "Modelo", "1 1 140px"], ["cor", "Cor", "1 1 100px"],
+                        ["ano", "Ano", "0 0 80px"], ["renavam", "RENAVAM", "1 1 130px"]].map(([k, label, flex]) => (
+                        <div key={k} style={{ flex }}>
+                          <label style={lbl}>{label}</label>
+                          <input value={v[k] ?? ""} onChange={(e) => setVeic(placa, { [k]: e.target.value })}
+                            onBlur={k === "renavam" ? (e) => setVeic(placa, { renavam: normalizarRenavam(e.target.value) }) : undefined}
+                            style={inp} />
+                        </div>
+                      ))}
+                      {/* Tanque só do cavalo: na carreta a planilha da embarcadora escreve "X". */}
+                      {(veicPorPlaca.get(placa)?.tipo || s.tipo) === "cavalo" && (
+                        <div style={{ flex: "0 0 110px" }}>
+                          <label style={lbl}>Tanque (L)</label>
+                          <input value={v.tanque_litros ?? ""} placeholder="540"
+                            onChange={(e) => setVeic(placa, { tanque_litros: e.target.value.replace(/\D/g, "") })} style={inp} />
+                        </div>
+                      )}
+                      <div style={{ flex: "1 1 160px" }}>
+                        <label style={lbl}>CPF/CNPJ do responsável</label>
+                        <input value={v.cpf_cnpj_responsavel ?? ""} onChange={(e) => setVeic(placa, { cpf_cnpj_responsavel: e.target.value })} style={inp} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
             {campo("Vínculo", "vinculo", { flex: "1 1 140px" })}
             {campo("Banco", "banco", { flex: "1 1 160px" })}
@@ -217,10 +489,17 @@ export default function MotoristasCad({ ctx, conn }) {
             {campo("Conta", "conta", { flex: "1 1 100px" })}
             {campo("Favorecido", "favorecido", { flex: "1 1 180px" })}
           </div>
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 6 }}>
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 6, flexWrap: "wrap" }}>
             <button onClick={() => setForm(null)} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Cancelar</button>
-            <button onClick={salvar} disabled={salvando} style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvando ? .5 : 1 }}>
+            <button onClick={() => salvar()} disabled={salvando} style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}`, opacity: salvando ? .5 : 1 }}>
               {salvando ? "Salvando..." : "Salvar"}
+            </button>
+            {/* Salvar guarda o que tem; Concluir afirma que está pronto pra enviar —
+                e por isso recusa enquanto houver pendência. */}
+            <button onClick={() => salvar({ concluir: true })} disabled={salvando || pendencias.length > 0}
+              title={pendencias.length ? `Falta: ${pendencias.join(", ")}` : "Marca o cadastro como pronto pra enviar"}
+              style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: pendencias.length ? "not-allowed" : "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvando || pendencias.length ? .45 : 1 }}>
+              Concluir cadastro
             </button>
           </div>
         </div>
@@ -242,7 +521,24 @@ export default function MotoristasCad({ ctx, conn }) {
             </div>
             <div style={{ flex: "1 1 160px", fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>
               {[m.placa1, m.placa2, m.placa3, m.placa4].filter(Boolean).join(" · ") || "sem placa"}
+              {(() => {
+                const vs = dtsPorMotorista.get(m.id) || [];
+                if (!vs.length) return null;
+                const ultima = vs[vs.length - 1];
+                return <div style={{ color: t.ouro }}>DT {ultima.dt}{vs.length > 1 ? ` +${vs.length - 1}` : ""}</div>;
+              })()}
             </div>
+            {(() => {
+              // Mesma conta do form: quem olha a lista já sabe de quem falta documento.
+              const faltas = pendenciasCadastro(m, m._veiculos || []);
+              return (
+                <span title={faltas.length ? `Falta: ${faltas.join(", ")}` : "Pronto pra enviar à embarcadora"}
+                  style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, whiteSpace: "nowrap",
+                    color: faltas.length ? t.warn : t.verde, border: `1px solid ${faltas.length ? t.warn : t.verde}` }}>
+                  {faltas.length ? `falta ${faltas.length}` : "completo"}
+                </span>
+              );
+            })()}
             {m.status_risco && (
               <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, color: STATUS_COR[m.status_risco], border: `1px solid ${STATUS_COR[m.status_risco]}` }}>
                 {STATUS_LABEL[m.status_risco]}
