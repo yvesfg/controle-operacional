@@ -3,7 +3,7 @@ import useVeiculos from "../../hooks/useVeiculos.js";
 import useMotoristas from "../../hooks/useMotoristas.js";
 import EmptyState from "../../components/EmptyState.jsx";
 import { soDigitosPlaca } from "../../veiculos.js";
-import { normalizarRenavam, renavamSuspeito } from "../../cadastroEmbarcadora.js";
+import { normalizarRenavam, renavamSuspeito, cpfCnpjValido, formatarCpfCnpj } from "../../cadastroEmbarcadora.js";
 
 // Veículos — cavalos e carretas, vinculados a um motorista via motorista_id.
 // config_eixos/carroceria/capacidade_m3 só fazem sentido pra tipo=carreta
@@ -251,7 +251,13 @@ export default function VeiculosCad({ ctx, conn }) {
             </div>
             <div style={{ flex: "1 1 170px" }}>
               <label style={lbl}>CPF/CNPJ do responsável</label>
-              <input value={form.cpf_cnpj_responsavel ?? ""} onChange={(e) => set("cpf_cnpj_responsavel", e.target.value)} style={inp} />
+              <input value={form.cpf_cnpj_responsavel ?? ""} placeholder="CPF ou CNPJ"
+                onChange={(e) => set("cpf_cnpj_responsavel", e.target.value)}
+                onBlur={(e) => cpfCnpjValido(e.target.value) && set("cpf_cnpj_responsavel", formatarCpfCnpj(e.target.value))}
+                style={{ ...inp, borderColor: form.cpf_cnpj_responsavel && !cpfCnpjValido(form.cpf_cnpj_responsavel) ? t.warn : t.borda }} />
+              {form.cpf_cnpj_responsavel && !cpfCnpjValido(form.cpf_cnpj_responsavel) && (
+                <div style={{ fontSize: 10, color: t.warn, marginTop: 2 }}>Não é um CPF nem um CNPJ válido</div>
+              )}
             </div>
           </div>
 

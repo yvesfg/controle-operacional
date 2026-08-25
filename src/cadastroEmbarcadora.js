@@ -79,6 +79,49 @@ export function formatarCPF(v) {
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
 }
 
+// ── Validação de CPF/CNPJ ───────────────────────────────────────────────────
+// Contar dígito não basta: na planilha manual apareceu "894864203" (9 dígitos)
+// no CPF/CNPJ do responsável, e CPF com PONTO no lugar do hífen, que ao perder a
+// pontuação vira outro número. O dígito verificador é o que separa "número
+// errado" de "número certo" — e é ele que a embarcadora confere.
+export function cpfValido(v) {
+  const d = soDigitos(v);
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  const dv = (ate) => {
+    let soma = 0;
+    for (let i = 0; i < ate; i++) soma += Number(d[i]) * (ate + 1 - i);
+    const r = (soma * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
+}
+
+export function cnpjValido(v) {
+  const d = soDigitos(v);
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const dv = (ate) => {
+    let peso = ate - 7, soma = 0;
+    for (let i = 0; i < ate; i++) {
+      soma += Number(d[i]) * peso;
+      peso = peso === 2 ? 9 : peso - 1;
+    }
+    const r = soma % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return dv(12) === Number(d[12]) && dv(13) === Number(d[13]);
+}
+
+// O responsável pelo veículo tanto pode ser pessoa quanto empresa — nos arquivos
+// reais aparecem os dois ("436.364.893-72" e "02.191.966/0001-89").
+export const cpfCnpjValido = (v) => cpfValido(v) || cnpjValido(v);
+
+export function formatarCpfCnpj(v) {
+  const d = soDigitos(v);
+  if (d.length === 11) return formatarCPF(d);
+  if (d.length === 14) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
+  return String(v ?? "").trim();
+}
+
 // RENAVAM tem 11 dígitos e zero à esquerda É significativo — a planilha manual
 // perdeu o zero em pelo menos dois veículos ("549838660" e "894864203") porque a
 // célula era numérica. Guardar como texto não basta: quem digita também omite.
@@ -123,7 +166,9 @@ export function pendenciasCadastro(motorista = {}, veiculos = []) {
   FALTA_MOTORISTA.forEach(([k, label]) => {
     if (!String(motorista[k] ?? "").trim()) faltas.push(label);
   });
-  if (motorista.cpf && cpfDigitos(motorista.cpf).length !== 11) faltas.push("CPF incompleto");
+  if (motorista.cpf && !cpfValido(motorista.cpf)) {
+    faltas.push(cpfDigitos(motorista.cpf).length !== 11 ? "CPF incompleto" : "CPF inválido");
+  }
 
   const cavalo = veiculos.filter((v) => v.tipo === "cavalo");
   if (!cavalo.length) faltas.push("Placa do cavalo");
@@ -134,6 +179,10 @@ export function pendenciasCadastro(motorista = {}, veiculos = []) {
       if (!String(v[k] ?? "").trim()) faltas.push(`${label} do ${quem}`);
     });
     if (renavamSuspeito(v.renavam)) faltas.push(`RENAVAM do ${quem} não tem 11 dígitos`);
+    // O responsável é coluna obrigatória nos dois modelos da embarcadora, e foi
+    // onde a planilha manual deixou "894864203" — nem CPF nem CNPJ.
+    if (!String(v.cpf_cnpj_responsavel ?? "").trim()) faltas.push(`CPF/CNPJ do responsável do ${quem}`);
+    else if (!cpfCnpjValido(v.cpf_cnpj_responsavel)) faltas.push(`CPF/CNPJ do responsável do ${quem} é inválido`);
     // Tanque só é exigido do cavalo — na carreta a planilha da embarcadora
     // escreve "X" (não existe tanque pra informar).
     if (v.tipo === "cavalo" && !String(v.tanque_litros ?? "").trim()) faltas.push(`Tanque do ${quem}`);

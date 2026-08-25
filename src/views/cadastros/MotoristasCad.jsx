@@ -7,7 +7,7 @@ import ExportarCadastroPanel from "./ExportarCadastroPanel.jsx";
 import {
   GENEROS, FUNCOES, UFS, normalizarGenero, normalizarFuncao, normalizarUF,
   normalizarRenavam, pendenciasCadastro, cnhVencida, diasParaVencerCnh, DIAS_AVISO_CNH,
-  cpfDigitos, formatarCPF,
+  cpfDigitos, formatarCPF, cpfValido, cpfCnpjValido, formatarCpfCnpj,
 } from "../../cadastroEmbarcadora.js";
 
 // Motoristas — tela ÚNICA do cadastro de motorista (a aba do sidebar foi removida:
@@ -393,7 +393,20 @@ export default function MotoristasCad({ ctx, conn }) {
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
             {campo("Nome", "nome", { flex: "1 1 220px" })}
-            {campo("CPF", "cpf", { flex: "1 1 140px" })}
+            {/* CPF com dígito verificador conferido: é o mesmo campo onde a
+                planilha manual trouxe "844.951.701.04" (ponto no lugar do hífen,
+                que ao perder a pontuação vira outro número). */}
+            <div style={{ flex: "1 1 140px" }}>
+              <label style={lbl}>CPF</label>
+              <input value={form.cpf ?? ""} onChange={(e) => set("cpf", e.target.value)}
+                onBlur={(e) => cpfValido(e.target.value) && set("cpf", formatarCPF(e.target.value))}
+                style={{ ...inp, borderColor: form.cpf && !cpfValido(form.cpf) ? t.warn : t.borda }} />
+              {form.cpf && !cpfValido(form.cpf) && (
+                <div style={{ fontSize: 10, color: t.warn, marginTop: 2 }}>
+                  {cpfDigitos(form.cpf).length !== 11 ? "CPF incompleto" : "Dígito verificador não confere"}
+                </div>
+              )}
+            </div>
             {campo("Telefone", "tel", { flex: "1 1 140px" })}
             <div style={{ flex: "1 1 140px" }}>
               <label style={lbl}>Status</label>
@@ -492,7 +505,13 @@ export default function MotoristasCad({ ctx, conn }) {
                       )}
                       <div style={{ flex: "1 1 160px" }}>
                         <label style={lbl}>CPF/CNPJ do responsável</label>
-                        <input value={v.cpf_cnpj_responsavel ?? ""} onChange={(e) => setVeic(placa, { cpf_cnpj_responsavel: e.target.value })} style={inp} />
+                        <input value={v.cpf_cnpj_responsavel ?? ""} placeholder="CPF ou CNPJ"
+                          onChange={(e) => setVeic(placa, { cpf_cnpj_responsavel: e.target.value })}
+                          onBlur={(e) => cpfCnpjValido(e.target.value) && setVeic(placa, { cpf_cnpj_responsavel: formatarCpfCnpj(e.target.value) })}
+                          style={{ ...inp, borderColor: v.cpf_cnpj_responsavel && !cpfCnpjValido(v.cpf_cnpj_responsavel) ? t.warn : t.borda }} />
+                        {v.cpf_cnpj_responsavel && !cpfCnpjValido(v.cpf_cnpj_responsavel) && (
+                          <div style={{ fontSize: 10, color: t.warn, marginTop: 2 }}>Não é um CPF nem um CNPJ válido</div>
+                        )}
                       </div>
                     </div>
                   )}

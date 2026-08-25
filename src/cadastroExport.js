@@ -8,7 +8,7 @@
 //
 // O layout é dado (tabela cadastro_templates, migration 071), então este módulo
 // não sabe nada sobre "Suzano": ele lê seções, escopos e colunas.
-import { conjuntoDaViagem, cpfDigitos, formatarCPF, pendenciasCadastro, normalizarRenavam, soDigitos } from "./cadastroEmbarcadora.js";
+import { conjuntoDaViagem, cpfDigitos, formatarCPF, formatarCpfCnpj, pendenciasCadastro, normalizarRenavam, soDigitos } from "./cadastroEmbarcadora.js";
 
 const UF_EXTENSO = {
   AC:"ACRE", AL:"ALAGOAS", AP:"AMAPÁ", AM:"AMAZONAS", BA:"BAHIA", CE:"CEARÁ",
@@ -33,13 +33,6 @@ const telefoneBR = (v) => {
   return String(v ?? "").trim();
 };
 
-const cpfCnpj = (v) => {
-  const d = soDigitos(v);
-  if (d.length === 11) return formatarCPF(d);
-  if (d.length === 14) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
-  return String(v ?? "").trim();
-};
-
 function formatar(valor, col) {
   const bruto = col.fixo !== undefined ? col.fixo : valor;
   const vazio = bruto === null || bruto === undefined || String(bruto).trim() === "";
@@ -47,7 +40,7 @@ function formatar(valor, col) {
   switch (col.formato) {
     case "data":      return dataBR(bruto);
     case "cpf":       return formatarCPF(bruto);
-    case "cpf_cnpj":  return cpfCnpj(bruto);
+    case "cpf_cnpj":  return formatarCpfCnpj(bruto);
     case "telefone":  return telefoneBR(bruto);
     case "uf_sigla":  return String(bruto).toUpperCase();
     case "uf_extenso":return UF_EXTENSO[String(bruto).toUpperCase()] || String(bruto).toUpperCase();
