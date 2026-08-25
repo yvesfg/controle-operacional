@@ -140,5 +140,30 @@ export function matrizesDoTemplate(template, itens) {
   }));
 }
 
+// ── Assinatura ──────────────────────────────────────────────────────────────
+// Hash do que foi pro arquivo — é o que separa "já enviei e nada mudou" de "já
+// enviei, mas trocou a carreta". Independe do template de propósito: o mesmo
+// motorista enviado nos dois modelos da Suzano é o mesmo cadastro.
+//
+// djb2: hash de igualdade, não de segurança. Só precisa mudar quando o conteúdo
+// muda, e cabe numa coluna text sem trazer dependência nova.
+const hash = (s) => {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+};
+
+const CAMPOS_ASSINATURA_MOTORISTA = ["nome", "cpf", "cnh_numero", "cnh_categoria", "cnh_validade", "cnh_uf", "genero", "data_nascimento", "tel", "funcao", "qualificacao"];
+const CAMPOS_ASSINATURA_VEICULO = ["placa", "tipo", "marca", "modelo", "cor", "ano", "renavam", "tanque_litros", "cpf_cnpj_responsavel"];
+
+export function assinaturaDoItem(item) {
+  const m = item?.motorista || {};
+  const partes = [
+    CAMPOS_ASSINATURA_MOTORISTA.map((k) => String(m[k] ?? "").trim()).join("|"),
+    ...(item?.veiculos || []).map((v) => CAMPOS_ASSINATURA_VEICULO.map((k) => String(v[k] ?? "").trim()).join("|")),
+  ];
+  return hash(partes.join("¬"));
+}
+
 export const nomeDoArquivo = (template, quando = new Date()) =>
   `Cadastro ${template?.embarcadora || "embarcadora"} ${quando.toLocaleDateString("pt-BR").replace(/\//g, ".")}`;

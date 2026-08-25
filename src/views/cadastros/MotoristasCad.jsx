@@ -6,8 +6,8 @@ import EmptyState from "../../components/EmptyState.jsx";
 import ExportarCadastroPanel from "./ExportarCadastroPanel.jsx";
 import {
   GENEROS, FUNCOES, UFS, normalizarGenero, normalizarFuncao, normalizarUF,
-  normalizarRenavam, pendenciasCadastro, cnhVencida, cpfDigitos, formatarCPF,
-  viagensDoMotorista,
+  normalizarRenavam, pendenciasCadastro, cnhVencida, diasParaVencerCnh, DIAS_AVISO_CNH,
+  cpfDigitos, formatarCPF,
 } from "../../cadastroEmbarcadora.js";
 
 // Motoristas — tela ÚNICA do cadastro de motorista (a aba do sidebar foi removida:
@@ -362,6 +362,12 @@ export default function MotoristasCad({ ctx, conn }) {
             {cnhVencida(form.cnh_validade) && (
               <span style={{ fontSize: 10.5, fontWeight: 700, color: t.danger }}>⚠ CNH vencida</span>
             )}
+            {(() => {
+              const dias = diasParaVencerCnh(form.cnh_validade);
+              return dias !== null && dias >= 0 && dias <= DIAS_AVISO_CNH
+                ? <span style={{ fontSize: 10.5, fontWeight: 700, color: t.warn }}>⚠ CNH vence em {dias} dia(s)</span>
+                : null;
+            })()}
           </div>
 
           {/* Segunda vez que o mesmo CPF chega: o cadastro já existe. */}

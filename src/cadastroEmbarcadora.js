@@ -138,34 +138,33 @@ export function pendenciasCadastro(motorista = {}, veiculos = []) {
     // escreve "X" (não existe tanque pra informar).
     if (v.tipo === "cavalo" && !String(v.tanque_litros ?? "").trim()) faltas.push(`Tanque do ${quem}`);
   });
+
+  // CNH vencida a embarcadora recusa — mandar assim é retrabalho garantido, então
+  // entra como pendência e não como aviso.
+  if (motorista.cnh_validade && cnhVencida(motorista.cnh_validade)) faltas.push("CNH vencida");
   return faltas;
 }
 
-// CNH vencida derruba o cadastro na embarcadora — vale avisar antes de enviar.
 export function cnhVencida(validade, hoje = new Date()) {
   if (!validade) return false;
   const d = new Date(`${String(validade).slice(0, 10)}T00:00:00`);
   return !Number.isNaN(d.getTime()) && d < hoje;
 }
 
-// ── DT ──────────────────────────────────────────────────────────────────────
-// A DT é a chave que o analista usa pra falar de uma carga, então ela precisa
-// aparecer no cadastro e servir de filtro. O vínculo DT->motorista é o MESMO
-// que o ModalWhatsApp já usa: CPF primeiro (só dígitos), depois nome exato,
-// depois placa — nessa ordem, porque CPF é o único estável.
-export function viagensDoMotorista(DADOS = [], motorista = {}) {
-  const cpf = cpfDigitos(motorista.cpf);
-  const nome = String(motorista.nome || "").toUpperCase().trim();
-  const placas = [motorista.placa1, motorista.placa2, motorista.placa3, motorista.placa4]
-    .filter(Boolean).map((p) => String(p).toUpperCase().replace(/[^A-Z0-9]/g, ""));
-  return (DADOS || []).filter((reg) => {
-    if (cpf && cpfDigitos(reg.cpf) === cpf) return true;
-    if (nome && String(reg.nome || "").toUpperCase().trim() === nome) return true;
-    const p = String(reg.placa || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    return !!p && placas.includes(p);
-  });
+// Dias até vencer (negativo = já venceu, null = sem data). A tela usa pra avisar
+// antes do envio: CNH que vence em duas semanas volta como problema logo depois
+// de o cadastro ter sido aceito.
+export function diasParaVencerCnh(validade, hoje = new Date()) {
+  if (!validade) return null;
+  const d = new Date(`${String(validade).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  return Math.round((d - base) / 86400000);
 }
 
+export const DIAS_AVISO_CNH = 30;
+
+// ── Conjunto da viagem ─────────────────────────────────────────
 // As placas que valem pro envio são as DA VIAGEM, não as do cadastro: o motorista
 // troca de carreta entre uma carga e outra, e a embarcadora quer o conjunto que
 // rodou naquela DT. O cadastro entra só como preenchimento do que a DT não traz.
