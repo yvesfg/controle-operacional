@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import ReactDOM from "react-dom";
 import {
@@ -171,14 +172,12 @@ export default function ContratosFrete({ ctx, conn }) {
       <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar contrato, CTRC, agregado, placa"
         style={{ fontSize: 12.5, padding: "8px 12px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.card, color: t.txt, minWidth: 240 }} />
       <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onArquivo} style={{ display: "none" }} />
-      <button onClick={escolherArquivo} disabled={importing}
-        style={{ fontSize: 12.5, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer", border: "none", background: "var(--accent)", color: t.onPrimary || "#181a20", fontFamily: "inherit" }}>
+      <Button variant="primary" size="sm" onClick={escolherArquivo} disabled={importing}>
         {importing ? "Lendo..." : "Importar contratos"}
-      </button>
-      <button onClick={() => setRelOpen(true)} disabled={!contratos.length}
-        style={{ fontSize: 12.5, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: contratos.length ? "pointer" : "not-allowed", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit", opacity: contratos.length ? 1 : .5 }}>
+      </Button>
+      <Button variant="secondary" size="sm" onClick={() => setRelOpen(true)} disabled={!contratos.length}>
         Relatório
-      </button>
+      </Button>
     </>
   );
 
@@ -260,14 +259,12 @@ export default function ContratosFrete({ ctx, conn }) {
                     {p.agregados.length ? ` · ${p.agregados.slice(0, 2).join(", ")}${p.agregados.length > 2 ? ` +${p.agregados.length - 2}` : ""}` : ""}
                   </span>
                   <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-                    <button onClick={() => decidirTrecho(p.empresa_emissao, p.trecho, false)} disabled={salvando}
-                      style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 8, cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.verde}`, background: "transparent", color: t.verde, fontFamily: "inherit" }}>
+                    <Button variant="success-outline" size="sm" onClick={() => decidirTrecho(p.empresa_emissao, p.trecho, false)} disabled={salvando}>
                       É nossa operação
-                    </button>
-                    <button onClick={() => decidirTrecho(p.empresa_emissao, p.trecho, true)} disabled={salvando}
-                      style={{ fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 8, cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => decidirTrecho(p.empresa_emissao, p.trecho, true)} disabled={salvando}>
                       Não é nossa
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
@@ -363,12 +360,9 @@ export default function ContratosFrete({ ctx, conn }) {
                     </div>
                     {/* Enquanto o TMS não é corrigido, o vínculo registra QUAL é o contrato: o
                         CTe sai da fila de "sem contrato" e a conferência mostra a margem real. */}
-                    <button onClick={() => onVincularAoCte(c, false)} disabled={vinculando === c.cte_alvo?.id}
-                      style={{ marginTop: 7, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8,
-                        cursor: vinculando === c.cte_alvo?.id ? "wait" : "pointer", fontFamily: "inherit",
-                        border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
+                    <Button variant="success-outline" size="sm" onClick={() => onVincularAoCte(c, false)} disabled={vinculando === c.cte_alvo?.id} style={{ marginTop: 7 }}>
                       {vinculando === c.cte_alvo?.id ? "Vinculando..." : `Vincular ao CTe ${c.cte_alvo?.ctrc || c.cte_ctrc}`}
-                    </button>
+                    </Button>
                   </div>
                 )}
                 {c.problemas.includes("cte_contrato_vinculado") && (
@@ -378,12 +372,9 @@ export default function ContratosFrete({ ctx, conn }) {
                       real ({money(c.frete_dos_ctes - c.valor)} de saldo). Falta lançar {money(c.valor)} no TMS e
                       reimportar pro número vir da fonte.
                     </div>
-                    <button onClick={() => onVincularAoCte(c, true)} disabled={vinculando === c.cte_alvo?.id}
-                      style={{ marginTop: 7, fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
-                        cursor: vinculando === c.cte_alvo?.id ? "wait" : "pointer", fontFamily: "inherit",
-                        border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                    <Button variant="secondary" size="sm" onClick={() => onVincularAoCte(c, true)} disabled={vinculando === c.cte_alvo?.id} style={{ marginTop: 7 }}>
                       <Icon n="undo" s={13} /> Desfazer vínculo
-                    </button>
+                    </Button>
                   </div>
                 )}
                 {/* A decisão do trecho também mora aqui, e não só no bloco do topo: o badge
@@ -404,16 +395,12 @@ export default function ContratosFrete({ ctx, conn }) {
                           : " inteiro"} e para as próximas importações.
                       </div>
                       <div style={{ display: "flex", gap: 6, marginTop: 7, flexWrap: "wrap" }}>
-                        <button onClick={() => decidirTrecho(up(c.empresa_emissao), up(c.trecho), false)} disabled={salvando}
-                          style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, fontFamily: "inherit",
-                            cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
+                        <Button variant="success-outline" size="sm" onClick={() => decidirTrecho(up(c.empresa_emissao), up(c.trecho), false)} disabled={salvando}>
                           {salvando ? "Salvando..." : "É nossa operação"}
-                        </button>
-                        <button onClick={() => decidirTrecho(up(c.empresa_emissao), up(c.trecho), true)} disabled={salvando}
-                          style={{ fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8, fontFamily: "inherit",
-                            cursor: salvando ? "wait" : "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => decidirTrecho(up(c.empresa_emissao), up(c.trecho), true)} disabled={salvando}>
                           Não é nossa
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );
@@ -428,12 +415,11 @@ export default function ContratosFrete({ ctx, conn }) {
         <div style={{ marginTop: 10, fontSize: 10.5, color: t.txt2, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <span>Fora da conferência neste mês:</span>
           {ignoradosTrecho.map((g) => (
-            <button key={`${g.empresa_emissao}-${g.trecho}`}
+            <Button variant="secondary" size="sm" key={`${g.empresa_emissao}-${g.trecho}`}
               onClick={() => decidirTrecho(g.empresa_emissao, g.trecho, null)}
-              title="Voltar a perguntar sobre este trecho"
-              style={{ fontSize: 10, fontFamily: "var(--font-mono)", padding: "3px 8px", borderRadius: 20, cursor: "pointer", border: `1px solid ${hexRgb(t.borda, .6)}`, background: "transparent", color: t.txt2 }}>
+              title="Voltar a perguntar sobre este trecho">
               {g.trecho} ({g.contratos}) <Icon n="x" s={13} />
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -460,14 +446,12 @@ export default function ContratosFrete({ ctx, conn }) {
               )}
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
-              <button onClick={() => setPreview(null)} disabled={importing}
-                style={{ fontSize: 12, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>
+              <Button variant="secondary" size="sm" onClick={() => setPreview(null)} disabled={importing}>
                 Cancelar
-              </button>
-              <button onClick={confirmarImport} disabled={importing}
-                style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer", border: "none", background: "var(--accent)", color: t.onPrimary || "#181a20", fontFamily: "inherit" }}>
+              </Button>
+              <Button variant="primary" size="sm" onClick={confirmarImport} disabled={importing}>
                 {importing ? "Importando..." : "Importar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

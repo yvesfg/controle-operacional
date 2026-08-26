@@ -121,7 +121,7 @@ export default function ModalMotorista({ ctx }) {
               )}
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
-              <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+              <Button variant="secondary" size="md" onClick={()=>setModalOpen(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
               <button onClick={()=>{
                 const m = {...formData};
                 if (!m.nome) { showToast("Nome obrigatório","warn"); return; }

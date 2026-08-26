@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO, PERMS_LISTA } from "../constants.js";
@@ -310,7 +311,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     return (
       <div key={p.id} style={{...card, borderColor: semBase ? hexRgb(t.danger,.4) : t.borda}}>
         <div style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",flexWrap:"wrap"}}>
-          <button onClick={()=>setAberto(exp?null:p.id)} style={{display:"flex",alignItems:"center",gap:10,background:"transparent",border:"none",cursor:"pointer",textAlign:"left",flex:1,minWidth:200,padding:0}}>
+          <Button variant="ghost" size="sm" onClick={()=>setAberto(exp?null:p.id)} style={{ flex: 1, minWidth: 200 }}>
             <div style={{width:34,height:34,borderRadius:"50%",background:hexRgb(t.ouro,.18),color:t.ouro,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,flexShrink:0}}>{(p.nome||p.email||"?").charAt(0).toUpperCase()}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:700,fontSize:13,color:t.txt,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
@@ -327,7 +328,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                 </div>
               )}
             </div>
-          </button>
+          </Button>
 
           <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:260}}>
             {p.status === "aprovado" && (p.acessos.length === 0
@@ -349,7 +350,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             )}
           </div>
 
-          <button onClick={()=>setAberto(exp?null:p.id)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:12,cursor:"pointer",padding:"4px"}}>{exp ? <Icon n="chevron-up" s={12} /> : <Icon n="chevron-down" s={12} />}</button>
+          <Button variant="ghost" size="sm" onClick={()=>setAberto(exp?null:p.id)}>{exp ? <Icon n="chevron-up" s={12} /> : <Icon n="chevron-down" s={12} />}</Button>
         </div>
 
         {exp && (
@@ -367,7 +368,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                     <input value={resetSenha.senha} onChange={e=>setResetSenha(s=>({...s,senha:e.target.value}))} style={{...inp,width:140,fontFamily:"var(--font-mono)"}} />
                     <button onClick={()=>setResetSenha(s=>({...s,senha:gerarSenhaAleatoria()}))} title="Gerar outra" style={{...css.hBtn,padding:"0 8px",fontSize:11}}><Icon n="refresh" s={13} /></button>
                     <button disabled={buscando} onClick={confirmarResetSenha} style={{...btnAcao(t.verde)}}>Salvar nova senha</button>
-                    <button onClick={()=>setResetSenha(null)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer"}}>Cancelar</button>
+                    <Button variant="ghost" size="sm" onClick={()=>setResetSenha(null)}>Cancelar</Button>
                   </div>
                 )}
               </div>
@@ -389,7 +390,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                       </select>
                     )}
                     <button onClick={()=>salvarAcesso(a,{ativo:!a.ativo})} style={{...chip(a.ativo),color:"var(--color-text-inverse)",borderColor:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)"}}>{a.ativo?"Ativo":"Inativo"}</button>
-                    <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover este registro de módulo"><Icon n="x" s={13} /></button>
+                    <Button variant="ghost" size="md" onClick={()=>remover(a.id)}  title="Remover este registro de módulo"><Icon n="x" s={13} /></Button>
                   </div>
 
                   {isCO && (
@@ -425,11 +426,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                           tem a aba — configurar KPI de quem não vê o dashboard é ruído. */}
                       {permsCO.dashboard !== false && (
                         <div>
-                          <button onClick={()=>setPainelAberto(x=>x===a.id?null:a.id)}
-                            style={{background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",padding:0}}>
+                          <Button variant="ghost" size="sm" onClick={()=>setPainelAberto(x=>x===a.id?null:a.id)}>
                             {painelAberto===a.id ? "Esconder painel do dashboard" : "Configurar painel do dashboard"}
                             {contarOcultos(a.config?.dash) > 0 && <span style={{color:t.txt2}}> · {contarOcultos(a.config?.dash)} oculto(s)</span>}
-                          </button>
+                          </Button>
                           {painelAberto===a.id && (
                             <div style={{marginTop:10,border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 12px"}}>
                               <div style={{fontSize:10.5,color:t.txt2,marginBottom:10,lineHeight:1.5}}>
@@ -560,10 +560,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           </div>
           {form.bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}><Icon n="alert" s={13} /> Sem base ele não vê dado nenhum</div>}
 
-          <button onClick={()=>setForm(f=>({...f,permsAberto:!f.permsAberto}))}
-            style={{marginTop:10,background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",padding:0}}>
+          <Button variant="ghost" size="sm" onClick={()=>setForm(f=>({...f,permsAberto:!f.permsAberto}))} style={{ marginTop: 10 }}>
             {form.permsAberto ? "Esconder permissões" : "Ajustar permissões (opcional)"}
-          </button>
+          </Button>
           {form.permsAberto && (
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
               {PERMS_LISTA.map(({key,lbl})=>{
@@ -576,11 +575,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           {/* Painel já na criação: no caminho do convite a config viaja junto e é
               aplicada no 1º login — não dá pra ajustar depois sem reconvidar. */}
           {permsForm.dashboard !== false && <>
-            <button onClick={()=>setForm(f=>({...f,dashAberto:!f.dashAberto}))}
-              style={{marginTop:8,background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",padding:0,display:"block"}}>
+            <Button variant="ghost" size="sm" onClick={()=>setForm(f=>({...f,dashAberto:!f.dashAberto}))} style={{ marginTop: 8 }}>
               {form.dashAberto ? "Esconder painel do dashboard" : "Escolher o que ele vê no dashboard (opcional)"}
               {contarOcultos(form.dash) > 0 && <span style={{color:t.txt2}}> · {contarOcultos(form.dash)} oculto(s)</span>}
-            </button>
+            </Button>
             {form.dashAberto && (
               <div style={{marginTop:8,border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 12px"}}>
                 {[["kpis","Indicadores (KPIs)",DASH_KPIS],["blocos","Blocos e painéis",DASH_BLOCOS]].map(([grupo,titulo,lista])=>(
@@ -649,12 +647,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
       </div>
 
       <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <button disabled={salvando} onClick={salvarNovo}
-          style={{background:t.ouro,color:t.onPrimary,border:"none",borderRadius:8,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:salvando?"default":"pointer",opacity:salvando?.6:1}}>
+        <Button variant="primary" size="sm" disabled={salvando} onClick={salvarNovo}>
           {salvando ? "Salvando…" : form.entrada === "google" ? "Liberar acesso por e-mail" : "Criar usuário de teste"}
-        </button>
-        <button onClick={()=>{setAddOpen(false); setForm(FORM_VAZIO());}}
-          style={{background:"transparent",border:"none",color:t.txt2,fontSize:12,cursor:"pointer"}}>Cancelar</button>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={()=>{setAddOpen(false); setForm(FORM_VAZIO());}}>Cancelar</Button>
       </div>
     </div>
   );
@@ -699,7 +695,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               {avisoDe(conviteCriado.email).texto}
             </div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}><BotoesAviso email={conviteCriado.email}/></div>
-            <button onClick={()=>setConviteCriado(null)} style={{marginTop:8,background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Fechar</button>
+            <Button variant="ghost" size="sm" onClick={()=>setConviteCriado(null)} style={{ marginTop: 8 }}>Fechar</Button>
           </div>
         )}
 
@@ -713,7 +709,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             {credenciaisCriadas.needsEmailConfirm && (
               <div style={{fontSize:10.5,color:t.danger,marginTop:8,lineHeight:1.5}}><Icon n="alert" s={13} /> Este projeto Supabase exige confirmação de email — esse usuário fictício nunca vai confirmar. Peça pro admin do Supabase desativar "Confirm email" em Authentication <Icon n="arrow-right" s={13} /> Providers <Icon n="arrow-right" s={13} /> Email pra esse login funcionar.</div>
             )}
-            <button onClick={()=>setCredenciaisCriadas(null)} style={{marginTop:8,background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Fechar</button>
+            <Button variant="ghost" size="sm" onClick={()=>setCredenciaisCriadas(null)} style={{ marginTop: 8 }}>Fechar</Button>
           </div>
         )}
 
@@ -747,9 +743,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               {secTitulo(t.danger, `Acesso negado (${negadosTd.length})`)}
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{negados.map(renderUserCard)}</div>
               {negadosTd.length > NEGADOS_PREVIA && (
-                <button onClick={()=>setVerTodosNegados(v=>!v)} style={{marginTop:8,background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>
+                <Button variant="ghost" size="sm" onClick={()=>setVerTodosNegados(v=>!v)} style={{ marginTop: 8 }}>
                   {verTodosNegados ? "Mostrar só os últimos" : `Ver todos (${negadosTd.length})`}
-                </button>
+                </Button>
               )}
             </div>
           )}

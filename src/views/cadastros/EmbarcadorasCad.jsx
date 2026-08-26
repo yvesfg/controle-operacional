@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../../design-system/components/Button.jsx";
 import useEmbarcadoras from "../../hooks/useEmbarcadoras.js";
 import { formatCNPJ, soDigitosCNPJ } from "../../embarcadoras.js";
 import { consultarCNPJ, nomeSugerido } from "../../receitaCnpj.js";
@@ -128,10 +129,9 @@ export default function EmbarcadorasCad({ ctx, conn }) {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CNPJ ou cidade"
           style={{ ...inp, flex: "1 1 220px", width: "auto" }} />
-        <button onClick={novo}
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none" }}>
+        <Button variant="primary" size="sm" onClick={novo}>
           + Nova embarcadora
-        </button>
+        </Button>
       </div>
 
       {form && (
@@ -181,14 +181,12 @@ export default function EmbarcadorasCad({ ctx, conn }) {
           </div>
 
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 14 }}>
-            <button onClick={() => setForm(null)}
-              style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+            <Button variant="secondary" size="sm" onClick={() => setForm(null)}>
               Cancelar
-            </button>
-            <button onClick={salvar} disabled={salvando}
-              style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvando ? .5 : 1 }}>
+            </Button>
+            <Button variant="primary" size="sm" onClick={salvar} disabled={salvando}>
               {salvando ? "Salvando..." : "Salvar"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -220,10 +218,9 @@ export default function EmbarcadorasCad({ ctx, conn }) {
               </div>
             )}
             <Toggle checked={!!e.ativo} onChange={(v) => setAtivo(e.cnpj, v).catch((err) => onErro("Erro: " + err.message))} />
-            <button onClick={() => editar(e)}
-              style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>
+            <Button variant="secondary" size="sm" onClick={() => editar(e)}>
               Editar
-            </button>
+            </Button>
           </div>
         ))}
       </div>

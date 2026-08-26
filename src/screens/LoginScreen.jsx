@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Toast from "../components/Toast.jsx";
 import { DESIGN, hexRgb } from "../constants.js";
 import { loginGoogle, loginTestUser } from "../supabaseAuth.js";
@@ -70,9 +71,9 @@ export default function LoginScreen({
         </button>
 
         {!modoTeste ? (
-          <button onClick={()=>setModoTeste(true)} style={{background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3,marginBottom:16,alignSelf:"center"}}>
+          <Button variant="ghost" size="sm" onClick={()=>setModoTeste(true)} style={{ marginBottom: 16, alignSelf: "center" }}>
             Entrar com usuário de teste
-          </button>
+          </Button>
         ) : (
           <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
             {testMsg && (
@@ -85,9 +86,9 @@ export default function LoginScreen({
               style={{background:t.inputBg,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"9px 11px",color:t.txt,fontSize:12}} />
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>{setModoTeste(false);setTestMsg(null);}} style={{flex:1,...css.hBtn,fontSize:11,padding:"8px"}}>Cancelar</button>
-              <button disabled={entrando} onClick={entrarTeste} style={{flex:2,background:t.ouro,color:t.onPrimary,border:"none",borderRadius:DESIGN.r.inp,padding:"8px",fontSize:12,fontWeight:700,cursor:entrando?"default":"pointer",opacity:entrando?.6:1}}>
+              <Button variant="primary" size="sm" disabled={entrando} onClick={entrarTeste} style={{ flex: 2 }}>
                 {entrando ? "Entrando…" : "Entrar"}
-              </button>
+              </Button>
             </div>
           </div>
         )}

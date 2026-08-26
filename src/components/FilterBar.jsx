@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 
 // FilterBar — barra de filtro padrão (Ano / Mês / Origem / Período + atalhos rápidos).
 // Uso: <FilterBar ano={} onAno={} mes={} onMes={} origens={} origem={} onOrigem={}
@@ -104,10 +105,9 @@ export default function FilterBar({
       <input type="date" className="ds-input ds-input--sm" value={fim} onChange={e => handleFim(e.target.value)}
         style={{ flex: "1 1 110px", minWidth: 0 }} />
       {temFiltro && (
-        <button type="button" onClick={handleClear}
-          style={{ fontSize: 9, padding: "4px 8px", borderRadius: 6, border: "1px solid var(--border)", background: "transparent", color: "var(--text3)", cursor: "pointer", fontFamily: "inherit" }}>
+        <Button variant="secondary" size="sm" type="button" onClick={handleClear}>
           &#10005; Limpar
-        </button>
+        </Button>
       )}
       {extra}
       {count != null && (

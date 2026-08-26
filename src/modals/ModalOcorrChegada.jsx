@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 
 export default function ModalOcorrChegada({ ctx }) {
   const {
@@ -25,9 +26,9 @@ export default function ModalOcorrChegada({ ctx }) {
             <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>Motorista Chegou ao Cliente</div>
             <div style={{fontSize:10,color:"var(--cat-amber)",fontWeight:600}}>{"Ocorrência/RO — registrar agora?"}</div>
           </div>
-          <button onClick={()=>setOcorrChegadaAlert(false)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+          <Button variant="ghost" size="sm" onClick={()=>setOcorrChegadaAlert(false)}>
             {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-          </button>
+          </Button>
         </div>
         <div style={{fontSize:10,color:t.txt2,marginBottom:14,background:t.bg,borderRadius:DESIGN.r.sm,padding:"8px 12px",border:`1px solid ${t.borda}`,lineHeight:1.7}}>
           A <strong style={{color:t.txt}}>{"Ocorrência (RO)"}</strong> é inerente à existência de NFD e deve ser registrada a partir da chegada do motorista ao cliente. Se houver RO, preencha o número abaixo.

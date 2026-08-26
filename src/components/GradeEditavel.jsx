@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { useDragOrdem } from "../hooks/useDragOrdem.js";
 import { ordenar, setOrdem, setVisivel, getTamanho, setTamanho, TAMANHOS, TAMANHO_ROTULO } from "../dashboardConfig.js";
 import Icon from "./Icon.jsx";
@@ -42,16 +43,10 @@ export function GavetaOcultos({ ocultos, tipo, cfg, onSalvar, t, isMobile, vazio
         {ocultos.length ? "Fora do painel" : vazioTexto}
       </span>
       {ocultos.map(o => (
-        <button key={o.id} onClick={() => onSalvar(setVisivel(cfg, tipo, o.id, true))}
-          title={`Colocar ${o.label} de volta`}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 5, cursor: "pointer",
-            background: "transparent", border: `1px solid ${t.borda}`, borderRadius: 8,
-            color: t.txt2, fontSize: 11, fontFamily: "inherit",
-            padding: isMobile ? "10px 12px" : "6px 10px",
-          }}>
+        <Button variant="secondary" size="sm" key={o.id} onClick={() => onSalvar(setVisivel(cfg, tipo, o.id, true))}
+          title={`Colocar ${o.label} de volta`}>
           <span style={{ color: t.ouro, fontWeight: 700, fontSize: 13, lineHeight: 1 }}>+</span> {o.label}
-        </button>
+        </Button>
       ))}
     </div>
   );

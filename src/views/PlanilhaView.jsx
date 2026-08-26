@@ -7,6 +7,7 @@
  *                t, isMobile, ExportMenu }
  */
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import { parseValorBR } from "../utils.js";
@@ -238,13 +239,13 @@ export default function PlanilhaView({ ctx }) {
         {planilhaFiltroStatus && (
           <span className="pv-filter-pill active" style={{ display: "flex", alignItems: "center", gap: 4 }}>
             Status: {planilhaFiltroStatus}
-            <button onClick={() => { setPlanilhaFiltroStatus(""); setPlanilhaPagina(1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 11, padding: 0, marginLeft: 2 }}>×</button>
+            <Button variant="ghost" size="sm" onClick={() => { setPlanilhaFiltroStatus(""); setPlanilhaPagina(1); }} style={{ marginLeft: 2 }}>×</Button>
           </span>
         )}
         {planilhaFiltroDestino && (
           <span className="pv-filter-pill active" style={{ display: "flex", alignItems: "center", gap: 4 }}>
             Destino: {planilhaFiltroDestino}
-            <button onClick={() => { setPlanilhaFiltroDestino(""); setPlanilhaPagina(1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 11, padding: 0, marginLeft: 2 }}>×</button>
+            <Button variant="ghost" size="sm" onClick={() => { setPlanilhaFiltroDestino(""); setPlanilhaPagina(1); }} style={{ marginLeft: 2 }}>×</Button>
           </span>
         )}
         {temFiltro && (
@@ -291,7 +292,7 @@ export default function PlanilhaView({ ctx }) {
           {planilhaSortKey && (
             <span style={{ color: "var(--accent)", marginLeft: 8 }}>
               ord. por {planilhaSortKey} <Icon n={planilhaSortDir === "asc" ? "arrow-up" : "arrow-down"} s={11} />
-              <button onClick={() => { setPlanilhaSortKey(null); setPlanilhaSortDir("asc"); }} style={{ background: "none", border: "none", color: "var(--text3)", cursor: "pointer", fontSize: 10, padding: "0 3px" }}><Icon n="x" s={13} /></button>
+              <Button variant="ghost" size="sm" onClick={() => { setPlanilhaSortKey(null); setPlanilhaSortDir("asc"); }}><Icon n="x" s={13} /></Button>
             </span>
           )}
         </span>

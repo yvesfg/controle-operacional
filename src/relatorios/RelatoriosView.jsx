@@ -16,6 +16,7 @@
  *   relDescargaOpen, setRelDescargaOpen
  */
 import React, { useState, useMemo } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { FIELD_CATALOG, FIELD_GROUPS } from "./fieldCatalog.js";
 import { ExportMenu } from "../exportHelpers.jsx";
 
@@ -190,26 +191,17 @@ export default function RelatoriosView({
             planilha/CSV/PDF de tabela. Antes só existia o primeiro. */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <ExportMenu dados={dados} cols={COLS_EXPORT} filename="relatorios-dados" titulo="Relatórios · dados do período" />
-          <button
-            onClick={() => onExportClick?.()}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              background: "var(--accent)", border: "none",
-              borderRadius: 8, padding: isMobile ? "6px 10px" : "8px 16px",
-              color: "var(--on-primary)", fontSize: isMobile ? 12 : 13, fontWeight: 600,
-              fontFamily: "var(--font-heading)", cursor: "pointer",
-              transition: "opacity 0.15s", whiteSpace: "nowrap",
-            }}
+          <Button variant="primary" size="sm" onClick={() => onExportClick?.()}
+            
             onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-          >
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
             <Ico size={14} color="currentColor">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </Ico>
             Relatório PDF
-          </button>
+          </Button>
         </div>
       </div>
 

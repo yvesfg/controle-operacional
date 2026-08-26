@@ -333,12 +333,9 @@ export default function ModalColarFaturamento({ ctx }) {
 
         {/* Rodapé */}
         <div style={{ padding: "10px 14px 18px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 8, flexShrink: 0 }}>
-          <button
-            onClick={limpar}
+          <Button variant="secondary" size="md" onClick={limpar}
             disabled={salvando || !texto.trim()}
-            title="Esvazia o bloco pra colar o próximo — não fecha a tela"
-            style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid ${t.borda}`, borderRadius: 9, padding: "10px 14px", color: t.txt2, fontSize: 11, fontWeight: 600, cursor: salvando || !texto.trim() ? "not-allowed" : "pointer", opacity: salvando || !texto.trim() ? .5 : 1, fontFamily: "inherit" }}
-          >LIMPAR</button>
+            title="Esvazia o bloco pra colar o próximo — não fecha a tela" style={{ flex: "0 0 auto" }}>LIMPAR</Button>
           <button
             onClick={gravar}
             disabled={salvando || !reg || !aGravar.length}

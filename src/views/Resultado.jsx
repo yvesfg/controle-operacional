@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import ModalDespesa from "../modals/ModalDespesa.jsx";
 import Toggle from "../components/Toggle.jsx";
@@ -368,14 +369,10 @@ export default function Resultado({ ctx }) {
               <div style={{ width: 1, alignSelf: "stretch", background: t.borda, margin: "0 4px" }} />
             </>
           )}
-          <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
-            style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-              border: `1px solid var(--accent)`, background: "transparent", color: "var(--accent)", opacity: importing ? .6 : 1 }}>
+          <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}>
             {importing ? "Importando..." : <><Icon n="upload" s={13} /> Importar planilha</>}
-          </button>
-          <button onClick={() => setModal({ open: true, inicial: null })}
-            style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-              border: "none", background: "var(--accent)", color: "#fff" }}>+ Despesa</button>
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => setModal({ open: true, inicial: null })}>+ Despesa</Button>
         </div>
       </div>
       {/* Painel de confirmação Desfazer importação */}
@@ -415,11 +412,9 @@ export default function Resultado({ ctx }) {
                 opacity: importing ? .6 : 1 }}>
               Confirmar desfazer
             </button>
-            <button onClick={() => { setUndoOpen(false); setUndoInput(""); }}
-              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 7, fontFamily: "inherit", cursor: "pointer",
-                background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+            <Button variant="secondary" size="sm" onClick={() => { setUndoOpen(false); setUndoInput(""); }}>
               Cancelar
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -501,18 +496,13 @@ export default function Resultado({ ctx }) {
               );
             })()}
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button onClick={() => setSheetSel(s => ({ ...s, open: false }))}
-                style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
-                  background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+              <Button variant="secondary" size="sm" onClick={() => setSheetSel(s => ({ ...s, open: false }))}>
                 Cancelar
-              </button>
-              <button onClick={onConfirmSheets}
-                disabled={Object.values(sheetSel.checked).every(v => !v) || importing}
-                style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
-                  background: "var(--accent)", color: "#fff", border: "none",
-                  opacity: Object.values(sheetSel.checked).every(v => !v) || importing ? .5 : 1 }}>
+              </Button>
+              <Button variant="primary" size="sm" onClick={onConfirmSheets}
+                disabled={Object.values(sheetSel.checked).every(v => !v) || importing}>
                 {importing ? "Importando..." : `Importar selecionadas`}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -584,16 +574,12 @@ export default function Resultado({ ctx }) {
               {Object.values(foraMesSel.checked).filter(Boolean).length} de {foraMesSel.foraMes.length} marcadas para entrar em {mesLabel(mesRef)}
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button onClick={() => { setForaMesSel(s => ({ ...s, open: false })); showToast?.("Importação cancelada.", "erro"); }}
-                style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
-                  background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>
+              <Button variant="secondary" size="sm" onClick={() => { setForaMesSel(s => ({ ...s, open: false })); showToast?.("Importação cancelada.", "erro"); }}>
                 Cancelar
-              </button>
-              <button onClick={onConfirmForaMes} disabled={importing}
-                style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, fontFamily: "inherit", cursor: "pointer",
-                  background: "var(--accent)", color: "#fff", border: "none", opacity: importing ? .5 : 1 }}>
+              </Button>
+              <Button variant="primary" size="sm" onClick={onConfirmForaMes} disabled={importing}>
                 {importing ? "Importando..." : "Confirmar importação"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -657,11 +643,9 @@ export default function Resultado({ ctx }) {
                 {money(totalIndevido)} nesta base, em todos os meses até resolver.
               </div>
             </div>
-            <button onClick={() => irParaCreditos?.(filialParaCreditos)}
-              style={{ fontSize: 12, fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer",
-                border: "none", background: t.danger, color: "#fff", whiteSpace: "nowrap" }}>
+            <Button variant="danger" size="sm" onClick={() => irParaCreditos?.(filialParaCreditos)}>
               Ver e vincular <Icon n="arrow-right" s={13} />
-            </button>
+            </Button>
           </div>
         );
       })()}
@@ -686,11 +670,9 @@ export default function Resultado({ ctx }) {
                 border: `1.5px solid ${busca ? t.ouro : t.borda}`, background: t.bg, color: t.txt,
                 fontFamily: "inherit", outline: "none" }} />
             {busca && (
-              <button onClick={() => setBusca("")}
-                style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)",
-                  background: "none", border: "none", cursor: "pointer", color: t.txt2, fontSize: 14, lineHeight: 1, padding: 0 }}>
+              <Button variant="ghost" size="md" onClick={() => setBusca("")} style={{ position: "absolute", top: "50%", right: 7 }}>
                 ×
-              </button>
+              </Button>
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
@@ -875,7 +857,7 @@ export default function Resultado({ ctx }) {
             <div onClick={(e) => e.stopPropagation()} style={{ ...card, maxWidth: 560, width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
                 <div style={{ fontSize: 15, fontWeight: 800, color: t.txt }}>Possível duplicidade · {money(Number(dupModal.registro.valor || 0))}</div>
-                <button onClick={fechar} style={{ border: "none", background: "transparent", color: t.txt2, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+                <Button variant="ghost" size="md" onClick={fechar}>×</Button>
               </div>
               <div style={{ fontSize: 11.5, color: t.txt2, marginBottom: 12 }}>
                 {grupo.length} lançamentos de mesmo valor, natureza e histórico em {mesLabel(mesRef)}. Desligue o(s) repetido(s) com o toggle <b>incl.</b> para não somar nas despesas.
@@ -901,9 +883,7 @@ export default function Resultado({ ctx }) {
                   <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: t.txt2, flexShrink: 0 }}>
                     <Toggle checked={d.incluir} onChange={() => toggleIncluir(d)} size={0.82} /> incl.
                   </span>
-                  <button onClick={() => { fechar(); setModal({ open: true, inicial: d }); }}
-                    style={{ fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 7, cursor: "pointer",
-                      border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, flexShrink: 0 }}>Editar</button>
+                  <Button variant="secondary" size="sm" onClick={() => { fechar(); setModal({ open: true, inicial: d }); }} style={{ flexShrink: 0 }}>Editar</Button>
                 </div>
               ))}
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 700, color: t.txt, marginTop: 12, paddingTop: 8 }}>

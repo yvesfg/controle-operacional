@@ -2,6 +2,7 @@
  * OcorrenciasView.jsx
  */
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import OcorrModal from "../components/OcorrModal.jsx";
 import { clickable } from "../utils.js";
@@ -79,14 +80,11 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia, isMobile }) {
       }}>
         <LinhaDoTempoDt etapas={resumo.etapas} isMobile={isMobile} />
         {onAddOcorrencia && (
-          <button
-            onClick={e => { e.stopPropagation(); onAddOcorrencia(r); }}
-            title="Nova Ocorrência"
-            style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,background:"var(--accent2,rgba(124,58,237,0.08))",border:"1.5px dashed var(--accent)",borderRadius:8,padding:"8px 12px",cursor:"pointer",color:"var(--accent)",minWidth:44,alignSelf:"center"}}
-          >
+          <Button variant="primary" size="sm" onClick={e => { e.stopPropagation(); onAddOcorrencia(r); }}
+            title="Nova Ocorrência" style={{ minWidth: 44, alignSelf: "center" }}>
             <Ico size={16} color="var(--accent)" sw={2.5}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
             <span style={{fontSize:8,fontFamily:"var(--font-mono)",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Ocorr.</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -317,11 +315,10 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
         {stats.obsChegada>0&&(<div style={{background:"rgba(6,182,212,0.08)",border:"1px solid rgba(6,182,212,0.25)",borderRadius:8,padding:"6px 12px",fontSize:12,color:"var(--cyan)"}}><span style={{fontWeight:700}}>{stats.obsChegada}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Chegada</span></div>)}
         {stats.obsDescarga>0&&(<div style={{background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:8,padding:"6px 12px",fontSize:12,color:"var(--green)"}}><span style={{fontWeight:700}}>{stats.obsDescarga}</span><span style={{color:"var(--text2)",marginLeft:6}}>com Obs Descarga</span></div>)}
         {onSalvarOcorrencia&&(
-          <button onClick={()=>openModal(null)}
-            style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,cursor:"pointer",border:"1.5px solid var(--accent)",background:"var(--accent2,rgba(124,58,237,0.08))",color:"var(--accent)",fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>
+          <Button variant="primary" size="sm" onClick={()=>openModal(null)}>
             <Ico size={13} color="var(--accent)" sw={2.2}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Ico>
             Nova Ocorrência
-          </button>
+          </Button>
         )}
       </div>
 
@@ -344,7 +341,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
         <span style={{fontSize:10,color:"var(--text3)"}}>até</span>
         <input type="date" value={filtroFim} onChange={e=>setFiltroFim(e.target.value)}
           style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${filtroFim?"var(--accent)":"var(--border)"}`,background:filtroFim?"var(--accent2,rgba(124,58,237,0.07))":"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
-        {(filtroIni||filtroFim||busca)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");setBusca("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}><Icon n="x" s={13} /> Limpar</button>)}
+        {(filtroIni||filtroFim||busca)&&(<Button variant="secondary" size="sm" onClick={()=>{setFiltroIni("");setFiltroFim("");setBusca("");}}><Icon n="x" s={13} /> Limpar</Button>)}
         <span style={{marginLeft:"auto",fontSize:9,fontFamily:"var(--font-mono)",color:"var(--text2)",fontWeight:600}}>{filtered.length} reg</span>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { ExportMenu } from "../exportHelpers.jsx";
 import { clickable } from "../utils.js";
@@ -363,17 +364,13 @@ export default function DiariasView({ ctx }) {
                       <span style={{fontSize:11,fontWeight:700,color:t.ouro,flex:1}}>{extratoFileName}</span>
                       <span style={{fontSize:10,color:t.txt2}}>{extratoRows.length} registros</span>
                       {prevExtratoSnap && (
-                        <button onClick={()=>{setExtratoUndoConfirm(true);setExtratoUndoInput("");}}
-                          style={{background:"transparent",border:`1px solid ${t.danger||"var(--cat-red)"}`,borderRadius:6,
-                            padding:"2px 8px",fontSize:10,color:t.danger||"var(--cat-red)",cursor:"pointer",fontFamily:"inherit"}}>
+                        <Button variant="danger-ghost" size="sm" onClick={()=>{setExtratoUndoConfirm(true);setExtratoUndoInput("");}}>
                           &#8617; Desfazer
-                        </button>
+                        </Button>
                       )}
-                      <button onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");setPrevExtratoSnap(null);setExtratoSheetInfo&&setExtratoUndoConfirm(false);}}
-                        style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,
-                          padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>
+                      <Button variant="secondary" size="sm" onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");setPrevExtratoSnap(null);setExtratoSheetInfo&&setExtratoUndoConfirm(false);}}>
                         &#215; Trocar
-                      </button>
+                      </Button>
                     </div>
                     {/* Modal confirmação desfazer */}
                     {extratoUndoConfirm && (
@@ -405,11 +402,9 @@ export default function DiariasView({ ctx }) {
                               border:`1px solid ${extratoUndoInput==="sim"?(t.danger||"var(--cat-red)"):t.borda}`}}>
                             Confirmar
                           </button>
-                          <button onClick={()=>{setExtratoUndoConfirm(false);setExtratoUndoInput("");}}
-                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
-                              background:"transparent",color:t.txt2,border:`1px solid ${t.borda}`}}>
+                          <Button variant="secondary" size="sm" onClick={()=>{setExtratoUndoConfirm(false);setExtratoUndoInput("");}}>
                             Cancelar
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -432,11 +427,9 @@ export default function DiariasView({ ctx }) {
                         onChange={e=>setExtratoDataFim(e.target.value)}
                         style={{...css.inp,padding:"4px 8px",fontSize:11,height:28,width:130}}/>
                       {(extratoDataIni||extratoDataFim) && (
-                        <button onClick={()=>{setExtratoDataIni("");setExtratoDataFim("");}}
-                          style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,
-                            padding:"2px 8px",fontSize:9,color:t.txt2,cursor:"pointer",fontFamily:"inherit",whiteSpace:"nowrap"}}>
+                        <Button variant="secondary" size="sm" onClick={()=>{setExtratoDataIni("");setExtratoDataFim("");}}>
                           &#215; Limpar
-                        </button>
+                        </Button>
                       )}
                       <span style={{marginLeft:"auto",fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>
                         {extratoDataIni||extratoDataFim

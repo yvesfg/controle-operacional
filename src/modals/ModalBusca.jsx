@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
@@ -39,10 +40,9 @@ export default function ModalBusca({ ctx }) {
   const VerMais = ({ total, visiveis, setVisiveis }) => total <= visiveis ? null : (
     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,padding:"2px 0 6px"}}>
       <span style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)"}}>{visiveis} de {total}</span>
-      <button onClick={()=>setVisiveis(v=>v+PAGINA)}
-        style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:8,color:t.txt2,fontSize:11,fontFamily:"inherit",cursor:"pointer",padding:isMobile?"12px 16px":"8px 14px"}}>
+      <Button variant="secondary" size="sm" onClick={()=>setVisiveis(v=>v+PAGINA)}>
         Ver mais {Math.min(PAGINA,total-visiveis)} ›
-      </button>
+      </Button>
     </div>
   );
 

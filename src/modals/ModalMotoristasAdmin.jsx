@@ -81,7 +81,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
               ))}
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
-              <button onClick={()=>setMotSugestOpen(false)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>FECHAR</button>
+              <Button variant="secondary" size="md" onClick={()=>setMotSugestOpen(false)} style={{ flex: "0 0 auto" }}>FECHAR</Button>
               <button onClick={()=>{
                 const aceitos=motSugestData.filter(s=>s.aceito===true);
                 if(!aceitos.length){setMotSugestOpen(false);return;}
@@ -118,7 +118,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
               />
             </div>
             <div style={{display:"flex",gap:8,padding:"0 16px 18px"}}>
-              <button onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+              <Button variant="secondary" size="md" onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
               <button disabled={motExcluirLoteTexto!=="EXCLUIR"} onClick={()=>{
                 if(motExcluirLoteTexto!=="EXCLUIR")return;
                 const nm=motoristas.filter((_,i)=>!motSelecionados.has(i));

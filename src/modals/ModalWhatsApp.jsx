@@ -128,9 +128,9 @@ export default function ModalWhatsApp({ ctx }) {
                   <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
                 </div>
               </div>
-              <button onClick={()=>setWppTipoOpen(false)} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:6,borderRadius:8}}>
+              <Button variant="ghost" size="sm" onClick={()=>setWppTipoOpen(false)}>
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18)}
-              </button>
+              </Button>
             </div>
             {/* Search / DT Context */}
             <div style={{padding:"12px 16px",borderBottom:`1px solid ${t.borda}`}}>
@@ -141,9 +141,9 @@ export default function ModalWhatsApp({ ctx }) {
                     <div style={{fontSize:12,fontWeight:700,color:"#25D366"}}>DT {(wppSearchReg||buscaResult).dt} · {(wppSearchReg||buscaResult).nome||"—"}</div>
                     {(wppSearchReg||buscaResult).placa&&<div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)"}}>{(wppSearchReg||buscaResult).placa}</div>}
                   </div>
-                  <button onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{background:"none",border:"none",cursor:"pointer",color:t.txt2,padding:4,borderRadius:6,flexShrink:0}}>
+                  <Button variant="ghost" size="sm" onClick={()=>{setWppSearchReg(null);setWppSearchTxt("");}} style={{ flexShrink: 0 }}>
                     {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,14)}
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div>
@@ -413,7 +413,7 @@ export default function ModalWhatsApp({ ctx }) {
                           </div>
                         </div>
                         <div style={{display:"flex",gap:7,marginTop:10}}>
-                          <button onClick={()=>setBankForm(null)} disabled={bankSaving} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:8,padding:"8px 12px",color:t.txt2,fontSize:10.5,fontWeight:600,cursor:bankSaving?"not-allowed":"pointer",fontFamily:"inherit"}}>AGORA NÃO</button>
+                          <Button variant="secondary" size="sm" onClick={()=>setBankForm(null)} disabled={bankSaving} style={{ flex: "0 0 auto" }}>AGORA NÃO</Button>
                           <button onClick={salvarDadosBancarios} disabled={bankSaving} style={{flex:1,borderRadius:8,padding:"9px 14px",cursor:bankSaving?"wait":"pointer",background:`rgba(22,119,255,.14)`,border:`1.5px solid rgba(22,119,255,.4)`,color:t.azulLt,fontWeight:700,fontSize:11.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                             <Icon n="save" s={13} c="currentColor"/> {bankSaving?"SALVANDO…":"SALVAR NO CADASTRO"}
                           </button>
@@ -424,8 +424,7 @@ export default function ModalWhatsApp({ ctx }) {
                         <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:6}}>
                           <Icon n="check-circle" s={12} c={t.verde}/>
                           <div style={{flex:1,fontSize:10,fontWeight:700,color:t.verde}}>Conta bancária cadastrada</div>
-                          <button onClick={()=>setBankForm({banco:mot?.banco||"",agencia:mot?.agencia||"",conta:mot?.conta||"",favorecido:mot?.favorecido||mot?.nome||reg.nome||"",pix_tipo:mot?.pix_tipo||"",pix_chave:mot?.pix_chave||""})}
-                            style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"3px 8px",color:t.txt2,fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>EDITAR</button>
+                          <Button variant="secondary" size="sm" onClick={()=>setBankForm({banco:mot?.banco||"",agencia:mot?.agencia||"",conta:mot?.conta||"",favorecido:mot?.favorecido||mot?.nome||reg.nome||"",pix_tipo:mot?.pix_tipo||"",pix_chave:mot?.pix_chave||""})}>EDITAR</Button>
                         </div>
                         <div style={{display:"grid",gap:3,fontSize:10,color:t.txt2}}>
                           <div>BCO: <strong style={{color:t.txt}}>{mot.banco||"—"}</strong></div>
@@ -479,7 +478,7 @@ export default function ModalWhatsApp({ ctx }) {
 
               {/* Botão enviar */}
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
-                <button onClick={()=>setWppModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <Button variant="secondary" size="md" onClick={()=>setWppModal(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
                 <button onClick={enviar} disabled={somaExcede} style={{flex:1,borderRadius:10,padding:"12px 18px",cursor:somaExcede?"not-allowed":"pointer",background:somaExcede?`rgba(128,128,128,.2)`:`rgba(37,211,102,.15)`,border:`1.5px solid ${somaExcede?t.borda:"rgba(37,211,102,.4)"}`,color:somaExcede?t.txt2:"#25D366",fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   <Icon n="smartphone" s={15} c="currentColor"/> ENVIAR NO WHATSAPP
                 </button>
@@ -614,7 +613,7 @@ export default function ModalWhatsApp({ ctx }) {
 
               {/* Botão enviar */}
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
-                <button onClick={()=>setWppModal2(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <Button variant="secondary" size="md" onClick={()=>setWppModal2(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
                 <button onClick={enviarDoc} disabled={!roOk} style={{flex:1,border:`1.5px solid ${roOk?"rgba(37,211,102,.4)":t.borda}`,borderRadius:10,padding:"12px 18px",cursor:roOk?"pointer":"not-allowed",background:roOk?`rgba(37,211,102,.15)`:`rgba(128,128,128,.08)`,color:roOk?"#25D366":t.txt2,fontWeight:700,fontSize:14,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   <Icon n="file-text" s={15} c="currentColor"/> ENVIAR DOC NO WHATSAPP
                 </button>
@@ -679,7 +678,7 @@ export default function ModalWhatsApp({ ctx }) {
                 })()}
               </div>
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8}}>
-                <button onClick={()=>setWppFatModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <Button variant="secondary" size="md" onClick={()=>setWppFatModal(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
                 <button onClick={()=>{
                   const faltando=[];
                   if(!reg.cte)faltando.push("CTE");if(!reg.mdf)faltando.push("MDF");if(!reg.nf)faltando.push("NF");if(isAvb&&!reg.codigo)faltando.push("CODIGO");
@@ -819,7 +818,7 @@ export default function ModalWhatsApp({ ctx }) {
                           <div key={idx} style={{background:`rgba(217,98,43,.04)`,borderRadius:8,border:`1px solid rgba(217,98,43,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.ouro}}>{"MINUTA DCC "+(wppDccMinutas.length>1?"("+(idx+1)+")":"")}</span>
-                              {wppDccMinutas.length>1 && <button onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
+                              {wppDccMinutas.length>1 && <Button variant="ghost" size="sm" onClick={()=>setWppDccMinutas(p=>p.filter((_,i)=>i!==idx))}><Icon n="x" s={13} c={t.danger} sw={2}/></Button>}
                             </div>
                             <div style={{display:"flex",gap:6,marginBottom:6}}>
                               {["D01-MAT","D05-MAR"].map(d=>(
@@ -850,7 +849,7 @@ export default function ModalWhatsApp({ ctx }) {
                           <div key={idx} style={{background:`rgba(22,119,255,.04)`,borderRadius:8,border:`1px solid rgba(22,119,255,.2)`,padding:"8px 10px",marginTop:idx===0?8:0}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                               <span style={{fontSize:10,fontWeight:700,color:t.azulLt}}>{"MINUTA DESCARGA "+(wppDscMinutas.length>1?"("+(idx+1)+")":"")}</span>
-                              {wppDscMinutas.length>1 && <button onClick={()=>setWppDscMinutas(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
+                              {wppDscMinutas.length>1 && <Button variant="ghost" size="sm" onClick={()=>setWppDscMinutas(p=>p.filter((_,i)=>i!==idx))}><Icon n="x" s={13} c={t.danger} sw={2}/></Button>}
                             </div>
                             <div style={{display:"flex",gap:6,marginBottom:6}}>
                               {["MAM","MRM"].map(tp=>(
@@ -878,7 +877,7 @@ export default function ModalWhatsApp({ ctx }) {
               </div>
 
               <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
-                <button onClick={()=>setWppPagModal(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+                <Button variant="secondary" size="md" onClick={()=>setWppPagModal(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
                 <button onClick={()=>{
                   const tel=(mot?.tel||reg.telefone||"").replace(/\D/g,"");
                   const rawMsg=gerarPag();

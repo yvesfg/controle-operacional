@@ -323,11 +323,11 @@ function ModalEditComponent({ ctx }) {
                 style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:t.danger,fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
               />
               <button onClick={()=>{if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt);}} disabled={excluirTexto!=="EXCLUIR"} style={{background:excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}>CONFIRMAR</button>
-              <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center"}}><Icon n="x" s={14} c={t.txt2} sw={2}/></button>
+              <Button variant="secondary" size="sm" onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}}><Icon n="x" s={14} c={t.txt2} sw={2}/></Button>
             </div>
           )}
           <div style={{display:"flex",gap:8,padding:"10px 16px 18px"}}>
-            <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+            <Button variant="secondary" size="md" onClick={()=>setModalOpen(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
             {editIdx>=0 && excluirConfirm!=="edit" && (
               <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="trash" s={13} c={t.danger}/> EXCLUIR</button>
             )}

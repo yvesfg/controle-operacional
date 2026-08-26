@@ -108,7 +108,7 @@ export default function ModalMotoristaImport({ ctx }) {
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
                       <button onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:true};setMotImportData({...motImportData,vinculos:nv});}} style={{padding:"5px 12px",fontSize:10,fontWeight:700,borderRadius:7,border:`1.5px solid ${t.verde}`,background:v.aceito===true?`rgba(2,192,118,.2)`:`rgba(2,192,118,.07)`,color:t.verde,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="check" s={11} c={t.verde} sw={2.2}/> Vincular</button>
-                      <button onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:false};setMotImportData({...motImportData,vinculos:nv});}} style={{padding:"5px 12px",fontSize:10,fontWeight:700,borderRadius:7,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="x" s={11} c={t.txt2} sw={2.2}/> Pular</button>
+                      <Button variant="secondary" size="sm" onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:false};setMotImportData({...motImportData,vinculos:nv});}}><Icon n="x" s={11} c={t.txt2} sw={2.2}/> Pular</Button>
                     </div>
                   </div>
                 </div>
@@ -190,7 +190,7 @@ export default function ModalMotoristaImport({ ctx }) {
 
         {/* Footer */}
         <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
-          <button onClick={()=>{setMotImportOpen(false);setMotImportData(null);setMotImportConfirm("");}} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+          <Button variant="secondary" size="md" onClick={()=>{setMotImportOpen(false);setMotImportData(null);setMotImportConfirm("");}} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
           {motImportStep===1 ? (
             <button onClick={aplicar} disabled={!confirmOk} style={{flex:1,border:`1.5px solid ${confirmOk?t.azulLt:t.borda}`,borderRadius:10,padding:"12px 18px",cursor:confirmOk?"pointer":"not-allowed",background:confirmOk?`rgba(22,119,255,.12)`:`rgba(128,128,128,.08)`,color:confirmOk?t.azulLt:t.txt2,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
               <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="download" s={14} c="currentColor"/> IMPORTAR ({novos.length} novos + {conflitos.filter(c=>c.escolha==="usar").length} atualizações)</span>

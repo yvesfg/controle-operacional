@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import OcorrModal from "../components/OcorrModal.jsx";
 import Icon from "../components/Icon.jsx";
 
@@ -113,7 +114,7 @@ export default function ModalDetalhe({ ctx }) {
                       disabled={excluirTexto!=="EXCLUIR"}
                       style={{background:excluirTexto==="EXCLUIR"?"var(--red)":"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}
                     >CONFIRMAR</button>
-                    <button onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:7,padding:"7px 10px",color:t.txt2,fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center"}}><Icon n="x" s={14} c={t.txt2} sw={2}/></button>
+                    <Button variant="secondary" size="sm" onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}}><Icon n="x" s={14} c={t.txt2} sw={2}/></Button>
                   </div>
                 )}
               </div>
@@ -127,9 +128,9 @@ export default function ModalDetalhe({ ctx }) {
                   {ref:refOcorr, l:"Ocorrências", ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>},
                   {ref:refDocs, l:"Documentos", ico:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>},
                 ].map(n => (
-                  <button key={n.l} onClick={()=>irPara(n.ref)} className="pv-filter-pill" style={{flexShrink:0,display:"inline-flex",alignItems:"center",gap:5}}>
+                  <Button variant="ghost" size="sm" key={n.l} onClick={()=>irPara(n.ref)} className="pv-filter-pill" style={{ flexShrink: 0 }}>
                     {hIco(n.ico,t.txt2,12)} {n.l}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
@@ -182,9 +183,9 @@ export default function ModalDetalhe({ ctx }) {
                         ))}
                       </div>
                       {dadosTodos.length > VISIBLE && (
-                        <button onClick={()=>setDadosExpanded(v=>!v)} style={{width:"100%",marginTop:6,padding:"5px 0",borderRadius:7,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.5}}>
+                        <Button variant="secondary" size="sm" onClick={()=>setDadosExpanded(v=>!v)} style={{ width: "100%", marginTop: 6 }}>
                           {dadosExpanded ? "Recolher" : `Ver mais (${hidden} campo${hidden>1?"s":""})`}
-                        </button>
+                        </Button>
                       )}
                     </div>
                   );
@@ -280,9 +281,9 @@ export default function ModalDetalhe({ ctx }) {
                         </div>
                       ))}
                       {ocorrAll.length > 3 && (
-                        <button onClick={()=>setOcorrListExpanded(v=>!v)} style={{fontSize:11,color:"var(--cat-amber)",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
+                        <Button variant="ghost" size="sm" onClick={()=>setOcorrListExpanded(v=>!v)}>
                           {ocorrListExpanded ? "Ver menos" : `Ver mais (${ocorrAll.length - 3} ocultas)`}
-                        </button>
+                        </Button>
                       )}
                     </div>
                   )}
@@ -290,12 +291,9 @@ export default function ModalDetalhe({ ctx }) {
                   {/* Adicionar nova ocorrência */}
                   {canOcorr && (
                     <>
-                      <button
-                        onClick={()=>setOcorrModalLocalOpen(true)}
-                        style={{width:"100%",padding:"9px 14px",borderRadius:9,border:`1.5px dashed ${t.borda}`,background:"transparent",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontFamily:"inherit",marginTop:8}}
-                      >
+                      <Button variant="secondary" size="sm" onClick={()=>setOcorrModalLocalOpen(true)} style={{ width: "100%", marginTop: 8 }}>
                         + Nova Ocorrência
-                      </button>
+                      </Button>
                       <OcorrModal
                         open={ocorrModalLocalOpen}
                         onClose={()=>setOcorrModalLocalOpen(false)}
@@ -363,7 +361,7 @@ export default function ModalDetalhe({ ctx }) {
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
                                 </div>
-                                {detalheMinDcc.length>1&&<button onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
+                                {detalheMinDcc.length>1&&<Button variant="ghost" size="sm" onClick={()=>setDetalheMinDcc(p=>p.filter((_,i)=>i!==idx))}><Icon n="x" s={13} c={t.danger} sw={2}/></Button>}
                               </div>
                               <div className="co-min-g4">
                                 <div><div style={lblP2}>CTE DCC</div><input value={mn.cte} onChange={e=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>
@@ -412,7 +410,7 @@ export default function ModalDetalhe({ ctx }) {
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
                                 </div>
-                                {detalheMinDsc.length>1&&<button onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))} style={{background:"transparent",border:"none",color:t.danger,cursor:"pointer",padding:2,display:"inline-flex",alignItems:"center"}}><Icon n="x" s={13} c={t.danger} sw={2}/></button>}
+                                {detalheMinDsc.length>1&&<Button variant="ghost" size="sm" onClick={()=>setDetalheMinDsc(p=>p.filter((_,i)=>i!==idx))}><Icon n="x" s={13} c={t.danger} sw={2}/></Button>}
                               </div>
                               <div className="co-min-g3">
                                 <div><div style={lblP2}>CTE {mn.tipo}</div><input value={mn.cte} onChange={e=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,cte:e.target.value}:m))} style={inpP2} /></div>

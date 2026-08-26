@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { supaStorageUpload } from "../supabase.js";
 import { analyzeNfdFoto } from "../utils/analyzeNfdFoto.js";
 import Toggle from "../components/Toggle.jsx";
@@ -32,9 +33,9 @@ export default function ModalNFD({ ctx }) {
                 <div style={{fontSize:14,fontWeight:800,color:t.txt,letterSpacing:.3}}>NFD — Nota de Devolução</div>
                 <div style={{fontSize:10,color:t.danger,fontWeight:600}}>Descarga registrada · Houve NFD?</div>
               </div>
-              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);}} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+              <Button variant="ghost" size="sm" onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);}}>
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-              </button>
+              </Button>
             </div>
             {/* Tipo */}
             <div style={{marginBottom:8}}>

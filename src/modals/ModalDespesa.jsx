@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Toggle from "../components/Toggle.jsx";
 
 // ModalDespesa — criar/editar uma única despesa (CRUD da planilha de débitos).
@@ -85,7 +86,7 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
           <div style={{ fontSize: 15, fontWeight: 700, color: t.txt }}>
             {ehEdicao ? "Editar despesa" : "Nova despesa"}
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: t.txt2, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+          <Button variant="ghost" size="md" onClick={onClose}>×</Button>
         </div>
 
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -176,16 +177,12 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
         <div style={{ padding: "14px 20px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 10, justifyContent: "space-between" }}>
           <div>
             {ehEdicao && onDelete && (
-              <button onClick={() => { if (confirm("Excluir esta despesa definitivamente?")) onDelete(inicial.id); }}
-                style={{ fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 9, cursor: "pointer",
-                  border: `1px solid ${t.danger}`, background: "transparent", color: t.danger }}>Excluir</button>
+              <Button variant="danger-ghost" size="sm" onClick={() => { if (confirm("Excluir esta despesa definitivamente?")) onDelete(inicial.id); }}>Excluir</Button>
             )}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={onClose} style={{ fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 9, cursor: "pointer",
-              border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>Cancelar</button>
-            <button onClick={salvar} style={{ fontSize: 13, fontWeight: 700, padding: "9px 18px", borderRadius: 9, cursor: "pointer",
-              border: "none", background: "var(--accent)", color: "#fff" }}>{ehEdicao ? "Salvar" : "Adicionar"}</button>
+            <Button variant="secondary" size="sm" onClick={onClose}>Cancelar</Button>
+            <Button variant="primary" size="sm" onClick={salvar}>{ehEdicao ? "Salvar" : "Adicionar"}</Button>
           </div>
         </div>
       </div>

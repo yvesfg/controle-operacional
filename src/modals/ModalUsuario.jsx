@@ -115,7 +115,7 @@ export default function ModalUsuario({ ctx }) {
               </div>
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
-              <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
+              <Button variant="secondary" size="md" onClick={()=>setModalOpen(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
               <button onClick={async ()=>{
                 const u = {...formData};
                 if (!u.nome) { showToast("Nome obrigatório","warn"); return; }
@@ -179,7 +179,7 @@ export default function ModalUsuario({ ctx }) {
                 O email será aberto no seu cliente de email (Mail, Outlook, Gmail) já preenchido com os dados de acesso. Basta clicar em <strong style={{color:t.txt}}>Enviar</strong>.
               </p>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setUsuarioEmailPreview(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>Agora não</button>
+                <Button variant="secondary" size="md" onClick={()=>setUsuarioEmailPreview(null)} style={{ flex: "0 0 auto" }}>Agora não</Button>
                 <button onClick={()=>{enviarEmailBoasVindas(usuarioEmailPreview, usuarioEmailPreview._senhaRaw||"");setUsuarioEmailPreview(null);}} style={{...css.btnGold,flex:1,justifyContent:"center"}}>
                   <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="mail" s={14} c="currentColor"/> Enviar Email de Boas-vindas</span>
                 </button>

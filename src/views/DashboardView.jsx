@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
@@ -204,7 +205,7 @@ export default function DashboardView({ ctx }) {
           </button>
         )}
         {dashOrigem!=="todos" && (
-          <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:10,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}><Icon n="x" s={13} /> {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
+          <Button variant="danger-ghost" size="sm" onClick={()=>setDashOrigem("todos")} style={{ marginLeft: 4 }}><Icon n="x" s={13} /> {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</Button>
         )}
         {dashOrigem==="todos" && dashData.cidades.length>0 && (
           <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",marginLeft:4}}>
@@ -564,7 +565,7 @@ export default function DashboardView({ ctx }) {
             <div style={{...css.card,padding:18,display:"flex",flexDirection:"column",minWidth:0,width:"100%"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Motoristas</span>
-                <button onClick={()=>setDashDrillModal({type:"motoristas",label:"Todos os Motoristas",regs:dashData.filtrado})} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
+                <Button variant="ghost" size="sm" onClick={()=>setDashDrillModal({type:"motoristas",label:"Todos os Motoristas",regs:dashData.filtrado})} style={{ margin: isMobile?"-15px -10px":"-6px -4px" }}>Ver todos ›</Button>
               </div>
               {topMot.length===0?(
                 <div style={{textAlign:"center",padding:20,color:t.txt2,fontSize:11}}>Sem dados</div>
@@ -741,7 +742,7 @@ export default function DashboardView({ ctx }) {
             toolbar={
               <div className="ds-table-toolbar">
                 <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Registros Recentes</span>
-                <button onClick={()=>setActiveTab("planilha")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"inline-flex",alignItems:"center"}}>Ver Tudo ›</button>
+                <Button variant="ghost" size="sm" onClick={()=>setActiveTab("planilha")}>Ver Tudo ›</Button>
               </div>
             }
           />
@@ -756,7 +757,7 @@ export default function DashboardView({ ctx }) {
           <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Diárias</span>
-              <button onClick={()=>setActiveTab("diarias")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
+              <Button variant="ghost" size="sm" onClick={()=>setActiveTab("diarias")} style={{ margin: isMobile?"-15px -10px":"-6px -4px" }}>Ver ›</Button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
@@ -799,7 +800,7 @@ export default function DashboardView({ ctx }) {
           <div style={{...css.card,padding:18}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Descargas</span>
-              <button onClick={()=>setActiveTab("descarga")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
+              <Button variant="ghost" size="sm" onClick={()=>setActiveTab("descarga")} style={{ margin: isMobile?"-15px -10px":"-6px -4px" }}>Ver ›</Button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
@@ -844,8 +845,7 @@ export default function DashboardView({ ctx }) {
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Destinos</span>
-                  <button onClick={()=>setDashDrillModal({type:"destinos",label:"Destinos",regs:dashData.filtrado})}
-                    style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver todos ›</button>
+                  <Button variant="ghost" size="sm" onClick={()=>setDashDrillModal({type:"destinos",label:"Destinos",regs:dashData.filtrado})} style={{ margin: isMobile?"-15px -10px":"-6px -4px" }}>Ver todos ›</Button>
                 </div>
                 {topDestinos.map(([dest,{ct,bases}],i)=>{
                   const pct=Math.round(ct/maxDest*100);
@@ -900,7 +900,7 @@ export default function DashboardView({ ctx }) {
               <div style={{...css.card,padding:18}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Top Diárias Pendentes</span>
-                  <button onClick={()=>setActiveTab("diarias")} style={{fontSize:10,color:"var(--text3)",background:"transparent",border:"none",cursor:"pointer",fontFamily:DESIGN.fnt.b,padding:isMobile?"15px 10px":"6px 4px",margin:isMobile?"-15px -10px":"-6px -4px",display:"inline-flex",alignItems:"center"}}>Ver ›</button>
+                  <Button variant="ghost" size="sm" onClick={()=>setActiveTab("diarias")} style={{ margin: isMobile?"-15px -10px":"-6px -4px" }}>Ver ›</Button>
                 </div>
                 {topPend.map(({nome,total:sld,dt},i)=>{
                   const partes=nome.split(" ").filter(Boolean);

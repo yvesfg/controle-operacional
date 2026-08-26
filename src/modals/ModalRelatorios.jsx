@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Toggle from "../components/Toggle.jsx";
 import Icon from "../components/Icon.jsx";
 
@@ -40,9 +41,9 @@ export default function ModalRelatorios({ ctx }) {
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Geral de Operações</div>
                 <div style={{fontSize:10,color:t.txt2}}>Configure os filtros e seções do relatório PDF</div>
               </div>
-              <button onClick={()=>setRelGeralOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+              <Button variant="ghost" size="sm" onClick={()=>setRelGeralOpen(false)} style={{ marginLeft: "auto" }}>
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-              </button>
+              </Button>
             </div>
 
             {/* Período */}
@@ -146,8 +147,8 @@ export default function ModalRelatorios({ ctx }) {
                   <span style={{marginLeft:"auto",fontSize:9,color:t.txt2,fontWeight:400}}>({Object.values(relGeralColunas).filter(Boolean).length} selecionadas)</span>
                 </summary>
                 <div style={{marginTop:8,display:"flex",gap:6,flexWrap:"wrap",paddingLeft:4}}>
-                  <button onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,true])))} style={{fontSize:9,padding:"2px 7px",borderRadius:5,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer"}}>Todas</button>
-                  <button onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,false])))} style={{fontSize:9,padding:"2px 7px",borderRadius:5,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer"}}>Nenhuma</button>
+                  <Button variant="secondary" size="sm" onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,true])))}>Todas</Button>
+                  <Button variant="secondary" size="sm" onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,false])))}>Nenhuma</Button>
                 </div>
                 <div style={{marginTop:8,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:4}}>
                   {[
@@ -193,10 +194,9 @@ export default function ModalRelatorios({ ctx }) {
 
             {/* Botões */}
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setRelGeralOpen(false)}
-                style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>
+              <Button variant="secondary" size="md" onClick={()=>setRelGeralOpen(false)} style={{ flex: 1 }}>
                 Cancelar
-              </button>
+              </Button>
               <button
                 disabled={relGeralLoading}
                 onClick={async ()=>{
@@ -250,9 +250,9 @@ export default function ModalRelatorios({ ctx }) {
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Diárias</div>
                 <div style={{fontSize:10,color:t.txt2}}>Financeiro e status de diárias por período</div>
               </div>
-              <button onClick={()=>setRelDiariaOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+              <Button variant="ghost" size="sm" onClick={()=>setRelDiariaOpen(false)} style={{ marginLeft: "auto" }}>
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-              </button>
+              </Button>
             </div>
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
@@ -296,7 +296,7 @@ export default function ModalRelatorios({ ctx }) {
               <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
             </div>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setRelDiariaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
+              <Button variant="secondary" size="md" onClick={()=>setRelDiariaOpen(false)} style={{ flex: 1 }}>Cancelar</Button>
               <button onClick={()=>{setRelDiariaOpen(false);gerarRelatorioDiarias(relDiariaFrom,relDiariaTo,{motorista:relDiariaMotorista,vinculo:relDiariaVinculo,status:relDiariaStatus});}}
                 style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
@@ -317,9 +317,9 @@ export default function ModalRelatorios({ ctx }) {
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório de Descargas</div>
                 <div style={{fontSize:10,color:t.txt2}}>Agenda, status e atrasos de descarga</div>
               </div>
-              <button onClick={()=>setRelDescargaOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+              <Button variant="ghost" size="sm" onClick={()=>setRelDescargaOpen(false)} style={{ marginLeft: "auto" }}>
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-              </button>
+              </Button>
             </div>
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
@@ -353,7 +353,7 @@ export default function ModalRelatorios({ ctx }) {
               <span>Deixe datas em branco para <strong style={{color:t.ouro}}>todos os registros</strong>.</span>
             </div>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setRelDescargaOpen(false)} style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>Cancelar</button>
+              <Button variant="secondary" size="md" onClick={()=>setRelDescargaOpen(false)} style={{ flex: 1 }}>Cancelar</Button>
               <button onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}}
                 style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
@@ -374,9 +374,9 @@ export default function ModalRelatorios({ ctx }) {
                 <div style={{fontSize:15,fontWeight:800,color:t.txt,letterSpacing:.3}}>Relatório Operacional</div>
                 <div style={{fontSize:10,color:t.txt2}}>SGS, Apontamentos e ID Diárias por período</div>
               </div>
-              <button onClick={()=>setRelOperOpen(false)} style={{marginLeft:"auto",background:"transparent",border:"none",color:t.txt2,cursor:"pointer",padding:4}}>
+              <Button variant="ghost" size="sm" onClick={()=>setRelOperOpen(false)} style={{ marginLeft: "auto" }}>
                 {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18,1.8)}
-              </button>
+              </Button>
             </div>
             {/* Período */}
             <div style={{fontSize:10,fontWeight:700,color:t.ouro,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8}}>Período</div>
@@ -410,10 +410,9 @@ export default function ModalRelatorios({ ctx }) {
             </div>
             {/* Botões */}
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setRelOperOpen(false)}
-                style={{flex:1,padding:"11px",borderRadius:10,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600}}>
+              <Button variant="secondary" size="md" onClick={()=>setRelOperOpen(false)} style={{ flex: 1 }}>
                 Cancelar
-              </button>
+              </Button>
               <button onClick={()=>{setRelOperOpen(false);gerarRelatorioOperacional(relOperFrom,relOperTo,relOperSecoes);}}
                 style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}

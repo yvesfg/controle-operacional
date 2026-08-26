@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { DESIGN, MOBILE_NAV_PINNED } from "../constants.js";
 import { clickable } from "../utils.js";
 
@@ -25,17 +26,15 @@ export default function AppSidebar({
               <div className="co-sidebar__logo-name">YFGroup</div>
               <div className="co-sidebar__logo-sub">CTRL OPERACIONAL</div>
             </div>
-          <button
-            className="co-sidebar__toggle"
-            style={{display:isWide?"none":"flex",alignItems:"center",justifyContent:"center"}}
+          <Button variant="ghost" size="sm" className="co-sidebar__toggle"
+            
             onClick={()=>isWide?setSidebarCollapsed(v=>!v):setMobileSidebarExpanded(v=>!v)}
-            title={!mobileSidebarExpanded?"Expandir":"Recolher"}
-          >
+            title={!mobileSidebarExpanded?"Expandir":"Recolher"}>
             {(isWide?sidebarCollapsed:!mobileSidebarExpanded)
               ? hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt2,14,2)
               : hIco(<><polyline points="15 18 9 12 15 6"/></>,t.txt2,14,2)
             }
-          </button>
+          </Button>
         </div>
 
         {/* ── Nav items ── */}
@@ -49,18 +48,15 @@ export default function AppSidebar({
             const renderItem = (tb) => {
               const ativo = activeTab===tb.k;
               return (
-                <button
-                  key={tb.k}
+                <Button variant="ghost" size="sm" key={tb.k}
                   className={`co-sidebar__item${ativo?" co-sidebar__item--active":""}`}
                   onClick={()=>{setActiveTab(tb.k);if(!isWide)setMobileSidebarExpanded(false);}}
-                  title={(isWide&&sidebarCollapsed)||!isWide?tb.l:undefined}
-                  style={{position:"relative"}}
-                >
+                  title={(isWide&&sidebarCollapsed)||!isWide?tb.l:undefined} style={{ position: "relative" }}>
                   <span className="co-sidebar__ico">
                     {typeof tb.ico==="function" ? tb.ico(ativo) : <span style={{fontSize:18}}>{tb.ico}</span>}
                   </span>
                   <span className="co-sidebar__item-lbl">{tb.l}</span>
-                </button>
+                </Button>
               );
             };
             return (<>
@@ -105,16 +101,14 @@ export default function AppSidebar({
               <div className="co-sidebar__user-name">{(usuarioLogado||perfil||"").split(" ")[0]}</div>
               <div className="co-sidebar__user-role">{perfil}</div>
             </div>
-            <button
-              className="co-sidebar__logout-btn"
+            <Button variant="ghost" size="sm" className="co-sidebar__logout-btn"
               onClick={e=>{e.stopPropagation();handleLogout();}}
               title="Sair"
-              style={{background:"transparent",border:"none",cursor:"pointer",padding:4,borderRadius:6,flexShrink:0,alignItems:"center",opacity:.6}}
+              
               onMouseEnter={e=>e.currentTarget.style.opacity="1"}
-              onMouseLeave={e=>e.currentTarget.style.opacity=".6"}
-            >
+              onMouseLeave={e=>e.currentTarget.style.opacity=".6"} style={{ flexShrink: 0 }}>
               {hIco(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,t.txt2,14)}
-            </button>
+            </Button>
           </div>
         </div>
     </aside>

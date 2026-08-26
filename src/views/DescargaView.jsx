@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { ExportMenu } from "../exportHelpers.jsx";
 import { saveJSON, parseData, diffDias, clickable } from "../utils.js";
@@ -153,9 +154,9 @@ export default function DescargaView({ ctx }) {
                 {v:"linhas",l:"Linhas",svg:<><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>},
                 {v:"blocos",l:"Blocos",svg:<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>}
               ].map(m => (
-                <button key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} className={`co-tab${descargaView===m.v?" co-tab--active":""}`} style={{display:"flex",alignItems:"center",gap:4}}>
+                <Button variant="ghost" size="sm" key={m.v} onClick={()=>{setDescargaView(m.v);saveJSON("co_descarga_view",m.v);}} className={`co-tab${descargaView===m.v?" co-tab--active":""}`}>
                   {hIco(m.svg,descargaView===m.v?t.azulLt:t.txt2,14)} {m.l}
-                </button>
+                </Button>
               ))}
               {descargaView==="blocos" && (
                 <>
@@ -304,13 +305,11 @@ export default function DescargaView({ ctx }) {
                       <span style={{fontSize:11,fontWeight:700,color:t.ouro,flex:1}}>{rodorricaFileName}</span>
                       <span style={{fontSize:10,color:t.txt2}}>{rodorricaRows.length} registros</span>
                       {prevRodorricaSnap && (
-                        <button onClick={()=>{setRodoUndoConfirm(true);setRodoUndoInput("");}}
-                          style={{background:"transparent",border:`1px solid ${t.danger||"var(--cat-red)"}`,borderRadius:6,
-                            padding:"2px 8px",fontSize:10,color:t.danger||"var(--cat-red)",cursor:"pointer",fontFamily:"inherit"}}>
+                        <Button variant="danger-ghost" size="sm" onClick={()=>{setRodoUndoConfirm(true);setRodoUndoInput("");}}>
                           &#8617; Desfazer
-                        </button>
+                        </Button>
                       )}
-                      <button onClick={()=>{setRodorricaRows([]);setRodorricaFileName(null);setRodorricaFiltro("todos");setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");setPrevRodorricaSnap(null);setRodoUndoConfirm(false);}} style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>&#10005; Limpar</button>
+                      <Button variant="secondary" size="sm" onClick={()=>{setRodorricaRows([]);setRodorricaFileName(null);setRodorricaFiltro("todos");setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");setPrevRodorricaSnap(null);setRodoUndoConfirm(false);}}>&#10005; Limpar</Button>
                     </div>
                     {/* Modal confirmação desfazer */}
                     {rodoUndoConfirm && (
@@ -342,11 +341,9 @@ export default function DescargaView({ ctx }) {
                               border:`1px solid ${rodoUndoInput==="sim"?(t.danger||"var(--cat-red)"):t.borda}`}}>
                             Confirmar
                           </button>
-                          <button onClick={()=>{setRodoUndoConfirm(false);setRodoUndoInput("");}}
-                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
-                              background:"transparent",color:t.txt2,border:`1px solid ${t.borda}`}}>
+                          <Button variant="secondary" size="sm" onClick={()=>{setRodoUndoConfirm(false);setRodoUndoInput("");}}>
                             Cancelar
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -358,7 +355,7 @@ export default function DescargaView({ ctx }) {
                       <span style={{fontSize:10,color:t.txt2}}>até</span>
                       <input type="date" value={rodorricaPeriodoFim} onChange={e=>setRodorricaPeriodoFim(e.target.value)}
                         style={{fontSize:11,padding:"3px 7px",borderRadius:6,border:`1.5px solid ${rodorricaPeriodoFim?t.ouro:t.borda}`,background:t.card,color:t.txt,height:26,width:130,cursor:"pointer"}}/>
-                      {(rodorricaPeriodoIni||rodorricaPeriodoFim)&&(<button onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}} style={{fontSize:9,padding:"3px 7px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}><Icon n="x" s={13} /></button>)}
+                      {(rodorricaPeriodoIni||rodorricaPeriodoFim)&&(<Button variant="secondary" size="sm" onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}}><Icon n="x" s={13} /></Button>)}
                       <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{(rodorricaPeriodoIni||rodorricaPeriodoFim)?"Filtrando por data de carregamento":"Todas as datas"}</span>
                     </div>
                     {/* Modal de seleção de período pós-upload */}
@@ -379,8 +376,8 @@ export default function DescargaView({ ctx }) {
                           </div>
                         </div>
                         <div style={{display:"flex",gap:8,marginTop:20,justifyContent:"flex-end"}}>
-                          <button onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");setRodorricaPeriodoModal(false);}} style={{fontSize:11,padding:"7px 16px",borderRadius:8,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>Sem filtro</button>
-                          <button onClick={()=>setRodorricaPeriodoModal(false)} style={{fontSize:11,padding:"7px 20px",borderRadius:8,border:"none",background:t.ouro,color:"#1a1a2e",fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Aplicar</button>
+                          <Button variant="secondary" size="sm" onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");setRodorricaPeriodoModal(false);}}>Sem filtro</Button>
+                          <Button variant="primary" size="sm" onClick={()=>setRodorricaPeriodoModal(false)}>Aplicar</Button>
                         </div>
                       </div>
                     </div>)}
@@ -429,8 +426,8 @@ export default function DescargaView({ ctx }) {
                             <span style={{fontSize:13,fontWeight:700,color:"var(--cat-red)"}}>{fmtR(totais.valorEmRisco)}</span>
                             <span style={{fontSize:10,color:t.txt2,marginLeft:8}}>Planilha: <b style={{color:t.txt}}>{fmtR(totais.totalPlanilha)}</b></span>
                             <span style={{fontSize:10,color:t.txt2}}>App: <b style={{color:t.txt}}>{fmtR(totais.totalApp)}</b></span>
-                            <button onClick={()=>setRodorricaPeriodoModal(true)} style={{marginLeft:"auto",fontSize:9,padding:"3px 10px",borderRadius:6,border:`1.5px solid ${t.ouro}`,background:"transparent",color:t.ouro,cursor:"pointer",fontFamily:"inherit"}}><Icon n="calendar" s={13} /> Período</button>
-                            {rodorricaFiltro!=="todos"&&<button onClick={()=>setRodorricaFiltro("todos")} style={{fontSize:9,padding:"3px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}><Icon n="x" s={13} /> Limpar</button>}
+                            <Button variant="outline" size="sm" onClick={()=>setRodorricaPeriodoModal(true)} style={{ marginLeft: "auto" }}><Icon n="calendar" s={13} /> Período</Button>
+                            {rodorricaFiltro!=="todos"&&<Button variant="secondary" size="sm" onClick={()=>setRodorricaFiltro("todos")}><Icon n="x" s={13} /> Limpar</Button>}
                             <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{filtrado.length} NFs</span>
                           </div>
                           {/* Tabela */}

@@ -3,6 +3,7 @@
 // rodaram a rota. Usado pelo ModalDashDrill (type "destinos"), aberto ao clicar
 // em qualquer linha do bloco "Top Destinos" do Dashboard.
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
@@ -105,10 +106,9 @@ export default function DestinosAccordion({ regs, destaque, t, isMobile, onMotor
                     {mots.length} motorista{mots.length !== 1 ? "s" : ""}
                   </span>
                   {onPlanilha && (
-                    <button onClick={() => onPlanilha(dest)}
-                      style={{ background: "transparent", border: `1px solid ${t.borda}`, borderRadius: 6, color: t.txt2, fontSize: 10, fontFamily: "inherit", cursor: "pointer", padding: isMobile ? "8px 12px" : "5px 10px", whiteSpace: "nowrap" }}>
+                    <Button variant="secondary" size="sm" onClick={() => onPlanilha(dest)}>
                       Ver na planilha ›
-                    </button>
+                    </Button>
                   )}
                 </div>
                 {mots.length === 0 ? (

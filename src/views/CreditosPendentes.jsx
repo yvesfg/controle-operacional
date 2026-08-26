@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 import { listarIndevidasPendentesGlobal, marcarCobrado, desmarcarCobrado, listarCreditosGlobal, vincularCredito } from "../despesas.js";
@@ -211,7 +212,7 @@ export default function CreditosPendentes({ ctx }) {
             style={{ width: "100%", boxSizing: "border-box", paddingLeft: 30, paddingRight: busca ? 28 : 10, paddingTop: 7, paddingBottom: 7,
               fontSize: 12, borderRadius: 8, border: `1.5px solid ${busca ? t.ouro : t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
           {busca && (
-            <button onClick={() => setBusca("")} style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: t.txt2, fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+            <Button variant="ghost" size="md" onClick={() => setBusca("")} style={{ position: "absolute", top: "50%", right: 7 }}>×</Button>
           )}
         </div>
       </div>
@@ -234,10 +235,9 @@ export default function CreditosPendentes({ ctx }) {
                   <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>{filialLabel(filialK)}</span>
                   <span style={{ background: `${t.danger}1a`, color: t.danger, fontSize: 12, fontWeight: 700, padding: "1px 9px", borderRadius: 20 }}>{arr.length}</span>
                   <span style={{ fontSize: 12, color: t.txt2, fontFamily: "var(--font-mono)" }}>{money(totFil)}</span>
-                  <button onClick={() => gerarCobranca(filialK, arr)}
-                    style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff", whiteSpace: "nowrap" }}>
+                  <Button variant="primary" size="sm" onClick={() => gerarCobranca(filialK, arr)} style={{ marginLeft: "auto" }}>
                     Gerar cobrança
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Linhas */}
@@ -259,16 +259,14 @@ export default function CreditosPendentes({ ctx }) {
                         </div>
                         <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                           {!d.cobrado_em && !emCobranca && (
-                            <button onClick={() => { setCobrandoId(d.id); setObsText(""); }}
-                              style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.ouro, color: "#1a1a1a", whiteSpace: "nowrap" }}>
+                            <Button variant="primary" size="sm" onClick={() => { setCobrandoId(d.id); setObsText(""); }}>
                               Cobrar
-                            </button>
+                            </Button>
                           )}
                           {d.cobrado_em && (
-                            <button onClick={() => desfazer(d.id)}
-                              style={{ fontSize: 11, padding: "7px 12px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, whiteSpace: "nowrap" }}>
+                            <Button variant="secondary" size="sm" onClick={() => desfazer(d.id)}>
                               Desfazer
-                            </button>
+                            </Button>
                           )}
                           <button onClick={() => { setVinculandoId(vinculandoId === d.id ? null : d.id); setBuscaCred(""); }}
                             style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer",
@@ -283,12 +281,10 @@ export default function CreditosPendentes({ ctx }) {
                             placeholder="Observação (a quem / como cobrou) — opcional"
                             onKeyDown={(e) => { if (e.key === "Enter") confirmarCobranca(d.id); }}
                             style={{ flex: 1, minWidth: 0, padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
-                          <button onClick={() => confirmarCobranca(d.id)}
-                            style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", border: "none", background: t.verde, color: "#fff", whiteSpace: "nowrap" }}>
+                          <Button variant="success" size="sm" onClick={() => confirmarCobranca(d.id)}>
                             Registrar
-                          </button>
-                          <button onClick={() => { setCobrandoId(null); setObsText(""); }}
-                            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}><Icon n="x" s={13} /></button>
+                          </Button>
+                          <Button variant="secondary" size="sm" onClick={() => { setCobrandoId(null); setObsText(""); }}><Icon n="x" s={13} /></Button>
                         </div>
                       )}
                       {vinculandoId === d.id && (
@@ -330,13 +326,13 @@ export default function CreditosPendentes({ ctx }) {
             style={{ ...card, width: "100%", maxWidth: 520, maxHeight: "80vh", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: t.txt }}>Cobrança · {filialLabel(preview.filialK)}</span>
-              <button onClick={() => setPreview(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: t.txt2, fontSize: 18, lineHeight: 1 }}>×</button>
+              <Button variant="ghost" size="md" onClick={() => setPreview(null)} style={{ marginLeft: "auto" }}>×</Button>
             </div>
             <textarea readOnly value={preview.texto}
               style={{ flex: 1, minHeight: 220, resize: "vertical", padding: 12, fontSize: 12, lineHeight: 1.5, borderRadius: 8, border: `1px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "var(--font-mono)", outline: "none" }} />
             <div style={{ display: "flex", gap: 8, marginTop: 12, justifyContent: "flex-end" }}>
-              <button onClick={() => setPreview(null)} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>Fechar</button>
-              <button onClick={() => copiar(preview.texto)} style={{ fontSize: 12, fontWeight: 700, padding: "9px 18px", borderRadius: 8, cursor: "pointer", border: "none", background: "var(--accent)", color: "#fff" }}>Copiar</button>
+              <Button variant="secondary" size="sm" onClick={() => setPreview(null)}>Fechar</Button>
+              <Button variant="primary" size="sm" onClick={() => copiar(preview.texto)}>Copiar</Button>
             </div>
           </div>
         </div>

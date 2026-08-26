@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Button } from "./design-system/components/Button.jsx";
 import Icon from "./components/Icon.jsx";
 import { nMoeda } from "./financeiroCalc.js";
 import { PERIODO_TODOS, periodoMes, dataRegistro } from "./periodoDash.js";
@@ -1484,11 +1485,10 @@ export default function App() {
               </span>
               {baseAtual && (
                 <div style={{position:"relative"}}>
-                  <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
-                    style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 9px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:6}}>
+                  <Button variant="primary" size="sm" title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}>
                     <Icon n="dot" s={13} /> {escopoLabel}
                     {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}><Icon n="chevron-down" s={13} /></span>}
-                  </button>
+                  </Button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
@@ -1546,11 +1546,10 @@ export default function App() {
             </div>
               {baseAtual && (
                 <div style={{position:"relative",marginLeft:8}}>
-                  <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
-                    style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 8px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
+                  <Button variant="primary" size="sm" title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}>
                     <Icon n="dot" s={13} /> {escopoLabel}
                     {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}><Icon n="chevron-down" s={13} /></span>}
-                  </button>
+                  </Button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>

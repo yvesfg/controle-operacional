@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASE_TODAS } from "../constants.js";
 import loginLogo from "../../assets/images/logo-login.png";
@@ -26,12 +27,10 @@ export default function BaseSelectorScreen({
 
         {/* Consolidado: soma as bases num painel só (leitura). Fica em destaque
             porque é o que quem acompanha resultado quer abrir primeiro. */}
-        <button
-          onClick={() => setBaseAtual(BASE_TODAS)}
-          style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:hexRgb(t.ouro,.10),border:`1px solid ${hexRgb(t.ouro,.45)}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",textAlign:"left",transition:"all .15s"}}
+        <Button variant="primary" size="md" onClick={() => setBaseAtual(BASE_TODAS)}
+          
           onMouseEnter={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.16)}}
-          onMouseLeave={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.10)}}
-        >
+          onMouseLeave={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.10)}} style={{ width: "100%" }}>
           <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${hexRgb(t.ouro,.28)},${hexRgb(t.ouro,.12)})`,border:`1px solid ${hexRgb(t.ouro,.4)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
           </div>
@@ -39,7 +38,7 @@ export default function BaseSelectorScreen({
             <div style={{fontFamily:"var(--font-heading)",fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-.01em"}}>{BASE_TODAS.label}</div>
             <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Painel somado das {basesPermitidas.length} bases · só leitura</div>
           </div>
-        </button>
+        </Button>
 
         {basesPermitidas.map(base => (
           <button
@@ -58,9 +57,9 @@ export default function BaseSelectorScreen({
             </div>
           </button>
         ))}
-        <button onClick={handleLogout} style={{marginTop:4,background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>
+        <Button variant="ghost" size="sm" onClick={handleLogout} style={{ marginTop: 4 }}>
           Sair e trocar conta
-        </button>
+        </Button>
       </div>
       <Toast {...toast} />
     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO } from "../constants.js";
 import { fetchMeusModulos, fetchMeuAcesso, getSupaAuth } from "../supabaseAuth.js";
@@ -203,7 +204,7 @@ export default function HubScreen({
         <div style={{maxWidth:380,textAlign:"center",position:"relative",zIndex:1,background:t.card,border:`1px solid ${hexRgb(t.danger,.35)}`,borderRadius:14,padding:"28px 24px"}}>
           <div style={{fontSize:13,fontWeight:700,color:t.txt,marginBottom:6}}>{erroMods}</div>
           <div style={{fontSize:11,color:t.txt2,lineHeight:1.6,marginBottom:14}}>Verifique sua conexão e tente de novo.</div>
-          <button onClick={()=>setTentativa(n=>n+1)} style={{background:t.ouro,color:t.onPrimary,border:"none",borderRadius:8,padding:"8px 16px",fontSize:12,fontWeight:700,cursor:"pointer"}}>Tentar novamente</button>
+          <Button variant="primary" size="sm" onClick={()=>setTentativa(n=>n+1)}>Tentar novamente</Button>
         </div>
       ) : mods === null ? (
         <div style={{fontSize:12,color:t.txt2,position:"relative",zIndex:1}}>Carregando módulos…</div>
@@ -240,14 +241,14 @@ export default function HubScreen({
 
       <div style={{display:"flex",gap:18,marginTop:24,position:"relative",zIndex:1}}>
         {ehAdmin && (
-          <button onClick={()=>setShowAdmin(true)} style={{background:"transparent",border:"none",fontSize:11,color:t.ouro,cursor:"pointer",fontWeight:700,display:"flex",alignItems:"center",gap:5}}>
+          <Button variant="ghost" size="sm" onClick={()=>setShowAdmin(true)}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Gerenciar acessos
-          </button>
+          </Button>
         )}
-        <button onClick={handleLogout} style={{background:"transparent",border:"none",fontSize:11,color:t.txt2,cursor:"pointer",textDecoration:"underline",textUnderlineOffset:3}}>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
           Sair e trocar conta
-        </button>
+        </Button>
       </div>
       <Toast {...toast}/>
     </div>

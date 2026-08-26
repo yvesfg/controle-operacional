@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "./Icon.jsx";
 import Toggle from "./Toggle.jsx";
 
@@ -218,9 +219,9 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
               {step === "review"     && "IA sugeriu — confira e edite se necessário"}
             </div>
           </div>
-          <button onClick={handleClose} style={{ background: "transparent", border: "none", color: t.txt2, cursor: "pointer", padding: 4 }}>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
             {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>, t.txt2, 18, 1.8)}
-          </button>
+          </Button>
         </div>
 
         {/* ── STEP: upload ── */}
@@ -256,12 +257,9 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => { setFile(null); setPreviewUrl(null); setIsPdf(false); inputRef.current?.click(); }}
-                    style={{ flex: 1, padding: "8px", borderRadius: 9, border: `1.5px solid ${t.borda}`, background: "transparent", color: t.txt2, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => { setFile(null); setPreviewUrl(null); setIsPdf(false); inputRef.current?.click(); }} style={{ flex: 1 }}>
                     Trocar arquivo
-                  </button>
+                  </Button>
                   <button
                     onClick={handleExtract}
                     style={{

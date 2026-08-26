@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "./Icon.jsx";
 
 // Captura erros de render em qualquer lugar da árvore e mostra um fallback em vez
@@ -40,16 +41,9 @@ export default class ErrorBoundary extends React.Component {
             O restante do sistema segue funcionando. Recarregue a página; se o erro
             persistir, avise o suporte com o horário em que aconteceu.
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              padding: "11px 20px", background: "var(--accent, #f0b90b)",
-              color: "var(--on-primary, #111)", border: "none", borderRadius: 10,
-              fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-            }}
-          >
+          <Button variant="primary" size="md" onClick={() => window.location.reload()}>
             Recarregar
-          </button>
+          </Button>
           {import.meta.env?.DEV && (
             <pre style={{
               marginTop: 20, textAlign: "left", fontSize: 11, color: "var(--red, #e66)",

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 
 const TIPOS = [
@@ -226,10 +227,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                       }}
                     >
                       {nf}
-                      <button
-                        onClick={() => setNfsManual(prev => prev.filter(n => n !== nf))}
-                        style={{ background: "none", border: "none", color: "#f0b90b88", cursor: "pointer", fontSize: 12, lineHeight: 1, padding: 0, fontWeight: 700 }}
-                      >×</button>
+                      <Button variant="ghost" size="sm" onClick={() => setNfsManual(prev => prev.filter(n => n !== nf))}>×</Button>
                     </span>
                   ))}
                 </div>
@@ -271,15 +269,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
 
         {/* Footer */}
         <div style={{ display: "flex", gap: 8, padding: "9px 14px 12px", borderTop: `1px solid ${t.borda}`, flexShrink: 0 }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "8px 14px", borderRadius: 8,
-              border: `1px solid ${t.borda}`, background: "transparent",
-              color: t.txt2, fontSize: 11, fontWeight: 600,
-              cursor: "pointer", fontFamily: "inherit",
-            }}
-          >Cancelar</button>
+          <Button variant="secondary" size="sm" onClick={onClose}>Cancelar</Button>
           <button
             onClick={handleSalvar}
             disabled={!texto.trim()}

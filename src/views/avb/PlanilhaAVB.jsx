@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../../design-system/components/Button.jsx";
 import Icon from "../../components/Icon.jsx";
 
 // PlanilhaAVB — Planilha exclusiva Açailândia AVB
@@ -211,18 +212,14 @@ export default function PlanilhaAVB({ ctx }) {
             padding:"3px 8px",borderRadius:6,background:"rgba(255,107,53,.12)",
             border:"1px solid rgba(255,107,53,.3)",color:"var(--accent)",fontFamily:"var(--font-heading)"}}>
             Status: {planilhaFiltroStatus}
-            <button onClick={()=>{setPlanilhaFiltroStatus("");setPlanilhaPagina(1);}}
-              style={{background:"none",border:"none",cursor:"pointer",color:"var(--accent)",fontSize:11,lineHeight:1,padding:0,marginLeft:2}}>×</button>
+            <Button variant="ghost" size="sm" onClick={()=>{setPlanilhaFiltroStatus("");setPlanilhaPagina(1);}} style={{ marginLeft: 2 }}>×</Button>
           </span>
         )}
 
         {temFiltro && (
-          <button onClick={limparFiltros}
-            style={{fontSize:9,padding:"4px 8px",borderRadius:6,
-              border:"1px solid var(--border)",background:"transparent",
-              color:"var(--text2)",cursor:"pointer"}}>
+          <Button variant="secondary" size="sm" onClick={limparFiltros}>
             <Icon n="x" s={13} /> Limpar
-          </button>
+          </Button>
         )}
 
         <span style={{marginLeft:"auto",fontSize:10,fontFamily:"var(--font-mono)",color:"var(--text2)",fontWeight:600}}>
@@ -239,8 +236,7 @@ export default function PlanilhaAVB({ ctx }) {
           {planilhaSortKey && (
             <span style={{color:"var(--accent)",marginLeft:8}}>
               ord. por {planilhaSortKey} <Icon n={planilhaSortDir==="asc"?"arrow-up":"arrow-down"} s={11} />
-              <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}}
-                style={{background:"none",border:"none",color:"var(--text3)",cursor:"pointer",fontSize:10,padding:"0 3px"}}><Icon n="x" s={13} /></button>
+              <Button variant="ghost" size="sm" onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}}><Icon n="x" s={13} /></Button>
             </span>
           )}
         </span>

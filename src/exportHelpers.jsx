@@ -5,6 +5,7 @@
 // do Excel 2003 com extensão .xls (o Excel abre reclamando, o Sheets recusa) e um
 // "PDF" que era janela de impressão.
 import React, { useState } from 'react';
+import { Button } from "./design-system/components/Button.jsx";
 import { baixarXLSX, baixarCSV, baixarPDF, matrizDeColunas } from './exportacao.js';
 
 // cols: [{ k, l }] — k é a chave na linha, l o rótulo da coluna.
@@ -51,17 +52,10 @@ export function ExportMenu({ dados, cols, filename, titulo }) {
             overflow: "hidden", zIndex: 50, minWidth: 190, boxShadow: "0 8px 24px var(--color-shadow)",
           }}>
             {opcoes.map((o, i) => (
-              <button key={o.id} onClick={() => rodar(o.id)} disabled={!!ocupado}
-                style={{
-                  width: "100%", background: "transparent", border: "none",
-                  borderBottom: i < opcoes.length - 1 ? "1px solid var(--border)" : "none",
-                  padding: "9px 14px", color: "var(--text)", fontSize: 11.5, fontWeight: 600,
-                  cursor: ocupado ? "wait" : "pointer", textAlign: "left", fontFamily: "inherit",
-                  opacity: ocupado && ocupado !== o.id ? .5 : 1,
-                }}>
+              <Button variant="ghost" size="sm" key={o.id} onClick={() => rodar(o.id)} disabled={!!ocupado} style={{ width: "100%" }}>
                 {ocupado === o.id ? "gerando…" : o.l}
                 <div style={{ fontSize: 9.5, color: "var(--text3)", fontWeight: 400, marginTop: 1 }}>{o.d}</div>
-              </button>
+              </Button>
             ))}
           </div>
         </>

@@ -21,6 +21,7 @@
  *   ctx.css, ctx.hIco
  */
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { clickable } from "../utils.js";
 
@@ -229,7 +230,7 @@ export default function OperacionalView({ ctx }) {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => setSgsFormOpen(false)} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid var(--border)`, borderRadius: 8, padding: "8px 12px", color: "var(--text2)", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>CANCELAR</button>
+                <Button variant="secondary" size="sm" onClick={() => setSgsFormOpen(false)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
                 <button onClick={() => {
                   if (!sgsForm.numero) { showToast("Informe o nº do chamado", "warn"); return; }
                   const nova = [{ ...sgsForm, id: Date.now(), criado_em: new Date().toISOString(), usuario: usuarioLogado || perfil }, ...sgsItems];
@@ -292,7 +293,7 @@ export default function OperacionalView({ ctx }) {
                               <div key={ri} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: t.card2, borderRadius: 7, padding: "7px 10px", border: `1px solid ${t.borda}` }}>
                                 <span style={{ fontSize: 9, fontWeight: 700, color: t.azulLt, whiteSpace: "nowrap" }}>{r.data ? new Date(r.data + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</span>
                                 <span style={{ fontSize: 10, color: t.txt, flex: 1 }}>{r.descricao || "-"}</span>
-                                <button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], retornos: retornos.filter((_, j) => j !== ri), ultimo_retorno: retornos.filter((_, j) => j !== ri).at(-1)?.data || s.data_chamado || "" }; saveSGS(a); }} style={{ background: "transparent", border: "none", color: t.danger, cursor: "pointer", fontSize: 11, flexShrink: 0, padding: 2 }}><Icon n="x" s={13} /></button>
+                                <Button variant="ghost" size="sm" onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], retornos: retornos.filter((_, j) => j !== ri), ultimo_retorno: retornos.filter((_, j) => j !== ri).at(-1)?.data || s.data_chamado || "" }; saveSGS(a); }} style={{ flexShrink: 0 }}><Icon n="x" s={13} /></Button>
                               </div>
                             ))}
                           </div>
@@ -472,7 +473,7 @@ export default function OperacionalView({ ctx }) {
                 <div><label style={lbl}>Data Apontamento</label><input type="date" value={apontForm.data_apontamento} onChange={e => setApontForm(p => ({ ...p, data_apontamento: e.target.value }))} style={inp} /></div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => setApontFormOpen(false)} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid var(--border)`, borderRadius: 8, padding: "8px 12px", color: "var(--text2)", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>CANCELAR</button>
+                <Button variant="secondary" size="sm" onClick={() => setApontFormOpen(false)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
                 <button onClick={async () => {
                   if (!apontForm.numero) { showToast("Informe o nº do apontamento", "warn"); return; }
                   const novoItem = { ...apontForm, id: Date.now(), criado_em: new Date().toISOString() };

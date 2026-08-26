@@ -136,10 +136,9 @@ export default function ModalDashDrill({ ctx }) {
           {!ehLista&&dashDrillModal.type!=="destino"&&dashDrillModal.type!=="motoristas"&&dashDrillModal.regs.length>visiveis&&(
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,paddingTop:4}}>
               <span style={{fontSize:9,color:"var(--text3)",fontFamily:"var(--font-mono)"}}>{visiveis} de {dashDrillModal.regs.length}</span>
-              <button onClick={()=>setVisiveis(v=>v+PAGINA)}
-                style={{background:"transparent",border:`1px solid ${t.borda}`,borderRadius:8,color:t.txt2,fontSize:11,fontFamily:"inherit",cursor:"pointer",padding:isMobile?"12px 16px":"8px 14px"}}>
+              <Button variant="secondary" size="sm" onClick={()=>setVisiveis(v=>v+PAGINA)}>
                 Ver mais {Math.min(PAGINA,dashDrillModal.regs.length-visiveis)} ›
-              </button>
+              </Button>
             </div>
           )}
           {dashDrillModal.regs.length===0&&<div style={{textAlign:"center",color:t.txt2,fontSize:12,padding:20}}>Nenhum registro encontrado.</div>}
