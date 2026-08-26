@@ -101,8 +101,13 @@ export function itensDoEnvio(DADOS = [], motoristas = [], veiculos = []) {
       pendencias: motorista ? pendenciasCadastro(motorista, pecas) : ["Motorista não cadastrado"],
     };
     // Sem motorista no cadastro não há assinatura que preste (o conjunto ainda
-    // pode ser o mesmo de outro): agrupa por placa, que é o que se tem.
-    const assinatura = motorista ? assinaturaDoItem(item) : `sem-cadastro:${placas.join("-")}`;
+    // pode ser o mesmo de outro): agrupa por placa, que é o que se tem. E sem
+    // placa, cada DT é seu próprio item — juntar tudo numa chave vazia fazia as
+    // DTs recém-criadas (ainda sem placa nem motorista) sumirem da lista, que é
+    // exatamente quando o analista vai procurá-las.
+    const assinatura = motorista
+      ? assinaturaDoItem(item)
+      : `sem-cadastro:${placas.join("-") || `dt-${dt}`}`;
     const existente = porCadastro.get(assinatura);
     if (existente) { existente.dts.push(dt); return; }
     porCadastro.set(assinatura, { ...item, assinatura, chave: assinatura, dts: [dt] });

@@ -81,16 +81,20 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
     return !i.pendencias.length && i.situacao.estado !== "igual";
   }, [filtro]);
 
+  const casaBusca = React.useCallback((i, q) => (
+    i.dts.some((d) => d.toUpperCase().includes(q))
+      || i.nome.toUpperCase().includes(q)
+      || i.veiculos.some((v) => v.placa.includes(q.replace(/[^A-Z0-9]/g, "")))
+  ), []);
+
+  // Buscar é PROCURAR, não filtrar: quem digita a DT quer achá-la, e ela quase
+  // sempre está em outra situação que não a aberta (a DT nova nasce em "falta
+  // documento"). Com busca ativa, a situação sai do caminho.
   const visiveis = React.useMemo(() => {
     const q = busca.trim().toUpperCase();
-    return itens.filter((i) => {
-      if (!daSituacao(i)) return false;
-      if (!q) return true;
-      return i.dts.some((d) => d.toUpperCase().includes(q))
-        || i.nome.toUpperCase().includes(q)
-        || i.veiculos.some((v) => v.placa.includes(q.replace(/[^A-Z0-9]/g, "")));
-    });
-  }, [itens, busca, daSituacao]);
+    if (q) return itens.filter((i) => casaBusca(i, q));
+    return itens.filter(daSituacao);
+  }, [itens, busca, daSituacao, casaBusca]);
   const selecionados = itens.filter((i) => marcadas.has(i.chave));
   const marcaveis = visiveis.filter((i) => !i.pendencias.length).length;
 
@@ -180,6 +184,9 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
             {f.l} {contagem[f.k] || 0}
           </button>
         ))}
+        {busca.trim() && (
+          <span style={{ color: t.azul }}>busca ativa — mostrando todas as situações</span>
+        )}
         <span style={{ marginLeft: "auto" }}>{marcadas.size} marcado(s)</span>
         {marcaveis > 0 && (
           <button onClick={marcarVisiveis} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}`, fontFamily: "inherit" }}>
@@ -195,7 +202,11 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
         {!visiveis.length && (
           <div style={{ fontSize: 11.5, color: t.txt2, padding: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             {busca.trim()
-              ? <span>Nada bate com “{busca.trim()}” nesta situação.</span>
+              ? <span>
+                  {(DADOS || []).some((r) => String(r.dt || "").toUpperCase().includes(busca.trim().toUpperCase()))
+                    ? <>“{busca.trim()}” existe nesta base, mas ainda não tem motorista nem placa na viagem — é por aí que o cadastro é montado.</>
+                    : <>“{busca.trim()}” não está na base carregada. Se você acabou de escrever na planilha, a sincronização ainda não trouxe — ela roda a cada 15 min.</>}
+                </span>
               : filtro === "prontos" && contagem.pendencia > 0
                 ? <>
                     <span>Nenhum cadastro pronto — {contagem.pendencia} ainda esperam CNH ou CRLV.</span>
