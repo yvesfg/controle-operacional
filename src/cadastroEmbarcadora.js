@@ -68,10 +68,22 @@ export function normalizarUF(v) {
   return "";
 }
 
-// CPF é texto no banco (veio da planilha assim) e chega em três formatos: com
-// máscara certa, com PONTO no lugar do dígito verificador ("844.951.701.04") e
-// só dígitos. Comparação e gravação usam sempre os 11 dígitos.
-export const cpfDigitos = (v) => soDigitos(v).slice(0, 11);
+// CPF é texto no banco (veio da planilha assim) e chega em quatro formatos: com
+// máscara certa, com PONTO no lugar do dígito verificador ("844.951.701.04"),
+// só dígitos, e — o pior — SEM O ZERO À ESQUERDA, porque a coluna do Sheets é
+// numérica e número não guarda zero: 00582481376 chega 582481376.
+//
+// Completar o zero só quando o DÍGITO VERIFICADOR fecha depois do padding: aí é
+// prova de que o número está certo e só perdeu o zero. Se não fechar, o valor
+// volta como veio — chutar zero em CPF errado criaria um CPF de outra pessoa.
+// Sem isso, o CPF curto não casa com o completo e o app cria um SEGUNDO cadastro
+// do mesmo motorista (aconteceu em 90 CPFs).
+export function cpfDigitos(v) {
+  const d = soDigitos(v).slice(0, 11);
+  if (d.length === 11 || d.length < 8) return d;
+  const completo = d.padStart(11, "0");
+  return dvCpfConfere(completo) ? completo : d;
+}
 
 export function formatarCPF(v) {
   const d = cpfDigitos(v);
@@ -84,9 +96,9 @@ export function formatarCPF(v) {
 // no CPF/CNPJ do responsável, e CPF com PONTO no lugar do hífen, que ao perder a
 // pontuação vira outro número. O dígito verificador é o que separa "número
 // errado" de "número certo" — e é ele que a embarcadora confere.
-export function cpfValido(v) {
-  const d = soDigitos(v);
-  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+// Recebe 11 dígitos crus (sem passar por cpfDigitos, que depende desta função).
+export function dvCpfConfere(d) {
+  if (!/^\d{11}$/.test(d) || /^(\d)\1{10}$/.test(d)) return false;
   const dv = (ate) => {
     let soma = 0;
     for (let i = 0; i < ate; i++) soma += Number(d[i]) * (ate + 1 - i);
@@ -95,6 +107,8 @@ export function cpfValido(v) {
   };
   return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
 }
+
+export const cpfValido = (v) => dvCpfConfere(cpfDigitos(v));
 
 export function cnpjValido(v) {
   const d = soDigitos(v);

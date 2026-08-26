@@ -222,7 +222,12 @@ export default function MotoristasCad({ ctx, conn }) {
       }
       showToast?.(`"${dados.nome}" ${concluir ? "com cadastro concluído" : form.__novo ? "cadastrado" : "atualizado"}.`, "ok");
       setForm(null);
-    } catch (e) { showToast?.("Erro ao salvar: " + e.message, "erro"); }
+    } catch (e) {
+      // O banco passou a recusar CPF repetido (migration 075) — sem traduzir, o
+      // analista veria o erro cru do Postgres e não saberia que o motorista já existe.
+      const dup = /duplicate key|23505|idx_motoristas_cpf_unico/i.test(e.message || "");
+      showToast?.(dup ? "Este CPF já tem cadastro — busque pelo CPF e edite o que existe." : "Erro ao salvar: " + e.message, "erro");
+    }
     finally { setSalvando(false); }
   };
 
