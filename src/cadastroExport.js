@@ -9,6 +9,7 @@
 // O layout é dado (tabela cadastro_templates, migration 071), então este módulo
 // não sabe nada sobre "Suzano": ele lê seções, escopos e colunas.
 import { conjuntoDaViagem, cpfDigitos, formatarCPF, formatarCpfCnpj, pendenciasCadastro, normalizarRenavam, soDigitos } from "./cadastroEmbarcadora.js";
+import { placaCanonica } from "./veiculos.js";
 
 const UF_EXTENSO = {
   AC:"ACRE", AL:"ALAGOAS", AP:"AMAPÁ", AM:"AMAZONAS", BA:"BAHIA", CE:"CEARÁ",
@@ -68,9 +69,12 @@ export function itensDoEnvio(DADOS = [], motoristas = [], veiculos = []) {
     if (cpf) porCpf.set(cpf, m);
     if (m.nome) porNome.set(m.nome.toUpperCase().trim(), m);
     [m.placa1, m.placa2, m.placa3, m.placa4].filter(Boolean)
-      .forEach((p) => porPlaca.set(String(p).toUpperCase().replace(/[^A-Z0-9]/g, ""), m));
+      .forEach((p) => porPlaca.set(placaCanonica(p), m));
   });
-  const veicPorPlaca = new Map(veiculos.map((v) => [v.placa, v]));
+  // Indexado pela CANÔNICA: a viagem escreve "OLL2I68" e o cadastro guardou
+  // "OLL2168" — mesma carreta, grafias diferentes. Sem isto ela entra como casca
+  // sem documento e trava o cadastro inteiro como incompleto.
+  const veicPorPlaca = new Map(veiculos.map((v) => [placaCanonica(v.placa), v]));
 
   const porDt = new Map();
   (DADOS || []).forEach((reg) => {
@@ -87,12 +91,12 @@ export function itensDoEnvio(DADOS = [], motoristas = [], veiculos = []) {
   [...porDt.entries()].forEach(([dt, reg]) => {
     const motorista = porCpf.get(cpfDigitos(reg.cpf))
       || porNome.get(String(reg.nome || "").toUpperCase().trim())
-      || porPlaca.get(String(reg.placa || "").toUpperCase().replace(/[^A-Z0-9]/g, ""))
+      || porPlaca.get(placaCanonica(reg.placa))
       || null;
     const placas = conjuntoDaViagem(reg, motorista || {});
     // Placa que rodou mas não está no cadastro de veículos entra como casca: o
     // envio precisa saber que ela existe pra poder acusar o que falta nela.
-    const pecas = placas.map((p, i) => veicPorPlaca.get(p) || { placa: p, tipo: i === 0 ? "cavalo" : "carreta" });
+    const pecas = placas.map((p, i) => veicPorPlaca.get(placaCanonica(p)) || { placa: p, tipo: i === 0 ? "cavalo" : "carreta" });
     const item = {
       reg,
       motorista,

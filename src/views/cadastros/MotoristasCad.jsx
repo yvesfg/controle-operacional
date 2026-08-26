@@ -4,6 +4,7 @@ import useVeiculos from "../../hooks/useVeiculos.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
 import EmptyState from "../../components/EmptyState.jsx";
 import Icon from "../../components/Icon.jsx";
+import { placaCanonica } from "../../veiculos.js";
 import { Button } from "../../design-system/components/Button.jsx";
 import { Badge } from "../../design-system/components/Badge.jsx";
 import ExportarCadastroPanel from "./ExportarCadastroPanel.jsx";
@@ -63,7 +64,9 @@ export default function MotoristasCad({ ctx, conn }) {
   // Lista completa de veículos: a placa digitada pode já existir (troca de conjunto
   // entre motoristas), e aí os dados do CRLV dela já estão no banco.
   const { lista: veiculosTodos, atualizar: atualizarVeiculo } = useVeiculos(conn, { onErro });
-  const veicPorPlaca = React.useMemo(() => new Map(veiculosTodos.map((v) => [v.placa, v])), [veiculosTodos]);
+  // Pela CANÔNICA (I=1, O=0): a placa digitada da viagem tem que achar a peça
+  // já cadastrada mesmo com a grafia divergente.
+  const veicPorPlaca = React.useMemo(() => new Map(veiculosTodos.map((v) => [placaCanonica(v.placa), v])), [veiculosTodos]);
 
   const [busca, setBusca] = React.useState("");
   const [form, setForm] = React.useState(null);
@@ -82,13 +85,13 @@ export default function MotoristasCad({ ctx, conn }) {
       const cpf = cpfDigitos(m.cpf);
       if (cpf) porCpf.set(cpf, m.id);
       if (m.nome) porNome.set(m.nome.toUpperCase().trim(), m.id);
-      [m.placa1, m.placa2, m.placa3, m.placa4].filter(Boolean).forEach((p) => porPlaca.set(normPlaca(p), m.id));
+      [m.placa1, m.placa2, m.placa3, m.placa4].filter(Boolean).forEach((p) => porPlaca.set(placaCanonica(p), m.id));
     });
     const mapa = new Map(); // id -> [{dt, data, destino}]
     (DADOS || []).forEach((reg) => {
       const id = porCpf.get(cpfDigitos(reg.cpf))
         || porNome.get(String(reg.nome || "").toUpperCase().trim())
-        || porPlaca.get(normPlaca(reg.placa));
+        || porPlaca.get(placaCanonica(reg.placa));
       if (!id || !reg.dt) return;
       const lista = mapa.get(id) || [];
       lista.push({ dt: String(reg.dt), destino: reg.destino || "", data: reg.data_carr || reg.data || "" });
@@ -116,7 +119,7 @@ export default function MotoristasCad({ ctx, conn }) {
   const veicDoForm = React.useCallback((placa) => {
     const p = normPlaca(placa);
     if (!p) return {};
-    return { ...(veicPorPlaca.get(p) || {}), ...((form?._veic || {})[p] || {}) };
+    return { ...(veicPorPlaca.get(placaCanonica(p)) || {}), ...((form?._veic || {})[p] || {}) };
   }, [form, veicPorPlaca]);
 
   const setVeic = (placa, patch) => {
@@ -129,7 +132,7 @@ export default function MotoristasCad({ ctx, conn }) {
   const conjuntoDoForm = React.useCallback(() => (
     SLOTS.map((s) => ({ slot: s, placa: normPlaca(form?.[s.k]) }))
       .filter((x) => x.placa)
-      .map((x) => ({ ...veicDoForm(x.placa), placa: x.placa, tipo: veicPorPlaca.get(x.placa)?.tipo || x.slot.tipo }))
+      .map((x) => ({ ...veicDoForm(x.placa), placa: x.placa, tipo: veicPorPlaca.get(placaCanonica(x.placa))?.tipo || x.slot.tipo }))
   ), [form, veicDoForm, veicPorPlaca]);
 
   const pendencias = form ? pendenciasCadastro(form, conjuntoDoForm()) : [];
@@ -212,7 +215,7 @@ export default function MotoristasCad({ ctx, conn }) {
       // Os dados do CRLV vão DEPOIS: saveMotoristasLS é quem cria o veículo da
       // placa nova (e define cavalo/carreta), então antes dele não há o que patchar.
       for (const [placa, patch] of Object.entries(form._veic || {})) {
-        const atual = veicPorPlaca.get(placa) || {};
+        const atual = veicPorPlaca.get(placaCanonica(placa)) || {};
         const limpo = {};
         CAMPOS_VEICULO.forEach((k) => {
           const v = k === "renavam" ? normalizarRenavam(patch[k]) : patch[k];
@@ -479,7 +482,7 @@ export default function MotoristasCad({ ctx, conn }) {
             {SLOTS.map((s) => {
               const placa = normPlaca(form[s.k]);
               const v = veicDoForm(placa);
-              const conhecida = placa && veicPorPlaca.has(placa);
+              const conhecida = placa && veicPorPlaca.has(placaCanonica(placa));
               return (
                 <div key={s.k} style={{ border: `1px solid ${t.borda}`, borderRadius: 9, padding: 10, background: t.card2 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", marginBottom: v.placa || placa ? 8 : 0 }}>
@@ -511,7 +514,7 @@ export default function MotoristasCad({ ctx, conn }) {
                         </div>
                       ))}
                       {/* Tanque só do cavalo: na carreta a planilha da embarcadora escreve "X". */}
-                      {(veicPorPlaca.get(placa)?.tipo || s.tipo) === "cavalo" && (
+                      {(veicPorPlaca.get(placaCanonica(placa))?.tipo || s.tipo) === "cavalo" && (
                         <div style={{ flex: "0 0 110px" }}>
                           <label style={lbl}>Tanque (L)</label>
                           <input value={v.tanque_litros ?? ""} placeholder="540"

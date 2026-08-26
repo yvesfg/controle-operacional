@@ -16,6 +16,38 @@ export function setVeiculosToken(t) { _sessionToken = t || null; }
 
 export const soDigitosPlaca = (v) => String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
+// ── I×1 e O×0 ───────────────────────────────────────────────────────────────
+// A mesma peça chega escrita de dois jeitos: a planilha digita "OLL2I68" e o
+// CRLV lido grava "OLL2168". Pro olho é a mesma placa; pro `===` não é, e aí o
+// veículo da viagem não acha o cadastro — a carreta vira casca sem documento e
+// o cadastro trava como incompleto. Aconteceu em 4 placas da base.
+//
+// CANÔNICA é chave de COMPARAÇÃO: colapsa I em 1 e O em 0, em qualquer posição.
+// Conferido na base: nenhuma placa cadastrada colide com outra ao colapsar.
+export const placaCanonica = (v) => soDigitosPlaca(v).replace(/I/g, "1").replace(/O/g, "0");
+
+export const mesmaPlaca = (a, b) => {
+  const ca = placaCanonica(a), cb = placaCanonica(b);
+  return !!ca && ca === cb;
+};
+
+// NORMALIZAR é correção de GRAFIA, e só onde o formato não deixa dúvida.
+// Placa de 7: as 3 primeiras são sempre letra e as 2 últimas sempre dígito, nos
+// dois padrões; a 4ª é sempre dígito. A 5ª é letra no Mercosul (LLLNLNN) e
+// dígito no antigo (LLLNNNN) — ambígua, então fica como está.
+export function normalizarPlaca(v) {
+  const p = soDigitosPlaca(v);
+  if (p.length !== 7) return p;
+  const letra = (c) => (c === "0" ? "O" : c === "1" ? "I" : c);
+  const digito = (c) => (c === "O" ? "0" : c === "I" ? "1" : c);
+  return [
+    letra(p[0]), letra(p[1]), letra(p[2]),
+    digito(p[3]),
+    p[4],
+    digito(p[5]), digito(p[6]),
+  ].join("");
+}
+
 export async function listarVeiculos(conn) {
   if (_sessionToken) {
     const r = await supaFetch(conn.url, conn.key, "POST", "rpc/listar_veiculos", { p_token: _sessionToken });
