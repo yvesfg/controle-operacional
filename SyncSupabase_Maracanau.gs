@@ -109,6 +109,7 @@ function sincronizarMaracanau() {
           if (v instanceof Date) {
             v = Utilities.formatDate(v, 'America/Sao_Paulo', 'dd/MM/yyyy');
           }
+          if (campo === 'cpf') v = cpfDaCelula(v);
           var vs = v ? v.toString().trim() : '';
           if (vs || !reg.hasOwnProperty(campo)) reg[campo] = vs;
           if (vs) linhaVazia = false;
@@ -350,4 +351,16 @@ function mapearColunaMaracanau(n) {
     'desc_aguardando': 'desc_aguardando', 'aguardando descarga': 'desc_aguardando'
   };
   return mapa[n] || null;
+}
+
+// CPF em celula NUMERICA perde o zero a esquerda: 00582481376 vira 582481376.
+// Nao e cosmetico — CPF curto nao casa com CPF completo, e o app chegou a criar
+// um SEGUNDO cadastro do mesmo motorista (120 duplicados absorvidos em 26/08/2026,
+// migrations 074/075). Aqui devolvemos o zero na ORIGEM; o app tambem normaliza
+// na leitura, mas isto evita o dado nascer torto.
+// So mexe quando a celula veio como NUMERO: texto digitado passa intacto.
+function cpfDaCelula(v) {
+  if (typeof v !== 'number') return v;
+  var d = String(Math.round(v));
+  return d.length < 11 ? Array(11 - d.length + 1).join('0') + d : d;
 }

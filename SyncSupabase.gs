@@ -718,8 +718,22 @@ function tratarValor(v, campo) {
   if (typeof v === 'number' && CAMPOS_FINANCEIROS.indexOf(campo) >= 0) {
     return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
+  if (campo === 'cpf') return cpfDaCelula(v);
   return v;
 }
+
+// CPF em celula NUMERICA perde o zero a esquerda: 00582481376 vira 582481376.
+// Nao e cosmetico — CPF curto nao casa com CPF completo, e o app chegou a criar
+// um SEGUNDO cadastro do mesmo motorista (120 duplicados absorvidos em 26/08/2026,
+// migrations 074/075). Aqui devolvemos o zero na ORIGEM; o app tambem normaliza
+// na leitura, mas isto evita o dado nascer torto.
+// So mexe quando a celula veio como NUMERO: texto digitado passa intacto.
+function cpfDaCelula(v) {
+  if (typeof v !== 'number') return v;
+  var d = String(Math.round(v));
+  return d.length < 11 ? Array(11 - d.length + 1).join('0') + d : d;
+}
+
 
 function normalizarCabecalho(s) {
   return String(s == null ? '' : s)
