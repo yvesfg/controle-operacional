@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "./Icon.jsx";
 import { baixarXLSX, baixarCSV, baixarPDF } from "../exportacao.js";
 
@@ -140,12 +141,9 @@ export default function ModalRelatorio({
   };
 
   const btn = (label, onClick, principal) => (
-    <button onClick={onClick}
-      style={{ fontSize: 12, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
-        border: principal ? "none" : `1px solid ${t.borda}`, background: principal ? "var(--accent)" : "transparent",
-        color: principal ? (t.onPrimary || "#181a20") : t.txt2 }}>
+    <Button variant={principal ? "primary" : "secondary"} size="sm" onClick={onClick}>
       {label}
-    </button>
+    </Button>
   );
 
   return (

@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import PainelFinanceiro from "./PainelFinanceiro.jsx";
 import Resultado from "./Resultado.jsx";
 import CreditosPendentes from "./CreditosPendentes.jsx";
@@ -104,12 +105,9 @@ export default function FinanceiroView({ ctx }) {
         {finTab === "resultado" && !consolidado && (
           <div style={{ display: "flex", gap: 4, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}` }}>
             {[["operacional", "Operacional"], ["faturamento", "Conferência de Faturamento"], ["contratos", "Contratos"], ["conciliacao", "Conciliação"]].map(([id, label]) => (
-              <button key={id} onClick={() => setSegmento(id)}
-                style={{ fontSize: 11.5, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", border: "none",
-                  background: segmento === id ? "var(--accent)" : "transparent",
-                  color: segmento === id ? (t.onPrimary || "#181a20") : t.txt2 }}>
+              <Button variant={segmento === id ? "primary" : "ghost"} size="sm" key={id} onClick={() => setSegmento(id)}>
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
         )}

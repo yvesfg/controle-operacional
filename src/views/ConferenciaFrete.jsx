@@ -1106,15 +1106,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {[["", "Todos os clientes"], ...clientesPresentes.map((c) => [c, c])].map(([v, label]) => {
                   const ativo = clienteFiltro === v;
                   return (
-                    <button key={v || "__all"} onClick={() => { setClienteFiltro(v); setCliOpen(false); }}
-                      style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", fontSize: 12.5, fontWeight: ativo ? 700 : 500,
-                        padding: "8px 10px", borderRadius: 7, cursor: "pointer", border: "none", fontFamily: "inherit", whiteSpace: "nowrap",
-                        background: ativo ? hexRgb(t.ouro, .12) : "transparent", color: ativo ? t.ouro : t.txt }}
+                    <Button variant={ativo ? "primary" : "ghost"} size="sm" key={v || "__all"} onClick={() => { setClienteFiltro(v); setCliOpen(false); }}
+                      
                       onMouseEnter={(e) => { if (!ativo) e.currentTarget.style.background = t.card2; }}
-                      onMouseLeave={(e) => { if (!ativo) e.currentTarget.style.background = "transparent"; }}>
+                      onMouseLeave={(e) => { if (!ativo) e.currentTarget.style.background = "transparent"; }} style={{ width: "100%" }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: ativo ? 1 : 0 }}><polyline points="20 6 9 17 4 12" /></svg>
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -1618,14 +1616,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
             {/* Recorte de mês — a fila já vem só do mês anterior + corrente; aqui você isola um deles */}
             <div style={{ display: "flex", gap: 3, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}` }}>
               {[["atual", "Atual", mesLabel(mesCorrenteReal)], ["anterior", "Anterior", mesLabel(mesAnteriorReal)], ["todos", "Todos", null]].map(([id, label, mes]) => (
-                <button key={id} onClick={() => setFilaMes(id)}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1, fontFamily: "inherit",
-                    fontSize: 10.5, fontWeight: 700, padding: "4px 9px", borderRadius: 7, cursor: "pointer", border: "none",
-                    background: filaMes === id ? "var(--accent)" : "transparent",
-                    color: filaMes === id ? (t.onPrimary || "#181a20") : t.txt2 }}>
+                <Button variant={filaMes === id ? "primary" : "ghost"} size="sm" key={id} onClick={() => setFilaMes(id)}>
                   {label}
                   {mes && <span style={{ fontSize: 8.5, fontWeight: 600, opacity: .8, fontFamily: "var(--font-mono)", marginTop: 1 }}>{mes}</span>}
-                </button>
+                </Button>
               ))}
             </div>
             {pendentesFiltrados.length > 0 && (
@@ -1816,12 +1810,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {/* Modo: embarcadora nova (CIF, cliente próprio) × devolução (FOB, fatura no cliente-alvo) */}
                   <div style={{ display: "flex", gap: 3, padding: 3, borderRadius: 9, background: t.card2, border: `1px solid ${t.borda}`, marginBottom: 10, width: "fit-content" }}>
                     {[["cadastro", "Nova embarcadora"], ["devolucao", "É devolução"]].map(([id, label]) => (
-                      <button key={id} onClick={() => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], modo: id } }))}
-                        style={{ fontSize: 11, fontWeight: 700, padding: "5px 11px", borderRadius: 7, cursor: "pointer", fontFamily: "inherit", border: "none",
-                          background: form.modo === id ? (id === "devolucao" ? t.azul : t.ouro) : "transparent",
-                          color: form.modo === id ? (id === "devolucao" ? "#fff" : "#1a1a1a") : t.txt2 }}>
+                      <Button variant={form.modo === id ? (id === "devolucao" ? "info" : "primary") : "ghost"} size="sm" key={id} onClick={() => setFormsDesconhecidos((f) => ({ ...f, [d.cnpj]: { ...f[d.cnpj], modo: id } }))}>
                         {label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
 

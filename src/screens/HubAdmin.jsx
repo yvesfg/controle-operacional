@@ -471,8 +471,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                   {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
                 </select>
               )}
-              <button disabled={!n.slug} onClick={()=>{concederModulo(p.id,n.slug,n.role);setNovo(s=>({...s,[p.id]:{slug:"",role:"viewer"}}));}}
-                style={{background:n.slug?t.ouro:t.borda2,color:n.slug?t.onPrimary:t.txt2,border:"none",borderRadius:8,padding:"6px 12px",fontSize:12,fontWeight:700,cursor:n.slug?"pointer":"not-allowed"}}>Conceder</button>
+              <Button variant={n.slug ? "primary" : "secondary"} size="sm" disabled={!n.slug} onClick={()=>{concederModulo(p.id,n.slug,n.role);setNovo(s=>({...s,[p.id]:{slug:"",role:"viewer"}}));}}>Conceder</Button>
             </div>
           </div>
         )}
@@ -664,10 +663,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             <div style={{fontFamily:"var(--font-heading)",fontSize:17,fontWeight:700,color:t.txt}}>Gerenciar acessos</div>
             <div style={{fontSize:11,color:t.txt2}}>Libere módulos e defina permissões por usuário</div>
           </div>
-          <button onClick={()=>{setAddOpen(v=>!v); setCredenciaisCriadas(null); setConviteCriado(null);}}
-            style={{background:addOpen?"transparent":t.ouro,color:addOpen?t.txt2:t.onPrimary,border:addOpen?`1px solid ${t.borda2}`:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+          <Button variant={addOpen ? "secondary" : "primary"} size="sm" onClick={()=>{setAddOpen(v=>!v); setCredenciaisCriadas(null); setConviteCriado(null);}}>
             {addOpen ? "Fechar" : "+ Adicionar usuário"}
-          </button>
+          </Button>
         </div>
 
         <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>

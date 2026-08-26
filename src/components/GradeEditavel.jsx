@@ -128,17 +128,11 @@ export default function GradeEditavel({
                       background: t.card, border: `1px solid ${t.borda}`, borderRadius: 6, padding: 1,
                     }}>
                       {Object.keys(escala).map(k => (
-                        <button key={k} data-nodrag
+                        <Button variant={tam === k ? "primary" : "ghost"} size="sm" key={k} data-nodrag
                           onClick={() => onSalvar(setTamanho(cfg, tipo, item.id, k))}
-                          title={`Largura ${TAMANHO_ROTULO[k]} (${escala[k]} de 12 colunas)`}
-                          style={{
-                            width: 17, height: 15, borderRadius: 4, cursor: "pointer", border: "none",
-                            fontSize: 9, fontWeight: 700, fontFamily: "var(--font-mono)", padding: 0,
-                            background: tam === k ? "var(--accent)" : "transparent",
-                            color: tam === k ? "var(--on-primary)" : t.txt2,
-                          }}>
+                          title={`Largura ${TAMANHO_ROTULO[k]} (${escala[k]} de 12 colunas)`} style={{ width: 17 }}>
                           {TAMANHO_ROTULO[k]}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}

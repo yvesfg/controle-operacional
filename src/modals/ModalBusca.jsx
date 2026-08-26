@@ -118,7 +118,7 @@ export default function ModalBusca({ ctx }) {
 
             <div style={{display:"flex",gap:8,marginBottom:12}}>
               <input value={buscaInput} onChange={e=>setBuscaInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&buscar()} placeholder={buscaTipo==="dt"?"00000000":buscaTipo==="nome"?"nome do motorista":buscaTipo==="cpf"?"000.000.000-00":"AAA0A00"} style={{...css.inp,flex:1,fontFamily:buscaTipo==="nome"?"inherit":"'Bebas Neue',sans-serif",fontSize:buscaTipo==="nome"?15:22,letterSpacing:buscaTipo==="nome"?0:3,textTransform:buscaTipo==="placa"?"uppercase":"none"}} />
-              <button onClick={buscar} style={{...css.btnGold,padding:"0 20px",display:"flex",alignItems:"center"}}><Icon n="search" s={20} c="currentColor" sw={2.2}/></button>
+              <Button variant="primary" size="md" onClick={buscar}><Icon n="search" s={20} c="currentColor" sw={2.2}/></Button>
             </div>
 
             <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:14,padding:"8px 12px",background:t.card,borderRadius:9,border:`1px solid ${t.verde}`}}>
@@ -247,12 +247,12 @@ export default function ModalBusca({ ctx }) {
                       empilhadas (Editar, DOC, Ocorrencias), o que esticava o card inteiro. */}
                   <div style={{display:"grid",gridTemplateColumns:canEdit?"1fr 1fr":"1fr",gap:8}}>
                     {canEdit && (
-                      <button onClick={()=>{
+                      <Button variant="primary" size="md" onClick={()=>{
                         const idx = DADOS.findIndex(r=>r.dt===buscaResult.dt);
                         setEditIdx(idx);setFormData({...buscaResult});setEditStep(1);setModalOpen("edit");
-                      }} style={{...css.btnGold,justifyContent:"center",padding:11,width:"100%"}}>
+                      }} style={{ width: "100%" }}>
                         {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)} EDITAR
-                      </button>
+                      </Button>
                     )}
                     <button
                       onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
@@ -356,15 +356,15 @@ export default function ModalBusca({ ctx }) {
                   {buscaTipo==="cpf"?"Nenhum motorista com este CPF nos registros.":buscaTipo==="placa"?"Nenhuma placa com este número nos registros.":buscaTipo==="nome"?"Nenhum motorista com este nome nos registros.":"DT não localizada no sistema."}
                 </p>
                 {canEdit && (
-                  <button onClick={()=>{
+                  <Button variant="primary" size="md" onClick={()=>{
                     const fd = buscaTipo==="dt" ? {dt:buscaError}
                              : buscaTipo==="cpf" ? {cpf:buscaError}
                              : buscaTipo==="nome" ? {nome:buscaError}
                              : {placa:buscaError};
                     setFormData(fd); setEditIdx(-1); setEditStep(1); setModalOpen("edit");
-                  }} style={{...css.btnGold,marginTop:4,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,color:"#fff",justifyContent:"center",width:"100%",fontSize:14}}>
+                  }} style={{ width: "100%", marginTop: 4 }}>
                     ＋ CADASTRAR NOVO REGISTRO
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

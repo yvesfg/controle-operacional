@@ -195,12 +195,9 @@ export default function CreditosPendentes({ ctx }) {
         {filiaisDisp.map((k) => chip(k, filialLabel(k), filtroFilial === k, () => setFiltroFilial(k)))}
         <div style={{ display: "flex", border: `1px solid ${t.borda}`, borderRadius: 8, overflow: "hidden", marginLeft: isMobile ? 0 : 6 }}>
           {[["todos", "Todos"], ["a_cobrar", "A cobrar"], ["cobrados", "Cobrados"]].map(([k, l], i) => (
-            <button key={k} onClick={() => setFiltroStatus(k)}
-              style={{ fontSize: 12, fontWeight: filtroStatus === k ? 700 : 500, padding: "7px 12px", cursor: "pointer",
-                border: "none", borderRight: i < 2 ? `1px solid ${t.borda}` : "none",
-                background: filtroStatus === k ? "var(--accent)" : "transparent", color: filtroStatus === k ? "#fff" : t.txt2 }}>
+            <Button variant={filtroStatus === k ? "primary" : "ghost"} size="sm" key={k} onClick={() => setFiltroStatus(k)}>
               {l}
-            </button>
+            </Button>
           ))}
         </div>
         <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
@@ -268,11 +265,9 @@ export default function CreditosPendentes({ ctx }) {
                               Desfazer
                             </Button>
                           )}
-                          <button onClick={() => { setVinculandoId(vinculandoId === d.id ? null : d.id); setBuscaCred(""); }}
-                            style={{ fontSize: 11, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer",
-                              border: `1px solid ${t.verde}`, background: vinculandoId === d.id ? t.verde : "transparent", color: vinculandoId === d.id ? "#fff" : t.verde, whiteSpace: "nowrap" }}>
+                          <Button variant={vinculandoId === d.id ? "success" : "success-outline"} size="sm" onClick={() => { setVinculandoId(vinculandoId === d.id ? null : d.id); setBuscaCred(""); }}>
                             Vincular crédito
-                          </button>
+                          </Button>
                         </div>
                       </div>
                       {emCobranca && (

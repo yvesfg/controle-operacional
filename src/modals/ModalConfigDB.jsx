@@ -47,7 +47,7 @@ export default function ModalConfigDB({ ctx }) {
                   <input id="cdbUrl" placeholder="https://xxx.supabase.co" style={css.inp} />
                   <input id="cdbKey" placeholder="anon key" style={css.inp} />
                   <input id="cdbName" placeholder="Nome" style={css.inp} />
-                  <button onClick={()=>{
+                  <Button variant="success" size="md" onClick={()=>{
                     const url=document.getElementById("cdbUrl").value.trim();
                     const key=document.getElementById("cdbKey").value.trim();
                     const name=document.getElementById("cdbName").value.trim()||"Conexão";
@@ -57,7 +57,7 @@ export default function ModalConfigDB({ ctx }) {
                     saveJSON("co_conexao_ativa",nc.length-1);
                     showToast("Conexão adicionada!","ok");
                     setModalOpen(null);
-                  }} style={{...css.btnGreen,justifyContent:"center",gap:6}}><Icon n="database" s={14} c="currentColor"/> CONECTAR</button>
+                  }}><Icon n="database" s={14} c="currentColor"/> CONECTAR</Button>
                 </div>
               </div>
             </div>
@@ -136,8 +136,8 @@ export default function ModalConfigDB({ ctx }) {
               </div>
               <div style={{padding:"12px 14px",borderTop:`1px solid ${t.borda}`,display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
                 <div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:t.verde}}>{_totalSel} selecionados</div><div style={{fontSize:9,color:t.txt2}}>{motImportRaw.length-_totalSel} ignorados</div></div>
-                <button onClick={()=>setMotImportPrefOpen(false)} style={{...css.btnOutline,padding:"9px 16px",fontSize:12}}>Cancelar</button>
-                <button onClick={_prosseguir} disabled={_totalSel===0} style={{...css.btnGold,padding:"9px 18px",fontSize:12,opacity:_totalSel===0?.5:1,display:"inline-flex",alignItems:"center",gap:5}}>Prosseguir ({_totalSel}) <Icon n="arrow-right" s={13} c="currentColor"/></button>
+                <Button variant="outline" size="md" onClick={()=>setMotImportPrefOpen(false)}>Cancelar</Button>
+                <Button variant="primary" size="md" onClick={_prosseguir} disabled={_totalSel===0}>Prosseguir ({_totalSel}) <Icon n="arrow-right" s={13} c="currentColor"/></Button>
               </div>
             </div>
           </div>

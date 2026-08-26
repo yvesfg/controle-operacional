@@ -34,16 +34,16 @@ export default function ModalMotoristasAdmin({ ctx }) {
             <input value={motExcluirTodosTexto} onChange={e=>setMotExcluirTodosTexto(e.target.value.toUpperCase())} placeholder="EXCLUIR" autoFocus
               style={{...css.inp,marginBottom:14,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:motExcluirTodosTexto==="EXCLUIR"?t.danger:t.txt}}/>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setMotExcluirTodosOpen(false)} style={{...css.btnOutline,flex:1,justifyContent:"center",padding:11}}>Cancelar</button>
-              <button disabled={motExcluirTodosTexto!="EXCLUIR"} onClick={()=>{
+              <Button variant="outline" size="md" onClick={()=>setMotExcluirTodosOpen(false)} style={{ flex: 1 }}>Cancelar</Button>
+              <Button variant="primary" size="md" disabled={motExcluirTodosTexto!="EXCLUIR"} onClick={()=>{
                 if(motExcluirTodosTexto!=="EXCLUIR")return;
                 saveMotoristasLS([]);setMotSelecionados(new Set());
                 setMotExcluirTodosOpen(false);
                 registrarLog("EXCLUIR_TODOS_MOTORISTAS",`${motoristas.length} motoristas removidos`);
                 showToast(`${motoristas.length} motorista(s) excluído(s)`,"ok");
-              }} style={{...css.btnGold,flex:1,justifyContent:"center",padding:11,background:motExcluirTodosTexto==="EXCLUIR"?t.danger:"rgba(246,70,93,.3)",color:motExcluirTodosTexto==="EXCLUIR"?"#fff":"rgba(255,255,255,.4)",cursor:motExcluirTodosTexto==="EXCLUIR"?"pointer":"not-allowed",border:"none"}}>
+              }} style={{ flex: 1 }}>
                 Excluir Todos
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
               <Button variant="secondary" size="md" onClick={()=>setMotSugestOpen(false)} style={{ flex: "0 0 auto" }}>FECHAR</Button>
-              <button onClick={()=>{
+              <Button variant="success" size="md" onClick={()=>{
                 const aceitos=motSugestData.filter(s=>s.aceito===true);
                 if(!aceitos.length){setMotSugestOpen(false);return;}
                 const nd=[...DADOS];
@@ -93,7 +93,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
                 setDadosBase(nd);
                 showToast(`${aceitos.length} registro(s) atualizado(s)!`,"ok");
                 setMotSugestOpen(false);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> APLICAR ACEITOS</button>
+              }} style={{ flex: 1 }}><Icon n="save" s={14} c="currentColor"/> APLICAR ACEITOS</Button>
             </div>
           </div>
         </div>

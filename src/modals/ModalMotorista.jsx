@@ -122,7 +122,7 @@ export default function ModalMotorista({ ctx }) {
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",borderTop:`1px solid ${t.borda}`}}>
               <Button variant="secondary" size="md" onClick={()=>setModalOpen(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
-              <button onClick={()=>{
+              <Button variant="success" size="md" onClick={()=>{
                 const m = {...formData};
                 if (!m.nome) { showToast("Nome obrigatório","warn"); return; }
                 if (!m.cpf) { showToast("CPF obrigatório","warn"); return; }
@@ -146,7 +146,7 @@ export default function ModalMotorista({ ctx }) {
                 registrarLog(editIdx>=0?"EDITAR_MOTORISTA":"NOVO_MOTORISTA",`${m.nome} · CPF ${m.cpf} · Vínculo: ${m.vinculo||"—"}`);
                 showToast(editIdx>=0?"Atualizado!":"Cadastrado!","ok");
                 setModalOpen(null);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
+              }} style={{ flex: 1 }}><Icon n="save" s={14} c="currentColor"/> SALVAR</Button>
             </div>
           </div>
         </div>

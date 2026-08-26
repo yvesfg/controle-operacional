@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import Toast from "../components/Toast.jsx";
 import { DESIGN, hexRgb } from "../constants.js";
@@ -39,7 +40,7 @@ export default function PrimeiroLoginScreen({
           }} style={{...css.inp,padding:"7px 10px",fontSize:11}} />
           {customLogo && <img src={customLogo} alt="preview" style={{width:60,height:60,objectFit:"contain",borderRadius:10,marginTop:8,border:`1px solid ${t.borda}`}} />}
         </div>
-        <button onClick={handlePrimeiroLoginSalvar} style={{...css.btnGold,justifyContent:"center",padding:13,fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:2}}><Icon n="check-circle" s={13} /> CONFIRMAR E ENTRAR</button>
+        <Button variant="primary" size="md" onClick={handlePrimeiroLoginSalvar}><Icon n="check-circle" s={13} /> CONFIRMAR E ENTRAR</Button>
       </div>
       <Toast {...toast} />
     </div>

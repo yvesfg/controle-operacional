@@ -1495,14 +1495,14 @@ export default function App() {
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:210,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
                         {opcoesEscopo.map(o=>(
-                          <button key={o.key} onClick={()=>escolherEscopo(o)}
-                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:o.sub?"8px 12px 8px 26px":"10px 12px",background:o.key===escopoKey?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:o.sub?11.5:12,cursor:"pointer"}}
+                          <Button variant={o.key===escopoKey ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)}
+                            
                             onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.16)}
-                            onMouseLeave={e=>e.currentTarget.style.background=o.key===escopoKey?hexRgb(t.ouro,.10):"transparent"}>
+                            onMouseLeave={e=>e.currentTarget.style.background=o.key===escopoKey?hexRgb(t.ouro,.10):"transparent"} style={{ width: "100%" }}>
                             <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
                             <span style={{flex:1}}>{o.label}</span>
                             {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </>
@@ -1512,10 +1512,9 @@ export default function App() {
               {perfilAtual.features.classificadores && perfilAtual.classificador && (
                 <div title={perfilAtual.classificador.label} style={{display:"flex",alignItems:"center",borderRadius:6,overflow:"hidden",border:`1px solid ${hexRgb(t.ouro,.25)}`}}>
                   {[["todos","Todos"], ...perfilAtual.classificador.valores.map(o=>[o.valor,o.label])].map(([v,l])=>(
-                    <button key={v} onClick={()=>setFiltroTipoCarga(v)}
-                      style={{fontSize:9,fontFamily:"var(--font-mono)",letterSpacing:".06em",textTransform:"uppercase",padding:"4px 9px",border:"none",cursor:"pointer",background:filtroTipoCarga===v?hexRgb(t.ouro,.18):"transparent",color:filtroTipoCarga===v?t.ouro:t.txt2}}>
+                    <Button variant={filtroTipoCarga===v ? "primary" : "ghost"} size="sm" key={v} onClick={()=>setFiltroTipoCarga(v)}>
                       {l}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -1531,9 +1530,9 @@ export default function App() {
                 {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,15,2)}
               </button>
               {canEdit && (
-                <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{...css.btnGold,padding:"8px 16px",fontSize:12,gap:6}}>
+                <Button variant="primary" size="md" onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}}>
                   {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",14,2.5)} Nova DT
-                </button>
+                </Button>
               )}
             </div>
           </>
@@ -1556,12 +1555,11 @@ export default function App() {
                       <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:200,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
                         {opcoesEscopo.map(o=>(
-                          <button key={o.key} onClick={()=>escolherEscopo(o)}
-                            style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:o.sub?"8px 12px 8px 26px":"10px 12px",background:o.key===escopoKey?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:o.sub?11.5:12,cursor:"pointer"}}>
+                          <Button variant={o.key===escopoKey ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)} style={{ width: "100%" }}>
                             <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
                             <span style={{flex:1}}>{o.label}</span>
                             {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </>
@@ -1586,9 +1584,9 @@ export default function App() {
                 {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,13,2)}
               </button>
               {canEdit && (
-                <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{...css.btnGold,padding:"7px 12px",fontSize:11,gap:5}}>
+                <Button variant="primary" size="md" onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}}>
                   {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",13,2.5)} Nova DT
-                </button>
+                </Button>
               )}
             </div>
           </>

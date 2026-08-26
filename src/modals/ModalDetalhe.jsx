@@ -242,7 +242,7 @@ export default function ModalDetalhe({ ctx }) {
                                   ))}
                                 </div>
                               )}
-                              <button onClick={()=>{salvarDia(acompDiaSel,acompTexto,acompImagens);showToast("{"+"\u2705"+"} Dia salvo!","ok");}} style={{...css.btnGreen,width:"100%",justifyContent:"center",fontSize:12,gap:6}}><Icon n="save" s={14} c="currentColor"/> Salvar Dia</button>
+                              <Button variant="success" size="md" onClick={()=>{salvarDia(acompDiaSel,acompTexto,acompImagens);showToast("{"+"\u2705"+"} Dia salvo!","ok");}} style={{ width: "100%" }}><Icon n="save" s={14} c="currentColor"/> Salvar Dia</Button>
                             </div>
                           )}
                         </div>

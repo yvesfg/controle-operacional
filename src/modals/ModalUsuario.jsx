@@ -116,7 +116,7 @@ export default function ModalUsuario({ ctx }) {
             </div>
             <div style={{display:"flex",gap:8,padding:"10px 16px 18px",flexShrink:0,borderTop:`1px solid ${t.borda}`}}>
               <Button variant="secondary" size="md" onClick={()=>setModalOpen(null)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
-              <button onClick={async ()=>{
+              <Button variant="success" size="md" onClick={async ()=>{
                 const u = {...formData};
                 if (!u.nome) { showToast("Nome obrigatório","warn"); return; }
                 if (!u.email) { showToast("Email obrigatório","warn"); return; }
@@ -154,7 +154,7 @@ export default function ModalUsuario({ ctx }) {
                   showToast(editIdx>=0?"Usuário atualizado!":"Usuário criado!","ok");
                 }
                 setModalOpen(null);
-              }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
+              }} style={{ flex: 1 }}><Icon n="save" s={14} c="currentColor"/> SALVAR</Button>
             </div>
           </div>
         </div>
@@ -180,9 +180,9 @@ export default function ModalUsuario({ ctx }) {
               </p>
               <div style={{display:"flex",gap:8}}>
                 <Button variant="secondary" size="md" onClick={()=>setUsuarioEmailPreview(null)} style={{ flex: "0 0 auto" }}>Agora não</Button>
-                <button onClick={()=>{enviarEmailBoasVindas(usuarioEmailPreview, usuarioEmailPreview._senhaRaw||"");setUsuarioEmailPreview(null);}} style={{...css.btnGold,flex:1,justifyContent:"center"}}>
+                <Button variant="primary" size="md" onClick={()=>{enviarEmailBoasVindas(usuarioEmailPreview, usuarioEmailPreview._senhaRaw||"");setUsuarioEmailPreview(null);}} style={{ flex: 1 }}>
                   <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="mail" s={14} c="currentColor"/> Enviar Email de Boas-vindas</span>
-                </button>
+                </Button>
               </div>
             </div>
           </div>

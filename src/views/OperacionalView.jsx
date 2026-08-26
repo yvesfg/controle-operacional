@@ -208,7 +208,7 @@ export default function OperacionalView({ ctx }) {
               Chamados SGS
               <span style={{ flex: 1, height: 1, background: t.borda }} />
             </div>
-            <button onClick={() => { setSgsForm({ numero: "", data_chamado: "", ultimo_retorno: "", descricao: "", dt_rel: "", status: "aberto" }); setSgsFormOpen(true); }} style={{ ...css.btnGold, padding: "8px 12px", fontSize: 11 }}>＋ Novo</button>
+            <Button variant="primary" size="md" onClick={() => { setSgsForm({ numero: "", data_chamado: "", ultimo_retorno: "", descricao: "", dt_rel: "", status: "aberto" }); setSgsFormOpen(true); }}>＋ Novo</Button>
           </div>
 
           {sgsFormOpen && (
@@ -231,12 +231,12 @@ export default function OperacionalView({ ctx }) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <Button variant="secondary" size="sm" onClick={() => setSgsFormOpen(false)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
-                <button onClick={() => {
+                <Button variant="primary" size="md" onClick={() => {
                   if (!sgsForm.numero) { showToast("Informe o nº do chamado", "warn"); return; }
                   const nova = [{ ...sgsForm, id: Date.now(), criado_em: new Date().toISOString(), usuario: usuarioLogado || perfil }, ...sgsItems];
                   saveSGS(nova); setSgsFormOpen(false);
                   showToast("Chamado registrado!", "ok");
-                }} style={{ ...css.btnGold, flex: 1, justifyContent: "center", fontSize: 12 }}><Icon n="save" s={13} /> Salvar Chamado</button>
+                }} style={{ flex: 1 }}><Icon n="save" s={13} /> Salvar Chamado</Button>
               </div>
             </div>
           )}
@@ -314,11 +314,11 @@ export default function OperacionalView({ ctx }) {
                                 }
                               }} />
                             </div>
-                            <button onClick={() => {
+                            <Button variant="primary" size="md" onClick={() => {
                               if (!sgsRetornoForm.data) { showToast("Informe a data do retorno", "warn"); return; }
                               const nr = { data: sgsRetornoForm.data, descricao: sgsRetornoForm.descricao };
                               const a = [...sgsItems]; a[i] = { ...a[i], retornos: [...retornos, nr], ultimo_retorno: sgsRetornoForm.data }; saveSGS(a); setSgsRetornoForm({ data: "", descricao: "" });
-                            }} style={{ ...css.btnGold, padding: "6px 12px", fontSize: 11, flexShrink: 0 }}>Salvar</button>
+                            }} style={{ flexShrink: 0 }}>Salvar</Button>
                           </div>
                         </div>
                       </div>
@@ -404,7 +404,7 @@ export default function OperacionalView({ ctx }) {
             </div>
             <div style={{ display: "flex", gap: 6 }}>
               <button onClick={() => setRelCtrlDccOpen(true)} style={{ background: `rgba(124,58,237,.08)`, border: `1px solid rgba(124,58,237,.28)`, borderRadius: 8, padding: "8px 12px", color: "var(--accent)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}><Icon n="chart" s={13} /> Planilha Financeiro</button>
-              <button onClick={() => { setApontForm({ numero: "", item: "", linha: "", descricao_apontamento: "", pedido: "", mes_ref: "", filial: "", valor: "", frs_folha: "", tipo: "descarga", dt_rel: "", cidade: "", nf_numero: "", data_emissao: "", data_apontamento: new Date().toISOString().split("T")[0] }); setApontFormOpen(true); }} style={{ ...css.btnGold, padding: "8px 12px", fontSize: 11 }}>＋ Novo</button>
+              <Button variant="primary" size="md" onClick={() => { setApontForm({ numero: "", item: "", linha: "", descricao_apontamento: "", pedido: "", mes_ref: "", filial: "", valor: "", frs_folha: "", tipo: "descarga", dt_rel: "", cidade: "", nf_numero: "", data_emissao: "", data_apontamento: new Date().toISOString().split("T")[0] }); setApontFormOpen(true); }}>＋ Novo</Button>
             </div>
           </div>
 
@@ -474,7 +474,7 @@ export default function OperacionalView({ ctx }) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <Button variant="secondary" size="sm" onClick={() => setApontFormOpen(false)} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
-                <button onClick={async () => {
+                <Button variant="primary" size="md" onClick={async () => {
                   if (!apontForm.numero) { showToast("Informe o nº do apontamento", "warn"); return; }
                   const novoItem = { ...apontForm, id: Date.now(), criado_em: new Date().toISOString() };
                   const nova = [novoItem, ...apontItems];
@@ -482,7 +482,7 @@ export default function OperacionalView({ ctx }) {
                   setApontFormOpen(false);
                   setApontForm({ numero: "", item: "", linha: "", descricao_apontamento: "", pedido: "", mes_ref: "", filial: "", valor: "", frs_folha: "", tipo: "descarga", dt_rel: "", cidade: "", nf_numero: "", data_emissao: "", data_apontamento: new Date().toISOString().split("T")[0] });
                   showToast("Apontamento salvo!", "ok");
-                }} style={{ ...css.btnGold, flex: 1, justifyContent: "center", fontSize: 12 }}><Icon n="save" s={13} /> Salvar Apontamento</button>
+                }} style={{ flex: 1 }}><Icon n="save" s={13} /> Salvar Apontamento</Button>
               </div>
             </div>
           )}

@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import Toggle from "../components/Toggle.jsx";
 import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
@@ -81,7 +82,7 @@ export default function AdminView({ ctx }) {
                   <input id="newSupaUrl" placeholder="https://xxx.supabase.co" style={css.inp} />
                   <input id="newSupaKey" placeholder="anon key" style={css.inp} />
                   <input id="newSupaName" placeholder="Nome da conexão" style={css.inp} />
-                  <button onClick={()=>{
+                  <Button variant="success" size="md" onClick={()=>{
                     const url = document.getElementById("newSupaUrl").value.trim();
                     const key = document.getElementById("newSupaKey").value.trim();
                     const name = document.getElementById("newSupaName").value.trim() || "Conexão";
@@ -90,7 +91,7 @@ export default function AdminView({ ctx }) {
                     saveConexoesLS(nc);
                     saveJSON("co_conexao_ativa", nc.length-1);
                     showToast("Conexão adicionada!","ok");
-                  }} style={{...css.btnGreen,justifyContent:"center"}}><Icon n="database" s={13} /> CONECTAR</button>
+                  }}><Icon n="database" s={13} /> CONECTAR</Button>
                 </div>
               </div>
             )}
@@ -343,10 +344,10 @@ function mapearColuna(n){
               <div style={{fontSize:10,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Email do Admin (login OAuth / identificação)</div>
               <div style={{display:"flex",gap:8}}>
                 <input value={adminEmailVal} onChange={e=>setAdminEmailVal(e.target.value)} placeholder="seu@email.com" style={{...css.inp,flex:1,fontSize:11}} />
-                <button onClick={()=>{saveJSON("co_admin_email",adminEmailVal.trim().toLowerCase());showToast("Email admin salvo","ok");}} style={{...css.btnGold,whiteSpace:"nowrap",fontSize:11}}>
+                <Button variant="primary" size="md" onClick={()=>{saveJSON("co_admin_email",adminEmailVal.trim().toLowerCase());showToast("Email admin salvo","ok");}}>
                   {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,t.bg,13,1.8)}
                   Salvar
-                </button>
+                </Button>
               </div>
               <div style={{fontSize:9,color:t.txt2,marginTop:4,lineHeight:1.6}}>Este email é usado para identificar o admin no login e via OAuth Google. Não fica visível no código-fonte.</div>
             </div>
@@ -370,8 +371,8 @@ function mapearColuna(n){
                   <textarea value={emailTemplate.corpo} onChange={e=>setEmailTemplate(p=>({...p,corpo:e.target.value}))} rows={9} style={{...css.inp,resize:"vertical",fontSize:11,lineHeight:1.6,fontFamily:"monospace"}} />
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  <button onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{...css.btnGreen,flex:1,justifyContent:"center",fontSize:12}}><Icon n="save" s={13} /> Salvar Template</button>
-                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",false)} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}><Icon n="mail" s={13} /> Testar (Gmail)</button>
+                  <Button variant="success" size="md" onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{ flex: 1 }}><Icon n="save" s={13} /> Salvar Template</Button>
+                  <Button variant="primary" size="md" onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",false)} style={{ flex: 1 }}><Icon n="mail" s={13} /> Testar (Gmail)</Button>
                   <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",true)} style={{...css.hBtn,flex:1,justifyContent:"center",fontSize:12}}><Icon n="mail" s={13} /> Outro Cliente</button>
                 </div>
                 <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:"1px solid "+t.borda,fontSize:10,color:t.txt2,lineHeight:1.6}}>
@@ -415,10 +416,10 @@ function mapearColuna(n){
                   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_google.csv";a.click();
                   showToast(`${motoristas.length} contatos exportados como CSV Google!`,"ok");
                 }} style={{...css.hBtn,fontSize:12}}><Icon n="chart" s={13} /> CSV Google</button>
-                <button onClick={()=>{
+                <Button variant="primary" size="md" onClick={()=>{
                   const normalizados=motoristas.map(m=>({...m,nome:normalizarNome(m.nome),tel:normalizarTelefone(m.tel),placa1:normalizarPlaca(m.placa1),placa2:normalizarPlaca(m.placa2),placa3:normalizarPlaca(m.placa3),placa4:normalizarPlaca(m.placa4),favorecido:normalizarNome(m.favorecido)}));
                   saveMotoristasLS(normalizados);registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);showToast(`${normalizados.length} contatos normalizados!`,"ok");
-                }} style={{...css.btnGold,fontSize:12}}><Icon n="tool" s={13} /> Normalizar</button>
+                }}><Icon n="tool" s={13} /> Normalizar</Button>
               </div>
 
               {/* ── Importar ── */}
@@ -596,9 +597,9 @@ function mapearColuna(n){
                             <div key={k}><span style={{color:t.ouro}}>DESIGN.{k}</span> = {JSON.stringify(v)}</div>
                           ))}
                         </div>
-                        <button onClick={auditarDesign} style={{...css.btnOutline,fontSize:11,padding:"8px 16px",minHeight:36}}>
+                        <Button variant="outline" size="md" onClick={auditarDesign}>
                           {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,14,2)} Executar Auditoria
-                        </button>
+                        </Button>
                       </div>
                       {auditReport && (
                         <div style={{padding:"10px 14px"}}>

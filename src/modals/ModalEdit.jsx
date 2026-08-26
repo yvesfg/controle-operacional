@@ -331,7 +331,7 @@ function ModalEditComponent({ ctx }) {
             {editIdx>=0 && excluirConfirm!=="edit" && (
               <button onClick={()=>{setExcluirConfirm("edit");setExcluirTexto("");}} style={{flex:"0 0 auto",background:"rgba(220,38,38,.08)",border:`1.5px solid rgba(220,38,38,.3)`,borderRadius:9,padding:"10px 14px",color:t.danger,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="trash" s={13} c={t.danger}/> EXCLUIR</button>
             )}
-            <button onClick={salvarRegistro} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
+            <Button variant="success" size="md" onClick={salvarRegistro} style={{ flex: 1 }}><Icon n="save" s={14} c="currentColor"/> SALVAR</Button>
           </div>
         </div>
 
