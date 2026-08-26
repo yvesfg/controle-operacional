@@ -4,6 +4,8 @@ import useVeiculos from "../../hooks/useVeiculos.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
 import EmptyState from "../../components/EmptyState.jsx";
 import Icon from "../../components/Icon.jsx";
+import { Button } from "../../design-system/components/Button.jsx";
+import { Badge } from "../../design-system/components/Badge.jsx";
 import ExportarCadastroPanel from "./ExportarCadastroPanel.jsx";
 import {
   GENEROS, FUNCOES, UFS, normalizarGenero, normalizarFuncao, normalizarUF,
@@ -24,7 +26,8 @@ import {
 // manual) -> agenda do Google (enriquecimento e volta).
 
 const STATUS_LABEL = { bom: "Bom", vermelho: "Vermelho", bloqueado: "Bloqueado", golpe: "Golpe" };
-const STATUS_COR = { bom: "var(--color-info)", vermelho: "var(--warn)", bloqueado: "var(--red, #e5484d)", golpe: "var(--red, #e5484d)" };
+// Risco do motorista no vocabulário de variantes do Badge (o hex solto saiu junto).
+const STATUS_VARIANTE = { bom: "success", vermelho: "warning", bloqueado: "danger", golpe: "danger" };
 
 const VAZIO = { nome: "", cpf: "", tel: "", vinculo: "", banco: "", agencia: "", conta: "", favorecido: "", status_risco: "", observacao: "", placa1: "", placa2: "", placa3: "", placa4: "",
   cnh_numero: "", cnh_categoria: "", cnh_validade: "", cnh_primeira_habilitacao: "", cnh_uf: "", genero: "", data_nascimento: "", funcao: "", qualificacao: "" };
@@ -289,10 +292,6 @@ export default function MotoristasCad({ ctx, conn }) {
   };
 
   const inp = { fontSize: 12.5, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", width: "100%" };
-  // Dois pesos: ferramenta (ghost, some no fundo) e ação (com borda/preenchimento).
-  const btnBase = { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" };
-  const btnGhost = { ...btnBase, padding: "7px 10px", background: "transparent", color: t.txt2, border: "1.5px solid transparent" };
-  const btnAcao = { ...btnBase, padding: "7px 14px", background: "transparent", border: "1.5px solid" };
   const lbl = { fontSize: 10.5, color: t.txt2, marginBottom: 3, display: "block" };
   const campo = (label, k, extra = {}) => (
     <div style={{ flex: extra.flex || "1 1 140px" }}>
@@ -312,41 +311,39 @@ export default function MotoristasCad({ ctx, conn }) {
           style={{ ...inp, flex: "1 1 240px", width: "auto" }} />
 
         <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
-          <button onClick={sugerirVinculos} title="Cruza as placas do cadastro com as viagens e preenche o motorista nas DTs sem nome"
-            style={btnGhost}>
+          <Button variant="ghost" size="sm" onClick={sugerirVinculos}
+            title="Cruza as placas do cadastro com as viagens e preenche o motorista nas DTs sem nome">
             <Icon n="link" s={13} /> Sugerir vínculos
-          </button>
-          <button onClick={() => setImportAberto(true)} title="Google Contacts cadastro (enriquece quem já existe)"
-            style={btnGhost}>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setImportAberto(true)}
+            title="Traz da agenda do Google para o cadastro (enriquece quem já existe)">
             <Icon n="upload" s={13} /> Importar agenda
-          </button>
-          <button onClick={exportarVCard} title="Cadastro Google Contacts (.vcf)" style={btnGhost}>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={exportarVCard} title="Leva o cadastro para a agenda do Google (.vcf)">
             <Icon n="download" s={13} /> Exportar vCard
-          </button>
+          </Button>
         </div>
 
         <div style={{ width: 1, height: 22, background: t.borda }} />
 
         {/* Toggle: quando o painel está aberto o botão fica preenchido, senão
             não dá pra saber de onde aquele bloco veio. */}
-        <button onClick={() => setEnvioAberto((v) => !v)}
-          title="Monta o arquivo no modelo da embarcadora com os cadastros que você marcar"
-          style={{ ...btnAcao, color: envioAberto ? t.txtInverse : t.azul, background: envioAberto ? t.azul : "transparent", borderColor: t.azul }}>
+        <Button variant={envioAberto ? "info" : "info-outline"} size="sm" onClick={() => setEnvioAberto((v) => !v)}
+          title="Monta o arquivo no modelo da embarcadora com os cadastros que você marcar">
           <Icon n="building" s={13} /> Cadastro embarcadora
-        </button>
-        <button onClick={novo} style={{ ...btnAcao, background: t.ouro, color: t.onPrimary, borderColor: t.ouro }}>
+        </Button>
+        <Button size="sm" onClick={novo}>
           <Icon n="user" s={13} /> Novo motorista
-        </button>
+        </Button>
       </div>
 
       {selecionados.size > 0 && (
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: t.card2, border: `1px solid ${t.borda}` }}>
           <span style={{ fontSize: 11.5, color: t.txt, flex: 1 }}>{selecionados.size} selecionado(s)</span>
-          <button onClick={() => setSelecionados(new Set())} style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Desmarcar</button>
-          <button onClick={excluirSelecionados} disabled={excluindoLote}
-            style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.danger, border: `1.5px solid ${t.danger}`, opacity: excluindoLote ? .5 : 1 }}>
+          <Button variant="ghost" size="sm" onClick={() => setSelecionados(new Set())}>Desmarcar</Button>
+          <Button variant="danger-ghost" size="sm" onClick={excluirSelecionados} loading={excluindoLote}>
             {excluindoLote ? "Excluindo…" : "Excluir selecionados"}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -368,10 +365,9 @@ export default function MotoristasCad({ ctx, conn }) {
             </div>
             {/* O selo responde a "este cadastro já está pronto pra enviar?" — é a
                 mesma conta que a exportação usa, então não há como divergir. */}
-            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 999,
-              color: pendencias.length ? t.warn : t.verde, border: `1px solid ${pendencias.length ? t.warn : t.verde}` }}>
+            <Badge variant={pendencias.length ? "warning" : "success"} pill>
               {pendencias.length ? `Falta ${pendencias.length}: ${pendencias.slice(0, 3).join(", ")}${pendencias.length > 3 ? "…" : ""}` : "Cadastro completo"}
-            </span>
+            </Badge>
             {form.cadastro_concluido_em && (
               <span style={{ fontSize: 10.5, color: t.txt2 }}>concluído em {dataBR(form.cadastro_concluido_em)}</span>
             )}
@@ -392,19 +388,18 @@ export default function MotoristasCad({ ctx, conn }) {
               <span style={{ fontSize: 11.5, color: t.txt, flex: "1 1 240px" }}>
                 Este CPF já está cadastrado como <strong>{jaCadastrado.nome}</strong> — completar o que existe evita duplicar o motorista.
               </span>
-              <button onClick={() => editar(jaCadastrado)}
-                style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.warn, border: `1.5px solid ${t.warn}` }}>
+              <Button variant="secondary" size="sm" onClick={() => editar(jaCadastrado)}>
                 Abrir cadastro existente
-              </button>
+              </Button>
             </div>
           )}
 
           {openDocIntake && (
-            <button onClick={() => openDocIntake("cnh", aplicarCnh)}
-              title="Envie foto ou PDF da CNH — a IA preenche número, categoria, validade, UF e nascimento"
-              style={{ ...btnAcao, marginBottom: 10, color: t.verde, borderColor: t.verde }}>
+            <Button variant="success-outline" size="sm" onClick={() => openDocIntake("cnh", aplicarCnh)}
+              style={{ marginBottom: 10 }}
+              title="Envie foto ou PDF da CNH — a IA preenche número, categoria, validade, UF e nascimento">
               <Icon n="id" s={13} /> Ler CNH (foto ou PDF)
-            </button>
+            </Button>
           )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
@@ -493,11 +488,10 @@ export default function MotoristasCad({ ctx, conn }) {
                     {/* Sempre visível, mesmo sem placa: o CRLV É quem traz a placa —
                         esconder o botão até digitar invertia a ordem do trabalho. */}
                     {openDocIntake && (
-                      <button onClick={() => openDocIntake("crlv", (d) => aplicarCrlv(s, d))}
-                        title="Envie foto ou PDF do CRLV desta peça — a placa vem do documento"
-                        style={{ ...btnAcao, padding: "6px 12px", fontSize: 11, color: t.azul, borderColor: t.azul, marginBottom: 1 }}>
+                      <Button variant="info-outline" size="sm" onClick={() => openDocIntake("crlv", (d) => aplicarCrlv(s, d))}
+                        title="Envie foto ou PDF do CRLV desta peça — a placa vem do documento">
                         <Icon n="truck" s={13} /> Ler CRLV
-                      </button>
+                      </Button>
                     )}
                   </div>
                   {placa && (
@@ -544,17 +538,16 @@ export default function MotoristasCad({ ctx, conn }) {
             {campo("Favorecido", "favorecido", { flex: "1 1 180px" })}
           </div>
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 6, flexWrap: "wrap" }}>
-            <button onClick={() => setForm(null)} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Cancelar</button>
-            <button onClick={() => salvar()} disabled={salvando} style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}`, opacity: salvando ? .5 : 1 }}>
+            <Button variant="ghost" size="sm" onClick={() => setForm(null)}>Cancelar</Button>
+            <Button variant="secondary" size="sm" onClick={() => salvar()} loading={salvando}>
               {salvando ? "Salvando..." : "Salvar"}
-            </button>
+            </Button>
             {/* Salvar guarda o que tem; Concluir afirma que está pronto pra enviar —
                 e por isso recusa enquanto houver pendência. */}
-            <button onClick={() => salvar({ concluir: true })} disabled={salvando || pendencias.length > 0}
-              title={pendencias.length ? `Falta: ${pendencias.join(", ")}` : "Marca o cadastro como pronto pra enviar"}
-              style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: pendencias.length ? "not-allowed" : "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvando || pendencias.length ? .45 : 1 }}>
+            <Button size="sm" onClick={() => salvar({ concluir: true })} disabled={salvando || pendencias.length > 0}
+              title={pendencias.length ? `Falta: ${pendencias.join(", ")}` : "Marca o cadastro como pronto pra enviar"}>
               Concluir cadastro
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -586,24 +579,24 @@ export default function MotoristasCad({ ctx, conn }) {
               // Mesma conta do form: quem olha a lista já sabe de quem falta documento.
               const faltas = pendenciasCadastro(m, m._veiculos || []);
               return (
-                <span title={faltas.length ? `Falta: ${faltas.join(", ")}` : "Pronto pra enviar à embarcadora"}
-                  style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, whiteSpace: "nowrap",
-                    color: faltas.length ? t.warn : t.verde, border: `1px solid ${faltas.length ? t.warn : t.verde}` }}>
+                <Badge variant={faltas.length ? "warning" : "success"} size="sm" pill
+                  title={faltas.length ? `Falta: ${faltas.join(", ")}` : "Pronto pra enviar à embarcadora"}>
                   {faltas.length ? `falta ${faltas.length}` : "completo"}
-                </span>
+                </Badge>
               );
             })()}
             {m.status_risco && (
-              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, color: STATUS_COR[m.status_risco], border: `1px solid ${STATUS_COR[m.status_risco]}` }}>
+              <Badge variant={STATUS_VARIANTE[m.status_risco] || "default"} size="sm" pill>
                 {STATUS_LABEL[m.status_risco]}
-              </span>
+              </Badge>
             )}
             {gerarRelatorioMotorista && (
-              <button onClick={() => gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista"
-                style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.ouro, border: `1px solid ${t.borda}` }}><Icon n="file-text" s={13} /></button>
+              <Button variant="secondary" size="sm" iconOnly onClick={() => gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista">
+                <Icon n="file-text" s={13} />
+              </Button>
             )}
-            <button onClick={() => editar(m)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Editar</button>
-            <button onClick={() => excluir(m)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Excluir</button>
+            <Button variant="secondary" size="sm" onClick={() => editar(m)}>Editar</Button>
+            <Button variant="ghost" size="sm" onClick={() => excluir(m)}>Excluir</Button>
           </div>
         ))}
         {filtrados.length > 200 && <div style={{ fontSize: 11, color: t.txt2, textAlign: "center", padding: 8 }}>mostrando 200 de {filtrados.length} — refine a busca pra ver os demais</div>}
@@ -680,7 +673,7 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
     <div style={box}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>Importar agenda (Google Contacts CSV)</div>
-        <button onClick={onFechar} style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Fechar</button>
+        <Button variant="ghost" size="sm" onClick={onFechar}>Fechar</Button>
       </div>
 
       {etapa === "upload" && (
@@ -711,10 +704,9 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
 
           {classificado.enriquecer.length > 0 && (
             <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: `1px solid ${t.borda}` }}>
-              <button onClick={aplicarEnriquecer}
-                style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none" }}>
+              <Button size="sm" onClick={aplicarEnriquecer}>
                 Aplicar enriquecimento em {classificado.enriquecer.length} motorista(s)
-              </button>
+              </Button>
               <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 6 }}>Completa telefone/status e adiciona placas de carreta que ainda não estavam no cadastro. Não sobrescreve o que já existe.</div>
             </div>
           )}
@@ -724,8 +716,8 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
               <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <input value={buscaNovos} onChange={(e) => { setBuscaNovos(e.target.value); setPagina(0); }} placeholder="Filtrar candidatos por nome/placa"
                   style={{ fontSize: 12, padding: "6px 10px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, flex: "1 1 200px" }} />
-                <button onClick={() => setSelecionados(new Set(classificado.novos.map((_, i) => i)))} style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Marcar todos</button>
-                <button onClick={() => setSelecionados(new Set())} style={{ fontSize: 11, padding: "5px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Desmarcar todos</button>
+                <Button variant="ghost" size="sm" onClick={() => setSelecionados(new Set(classificado.novos.map((_, i) => i)))}>Marcar todos</Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelecionados(new Set())}>Desmarcar todos</Button>
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 360, overflowY: "auto", marginBottom: 8 }}>
@@ -746,14 +738,13 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
                 <div style={{ fontSize: 10.5, color: t.txt2 }}>
                   página {pagina + 1} de {Math.max(1, Math.ceil(novosFiltrados.length / porPagina))} · {selecionados.size} selecionado(s)
                   {" · "}
-                  <button disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)} style={{ border: "none", background: "transparent", color: pagina === 0 ? t.txt2 : t.txt, cursor: pagina === 0 ? "default" : "pointer" }}>‹ anterior</button>
+                  <Button variant="ghost" size="sm" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}><Icon n="chevron-left" s={11} /> anterior</Button>
                   {" "}
-                  <button disabled={(pagina + 1) * porPagina >= novosFiltrados.length} onClick={() => setPagina((p) => p + 1)} style={{ border: "none", background: "transparent", color: (pagina + 1) * porPagina >= novosFiltrados.length ? t.txt2 : t.txt, cursor: (pagina + 1) * porPagina >= novosFiltrados.length ? "default" : "pointer" }}>próxima ›</button>
+                  <Button variant="ghost" size="sm" disabled={(pagina + 1) * porPagina >= novosFiltrados.length} onClick={() => setPagina((p) => p + 1)}>próxima <Icon n="chevron-right" s={11} /></Button>
                 </div>
-                <button onClick={confirmarNovos} disabled={!selecionados.size}
-                  style={{ fontSize: 12, fontWeight: 700, padding: "8px 16px", borderRadius: 8, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none", opacity: selecionados.size ? 1 : .5 }}>
+                <Button size="sm" onClick={confirmarNovos} disabled={!selecionados.size}>
                   Importar {selecionados.size} selecionado(s)
-                </button>
+                </Button>
               </div>
             </div>
           )}

@@ -5,6 +5,8 @@ import { listarEnvios, registrarEnvios, situacaoDoEnvio, indexarEnvios } from ".
 import { diasParaVencerCnh, DIAS_AVISO_CNH } from "../../cadastroEmbarcadora.js";
 import { baixarXLSXAbas } from "../../exportacao.js";
 import Icon from "../../components/Icon.jsx";
+import { Button } from "../../design-system/components/Button.jsx";
+import { Badge } from "../../design-system/components/Badge.jsx";
 
 // Painel de geração do cadastro da embarcadora — mora dentro de Cadastros >
 // Motoristas, no mesmo lugar (e no mesmo padrão) do "Importar agenda".
@@ -17,8 +19,8 @@ import Icon from "../../components/Icon.jsx";
 // da embarcadora e o trabalho é refeito.
 
 // "novo" chama atenção (é o que precisa ir), "mudou" alerta (foi, mas mudou) e
-// "enviado" fica apagado — já resolvido.
-const ESTADO_COR = (t) => ({ novo: t.azul, mudou: t.warn, igual: t.txt2 });
+// "enviado" fica apagado — já resolvido. Variantes do Badge, não cor solta.
+const ESTADO_VARIANTE = { novo: "info", mudou: "warning", igual: "default" };
 const dataCurta = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR") : "");
 
 export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos, onFechar }) {
@@ -152,7 +154,7 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>Gerar cadastro da embarcadora</div>
           <div style={{ fontSize: 11, color: t.txt2 }}>Cada linha é um motorista com o conjunto que rodou — marque e gere o arquivo no modelo dela.</div>
         </div>
-        <button onClick={onFechar} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Fechar</button>
+        <Button variant="ghost" size="sm" onClick={onFechar}>Fechar</Button>
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
@@ -176,25 +178,22 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
           { k: "enviados",  l: "Já enviados",        dica: "Mesmo motorista e mesmo conjunto que já foram — reenviar repete" },
           { k: "todos",     l: "Todos",              dica: "A base inteira" },
         ].map((f) => (
-          <button key={f.k} onClick={() => setFiltro(f.k)} title={f.dica}
-            style={{ fontSize: 11.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit",
-              background: filtro === f.k ? t.azul : "transparent",
-              color: filtro === f.k ? t.txtInverse : t.txt2,
-              border: `1px solid ${filtro === f.k ? t.azul : t.borda}` }}>
+          <Button key={f.k} size="sm" variant={filtro === f.k ? "info" : "secondary"}
+            onClick={() => setFiltro(f.k)} title={f.dica} style={{ borderRadius: 999 }}>
             {f.l} {contagem[f.k] || 0}
-          </button>
+          </Button>
         ))}
         {busca.trim() && (
           <span style={{ color: t.azul }}>busca ativa — mostrando todas as situações</span>
         )}
         <span style={{ marginLeft: "auto" }}>{marcadas.size} marcado(s)</span>
         {marcaveis > 0 && (
-          <button onClick={marcarVisiveis} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}`, fontFamily: "inherit" }}>
+          <Button variant="secondary" size="sm" onClick={marcarVisiveis}>
             Marcar {marcaveis} da lista
-          </button>
+          </Button>
         )}
         {marcadas.size > 0 && (
-          <button onClick={() => setMarcadas(new Set())} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Desmarcar</button>
+          <Button variant="ghost" size="sm" onClick={() => setMarcadas(new Set())}>Desmarcar</Button>
         )}
       </div>
 
@@ -210,10 +209,9 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
               : filtro === "prontos" && contagem.pendencia > 0
                 ? <>
                     <span>Nenhum cadastro pronto — {contagem.pendencia} ainda esperam CNH ou CRLV.</span>
-                    <button onClick={() => setFiltro("pendencia")}
-                      style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.warn, border: `1px solid ${t.warn}`, fontFamily: "inherit" }}>
+                    <Button variant="secondary" size="sm" onClick={() => setFiltro("pendencia")}>
                       Ver o que falta
-                    </button>
+                    </Button>
                   </>
                 : <span>Nada nesta situação.</span>}
           </div>
@@ -239,19 +237,17 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
                 CNH vence em {i.diasCnh}d
               </span>
             )}
-            <span title={i.situacao.em
-              ? `Enviado em ${new Date(i.situacao.em).toLocaleString("pt-BR")}${i.situacao.por ? " por " + i.situacao.por : ""}${i.situacao.antes ? ` · conjunto enviado antes: ${i.situacao.antes}` : ""}`
-              : "Este motorista com este conjunto nunca foi enviado"}
-              style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, whiteSpace: "nowrap",
-                color: ESTADO_COR(t)[i.situacao.estado], border: `1px solid ${ESTADO_COR(t)[i.situacao.estado]}` }}>
+            <Badge variant={ESTADO_VARIANTE[i.situacao.estado]} size="sm" pill
+              title={i.situacao.em
+                ? `Enviado em ${new Date(i.situacao.em).toLocaleString("pt-BR")}${i.situacao.por ? " por " + i.situacao.por : ""}${i.situacao.antes ? ` · conjunto enviado antes: ${i.situacao.antes}` : ""}`
+                : "Este motorista com este conjunto nunca foi enviado"}>
               {i.situacao.estado === "novo" ? "cadastro novo"
                 : i.situacao.estado === "mudou" ? `conjunto mudou desde ${dataCurta(i.situacao.em)}`
                 : `enviado ${dataCurta(i.situacao.em)}`}
-            </span>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, whiteSpace: "nowrap",
-              color: i.pendencias.length ? t.warn : t.verde, border: `1px solid ${i.pendencias.length ? t.warn : t.verde}` }}>
+            </Badge>
+            <Badge variant={i.pendencias.length ? "warning" : "success"} size="sm" pill>
               {i.pendencias.length ? `falta ${i.pendencias.length}` : "completo"}
-            </span>
+            </Badge>
           </label>
         ))}
         {visiveis.length > 300 && <div style={{ fontSize: 11, color: t.txt2, textAlign: "center", padding: 6 }}>mostrando 300 de {visiveis.length} — refine a busca</div>}
@@ -263,13 +259,10 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
             {template.layout === "blocos" ? "Uma aba, um bloco por motorista" : `${template.definicao?.secoes?.length || 0} abas`}
           </span>
         )}
-        <button onClick={gerar} disabled={!selecionados.length || gerando}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit",
-            fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: selecionados.length ? "pointer" : "not-allowed",
-            background: "var(--accent)", color: "#fff", border: "none", opacity: selecionados.length && !gerando ? 1 : .45 }}>
+        <Button size="sm" onClick={gerar} disabled={!selecionados.length} loading={gerando}>
           <Icon n="download" s={13} />
           {gerando ? "Gerando…" : selecionados.length ? `Gerar .xlsx · ${selecionados.length} cadastro(s)` : "Gerar .xlsx"}
-        </button>
+        </Button>
       </div>
     </div>
   );

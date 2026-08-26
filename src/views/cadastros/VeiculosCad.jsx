@@ -1,5 +1,6 @@
 import React from "react";
 import Icon from "../../components/Icon.jsx";
+import { Button } from "../../design-system/components/Button.jsx";
 import useVeiculos from "../../hooks/useVeiculos.js";
 import useMotoristas from "../../hooks/useMotoristas.js";
 import EmptyState from "../../components/EmptyState.jsx";
@@ -139,10 +140,9 @@ export default function VeiculosCad({ ctx, conn }) {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por placa ou motorista"
           style={{ ...inp, flex: "1 1 220px", width: "auto" }} />
-        <button onClick={novo}
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none" }}>
-          + Novo veículo
-        </button>
+        <Button size="sm" onClick={novo}>
+          <Icon n="truck" s={13} /> Novo veículo
+        </Button>
       </div>
 
       {form && (
@@ -150,11 +150,11 @@ export default function VeiculosCad({ ctx, conn }) {
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>{form.__novo ? "Novo veículo" : `Editando: ${form.placa}`}</div>
 
           {openDocIntake && (
-            <button onClick={() => openDocIntake("crlv", aplicarCrlv)}
-              title="Envie foto ou PDF do CRLV — preenche placa, marca, modelo, cor, ano, RENAVAM e chassi"
-              style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}` }}>
+            <Button variant="info-outline" size="sm" onClick={() => openDocIntake("crlv", aplicarCrlv)}
+              style={{ marginBottom: 10 }}
+              title="Envie foto ou PDF do CRLV — preenche placa, marca, modelo, cor, ano, RENAVAM e chassi">
               <Icon n="file-text" s={13} /> Ler CRLV (foto ou PDF)
-            </button>
+            </Button>
           )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
@@ -286,10 +286,10 @@ export default function VeiculosCad({ ctx, conn }) {
           )}
 
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
-            <button onClick={() => setForm(null)} style={{ fontSize: 12, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Cancelar</button>
-            <button onClick={salvar} disabled={salvando} style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: "pointer", background: "var(--accent)", color: "#fff", border: "none", opacity: salvando ? .5 : 1 }}>
+            <Button variant="ghost" size="sm" onClick={() => setForm(null)}>Cancelar</Button>
+            <Button size="sm" onClick={salvar} loading={salvando}>
               {salvando ? "Salvando..." : "Salvar"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -310,7 +310,7 @@ export default function VeiculosCad({ ctx, conn }) {
               {[[v.marca, v.modelo].filter(Boolean).join(" "), v.num_eixos && `${v.num_eixos} eixos`, v.config_eixos, v.carroceria, v.capacidade_m3 && v.capacidade_m3 + "m³"].filter(Boolean).join(" · ")}
               {!v.renavam && <span style={{ color: t.warn }}> · sem RENAVAM</span>}
             </div>
-            <button onClick={() => editar(v)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Editar</button>
+            <Button variant="secondary" size="sm" onClick={() => editar(v)}>Editar</Button>
           </div>
         ))}
         {filtrados.length > 200 && <div style={{ fontSize: 11, color: t.txt2, textAlign: "center", padding: 8 }}>mostrando 200 de {filtrados.length} — refine a busca pra ver os demais</div>}

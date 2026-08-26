@@ -133,6 +133,31 @@
   border-color: var(--color-success-dk);
 }
 
+/* Variantes de CONTORNO por cor semântica.
+   O app já usava botão contornado em azul (ação secundária de destaque) e em
+   verde (ação de confirmação) com estilo inline em cada tela; faltava a variante
+   equivalente aqui, e era por isso que ninguém usava ds-btn. */
+.ds-btn--info {
+  background  : var(--color-info);
+  color       : var(--color-text-inverse);
+  border-color: var(--color-info);
+}
+.ds-btn--info:hover:not(:disabled) { background: var(--color-info-lt); border-color: var(--color-info-lt); }
+
+.ds-btn--info-outline {
+  background  : transparent;
+  color       : var(--color-info);
+  border-color: var(--color-info-border);
+}
+.ds-btn--info-outline:hover:not(:disabled) { background: var(--color-info-bg); border-color: var(--color-info); }
+
+.ds-btn--success-outline {
+  background  : transparent;
+  color       : var(--color-success);
+  border-color: var(--color-success-border, var(--color-success));
+}
+.ds-btn--success-outline:hover:not(:disabled) { background: var(--color-success-bg); border-color: var(--color-success); }
+
 /* Loading spinner */
 .ds-btn--loading { pointer-events: none; opacity: 0.75; }
 .ds-btn__spinner {
