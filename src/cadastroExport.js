@@ -53,8 +53,13 @@ function formatar(valor, col) {
 }
 
 // ── Itens do envio ──────────────────────────────────────────────────────────
-// Um item = uma DT: a viagem, o motorista que o cadastro conhece e as peças que
-// rodaram. `pendencias` é a MESMA função da tela de cadastro — o que aparece
+// Um item = um CADASTRO: motorista + conjunto que rodou junto. NÃO é uma DT —
+// o mesmo motorista com o mesmo cavalo e a mesma carreta faz dez viagens no mês,
+// e a embarcadora quer esse cadastro UMA vez. Quando ele troca uma peça, aí sim
+// vira outro item, porque é outro conjunto.
+//
+// As DTs vêm junto (`dts`) porque é por elas que o analista reconhece a linha e
+// faz a busca. `pendencias` é a MESMA função da tela de cadastro — o que aparece
 // como "falta 3" lá é o que trava o envio aqui.
 export function itensDoEnvio(DADOS = [], motoristas = [], veiculos = []) {
   const porCpf = new Map(), porNome = new Map(), porPlaca = new Map();
@@ -75,7 +80,11 @@ export function itensDoEnvio(DADOS = [], motoristas = [], veiculos = []) {
     if (!porDt.has(String(reg.dt))) porDt.set(String(reg.dt), reg);
   });
 
-  return [...porDt.entries()].map(([dt, reg]) => {
+  // Agrupa por CADASTRO: a chave é a assinatura (motorista + peças). Dez DTs do
+  // mesmo conjunto viram uma linha só — sem isso o arquivo saía com o mesmo
+  // motorista repetido dez vezes.
+  const porCadastro = new Map();
+  [...porDt.entries()].forEach(([dt, reg]) => {
     const motorista = porCpf.get(cpfDigitos(reg.cpf))
       || porNome.get(String(reg.nome || "").toUpperCase().trim())
       || porPlaca.get(String(reg.placa || "").toUpperCase().replace(/[^A-Z0-9]/g, ""))
@@ -84,15 +93,24 @@ export function itensDoEnvio(DADOS = [], motoristas = [], veiculos = []) {
     // Placa que rodou mas não está no cadastro de veículos entra como casca: o
     // envio precisa saber que ela existe pra poder acusar o que falta nela.
     const pecas = placas.map((p, i) => veicPorPlaca.get(p) || { placa: p, tipo: i === 0 ? "cavalo" : "carreta" });
-    return {
-      dt,
+    const item = {
       reg,
       motorista,
       veiculos: pecas,
       nome: motorista?.nome || reg.nome || "—",
       pendencias: motorista ? pendenciasCadastro(motorista, pecas) : ["Motorista não cadastrado"],
     };
-  }).sort((a, b) => a.nome.localeCompare(b.nome));
+    // Sem motorista no cadastro não há assinatura que preste (o conjunto ainda
+    // pode ser o mesmo de outro): agrupa por placa, que é o que se tem.
+    const assinatura = motorista ? assinaturaDoItem(item) : `sem-cadastro:${placas.join("-")}`;
+    const existente = porCadastro.get(assinatura);
+    if (existente) { existente.dts.push(dt); return; }
+    porCadastro.set(assinatura, { ...item, assinatura, chave: assinatura, dts: [dt] });
+  });
+
+  return [...porCadastro.values()]
+    .map((i) => ({ ...i, dts: i.dts.sort(), dt: i.dts[0] }))
+    .sort((a, b) => a.nome.localeCompare(b.nome));
 }
 
 // ── Montagem ────────────────────────────────────────────────────────────────

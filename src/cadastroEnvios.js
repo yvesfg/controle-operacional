@@ -25,15 +25,32 @@ export function registrarEnvios(conn, linhas) {
   return supaFetch(conn.url, conn.key, "POST", TABELA, linhas);
 }
 
-// ── Situação de uma DT diante do último envio ───────────────────────────────
-// "novo"       nunca foi mandada
-// "igual"      já foi e nada mudou — reenviar só repete trabalho pra quem recebe
-// "mudou"      já foi, mas o conjunto ou o documento mudou desde então
-export function situacaoDoEnvio(envio, assinatura) {
-  if (!envio) return { estado: "novo" };
-  return {
-    estado: envio.assinatura === assinatura ? "igual" : "mudou",
-    em: envio.enviado_em,
-    por: envio.enviado_por,
-  };
+// ── Situação de um CADASTRO diante do histórico ─────────────────────────────
+// A pergunta NÃO é sobre a viagem: o mesmo motorista com o mesmo conjunto roda
+// várias DTs e a embarcadora quer esse cadastro uma vez só. Já se ele troca uma
+// peça, é cadastro novo mesmo tendo sido mandado antes.
+//
+// "igual"  esta assinatura (motorista + conjunto) já foi mandada
+// "mudou"  o motorista já foi, mas com outro conjunto ou outro documento
+// "novo"   nunca foi
+export function indexarEnvios(envios = []) {
+  const porAssinatura = new Map();
+  const porMotorista = new Map();
+  envios.forEach((e) => {
+    porAssinatura.set(e.assinatura, e);
+    if (!e.motorista_id) return;
+    const atual = porMotorista.get(e.motorista_id);
+    if (!atual || new Date(e.enviado_em) > new Date(atual.enviado_em)) porMotorista.set(e.motorista_id, e);
+  });
+  return { porAssinatura, porMotorista };
+}
+
+export function situacaoDoEnvio(indice, item) {
+  const igual = indice?.porAssinatura?.get(item.assinatura);
+  if (igual) return { estado: "igual", em: igual.enviado_em, por: igual.enviado_por };
+
+  const doMotorista = item.motorista?.id ? indice?.porMotorista?.get(item.motorista.id) : null;
+  if (doMotorista) return { estado: "mudou", em: doMotorista.enviado_em, por: doMotorista.enviado_por, antes: doMotorista.placas };
+
+  return { estado: "novo" };
 }

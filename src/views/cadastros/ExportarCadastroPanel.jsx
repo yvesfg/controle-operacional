@@ -1,17 +1,19 @@
 import React from "react";
 import { listarTemplates } from "../../cadastroTemplates.js";
-import { itensDoEnvio, matrizesDoTemplate, nomeDoArquivo, assinaturaDoItem } from "../../cadastroExport.js";
-import { listarEnvios, registrarEnvios, situacaoDoEnvio } from "../../cadastroEnvios.js";
+import { itensDoEnvio, matrizesDoTemplate, nomeDoArquivo } from "../../cadastroExport.js";
+import { listarEnvios, registrarEnvios, situacaoDoEnvio, indexarEnvios } from "../../cadastroEnvios.js";
 import { diasParaVencerCnh, DIAS_AVISO_CNH } from "../../cadastroEmbarcadora.js";
 import { baixarXLSXAbas } from "../../exportacao.js";
 
 // Painel de geração do cadastro da embarcadora — mora dentro de Cadastros >
 // Motoristas, no mesmo lugar (e no mesmo padrão) do "Importar agenda".
 //
-// A seleção é por DT porque é assim que o analista pensa a carga, e porque o
-// conjunto que vai no arquivo é o da VIAGEM: o motorista troca de carreta entre
-// uma DT e outra. Quem tem pendência aparece, mas não pode ser marcado — o
-// arquivo incompleto volta da embarcadora e o trabalho é refeito.
+// Cada linha é um CADASTRO (motorista + conjunto), não uma viagem: o mesmo
+// motorista com o mesmo conjunto roda várias DTs e a embarcadora quer isso uma
+// vez só. Trocou uma peça, é outra linha — outro conjunto, outro cadastro.
+// As DTs aparecem na linha porque é por elas que o analista se orienta e busca.
+// Quem tem pendência aparece, mas não pode ser marcado: arquivo incompleto volta
+// da embarcadora e o trabalho é refeito.
 
 // "novo" chama atenção (é o que precisa ir), "mudou" alerta (foi, mas mudou) e
 // "enviado" fica apagado — já resolvido.
@@ -52,17 +54,13 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
     return () => { vivo = false; };
   }, [conn, embarcadora]);
 
-  const envioPorDt = React.useMemo(() => new Map(envios.map((e) => [String(e.dt), e])), [envios]);
+  const indiceEnvios = React.useMemo(() => indexarEnvios(envios), [envios]);
 
-  const itens = React.useMemo(() => itensDoEnvio(DADOS, motoristas, veiculos).map((i) => {
-    const assinatura = assinaturaDoItem(i);
-    return {
-      ...i,
-      assinatura,
-      situacao: situacaoDoEnvio(envioPorDt.get(i.dt), assinatura),
-      diasCnh: diasParaVencerCnh(i.motorista?.cnh_validade),
-    };
-  }), [DADOS, motoristas, veiculos, envioPorDt]);
+  const itens = React.useMemo(() => itensDoEnvio(DADOS, motoristas, veiculos).map((i) => ({
+    ...i,
+    situacao: situacaoDoEnvio(indiceEnvios, i),
+    diasCnh: diasParaVencerCnh(i.motorista?.cnh_validade),
+  })), [DADOS, motoristas, veiculos, indiceEnvios]);
 
   const contagem = React.useMemo(() => itens.reduce((acc, i) => {
     acc[i.situacao.estado] = (acc[i.situacao.estado] || 0) + 1;
@@ -77,52 +75,52 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
       // repetido, então some por padrão — mas o filtro é destravável.
       if (soPendentes && i.situacao.estado === "igual") return false;
       if (!q) return true;
-      return i.dt.toUpperCase().includes(q)
+      return i.dts.some((d) => d.toUpperCase().includes(q))
         || i.nome.toUpperCase().includes(q)
         || i.veiculos.some((v) => v.placa.includes(q.replace(/[^A-Z0-9]/g, "")));
     });
   }, [itens, busca, soCompletos, soPendentes]);
-  const selecionados = itens.filter((i) => marcadas.has(i.dt));
+  const selecionados = itens.filter((i) => marcadas.has(i.chave));
   const comPendencia = itens.filter((i) => i.pendencias.length).length;
 
-  const alternar = (dt) => setMarcadas((s) => {
+  const alternar = (chave) => setMarcadas((s) => {
     const n = new Set(s);
-    n.has(dt) ? n.delete(dt) : n.add(dt);
+    n.has(chave) ? n.delete(chave) : n.add(chave);
     return n;
   });
 
   const marcarVisiveis = () => setMarcadas((s) => {
     const n = new Set(s);
-    visiveis.filter((i) => !i.pendencias.length).forEach((i) => n.add(i.dt));
+    visiveis.filter((i) => !i.pendencias.length).forEach((i) => n.add(i.chave));
     return n;
   });
 
   const gerar = async () => {
     if (!template) { showToast?.("Escolha o modelo da embarcadora.", "erro"); return; }
-    if (!selecionados.length) { showToast?.("Marque ao menos uma DT.", "erro"); return; }
+    if (!selecionados.length) { showToast?.("Marque ao menos um cadastro.", "erro"); return; }
     const travados = selecionados.filter((i) => i.pendencias.length);
     if (travados.length) {
-      showToast?.(`${travados.length} DT(s) marcada(s) ainda têm pendência — complete o cadastro antes.`, "erro");
+      showToast?.(`${travados.length} cadastro(s) marcado(s) ainda têm pendência — complete antes.`, "erro");
       return;
     }
     setGerando(true);
     try {
       const abas = matrizesDoTemplate(template, selecionados);
       baixarXLSXAbas(abas, nomeDoArquivo(template));
-      showToast?.(`Arquivo gerado com ${selecionados.length} DT(s).`, "ok");
+      showToast?.(`Arquivo gerado com ${selecionados.length} cadastro(s).`, "ok");
 
       // O registro vem DEPOIS do arquivo e não derruba a geração se falhar: o
       // que o analista precisa é do .xlsx; o histórico é conveniência.
       const agora = new Date().toISOString();
       const linhas = selecionados.map((i) => ({
-        embarcadora, dt: i.dt, template: template.nome,
+        embarcadora, dts: i.dts.join(", "), template: template.nome,
         motorista_id: i.motorista?.id || null,
         nome: i.nome, placas: i.veiculos.map((v) => v.placa).join(" / "),
         assinatura: i.assinatura, enviado_em: agora, enviado_por: usuarioLogado?.nome || null,
       }));
       try {
         await registrarEnvios(conn, linhas);
-        setEnvios((antes) => [...antes.filter((e) => !marcadas.has(String(e.dt))), ...linhas]);
+        setEnvios((antes) => [...antes.filter((e) => !marcadas.has(e.assinatura)), ...linhas]);
         setMarcadas(new Set());
       } catch (e) {
         showToast?.("Arquivo pronto, mas o histórico de envio não foi gravado: " + e.message, "warn");
@@ -159,14 +157,14 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
           Só cadastros completos
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
-          title="Esconde as DTs que já foram mandadas e não mudaram desde então">
+          title="Esconde os cadastros já mandados com este mesmo conjunto — reenviar igual só faz a embarcadora receber repetido">
           <input type="checkbox" checked={soPendentes} onChange={(e) => setSoPendentes(e.target.checked)} />
-          Esconder o que já foi e não mudou
+          Esconder o que já foi com este mesmo conjunto
         </label>
-        <span>{visiveis.length} DT(s) na lista · {marcadas.size} marcada(s)</span>
+        <span>{visiveis.length} cadastro(s) na lista · {marcadas.size} marcado(s)</span>
         {comPendencia > 0 && <span style={{ color: t.warn }}>{comPendencia} com pendência</span>}
         {(contagem.mudou > 0 || contagem.igual > 0) && (
-          <span>{contagem.novo || 0} nova(s) · {contagem.mudou || 0} mudou · {contagem.igual || 0} já enviada(s)</span>
+          <span>{contagem.novo || 0} novo(s) · {contagem.mudou || 0} com conjunto novo · {contagem.igual || 0} já enviado(s)</span>
         )}
         <button onClick={marcarVisiveis} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Marcar visíveis</button>
         {marcadas.size > 0 && (
@@ -177,16 +175,21 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
       <div style={{ display: "flex", flexDirection: "column", gap: 5, maxHeight: 320, overflowY: "auto", marginBottom: 10 }}>
         {!visiveis.length && (
           <div style={{ fontSize: 11.5, color: t.txt2, padding: 8 }}>
-            Nenhuma DT {soCompletos ? "com cadastro completo " : ""}nesta base — desmarque o filtro pra ver o que falta.
+            Nenhum cadastro {soCompletos ? "completo " : ""}nesta base — desmarque o filtro pra ver o que falta.
           </div>
         )}
         {visiveis.slice(0, 300).map((i) => (
-          <label key={i.dt} title={i.pendencias.length ? `Falta: ${i.pendencias.join(", ")}` : ""}
+          <label key={i.chave} title={i.pendencias.length ? `Falta: ${i.pendencias.join(", ")}` : ""}
             style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "7px 10px", borderRadius: 8,
-              background: t.card2, border: `1px solid ${marcadas.has(i.dt) ? t.azul : t.borda}`, cursor: i.pendencias.length ? "not-allowed" : "pointer", opacity: i.pendencias.length ? .65 : 1 }}>
-            <input type="checkbox" checked={marcadas.has(i.dt)} disabled={i.pendencias.length > 0}
-              onChange={() => alternar(i.dt)} style={{ cursor: "inherit" }} />
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: t.ouro, fontWeight: 700 }}>DT {i.dt}</span>
+              background: t.card2, border: `1px solid ${marcadas.has(i.chave) ? t.azul : t.borda}`, cursor: i.pendencias.length ? "not-allowed" : "pointer", opacity: i.pendencias.length ? .65 : 1 }}>
+            <input type="checkbox" checked={marcadas.has(i.chave)} disabled={i.pendencias.length > 0}
+              onChange={() => alternar(i.chave)} style={{ cursor: "inherit" }} />
+            {/* Uma linha cobre TODAS as viagens do mesmo conjunto — mostra a
+                primeira DT e conta o resto, com a lista inteira no título. */}
+            <span title={i.dts.length > 1 ? `DTs: ${i.dts.join(", ")}` : ""}
+              style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: t.ouro, fontWeight: 700 }}>
+              DT {i.dts[0]}{i.dts.length > 1 ? ` +${i.dts.length - 1}` : ""}
+            </span>
             <span style={{ fontSize: 12, color: t.txt, flex: "1 1 180px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.nome}</span>
             <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: t.txt2 }}>{i.veiculos.map((v) => v.placa).join(" · ") || "sem placa"}</span>
             {/* CNH que vence logo passa, mas avisada: ela volta como problema
@@ -196,11 +199,13 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
                 CNH vence em {i.diasCnh}d
               </span>
             )}
-            <span title={i.situacao.em ? `Enviado em ${new Date(i.situacao.em).toLocaleString("pt-BR")}${i.situacao.por ? " por " + i.situacao.por : ""}` : ""}
+            <span title={i.situacao.em
+              ? `Enviado em ${new Date(i.situacao.em).toLocaleString("pt-BR")}${i.situacao.por ? " por " + i.situacao.por : ""}${i.situacao.antes ? ` · conjunto enviado antes: ${i.situacao.antes}` : ""}`
+              : "Este motorista com este conjunto nunca foi enviado"}
               style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, whiteSpace: "nowrap",
                 color: ESTADO_COR(t)[i.situacao.estado], border: `1px solid ${ESTADO_COR(t)[i.situacao.estado]}` }}>
-              {i.situacao.estado === "novo" ? "novo"
-                : i.situacao.estado === "mudou" ? `mudou desde ${dataCurta(i.situacao.em)}`
+              {i.situacao.estado === "novo" ? "cadastro novo"
+                : i.situacao.estado === "mudou" ? `conjunto mudou desde ${dataCurta(i.situacao.em)}`
                 : `enviado ${dataCurta(i.situacao.em)}`}
             </span>
             <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, whiteSpace: "nowrap",
