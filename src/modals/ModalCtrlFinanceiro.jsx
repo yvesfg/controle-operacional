@@ -17,7 +17,7 @@ export default function ModalCtrlFinanceiro({ ctx }) {
       {/* ═══ MODAL: PLANILHA CONTROLE FINANCEIRO OPERACIONAL ═══ */}
       {relCtrlDccOpen && (()=>{
         const gerarCtrlDcc = () => {
-          if(!relCtrlDccFrom||!relCtrlDccTo){showToast("⚠️ Selecione o período","warn");return;}
+          if(!relCtrlDccFrom||!relCtrlDccTo){showToast("Selecione o período","warn");return;}
           const [fyy,fmm,fdd] = relCtrlDccFrom.split("-").map(Number);
           const [tyy,tmm,tdd] = relCtrlDccTo.split("-").map(Number);
           const dFrom = new Date(fyy,fmm-1,fdd);
@@ -151,7 +151,7 @@ export default function ModalCtrlFinanceiro({ ctx }) {
           ];
           const per = `${relCtrlDccFrom}_${relCtrlDccTo}`;
           baixarXLSX(matrizDeColunas(linhas, cols), `controle-financeiro-${per}`);
-          showToast(`✅ Planilha gerada — ${linhas.length} registro(s)`,"ok");
+          showToast(`Planilha gerada — ${linhas.length} registro(s)`,"ok");
           setRelCtrlDccOpen(false);
         };
         return (

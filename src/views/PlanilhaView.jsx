@@ -7,6 +7,7 @@
  *                t, isMobile, ExportMenu }
  */
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import { parseValorBR } from "../utils.js";
 
@@ -62,7 +63,7 @@ function PvBadge({ status }) {
   else if (s.includes("pend") || s.includes("aguard")) cls = "pv-badge pv-badge-pend";
   else if (s.includes("atraso") || s.includes("atrasad")) cls = "pv-badge pv-badge-atraso";
   else if (s.includes("trânsito") || s.includes("transito") || s.includes("viagem")) cls = "pv-badge pv-badge-transito";
-  return <span className={cls}>● {status || "—"}</span>;
+  return <span className={cls}><Icon n="dot" s={13} /> {status || "—"}</span>;
 }
 
 // Antes assumia formato BR sempre (stripava TODO ponto como milhar); ~489 linhas no banco
@@ -197,7 +198,7 @@ export default function PlanilhaView({ ctx }) {
       {/* ── Toolbar ── */}
       <div className="pv-toolbar">
         {baseAtual && (
-          <span className="pv-filter-pill active">{baseAtual.nome || baseAtual.label || baseAtual.id} ▾</span>
+          <span className="pv-filter-pill active">{baseAtual.nome || baseAtual.label || baseAtual.id} <Icon n="chevron-down" s={13} /></span>
         )}
         <select
           className="pv-filter-pill"
@@ -248,7 +249,7 @@ export default function PlanilhaView({ ctx }) {
         )}
         {temFiltro && (
           <button className="pv-filter-pill" onClick={() => { setPlanilhaFiltroAno(""); setPlanilhaFiltroMes(""); setPlanilhaFiltroOrigem("todas"); setPlanilhaFiltroDataDe(""); setPlanilhaFiltroDataAte(""); setPlanilhaBusca(""); setPlanilhaFiltroStatus(""); setPlanilhaFiltroDestino(""); if(setPlanilhaFiltroContratante)setPlanilhaFiltroContratante(""); if(setPlanilhaFiltroGerenciadora)setPlanilhaFiltroGerenciadora(""); setPlanilhaPagina(1); }}>
-            ✕ Limpar
+            <Icon n="x" s={13} /> Limpar
           </button>
         )}
         {ExportMenu && (
@@ -289,8 +290,8 @@ export default function PlanilhaView({ ctx }) {
           {dadosFiltrados.length} de {DADOS.length} registros · pág. {paginaAtual}/{totalPaginas}
           {planilhaSortKey && (
             <span style={{ color: "var(--accent)", marginLeft: 8 }}>
-              ord. por {planilhaSortKey} {planilhaSortDir === "asc" ? "↑" : "↓"}
-              <button onClick={() => { setPlanilhaSortKey(null); setPlanilhaSortDir("asc"); }} style={{ background: "none", border: "none", color: "var(--text3)", cursor: "pointer", fontSize: 10, padding: "0 3px" }}>✕</button>
+              ord. por {planilhaSortKey} <Icon n={planilhaSortDir === "asc" ? "arrow-up" : "arrow-down"} s={11} />
+              <button onClick={() => { setPlanilhaSortKey(null); setPlanilhaSortDir("asc"); }} style={{ background: "none", border: "none", color: "var(--text3)", cursor: "pointer", fontSize: 10, padding: "0 3px" }}><Icon n="x" s={13} /></button>
             </span>
           )}
         </span>
@@ -337,7 +338,7 @@ export default function PlanilhaView({ ctx }) {
                     {margem != null ? fmtR(margem) : "—"}
                   </div>
                   <div className="pv-toggle" style={{ width: 28, textAlign: "center" }}>
-                    {isExp ? "▴" : "▾"}
+                    {isExp ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}
                   </div>
                 </div>
                 <div className="pv-row-detail">
@@ -371,11 +372,11 @@ export default function PlanilhaView({ ctx }) {
 
         {dadosFiltrados.length > REGISTROS_POR_PAGINA && (
           <div className="pv-pagination">
-            <button className="pv-page-btn" disabled={paginaAtual <= 1} onClick={() => setPlanilhaPagina(1)}>⏮</button>
-            <button className="pv-page-btn" disabled={paginaAtual <= 1} onClick={() => setPlanilhaPagina(p => Math.max(1, p - 1))}>← Ant</button>
+            <button className="pv-page-btn" disabled={paginaAtual <= 1} onClick={() => setPlanilhaPagina(1)}><Icon n="chevron-left" s={12} /><Icon n="chevron-left" s={12} style={{marginLeft:-6}} /></button>
+            <button className="pv-page-btn" disabled={paginaAtual <= 1} onClick={() => setPlanilhaPagina(p => Math.max(1, p - 1))}><Icon n="arrow-left" s={13} /> Ant</button>
             <span>Pág {paginaAtual} / {totalPaginas}</span>
-            <button className="pv-page-btn" disabled={paginaAtual >= totalPaginas} onClick={() => setPlanilhaPagina(p => Math.min(totalPaginas, p + 1))}>Próx →</button>
-            <button className="pv-page-btn" disabled={paginaAtual >= totalPaginas} onClick={() => setPlanilhaPagina(totalPaginas)}>⏭</button>
+            <button className="pv-page-btn" disabled={paginaAtual >= totalPaginas} onClick={() => setPlanilhaPagina(p => Math.min(totalPaginas, p + 1))}>Próx <Icon n="arrow-right" s={13} /></button>
+            <button className="pv-page-btn" disabled={paginaAtual >= totalPaginas} onClick={() => setPlanilhaPagina(totalPaginas)}><Icon n="chevron-right" s={12} /><Icon n="chevron-right" s={12} style={{marginLeft:-6}} /></button>
             <div className="pv-spacer" />
             <span>{dadosFiltrados.length} registros</span>
           </div>

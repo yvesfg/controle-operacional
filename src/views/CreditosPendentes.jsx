@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 import { listarIndevidasPendentesGlobal, marcarCobrado, desmarcarCobrado, listarCreditosGlobal, vincularCredito } from "../despesas.js";
 import KpiCard from "../components/KpiCard.jsx";
@@ -220,7 +221,7 @@ export default function CreditosPendentes({ ctx }) {
         <div style={{ ...card, textAlign: "center", color: t.txt2, fontSize: 13, padding: 32 }}>Carregando pendências…</div>
       ) : filtrados.length === 0 ? (
         <div style={{ ...card, textAlign: "center", color: t.txt2, fontSize: 13, padding: 32 }}>
-          {items.length === 0 ? "Nenhuma despesa indevida pendente. 🎉" : "Nada encontrado com os filtros atuais."}
+          {items.length === 0 ? "Nenhuma despesa indevida pendente. " : "Nada encontrado com os filtros atuais."}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -252,7 +253,7 @@ export default function CreditosPendentes({ ctx }) {
                           <div style={{ fontSize: 10, marginTop: 1, color: t.txt2 }}>
                             ref. {mesLabel(d.mes_ref)}
                             {a != null && <span style={{ color: faixaCor(a, t), fontWeight: 700 }}> · {a} dias</span>}
-                            {d.cobrado_em && <span style={{ color: t.verde, fontWeight: 700 }}> · ✓ cobrado {new Date(d.cobrado_em).toLocaleDateString("pt-BR")}</span>}
+                            {d.cobrado_em && <span style={{ color: t.verde, fontWeight: 700 }}> · <Icon n="check" s={13} /> cobrado {new Date(d.cobrado_em).toLocaleDateString("pt-BR")}</span>}
                           </div>
                           {d.cobrado_em && d.cobranca_obs && <div style={{ fontSize: 10, color: t.txt2, marginTop: 1, fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>“{d.cobranca_obs}”</div>}
                         </div>
@@ -287,7 +288,7 @@ export default function CreditosPendentes({ ctx }) {
                             Registrar
                           </button>
                           <button onClick={() => { setCobrandoId(null); setObsText(""); }}
-                            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>✕</button>
+                            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}><Icon n="x" s={13} /></button>
                         </div>
                       )}
                       {vinculandoId === d.id && (

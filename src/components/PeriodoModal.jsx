@@ -14,6 +14,7 @@
 //
 // Tokens do design system (DESIGN.md) — sem hex solto aqui.
 import React from "react";
+import Icon from "./Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
   periodoMes, periodoTrimestre, periodoAno, periodoLivre, periodoMesAnterior,
@@ -144,7 +145,7 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
               Selecionado: {rotuloPeriodo(value)}
             </div>
           </div>
-          <button onClick={onFechar} style={{ ...btn, width: 30, padding: 0, fontSize: 14 }} title="Fechar">✕</button>
+          <button onClick={onFechar} style={{ ...btn, width: 30, padding: 0, fontSize: 14 }} title="Fechar"><Icon n="x" s={13} /></button>
         </div>
 
         {/* ── Atalhos ── */}
@@ -256,7 +257,7 @@ export default function PeriodoBotao({ value, onChange, modo, meses, titulo, sty
       >
         <CalIco s={compacto ? 10 : 12} />
         {rotuloPeriodo(value)}
-        <span style={{ fontSize: 8, opacity: 0.6 }}>▾</span>
+        <span style={{ fontSize: 8, opacity: 0.6 }}><Icon n="chevron-down" s={13} /></span>
       </button>
       <PeriodoModal aberto={aberto} onFechar={() => setAberto(false)}
         value={value} onChange={onChange} modo={modo} meses={meses} titulo={titulo} />

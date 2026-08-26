@@ -2,6 +2,7 @@
 // Tile de indicador único usado em todos os dashboards do app (Dashboard, Relatórios,
 // Painel Financeiro, etc). Mudar aqui propaga para todos — não duplicar este markup.
 import React from "react";
+import Icon from "./Icon.jsx";
 import { clickable } from "../utils.js";
 
 // Sparkline em SVG puro (sem libs) — última barra em destaque, mesmo padrão do modelo de referência.
@@ -127,7 +128,7 @@ export default function KpiCard({
           fontFamily: "var(--font-mono)",
           color: deltaPct >= 0 ? "var(--color-success)" : "var(--color-danger)",
         }}>
-          <span>{deltaPct >= 0 ? "↑" : "↓"} {Math.abs(deltaPct).toFixed(0)}%</span>
+          <span><Icon n={deltaPct >= 0 ? "arrow-up" : "arrow-down"} s={11} /> {Math.abs(deltaPct).toFixed(0)}%</span>
           <span style={{ color: "var(--text3)" }}>{deltaLabel || "vs período anterior"}</span>
         </div>
       )}

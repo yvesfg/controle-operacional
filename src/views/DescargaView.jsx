@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import Icon from "../components/Icon.jsx";
 import { ExportMenu } from "../exportHelpers.jsx";
 import { saveJSON, parseData, diffDias, clickable } from "../utils.js";
 import Toggle from "../components/Toggle.jsx";
@@ -79,7 +80,7 @@ export default function DescargaView({ ctx }) {
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,13)}
                 <span style={{fontSize:11,fontWeight:700,color:t.azulLt}}>DT {descargaNavDT}</span>
                 <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
-                <button onClick={()=>setDescargaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(22,119,255,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.azulLt,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✕ Limpar</button>
+                <button onClick={()=>setDescargaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(22,119,255,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.azulLt,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}><Icon n="x" s={13} /> Limpar</button>
               </div>
             )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
@@ -177,17 +178,17 @@ export default function DescargaView({ ctx }) {
                   return (
                     <div key={i} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" style={{background:_isDHL2?`rgba(22,119,255,.06)`:t.card,borderRadius:11,padding:12,border:`1px solid ${_isDHL2?t.azulLt:isAtrasado?hexRgb(t.danger,.5):hexRgb(t.azul,.35)}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL2?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
                       <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                        {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}>🚨 {dias}d</span>}
+                        {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}><Icon n="alert-octagon" s={13} /> {dias}d</span>}
                         {r.nome||"—"}
                         {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.08)`,color:t.laranja,border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
-                        {r.fora_planilha && <span title="Não foi encontrado na planilha na última sincronização" style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:t.danger,color:"#fff"}}>⚠ Fora da planilha</span>}
+                        {r.fora_planilha && <span title="Não foi encontrado na planilha na última sincronização" style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:t.danger,color:"#fff"}}><Icon n="alert" s={13} /> Fora da planilha</span>}
                         <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
                       <div style={{fontSize:12,color:t.txt2,lineHeight:1.8}}>
-                        🔢 <strong style={{color:t.txt}}>{r.dt}</strong> · 🚛 {r.placa||"—"}<br/>
-                        📍 {r.destino||"—"}<br/>
-                        📅 Agenda: <strong style={{color:isAtrasado?t.danger:t.ouro}}>{r.data_agenda||"—"}</strong>
-                        {r.data_desc && <> · 🏁 Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></>}
+                        <Icon n="hash" s={13} /> <strong style={{color:t.txt}}>{r.dt}</strong> · <Icon n="truck" s={13} /> {r.placa||"—"}<br/>
+                        <Icon n="map-pin" s={13} /> {r.destino||"—"}<br/>
+                        <Icon n="calendar" s={13} /> Agenda: <strong style={{color:isAtrasado?t.danger:t.ouro}}>{r.data_agenda||"—"}</strong>
+                        {r.data_desc && <> · <Icon n="flag" s={13} /> Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></>}
                       </div>
                     </div>
                   );
@@ -261,7 +262,7 @@ export default function DescargaView({ ctx }) {
               </div>
             )}
             {(()=>{const _de=dscTab==="hoje"?descargaData.hoje:dscTab==="aguardando"?descargaData.aguardando:dscTab==="carrega"?descargaData.carregaHoje:dscTab==="semMotorista"?descargaData.semMotorista:descargaData.atrasados;const _iniE=dscFiltroIni?new Date(dscFiltroIni+"T00:00:00"):null;const _fimE=dscFiltroFim?new Date(dscFiltroFim+"T23:59:59"):null;const _pymE=s=>{if(!s)return null;if(/^\d{2}\/\d{2}\/\d{4}/.test(s)){const p=s.split("/");return{ano:p[2],mes:p[1],full:new Date(p[2]+"-"+p[1]+"-"+p[0]+"T00:00:00")};}if(/^\d{4}-\d{2}-\d{2}/.test(s)){const p=s.split("-");return{ano:p[0],mes:p[1],full:new Date(s+"T00:00:00")};}return null;};return _de.filter(r=>{const ym=_pymE(campoOrdenacao(r));if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroAno&&ym?.ano!==dscFiltroAno)return false;if(dscTab!=="semMotorista"&&dscTab!=="hoje"&&dscTab!=="atrasado"&&dscFiltroMes&&ym?.mes!==dscFiltroMes)return false;if(dscFiltroOrigem!=="todas"&&(r.origem||"").trim()!==dscFiltroOrigem)return false;if(_iniE||_fimE){const d=ym?.full||null;if(!d)return false;if(_iniE&&d<_iniE)return false;if(_fimE&&d>_fimE)return false;}return true;}).length;})() === 0 && (
-              <div style={css.empty}><div style={{fontSize:36,marginBottom:10}}>{dscTab==="hoje"?"📅":dscTab==="aguardando"?"⏳":dscTab==="semMotorista"?"🚫":"✅"}</div><h3 style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:600,letterSpacing:"-0.02em",color:"var(--text2)"}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":dscTab==="aguardando"?"NENHUM AGUARDANDO AGENDA":dscTab==="carrega"?"NENHUM CARREGAMENTO HOJE":dscTab==="semMotorista"?"NENHUM DT SEM MOTORISTA":"SEM ATRASOS"}</h3></div>
+              <div style={css.empty}><div style={{marginBottom:10}}>{dscTab==="hoje"?<Icon n="calendar" s={32} />:dscTab==="aguardando"?<Icon n="clock" s={32} />:dscTab==="semMotorista"?<Icon n="ban" s={32} />:<Icon n="check-circle" s={32} />}</div><h3 style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:600,letterSpacing:"-0.02em",color:"var(--text2)"}}>{dscTab==="hoje"?"NENHUMA DESCARGA HOJE":dscTab==="aguardando"?"NENHUM AGUARDANDO AGENDA":dscTab==="carrega"?"NENHUM CARREGAMENTO HOJE":dscTab==="semMotorista"?"NENHUM DT SEM MOTORISTA":"SEM ATRASOS"}</h3></div>
             )}
             </>)}
 
@@ -357,13 +358,13 @@ export default function DescargaView({ ctx }) {
                       <span style={{fontSize:10,color:t.txt2}}>até</span>
                       <input type="date" value={rodorricaPeriodoFim} onChange={e=>setRodorricaPeriodoFim(e.target.value)}
                         style={{fontSize:11,padding:"3px 7px",borderRadius:6,border:`1.5px solid ${rodorricaPeriodoFim?t.ouro:t.borda}`,background:t.card,color:t.txt,height:26,width:130,cursor:"pointer"}}/>
-                      {(rodorricaPeriodoIni||rodorricaPeriodoFim)&&(<button onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}} style={{fontSize:9,padding:"3px 7px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>✕</button>)}
+                      {(rodorricaPeriodoIni||rodorricaPeriodoFim)&&(<button onClick={()=>{setRodorricaPeriodoIni("");setRodorricaPeriodoFim("");}} style={{fontSize:9,padding:"3px 7px",borderRadius:6,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}><Icon n="x" s={13} /></button>)}
                       <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{(rodorricaPeriodoIni||rodorricaPeriodoFim)?"Filtrando por data de carregamento":"Todas as datas"}</span>
                     </div>
                     {/* Modal de seleção de período pós-upload */}
                     {rodorricaPeriodoModal&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:"var(--z-modal)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setRodorricaPeriodoModal(false)}>
                       <div style={{background:t.card,border:`1.5px solid ${t.ouro}`,borderRadius:16,padding:"28px 28px 22px",minWidth:340,maxWidth:420,boxShadow:"0 8px 40px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
-                        <div style={{fontWeight:800,fontSize:14,color:t.ouro,marginBottom:6}}>📅 Definir período de comparação</div>
+                        <div style={{fontWeight:800,fontSize:14,color:t.ouro,marginBottom:6}}><Icon n="calendar" s={13} /> Definir período de comparação</div>
                         <div style={{fontSize:11,color:t.txt2,marginBottom:18}}>Filtra por <b>DT Carregamento</b> da planilha. Deixe em branco para incluir todos os registros.</div>
                         <div style={{display:"flex",flexDirection:"column",gap:12}}>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -387,7 +388,7 @@ export default function DescargaView({ ctx }) {
                       const {totais,linhas,syncOk} = rodorricaResultado;
                       const fmtR = v => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
                       const STATUS_COR = {BATE:"var(--cat-green)",MAIOR:"var(--cat-red)",MENOR:"var(--cat-gold)",SEM_APP:"var(--cat-orange)",FORA_PLAN:"var(--cat-purple)",SEM_DADOS:"var(--cat-gray)",SEM_SYNC:"var(--accent)",INEXISTENTE:"var(--cat-gray)"};
-                      const STATUS_LABEL = {BATE:"✓ BATE",MAIOR:"↑ MAIOR",MENOR:"↓ MENOR",SEM_APP:"— SEM PAG.",FORA_PLAN:"◊ FORA PLAN.",SEM_DADOS:"? SEM DT",SEM_SYNC:"↻ SEM SYNC",INEXISTENTE:"∅"};
+                      const STATUS_LABEL = {BATE:"BATE",MAIOR:"MAIOR",MENOR:"MENOR",SEM_APP:"— SEM PAG.",FORA_PLAN:"FORA PLAN.",SEM_DADOS:"? SEM DT",SEM_SYNC:"SEM SYNC",INEXISTENTE:"∅"};
                       const KPIS = [
                         {k:"BATE",l:"Bate",c:"var(--cat-green)",bg:"rgba(2,192,118,.08)",v:totais.bate},
                         {k:"MAIOR",l:"Planilha Maior",c:"var(--cat-red)",bg:"rgba(246,70,93,.08)",v:totais.maior},
@@ -404,7 +405,7 @@ export default function DescargaView({ ctx }) {
                       }) : linhas;
                       const filtrado = rodorricaFiltro === "todos" ? linhasPeriodo : linhasPeriodo.filter(x=>x.conf===rodorricaFiltro);
                       const _confCor = c => ({BATE:"var(--cat-green)",MAIOR:"var(--cat-red)",MENOR:"var(--cat-gold)",SEM_APP:"var(--cat-orange)",FORA_PLAN:"var(--cat-purple)",SEM_DADOS:"var(--cat-gray)",SEM_SYNC:"var(--accent)",INEXISTENTE:"var(--cat-gray)"}[c]||t.txt2);
-                      const _confLbl = c => ({BATE:"✓",MAIOR:"↑",MENOR:"↓",SEM_APP:"—",FORA_PLAN:"◊",SEM_DADOS:"?",SEM_SYNC:"↻",INEXISTENTE:"∅"}[c]||c);
+                      const _confLbl = c => ({BATE:<Icon n="check" s={10} />,MAIOR:<Icon n="arrow-up" s={10} />,MENOR:<Icon n="arrow-down" s={10} />,SEM_APP:"—",FORA_PLAN:"·",SEM_DADOS:"?",SEM_SYNC:<Icon n="refresh" s={10} />,INEXISTENTE:"—"}[c]||c);
                       return (
                         <div>
                           {/* KPI cards */}
@@ -419,8 +420,8 @@ export default function DescargaView({ ctx }) {
                           </div>
                           {/* Alertas de tipo */}
                           {(totais.semStrech>0||totais.semDescarga>0)&&(<div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
-                            {totais.semStrech>0&&<span style={{fontSize:10,background:"rgba(246,70,93,.1)",border:"1px solid #f6465d44",borderRadius:6,padding:"3px 10px",color:"var(--cat-red)"}}>⚠ {totais.semStrech} NFs com Descarga sem Stretch</span>}
-                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(217,98,43,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"var(--cat-gold)"}}>⚠ {totais.semDescarga} NFs com Stretch sem Descarga</span>}
+                            {totais.semStrech>0&&<span style={{fontSize:10,background:"rgba(246,70,93,.1)",border:"1px solid #f6465d44",borderRadius:6,padding:"3px 10px",color:"var(--cat-red)"}}><Icon n="alert" s={13} /> {totais.semStrech} NFs com Descarga sem Stretch</span>}
+                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(217,98,43,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"var(--cat-gold)"}}><Icon n="alert" s={13} /> {totais.semDescarga} NFs com Stretch sem Descarga</span>}
                           </div>)}
                           {/* Totais */}
                           <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"7px 12px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10}}>
@@ -428,14 +429,14 @@ export default function DescargaView({ ctx }) {
                             <span style={{fontSize:13,fontWeight:700,color:"var(--cat-red)"}}>{fmtR(totais.valorEmRisco)}</span>
                             <span style={{fontSize:10,color:t.txt2,marginLeft:8}}>Planilha: <b style={{color:t.txt}}>{fmtR(totais.totalPlanilha)}</b></span>
                             <span style={{fontSize:10,color:t.txt2}}>App: <b style={{color:t.txt}}>{fmtR(totais.totalApp)}</b></span>
-                            <button onClick={()=>setRodorricaPeriodoModal(true)} style={{marginLeft:"auto",fontSize:9,padding:"3px 10px",borderRadius:6,border:`1.5px solid ${t.ouro}`,background:"transparent",color:t.ouro,cursor:"pointer",fontFamily:"inherit"}}>📅 Período</button>
-                            {rodorricaFiltro!=="todos"&&<button onClick={()=>setRodorricaFiltro("todos")} style={{fontSize:9,padding:"3px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}>✕ Limpar</button>}
+                            <button onClick={()=>setRodorricaPeriodoModal(true)} style={{marginLeft:"auto",fontSize:9,padding:"3px 10px",borderRadius:6,border:`1.5px solid ${t.ouro}`,background:"transparent",color:t.ouro,cursor:"pointer",fontFamily:"inherit"}}><Icon n="calendar" s={13} /> Período</button>
+                            {rodorricaFiltro!=="todos"&&<button onClick={()=>setRodorricaFiltro("todos")} style={{fontSize:9,padding:"3px 8px",borderRadius:6,border:`1.5px solid ${t.borda}`,background:"transparent",color:t.txt2,cursor:"pointer",fontFamily:"inherit"}}><Icon n="x" s={13} /> Limpar</button>}
                             <span style={{fontSize:10,color:t.txt2,fontWeight:600}}>{filtrado.length} NFs</span>
                           </div>
                           {/* Tabela */}
                           <div style={{overflowX:"auto"}}>
                             {!syncOk&&<div style={{background:"rgba(59,130,246,.1)",border:"1.5px solid rgba(59,130,246,.3)",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:10,color:"var(--accent)",lineHeight:1.6}}>
-                              ⚠️ <strong>Colunas PAG. DESCARGA / PAG. STRETCH ainda não sincronizadas.</strong><br/>
+                              <Icon n="alert" s={13} /> <strong>Colunas PAG. DESCARGA / PAG. STRETCH ainda não sincronizadas.</strong><br/>
                               Atualize o Apps Script (adicione os campos ao <code>mapearColuna</code>) e rode uma sincronização para liberar a comparação completa.
                             </div>}
                             <table className="ds-table ds-table--compact">
@@ -452,7 +453,7 @@ export default function DescargaView({ ctx }) {
                                   const cDesc = _confCor(row.confDesc); const cStr = _confCor(row.confStr);
                                   return (
                                     <tr key={i} style={{borderBottom:`1px solid ${t.borda}`,background:i%2===0?t.bg:t.card}}>
-                                      <td style={{padding:"5px 8px",fontWeight:700,color:t.ouro,whiteSpace:"nowrap"}}>{row.dt}{row.semStrech&&<span title="Sem Stretch" style={{marginLeft:4,fontSize:8,color:"var(--cat-red)"}}>▲</span>}{row.semDescarga&&<span title="Sem Descarga" style={{marginLeft:4,fontSize:8,color:"var(--cat-gold)"}}>▲</span>}</td>
+                                      <td style={{padding:"5px 8px",fontWeight:700,color:t.ouro,whiteSpace:"nowrap"}}>{row.dt}{row.semStrech&&<span title="Sem Stretch" style={{marginLeft:4,fontSize:8,color:"var(--cat-red)"}}><Icon n="chevron-up" s={13} /></span>}{row.semDescarga&&<span title="Sem Descarga" style={{marginLeft:4,fontSize:8,color:"var(--cat-gold)"}}><Icon n="chevron-up" s={13} /></span>}</td>
                                       <td style={{padding:"5px 8px",color:t.azulLt,whiteSpace:"nowrap",fontSize:10}}>{row.nf||"—"}</td>
                                       <td style={{padding:"5px 8px",color:t.txt2,whiteSpace:"nowrap",fontSize:10}}>{row.dtCarregamento||"—"}</td>
                                       <td style={{padding:"5px 8px",color:t.txt,maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:10}}>{row.cliente||"—"}</td>

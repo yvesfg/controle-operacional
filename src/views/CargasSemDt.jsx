@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 import { parseValorBR } from "../utils.js";
 import {
@@ -146,7 +147,7 @@ export default function CargasSemDt({ conn, ctx }) {
             {pendentes} a revisar
           </span>
         )}
-        <span style={{ marginLeft: "auto", fontSize: 11, color: t.txt2 }}>{aberto ? "▴" : "▾"}</span>
+        <span style={{ marginLeft: "auto", fontSize: 11, color: t.txt2 }}>{aberto ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
       </div>
 
       {aberto && (

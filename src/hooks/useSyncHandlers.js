@@ -56,10 +56,10 @@ const sincronizar = useCallback(async () => {
     localStorage.setItem("ultima_sync", JSON.stringify(now));
     setUltimaSync(now);
     setConnStatus("online");
-    showToast(`✅ ${all.length} registros sincronizados!`,"ok");
+    showToast(`${all.length} registros sincronizados!`,"ok");
   } catch(e) {
     setConnStatus("error");
-    showToast(`⚠️ ${e.message}`,"warn");
+    showToast(`${e.message}`,"warn");
   }
 }, [getConexao, dadosExtras, showToast, sessionToken, baseAtual, basesPermitidas]);
 

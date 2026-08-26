@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "./Icon.jsx";
 import { baixarXLSX, baixarCSV, baixarPDF } from "../exportacao.js";
 
 // ── ModalRelatorio — relatório da TELA, não do módulo ────────────────────────
@@ -163,7 +164,7 @@ export default function ModalRelatorio({
               {btn(gerando === "pdf" ? "gerando…" : "PDF", () => exportar("pdf"))}
               {btn(gerando === "csv" ? "gerando…" : "CSV", () => exportar("csv"))}
               {btn(gerando === "xlsx" ? "gerando…" : "XLSX", () => exportar("xlsx"), true)}
-              {btn("✕", onFechar)}
+              {btn(<Icon n="x" s={13} />, onFechar)}
             </div>
           </div>
 
@@ -198,7 +199,7 @@ export default function ModalRelatorio({
                     style={{ textAlign: c.tipo === "moeda" || c.tipo === "numero" || c.tipo === "pct" ? "right" : "left",
                       padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: ".05em",
                       color: ordemId === c.id ? t.txt : "var(--text3)", fontFamily: "var(--font-mono)", cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {c.label}{ordemId === c.id ? (ordemDesc ? " ↓" : " ↑") : ""}
+                    {c.label}{ordemId === c.id ? <Icon n={ordemDesc ? "arrow-down" : "arrow-up"} s={11} style={{ marginLeft: 3 }} /> : null}
                   </th>
                 ))}
               </tr>

@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
 import KpiCard     from '../components/KpiCard.jsx';
@@ -114,7 +115,7 @@ export default function DashboardView({ ctx }) {
   });
   const topCli = Object.entries(cMap).sort((a,b)=>b[1].viagens-a[1].viagens);
   const maxVg = topCli[0]?.[1]?.viagens || 1;
-  const medalhas = ["🥇","🥈","🥉"];
+  const medalhas = ["1º", "2º", "3º"];
   const podColors = ["var(--accent)","var(--rank-silver)","var(--rank-bronze)"];
 
   const motsUniq = new Set(dashData.filtrado.map(r=>r.nome).filter(Boolean));
@@ -174,7 +175,7 @@ export default function DashboardView({ ctx }) {
       render: (_, r) => {
         const origemCurta=(r.origem||"").split(/[-–\s]+/)[0].trim();
         const destinoCurto=(r.destino||"").split(/[-–\s]+/)[0].trim();
-        return origemCurta&&destinoCurto ? `${origemCurta} → ${destinoCurto}` : (origemCurta||destinoCurto||"—");
+        return origemCurta&&destinoCurto ? `${origemCurta} ${destinoCurto}` : (origemCurta||destinoCurto||"—");
       },
     },
     {
@@ -199,11 +200,11 @@ export default function DashboardView({ ctx }) {
         {dashPeriodo?.tipo !== "mes" && (
           <button onClick={()=>setDashPeriodo(periodoMes(mesAtual()))} title="Voltar para o mês corrente"
             style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1px solid ${t.borda}`,color:t.txt2,fontFamily:DESIGN.fnt.b}}>
-            ✕
+            <Icon n="x" s={13} />
           </button>
         )}
         {dashOrigem!=="todos" && (
-          <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:10,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}>✕ {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
+          <button onClick={()=>setDashOrigem("todos")} style={{marginLeft:4,fontSize:10,background:"transparent",border:`1px solid ${hexRgb(t.danger,.3)}`,borderRadius:DESIGN.r.tag,color:t.danger,cursor:"pointer",padding:"3px 9px",fontFamily:DESIGN.fnt.b}}><Icon n="x" s={13} /> {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</button>
         )}
         {dashOrigem==="todos" && dashData.cidades.length>0 && (
           <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",marginLeft:4}}>
@@ -294,7 +295,7 @@ export default function DashboardView({ ctx }) {
           ]:[]),
           // "Sem DT" — carga real aguardando DT (fila separada; NÃO entra no DADOS/nos totais acima).
           ...(getPerfil(baseAtual?.id).features.semDt && semDtAguardando>0 ? [{id:"sem_dt",label:"Sem DT · revisar",value:String(semDtAguardando),sub:(filtroTipoCarga&&filtroTipoCarga!=="todos"?filtroTipoCarga+" · ":"")+"clique p/ decidir",danger:true,icon:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12.01" y2="9"/></>,click:nav("planilha")}]:[]),
-          ...(perfil.ancora==="dt"?[{id:"sem_faturamento",label:"Sem Faturamento",value:String(semFat.length),sub:semFat.length?"clique p/ ver o que falta":"✓ tudo faturado",danger:semFat.length>0,icon:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,click:()=>setDashDrillModal({type:"faturamento",label:"DTs sem dados de faturamento",regs:semFat})}]:[]),
+          ...(perfil.ancora==="dt"?[{id:"sem_faturamento",label:"Sem Faturamento",value:String(semFat.length),sub:semFat.length?"clique p/ ver o que falta":"tudo faturado",danger:semFat.length>0,icon:<><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><line x1="16" y1="8" x2="8" y2="8"/><line x1="16" y1="12" x2="8" y2="12"/></>,click:()=>setDashDrillModal({type:"faturamento",label:"DTs sem dados de faturamento",regs:semFat})}]:[]),
           {id:"motoristas",label:"Motoristas Ativos",value:String(motsUniq.size),sub:`de ${motoristas.length} cadastrados`,trend:motsTrend,delta:pctDelta(motsTrend),click:nav("cadastros")},
           ...(canFin?[{id:"cte_medio",label:"CTE Médio/Viagem",value:cteMed>=1000?"R$"+(cteMed/1000).toFixed(1)+"k":cteMed>0?"R$"+Math.round(cteMed).toLocaleString("pt-BR"):"—",sub:"por carregamento",trend:cteMedTrend,delta:pctDelta(cteMedTrend)}]:[]),
           ...(canFin && perfil.features.diarias?[{id:"diarias",label:"Diárias a Pagar",value:saldoD>0?(saldoD>=1000?"R$"+(saldoD/1000).toFixed(1)+"k":"R$"+Math.round(saldoD).toLocaleString("pt-BR")):"Quitado",sub:`de ${fmtMoeda(totalDevD)} devido`,danger:saldoD>0,icon:<><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,click:nav("diarias")}]:[]),
@@ -342,7 +343,7 @@ export default function DashboardView({ ctx }) {
         return (
           <GavetaOcultos ocultos={disponiveis.filter(b=>!verB(b.id))} tipo="blocos" cfg={dashCfg}
             onSalvar={salvarDashCfg} t={t} isMobile={isMobile}
-            vazioTexto={"Arraste os cards para reordenar · ✕ tira do painel"} />
+            vazioTexto={"Arraste os cards para reordenar · tira do painel"} />
         );
       })()}
 
@@ -422,7 +423,7 @@ export default function DashboardView({ ctx }) {
         const ordenar = (k) => setOrdemBase(o => o.k===k ? {k,dir:-o.dir} : {k, dir: k==="label" ? 1 : -1});
         const Th = ({k,children,left}) => (
           <th style={{...th,textAlign:left?"left":"right",color:ordemBase.k===k?t.ouro:t.txt2}} onClick={()=>ordenar(k)}>
-            {children}{ordemBase.k===k ? (ordemBase.dir>0?" ↑":" ↓") : ""}
+            {children}{ordemBase.k===k ? <Icon n={ordemBase.dir>0?"arrow-up":"arrow-down"} s={10} style={{marginLeft:3}} /> : null}
           </th>
         );
         // Δ mora embaixo do próprio número, em vez de virar uma coluna por métrica —
@@ -433,7 +434,7 @@ export default function DashboardView({ ctx }) {
           // (sair de -100 para -50 é melhora, e aparecia como queda).
           const p = ((cur-prev)/Math.abs(prev))*100;
           if (!isFinite(p)) return null;
-          return <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:p>=0?t.verde:t.danger,marginTop:2}}>{p>=0?"↑":"↓"} {Math.abs(p).toFixed(0)}%</div>;
+          return <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:p>=0?t.verde:t.danger,marginTop:2}}><Icon n={p>=0?"arrow-up":"arrow-down"} s={9} /> {Math.abs(p).toFixed(0)}%</div>;
         };
         return (
           <CardEditavel id="por_base" label="Comparativo por base" tipo="blocos" cfg={dashCfg}
@@ -442,7 +443,7 @@ export default function DashboardView({ ctx }) {
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,gap:8,flexWrap:"wrap"}}>
               <span style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Por base</span>
               <span style={{fontSize:9,color:"var(--text3)",fontFamily:DESIGN.fnt.b}}>
-                {mesPrev ? `↑↓ = dias ${janelaB.d1}–${janelaB.d2} vs ${mesCurto(mesPrev)} · ` : ""}ordene pelo cabeçalho · clique na linha para abrir a base
+                {mesPrev ? `= dias ${janelaB.d1}–${janelaB.d2} vs ${mesCurto(mesPrev)} · ` : ""}ordene pelo cabeçalho · clique na linha para abrir a base
               </span>
             </div>
             <div style={{overflowX:"auto"}}>
@@ -528,7 +529,7 @@ export default function DashboardView({ ctx }) {
                 </div>
                 <div style={{textAlign:"right"}}>
                   <div style={{fontFamily:"var(--font-heading)",fontSize:28,fontWeight:700,letterSpacing:"-0.04em",color:"var(--text)",lineHeight:1}}>{heroNum}</div>
-                  <div style={{fontSize:10,color:t.verde}}>↗ {heroLabel}</div>
+                  <div style={{fontSize:10,color:t.verde}}><Icon n="arrow-right" s={13} /> {heroLabel}</div>
                 </div>
               </div>
               <div style={{height:200}}><canvas ref={chartAreaRef} /></div>
@@ -628,7 +629,7 @@ export default function DashboardView({ ctx }) {
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:incompletas.length>0?14:0}}>
             {[{label:"Sem CTE",count:semCTE.length},{label:"Sem MDF",count:semMDF.length},{label:"Sem NF",count:semNF.length}].map(({label,count})=>(
-              <KpiCard key={label} label={label} value={count} sub={count>0?"cargas pendentes":"✓ completo"}
+              <KpiCard key={label} label={label} value={count} sub={count>0?"cargas pendentes":"completo"}
                 color={count>0?undefined:t.verde} danger={count>0} compact />
             ))}
           </div>
@@ -663,7 +664,7 @@ export default function DashboardView({ ctx }) {
           )}
           {incompletas.length === 0 && efet.length > 0 && (
             <div style={{textAlign:"center",padding:"12px 0",color:t.verde,fontSize:11,fontWeight:600}}>
-              ✓ Toda documentação completa no período
+              <Icon n="check" s={13} /> Toda documentação completa no período
             </div>
           )}
         </div>
@@ -759,9 +760,9 @@ export default function DashboardView({ ctx }) {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
-                {l:"No Prazo",       v:diariasData.ok,    tag:"● ok",       tagC:t.verde},
-                {l:"Perdeu Agenda",  v:diariasData.atraso, tag:"● atenção",  tagC:t.ouro},
-                {l:"Aguardando",     v:diariasData.pend,  tag:"● pendente", tagC:"var(--text3)"},
+                {l:"No Prazo",       v:diariasData.ok,    tag:"ok",       tagC:t.verde},
+                {l:"Perdeu Agenda",  v:diariasData.atraso, tag:"atenção",  tagC:t.ouro},
+                {l:"Aguardando",     v:diariasData.pend,  tag:"pendente", tagC:"var(--text3)"},
               ].map(d=>(
                 <div key={d.l} {...clickable(()=>setActiveTab("diarias"))} style={{background:t.bg,border:`1px solid ${t.borda}`,borderRadius:8,padding:12,cursor:"pointer"}}>
                   <div style={{fontFamily:"var(--font-heading)",fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:t.txt,lineHeight:1,marginBottom:3,fontVariantNumeric:"tabular-nums"}}>{d.v}</div>
@@ -803,7 +804,7 @@ export default function DashboardView({ ctx }) {
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
               {[
                 {l:"Hoje",       v:descargaData.hoje.length},
-                {l:"Em Atraso",  v:descargaData.atrasados.length,  tag:"● atraso", tagC:t.danger},
+                {l:"Em Atraso",  v:descargaData.atrasados.length,  tag:"atraso", tagC:t.danger},
                 {l:"Aguardando", v:descargaData.aguardando.length},
               ].map(d=>(
                 <div key={d.l} {...clickable(()=>setActiveTab("descarga"))} style={{background:t.bg,border:`1px solid ${t.borda}`,borderRadius:8,padding:12,cursor:"pointer"}}>

@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../../components/Icon.jsx";
 import { clickable } from "../../utils.js";
 import KpiCard from "../../components/KpiCard.jsx";
 
@@ -144,7 +145,7 @@ export default function GestaoAVB({ ctx }) {
       {/* ── Lista ── */}
       {dadosOrdenados.length===0&&(
         <div style={{textAlign:"center",padding:"48px 0"}}>
-          <div style={{fontSize:36,marginBottom:8}}>✅</div>
+          <div style={{fontSize:36,marginBottom:8}}><Icon n="check-circle" s={13} /></div>
           <div style={{fontSize:13,fontWeight:600,color:t.txt}}>Nenhum registro neste filtro</div>
         </div>
       )}
@@ -204,7 +205,7 @@ export default function GestaoAVB({ ctx }) {
                         background:ok?e.cor:isProx?"rgba(255,107,53,.15)":"transparent",
                         border:`1.5px solid ${ok?e.cor:isProx?"var(--accent)":"var(--border)"}`,
                         color:ok?"#fff":isProx?"var(--accent)":"var(--text3)"}}>
-                        {ok?"✓":ei+1}
+                        {ok ? <Icon n="check" s={12} /> : ei+1}
                       </span>
                       <span style={{fontSize:isMobile?8:9,color:ok?e.cor:isProx?"var(--accent)":"var(--text3)",
                         fontFamily:"var(--font-mono)",fontWeight:isProx?700:400,
@@ -220,7 +221,7 @@ export default function GestaoAVB({ ctx }) {
               })}
               {completo&&(
                 <span style={{fontSize:9,fontWeight:700,color:t.verde,fontFamily:"var(--font-mono)",
-                  marginLeft:4,letterSpacing:"0.04em"}}>✓ COMPLETO</span>
+                  marginLeft:4,letterSpacing:"0.04em"}}><Icon n="check" s={13} /> COMPLETO</span>
               )}
             </div>
 
@@ -239,7 +240,7 @@ export default function GestaoAVB({ ctx }) {
               {r.data_carr&&(
                 <span style={{fontSize:9,color:t.ouro,fontFamily:"var(--font-mono)",
                   background:"rgba(217,98,43,.07)",borderRadius:4,padding:"2px 6px"}}>
-                  ↑ {r.data_carr.slice(0,5)}
+                  <Icon n="arrow-up" s={13} /> {r.data_carr.slice(0,5)}
                 </span>
               )}
               {adiant&&adiant>0&&(
@@ -267,7 +268,7 @@ export default function GestaoAVB({ ctx }) {
                 <span style={{marginLeft:"auto",fontSize:9,fontWeight:700,
                   color:"var(--accent)",fontFamily:"var(--font-mono)",
                   letterSpacing:"0.04em",flexShrink:0}}>
-                  ▶ {proxEtapa.l}
+                  <Icon n="play" s={13} /> {proxEtapa.l}
                 </span>
               )}
             </div>

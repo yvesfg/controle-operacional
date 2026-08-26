@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../../components/Icon.jsx";
 
 // PlanilhaAVB — Planilha exclusiva Açailândia AVB
 // Sem código Suzano. Colunas, filtros e busca específicos AVB.
@@ -220,7 +221,7 @@ export default function PlanilhaAVB({ ctx }) {
             style={{fontSize:9,padding:"4px 8px",borderRadius:6,
               border:"1px solid var(--border)",background:"transparent",
               color:"var(--text2)",cursor:"pointer"}}>
-            ✕ Limpar
+            <Icon n="x" s={13} /> Limpar
           </button>
         )}
 
@@ -237,17 +238,17 @@ export default function PlanilhaAVB({ ctx }) {
           {dadosFiltrados.length} registros · pág. {paginaAtual}/{totalPaginas}
           {planilhaSortKey && (
             <span style={{color:"var(--accent)",marginLeft:8}}>
-              ord. por {planilhaSortKey} {planilhaSortDir==="asc"?"↑":"↓"}
+              ord. por {planilhaSortKey} <Icon n={planilhaSortDir==="asc"?"arrow-up":"arrow-down"} s={11} />
               <button onClick={()=>{setPlanilhaSortKey(null);setPlanilhaSortDir("asc");}}
-                style={{background:"none",border:"none",color:"var(--text3)",cursor:"pointer",fontSize:10,padding:"0 3px"}}>✕</button>
+                style={{background:"none",border:"none",color:"var(--text3)",cursor:"pointer",fontSize:10,padding:"0 3px"}}><Icon n="x" s={13} /></button>
             </span>
           )}
         </span>
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
-          <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={pagBtn(paginaAtual===1)}>⏮</button>
-          <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={pagBtn(paginaAtual===1)}>◀</button>
-          <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={pagBtn(paginaAtual===totalPaginas)}>▶</button>
-          <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={pagBtn(paginaAtual===totalPaginas)}>⏭</button>
+          <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={pagBtn(paginaAtual===1)}><Icon n="chevron-left" s={12} /><Icon n="chevron-left" s={12} style={{marginLeft:-6}} /></button>
+          <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={pagBtn(paginaAtual===1)}><Icon n="chevron-left" s={13} /></button>
+          <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={pagBtn(paginaAtual===totalPaginas)}><Icon n="play" s={13} /></button>
+          <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={pagBtn(paginaAtual===totalPaginas)}><Icon n="chevron-right" s={12} /><Icon n="chevron-right" s={12} style={{marginLeft:-6}} /></button>
         </div>
         {ExportMenu && (
           <ExportMenu
@@ -287,7 +288,7 @@ export default function PlanilhaAVB({ ctx }) {
                     <span style={{display:"flex",alignItems:"center",gap:3}}>
                       {c.h}
                       <span style={{fontSize:9,lineHeight:1,opacity:ativo?1:.35}}>
-                        {ativo?(planilhaSortDir==="asc"?"▲":"▼"):"⇅"}
+                        {ativo ? <Icon n={planilhaSortDir==="asc"?"chevron-up":"chevron-down"} s={11} /> : <Icon n="chevron-down" s={11} style={{opacity:.35}} />}
                       </span>
                     </span>
                   </th>
@@ -340,7 +341,7 @@ export default function PlanilhaAVB({ ctx }) {
                         fontWeight:c.k==="codigo"?700:400,
                         overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                         letterSpacing:c.k==="codigo"?"0.06em":0}}>
-                      {isDocCol ? (hasVal ? "✓" : "✗") : (val||"—")}
+                      {isDocCol ? (hasVal ? <Icon n="check" s={12} /> : <Icon n="x" s={12} />) : (val||"—")}
                     </td>
                   );
                 })}

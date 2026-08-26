@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../../components/Icon.jsx";
 import Toggle from "../../components/Toggle.jsx";
 import { FEATURES_META, ALERTAS_OPCOES } from "../../operacao/perfil.js";
 import { formDaBase, perfilDoForm } from "../../operacao/basesForm.js";
@@ -76,7 +77,7 @@ export default function BasesOperacao({ ctx }) {
       <div onClick={() => setAberto((v) => !v)}
         style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 11, fontWeight: 700, color: t.txt, marginBottom: 10 }}>
         {hIco(<><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><path d="M14 17h7" /></>, t.ouro, 12)}
-        Bases / Operações <span style={{ fontSize: 11, color: t.txt2, marginLeft: 4 }}>{aberto ? "▲" : "▼"}</span>
+        Bases / Operações <span style={{ fontSize: 11, color: t.txt2, marginLeft: 4 }}>{aberto ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
         <span style={{ flex: 1, height: 1, background: t.borda }} />
       </div>
 
@@ -91,7 +92,7 @@ export default function BasesOperacao({ ctx }) {
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <button onClick={recarregar} style={{ ...css.hBtn, fontSize: 10, padding: "3px 8px" }}>
-                {carregando ? "⏳" : "↺ Atualizar"}
+                {carregando ? <Icon n="clock" s={12} /> : <><Icon n="refresh" s={12} /> Atualizar</>}
               </button>
               <button onClick={() => abrirEdicao(null)} style={{ ...css.hBtn, fontSize: 10, padding: "3px 8px", marginLeft: "auto" }}>
                 + Nova base

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import Icon from "../components/Icon.jsx";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO, PERMS_LISTA } from "../constants.js";
 import { DASH_KPIS, DASH_BLOCOS } from "../dashboardConfig.js";
@@ -321,7 +322,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               {/* Bases na linha fechada: dá pra varrer quem vê o quê sem abrir card por card */}
               {acessoCO && (
                 <div style={{fontSize:10,color:semBase?t.danger:t.txt2,marginTop:2}}>
-                  {semBase ? "⚠ sem base — não vai ver dado nenhum"
+                  {semBase ? "sem base — não vai ver dado nenhum"
                            : basesCO.map(id => BASES[id]?.label || id).join(" · ")}
                 </div>
               )}
@@ -348,7 +349,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             )}
           </div>
 
-          <button onClick={()=>setAberto(exp?null:p.id)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:12,cursor:"pointer",padding:"4px"}}>{exp?"▲":"▼"}</button>
+          <button onClick={()=>setAberto(exp?null:p.id)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:12,cursor:"pointer",padding:"4px"}}>{exp ? <Icon n="chevron-up" s={12} /> : <Icon n="chevron-down" s={12} />}</button>
         </div>
 
         {exp && (
@@ -357,14 +358,14 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               <div style={{border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{fontWeight:700,fontSize:11.5,color:t.txt,flex:1}}>Credenciais de teste</span>
-                  <button disabled={buscando} onClick={()=>abrirResetSenha(p.id)} style={{...css.hBtn,fontSize:11,padding:"5px 10px"}}>🔑 Resetar senha</button>
-                  <button disabled={buscando} onClick={()=>excluirTeste(p)} style={{...css.hBtn,fontSize:11,padding:"5px 10px",color:t.danger}}>🗑 Excluir conta</button>
+                  <button disabled={buscando} onClick={()=>abrirResetSenha(p.id)} style={{...css.hBtn,fontSize:11,padding:"5px 10px"}}><Icon n="key" s={13} /> Resetar senha</button>
+                  <button disabled={buscando} onClick={()=>excluirTeste(p)} style={{...css.hBtn,fontSize:11,padding:"5px 10px",color:t.danger}}><Icon n="trash" s={13} /> Excluir conta</button>
                 </div>
                 {resetSenha?.userId === p.id && (
                   <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",background:hexRgb(t.ouro,.06),border:`1px solid ${hexRgb(t.ouro,.3)}`,borderRadius:8,padding:"8px 10px"}}>
                     <span style={{fontSize:10.5,color:t.txt2}}>Nova senha:</span>
                     <input value={resetSenha.senha} onChange={e=>setResetSenha(s=>({...s,senha:e.target.value}))} style={{...inp,width:140,fontFamily:"var(--font-mono)"}} />
-                    <button onClick={()=>setResetSenha(s=>({...s,senha:gerarSenhaAleatoria()}))} title="Gerar outra" style={{...css.hBtn,padding:"0 8px",fontSize:11}}>↻</button>
+                    <button onClick={()=>setResetSenha(s=>({...s,senha:gerarSenhaAleatoria()}))} title="Gerar outra" style={{...css.hBtn,padding:"0 8px",fontSize:11}}><Icon n="refresh" s={13} /></button>
                     <button disabled={buscando} onClick={confirmarResetSenha} style={{...btnAcao(t.verde)}}>Salvar nova senha</button>
                     <button onClick={()=>setResetSenha(null)} style={{background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer"}}>Cancelar</button>
                   </div>
@@ -388,7 +389,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                       </select>
                     )}
                     <button onClick={()=>salvarAcesso(a,{ativo:!a.ativo})} style={{...chip(a.ativo),color:"var(--color-text-inverse)",borderColor:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)"}}>{a.ativo?"Ativo":"Inativo"}</button>
-                    <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover este registro de módulo">✕</button>
+                    <button onClick={()=>remover(a.id)} style={{background:"transparent",border:"none",color:t.txt2,cursor:"pointer",fontSize:14}} title="Remover este registro de módulo"><Icon n="x" s={13} /></button>
                   </div>
 
                   {isCO && (
@@ -409,7 +410,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                             <button key={b.id} onClick={()=>setConfig(a,{bases:on?bases.filter(x=>x!==b.id):[...bases,b.id]})} style={chip(on)}>{b.label}</button>
                           );})}
                         </div>
-                        {bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}>⚠ Sem base — usuário não verá dados</div>}
+                        {bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}><Icon n="alert" s={13} /> Sem base — usuário não verá dados</div>}
                       </div>
                       <div>
                         <div style={rotulo}>Permissões finas</div>
@@ -426,7 +427,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         <div>
                           <button onClick={()=>setPainelAberto(x=>x===a.id?null:a.id)}
                             style={{background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",padding:0}}>
-                            {painelAberto===a.id ? "▲ Esconder painel do dashboard" : "▼ Configurar painel do dashboard"}
+                            {painelAberto===a.id ? "Esconder painel do dashboard" : "Configurar painel do dashboard"}
                             {contarOcultos(a.config?.dash) > 0 && <span style={{color:t.txt2}}> · {contarOcultos(a.config?.dash)} oculto(s)</span>}
                           </button>
                           {painelAberto===a.id && (
@@ -494,7 +495,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     return (
       <div key={c.email} style={{...card, borderStyle:"dashed", borderColor:hexRgb(t.azulLt,.45)}}>
         <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",flexWrap:"wrap"}}>
-          <div style={{width:34,height:34,borderRadius:"50%",background:hexRgb(t.azulLt,.15),color:t.azulLt,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>✉</div>
+          <div style={{width:34,height:34,borderRadius:"50%",background:hexRgb(t.azulLt,.15),color:t.azulLt,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}><Icon n="mail" s={13} /></div>
           <div style={{flex:1,minWidth:180}}>
             <div style={{fontWeight:700,fontSize:13,color:t.txt,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
               {c.nome || c.email.split("@")[0]}
@@ -557,11 +558,11 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               return <button key={b.id} onClick={()=>setForm(f=>({...f,bases:on?f.bases.filter(x=>x!==b.id):[...f.bases,b.id]}))} style={chip(on)}>{b.label}</button>;
             })}
           </div>
-          {form.bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}>⚠ Sem base ele não vê dado nenhum</div>}
+          {form.bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}><Icon n="alert" s={13} /> Sem base ele não vê dado nenhum</div>}
 
           <button onClick={()=>setForm(f=>({...f,permsAberto:!f.permsAberto}))}
             style={{marginTop:10,background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",padding:0}}>
-            {form.permsAberto ? "▲ Esconder permissões" : "▼ Ajustar permissões (opcional)"}
+            {form.permsAberto ? "Esconder permissões" : "Ajustar permissões (opcional)"}
           </button>
           {form.permsAberto && (
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
@@ -577,7 +578,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           {permsForm.dashboard !== false && <>
             <button onClick={()=>setForm(f=>({...f,dashAberto:!f.dashAberto}))}
               style={{marginTop:8,background:"transparent",border:"none",color:t.azulLt,fontSize:11,cursor:"pointer",padding:0,display:"block"}}>
-              {form.dashAberto ? "▲ Esconder painel do dashboard" : "▼ Escolher o que ele vê no dashboard (opcional)"}
+              {form.dashAberto ? "Esconder painel do dashboard" : "Escolher o que ele vê no dashboard (opcional)"}
               {contarOcultos(form.dash) > 0 && <span style={{color:t.txt2}}> · {contarOcultos(form.dash)} oculto(s)</span>}
             </button>
             {form.dashAberto && (
@@ -639,7 +640,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                 <div style={rotulo}>Senha</div>
                 <div style={{display:"flex",gap:6}}>
                   <input value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} style={inp}/>
-                  <button onClick={()=>setForm(f=>({...f,password:gerarSenhaAleatoria()}))} title="Gerar nova senha" style={{...css.hBtn,padding:"0 10px",fontSize:12}}>↻</button>
+                  <button onClick={()=>setForm(f=>({...f,password:gerarSenhaAleatoria()}))} title="Gerar nova senha" style={{...css.hBtn,padding:"0 10px",fontSize:12}}><Icon n="refresh" s={13} /></button>
                 </div>
               </div>
             </div>
@@ -662,7 +663,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     <div style={{...css.app,background:t.bg,minHeight:"100vh",padding:"24px 18px"}}>
       <div style={{maxWidth:960,margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-          <button onClick={onVoltar} style={{...css.hBtn,padding:"7px 12px",fontSize:12}}>← Voltar</button>
+          <button onClick={onVoltar} style={{...css.hBtn,padding:"7px 12px",fontSize:12}}><Icon n="arrow-left" s={13} /> Voltar</button>
           <div style={{flex:1,minWidth:180}}>
             <div style={{fontFamily:"var(--font-heading)",fontSize:17,fontWeight:700,color:t.txt}}>Gerenciar acessos</div>
             <div style={{fontSize:11,color:t.txt2}}>Libere módulos e defina permissões por usuário</div>
@@ -689,7 +690,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             junto com a confirmação, no momento em que dá pra mandar. */}
         {conviteCriado && (
           <div style={{...card,padding:"14px",marginBottom:16,border:`1px solid ${hexRgb(t.azulLt,.4)}`,background:hexRgb(t.azulLt,.06)}}>
-            <div style={{fontSize:12,fontWeight:700,color:t.azulLt,marginBottom:6}}>✓ Convite criado para {conviteCriado.email} — falta avisar a pessoa</div>
+            <div style={{fontSize:12,fontWeight:700,color:t.azulLt,marginBottom:6}}><Icon n="check" s={13} /> Convite criado para {conviteCriado.email} — falta avisar a pessoa</div>
             <div style={{fontSize:11,color:t.txt2,lineHeight:1.5,marginBottom:8}}>
               O sistema <b>não envia e-mail</b>: o convite libera esse endereço aqui dentro e o acesso entra no 1º login —
               e só se ela entrar com o Google <b>desse mesmo e-mail</b>. Mande o aviso abaixo:
@@ -704,13 +705,13 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
         {credenciaisCriadas && (
           <div style={{...card,padding:"14px",marginBottom:16,border:`1px solid ${hexRgb(t.verde,.4)}`,background:hexRgb(t.verde,.06)}}>
-            <div style={{fontSize:12,fontWeight:700,color:t.verde,marginBottom:6}}>✓ Usuário de teste criado — anote a senha, ela não aparece de novo (a menos que você resete depois)</div>
+            <div style={{fontSize:12,fontWeight:700,color:t.verde,marginBottom:6}}><Icon n="check" s={13} /> Usuário de teste criado — anote a senha, ela não aparece de novo (a menos que você resete depois)</div>
             <div style={{fontFamily:"var(--font-mono)",fontSize:12,color:t.txt,display:"flex",flexDirection:"column",gap:2}}>
               <div>usuário: <b>{credenciaisCriadas.username}</b></div>
               <div>senha: <b>{credenciaisCriadas.password}</b></div>
             </div>
             {credenciaisCriadas.needsEmailConfirm && (
-              <div style={{fontSize:10.5,color:t.danger,marginTop:8,lineHeight:1.5}}>⚠ Este projeto Supabase exige confirmação de email — esse usuário fictício nunca vai confirmar. Peça pro admin do Supabase desativar "Confirm email" em Authentication → Providers → Email pra esse login funcionar.</div>
+              <div style={{fontSize:10.5,color:t.danger,marginTop:8,lineHeight:1.5}}><Icon n="alert" s={13} /> Este projeto Supabase exige confirmação de email — esse usuário fictício nunca vai confirmar. Peça pro admin do Supabase desativar "Confirm email" em Authentication <Icon n="arrow-right" s={13} /> Providers <Icon n="arrow-right" s={13} /> Email pra esse login funcionar.</div>
             )}
             <button onClick={()=>setCredenciaisCriadas(null)} style={{marginTop:8,background:"transparent",border:"none",color:t.txt2,fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Fechar</button>
           </div>

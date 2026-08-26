@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import Icon from "./components/Icon.jsx";
 import { nMoeda } from "./financeiroCalc.js";
 import { PERIODO_TODOS, periodoMes, dataRegistro } from "./periodoDash.js";
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
@@ -422,11 +423,11 @@ export default function App() {
       // ── Alertas padrão (Imperatriz/Belém / Maracanau) ──
       const da = parseData(r.data_agenda), dd = parseData(r.data_desc);
       // Alerta de atraso na descarga — inclui ref. ao registro para botão de calendário
-      if (pf.features.descargaAgendada && da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`🚨 ${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
+      if (pf.features.descargaAgendada && da && !dd) { const dif = diffDias(da,hoje); if (dif>=1) list.push({tipo:"danger",cat:"descarga",txt:`${r.nome} · DT ${r.dt} · Agenda ${r.data_agenda} sem descarga (${dif}d)`,reg:r}); }
       // Alerta de cobrança — saldo pendente após descarga
       const saldo = parseFloat(r.saldo);
       if (pf.features.cobrancaSaldo && !isNaN(saldo) && saldo > 0 && dd) {
-        list.push({tipo:"warn",cat:"cobranca",txt:`💰 Cobrança pendente: ${r.nome} · DT ${r.dt} · Saldo ${fmtMoeda(r.saldo)}`,reg:r});
+        list.push({tipo:"warn",cat:"cobranca",txt:`Cobrança pendente: ${r.nome} · DT ${r.dt} · Saldo ${fmtMoeda(r.saldo)}`,reg:r});
       }
     });
     return list;
@@ -1383,9 +1384,9 @@ export default function App() {
           try {
             const json2 = await rodorricaAIRemap(json);
             rows = buildRodorricaRows(json2);
-            if (rows.length) showToast('✨ IA mapeou ' + rows.length + ' registros — confira', 'ok');
+            if (rows.length) showToast('IA mapeou ' + rows.length + ' registros — confira', 'ok');
             else showToast('IA não conseguiu mapear esta planilha', 'warn');
-          } catch (e) { showToast('⚠️ IA: ' + e.message, 'warn'); }
+          } catch (e) { showToast('IA: ' + e.message, 'warn'); }
         }
         if (rodorricaRows.length > 0 || rodorricaFileName) {
           setPrevRodorricaSnap({ rows: rodorricaRows, fileName: rodorricaFileName });
@@ -1485,8 +1486,8 @@ export default function App() {
                 <div style={{position:"relative"}}>
                   <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
                     style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 9px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:6}}>
-                    ● {escopoLabel}
-                    {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}>▾</span>}
+                    <Icon n="dot" s={13} /> {escopoLabel}
+                    {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}><Icon n="chevron-down" s={13} /></span>}
                   </button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>
@@ -1500,7 +1501,7 @@ export default function App() {
                             onMouseLeave={e=>e.currentTarget.style.background=o.key===escopoKey?hexRgb(t.ouro,.10):"transparent"}>
                             <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
                             <span style={{flex:1}}>{o.label}</span>
-                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
+                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
                           </button>
                         ))}
                       </div>
@@ -1547,8 +1548,8 @@ export default function App() {
                 <div style={{position:"relative",marginLeft:8}}>
                   <button title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}
                     style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.ouro,letterSpacing:".08em",textTransform:"uppercase",padding:"4px 8px",borderRadius:5,background:`${hexRgb(t.ouro,.08)}`,border:`1px solid ${hexRgb(t.ouro,.2)}`,cursor:basesPermitidas.length>1?"pointer":"default",display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap"}}>
-                    ● {escopoLabel}
-                    {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}>▾</span>}
+                    <Icon n="dot" s={13} /> {escopoLabel}
+                    {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}><Icon n="chevron-down" s={13} /></span>}
                   </button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>
@@ -1560,7 +1561,7 @@ export default function App() {
                             style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:9,padding:o.sub?"8px 12px 8px 26px":"10px 12px",background:o.key===escopoKey?hexRgb(t.ouro,.10):"transparent",border:"none",borderTop:`1px solid ${t.borda}`,color:t.txt,fontSize:o.sub?11.5:12,cursor:"pointer"}}>
                             <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
                             <span style={{flex:1}}>{o.label}</span>
-                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}>✓</span>}
+                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
                           </button>
                         ))}
                       </div>
@@ -1601,24 +1602,24 @@ export default function App() {
           {alertas.slice(0,10).map((a,i) => (
             <div key={i} {...clickable(()=>{ if(a.reg){ abrirDetalhe(a.reg); setAlertasOpen(false); } })} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`,cursor:a.reg?"pointer":"default",transition:"background .15s"}} onMouseEnter={e=>{ if(a.reg) e.currentTarget.style.background=t.card2; }} onMouseLeave={e=>{ e.currentTarget.style.background=""; }}>
               <span style={{flexShrink:0}}>{a.tipo==="danger"?hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,16):hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.ouro,16)}</span>
-              <span style={{fontSize:11,color:t.txt2,lineHeight:1.5,flex:1}}>{a.txt}{a.reg&&<span style={{color:t.azulLt,fontSize:10,marginLeft:6}}>↗ ver DT</span>}</span>
+              <span style={{fontSize:11,color:t.txt2,lineHeight:1.5,flex:1}}>{a.txt}{a.reg&&<span style={{color:t.azulLt,fontSize:10,marginLeft:6}}><Icon n="arrow-right" s={13} /> ver DT</span>}</span>
               {a.cat==="descarga" && a.reg && (
                 <div style={{display:"flex",gap:5,flexShrink:0}}>
                   <button
                     title="Adicionar ao Calendário (celular/notebook)"
                     onClick={()=>{
                       const reg = a.reg;
-                      const titulo = `📦 Descarga — ${reg.nome||"Motorista"} · DT ${reg.dt}`;
-                      const desc = `DT: ${reg.dt}\nMotorista: ${reg.nome||"—"}\nRota: ${reg.origem||"—"} → ${reg.destino||"—"}\nPlaca: ${reg.placa||"—"}\nYFGroup Controle Operacional`;
+                      const titulo = `Descarga — ${reg.nome||"Motorista"} · DT ${reg.dt}`;
+                      const desc = `DT: ${reg.dt}\nMotorista: ${reg.nome||"—"}\nRota: ${reg.origem||"—"} ${reg.destino||"—"}\nPlaca: ${reg.placa||"—"}\nYFGroup Controle Operacional`;
                       const data = reg.data_agenda;
-                      if (window.confirm(`📅 Adicionar ao calendário?\n"${titulo}"\nData: ${data}\n\nClique OK para baixar .ics (celular/notebook)\nou Cancelar para abrir no Google Calendar`)) {
+                      if (window.confirm(`Adicionar ao calendário?\n"${titulo}"\nData: ${data}\n\nClique OK para baixar .ics (celular/notebook)\nou Cancelar para abrir no Google Calendar`)) {
                         gerarICS(titulo, data, desc, reg.destino||"");
                       } else {
                         abrirGoogleCalendar(titulo, data, desc);
                       }
                     }}
                     style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:6,padding:"4px 8px",color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}
-                  >📅 Calendário</button>
+                  ><Icon n="calendar" s={13} /> Calendário</button>
                 </div>
               )}
             </div>

@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import ModalDespesa from "../modals/ModalDespesa.jsx";
 import Toggle from "../components/Toggle.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
@@ -255,7 +256,7 @@ export default function Resultado({ ctx }) {
     const faltando = ESPERADAS.filter(([k]) => !presentes.has(k)).map(([, n]) => n);
     const achadas = ESPERADAS.filter(([k]) => presentes.has(k)).map(([, n]) => n);
     if (faltando.length) {
-      const msg = `Filiais com lançamentos: ${achadas.join(", ") || "—"}.\n⚠ SEM lançamentos: ${faltando.join(", ")}.\nPode ser normal ou aba esquecida. Continuar?`;
+      const msg = `Filiais com lançamentos: ${achadas.join(", ") || "—"}.\nSEM lançamentos: ${faltando.join(", ")}.\nPode ser normal ou aba esquecida. Continuar?`;
       if (!window.confirm(msg)) { showToast?.("Importação cancelada.", "erro"); return; }
     }
     if (foraMes.length) {
@@ -361,7 +362,7 @@ export default function Resultado({ ctx }) {
                 style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
                   border: `1px solid ${t.danger||"var(--cat-red)"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
                   color: t.danger||"var(--cat-red)" }}>
-                ↩ Desfazer ({lastImportIds.length})
+                <Icon n="undo" s={13} /> Desfazer ({lastImportIds.length})
               </button>
               {/* separa a ação destrutiva das demais — evita clique acidental por proximidade */}
               <div style={{ width: 1, alignSelf: "stretch", background: t.borda, margin: "0 4px" }} />
@@ -370,7 +371,7 @@ export default function Resultado({ ctx }) {
           <button onClick={() => fileRef.current?.click()} disabled={importing || !mesRef}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid var(--accent)`, background: "transparent", color: "var(--accent)", opacity: importing ? .6 : 1 }}>
-            {importing ? "Importando..." : "⬆ Importar planilha"}
+            {importing ? "Importando..." : <><Icon n="upload" s={13} /> Importar planilha</>}
           </button>
           <button onClick={() => setModal({ open: true, inicial: null })}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
@@ -532,7 +533,7 @@ export default function Resultado({ ctx }) {
             {foraMesSel.avisoVazio && (
               <div style={{ fontSize: 11, color: t.danger, background: `${t.danger}1a`, border: `1px solid ${t.danger}55`,
                 borderRadius: 8, padding: "8px 10px", marginBottom: 10 }}>
-                ⚠ Nenhuma linha datada de {mesLabel(mesRef)} nas abas selecionadas — confira se é o arquivo/mês certo antes de marcar linhas abaixo.
+                <Icon n="alert" s={13} /> Nenhuma linha datada de {mesLabel(mesRef)} nas abas selecionadas — confira se é o arquivo/mês certo antes de marcar linhas abaixo.
               </div>
             )}
             {/* Mestre da lista: marcar tudo e ir desmarcando a exceção é mais rápido do que
@@ -659,7 +660,7 @@ export default function Resultado({ ctx }) {
             <button onClick={() => irParaCreditos?.(filialParaCreditos)}
               style={{ fontSize: 12, fontWeight: 700, padding: "9px 16px", borderRadius: 8, cursor: "pointer",
                 border: "none", background: t.danger, color: "#fff", whiteSpace: "nowrap" }}>
-              Ver e vincular →
+              Ver e vincular <Icon n="arrow-right" s={13} />
             </button>
           </div>
         );
@@ -709,7 +710,7 @@ export default function Resultado({ ctx }) {
           )}
           <div style={{ fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)", flex: "0 0 auto" }}>
             {buscaQ ? `${despesasFiltradas.length} de ${pool.length}` : `${pool.length}`} lançamentos
-            {loadingTodas && " ⏳"}
+            {loadingTodas && <Icon n="clock" s={12} style={{ marginLeft: 4 }} />}
           </div>
         </div>
 
@@ -749,8 +750,8 @@ export default function Resultado({ ctx }) {
                     {d.origem === "manual" && <span style={{ marginLeft: 6, fontSize: 9, color: "var(--cat-violet)", fontWeight: 700 }}>MANUAL</span>}
                     {classeDoCredito(d) === "estorno" && <span style={{ marginLeft: 6, fontSize: 9, color: t.verde, fontWeight: 700 }}>CRÉDITO</span>}
                     {classeDoCredito(d) === "receita" && <span title="Recuperação de custo (sinistro, avaria, venda) — abate a despesa como qualquer crédito" style={{ marginLeft: 6, fontSize: 9, color: t.azul, fontWeight: 700 }}>RECUPERAÇÃO</span>}
-                    {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "✓ RECUPERADA" : "INDEVIDA"}</span>}
-                    {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? ⓘ</span>}
+                    {d.indevida && <span style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>{d.credito_match_id ? "RECUPERADA" : "INDEVIDA"}</span>}
+                    {d.dup_flag && <span title="Clique para ver os outros lançamentos de mesmo valor" style={{ marginLeft: 6, fontSize: 9, color: t.danger, fontWeight: 700 }}>DUPLICIDADE? <Icon n="alert" s={10} /></span>}
                     {/* Estado intermediário (migration 060): marcada pra conferir, sem decisão ainda. */}
                     {d.em_revisao && (
                       <span title={d.revisao_obs || "Marcada para conferir antes de decidir"}

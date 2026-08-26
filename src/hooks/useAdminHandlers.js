@@ -47,7 +47,7 @@ const enviarEmailBoasVindas = useCallback((usuario, senhaPlain = "", forcarExter
     const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(usuario.email)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
     window.open(gmailUrl, "_blank");
   }
-  showToast(`📧 Email preparado para ${usuario.email}`,"ok");
+  showToast(`Email preparado para ${usuario.email}`,"ok");
 }, [emailTemplate, gerarCorpoEmail, showToast]);
 
 // Item 8 — Carregar logs do Supabase

@@ -133,19 +133,19 @@ function ModalEditComponent({ ctx }) {
         ) : f.type==="select_sim_nao" ? (
           <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?0.6:1}}>
             <option value="">— Selecione —</option>
-            <option value="sim">✅ Sim</option>
-            <option value="nao">❌ Não</option>
+            <option value="sim"><Icon n="check-circle" s={13} /> Sim</option>
+            <option value="nao"><Icon n="x-circle" s={13} /> Não</option>
           </select>
 
         ) : f.type==="select_status" ? (
           <select value={formData[f.k]||""} onChange={e=>setFormData(p=>({...p,[f.k]:e.target.value}))} disabled={isLocked} style={{...css.inp,padding:"8px 10px",fontSize:12,appearance:"none",cursor:isLocked?"not-allowed":"pointer",opacity:isLocked?0.6:1}}>
             <option value="">— Selecione —</option>
-            <option value="CARREGADO">📦 CARREGADO</option>
-            <option value="PENDENTE">⏳ PENDENTE</option>
-            <option value="NO-SHOW">🚫 NO-SHOW</option>
-            <option value="NÃO ACEITE">❌ NÃO ACEITE</option>
-            <option value="EM ABERTO">🔓 EM ABERTO</option>
-            <option value="CANCELADO">🛑 CANCELADO</option>
+            <option value="CARREGADO"><Icon n="package" s={13} /> CARREGADO</option>
+            <option value="PENDENTE"><Icon n="clock" s={13} /> PENDENTE</option>
+            <option value="NO-SHOW"><Icon n="ban" s={13} /> NO-SHOW</option>
+            <option value="NÃO ACEITE"><Icon n="x-circle" s={13} /> NÃO ACEITE</option>
+            <option value="EM ABERTO"><Icon n="unlock" s={13} /> EM ABERTO</option>
+            <option value="CANCELADO"><Icon n="stop" s={13} /> CANCELADO</option>
           </select>
 
         ) : f.type==="select_opts" ? (
@@ -168,7 +168,7 @@ function ModalEditComponent({ ctx }) {
                 </label>
                 {!isOC && (
                   <input type="date" value={brToInput(formData[f.k])} readOnly={isLocked}
-                    onClick={isLocked?()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
+                    onClick={isLocked?()=>alert(`Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`):undefined}
                     onChange={isLocked?undefined:e=>setFormData(p=>({...p,[f.k]:inputToBr(e.target.value)}))}
                     style={{...css.inp,padding:"8px 10px",fontSize:12,cursor:isLocked?"not-allowed":"text",opacity:isLocked?0.5:1,background:t.inputBg}} />
                 )}
@@ -202,8 +202,8 @@ function ModalEditComponent({ ctx }) {
             value={fieldVal}
             readOnly={isLocked || isDescAguardando}
             onClick={
-              isLocked ? ()=>alert(`🔒 Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`)
-              : isDescAguardando ? ()=>alert("⏳ Desmarque 'Aguardando Descarga' para inserir a data/hora.")
+              isLocked ? ()=>alert(`Este campo não pode ser alterado por este perfil.\nContate o administrador para realizar esta alteração.`)
+              : isDescAguardando ? ()=>alert("Desmarque 'Aguardando Descarga' para inserir a data/hora.")
               : undefined
             }
             onChange={(isLocked||isDescAguardando) ? undefined : e => {
@@ -246,7 +246,7 @@ function ModalEditComponent({ ctx }) {
               if (data.placa)  updates.placa2 = "";
               setFormData(p => ({ ...p, ...updates }));
               const pct = data.confianca != null ? ` · ${Math.round(data.confianca * 100)}% conf.` : "";
-              showToast?.(`✅ CRLV lido — Placa: ${data.placa || "—"}${pct}`, "ok");
+              showToast?.(`CRLV lido — Placa: ${data.placa || "—"}${pct}`, "ok");
             })}
             style={{
               width:"100%", marginBottom:8, padding:"7px 10px", borderRadius:8, cursor:"pointer",

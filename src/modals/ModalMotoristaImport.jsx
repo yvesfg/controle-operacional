@@ -22,7 +22,7 @@ export default function ModalMotoristaImport({ ctx }) {
   const lblS = {fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:t.txt2,fontWeight:600,display:"block",marginBottom:2};
 
   const aplicar = () => {
-    if (!confirmOk) { showToast("⚠️ Digite ESTOU DE ACORDO para confirmar","warn"); return; }
+    if (!confirmOk) { showToast("Digite ESTOU DE ACORDO para confirmar","warn"); return; }
     const updated = [...motoristas];
     novos.forEach(n => { if (!updated.find(m=>m.nome===n.nome)) updated.push(n); });
     conflitos.forEach(c => {
@@ -37,7 +37,7 @@ export default function ModalMotoristaImport({ ctx }) {
     });
     saveMotoristasLS(updated);
     registrarLog("IMPORTAR_CONTATOS", `${novos.length} novos + ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`);
-    showToast(`✅ ${novos.length} novos importados, ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`, "ok");
+    showToast(`${novos.length} novos importados, ${conflitos.filter(c=>c.escolha==="usar").length} atualizados`, "ok");
     if(vinculos.length>0){
       setMotImportStep(2);
     } else {
@@ -57,7 +57,7 @@ export default function ModalMotoristaImport({ ctx }) {
     });
     setDadosBase(novosD.filter(r=>!dadosExtras.find(e=>e.dt===r.dt)));
     registrarLog("VINCULAR_CONTATOS", `${aceitos.length} DT(s) vinculadas via placa`);
-    showToast(`🔗 ${aceitos.length} DT${aceitos.length>1?"s":""} vinculada${aceitos.length>1?"s":""}`, "ok");
+    showToast(`${aceitos.length} DT${aceitos.length>1?"s":""} vinculada${aceitos.length>1?"s":""}`, "ok");
     setMotImportOpen(false);
     setMotImportData(null);
     setMotImportConfirm("");
@@ -101,7 +101,7 @@ export default function ModalMotoristaImport({ ctx }) {
                       </div>
                       <div style={{fontSize:9,color:t.txt2,marginTop:5,paddingTop:5,borderTop:`1px solid ${t.borda}`}}>
                         <span style={{color:t.azulLt,fontWeight:700}}>DT {v.reg.dt}</span>
-                        {" · "}{v.reg.origem||"?"} → {v.reg.destino||"?"}
+                        {" · "}{v.reg.origem||"?"} <Icon n="arrow-right" s={13} /> {v.reg.destino||"?"}
                         {v.reg.nome&&<span style={{color:t.txt2}}> · atual: <em>{v.reg.nome}</em></span>}
                       </div>
                     </div>
@@ -193,7 +193,7 @@ export default function ModalMotoristaImport({ ctx }) {
           {motImportStep===1 ? (
             <button onClick={aplicar} disabled={!confirmOk} style={{flex:1,border:`1.5px solid ${confirmOk?t.azulLt:t.borda}`,borderRadius:10,padding:"12px 18px",cursor:confirmOk?"pointer":"not-allowed",background:confirmOk?`rgba(22,119,255,.12)`:`rgba(128,128,128,.08)`,color:confirmOk?t.azulLt:t.txt2,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
               <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="download" s={14} c="currentColor"/> IMPORTAR ({novos.length} novos + {conflitos.filter(c=>c.escolha==="usar").length} atualizações)</span>
-              {vinculos.length>0&&<span style={{fontSize:10,opacity:.7,marginLeft:6}}>→ depois {vinculos.length} sugestão{vinculos.length>1?"ões":""}</span>}
+              {vinculos.length>0&&<span style={{fontSize:10,opacity:.7,marginLeft:6}}><Icon n="arrow-right" s={13} /> depois {vinculos.length} sugestão{vinculos.length>1?"ões":""}</span>}
             </button>
           ) : (
             <button onClick={aplicarVinculos} style={{flex:1,border:`1.5px solid ${t.verde}`,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(2,192,118,.1)`,color:t.verde,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>

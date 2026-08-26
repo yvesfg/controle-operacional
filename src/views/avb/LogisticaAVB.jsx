@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../../components/Icon.jsx";
 import { calcAgendaAvb, fmtDataAvb } from "../../utils_avb.js";
 import { clickable } from "../../utils.js";
 
@@ -127,7 +128,7 @@ export default function LogisticaAVB({ ctx }) {
       {/* ── Lista vazia ── */}
       {lista.length===0&&(
         <div style={{textAlign:"center",padding:"48px 0",color:t.txt2}}>
-          <div style={{fontSize:36,marginBottom:10}}>✅</div>
+          <div style={{fontSize:36,marginBottom:10}}><Icon n="check-circle" s={13} /></div>
           <div style={{fontSize:13,fontWeight:600,color:t.txt}}>Nenhum registro nesta categoria</div>
           <div style={{fontSize:11,color:"var(--text3)",marginTop:4}}>Tudo em ordem por aqui.</div>
         </div>
@@ -198,7 +199,7 @@ export default function LogisticaAVB({ ctx }) {
                 <span style={{color:"var(--text3)",fontSize:9}}>Docs </span>
                 {[["CTE",hasCte],["MDF",hasMdf],["NF",hasNf]].map(([lbl,ok])=>(
                   <span key={lbl} style={{color:ok?"var(--green)":"var(--red)",fontWeight:700,fontSize:9}}>
-                    {lbl}{ok?"✓":"✗"}
+                    {lbl}{ok ? <Icon n="check" s={11} style={{marginLeft:3}} /> : <Icon n="x" s={11} style={{marginLeft:3}} />}
                   </span>
                 ))}
               </div>

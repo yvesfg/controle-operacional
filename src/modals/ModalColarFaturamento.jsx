@@ -115,9 +115,9 @@ export default function ModalColarFaturamento({ ctx }) {
         const semEla = prev.filter(r => String(r.dt).trim() !== String(novo.dt).trim());
         return [...semEla, novo];
       });
-      showToast(`✅ DT ${novo.dt} trazida da planilha (${res.aba}, linha ${res.linha})`, "ok");
+      showToast(`DT ${novo.dt} trazida da planilha (${res.aba}, linha ${res.linha})`, "ok");
     } catch (e) {
-      showToast("❌ " + (e.message || e), "err");
+      showToast(String(e.message || e), "err");
     } finally {
       setBuscandoDT(false);
     }
@@ -152,11 +152,11 @@ export default function ModalColarFaturamento({ ctx }) {
         await registrarLog(`BLOCO_${modo.toUpperCase()}_COLADO`, `DT ${reg.dt} — ${Object.keys(gravados).join(", ")}`, reg, { ...reg, ...gravados });
       }
       const extra = res.ignorados?.length ? ` (sem coluna na planilha: ${res.ignorados.join(", ")})` : "";
-      showToast(`✅ DT ${reg.dt} atualizada na planilha (${res.aba}, linha ${res.linha}) e no app${extra}`, "ok");
+      showToast(`DT ${reg.dt} atualizada na planilha (${res.aba}, linha ${res.linha}) e no app${extra}`, "ok");
       // Fica aberto e limpo pro próximo bloco — fechar é no X do cabeçalho.
       limpar();
     } catch (e) {
-      showToast("❌ " + (e.message || e), "err");
+      showToast(String(e.message || e), "err");
     } finally {
       setSalvando(false);
     }
@@ -274,7 +274,7 @@ export default function ModalColarFaturamento({ ctx }) {
                   <div style={{ flex: 1, fontSize: 11, color: t.txt, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{reg.nome || "—"}</div>
                   <div style={{ fontSize: 10, color: t.txt2, fontFamily: "var(--font-mono)" }}>{reg.placa || "—"}</div>
                 </div>
-                <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{reg.origem || "—"} → {reg.destino || "—"} · aba {reg.sheet || "?"}</div>
+                <div style={{ fontSize: 10, color: t.txt2, marginTop: 3 }}>{reg.origem || "—"} <Icon n="arrow-right" s={13} /> {reg.destino || "—"} · aba {reg.sheet || "?"}</div>
               </div>
             )}
 
@@ -301,7 +301,7 @@ export default function ModalColarFaturamento({ ctx }) {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2, fontSize: 11 }}>
                         <span style={{ color: t.txt2, textDecoration: l.estado === "conflito" && sobrescrever ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.atual || "—"}</span>
-                        <span style={{ color: t.txt2, flexShrink: 0 }}>→</span>
+                        <span style={{ color: t.txt2, flexShrink: 0 }}><Icon n="arrow-right" s={13} /></span>
                         <span style={{ color: t.txt, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.novo}</span>
                         {l.anoAssumido && <span title="O texto veio sem o ano e a DT não tinha data gravada — assumi o ano corrente" style={{ color: t.warn, fontSize: 9, flexShrink: 0 }}>ano assumido</span>}
                       </div>

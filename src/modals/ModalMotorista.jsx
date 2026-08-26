@@ -123,9 +123,9 @@ export default function ModalMotorista({ ctx }) {
               <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
               <button onClick={()=>{
                 const m = {...formData};
-                if (!m.nome) { showToast("⚠️ Nome obrigatório","warn"); return; }
-                if (!m.cpf) { showToast("⚠️ CPF obrigatório","warn"); return; }
-                if (!m.placa1) { showToast("⚠️ Placa Cavalo obrigatória","warn"); return; }
+                if (!m.nome) { showToast("Nome obrigatório","warn"); return; }
+                if (!m.cpf) { showToast("CPF obrigatório","warn"); return; }
+                if (!m.placa1) { showToast("Placa Cavalo obrigatória","warn"); return; }
                 // Verificar duplicatas ao cadastrar NOVO motorista
                 if (editIdx < 0) {
                   const nomeN = m.nome.toUpperCase().trim();
@@ -143,7 +143,7 @@ export default function ModalMotorista({ ctx }) {
                 saveMotoristasLS(nm);
                 setMotDupSugest(null);
                 registrarLog(editIdx>=0?"EDITAR_MOTORISTA":"NOVO_MOTORISTA",`${m.nome} · CPF ${m.cpf} · Vínculo: ${m.vinculo||"—"}`);
-                showToast(editIdx>=0?"✅ Atualizado!":"✅ Cadastrado!","ok");
+                showToast(editIdx>=0?"Atualizado!":"Cadastrado!","ok");
                 setModalOpen(null);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>
             </div>

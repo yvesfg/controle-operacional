@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import ReactDOM from "react-dom";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
@@ -1137,7 +1138,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           {buscaCte && (
             <button onClick={() => setBuscaCte("")} title="Limpar busca"
               style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent",
-                color: t.txt2, cursor: "pointer", fontSize: 13, lineHeight: 1, padding: 4 }}>✕</button>
+                color: t.txt2, cursor: "pointer", fontSize: 13, lineHeight: 1, padding: 4 }}><Icon n="x" s={13} /></button>
           )}
         </div>
 
@@ -1153,7 +1154,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           <button onClick={() => gerarWorkbookXLSX(linhasFiltradas, periodoRef)} disabled={!linhasFiltradas.length}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid ${t.borda}`, background: "transparent", color: t.txt, opacity: linhasFiltradas.length ? 1 : .5 }}>
-            ⬇ Baixar planilha
+            <Icon n="download" s={13} /> Baixar planilha
           </button>
           <button onClick={() => setRelOpen(true)} disabled={!linhasFiltradas.length}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
@@ -1166,7 +1167,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           <button onClick={() => fileRef.current?.click()} disabled={importing}
             style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
               border: `1px solid ${t.azul}`, background: "transparent", color: t.azul, opacity: importing ? .6 : 1 }}>
-            {importing ? "Lendo..." : "⬆ Importar planilha bruta"}
+            {importing ? "Lendo..." : <><Icon n="upload" s={13} /> Importar planilha bruta</>}
           </button>
         </div>
     </>
@@ -1435,7 +1436,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           {sectionHead(`CTes · ${clienteFiltro}`, (
             <button onClick={() => setClienteFiltro("")}
               style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 11px", borderRadius: 20, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
-              limpar ✕
+              limpar <Icon n="x" s={13} />
             </button>
           ))}
           <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 10 }}>
@@ -1476,7 +1477,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "DUPLICIDADE", t.danger)}
                   {p.decisao_manual && (
                     <span style={{ fontSize: 10, fontWeight: 700, color: t.verde }}>
-                      ✓ {p.decisao_manual === "sinalizar_correcao" ? "sinalizado" : (DECISAO_LABEL[p.decisao_manual] || p.decisao_manual)}
+                      <Icon n="check" s={13} /> {p.decisao_manual === "sinalizar_correcao" ? "sinalizado" : (DECISAO_LABEL[p.decisao_manual] || p.decisao_manual)}
                     </span>
                   )}
                 </div>
@@ -1533,7 +1534,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </span>
                 <span style={{ width: 74, display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 5 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", color: t.txt }}>{d.registros}</span>
-                  {delta !== null && delta !== 0 && <span style={{ fontSize: 10, fontWeight: 700, color: delta > 0 ? t.verde : t.danger }}>{delta > 0 ? "▲" : "▼"}{Math.abs(delta)}</span>}
+                  {delta !== null && delta !== 0 && <span style={{ fontSize: 10, fontWeight: 700, color: delta > 0 ? t.verde : t.danger }}><Icon n={delta > 0 ? "chevron-up" : "chevron-down"} s={10} />{Math.abs(delta)}</span>}
                 </span>
                 <span style={{ flex: 1, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(d.fretePeso)}</span>
                 <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>{money(d.saldo)}</span>
@@ -1645,7 +1646,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <button onClick={() => setUsuarioFiltro("")}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 10.5, fontWeight: 700, padding: "3px 10px", borderRadius: 20, cursor: "pointer",
                   background: hexRgb(t.ouro, .12), border: `1px solid ${t.ouro}`, color: t.ouro, fontFamily: "inherit" }}>
-                {usuarioFiltro} ✕
+                {usuarioFiltro} <Icon n="x" s={13} />
               </button>
             )}
           </div>
@@ -1722,7 +1723,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 </button>
               </div>
               <div style={{ fontSize: 10.5, color: t.ouro, marginTop: 3 }}>
-                🏷 sinalizado {p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}
+                <Icon n="flag" s={11} /> sinalizado {p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}
                 {p.revisado_obs && <span style={{ color: t.txt2 }}> · “{p.revisado_obs}”</span>}
               </div>
             </div>
@@ -1761,7 +1762,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 <span style={{ fontSize: 10, color: t.txt2 }}>{p.revisado_em ? new Date(p.revisado_em).toLocaleDateString("pt-BR") : ""}</span>
                 <button onClick={(e) => { e.stopPropagation(); onEstornar(p); }} title="Estornar esta decisão e devolver à fila"
                   style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, background: hexRgb(t.danger, .08), border: `1px solid ${hexRgb(t.danger, .18)}`, borderRadius: 6, padding: "2px 9px", cursor: "pointer", fontSize: 10, fontWeight: 700, color: t.danger, fontFamily: "inherit" }}>
-                  ↩ Estornar
+                  <Icon n="undo" s={13} /> Estornar
                 </button>
               </div>
             </div>
@@ -1817,7 +1818,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
             {preview.naoClassificadas.length > 0 && (
               <div style={{ marginTop: 10, fontSize: 11, color: t.warn, background: hexRgb(t.warn, .1), border: `1px solid ${hexRgb(t.warn, .33)}`, borderRadius: 8, padding: "8px 10px" }}>
-                ⚠ {preview.naoClassificadas.length} linha(s) com código de Empresa fora do mapeamento (cliente conhecido, mas o código não bate com Frete/Descarga/Local/Diária cadastrados) — não serão importadas.
+                <Icon n="alert" s={13} /> {preview.naoClassificadas.length} linha(s) com código de Empresa fora do mapeamento (cliente conhecido, mas o código não bate com Frete/Descarga/Local/Diária cadastrados) — não serão importadas.
               </div>
             )}
 
@@ -2189,7 +2190,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                         <button onClick={() => onVincular(p, "normal")} disabled={salvandoVinc}
                           style={{ marginTop: 9, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
                             border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
-                          ↩ Desfazer vínculo
+                          <Icon n="undo" s={13} /> Desfazer vínculo
                         </button>
                       </div>
                     ) : vincTipo ? (
@@ -2205,7 +2206,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                             {salvandoVinc ? "Salvando..." : "Confirmar"}
                           </button>
                           <button onClick={() => { setVincTipo(null); setVincCtrc(""); }}
-                            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>✕</button>
+                            style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}><Icon n="x" s={13} /></button>
                         </div>
                         {/* Sugestões: mesmo cliente/categoria com a mesma NF ou o mesmo valor — é onde
                             o par costuma estar. Só atalho de digitação; quem decide é quem revisa. */}
@@ -2441,7 +2442,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       {p.contrato_ref && (
                         <button onClick={() => onVincularContrato(p, null)} disabled={salvandoContrato}
                           style={{ marginTop: 9, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
-                          ↩ Desfazer vínculo
+                          <Icon n="undo" s={13} /> Desfazer vínculo
                         </button>
                       )}
                     </div>
@@ -2479,7 +2480,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                           {salvandoContrato ? "Salvando..." : "Vincular"}
                         </button>
                         <button onClick={() => setVincContrato({ aberto: false, num: "" })}
-                          style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>✕</button>
+                          style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}><Icon n="x" s={13} /></button>
                       </div>
                     </div>
                   )}
@@ -2531,7 +2532,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       Confirmar
                     </button>
                     <button onClick={() => { setRevisando(false); setRevisObs(""); }}
-                      style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}>✕</button>
+                      style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit" }}><Icon n="x" s={13} /></button>
                   </div>
                 </div>
               )}
@@ -2547,7 +2548,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     Confirmar
                   </button>
                   <button onClick={() => { setSinalizando(false); setSinalObs(""); }}
-                    style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>✕</button>
+                    style={{ fontSize: 11, padding: "7px 11px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}><Icon n="x" s={13} /></button>
                 </div>
               )}
 
@@ -2580,19 +2581,19 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       {isAdmin && !sinalizando && !revisando && (
                         <button onClick={() => abrirEdicao(p)} title="Corrigir este CTe (só admin)"
                           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.azul}`, background: "transparent", color: t.azul }}>
-                          ✎ Editar
+                          <Icon n="edit" s={12} /> Editar
                         </button>
                       )}
                       {isAdmin && !sinalizando && !revisando && (
                         <button onClick={() => onExcluir(p)} title="Apaga só ESTA linha da conferência (ex.: cópia criada por reimportação)"
                           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
-                          🗑 Excluir CTe
+                          <Icon n="trash" s={13} /> Excluir CTe
                         </button>
                       )}
                       {p.decisao_manual && !sinalizando && !revisando && (
                         <button onClick={() => { fechar(); onEstornar(p); }} title="Remover a decisão e devolver à fila (se ainda tiver flag)"
                           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${hexRgb(t.danger, .4)}`, background: "transparent", color: t.danger }}>
-                          ↩ Estornar decisão
+                          <Icon n="undo" s={13} /> Estornar decisão
                         </button>
                       )}
                       {/* Traço separando manutenção do registro × decisão da conferência. Some
@@ -2604,7 +2605,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                         <button onClick={() => setVincContrato((v) => ({ ...v, aberto: !v.aberto }))}
                           title="Apontar o contrato que o TMS não amarrou neste CTe"
                           style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
-                          🔗 Vincular contrato
+                          <Icon n="link" s={13} /> Vincular contrato
                         </button>
                       )}
                       {p.flag_ambigua && (
@@ -2705,7 +2706,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       {d.is_devolucao && badge(ICO_DEVOLUCAO, "FOB", t.azul)}
                       {badgesCiclo(d)}
                       {d.decisao_manual && (
-                        <span style={{ fontSize: 9.5, fontWeight: 700, color: t.verde }}>✓ {DECISAO_LABEL[d.decisao_manual] || d.decisao_manual}</span>
+                        <span style={{ fontSize: 9.5, fontWeight: 700, color: t.verde }}><Icon n="check" s={13} /> {DECISAO_LABEL[d.decisao_manual] || d.decisao_manual}</span>
                       )}
                     </div>
 

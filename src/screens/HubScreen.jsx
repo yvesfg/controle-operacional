@@ -162,7 +162,7 @@ export default function HubScreen({
     else if (m.slug === "frota") entrarFrota();
     else if (m.slug === "antt" || m.slug === "calculadora") entrarExterno(m);
     else if (m.url && /^https?:/.test(m.url)) window.open(m.url, "_blank");
-    else showToast?.("⏳ Módulo em breve", "warn");
+    else showToast?.("Módulo em breve", "warn");
   };
 
   if (showAdmin) {

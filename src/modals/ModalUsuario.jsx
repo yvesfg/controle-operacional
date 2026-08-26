@@ -117,11 +117,11 @@ export default function ModalUsuario({ ctx }) {
               <button onClick={()=>setModalOpen(null)} style={{flex:"0 0 auto",background:"transparent",border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px 14px",color:t.txt2,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>CANCELAR</button>
               <button onClick={async ()=>{
                 const u = {...formData};
-                if (!u.nome) { showToast("⚠️ Nome obrigatório","warn"); return; }
-                if (!u.email) { showToast("⚠️ Email obrigatório","warn"); return; }
-                if (editIdx<0 && !u._senhaPlain) { showToast("⚠️ Senha obrigatória","warn"); return; }
+                if (!u.nome) { showToast("Nome obrigatório","warn"); return; }
+                if (!u.email) { showToast("Email obrigatório","warn"); return; }
+                if (editIdx<0 && !u._senhaPlain) { showToast("Senha obrigatória","warn"); return; }
                 if (u._senhaPlain) {
-                  if (u._senhaPlain.length < 6) { showToast("⚠️ Senha deve ter ao menos 6 caracteres","warn"); return; }
+                  if (u._senhaPlain.length < 6) { showToast("Senha deve ter ao menos 6 caracteres","warn"); return; }
                   u.senha = await hashSenha(u._senhaPlain);
                 }
                 delete u._senhaPlain;
@@ -136,7 +136,7 @@ export default function ModalUsuario({ ctx }) {
                 // Salvar no Supabase com upsert real
                 const conn = getConexao();
                 if (conn) {
-                  if (!sessionToken) { showToast("⚠️ Sessão admin expirada — refaça login para gerenciar usuários","warn"); return; }
+                  if (!sessionToken) { showToast("Sessão admin expirada — refaça login para gerenciar usuários","warn"); return; }
                   try {
                     // Escrita via RPC (admin_upsert_usuario): a policy anon de escrita em
                     // co_usuarios foi removida (migration 023); a RPC confirma no servidor,
@@ -145,12 +145,12 @@ export default function ModalUsuario({ ctx }) {
                       "rpc/admin_upsert_usuario", { p_token: sessionToken, p_dados: uParaSupa });
                     await registrarLog(editIdx>=0?"EDITAR_USUARIO":"NOVO_USUARIO", `${u.nome} (${u.email}) - perfil: ${u.perfil}`);
                     if (editIdx < 0) { setUsuarioEmailPreview({...u, _senhaRaw: formData._senhaPlain||""}); }
-                    showToast(editIdx>=0?"✅ Usuário atualizado e sincronizado!":"✅ Usuário criado! Envie o email de boas-vindas.","ok");
+                    showToast(editIdx>=0?"Usuário atualizado e sincronizado!":"Usuário criado! Envie o email de boas-vindas.","ok");
                   } catch(e) {
-                    showToast("✅ Salvo local. Supabase: "+e.message.slice(0,40),"warn");
+                    showToast("Salvo local. Supabase: "+e.message.slice(0,40),"warn");
                   }
                 } else {
-                  showToast(editIdx>=0?"✅ Usuário atualizado!":"✅ Usuário criado!","ok");
+                  showToast(editIdx>=0?"Usuário atualizado!":"Usuário criado!","ok");
                 }
                 setModalOpen(null);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> SALVAR</button>

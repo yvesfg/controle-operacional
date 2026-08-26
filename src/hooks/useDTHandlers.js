@@ -96,14 +96,14 @@ export function useDTHandlers({
         try {
           await supaUpsert(reg);
           await registrarLog(editIdx>=0 ? "EDITAR_REGISTRO" : "NOVO_REGISTRO", `COD ${reg.codigo||"(avulso)"} — ${reg.nome||"sem nome"}`, editIdx>=0 ? DADOS[editIdx] : null, reg);
-          showToast("✅ Salvo e sincronizado!","ok");
-        } catch(e) { showToast("⚠️ Salvo local. Sync: "+e.message,"warn"); }
-      } else { showToast("✅ Salvo localmente!","ok"); }
+          showToast("Salvo e sincronizado!","ok");
+        } catch(e) { showToast("Salvo local. Sync: "+e.message,"warn"); }
+      } else { showToast("Salvo localmente!","ok"); }
       setModalOpen(null);
       return;
     }
 
-    if (!reg.dt) { showToast("⚠️ DT obrigatório","warn"); return; }
+    if (!reg.dt) { showToast("DT obrigatório","warn"); return; }
 
     // local save
     const newExtras = [...dadosExtras];
@@ -139,11 +139,11 @@ export function useDTHandlers({
           editIdx>=0 ? DADOS[editIdx] : null,
           reg
         );
-        showToast("✅ Salvo e sincronizado!","ok");
+        showToast("Salvo e sincronizado!","ok");
       }
-      catch(e) { showToast("⚠️ Salvo local. Sync: "+e.message,"warn"); }
+      catch(e) { showToast("Salvo local. Sync: "+e.message,"warn"); }
     } else {
-      showToast("✅ Salvo localmente!","ok");
+      showToast("Salvo localmente!","ok");
     }
     setModalOpen(null);
   };
@@ -166,9 +166,9 @@ export function useDTHandlers({
           p_dt:    dt,
         });
         await registrarLog("EXCLUIR_REGISTRO", `DT ${dt} excluido`);
-        showToast("🗑️ Registro excluído!", "ok");
-      } catch(e) { showToast("⚠️ Excluído local. Sync: "+e.message, "warn"); }
-    } else { showToast("🗑️ Registro excluído localmente!", "ok"); }
+        showToast("Registro excluído!", "ok");
+      } catch(e) { showToast("Excluído local. Sync: "+e.message, "warn"); }
+    } else { showToast("Registro excluído localmente!", "ok"); }
     setModalOpen(null); setDetalheDT(null);
     setExcluirConfirm(null); setExcluirTexto("");
   };
@@ -177,7 +177,7 @@ export function useDTHandlers({
   const salvarMinutasDetalhe = async () => {
     if (!detalheDT) return;
     const conn = getConexao();
-    if (!conn) { showToast("⚠️ Sem conexão","warn"); return; }
+    if (!conn) { showToast("Sem conexão","warn"); return; }
     setSalvandoMins(true);
     try {
       const tok = await garantirSessionToken(conn);
@@ -199,9 +199,9 @@ export function useDTHandlers({
       const updated = {...detalheDT, ...payload};
       setDetalheDT(updated);
       setDadosBase(prev => prev.map(r => r.dt === detalheDT.dt ? {...r, ...payload} : r));
-      showToast("✅ Documentos salvos!","ok");
+      showToast("Documentos salvos!","ok");
     } catch(e) {
-      showToast("⚠️ Erro: "+e.message,"warn");
+      showToast("Erro: "+e.message,"warn");
     } finally {
       setSalvandoMins(false);
     }

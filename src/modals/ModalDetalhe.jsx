@@ -61,7 +61,7 @@ export default function ModalDetalhe({ ctx }) {
   const canOcorr = isAdmin || perms.ocorrencias;
   const steps = [
     {ico:"package",lbl:"Carregamento",val:r.data_carr,  c:t.ouro,  done:!!r.data_carr},
-    {ico:"map-pin",lbl:"Em Trânsito",  val:r.origem&&r.destino?`${r.origem}→${r.destino}`:r.origem||r.destino||null, c:t.azulLt,done:!!r.data_carr},
+    {ico:"map-pin",lbl:"Em Trânsito",  val:r.origem&&r.destino?`${r.origem}${r.destino}`:r.origem||r.destino||null, c:t.azulLt,done:!!r.data_carr},
     {ico:"calendar",lbl:"Agenda Desc.", val:r.data_agenda,c:t.warn,  done:!!r.data_agenda},
     {ico:"flag",lbl:"Descarga",     val:r.data_desc,  c:t.verde, done:!!r.data_desc},
   ];
@@ -183,7 +183,7 @@ export default function ModalDetalhe({ ctx }) {
                       </div>
                       {dadosTodos.length > VISIBLE && (
                         <button onClick={()=>setDadosExpanded(v=>!v)} style={{width:"100%",marginTop:6,padding:"5px 0",borderRadius:7,border:`1px solid ${t.borda}`,background:"transparent",color:t.txt2,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.5}}>
-                          {dadosExpanded ? "▲ Recolher" : `▼ Ver mais (${hidden} campo${hidden>1?"s":""})`}
+                          {dadosExpanded ? "Recolher" : `Ver mais (${hidden} campo${hidden>1?"s":""})`}
                         </button>
                       )}
                     </div>
@@ -281,7 +281,7 @@ export default function ModalDetalhe({ ctx }) {
                       ))}
                       {ocorrAll.length > 3 && (
                         <button onClick={()=>setOcorrListExpanded(v=>!v)} style={{fontSize:11,color:"var(--cat-amber)",background:"transparent",border:"none",cursor:"pointer",padding:"4px 0",textAlign:"center",fontFamily:"inherit",fontWeight:700}}>
-                          {ocorrListExpanded ? "▲ Ver menos" : `▼ Ver mais (${ocorrAll.length - 3} ocultas)`}
+                          {ocorrListExpanded ? "Ver menos" : `Ver mais (${ocorrAll.length - 3} ocultas)`}
                         </button>
                       )}
                     </div>

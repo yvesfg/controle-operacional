@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import Icon from "./Icon.jsx";
 import Toggle from "./Toggle.jsx";
 
 // ─── Configuração por tipo de documento ───────────────────────────
@@ -139,7 +140,7 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
     if (!f) return;
     e.target.value = "";
     if (f.size > 10 * 1024 * 1024) {
-      showToast("⚠️ Arquivo muito grande — máx. 10 MB", "warn");
+      showToast("Arquivo muito grande — máx. 10 MB", "warn");
       return;
     }
     const pdf = f.type === "application/pdf";
@@ -170,7 +171,7 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
       setConfianca(typeof data.confianca === "number" ? data.confianca : null);
       setStep("review");
     } catch (e) {
-      showToast("⚠️ IA: " + e.message, "warn");
+      showToast("IA: " + e.message, "warn");
       setStep("upload");
     }
   }
@@ -214,7 +215,7 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
             <div style={{ fontSize: 10, color: col, fontWeight: 600 }}>
               {step === "upload"     && "Envie uma foto ou PDF do documento"}
               {step === "extracting" && "Extraindo dados com IA…"}
-              {step === "review"     && "✨ IA sugeriu — confira e edite se necessário"}
+              {step === "review"     && "IA sugeriu — confira e edite se necessário"}
             </div>
           </div>
           <button onClick={handleClose} style={{ background: "transparent", border: "none", color: t.txt2, cursor: "pointer", padding: 4 }}>
@@ -303,7 +304,7 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
                 color: confianca >= 0.8 ? t.verde : t.warn,
                 fontSize: 10, fontWeight: 700,
               }}>
-                ✨ Confiança: {Math.round(confianca * 100)}%
+                <Icon n="sparkles" s={13} /> Confiança: {Math.round(confianca * 100)}%
                 {confianca < 0.8 && " — revise com atenção"}
               </div>
             )}

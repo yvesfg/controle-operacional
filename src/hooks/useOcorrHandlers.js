@@ -75,7 +75,7 @@ export function useOcorrHandlers({
         await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]);
       } catch { /* silencioso */ }
     }
-    showToast("✅ Ocorrência registrada","ok");
+    showToast("Ocorrência registrada","ok");
   }, [detalheDT, ocorrencias, getConexao, usuarioLogado, perfil, showToast]);
 
   // Salvar ocorrencia a partir de modal externo (OcorrenciasView)
@@ -96,7 +96,7 @@ export function useOcorrHandlers({
       try { await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]); }
       catch { /* silencioso */ }
     }
-    showToast("✅ Ocorrência registrada", "ok");
+    showToast("Ocorrência registrada", "ok");
   }, [getConexao, usuarioLogado, perfil, showToast]);
 
   // Abre OcorrModal para nova ocorrência
@@ -124,7 +124,7 @@ export function useOcorrHandlers({
       try { await supaFetch(conn.url, conn.key, "POST", TABLE_OCORR, [nova]); }
       catch { /* silencioso */ }
     }
-    showToast("✅ Ocorrência registrada","ok");
+    showToast("Ocorrência registrada","ok");
   }, [ocorrModalNova, ocorrModalTipo, ocorrModalDT, ocorrModalList, getConexao, usuarioLogado, perfil, showToast]);
 
   return { abrirDetalhe, adicionarOcorrencia, salvarOcorrenciaExterna, abrirOcorrModal, adicionarOcorrenciaModal };

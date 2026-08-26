@@ -142,7 +142,7 @@ export function trechoInfo(codigo) {
 // "ACAILANDIA → SAO LUIS" (só a rota, para linha secundária/tooltip). "" se desconhecido.
 export function trechoRota(codigo) {
   const i = trechoInfo(codigo);
-  return i ? `${i.origem} → ${i.destino}` : "";
+  return i ? `${i.origem} ${i.destino}` : "";
 }
 
 // Origem e destino separados — usados como colunas próprias no relatório exportado,

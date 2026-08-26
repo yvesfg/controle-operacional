@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "./Icon.jsx";
 
 // Captura erros de render em qualquer lugar da árvore e mostra um fallback em vez
 // da tela branca. Propositalmente sem dependências do app (usa CSS vars direto),
@@ -31,7 +32,7 @@ export default class ErrorBoundary extends React.Component {
           background: "var(--card, #1c1c1c)", border: "1px solid var(--border, #333)",
           borderRadius: 16, padding: "32px 28px",
         }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }} aria-hidden="true">⚠️</div>
+          <div style={{ fontSize: 40, marginBottom: 12 }} aria-hidden="true"><Icon n="alert" s={13} /></div>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 8px" }}>
             Algo deu errado nesta tela
           </h1>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Icon from "../components/Icon.jsx";
 import { ExportMenu } from "../exportHelpers.jsx";
 import { clickable } from "../utils.js";
 import FilterBar from "../components/FilterBar.jsx";
@@ -46,7 +47,7 @@ export default function DiariasView({ ctx }) {
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13)}
                 <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>DT {diariaNavDT}</span>
                 <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
-                <button onClick={()=>setDiariaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(217,98,43,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>✕ Limpar</button>
+                <button onClick={()=>setDiariaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(217,98,43,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}><Icon n="x" s={13} /> Limpar</button>
               </div>
             )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
@@ -157,11 +158,11 @@ export default function DiariasView({ ctx }) {
                     const borderC = _isDHL?t.ouro:tipo==="diaria"?t.danger:tipo==="atraso"?t.ouro:tipo==="sem_diaria"?t.verde:tipo==="ok"?t.verde:t.txt2;
                     const saldoPg = parseFloat(r.diaria_pg), saldoPrev = parseFloat(r.diaria_prev);
                     const pgStatus = !isNaN(saldoPg)&&saldoPg>0 ? "pago" : !isNaN(saldoPrev)&&saldoPrev>0 ? "pendente" : null;
-                    const tipoLabel = tipo==="diaria"?`🛏️ DIÁRIA ${dias>0?dias+"d":""}`
-                      :tipo==="atraso"?`⚠️ Atraso ${dias>0?dias+"d":""}`
-                      :tipo==="sem_diaria"?"✅ Sem diária"
-                      :tipo==="ok"?"✅ No prazo"
-                      :"⏳ Aguardando";
+                    const tipoLabel = tipo==="diaria"?`DIÁRIA ${dias>0?dias+"d":""}`
+                      :tipo==="atraso"?`Atraso ${dias>0?dias+"d":""}`
+                      :tipo==="sem_diaria"?"Sem diária"
+                      :tipo==="ok"?"No prazo"
+                      :"Aguardando";
                     const tipoColor = tipo==="diaria"?`rgba(246,70,93,.08)`:tipo==="atraso"?`rgba(217,98,43,.08)`:tipo==="sem_diaria"?`rgba(2,192,118,.08)`:tipo==="ok"?`rgba(2,192,118,.08)`:`rgba(217,98,43,.06)`;
                     return (
                       <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:_isDHL?`rgba(217,98,43,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:hexRgb(borderC,.5)}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(217,98,43,.22)`:"none"}}>
@@ -170,15 +171,15 @@ export default function DiariasView({ ctx }) {
                           <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:tipoColor,color:borderC,border:`1px solid ${borderC}33`}}>
                             {tipoLabel}
                           </span>
-                          {pgStatus && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>{pgStatus==="pago"?"💳 Pago":"💸 Não Pago"}</span>}
+                          {pgStatus && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>{pgStatus==="pago"?"Pago":<><Icon n="money" s={11} /> Não Pago</>}</span>}
                           {r.ro && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`rgba(255,152,0,.08)`,color:t.laranja,border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
                           <span style={{marginLeft:"auto",fontSize:11,color:t.txt2}}>ver detalhes ›</span>
                         </div>
                         <div style={{fontSize:13,color:t.txt2,lineHeight:1.8}}>
-                          <span role="img" aria-label="DT">🔢</span> <strong style={{color:t.txt}}>{r.dt}</strong> · <span role="img" aria-label="Placa">🚛</span> {r.placa||"—"}<br/>
-                          <span role="img" aria-label="Agenda">📅</span> Agenda: <strong style={{color:t.ouro}}>{r.data_agenda||"—"}</strong> · <span role="img" aria-label="Chegada">🛬</span> Chegada: <strong style={{color:r.chegada?t.azulLt:t.txt2}}>{r.chegada||"Não informada"}</strong><br/>
-                          <span role="img" aria-label="Descarga">🏁</span> Descarga: <strong style={{color:r.data_desc?t.verde:t.txt2}}>{r.data_desc||"Não informada"}</strong>
-                          {r.informou_analista && <> · <span style={{color:r.informou_analista==="sim"?t.verde:t.danger,fontSize:11}}>{r.informou_analista==="sim"?"✅ Informou analista":"❌ Não informou analista"}</span></>}
+                          <span role="img" aria-label="DT"><Icon n="hash" s={13} /></span> <strong style={{color:t.txt}}>{r.dt}</strong> · <span role="img" aria-label="Placa"><Icon n="truck" s={13} /></span> {r.placa||"—"}<br/>
+                          <Icon n="calendar" s={13} /> Agenda: <strong style={{color:t.ouro}}>{r.data_agenda||"—"}</strong> · <Icon n="package" s={13} /> Chegada: <strong style={{color:r.chegada?t.azulLt:t.txt2}}>{r.chegada||"Não informada"}</strong><br/>
+                          <span role="img" aria-label="Descarga"><Icon n="flag" s={13} /></span> Descarga: <strong style={{color:r.data_desc?t.verde:t.txt2}}>{r.data_desc||"Não informada"}</strong>
+                          {r.informou_analista && <> · <span style={{color:r.informou_analista==="sim"?t.verde:t.danger,fontSize:11}}>{r.informou_analista==="sim"?"Informou analista":"Não informou analista"}</span></>}
                         </div>
                       </div>
                     );
@@ -439,7 +440,7 @@ export default function DiariasView({ ctx }) {
                       )}
                       <span style={{marginLeft:"auto",fontSize:9,color:t.txt2,whiteSpace:"nowrap"}}>
                         {extratoDataIni||extratoDataFim
-                          ? `${extratoDataIni||"?"} → ${extratoDataFim||"?"}` 
+                          ? `${extratoDataIni||"?"} ${extratoDataFim||"?"}` 
                           : "Sem filtro de período"}
                       </span>
                     </div>

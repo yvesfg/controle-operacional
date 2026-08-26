@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../../components/Icon.jsx";
 import useVeiculos from "../../hooks/useVeiculos.js";
 import useMotoristas from "../../hooks/useMotoristas.js";
 import EmptyState from "../../components/EmptyState.jsx";
@@ -152,7 +153,7 @@ export default function VeiculosCad({ ctx, conn }) {
             <button onClick={() => openDocIntake("crlv", aplicarCrlv)}
               title="Envie foto ou PDF do CRLV — preenche placa, marca, modelo, cor, ano, RENAVAM e chassi"
               style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}` }}>
-              📄 Ler CRLV (foto ou PDF)
+              <Icon n="file-text" s={13} /> Ler CRLV (foto ou PDF)
             </button>
           )}
 
@@ -278,7 +279,7 @@ export default function VeiculosCad({ ctx, conn }) {
               </div>
               <div style={{ fontSize: 11, color: conjunto.total ? t.txt : t.txt2, marginTop: 6 }}>
                 {conjunto.total
-                  ? <>Total: <b>{conjunto.total} eixos</b> → {categoriaPorEixos(conjunto.total, conjunto.qtdCarretas)}</>
+                  ? <>Total: <b>{conjunto.total} eixos</b> <Icon n="arrow-right" s={13} /> {categoriaPorEixos(conjunto.total, conjunto.qtdCarretas)}</>
                   : "Preencha os eixos das peças pra calcular a categoria."}
               </div>
             </div>

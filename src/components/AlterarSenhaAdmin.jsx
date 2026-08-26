@@ -1,5 +1,6 @@
 // ── AlterarSenhaAdmin.jsx — gerado automaticamente ──
 import React, { useState } from 'react';
+import Icon from "./Icon.jsx";
 import { hashSenha, saveJSON } from '../utils.js';
 
 export default function AlterarSenhaAdmin({ t, css, showToast, onSalvar }) {
@@ -8,20 +9,20 @@ export default function AlterarSenhaAdmin({ t, css, showToast, onSalvar }) {
   const [confirmar, setConfirmar] = useState("");
 
   const salvar = async () => {
-    if (!novaSenha) { showToast("⚠️ Digite a nova senha","warn"); return; }
-    if (novaSenha.length < 6) { showToast("⚠️ Mínimo 6 caracteres","warn"); return; }
-    if (novaSenha !== confirmar) { showToast("❌ Senhas não conferem","err"); return; }
+    if (!novaSenha) { showToast("Digite a nova senha","warn"); return; }
+    if (novaSenha.length < 6) { showToast("Mínimo 6 caracteres","warn"); return; }
+    if (novaSenha !== confirmar) { showToast("Senhas não conferem","err"); return; }
     const hash = await hashSenha(novaSenha);
     saveJSON("co_admin_senha", hash);
     if (onSalvar) await onSalvar(hash); // ← salva no Supabase via callback
     setNovaSenha(""); setConfirmar("");
-    showToast("✅ Senha atualizada e sincronizada!","ok");
+    showToast("Senha atualizada e sincronizada!","ok");
   };
 
   return (
     <>
       <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setOpen(!open)}>
-        🔑 Alterar Senha do Admin <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{open?"▲":"▼"}</span>
+        <Icon n="key" s={13} /> Alterar Senha do Admin <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{open ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
         <span style={{flex:1,height:1,background:t.borda}} />
       </div>
       {open && (
@@ -29,7 +30,7 @@ export default function AlterarSenhaAdmin({ t, css, showToast, onSalvar }) {
           <input type="password" placeholder="Nova senha (mín. 6 caracteres)" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)} style={{...css.inp,fontSize:12}} />
           <input type="password" placeholder="Confirmar nova senha" value={confirmar} onChange={e=>setConfirmar(e.target.value)} onKeyDown={e=>e.key==="Enter"&&salvar()} style={{...css.inp,fontSize:12}} />
           <button onClick={salvar} style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.3)`,borderRadius:8,padding:"10px 14px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
-            💾 Salvar Nova Senha
+            <Icon n="save" s={13} /> Salvar Nova Senha
           </button>
         </div>
       )}

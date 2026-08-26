@@ -50,7 +50,7 @@ export default function ModalOcorrChegada({ ctx }) {
           </button>
           <button onClick={()=>{
             setOcorrChegadaAlert(false);
-            if(formData.ro) showToast(`✅ RO registrado: ${formData.ro}`,"ok");
+            if(formData.ro) showToast(`RO registrado: ${formData.ro}`,"ok");
           }} style={{flex:1,background:`linear-gradient(135deg,rgba(232,130,12,.2),rgba(232,130,12,.1))`,border:`1.5px solid rgba(232,130,12,.5)`,borderRadius:DESIGN.r.inp,padding:"10px",color:"var(--cat-amber)",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
             {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,"var(--cat-amber)",14,2)} Confirmar RO
           </button>

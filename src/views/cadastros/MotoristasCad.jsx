@@ -316,11 +316,11 @@ export default function MotoristasCad({ ctx, conn }) {
             style={btnGhost}>
             <Icon n="link" s={13} /> Sugerir vínculos
           </button>
-          <button onClick={() => setImportAberto(true)} title="Google Contacts → cadastro (enriquece quem já existe)"
+          <button onClick={() => setImportAberto(true)} title="Google Contacts cadastro (enriquece quem já existe)"
             style={btnGhost}>
             <Icon n="upload" s={13} /> Importar agenda
           </button>
-          <button onClick={exportarVCard} title="Cadastro → Google Contacts (.vcf)" style={btnGhost}>
+          <button onClick={exportarVCard} title="Cadastro Google Contacts (.vcf)" style={btnGhost}>
             <Icon n="download" s={13} /> Exportar vCard
           </button>
         </div>
@@ -376,12 +376,12 @@ export default function MotoristasCad({ ctx, conn }) {
               <span style={{ fontSize: 10.5, color: t.txt2 }}>concluído em {dataBR(form.cadastro_concluido_em)}</span>
             )}
             {cnhVencida(form.cnh_validade) && (
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: t.danger }}>⚠ CNH vencida</span>
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: t.danger }}><Icon n="alert" s={13} /> CNH vencida</span>
             )}
             {(() => {
               const dias = diasParaVencerCnh(form.cnh_validade);
               return dias !== null && dias >= 0 && dias <= DIAS_AVISO_CNH
-                ? <span style={{ fontSize: 10.5, fontWeight: 700, color: t.warn }}>⚠ CNH vence em {dias} dia(s)</span>
+                ? <span style={{ fontSize: 10.5, fontWeight: 700, color: t.warn }}><Icon n="alert" s={13} /> CNH vence em {dias} dia(s)</span>
                 : null;
             })()}
           </div>
@@ -600,7 +600,7 @@ export default function MotoristasCad({ ctx, conn }) {
             )}
             {gerarRelatorioMotorista && (
               <button onClick={() => gerarRelatorioMotorista(m)} title="Relatório PDF deste motorista"
-                style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.ouro, border: `1px solid ${t.borda}` }}>📄</button>
+                style={{ fontSize: 11, padding: "6px 10px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.ouro, border: `1px solid ${t.borda}` }}><Icon n="file-text" s={13} /></button>
             )}
             <button onClick={() => editar(m)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Editar</button>
             <button onClick={() => excluir(m)} style={{ fontSize: 11, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Excluir</button>
@@ -686,7 +686,7 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
       {etapa === "upload" && (
         <div>
           <div style={{ fontSize: 11.5, color: t.txt2, marginBottom: 10, lineHeight: 1.5 }}>
-            Exporte os contatos do Google (Google Contacts → Exportar → formato Google CSV) e envie o arquivo aqui.
+            Exporte os contatos do Google (Google Contacts <Icon n="arrow-right" s={13} /> Exportar <Icon n="arrow-right" s={13} /> formato Google CSV) e envie o arquivo aqui.
             Contatos com placa reconhecível no nome que já batem com um motorista existente (por placa ou nome) viram
             enriquecimento; os que sobrarem entram numa fila de revisão antes de criar cadastro novo.
           </div>

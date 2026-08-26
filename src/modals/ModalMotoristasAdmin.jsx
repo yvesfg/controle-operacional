@@ -39,7 +39,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
                 saveMotoristasLS([]);setMotSelecionados(new Set());
                 setMotExcluirTodosOpen(false);
                 registrarLog("EXCLUIR_TODOS_MOTORISTAS",`${motoristas.length} motoristas removidos`);
-                showToast(`🗑️ ${motoristas.length} motorista(s) excluído(s)`,"ok");
+                showToast(`${motoristas.length} motorista(s) excluído(s)`,"ok");
               }} style={{...css.btnGold,flex:1,justifyContent:"center",padding:11,background:motExcluirTodosTexto==="EXCLUIR"?t.danger:"rgba(246,70,93,.3)",color:motExcluirTodosTexto==="EXCLUIR"?"#fff":"rgba(255,255,255,.4)",cursor:motExcluirTodosTexto==="EXCLUIR"?"pointer":"not-allowed",border:"none"}}>
                 Excluir Todos
               </button>
@@ -90,7 +90,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
                   if(idx>=0)nd[idx]={...nd[idx],nome:s.mot.nome};
                 });
                 setDadosBase(nd);
-                showToast(`✅ ${aceitos.length} registro(s) atualizado(s)!`,"ok");
+                showToast(`${aceitos.length} registro(s) atualizado(s)!`,"ok");
                 setMotSugestOpen(false);
               }} style={{...css.btnGreen,flex:1,justifyContent:"center",gap:6}}><Icon n="save" s={14} c="currentColor"/> APLICAR ACEITOS</button>
             </div>
@@ -123,7 +123,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
                 const nm=motoristas.filter((_,i)=>!motSelecionados.has(i));
                 saveMotoristasLS(nm);
                 registrarLog("EXCLUIR_MOTORISTAS_LOTE",`${motSelecionados.size} motorista(s) removido(s)`);
-                showToast(`🗑️ ${motSelecionados.size} motorista(s) excluído(s)`);
+                showToast(`${motSelecionados.size} motorista(s) excluído(s)`);
                 setMotSelecionados(new Set());
                 setMotExcluirLoteOpen(false);
                 setMotExcluirLoteTexto("");

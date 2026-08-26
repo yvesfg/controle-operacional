@@ -2,6 +2,7 @@
  * OcorrenciasView.jsx
  */
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import Icon from "../components/Icon.jsx";
 import OcorrModal from "../components/OcorrModal.jsx";
 import { clickable } from "../utils.js";
 import LinhaDoTempoDt from "../components/LinhaDoTempoDt.jsx";
@@ -343,7 +344,7 @@ export default function OcorrenciasView({ dados=[], diariasData, filtroOcorr, se
         <span style={{fontSize:10,color:"var(--text3)"}}>até</span>
         <input type="date" value={filtroFim} onChange={e=>setFiltroFim(e.target.value)}
           style={{fontSize:11,fontWeight:600,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${filtroFim?"var(--accent)":"var(--border)"}`,background:filtroFim?"var(--accent2,rgba(124,58,237,0.07))":"var(--card)",color:"var(--text)",height:28,width:130,cursor:"pointer"}}/>
-        {(filtroIni||filtroFim||busca)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");setBusca("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}>✕ Limpar</button>)}
+        {(filtroIni||filtroFim||busca)&&(<button onClick={()=>{setFiltroIni("");setFiltroFim("");setBusca("");}} style={{fontSize:9,padding:"4px 8px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer"}}><Icon n="x" s={13} /> Limpar</button>)}
         <span style={{marginLeft:"auto",fontSize:9,fontFamily:"var(--font-mono)",color:"var(--text2)",fontWeight:600}}>{filtered.length} reg</span>
       </div>
 

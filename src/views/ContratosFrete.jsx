@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import ReactDOM from "react-dom";
 import {
   parseContratosXLSX, diffImportContratos, inserirContratos, listarContratosPorPeriodos,
@@ -172,7 +173,7 @@ export default function ContratosFrete({ ctx, conn }) {
       <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onArquivo} style={{ display: "none" }} />
       <button onClick={escolherArquivo} disabled={importing}
         style={{ fontSize: 12.5, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer", border: "none", background: "var(--accent)", color: t.onPrimary || "#181a20", fontFamily: "inherit" }}>
-        {importing ? "Lendo..." : "↑ Importar contratos"}
+        {importing ? "Lendo..." : "Importar contratos"}
       </button>
       <button onClick={() => setRelOpen(true)} disabled={!contratos.length}
         style={{ fontSize: 12.5, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: contratos.length ? "pointer" : "not-allowed", border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2, fontFamily: "inherit", opacity: contratos.length ? 1 : .5 }}>
@@ -366,7 +367,7 @@ export default function ContratosFrete({ ctx, conn }) {
                       style={{ marginTop: 7, fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8,
                         cursor: vinculando === c.cte_alvo?.id ? "wait" : "pointer", fontFamily: "inherit",
                         border: `1px solid ${t.verde}`, background: "transparent", color: t.verde }}>
-                      {vinculando === c.cte_alvo?.id ? "Vinculando..." : `🔗 Vincular ao CTe ${c.cte_alvo?.ctrc || c.cte_ctrc}`}
+                      {vinculando === c.cte_alvo?.id ? "Vinculando..." : `Vincular ao CTe ${c.cte_alvo?.ctrc || c.cte_ctrc}`}
                     </button>
                   </div>
                 )}
@@ -381,7 +382,7 @@ export default function ContratosFrete({ ctx, conn }) {
                       style={{ marginTop: 7, fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 8,
                         cursor: vinculando === c.cte_alvo?.id ? "wait" : "pointer", fontFamily: "inherit",
                         border: `1px solid ${t.borda}`, background: "transparent", color: t.txt2 }}>
-                      ↩ Desfazer vínculo
+                      <Icon n="undo" s={13} /> Desfazer vínculo
                     </button>
                   </div>
                 )}
@@ -431,7 +432,7 @@ export default function ContratosFrete({ ctx, conn }) {
               onClick={() => decidirTrecho(g.empresa_emissao, g.trecho, null)}
               title="Voltar a perguntar sobre este trecho"
               style={{ fontSize: 10, fontFamily: "var(--font-mono)", padding: "3px 8px", borderRadius: 20, cursor: "pointer", border: `1px solid ${hexRgb(t.borda, .6)}`, background: "transparent", color: t.txt2 }}>
-              {g.trecho} ({g.contratos}) ✕
+              {g.trecho} ({g.contratos}) <Icon n="x" s={13} />
             </button>
           ))}
         </div>

@@ -217,7 +217,7 @@ export default function PainelFinanceiro({ ctx }) {
     if (!prev) return null;
     const d = (cur - prev) / Math.abs(prev) * 100;
     const good = higherIsGood ? d >= 0 : d <= 0;
-    return <span style={{ marginLeft: 5, color: good ? t.verde : t.danger, fontWeight: 700 }}>{d >= 0 ? "▲" : "▼"}{Math.abs(d).toFixed(0)}%</span>;
+    return <span style={{ marginLeft: 5, color: good ? t.verde : t.danger, fontWeight: 700 }}><Icon n={d >= 0 ? "chevron-up" : "chevron-down"} s={10} />{Math.abs(d).toFixed(0)}%</span>;
   };
 
   const semDados = !loading && r.n === 0 && composicao.length === 0;

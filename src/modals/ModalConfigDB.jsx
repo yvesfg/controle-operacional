@@ -50,11 +50,11 @@ export default function ModalConfigDB({ ctx }) {
                     const url=document.getElementById("cdbUrl").value.trim();
                     const key=document.getElementById("cdbKey").value.trim();
                     const name=document.getElementById("cdbName").value.trim()||"Conexão";
-                    if(!url||!key){showToast("⚠️ URL e Key obrigatórios","warn");return;}
+                    if(!url||!key){showToast("URL e Key obrigatórios","warn");return;}
                     const nc=[...conexoes,{url,key,name}];
                     saveConexoesLS(nc);
                     saveJSON("co_conexao_ativa",nc.length-1);
-                    showToast("✅ Conexão adicionada!","ok");
+                    showToast("Conexão adicionada!","ok");
                     setModalOpen(null);
                   }} style={{...css.btnGreen,justifyContent:"center",gap:6}}><Icon n="database" s={14} c="currentColor"/> CONECTAR</button>
                 </div>
@@ -74,7 +74,7 @@ export default function ModalConfigDB({ ctx }) {
         const _totalSel = motImportRaw.filter(c=>motImportPrefSel.has((c.nome||"").trim().split(/\s+/)[0].toUpperCase())).length;
         const _prosseguir = () => {
           const _importados = motImportRaw.filter(c=>motImportPrefSel.has((c.nome||"").trim().split(/\s+/)[0].toUpperCase()));
-          if(!_importados.length){showToast("⚠️ Nenhum contato selecionado","warn");return;}
+          if(!_importados.length){showToast("Nenhum contato selecionado","warn");return;}
           const _novos=[],_conflitos=[];
           _importados.forEach(imp=>{
             const nN=imp.nome.toUpperCase(),cN=(imp.cpf||"").replace(/\D/g,""),p1N=(imp.placa1||"").toUpperCase().replace(/[^A-Z0-9]/g,"");

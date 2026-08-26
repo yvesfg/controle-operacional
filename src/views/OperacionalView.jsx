@@ -21,6 +21,7 @@
  *   ctx.css, ctx.hIco
  */
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import { clickable } from "../utils.js";
 
 // ── Ícone SVG ─────────────────────────────────────────────────────────────────
@@ -211,7 +212,7 @@ export default function OperacionalView({ ctx }) {
 
           {sgsFormOpen && (
             <div style={{ background: t.card, borderRadius: 12, border: `1px solid var(--accent)44`, padding: 14, marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, color: "var(--accent)", fontSize: 12, marginBottom: 10 }}>📞 Registrar Chamado SGS</div>
+              <div style={{ fontWeight: 700, color: "var(--accent)", fontSize: 12, marginBottom: 10 }}><Icon n="phone" s={13} /> Registrar Chamado SGS</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                 <div><label style={lbl}>Nº do Chamado</label><input value={sgsForm.numero} onChange={e => setSgsForm(p => ({ ...p, numero: e.target.value }))} placeholder="SGS-000000" style={inp} /></div>
                 <div><label style={lbl}>DT Relacionado</label><input value={sgsForm.dt_rel} onChange={e => setSgsForm(p => ({ ...p, dt_rel: e.target.value }))} placeholder="Ex: 12345678" style={inp} /></div>
@@ -221,31 +222,31 @@ export default function OperacionalView({ ctx }) {
                 <div>
                   <label style={lbl}>Status</label>
                   <select value={sgsForm.status} onChange={e => setSgsForm(p => ({ ...p, status: e.target.value }))} style={{ ...inp, appearance: "none" }}>
-                    <option value="aberto">🔴 Aberto</option>
-                    <option value="andamento">🟡 Em Andamento</option>
-                    <option value="encerrado">🟢 Encerrado</option>
+                    <option value="aberto"><Icon n="dot" s={13} /> Aberto</option>
+                    <option value="andamento"><Icon n="dot" s={13} /> Em Andamento</option>
+                    <option value="encerrado"><Icon n="dot" s={13} /> Encerrado</option>
                   </select>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => setSgsFormOpen(false)} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid var(--border)`, borderRadius: 8, padding: "8px 12px", color: "var(--text2)", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>CANCELAR</button>
                 <button onClick={() => {
-                  if (!sgsForm.numero) { showToast("⚠️ Informe o nº do chamado", "warn"); return; }
+                  if (!sgsForm.numero) { showToast("Informe o nº do chamado", "warn"); return; }
                   const nova = [{ ...sgsForm, id: Date.now(), criado_em: new Date().toISOString(), usuario: usuarioLogado || perfil }, ...sgsItems];
                   saveSGS(nova); setSgsFormOpen(false);
-                  showToast("✅ Chamado registrado!", "ok");
-                }} style={{ ...css.btnGold, flex: 1, justifyContent: "center", fontSize: 12 }}>💾 Salvar Chamado</button>
+                  showToast("Chamado registrado!", "ok");
+                }} style={{ ...css.btnGold, flex: 1, justifyContent: "center", fontSize: 12 }}><Icon n="save" s={13} /> Salvar Chamado</button>
               </div>
             </div>
           )}
 
           {sgsItems.length === 0 ? (
-            <div style={css.empty}><div style={{ fontSize: 36, marginBottom: 8 }}>📞</div><div style={{ fontSize: 13, color: t.txt2 }}>Nenhum chamado SGS registrado</div></div>
+            <div style={css.empty}><div style={{ fontSize: 36, marginBottom: 8 }}><Icon n="phone" s={13} /></div><div style={{ fontSize: 13, color: t.txt2 }}>Nenhum chamado SGS registrado</div></div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {sgsItems.map((s, i) => {
                 const statusC = s.status === "encerrado" ? t.verde : s.status === "andamento" ? t.ouro : t.danger;
-                const statusIco = s.status === "encerrado" ? "🟢" : s.status === "andamento" ? "🟡" : "🔴";
+                const statusCor = s.status === "encerrado" ? t.verde : s.status === "andamento" ? t.warn : t.danger;
                 const retornos = Array.isArray(s.retornos) ? s.retornos : [];
                 const ultimoRet = retornos.length > 0 ? retornos[retornos.length - 1] : null;
                 const dataUltimoRet = ultimoRet?.data || s.ultimo_retorno;
@@ -261,28 +262,28 @@ export default function OperacionalView({ ctx }) {
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                             <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--yellow)" }}>{s.numero || "—"}</span>
-                            <span style={{ fontSize: 9, fontWeight: 700, color: statusC, background: `${statusC}18`, border: `1px solid ${statusC}33`, borderRadius: 4, padding: "2px 7px", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}>{statusIco} {s.status?.toUpperCase() || "ABERTO"}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, color: statusC, background: `${statusC}18`, border: `1px solid ${statusC}33`, borderRadius: 4, padding: "2px 7px", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}><Icon n="dot" s={9} c={statusCor} /> {s.status?.toUpperCase() || "ABERTO"}</span>
                             {s.dt_rel && <span style={{ fontSize: 9, color: t.txt2 }}>DT: {s.dt_rel}</span>}
-                            {alertaRetorno && <span style={{ fontSize: 9, color: t.danger, fontWeight: 700, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}>⚠️ {diasSemRetorno}d sem retorno</span>}
-                            <span style={{ marginLeft: "auto", fontSize: 10, color: t.txt2, flexShrink: 0 }}>{isExpanded ? "▲" : "▼"}</span>
+                            {alertaRetorno && <span style={{ fontSize: 9, color: t.danger, fontWeight: 700, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}><Icon n="alert" s={13} /> {diasSemRetorno}d sem retorno</span>}
+                            <span style={{ marginLeft: "auto", fontSize: 10, color: t.txt2, flexShrink: 0 }}>{isExpanded ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
                           </div>
                           <div style={{ fontSize: 11, color: t.txt2, marginTop: 3, lineHeight: 1.5 }}>
-                            📅 Chamado: <strong style={{ color: t.txt }}>{s.data_chamado ? new Date(s.data_chamado + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</strong>
-                            {dataUltimoRet && <> · 🔄 Último retorno: <strong style={{ color: t.txt }}>{new Date(dataUltimoRet + "T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
+                            <Icon n="calendar" s={13} /> Chamado: <strong style={{ color: t.txt }}>{s.data_chamado ? new Date(s.data_chamado + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</strong>
+                            {dataUltimoRet && <> · <Icon n="refresh" s={13} /> Último retorno: <strong style={{ color: t.txt }}>{new Date(dataUltimoRet + "T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
                             {retornos.length > 0 && <span style={{ marginLeft: 6, fontSize: 9, background: `rgba(217,98,43,.1)`, color: t.ouro, borderRadius: 4, padding: "1px 5px" }}>{retornos.length} retorno{retornos.length > 1 ? "s" : ""}</span>}
                           </div>
                           {s.descricao && <div style={{ fontSize: 11, color: t.txt, marginTop: 4, lineHeight: 1.4 }}>{s.descricao}</div>}
                         </div>
                         <div style={{ display: "flex", gap: 5, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                          <button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], status: a[i].status === "encerrado" ? "aberto" : "encerrado" }; saveSGS(a); }} style={{ background: s.status === "encerrado" ? `rgba(246,70,93,.08)` : `rgba(2,192,118,.08)`, border: `1px solid ${s.status === "encerrado" ? t.danger : t.verde}33`, borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>{s.status === "encerrado" ? "🔴" : "🟢"}</button>
-                          <button onClick={() => { if (confirm("Excluir este chamado?")) { const n = [...sgsItems]; n.splice(i, 1); saveSGS(n); } }} style={{ background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.18)`, borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>🗑️</button>
+                          <button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], status: a[i].status === "encerrado" ? "aberto" : "encerrado" }; saveSGS(a); }} style={{ background: s.status === "encerrado" ? `rgba(246,70,93,.08)` : `rgba(2,192,118,.08)`, border: `1px solid ${s.status === "encerrado" ? t.danger : t.verde}33`, borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon n="dot" s={11} c={s.status === "encerrado" ? t.danger : t.verde} /></button>
+                          <button onClick={() => { if (confirm("Excluir este chamado?")) { const n = [...sgsItems]; n.splice(i, 1); saveSGS(n); } }} style={{ background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.18)`, borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon n="trash" s={13} /></button>
                         </div>
                       </div>
                     </div>
 
                     {isExpanded && (
                       <div style={{ borderTop: `1px solid var(--border)`, padding: "10px 12px", background: `rgba(234,179,8,.02)` }}>
-                        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: t.ouro, marginBottom: 8 }}>🔄 Histórico de Retornos</div>
+                        <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: t.ouro, marginBottom: 8 }}><Icon n="refresh" s={13} /> Histórico de Retornos</div>
                         {retornos.length === 0 ? (
                           <div style={{ fontSize: 10, color: t.txt2, marginBottom: 10 }}>Nenhum retorno registrado ainda.</div>
                         ) : (
@@ -291,7 +292,7 @@ export default function OperacionalView({ ctx }) {
                               <div key={ri} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: t.card2, borderRadius: 7, padding: "7px 10px", border: `1px solid ${t.borda}` }}>
                                 <span style={{ fontSize: 9, fontWeight: 700, color: t.azulLt, whiteSpace: "nowrap" }}>{r.data ? new Date(r.data + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</span>
                                 <span style={{ fontSize: 10, color: t.txt, flex: 1 }}>{r.descricao || "-"}</span>
-                                <button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], retornos: retornos.filter((_, j) => j !== ri), ultimo_retorno: retornos.filter((_, j) => j !== ri).at(-1)?.data || s.data_chamado || "" }; saveSGS(a); }} style={{ background: "transparent", border: "none", color: t.danger, cursor: "pointer", fontSize: 11, flexShrink: 0, padding: 2 }}>✕</button>
+                                <button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], retornos: retornos.filter((_, j) => j !== ri), ultimo_retorno: retornos.filter((_, j) => j !== ri).at(-1)?.data || s.data_chamado || "" }; saveSGS(a); }} style={{ background: "transparent", border: "none", color: t.danger, cursor: "pointer", fontSize: 11, flexShrink: 0, padding: 2 }}><Icon n="x" s={13} /></button>
                               </div>
                             ))}
                           </div>
@@ -313,7 +314,7 @@ export default function OperacionalView({ ctx }) {
                               }} />
                             </div>
                             <button onClick={() => {
-                              if (!sgsRetornoForm.data) { showToast("⚠️ Informe a data do retorno", "warn"); return; }
+                              if (!sgsRetornoForm.data) { showToast("Informe a data do retorno", "warn"); return; }
                               const nr = { data: sgsRetornoForm.data, descricao: sgsRetornoForm.descricao };
                               const a = [...sgsItems]; a[i] = { ...a[i], retornos: [...retornos, nr], ultimo_retorno: sgsRetornoForm.data }; saveSGS(a); setSgsRetornoForm({ data: "", descricao: "" });
                             }} style={{ ...css.btnGold, padding: "6px 12px", fontSize: 11, flexShrink: 0 }}>Salvar</button>
@@ -341,7 +342,7 @@ export default function OperacionalView({ ctx }) {
           </div>
           {diariasData.items.filter(i => i.tipo === "diaria" || i.tipo === "atraso").length === 0 ? (
             <div style={css.empty}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>🛏️</div>
+              <div style={{ fontSize: 36, marginBottom: 8 }}><Icon n="bed" s={13} /></div>
               <div style={{ fontSize: 13, color: t.txt2 }}>Nenhum registro com diária identificado</div>
               <div style={{ fontSize: 10, color: t.txt2, marginTop: 4 }}>Preencha o campo "Chegada" para calcular diárias.</div>
             </div>
@@ -352,7 +353,7 @@ export default function OperacionalView({ ctx }) {
                 if (semRo.length === 0) return null;
                 return (
                   <div style={{ background: `rgba(255,152,0,.07)`, border: `1px solid rgba(255,152,0,.28)`, borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}><Icon n="alert" s={13} /></span>
                     <div>
                       <div style={{ fontSize: 11, color: "var(--cat-amber2)", fontWeight: 700 }}>{semRo.length} DT{semRo.length > 1 ? "s" : ""} com diária sem RO preenchido</div>
                       <div style={{ fontSize: 9, color: t.txt2, marginTop: 2 }}>DTs: {semRo.map(i => i.r.dt).join(", ")}</div>
@@ -362,18 +363,18 @@ export default function OperacionalView({ ctx }) {
               })()}
               {diariasData.items.filter(i => i.tipo === "diaria" || i.tipo === "atraso").map(({ r, tipo, dias }, i) => {
                 const semRo = !r.ro;
-                const tipoLabel = tipo === "diaria" ? `🛏️ ${dias || 0}d de diária` : `⚠️ Perdeu Agenda`;
+                const tipoLabel = tipo === "diaria" ? `${dias || 0}d de diária` : `Perdeu Agenda`;
                 const tipoColor = tipo === "diaria" ? t.danger : t.ouro;
                 return (
                   <div key={i} {...clickable(() => abrirDetalhe(r))} style={{ background: t.card, borderRadius: 11, border: `1px solid ${tipoColor}`, padding: 12, cursor: "pointer" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       {r.nome || "—"}
                       <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(246,70,93,.08)`, color: tipoColor, border: `1px solid ${tipoColor}33` }}>{tipoLabel}</span>
-                      {semRo && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(255,152,0,.07)`, color: "var(--cat-amber2)", border: `1px solid rgba(255,152,0,.3)` }}>⚠️ RO vazio</span>}
+                      {semRo && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(255,152,0,.07)`, color: "var(--cat-amber2)", border: `1px solid rgba(255,152,0,.3)` }}><Icon n="alert" s={13} /> RO vazio</span>}
                       <span style={{ marginLeft: "auto", fontSize: 10, color: t.txt2 }}>›</span>
                     </div>
                     <div style={{ fontSize: 11, color: t.txt2 }}>
-                      🔢 {r.dt} · 📅 Agenda: {r.data_agenda || "—"} · 🏁 Descarga: {r.data_desc || "—"}
+                      <Icon n="hash" s={13} /> {r.dt} · <Icon n="calendar" s={13} /> Agenda: {r.data_agenda || "—"} · <Icon n="flag" s={13} /> Descarga: {r.data_desc || "—"}
                     </div>
                     {(r.diaria_prev || r.diaria_pg) && (
                       <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
@@ -401,7 +402,7 @@ export default function OperacionalView({ ctx }) {
               <span style={{ flex: 1, height: 1, background: t.borda }} />
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => setRelCtrlDccOpen(true)} style={{ background: `rgba(124,58,237,.08)`, border: `1px solid rgba(124,58,237,.28)`, borderRadius: 8, padding: "8px 12px", color: "var(--accent)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>📊 Planilha Financeiro</button>
+              <button onClick={() => setRelCtrlDccOpen(true)} style={{ background: `rgba(124,58,237,.08)`, border: `1px solid rgba(124,58,237,.28)`, borderRadius: 8, padding: "8px 12px", color: "var(--accent)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}><Icon n="chart" s={13} /> Planilha Financeiro</button>
               <button onClick={() => { setApontForm({ numero: "", item: "", linha: "", descricao_apontamento: "", pedido: "", mes_ref: "", filial: "", valor: "", frs_folha: "", tipo: "descarga", dt_rel: "", cidade: "", nf_numero: "", data_emissao: "", data_apontamento: new Date().toISOString().split("T")[0] }); setApontFormOpen(true); }} style={{ ...css.btnGold, padding: "8px 12px", fontSize: 11 }}>＋ Novo</button>
             </div>
           </div>
@@ -412,7 +413,7 @@ export default function OperacionalView({ ctx }) {
             const mesSel = meses[0] || "";
             const itensMes = apontItems.filter(a => !mesSel || a.mes_ref === mesSel);
             const tipos = ["descarga", "stretch", "deslocamento", "outros"];
-            const tipoLabel = { descarga: "📦 Descarga", stretch: "📏 Stretch", deslocamento: "🚗 Deslocamento", outros: "📋 Outros" };
+            const tipoLabel = { descarga: "Descarga", stretch: "Stretch", deslocamento: "Deslocamento", outros: "Outros" };
             const tipoColor = { descarga: "var(--accent)", stretch: "var(--green)", deslocamento: "var(--yellow)", outros: "var(--text2)" };
             const totais = tipos.map(tp => ({ tp, total: itensMes.filter(a => a.tipo === tp).reduce((s, a) => s + (parseFloat(a.valor) || 0), 0), qtd: itensMes.filter(a => a.tipo === tp).length })).filter(x => x.qtd > 0);
             const grandTotal = totais.reduce((s, x) => s + x.total, 0);
@@ -442,7 +443,7 @@ export default function OperacionalView({ ctx }) {
           {/* Form novo apontamento */}
           {apontFormOpen && (
             <div style={{ background: t.card, borderRadius: 12, border: `1px solid var(--accent)44`, padding: 14, marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, color: "var(--accent)", fontSize: 12, marginBottom: 10 }}>📑 Novo Apontamento</div>
+              <div style={{ fontWeight: 700, color: "var(--accent)", fontSize: 12, marginBottom: 10 }}><Icon n="clipboard" s={13} /> Novo Apontamento</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                 <div><label style={lbl}>Nº Apontamento</label><input value={apontForm.numero} onChange={e => setApontForm(p => ({ ...p, numero: e.target.value }))} placeholder="Ex: 1000000002580650" style={inp} /></div>
                 <div><label style={lbl}>Pedido</label><input value={apontForm.pedido} onChange={e => setApontForm(p => ({ ...p, pedido: e.target.value }))} placeholder="Ex: 4502384474" style={inp} /></div>
@@ -454,16 +455,16 @@ export default function OperacionalView({ ctx }) {
                 <div><label style={lbl}>Valor (R$)</label><input type="number" value={apontForm.valor} onChange={e => setApontForm(p => ({ ...p, valor: e.target.value }))} placeholder="0,00" style={inp} /></div>
                 <div>
                   <label style={{ ...lbl, color: apontForm.frs_folha ? undefined : t.danger }}>
-                    FRS · Folha {!apontForm.frs_folha && <span style={{ color: t.danger }}>⚠️</span>}
+                    FRS · Folha {!apontForm.frs_folha && <span style={{ color: t.danger }}><Icon n="alert" s={13} /></span>}
                   </label>
                   <input value={apontForm.frs_folha} onChange={e => setApontForm(p => ({ ...p, frs_folha: e.target.value }))} style={{ ...inp, border: `1.5px solid ${apontForm.frs_folha ? t.borda2 : t.danger}` }} />
                 </div>
                 <div><label style={lbl}>Tipo</label>
                   <select value={apontForm.tipo} onChange={e => setApontForm(p => ({ ...p, tipo: e.target.value }))} style={{ ...inp, appearance: "none" }}>
-                    <option value="descarga">📦 Descarga</option>
-                    <option value="stretch">📏 Stretch</option>
-                    <option value="deslocamento">🚗 Deslocamento</option>
-                    <option value="outros">📋 Outros</option>
+                    <option value="descarga"><Icon n="package" s={13} /> Descarga</option>
+                    <option value="stretch"><Icon n="ruler" s={13} /> Stretch</option>
+                    <option value="deslocamento"><Icon n="car" s={13} /> Deslocamento</option>
+                    <option value="outros"><Icon n="clipboard" s={13} /> Outros</option>
                   </select>
                 </div>
                 <div><label style={lbl}>DT Relacionado</label><input value={apontForm.dt_rel} onChange={e => setApontForm(p => ({ ...p, dt_rel: e.target.value }))} style={inp} /></div>
@@ -473,14 +474,14 @@ export default function OperacionalView({ ctx }) {
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => setApontFormOpen(false)} style={{ flex: "0 0 auto", background: "transparent", border: `1.5px solid var(--border)`, borderRadius: 8, padding: "8px 12px", color: "var(--text2)", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>CANCELAR</button>
                 <button onClick={async () => {
-                  if (!apontForm.numero) { showToast("⚠️ Informe o nº do apontamento", "warn"); return; }
+                  if (!apontForm.numero) { showToast("Informe o nº do apontamento", "warn"); return; }
                   const novoItem = { ...apontForm, id: Date.now(), criado_em: new Date().toISOString() };
                   const nova = [novoItem, ...apontItems];
                   await saveAponts(nova, novoItem);
                   setApontFormOpen(false);
                   setApontForm({ numero: "", item: "", linha: "", descricao_apontamento: "", pedido: "", mes_ref: "", filial: "", valor: "", frs_folha: "", tipo: "descarga", dt_rel: "", cidade: "", nf_numero: "", data_emissao: "", data_apontamento: new Date().toISOString().split("T")[0] });
-                  showToast("✅ Apontamento salvo!", "ok");
-                }} style={{ ...css.btnGold, flex: 1, justifyContent: "center", fontSize: 12 }}>💾 Salvar Apontamento</button>
+                  showToast("Apontamento salvo!", "ok");
+                }} style={{ ...css.btnGold, flex: 1, justifyContent: "center", fontSize: 12 }}><Icon n="save" s={13} /> Salvar Apontamento</button>
               </div>
             </div>
           )}
@@ -488,7 +489,7 @@ export default function OperacionalView({ ctx }) {
           {apontLoading ? (
             <div style={{ textAlign: "center", padding: 20, color: t.txt2, fontSize: 12 }}>Carregando apontamentos...</div>
           ) : apontItems.length === 0 ? (
-            <div style={css.empty}><div style={{ fontSize: 36, marginBottom: 8 }}>📑</div><div style={{ fontSize: 13, color: t.txt2 }}>Nenhum apontamento registrado</div></div>
+            <div style={css.empty}><div style={{ marginBottom: 8 }}><Icon n="clipboard" s={32} /></div><div style={{ fontSize: 13, color: t.txt2 }}>Nenhum apontamento registrado</div></div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {apontItems.map((a, i) => {
@@ -500,9 +501,9 @@ export default function OperacionalView({ ctx }) {
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
                       <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, letterSpacing: "-0.01em", color: "var(--yellow)" }}>{a.numero || a.apontamento || "—"}</span>
                       {(a.item || a.linha) && <span style={{ fontSize: 9, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 6px" }}>It.{a.item || "?"} / Ln.{a.linha || "?"}</span>}
-                      <span style={{ fontSize: 9, fontWeight: 700, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 7px" }}>{a.tipo === "stretch" ? "📏 Stretch" : a.tipo === "deslocamento" ? "🚗 Deslocamento" : a.tipo === "outros" ? "📋 Outros" : "📦 Descarga"}</span>
-                      {semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.danger, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}>⚠️ FRS vazio</span>}
-                      {semNF && !semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.warn, background: `rgba(245,158,11,.08)`, border: `1px solid rgba(245,158,11,.2)`, borderRadius: 4, padding: "2px 7px" }}>📄 NF pendente</span>}
+                      <span style={{ fontSize: 9, fontWeight: 700, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 7px" }}>{a.tipo === "stretch" ? "Stretch" : a.tipo === "deslocamento" ? "Deslocamento" : a.tipo === "outros" ? "Outros" : "Descarga"}</span>
+                      {semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.danger, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}><Icon n="alert" s={13} /> FRS vazio</span>}
+                      {semNF && !semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.warn, background: `rgba(245,158,11,.08)`, border: `1px solid rgba(245,158,11,.2)`, borderRadius: 4, padding: "2px 7px" }}><Icon n="file-text" s={13} /> NF pendente</span>}
                     </div>
                     {a.descricao_apontamento && <div style={{ fontSize: 10, color: t.txt2, marginBottom: 6, fontStyle: "italic" }}>{a.descricao_apontamento}</div>}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, fontSize: 10, color: t.txt2 }}>
@@ -512,10 +513,10 @@ export default function OperacionalView({ ctx }) {
                       <div>Valor: <strong style={{ color: t.verde }}>{a.valor ? fmtMoeda(a.valor) : "—"}</strong></div>
                       {a.cidade && <div>Cidade: <strong style={{ color: t.txt }}>{a.cidade}</strong></div>}
                       {(a.dt_rel || a.dt_relacionado) && <div>DT: <strong style={{ color: "var(--accent)" }}>{a.dt_rel || a.dt_relacionado}</strong></div>}
-                      <div style={{ gridColumn: "1/-1" }}>FRS · Folha: <strong style={{ color: semFRS ? t.danger : t.verde }}>{a.frs_folha || a.folha_registro || "⚠️ NÃO PREENCHIDO"}</strong></div>
-                      {a.data_apontamento && <div style={{ gridColumn: "1/-1", fontSize: 9, color: t.txt2, marginTop: 2 }}>📅 {a.data_apontamento}</div>}
+                      <div style={{ gridColumn: "1/-1" }}>FRS · Folha: <strong style={{ color: semFRS ? t.danger : t.verde }}>{a.frs_folha || a.folha_registro || "NÃO PREENCHIDO"}</strong></div>
+                      {a.data_apontamento && <div style={{ gridColumn: "1/-1", fontSize: 9, color: t.txt2, marginTop: 2 }}><Icon n="calendar" s={13} /> {a.data_apontamento}</div>}
                     </div>
-                    <button onClick={async () => { if (confirm("Excluir apontamento?")) { const n = [...apontItems]; n.splice(i, 1); await deleteApontSupabase(a.numero || a.apontamento); await saveAponts(n); } }} style={{ marginTop: 8, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.18)`, borderRadius: 6, padding: "4px 9px", cursor: "pointer", fontSize: 10, color: t.danger, fontFamily: "inherit" }}>🗑️ Excluir</button>
+                    <button onClick={async () => { if (confirm("Excluir apontamento?")) { const n = [...apontItems]; n.splice(i, 1); await deleteApontSupabase(a.numero || a.apontamento); await saveAponts(n); } }} style={{ marginTop: 8, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.18)`, borderRadius: 6, padding: "4px 9px", cursor: "pointer", fontSize: 10, color: t.danger, fontFamily: "inherit" }}><Icon n="trash" s={13} /> Excluir</button>
                   </div>
                 );
               })}

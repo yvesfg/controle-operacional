@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import Toggle from "../components/Toggle.jsx";
 import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
 import BasesOperacao from "./admin/BasesOperacao.jsx";
@@ -56,7 +57,7 @@ export default function AdminView({ ctx }) {
             {/* Gestão de usuários migrada para o Hub (Gerenciar acessos) */}
             <div style={{...css.card,marginBottom:12,padding:"14px",fontSize:11,color:t.txt2,lineHeight:1.6,display:"flex",gap:10,alignItems:"flex-start"}}>
               {hIco(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,t.ouro,16)}
-              <span>A gestão de <b style={{color:t.ouro}}>usuários, perfis e permissões</b> agora fica no <b style={{color:t.ouro}}>Hub → Gerenciar acessos</b>. Saia para o Hub para liberar módulos, definir perfil/bases e permissões finas.</span>
+              <span>A gestão de <b style={{color:t.ouro}}>usuários, perfis e permissões</b> agora fica no <b style={{color:t.ouro}}>Hub <Icon n="arrow-right" s={13} /> Gerenciar acessos</b>. Saia para o Hub para liberar módulos, definir perfil/bases e permissões finas.</span>
             </div>
 
             {/* Bases / Operações — perfil da operação vindo de co_bases (Fase 4b) */}
@@ -64,7 +65,7 @@ export default function AdminView({ ctx }) {
 
             {/* Conexões Supabase — colapsável */}
             <div style={{...css.secTitle,margin:"20px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setConexoesOpen(!conexoesOpen)}>
-              {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.ouro,12)} Conexões Supabase <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{conexoesOpen?"▲":"▼"}</span>
+              {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.ouro,12)} Conexões Supabase <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{conexoesOpen ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
             {conexoesOpen && (
@@ -73,7 +74,7 @@ export default function AdminView({ ctx }) {
                   <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
                     {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.txt2,14)}
                     <div style={{flex:1,minWidth:0}}><div style={{fontSize:11,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name||c.url}</div></div>
-                    <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:DESIGN.r.badge,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:DESIGN.fnt.b}}>✕</button>
+                    <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:DESIGN.r.badge,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:DESIGN.fnt.b}}><Icon n="x" s={13} /></button>
                   </div>
                 ))}
                 <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
@@ -84,12 +85,12 @@ export default function AdminView({ ctx }) {
                     const url = document.getElementById("newSupaUrl").value.trim();
                     const key = document.getElementById("newSupaKey").value.trim();
                     const name = document.getElementById("newSupaName").value.trim() || "Conexão";
-                    if (!url || !key) { showToast("⚠️ URL e Key obrigatórios","warn"); return; }
+                    if (!url || !key) { showToast("URL e Key obrigatórios","warn"); return; }
                     const nc = [...conexoes, {url,key,name}];
                     saveConexoesLS(nc);
                     saveJSON("co_conexao_ativa", nc.length-1);
-                    showToast("✅ Conexão adicionada!","ok");
-                  }} style={{...css.btnGreen,justifyContent:"center"}}>🗄️ CONECTAR</button>
+                    showToast("Conexão adicionada!","ok");
+                  }} style={{...css.btnGreen,justifyContent:"center"}}><Icon n="database" s={13} /> CONECTAR</button>
                 </div>
               </div>
             )}
@@ -105,7 +106,7 @@ export default function AdminView({ ctx }) {
                 setSyncStatusLoading(false);
               }
             }}>
-              {hIco(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>,t.verde,12)} Sincronização Google Sheets <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{gsheetsOpen?"▲":"▼"}</span>
+              {hIco(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>,t.verde,12)} Sincronização Google Sheets <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{gsheetsOpen ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
             {gsheetsOpen && (
@@ -114,18 +115,18 @@ export default function AdminView({ ctx }) {
                 {/* ── PAINEL DE STATUS DA ÚLTIMA SINCRONIZAÇÃO ── */}
                 <div style={{...css.card,padding:12,border:`1px solid ${syncStatus?(syncStatus.ok?t.verde:(syncStatus.erros_http>0?t.danger:t.ouro)):t.borda}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                    <div style={{fontSize:11,fontWeight:700,color:t.txt}}>📡 Última Sincronização</div>
-                    <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto(`gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`);setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading?"⏳":"↺ Atualizar"}</button>
+                    <div style={{fontSize:11,fontWeight:700,color:t.txt}}><Icon n="antenna" s={13} /> Última Sincronização</div>
+                    <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto(`gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`);setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading ? <Icon n="clock" s={11} /> : "Atualizar"}</button>
                   </div>
                   {syncStatusLoading && <div style={{fontSize:10,color:t.txt2}}>Buscando status...</div>}
                   {!syncStatusLoading && !syncStatus && (
-                    <div style={{fontSize:10,color:t.txt2}}>⚠️ Nenhum status encontrado — o script ainda não rodou ou não está gravando no Supabase.</div>
+                    <div style={{fontSize:10,color:t.txt2}}><Icon n="alert" s={13} /> Nenhum status encontrado — o script ainda não rodou ou não está gravando no Supabase.</div>
                   )}
                   {!syncStatusLoading && syncStatus && (
                     <div style={{display:"flex",flexDirection:"column",gap:6}}>
                       <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-                        <span style={{...css.badge(syncStatus.ok?t.verde:t.danger,syncStatus.ok?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`,syncStatus.ok?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>{syncStatus.ok?"✅ OK":"❌ COM ERROS"}</span>
-                        <span style={{fontSize:10,color:t.txt2}}>🕐 {syncStatus.timestamp}</span>
+                        <span style={{...css.badge(syncStatus.ok?t.verde:t.danger,syncStatus.ok?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`,syncStatus.ok?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>{syncStatus.ok?"OK":"COM ERROS"}</span>
+                        <span style={{fontSize:10,color:t.txt2}}><Icon n="clock" s={13} /> {syncStatus.timestamp}</span>
                       </div>
                       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
                         <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
@@ -143,19 +144,19 @@ export default function AdminView({ ctx }) {
                       </div>
                       {syncStatus.motivos_ignorados?.length>0&&(
                         <div style={{background:`rgba(217,98,43,.06)`,border:`1px solid rgba(217,98,43,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:4}}>⚠️ Linhas ignoradas (sem DT preenchida):</div>
+                          <div style={{fontSize:9,fontWeight:700,color:t.ouro,marginBottom:4}}><Icon n="alert" s={13} /> Linhas ignoradas (sem DT preenchida):</div>
                           {syncStatus.motivos_ignorados.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
                         </div>
                       )}
                       {syncStatus.info?.length>0&&(
                         <div style={{background:`rgba(59,130,246,.06)`,border:`1px solid rgba(59,130,246,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,fontWeight:700,color:t.azulLt,marginBottom:4}}>📋 Abas processadas:</div>
+                          <div style={{fontSize:9,fontWeight:700,color:t.azulLt,marginBottom:4}}><Icon n="clipboard" s={13} /> Abas processadas:</div>
                           {syncStatus.info.map((m,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {m}</div>)}
                         </div>
                       )}
                       {syncStatus.erros_detalhes?.length>0&&(
                         <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                          <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:4}}>❌ Erros de envio:</div>
+                          <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:4}}><Icon n="x-circle" s={13} /> Erros de envio:</div>
                           {syncStatus.erros_detalhes.map((e,i)=><div key={i} style={{fontSize:9,color:t.txt2,lineHeight:1.6}}>• {e}</div>)}
                         </div>
                       )}
@@ -165,9 +166,9 @@ export default function AdminView({ ctx }) {
 
                 {/* ── SCRIPT APPS SCRIPT v2 ── */}
                 <div style={{...css.card,padding:12,background:t.card2}}>
-                  <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:4}}>📋 Apps Script v2 — Cole na planilha</div>
+                  <div style={{fontSize:11,fontWeight:700,color:t.txt,marginBottom:4}}><Icon n="clipboard" s={13} /> Apps Script v2 — Cole na planilha</div>
                   <div style={{fontSize:10,color:t.txt2,lineHeight:1.6,marginBottom:8}}>
-                    <strong style={{color:t.ouro}}>Planilha → Extensões → Apps Script</strong> → cole o código abaixo → salve → rode <code style={{background:t.bg,padding:"1px 5px",borderRadius:4,color:t.verde}}>configurarGatilho()</code> <strong>UMA VEZ</strong> para ativar o sync automático de 15 em 15 min.
+                    <strong style={{color:t.ouro}}>Planilha <Icon n="arrow-right" s={13} /> Extensões <Icon n="arrow-right" s={13} /> Apps Script</strong> <Icon n="arrow-right" s={13} /> cole o código abaixo <Icon n="arrow-right" s={13} /> salve <Icon n="arrow-right" s={13} /> rode <code style={{background:t.bg,padding:"1px 5px",borderRadius:4,color:t.verde}}>configurarGatilho()</code> <strong>UMA VEZ</strong> para ativar o sync automático de 15 em 15 min.
                   </div>
                   <div style={{background:t.bg,borderRadius:8,padding:10,border:`1px solid ${t.borda}`,overflowX:"auto",maxHeight:260,overflowY:"auto"}}>
                     <pre style={{fontSize:8.5,color:t.verde,margin:0,whiteSpace:"pre",lineHeight:1.55}}>{`// ═══════════════════════════════════════════════════════
@@ -278,7 +279,7 @@ function configurarGatilho(){
     if(t.getHandlerFunction()==='sincronizarComSupabase') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('sincronizarComSupabase').timeBased().everyMinutes(15).create();
-  Logger.log('✅ Gatilho de 15 min criado! Rodando sincronização agora...');
+  Logger.log('Gatilho de 15 min criado! Rodando sincronização agora...');
   sincronizarComSupabase();
 }
 
@@ -322,11 +323,11 @@ function mapearColuna(n){
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
                     <div style={{background:`rgba(2,192,118,.06)`,border:`1px solid rgba(2,192,118,.2)`,borderRadius:7,padding:"8px 10px"}}>
-                      <div style={{fontSize:9,fontWeight:700,color:t.verde,marginBottom:3}}>▶ Como ativar (1x apenas)</div>
-                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>1. Cole o script acima no Apps Script<br/>2. Preencha <code>SUPA_URL</code> e <code>SUPA_KEY</code><br/>3. No menu <strong style={{color:t.txt}}>Executar</strong> → <strong style={{color:t.verde}}>configurarGatilho</strong><br/>4. Autorize quando pedido<br/>✅ Pronto — sync automático a cada 15min</div>
+                      <div style={{fontSize:9,fontWeight:700,color:t.verde,marginBottom:3}}><Icon n="play" s={13} /> Como ativar (1x apenas)</div>
+                      <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>1. Cole o script acima no Apps Script<br/>2. Preencha <code>SUPA_URL</code> e <code>SUPA_KEY</code><br/>3. No menu <strong style={{color:t.txt}}>Executar</strong> <Icon n="arrow-right" s={13} /> <strong style={{color:t.verde}}>configurarGatilho</strong><br/>4. Autorize quando pedido<br/><Icon n="check-circle" s={13} /> Pronto — sync automático a cada 15min</div>
                     </div>
                     <div style={{background:`rgba(246,70,93,.06)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:7,padding:"8px 10px"}}>
-                      <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:3}}>🔍 Diagnóstico de registros ausentes</div>
+                      <div style={{fontSize:9,fontWeight:700,color:t.danger,marginBottom:3}}><Icon n="search" s={13} /> Diagnóstico de registros ausentes</div>
                       <div style={{fontSize:9,color:t.txt2,lineHeight:1.7}}>Se uma DT está na planilha mas não no app:<br/>• Verifique a coluna DT/Espelho da linha<br/>• Rode o script manualmente e veja o painel acima<br/>• "Ignorados" lista as linhas com problema<br/>• Confirme que SUPA_URL e SUPA_KEY estão corretos</div>
                     </div>
                   </div>
@@ -342,7 +343,7 @@ function mapearColuna(n){
               <div style={{fontSize:10,fontWeight:700,color:t.txt2,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Email do Admin (login OAuth / identificação)</div>
               <div style={{display:"flex",gap:8}}>
                 <input value={adminEmailVal} onChange={e=>setAdminEmailVal(e.target.value)} placeholder="seu@email.com" style={{...css.inp,flex:1,fontSize:11}} />
-                <button onClick={()=>{saveJSON("co_admin_email",adminEmailVal.trim().toLowerCase());showToast("✅ Email admin salvo","ok");}} style={{...css.btnGold,whiteSpace:"nowrap",fontSize:11}}>
+                <button onClick={()=>{saveJSON("co_admin_email",adminEmailVal.trim().toLowerCase());showToast("Email admin salvo","ok");}} style={{...css.btnGold,whiteSpace:"nowrap",fontSize:11}}>
                   {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,t.bg,13,1.8)}
                   Salvar
                 </button>
@@ -352,7 +353,7 @@ function mapearColuna(n){
 
             {/* EMAIL BOAS-VINDAS */}
             <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setEmailTemplateOpen(!emailTemplateOpen)}>
-              {hIco(<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,t.ouro,12)} Email de Boas-vindas<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{emailTemplateOpen?"▲":"▼"}</span>
+              {hIco(<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,t.ouro,12)} Email de Boas-vindas<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{emailTemplateOpen ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
             {emailTemplateOpen && (
@@ -369,9 +370,9 @@ function mapearColuna(n){
                   <textarea value={emailTemplate.corpo} onChange={e=>setEmailTemplate(p=>({...p,corpo:e.target.value}))} rows={9} style={{...css.inp,resize:"vertical",fontSize:11,lineHeight:1.6,fontFamily:"monospace"}} />
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  <button onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("✅ Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{...css.btnGreen,flex:1,justifyContent:"center",fontSize:12}}>💾 Salvar Template</button>
-                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",false)} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}>📧 Testar (Gmail)</button>
-                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",true)} style={{...css.hBtn,flex:1,justifyContent:"center",fontSize:12}}>✉️ Outro Cliente</button>
+                  <button onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{...css.btnGreen,flex:1,justifyContent:"center",fontSize:12}}><Icon n="save" s={13} /> Salvar Template</button>
+                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",false)} style={{...css.btnGold,flex:1,justifyContent:"center",fontSize:12}}><Icon n="mail" s={13} /> Testar (Gmail)</button>
+                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",true)} style={{...css.hBtn,flex:1,justifyContent:"center",fontSize:12}}><Icon n="mail" s={13} /> Outro Cliente</button>
                 </div>
                 <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:"1px solid "+t.borda,fontSize:10,color:t.txt2,lineHeight:1.6}}>
                   O email abre no seu cliente de email ja preenchido. Para usuarios novos, clique no botao Email no cadastro.
@@ -381,7 +382,7 @@ function mapearColuna(n){
 
             {/* NORMALIZAR CONTATOS (Item 3) — colapsável */}
             <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={()=>setContatosAdminOpen(!contatosAdminOpen)}>
-              {hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Contatos / Motoristas <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{contatosAdminOpen?"▲":"▼"}</span>
+              {hIco(<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,t.ouro,12)} Contatos / Motoristas <span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{contatosAdminOpen ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
             {contatosAdminOpen && <div style={{...css.card,padding:14,marginBottom:16,background:t.card2}}>
@@ -389,18 +390,18 @@ function mapearColuna(n){
                 Normaliza os dados de todos os motoristas cadastrados: capitalização dos nomes, formato de telefone <strong style={{color:t.txt}}>(XX) XXXXX-XXXX</strong> e placas em maiúsculas sem caracteres extras.
               </p>
               {/* ── Exportar ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6}}>📤 Exportar</div>
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6}}><Icon n="download" s={13} /> Exportar</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
                 <button onClick={()=>{
-                  if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("❌ Exportação cancelada","err");return;}}
+                  if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("Exportação cancelada","err");return;}}
                   const vcards=motoristas.map(m=>{const tel=(m.tel||"").replace(/\D/g,"");const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
                     return["BEGIN:VCARD","VERSION:3.0",`FN:${m.nome||""}`,`N:${sob};${prim};;;`,tel?`TEL;TYPE=CELL:+55${tel}`:"",m.cpf?`X-CPF:${m.cpf}`:"",`NOTE:Placa: ${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join(" | ")} | Vínculo: ${m.vinculo||"—"}`,"END:VCARD"].filter(Boolean).join("\r\n");
                   }).join("\r\n");
                   const blob=new Blob([vcards],{type:"text/vcard;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_yfgroup.vcf";a.click();
-                  showToast(`📤 ${motoristas.length} contatos exportados como vCard!`,"ok");
-                }} style={{...css.hBtn,fontSize:12}}>📤 vCard (.vcf)</button>
+                  showToast(`${motoristas.length} contatos exportados como vCard!`,"ok");
+                }} style={{...css.hBtn,fontSize:12}}><Icon n="download" s={13} /> vCard (.vcf)</button>
                 <button onClick={()=>{
-                  if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("❌ Exportação cancelada","err");return;}}
+                  if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("Exportação cancelada","err");return;}}
                   const header="Name,Given Name,Family Name,Phone 1 - Type,Phone 1 - Value,Notes";
                   const rows=motoristas.map(m=>{
                     const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
@@ -412,19 +413,19 @@ function mapearColuna(n){
                   });
                   const bom="\uFEFF";const blob=new Blob([bom+[header,...rows].join("\n")],{type:"text/csv;charset=utf-8"});
                   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_google.csv";a.click();
-                  showToast(`📤 ${motoristas.length} contatos exportados como CSV Google!`,"ok");
-                }} style={{...css.hBtn,fontSize:12}}>📊 CSV Google</button>
+                  showToast(`${motoristas.length} contatos exportados como CSV Google!`,"ok");
+                }} style={{...css.hBtn,fontSize:12}}><Icon n="chart" s={13} /> CSV Google</button>
                 <button onClick={()=>{
                   const normalizados=motoristas.map(m=>({...m,nome:normalizarNome(m.nome),tel:normalizarTelefone(m.tel),placa1:normalizarPlaca(m.placa1),placa2:normalizarPlaca(m.placa2),placa3:normalizarPlaca(m.placa3),placa4:normalizarPlaca(m.placa4),favorecido:normalizarNome(m.favorecido)}));
-                  saveMotoristasLS(normalizados);registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);showToast(`✅ ${normalizados.length} contatos normalizados!`,"ok");
-                }} style={{...css.btnGold,fontSize:12}}>🔧 Normalizar</button>
+                  saveMotoristasLS(normalizados);registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);showToast(`${normalizados.length} contatos normalizados!`,"ok");
+                }} style={{...css.btnGold,fontSize:12}}><Icon n="tool" s={13} /> Normalizar</button>
               </div>
 
               {/* ── Importar ── */}
-              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6,marginTop:8}}>📥 Importar</div>
+              <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6,marginTop:8}}><Icon n="upload" s={13} /> Importar</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
                 <label style={{...css.hBtn,fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
-                  📥 CSV Google / vCard
+                  <Icon n="upload" s={13} /> CSV Google / vCard
                   <input type="file" accept=".csv,.vcf,.vcard" style={{display:"none"}} onChange={e=>{
                     const f=e.target.files?.[0]; if(!f){return;}
                     const reader=new FileReader();
@@ -503,7 +504,7 @@ function mapearColuna(n){
                       };
                       const isVCard=txt.toUpperCase().includes("BEGIN:VCARD");
                       const importados=isVCard?parseVCard(txt):parseCSV(txt);
-                      if(!importados.length){showToast("⚠️ Nenhum contato encontrado no arquivo","warn");return;}
+                      if(!importados.length){showToast("Nenhum contato encontrado no arquivo","warn");return;}
                       // Comparar com existentes
                       const novos=[], conflitos=[];
                       importados.forEach(imp=>{
@@ -555,23 +556,23 @@ function mapearColuna(n){
                 </label>
               </div>
               <div style={{padding:"8px 10px",background:t.bg,borderRadius:8,border:`1px solid ${t.borda}`,fontSize:10,color:t.txt2,lineHeight:1.5}}>
-                💡 Google Contacts: <strong style={{color:t.txt}}>contacts.google.com</strong> → Exportar → CSV Google. Para importar, exporte da aba Motoristas ou baixe o .csv/.vcf e importe aqui.
+                <Icon n="bulb" s={13} /> Google Contacts: <strong style={{color:t.txt}}>contacts.google.com</strong> <Icon n="arrow-right" s={13} /> Exportar <Icon n="arrow-right" s={13} /> CSV Google. Para importar, exporte da aba Motoristas ou baixe o .csv/.vcf e importe aqui.
               </div>
             </div>}
 
             {/* LOG DE ALTERACOES */}
             <div style={{...css.secTitle,margin:"24px 0 2px",padding:"16px 0",cursor:"pointer",userSelect:"none"}} onClick={async()=>{const next=!logsOpen;setLogsOpen(next);if(next)await carregarLogs();}}>
-              {hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Log de Alterações<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{logsOpen?"▲":"▼"}</span>
+              {hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,t.ouro,12)} Log de Alterações<span style={{fontSize:11,color:t.txt2,marginLeft:4}}>{logsOpen ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
               <span style={{flex:1,height:1,background:t.borda}} />
             </div>
             {logsOpen && (
               <div style={{marginBottom:16}}>
                 {/* Sub-abas */}
                 <div style={{display:"flex",gap:5,marginBottom:12}}>
-                  {[{k:"dev",l:"🧑‍💻 Desenvolvimento"},{k:"op",l:"⚙️ Operacional"}].map(st=>(
+                  {[{k:"dev",l:"Desenvolvimento"},{k:"op",l:"Operacional"}].map(st=>(
                     <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.badge,cursor:"pointer",background:logsSubTab===st.k?`rgba(217,98,43,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{st.l}</button>
                   ))}
-                  {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}>↺ Atualizar</button>}
+                  {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}><Icon n="refresh" s={13} /> Atualizar</button>}
                 </div>
 
                 {/* ABA DESENVOLVIMENTO */}
@@ -588,7 +589,7 @@ function mapearColuna(n){
                         </div>
                         <div style={{fontSize:10,color:t.txt2,lineHeight:1.6,marginBottom:8}}>
                           Detecta elementos com estilos fora do padrão <strong style={{color:t.ouro}}>DESIGN.*</strong>.<br/>
-                          Para alterar qualquer elemento globalmente: edite <strong style={{color:t.ouro}}>DESIGN</strong> no topo do arquivo → propaga em todo o código que usa <strong style={{color:t.ouro}}>css.*</strong>.
+                          Para alterar qualquer elemento globalmente: edite <strong style={{color:t.ouro}}>DESIGN</strong> no topo do arquivo <Icon n="arrow-right" s={13} /> propaga em todo o código que usa <strong style={{color:t.ouro}}>css.*</strong>.
                         </div>
                         <div style={{background:t.card2,borderRadius:DESIGN.r.sm,padding:"8px 10px",fontSize:9,color:t.txt2,fontFamily:DESIGN.fnt.b,marginBottom:10,lineHeight:1.8}}>
                           {Object.entries(DESIGN).filter(([k])=>k!=="c").map(([k,v])=>(
@@ -603,7 +604,7 @@ function mapearColuna(n){
                         <div style={{padding:"10px 14px"}}>
                           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                             <span style={{...css.badge(auditReport.total===0?t.verde:t.danger, auditReport.total===0?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`, auditReport.total===0?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>
-                              {auditReport.total===0?"✓ TUDO OK":`${auditReport.total} VIOLAÇÕES`}
+                              {auditReport.total===0?"TUDO OK":`${auditReport.total} VIOLAÇÕES`}
                             </span>
                             <span style={{fontSize:9,color:t.txt2}}>{auditReport.timestamp}</span>
                           </div>
@@ -619,7 +620,7 @@ function mapearColuna(n){
                                   <div key={i} style={{background:t.card2,borderRadius:DESIGN.r.tag,padding:"5px 8px",fontSize:9,color:t.txt2,display:"flex",gap:8,alignItems:"flex-start"}}>
                                     <span style={{color:t.danger,fontWeight:700,flexShrink:0}}>{item.tipo}</span>
                                     <span style={{color:t.txt,fontWeight:600}}>{item.valor}</span>
-                                    <span style={{color:t.txt2,flex:1}}>→ {item.sugestao}</span>
+                                    <span style={{color:t.txt2,flex:1}}><Icon n="arrow-right" s={13} /> {item.sugestao}</span>
                                     <span style={{color:t.txt2,flexShrink:0,fontStyle:"italic"}}>{item.label}</span>
                                   </div>
                                 ))}
@@ -636,14 +637,14 @@ function mapearColuna(n){
                     {DEV_CHANGELOG.map((sessao,si)=>(
                       <div key={si} style={{background:t.card,borderRadius:10,border:`1px solid ${t.azulLt}`,overflow:"hidden"}}>
                         <div style={{padding:"8px 12px",background:t.card2,display:"flex",alignItems:"center",gap:8}}>
-                          <span style={{fontSize:12}}>🧑‍💻</span>
+                          <span style={{fontSize:12}}><Icon n="code" s={13} /></span>
                           <span style={{fontSize:11,fontWeight:700,color:t.txt}}>{sessao.sessao}</span>
                           <span style={{fontSize:9,color:t.txt2,marginLeft:"auto"}}>{sessao.data}</span>
                         </div>
                         <div style={{padding:"8px 12px",display:"flex",flexDirection:"column",gap:5}}>
                           {sessao.itens.map((item,ii)=>(
                             <div key={ii} style={{display:"flex",gap:7,alignItems:"flex-start"}}>
-                              <span style={{color:t.verde,fontSize:10,flexShrink:0,marginTop:1}}>✓</span>
+                              <span style={{color:t.verde,fontSize:10,flexShrink:0,marginTop:1}}><Icon n="check" s={13} /></span>
                               <span style={{fontSize:10,color:t.txt2,lineHeight:1.55}}>{item}</span>
                             </div>
                           ))}
@@ -659,7 +660,7 @@ function mapearColuna(n){
                     <div style={{fontSize:10,color:t.txt2,marginBottom:8}}>{logsData.length} eventos operacionais · tabela: co_logs_alteracoes</div>
                     {logsData.length===0?(
                       <div style={{...css.empty,padding:"16px 0",fontSize:11,color:t.txt2}}>
-                        <div style={{fontSize:28,marginBottom:8}}>📭</div>
+                        <div style={{fontSize:28,marginBottom:8}}><Icon n="inbox" s={13} /></div>
                         Nenhum evento operacional registrado ainda.<br/>
                         <span style={{fontSize:9}}>Eventos são criados ao editar, criar ou excluir registros no app.</span>
                       </div>

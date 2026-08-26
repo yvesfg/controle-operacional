@@ -43,8 +43,8 @@ const setConfigRemoto = useCallback(async (key, value) => {
 const handleLogin = async () => {
   setAuthMsg(null);
   const login = authEmail.trim().toLowerCase();
-  if (!login) { setAuthMsg({t:"err",m:"⚠️ Digite seu email"}); return; }
-  if (!authSenha) { setAuthMsg({t:"err",m:"⚠️ Digite a senha"}); return; }
+  if (!login) { setAuthMsg({t:"err",m:"Digite seu email"}); return; }
+  if (!authSenha) { setAuthMsg({t:"err",m:"Digite a senha"}); return; }
 
   // ── Login ADMIN ──
   const adminEmailCfg = loadJSON("co_admin_email","").toLowerCase();
@@ -60,7 +60,7 @@ const handleLogin = async () => {
     // Fallback local removido por segurança — hash admin apenas no Supabase
 
     if (!storedHash) {
-      setAuthMsg({t:"err",m:"⚠️ Senha admin não foi configurada. Acesse o painel admin e defina a senha."});
+      setAuthMsg({t:"err",m:"Senha admin não foi configurada. Acesse o painel admin e defina a senha."});
       setAuthSenha("");
       return;
     }
@@ -86,7 +86,7 @@ const handleLogin = async () => {
           .catch(() => {});
       }
     } else {
-      setAuthMsg({t:"err",m:"❌ Senha incorreta"});
+      setAuthMsg({t:"err",m:"Senha incorreta"});
       setAuthSenha("");
     }
     return;
@@ -161,7 +161,7 @@ const handleLogin = async () => {
   } else {
     // Checar se existe na lista local para dar mensagem correta
     const emailExiste = usuarios.some(u => (u.email||"").toLowerCase() === login);
-    setAuthMsg({t:"err",m: emailExiste ? "❌ Senha incorreta" : "❌ Usuário não encontrado"});
+    setAuthMsg({t:"err",m: emailExiste ? "Senha incorreta" : "Usuário não encontrado"});
     setAuthSenha("");
   }
 };
@@ -188,14 +188,14 @@ const handleLogout = () => {
 
 // Salvar nova senha no primeiro login (local + Supabase)
 const handlePrimeiroLoginSalvar = async () => {
-  if (!primLoginSenha || primLoginSenha.length < 6) { showToast("⚠️ Senha deve ter ao menos 6 caracteres","warn"); return; }
-  if (primLoginSenha !== primLoginSenha2) { showToast("❌ Senhas não conferem","err"); return; }
+  if (!primLoginSenha || primLoginSenha.length < 6) { showToast("Senha deve ter ao menos 6 caracteres","warn"); return; }
+  if (primLoginSenha !== primLoginSenha2) { showToast("Senhas não conferem","err"); return; }
   const hash = await hashSenha(primLoginSenha);
   // Hash admin não é mais salvo localmente — apenas no Supabase
   await setConfigRemoto("admin_senha_hash", hash); // ← sincroniza todos os dispositivos
   setPrimeiroLogin(false);
   setPrimLoginSenha(""); setPrimLoginSenha2("");
-  showToast("✅ Senha atualizada e sincronizada!","ok");
+  showToast("Senha atualizada e sincronizada!","ok");
 };
 
   return { getConfigRemoto, setConfigRemoto, handleLogin, handleLogout, handlePrimeiroLoginSalvar };

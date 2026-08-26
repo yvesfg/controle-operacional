@@ -107,7 +107,7 @@ export default function ModalNFD({ ctx }) {
               </label>
               <input type="file" accept="image/*" multiple onChange={e=>{
                 const files=Array.from(e.target.files||[]);
-                if(nfdFotos.length+files.length>5){showToast("⚠️ Máximo 5 fotos","warn");e.target.value="";return;}
+                if(nfdFotos.length+files.length>5){showToast("Máximo 5 fotos","warn");e.target.value="";return;}
                 files.forEach(f=>{const rd=new FileReader();rd.onload=ev=>setNfdFotos(p=>[...p,{file:f,preview:ev.target.result,nome:f.name}]);rd.readAsDataURL(f);});
                 e.target.value="";
               }} style={{...css.inp,padding:"7px 10px",fontSize:11,marginBottom:nfdFotos.length>0?8:0}} />
@@ -135,8 +135,8 @@ export default function ModalNFD({ ctx }) {
                     ...(s.tipo?{tipo:s.tipo}:{}),
                   }));
                   const pct=s.confianca!=null?` · ${Math.round(s.confianca*100)}% conf.`:"";
-                  showToast(`✨ IA sugeriu — confira os campos${pct}`,"ok");
-                }catch(e){showToast("⚠️ IA: "+e.message,"warn");}
+                  showToast(`IA sugeriu — confira os campos${pct}`,"ok");
+                }catch(e){showToast("IA: "+e.message,"warn");}
                 finally{setIaLoading(false);}
               }} style={{width:"100%",marginBottom:10,padding:"9px 10px",borderRadius:9,
                 border:`1.5px solid ${t.ouro}`,background:`rgba(217,98,43,.08)`,color:t.ouro,
@@ -156,11 +156,11 @@ export default function ModalNFD({ ctx }) {
                 Não houve NFD
               </button>
               <button disabled={nfdUploadando} onClick={async()=>{
-                if(nfdForm.tipo!=="sobra"&&!nfdForm.numero){showToast("⚠️ Informe o número da NFD","warn");return;}
+                if(nfdForm.tipo!=="sobra"&&!nfdForm.numero){showToast("Informe o número da NFD","warn");return;}
                 const conn=getConexao();
                 let fotos=[];
                 if(nfdFotos.length>0){
-                  if(!conn){showToast("⚠️ Sem conexão — fotos não enviadas","warn");}
+                  if(!conn){showToast("Sem conexão — fotos não enviadas","warn");}
                   else{
                     setNfdUploadando(true);
                     try{
@@ -172,15 +172,15 @@ export default function ModalNFD({ ctx }) {
                         const url=await supaStorageUpload(conn.url,conn.key,"nfd-fotos",filePath,img.file);
                         fotos.push(url);
                       }
-                      showToast(`📷 ${fotos.length} foto(s) enviada(s)`,"ok");
-                    }catch(e){showToast("⚠️ Erro no upload: "+e.message,"warn");}
+                      showToast(`${fotos.length} foto(s) enviada(s)`,"ok");
+                    }catch(e){showToast("Erro no upload: "+e.message,"warn");}
                     setNfdUploadando(false);
                   }
                 }
                 const nfdData={...nfdForm,...(fotos.length>0?{fotos}:{})};
                 setFormData(p=>({...p,nfd:nfdData}));
-                const label=nfdForm.tipo.toUpperCase()+(nfdForm.numero?" · Nº "+nfdForm.numero:"")+(fotos.length>0?" · "+fotos.length+"📷":"");
-                showToast(`✅ NFD registrada — ${label}`,"ok");
+                const label=nfdForm.tipo.toUpperCase()+(nfdForm.numero?" · Nº "+nfdForm.numero:"")+(fotos.length>0?" · "+fotos.length+" foto(s)":"");
+                showToast(`NFD registrada — ${label}`,"ok");
                 if(nfdRegistrarOutra){
                   setNfdForm({numero:"",valor:"",tipo:"avaria"});
                   setNfdFotos([]);

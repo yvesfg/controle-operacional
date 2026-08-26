@@ -5,6 +5,7 @@
 // Só leitura de propósito (fase 1): a tela aponta e exporta pra quem preenche.
 // Corrigir a planilha pelo app é outra conversa — escreve nos dois lados.
 import React from "react";
+import Icon from "../components/Icon.jsx";
 import { listarPorPeriodos, ehAtivo } from "../freteConferencia.js";
 import { conciliar, CLASSES } from "../conciliacao.js";
 import { ExportMenu } from "../exportHelpers.jsx";
@@ -96,7 +97,7 @@ export default function Conciliacao({ ctx, conn }) {
           sub={`${resumo.batendo} de ${resumo.comparadas}`}
           color={pctBate >= 95 ? t.verde : undefined} danger={pctBate < 80} compact={isMobile} />
         <KpiCard label="Divergências" value={String(achados.length)}
-          sub={achados.length ? "clique numa classe abaixo" : "✓ nada a corrigir"}
+          sub={achados.length ? "clique numa classe abaixo" : "nada a corrigir"}
           danger={achados.length > 0} compact={isMobile} />
         <KpiCard label="Impacto somado" value={moneyK(impactoTotal)}
           sub="valor em jogo no mês" danger={impactoTotal > 0} compact={isMobile} />
@@ -151,7 +152,7 @@ export default function Conciliacao({ ctx, conn }) {
           {filtro !== "todos" && (
             <>
               <span style={{ fontSize: 10.5, color: t.txt2 }}>{CLASSES[filtro]?.desc}</span>
-              <button onClick={() => setFiltro("todos")} style={{ background: "transparent", border: `1px solid ${t.borda}`, borderRadius: 6, color: t.txt2, fontSize: 10, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}>✕ limpar</button>
+              <button onClick={() => setFiltro("todos")} style={{ background: "transparent", border: `1px solid ${t.borda}`, borderRadius: 6, color: t.txt2, fontSize: 10, padding: "3px 8px", cursor: "pointer", fontFamily: "inherit" }}><Icon n="x" s={13} /> limpar</button>
             </>
           )}
           <div style={{ marginLeft: "auto" }}>
