@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { ExportMenu } from "../exportHelpers.jsx";
@@ -179,9 +180,9 @@ export default function DescargaView({ ctx }) {
                   return (
                     <div key={i} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" style={{background:_isDHL2?`rgba(22,119,255,.06)`:t.card,borderRadius:11,padding:12,border:`1px solid ${_isDHL2?t.azulLt:isAtrasado?hexRgb(t.danger,.5):hexRgb(t.azul,.35)}`,marginBottom:8,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL2?`0 0 0 2px rgba(22,119,255,.18)`:"none"}}>
                       <div style={{fontSize:15,fontWeight:700,color:t.txt,marginBottom:4,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                        {isAtrasado && dias !== null && <span style={{background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:700}}><Icon n="alert-octagon" s={13} /> {dias}d</span>}
+                        {isAtrasado && dias !== null && <Badge variant="danger" size="sm"><Icon n="alert-octagon" s={13} /> {dias}d</Badge>}
                         {r.nome||"—"}
-                        {r.ro && <span style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:`rgba(255,152,0,.08)`,color:t.laranja,border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
+                        {r.ro && <Badge variant="default" size="sm">RO {r.ro}</Badge>}
                         {r.fora_planilha && <span title="Não foi encontrado na planilha na última sincronização" style={{padding:"2px 7px",borderRadius:4,fontSize:9,fontWeight:700,background:t.danger,color:"#fff"}}><Icon n="alert" s={13} /> Fora da planilha</span>}
                         <span style={{marginLeft:"auto",fontSize:10,color:t.txt2}}>ver detalhes ›</span>
                       </div>
@@ -239,7 +240,7 @@ export default function DescargaView({ ctx }) {
                               </span>
                             )}
                             {isAtrasado && dias !== null && (
-                              <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:8,fontWeight:700,background:`rgba(246,70,93,.07)`,color:t.danger,border:`1px solid rgba(246,70,93,.18)`}}>{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9)} {dias}d atraso</span>
+                              <Badge variant="danger" size="sm">{hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,9)} {dias}d atraso</Badge>
                             )}
                             {pgStatus && <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 6px",borderRadius:4,fontSize:11,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>
                               {pgStatus==="pago"?hIco(<><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></>,t.verde,9):hIco(<><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,t.danger,9)}
@@ -417,8 +418,8 @@ export default function DescargaView({ ctx }) {
                           </div>
                           {/* Alertas de tipo */}
                           {(totais.semStrech>0||totais.semDescarga>0)&&(<div style={{display:"flex",gap:8,marginBottom:8,flexWrap:"wrap"}}>
-                            {totais.semStrech>0&&<span style={{fontSize:10,background:"rgba(246,70,93,.1)",border:"1px solid #f6465d44",borderRadius:6,padding:"3px 10px",color:"var(--cat-red)"}}><Icon n="alert" s={13} /> {totais.semStrech} NFs com Descarga sem Stretch</span>}
-                            {totais.semDescarga>0&&<span style={{fontSize:10,background:"rgba(217,98,43,.1)",border:"1px solid #f0b90b44",borderRadius:6,padding:"3px 10px",color:"var(--cat-gold)"}}><Icon n="alert" s={13} /> {totais.semDescarga} NFs com Stretch sem Descarga</span>}
+                            {totais.semStrech>0&&<Badge variant="default" size="sm"><Icon n="alert" s={13} /> {totais.semStrech} NFs com Descarga sem Stretch</Badge>}
+                            {totais.semDescarga>0&&<Badge variant="default" size="sm"><Icon n="alert" s={13} /> {totais.semDescarga} NFs com Stretch sem Descarga</Badge>}
                           </div>)}
                           {/* Totais */}
                           <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center",padding:"7px 12px",background:t.card,border:`1px solid ${t.borda}`,borderRadius:10}}>
@@ -462,7 +463,7 @@ export default function DescargaView({ ctx }) {
                                       <td style={{padding:"5px 8px",textAlign:"right",fontWeight:600,color:cStr}}>{row.temDados&&syncOk?fD(row.diffStr):"—"}{" "}<span style={{fontSize:8}}>{_confLbl(row.confStr)}</span></td>
                                       <td style={{padding:"5px 8px",textAlign:"right",fontWeight:700,color:t.txt}}>{fV(row.totalPlan)}</td>
                                       <td style={{padding:"5px 8px",textAlign:"right",fontWeight:700,color:row.temDados?t.txt:t.txt2}}>{row.temDados?fV(row.totalApp):"—"}</td>
-                                      <td style={{padding:"5px 8px"}}><span style={{fontSize:9,fontWeight:700,color:cor,background:`${cor}18`,border:`1px solid ${cor}44`,borderRadius:5,padding:"2px 6px",whiteSpace:"nowrap"}}>{STATUS_LABEL[row.conf]||row.conf}</span></td>
+                                      <td style={{padding:"5px 8px"}}><Badge variant="default" size="sm">{STATUS_LABEL[row.conf]||row.conf}</Badge></td>
                                     </tr>
                                   );
                                 })}

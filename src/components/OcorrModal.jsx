@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 
@@ -108,18 +109,10 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
               Nova Ocorrência
             </span>
             {dtRecord && (
-              <span style={{
-                padding: "2px 7px", borderRadius: 5,
-                background: "rgba(22,119,255,0.12)", color: "var(--cat-blue)",
-                fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
-              }}>DT {dtRecord.dt}</span>
+              <Badge variant="default" size="sm">DT {dtRecord.dt}</Badge>
             )}
             {tipos.size > 1 && (
-              <span style={{
-                padding: "2px 7px", borderRadius: 5,
-                background: `${primTipo.cor}18`, color: primTipo.cor,
-                fontSize: 10, fontWeight: 700,
-              }}>{tipos.size} tipos</span>
+              <Badge variant="default" size="sm">{tipos.size} tipos</Badge>
             )}
           </div>
           <button

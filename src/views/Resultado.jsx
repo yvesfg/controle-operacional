@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import ModalDespesa from "../modals/ModalDespesa.jsx";
@@ -351,9 +352,9 @@ export default function Resultado({ ctx }) {
             juntas), o mesmo que o Painel Financeiro respeita — dois seletores para o mesmo
             recorte na mesma faixa era a redundância que a tela tinha. */}
         {temFilial && filial !== "todos" && (
-          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 11px", borderRadius: 8, background: "var(--accent)", color: "#fff" }}>
+          <Badge variant="primary" size="md">
             {filialLabel}
-          </span>
+          </Badge>
         )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
@@ -459,9 +460,9 @@ export default function Resultado({ ctx }) {
                       )}
                     </div>
                     {temMesDivergente && (
-                      <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 4, background: `rgba(217,98,43,.15)`, color: t.ouro, fontWeight: 700, whiteSpace: "nowrap" }}>
+                      <Badge variant="primary" size="sm">
                         mês diferente
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 );
@@ -780,10 +781,9 @@ export default function Resultado({ ctx }) {
                           {fmtDiaMes(d.dt_mov) || "sem data"}
                         </span>
                         {buscaTodosMeses && d.mes_ref && (
-                          <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: t.azulLt || t.txt2,
-                            background: `rgba(100,160,255,.12)`, borderRadius: 3, padding: "1px 4px", marginTop: 2, whiteSpace: "nowrap" }}>
+                          <Badge variant="info" size="sm"  style={{ marginTop: 2 }}>
                             {mesLabel(d.mes_ref)}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -811,10 +811,9 @@ export default function Resultado({ ctx }) {
                         {fmtDiaMes(d.dt_mov) || "sem data"}
                       </span>
                       {buscaTodosMeses && d.mes_ref && (
-                        <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: t.azulLt || t.txt2,
-                          background: `rgba(100,160,255,.12)`, borderRadius: 3, padding: "1px 4px", marginTop: 2, whiteSpace: "nowrap", alignSelf: "flex-start" }}>
+                        <Badge variant="info" size="sm"  style={{ marginTop: 2, alignSelf: "flex-start" }}>
                           {mesLabel(d.mes_ref)}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                     {/* Natureza (texto com ellipsis + badges sempre visíveis) */}

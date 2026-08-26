@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../../design-system/components/Badge.jsx";
 import Icon from "../../components/Icon.jsx";
 import { clickable } from "../../utils.js";
 import KpiCard from "../../components/KpiCard.jsx";
@@ -228,40 +229,32 @@ export default function GestaoAVB({ ctx }) {
             {/* Linha 3: Info operacional + alertas */}
             <div style={{display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"}}>
               {r.placa&&(
-                <span style={{fontSize:9,color:t.verde,fontFamily:"var(--font-mono)",
-                  background:`rgba(16,185,129,.08)`,border:"1px solid rgba(16,185,129,.2)",
-                  borderRadius:4,padding:"2px 6px"}}>{r.placa}</span>
+                <Badge variant="success" size="sm">{r.placa}</Badge>
               )}
               {r.destino&&(
-                <span style={{fontSize:9,color:t.txt2,background:t.card2,borderRadius:4,padding:"2px 6px"}}>
+                <Badge variant="default" size="sm">
                   {r.destino.split(/\s*[-–]\s*/)[0].trim()}
-                </span>
+                </Badge>
               )}
               {r.data_carr&&(
-                <span style={{fontSize:9,color:t.ouro,fontFamily:"var(--font-mono)",
-                  background:"rgba(217,98,43,.07)",borderRadius:4,padding:"2px 6px"}}>
+                <Badge variant="primary" size="sm">
                   <Icon n="arrow-up" s={13} /> {r.data_carr.slice(0,5)}
-                </span>
+                </Badge>
               )}
               {adiant&&adiant>0&&(
-                <span style={{fontSize:9,color:t.laranja,fontFamily:"var(--font-mono)",
-                  background:"rgba(245,158,11,.08)",borderRadius:4,padding:"2px 6px"}}>
+                <Badge variant="default" size="sm">
                   ADT {fmtM(adiant)}
-                </span>
+                </Badge>
               )}
               {saldo&&saldo>0&&(
-                <span style={{fontSize:9,color:t.danger,fontFamily:"var(--font-mono)",fontWeight:700,
-                  background:"rgba(246,70,93,.08)",border:"1px solid rgba(246,70,93,.2)",
-                  borderRadius:4,padding:"2px 6px"}}>
+                <Badge variant="danger" size="sm">
                   Saldo {fmtM(saldo)}
-                </span>
+                </Badge>
               )}
               {temCteComp&&(
-                <span style={{fontSize:9,fontWeight:700,color:"var(--cat-violet)",
-                  background:"rgba(168,85,247,.08)",border:"1px solid rgba(168,85,247,.2)",
-                  borderRadius:4,padding:"2px 6px",fontFamily:"var(--font-mono)"}}>
+                <Badge variant="default" size="sm">
                   CTE COMPL.
-                </span>
+                </Badge>
               )}
               {/* Próxima ação em destaque */}
               {!completo&&proxEtapa&&(

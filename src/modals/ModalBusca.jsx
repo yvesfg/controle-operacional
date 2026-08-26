@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import Icon from "../components/Icon.jsx";
@@ -63,7 +64,7 @@ export default function ModalBusca({ ctx }) {
             <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:t.ouro}}>{r.dt}</span>
             <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:12,letterSpacing:2,color:t.verde}}>{r.placa||""}</span>
             <span style={{fontSize:10,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.destino||""}</span>
-            {buscaResult&&r.dt===buscaResult.dt&&<span style={{fontSize:8,fontWeight:700,letterSpacing:1,color:t.ouro,border:"1px solid var(--accent2)",background:"var(--accent2)",borderRadius:4,padding:"1px 5px"}}>ABERTA</span>}
+            {buscaResult&&r.dt===buscaResult.dt&&<Badge variant="primary" size="sm">ABERTA</Badge>}
           </div>
           <div style={{fontSize:10,color:t.txt2,display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
             <span style={{display:"flex",alignItems:"center",gap:3}}><Icon n="package" s={10} c={t.txt2}/> {r.data_carr||"—"}</span>
@@ -123,7 +124,7 @@ export default function ModalBusca({ ctx }) {
 
             <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:14,padding:"8px 12px",background:t.card,borderRadius:9,border:`1px solid ${t.verde}`}}>
               <span style={{width:6,height:6,background:t.verde,borderRadius:"50%",animation:"pulse 2s infinite"}} />
-              <span style={{fontSize:11,color:t.txt2,fontWeight:500}}><strong style={{color:t.verde}}>{DADOS.length}</strong> registros · <span style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:4,padding:"1px 6px",fontSize:9,color:t.azulLt,fontWeight:700,display:"inline-flex",alignItems:"center",gap:4}}>{connStatus==="online"?<><Icon n="dot" s={8} c={t.verde}/> ONLINE</>:<><Icon n="dot" s={8} c={t.txt2}/> LOCAL</>}</span></span>
+              <span style={{fontSize:11,color:t.txt2,fontWeight:500}}><strong style={{color:t.verde}}>{DADOS.length}</strong> registros · <Badge variant="info" size="sm">{connStatus==="online"?<><Icon n="dot" s={8} c={t.verde}/> ONLINE</>:<><Icon n="dot" s={8} c={t.txt2}/> LOCAL</>}</Badge></span>
             </div>
 
             {/* ── Busca por nome que casou com vários motoristas ── */}
@@ -162,8 +163,8 @@ export default function ModalBusca({ ctx }) {
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt,lineHeight:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{buscaResult.nome||"—"}</div>
                     <div style={{fontSize:9,color:t.txt2,fontWeight:600,letterSpacing:1.5,marginTop:2,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                      <span style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.ouro,fontFamily:"'Bebas Neue',sans-serif"}}>DT {buscaResult.dt}</span>
-                      {buscaResult.placa&&<span style={{background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:DESIGN.r.badge,padding:"3px 10px",fontSize:9,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:t.verde,fontFamily:"'Bebas Neue',sans-serif"}}>{buscaResult.placa}</span>}
+                      <Badge variant="primary" size="sm">DT {buscaResult.dt}</Badge>
+                      {buscaResult.placa&&<Badge variant="success" size="sm">{buscaResult.placa}</Badge>}
                       {buscaResult.data_desc?<span style={{...css.badge(t.verde,`rgba(2,192,118,.1)`,`rgba(2,192,118,.3)`)}}> DESCARREGADO</span>:buscaResult.data_agenda?<span style={{...css.badge(t.ouro,`rgba(217,98,43,.08)`,`rgba(217,98,43,.3)`)}}>AGUARDANDO</span>:<span style={{...css.badge(t.danger,`rgba(246,70,93,.08)`,`rgba(246,70,93,.3)`)}}>SEM AGENDA</span>}
                     </div>
                   </div>

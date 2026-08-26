@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../../design-system/components/Badge.jsx";
 import { Button } from "../../design-system/components/Button.jsx";
 import Icon from "../../components/Icon.jsx";
 
@@ -208,12 +209,10 @@ export default function PlanilhaAVB({ ctx }) {
             color:"var(--text)",height:28,width:220,outline:"none",fontFamily:"var(--font-heading)"}}/>
 
         {planilhaFiltroStatus && (
-          <span style={{display:"flex",alignItems:"center",gap:4,fontSize:9,fontWeight:700,
-            padding:"3px 8px",borderRadius:6,background:"rgba(255,107,53,.12)",
-            border:"1px solid rgba(255,107,53,.3)",color:"var(--accent)",fontFamily:"var(--font-heading)"}}>
+          <Badge variant="primary" size="sm">
             Status: {planilhaFiltroStatus}
             <Button variant="ghost" size="sm" onClick={()=>{setPlanilhaFiltroStatus("");setPlanilhaPagina(1);}} style={{ marginLeft: 2 }}>×</Button>
-          </span>
+          </Badge>
         )}
 
         {temFiltro && (

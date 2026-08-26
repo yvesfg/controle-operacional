@@ -7,6 +7,7 @@
  *                t, isMobile, ExportMenu }
  */
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { getPerfil } from "../operacao/perfil.js";
@@ -328,7 +329,7 @@ export default function PlanilhaView({ ctx }) {
                   <div style={{ flex: 2, fontSize: 10, color: "var(--text3)", display: "flex", alignItems: "center", gap: 6 }}>
                     <span>{rota}</span>
                     {rotuloClf(row) && (
-                      <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--color-info)", background: "color-mix(in srgb, var(--color-info) 14%, transparent)", border: "1px solid color-mix(in srgb, var(--color-info) 30%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>{rotuloClf(row)}</span>
+                      <Badge variant="info" size="sm" pill>{rotuloClf(row)}</Badge>
                     )}
                     {row._semDt && (
                       <span title="Carga carregada sem DT (aguardando o DT da Suzano) — confirmada e contando nos totais" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--accent)", background: "color-mix(in srgb, var(--accent) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Sem DT</span>

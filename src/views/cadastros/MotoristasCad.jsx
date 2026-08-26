@@ -748,7 +748,7 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
                   {" · "}
                   <Button variant="ghost" size="sm" disabled={pagina === 0} onClick={() => setPagina((p) => p - 1)}><Icon n="chevron-left" s={11} /> anterior</Button>
                   {" "}
-                  <Button variant="ghost" size="sm" disabled={(pagina + 1) * porPagina >= novosFiltrados.length} onClick={() => setPagina((p) => p + 1)}>próxima <Icon n="chevron-right" s={11} /></Button>
+                  <Button variant="ghost" size="sm" disabled={(pagina + 1) * porPagina>= novosFiltrados.length} onClick={() => setPagina((p) => p + 1)}>próxima <Icon n="chevron-right" s={11} /></Button>
                 </div>
                 <Button size="sm" onClick={confirmarNovos} disabled={!selecionados.size}>
                   Importar {selecionados.size} selecionado(s)

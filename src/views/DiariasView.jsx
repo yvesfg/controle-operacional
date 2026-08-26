@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { ExportMenu } from "../exportHelpers.jsx";
@@ -169,11 +170,11 @@ export default function DiariasView({ ctx }) {
                       <div key={idx} onClick={()=>abrirDetalhe(r)} onKeyDown={e=>(e.key==='Enter'||e.key===' ')&&abrirDetalhe(r)} tabIndex="0" role="button" className="co-card" style={{background:_isDHL?`rgba(217,98,43,.06)`:t.card,borderRadius:12,padding:14,border:`1px solid ${_isDHL?t.ouro:hexRgb(borderC,.5)}`,marginBottom:10,animation:"slideUp .3s",cursor:"pointer",boxShadow:_isDHL?`0 0 0 2px rgba(217,98,43,.22)`:"none"}}>
                         <div style={{fontSize:16,fontWeight:700,color:t.txt,marginBottom:5,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                           {r.nome||"—"}
-                          <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:tipoColor,color:borderC,border:`1px solid ${borderC}33`}}>
+                          <Badge variant="default" size="sm">
                             {tipoLabel}
-                          </span>
+                          </Badge>
                           {pgStatus && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:pgStatus==="pago"?`rgba(2,192,118,.08)`:`rgba(246,70,93,.06)`,color:pgStatus==="pago"?t.verde:t.danger,border:`1px solid ${pgStatus==="pago"?t.verde:t.danger}33`}}>{pgStatus==="pago"?"Pago":<><Icon n="money" s={11} /> Não Pago</>}</span>}
-                          {r.ro && <span style={{padding:"3px 8px",borderRadius:4,fontSize:10,fontWeight:700,background:`rgba(255,152,0,.08)`,color:t.laranja,border:`1px solid rgba(255,152,0,.25)`}}>RO {r.ro}</span>}
+                          {r.ro && <Badge variant="default" size="sm">RO {r.ro}</Badge>}
                           <span style={{marginLeft:"auto",fontSize:11,color:t.txt2}}>ver detalhes ›</span>
                         </div>
                         <div style={{fontSize:13,color:t.txt2,lineHeight:1.8}}>
@@ -514,10 +515,9 @@ export default function DiariasView({ ctx }) {
                                       className="co-tr"
                                       onClick={()=>{if(row.appReg){setBuscaInput(row.dt);setBuscaTipo("dt");setActiveTab("busca");}}}>
                                       <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`}}>
-                                        <span style={{background:cfg.bg,color:cfg.c,border:`1px solid ${cfg.c}44`,
-                                          borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700,whiteSpace:"nowrap"}}>
+                                        <Badge variant="default" size="sm">
                                           {cfg.l}
-                                        </span>
+                                        </Badge>
                                       </td>
                                       <td style={{padding:"6px 10px",borderBottom:`1px solid ${t.borda}22`,fontWeight:700,
                                         fontFamily:"'Bebas Neue',sans-serif",letterSpacing:1.5}}>{row.dt||"\u2014"}</td>

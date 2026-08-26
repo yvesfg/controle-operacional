@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
@@ -114,7 +115,7 @@ export default function ModalDashDrill({ ctx }) {
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:2}}>
                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:13,color:t.ouro,letterSpacing:1}}>{r.dt}</span>
                     {dashDrillModal.type==="motorista"&&<span style={{fontSize:11,color:t.txt,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.nome||"—"}</span>}
-                    {r.status&&<span style={{fontSize:8,padding:"1px 6px",borderRadius:4,background:`rgba(128,128,128,.12)`,color:t.txt2,fontWeight:600}}>{r.status}</span>}
+                    {r.status&&<Badge variant="default" size="sm">{r.status}</Badge>}
                   </div>
                   {dashDrillModal.type==="faturamento" ? (
                     <div style={{fontSize:9,color:t.txt2,lineHeight:1.5,display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>

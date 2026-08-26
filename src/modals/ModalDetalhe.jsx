@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import OcorrModal from "../components/OcorrModal.jsx";
 import Icon from "../components/Icon.jsx";
@@ -326,8 +327,8 @@ export default function ModalDetalhe({ ctx }) {
                     <div ref={refDocs}>
                       <div style={{...css.secTitle,marginBottom:10}}>
                         {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.azulLt,12)} Documentos / Minutas
-                        {isDiariaReg&&<span style={{fontSize:9,background:"rgba(217,98,43,.15)",border:"1px solid rgba(217,98,43,.3)",borderRadius:4,padding:"1px 6px",color:t.ouro,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="bed" s={10} c={t.ouro}/> DIÁRIA</span>}
-                        {isDescargaReg&&<span style={{fontSize:9,background:"rgba(22,119,255,.12)",border:"1px solid rgba(22,119,255,.25)",borderRadius:4,padding:"1px 6px",color:t.azulLt,fontWeight:700,marginLeft:4,display:"inline-flex",alignItems:"center",gap:3}}><Icon n="package" s={10} c={t.azulLt}/> DESCARGA</span>}
+                        {isDiariaReg&&<Badge variant="primary" size="sm"  style={{ marginLeft: 4 }}><Icon n="bed" s={10} c={t.ouro}/> DIÁRIA</Badge>}
+                        {isDescargaReg&&<Badge variant="info" size="sm"  style={{ marginLeft: 4 }}><Icon n="package" s={10} c={t.azulLt}/> DESCARGA</Badge>}
                         <span style={{flex:1,height:1,background:t.borda}} />
                       </div>
 
@@ -380,7 +381,7 @@ export default function ModalDetalhe({ ctx }) {
                         <button onClick={()=>setDetalheSecCteComp(p=>!p)} style={accHdr(detalheSecCteComp)}>
                           {hIco(<><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,t.azulLt,13,2)}
                           <span style={{fontSize:10,fontWeight:700,color:t.txt,letterSpacing:.5,flex:1,textAlign:"left"}}>CTE COMPLEMENTAR</span>
-                          {(detalheCteComp.cte||detalheCteComp.mdf||detalheCteComp.mat)&&<span style={{fontSize:8,background:"rgba(22,119,255,.12)",borderRadius:8,padding:"1px 6px",color:t.azulLt,fontWeight:700}}>preenchido</span>}
+                          {(detalheCteComp.cte||detalheCteComp.mdf||detalheCteComp.mat)&&<Badge variant="info" size="sm">preenchido</Badge>}
                           {hIco(detalheSecCteComp?<><polyline points="18 15 12 9 6 15"/></>:<><polyline points="6 9 12 15 18 9"/></>,t.txt2,13,2)}
                         </button>
                         {detalheSecCteComp&&<div style={{background:`rgba(22,119,255,.04)`,border:`1px solid rgba(22,119,255,.15)`,borderRadius:8,padding:"8px 10px"}}>

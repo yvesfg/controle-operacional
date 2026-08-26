@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import Icon from "../components/Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 import { parseValorBR } from "../utils.js";
@@ -143,9 +144,9 @@ export default function CargasSemDt({ conn, ctx }) {
       <div onClick={() => setAberto((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", cursor: "pointer" }}>
         <span style={{ fontSize: 13, fontWeight: 800, color: t.txt }}>Cargas sem DT</span>
         {pendentes > 0 && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: t.warn, background: hexRgb(t.warn, 0.15), border: `1px solid ${hexRgb(t.warn, 0.35)}`, borderRadius: 20, padding: "1px 9px" }}>
+          <Badge variant="warning" size="md" pill>
             {pendentes} a revisar
-          </span>
+          </Badge>
         )}
         <span style={{ marginLeft: "auto", fontSize: 11, color: t.txt2 }}>{aberto ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
       </div>
@@ -186,12 +187,12 @@ export default function CargasSemDt({ conn, ctx }) {
                     <span style={{ fontSize: 12.5, fontWeight: 700, color: t.txt }}>{p.nome || "sem motorista"}</span>
                     <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: t.txt2 }}>{p.placa || "sem placa"}</span>
                     {rotuloClf(p) && (
-                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: t.azul, background: hexRgb(t.azul, 0.12), border: `1px solid ${hexRgb(t.azul, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>{rotuloClf(p)}</span>
+                      <Badge variant="info" size="sm" pill>{rotuloClf(p)}</Badge>
                     )}
                     {p.status === "conciliado" && p.dt_conciliado && (
-                      <span style={{ fontSize: 10, fontWeight: 700, color: t.verde, background: hexRgb(t.verde, 0.12), border: `1px solid ${hexRgb(t.verde, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>
+                      <Badge variant="success" size="sm" pill>
                         conciliada · DT {p.dt_conciliado}
-                      </span>
+                      </Badge>
                     )}
                     <span style={{ marginLeft: "auto", fontSize: 11, color: t.txt2 }}>›</span>
                   </div>
@@ -225,7 +226,7 @@ export default function CargasSemDt({ conn, ctx }) {
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 800, fontSize: 14, color: t.txt }}>Carga sem DT</span>
                 {rotuloClf(p) && (
-                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", color: t.azul, background: hexRgb(t.azul, 0.12), border: `1px solid ${hexRgb(t.azul, 0.3)}`, borderRadius: 20, padding: "1px 8px" }}>{rotuloClf(p)}</span>
+                  <Badge variant="info" size="sm" pill>{rotuloClf(p)}</Badge>
                 )}
                 <span style={{ marginLeft: "auto", fontSize: 10.5, color: t.txt2, textTransform: "capitalize" }}>{p.status}</span>
               </div>

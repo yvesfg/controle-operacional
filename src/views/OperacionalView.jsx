@@ -21,6 +21,7 @@
  *   ctx.css, ctx.hIco
  */
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { clickable } from "../utils.js";
@@ -263,15 +264,15 @@ export default function OperacionalView({ ctx }) {
                         <div style={{ flex: 1 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                             <span style={{ fontFamily: "var(--font-heading)", fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--yellow)" }}>{s.numero || "—"}</span>
-                            <span style={{ fontSize: 9, fontWeight: 700, color: statusC, background: `${statusC}18`, border: `1px solid ${statusC}33`, borderRadius: 4, padding: "2px 7px", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}><Icon n="dot" s={9} c={statusCor} /> {s.status?.toUpperCase() || "ABERTO"}</span>
+                            <Badge variant="default" size="sm"><Icon n="dot" s={9} c={statusCor} /> {s.status?.toUpperCase() || "ABERTO"}</Badge>
                             {s.dt_rel && <span style={{ fontSize: 9, color: t.txt2 }}>DT: {s.dt_rel}</span>}
-                            {alertaRetorno && <span style={{ fontSize: 9, color: t.danger, fontWeight: 700, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}><Icon n="alert" s={13} /> {diasSemRetorno}d sem retorno</span>}
+                            {alertaRetorno && <Badge variant="danger" size="sm"><Icon n="alert" s={13} /> {diasSemRetorno}d sem retorno</Badge>}
                             <span style={{ marginLeft: "auto", fontSize: 10, color: t.txt2, flexShrink: 0 }}>{isExpanded ? <Icon n="chevron-up" s={11} /> : <Icon n="chevron-down" s={11} />}</span>
                           </div>
                           <div style={{ fontSize: 11, color: t.txt2, marginTop: 3, lineHeight: 1.5 }}>
                             <Icon n="calendar" s={13} /> Chamado: <strong style={{ color: t.txt }}>{s.data_chamado ? new Date(s.data_chamado + "T12:00:00").toLocaleDateString("pt-BR") : "-"}</strong>
                             {dataUltimoRet && <> · <Icon n="refresh" s={13} /> Último retorno: <strong style={{ color: t.txt }}>{new Date(dataUltimoRet + "T12:00:00").toLocaleDateString("pt-BR")}</strong></>}
-                            {retornos.length > 0 && <span style={{ marginLeft: 6, fontSize: 9, background: `rgba(217,98,43,.1)`, color: t.ouro, borderRadius: 4, padding: "1px 5px" }}>{retornos.length} retorno{retornos.length > 1 ? "s" : ""}</span>}
+                            {retornos.length > 0 && <Badge variant="primary" size="sm"  style={{ marginLeft: 6 }}>{retornos.length} retorno{retornos.length > 1 ? "s" : ""}</Badge>}
                           </div>
                           {s.descricao && <div style={{ fontSize: 11, color: t.txt, marginTop: 4, lineHeight: 1.4 }}>{s.descricao}</div>}
                         </div>
@@ -370,8 +371,8 @@ export default function OperacionalView({ ctx }) {
                   <div key={i} {...clickable(() => abrirDetalhe(r))} style={{ background: t.card, borderRadius: 11, border: `1px solid ${tipoColor}`, padding: 12, cursor: "pointer" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                       {r.nome || "—"}
-                      <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(246,70,93,.08)`, color: tipoColor, border: `1px solid ${tipoColor}33` }}>{tipoLabel}</span>
-                      {semRo && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 9, fontWeight: 700, background: `rgba(255,152,0,.07)`, color: "var(--cat-amber2)", border: `1px solid rgba(255,152,0,.3)` }}><Icon n="alert" s={13} /> RO vazio</span>}
+                      <Badge variant="default" size="sm">{tipoLabel}</Badge>
+                      {semRo && <Badge variant="default" size="sm"><Icon n="alert" s={13} /> RO vazio</Badge>}
                       <span style={{ marginLeft: "auto", fontSize: 10, color: t.txt2 }}>›</span>
                     </div>
                     <div style={{ fontSize: 11, color: t.txt2 }}>
@@ -379,8 +380,8 @@ export default function OperacionalView({ ctx }) {
                     </div>
                     {(r.diaria_prev || r.diaria_pg) && (
                       <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                        <span style={{ background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 6, padding: "3px 8px", fontSize: 10, color: t.danger }}>Devido: <strong>{fmtMoeda(r.diaria_prev)}</strong></span>
-                        <span style={{ background: `rgba(2,192,118,.08)`, border: `1px solid rgba(2,192,118,.2)`, borderRadius: 6, padding: "3px 8px", fontSize: 10, color: t.verde }}>Pago: <strong>{fmtMoeda(r.diaria_pg)}</strong></span>
+                        <Badge variant="danger" size="sm">Devido: <strong>{fmtMoeda(r.diaria_prev)}</strong></Badge>
+                        <Badge variant="success" size="sm">Pago: <strong>{fmtMoeda(r.diaria_pg)}</strong></Badge>
                       </div>
                     )}
                   </div>
@@ -501,10 +502,10 @@ export default function OperacionalView({ ctx }) {
                   <div key={a.id || i} style={{ background: t.card, borderRadius: 11, border: `1px solid ${bordaC}`, padding: 12 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
                       <span style={{ fontFamily: "var(--font-heading)", fontWeight: 700, fontSize: 13, letterSpacing: "-0.01em", color: "var(--yellow)" }}>{a.numero || a.apontamento || "—"}</span>
-                      {(a.item || a.linha) && <span style={{ fontSize: 9, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 6px" }}>It.{a.item || "?"} / Ln.{a.linha || "?"}</span>}
-                      <span style={{ fontSize: 9, fontWeight: 700, color: t.txt2, background: t.card2, border: `1px solid ${t.borda}`, borderRadius: 4, padding: "2px 7px" }}>{a.tipo === "stretch" ? "Stretch" : a.tipo === "deslocamento" ? "Deslocamento" : a.tipo === "outros" ? "Outros" : "Descarga"}</span>
-                      {semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.danger, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.2)`, borderRadius: 4, padding: "2px 7px" }}><Icon n="alert" s={13} /> FRS vazio</span>}
-                      {semNF && !semFRS && <span style={{ fontSize: 9, fontWeight: 700, color: t.warn, background: `rgba(245,158,11,.08)`, border: `1px solid rgba(245,158,11,.2)`, borderRadius: 4, padding: "2px 7px" }}><Icon n="file-text" s={13} /> NF pendente</span>}
+                      {(a.item || a.linha) && <Badge variant="default" size="sm">It.{a.item || "?"} / Ln.{a.linha || "?"}</Badge>}
+                      <Badge variant="default" size="sm">{a.tipo === "stretch" ? "Stretch" : a.tipo === "deslocamento" ? "Deslocamento" : a.tipo === "outros" ? "Outros" : "Descarga"}</Badge>
+                      {semFRS && <Badge variant="danger" size="sm"><Icon n="alert" s={13} /> FRS vazio</Badge>}
+                      {semNF && !semFRS && <Badge variant="warning" size="sm"><Icon n="file-text" s={13} /> NF pendente</Badge>}
                     </div>
                     {a.descricao_apontamento && <div style={{ fontSize: 10, color: t.txt2, marginBottom: 6, fontStyle: "italic" }}>{a.descricao_apontamento}</div>}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, fontSize: 10, color: t.txt2 }}>

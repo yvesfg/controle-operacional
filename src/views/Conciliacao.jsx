@@ -5,6 +5,7 @@
 // Só leitura de propósito (fase 1): a tela aponta e exporta pra quem preenche.
 // Corrigir a planilha pelo app é outra conversa — escreve nos dois lados.
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { listarPorPeriodos, ehAtivo } from "../freteConferencia.js";
@@ -185,10 +186,9 @@ export default function Conciliacao({ ctx, conn }) {
                 {visiveis.map((a, i) => (
                   <tr key={i} style={{ borderTop: `1px solid ${t.borda}` }}>
                     <td style={td}>
-                      <span style={{ fontSize: 9.5, fontFamily: "var(--font-mono)", textTransform: "uppercase",
-                        color: COR[a.classe], border: `1px solid ${COR[a.classe]}`, borderRadius: 4, padding: "1px 6px" }}>
+                      <Badge variant="default" size="sm">
                         {CLASSES[a.classe]?.label}
-                      </span>
+                      </Badge>
                     </td>
                     <td style={{ ...td, fontFamily: "var(--font-mono)" }}>{a.dt || "—"}</td>
                     <td style={{ ...td, fontFamily: "var(--font-mono)" }}>{a.ctes || "—"}</td>

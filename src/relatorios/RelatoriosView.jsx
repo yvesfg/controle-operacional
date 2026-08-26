@@ -16,6 +16,7 @@
  *   relDescargaOpen, setRelDescargaOpen
  */
 import React, { useState, useMemo } from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import { FIELD_CATALOG, FIELD_GROUPS } from "./fieldCatalog.js";
 import { ExportMenu } from "../exportHelpers.jsx";
@@ -420,14 +421,9 @@ export default function RelatoriosView({
                       </div>
                     </td>
                     <td style={{ padding: "11px 16px" }}>
-                      <span style={{
-                        fontSize: 10, fontFamily: "var(--font-mono)",
-                        background: "var(--accent2, rgba(124,58,237,0.1))",
-                        color: "var(--accent)", padding: "2px 8px",
-                        borderRadius: 4, border: "1px solid var(--accent)",
-                      }}>
+                      <Badge variant="primary" size="sm">
                         ATIVO
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 );

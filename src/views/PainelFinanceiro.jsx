@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
@@ -231,9 +232,9 @@ export default function PainelFinanceiro({ ctx }) {
           onChange={(p) => { const m = mesRefDe(p); if (m) setMesRef(m); }} />
         {/* Recorte de filial agora é o do topbar — ver comentário em temFilial. */}
         {temFilial && filial !== "todos" && (
-          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 11px", borderRadius: 8, background: "var(--accent)", color: "#fff" }}>
+          <Badge variant="primary" size="md">
             {filial === "IMP" ? "Imperatriz" : "Belém"}
-          </span>
+          </Badge>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: t.txt,
           padding: "6px 11px", border: `1px solid ${t.borda}`, borderRadius: 8 }}>

@@ -2,6 +2,7 @@
  * OcorrenciasView.jsx
  */
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import OcorrModal from "../components/OcorrModal.jsx";
@@ -19,12 +20,7 @@ const Ico = ({ size=16, color="currentColor", sw=1.8, children, style }) => (
 
 function OcorrBadge({ label, color }) {
   return (
-    <span style={{
-      fontSize:9, fontFamily:"var(--font-mono)", fontWeight:500,
-      letterSpacing:"0.06em", textTransform:"uppercase",
-      background:color+"22", border:`1px solid ${color}44`,
-      borderRadius:4, padding:"2px 7px", color,
-    }}>{label}</span>
+    <Badge variant="default" size="sm">{label}</Badge>
   );
 }
 
@@ -91,14 +87,14 @@ function OcorrCard({ entry, onOpen, motInfo, onAddOcorrencia, isMobile }) {
       {/* Row 3: RO / NFD */}
       {(r.ro||r.nfd?.numero)&&(
         <div style={{display:"flex",gap:8,flexWrap:"wrap",borderTop:"1px solid var(--border)",paddingTop:8}}>
-          {r.ro&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(249,115,22,.1)",border:"1px solid rgba(249,115,22,.3)",borderRadius:5,padding:"2px 8px",color:"var(--cat-tangerine)",fontWeight:700}}>RO {r.ro}</span>)}
+          {r.ro&&(<Badge variant="default" size="sm">RO {r.ro}</Badge>)}
           {r.ro_status&&<span style={{padding:'2px 6px',borderRadius:4,fontSize:9,fontWeight:700,
             background:r.ro_status==='FINALIZADO'?'rgba(2,192,118,.1)':'rgba(217,98,43,.1)',
             color:r.ro_status==='FINALIZADO'?'var(--cat-green)':'var(--cat-gold)',
             border:`1px solid ${r.ro_status==='FINALIZADO'?'rgba(2,192,118,.3)':'rgba(217,98,43,.3)'}`}}>
             {r.ro_status}
           </span>}
-          {r.nfd?.numero&&(<span style={{fontSize:10,fontFamily:"var(--font-mono)",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:5,padding:"2px 8px",color:"var(--red)",fontWeight:700}}>NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</span>)}
+          {r.nfd?.numero&&(<Badge variant="danger" size="sm">NFD {r.nfd.tipo?.toUpperCase()||"NFD"} · Nº {r.nfd.numero}{r.nfd.valor?` · R$ ${r.nfd.valor}`:""}</Badge>)}
         </div>
       )}
       {/* As datas de carregamento/agenda/descarga saíram daqui: viraram etapas
@@ -119,9 +115,9 @@ function StatusBadge({ status }) {
   };
   const c = map[s] || { color:"var(--text3)", bg:"var(--card2)" };
   return (
-    <span style={{fontSize:9,fontFamily:"var(--font-mono)",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",padding:"3px 9px",borderRadius:99,background:c.bg,color:c.color,border:`1px solid ${c.color}44`}}>
+    <Badge variant="default" size="sm">
       {s || "—"}
-    </span>
+    </Badge>
   );
 }
 

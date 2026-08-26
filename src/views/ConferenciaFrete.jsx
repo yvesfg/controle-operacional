@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import ReactDOM from "react-dom";
@@ -930,10 +931,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   );
 
   const badge = (icon, texto, cor) => (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: hexRgb(cor, .12), border: `1px solid ${hexRgb(cor, .3)}`, color: cor, marginRight: 5, whiteSpace: "nowrap" }}>
+    <Badge variant="default" size="sm" pill  style={{ marginRight: 5 }}>
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">{icon}</svg>
       {texto}
-    </span>
+    </Badge>
   );
 
   // Badges do ciclo de vida do CTe (migration 048): o que ele É (tipo_doc) e se ainda
@@ -1310,10 +1311,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: t.txt }}>
                 {l.label}
                 {!l.temDespesa && (
-                  <span style={{ marginLeft: 7, fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap",
-                    background: hexRgb(t.warn, .12), border: `1px solid ${hexRgb(t.warn, .3)}`, color: t.warn }}>
+                  <Badge variant="warning" size="sm" pill  style={{ marginLeft: 7 }}>
                     DÉBITOS NÃO IMPORTADOS
-                  </span>
+                  </Badge>
                 )}
               </span>
               <span style={{ width: COL_MOEDA, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.txt }}>{money(l.saldo)}</span>
@@ -1373,10 +1373,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {Object.keys(resumoCli).length > 0 && (
         <div style={{ ...tile }}>
           {sectionHead(`Por cliente · ${mesLabel(periodoRef)}`, !incluirDiariaDescarga && (
-            <span style={{ fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, whiteSpace: "nowrap",
-              background: hexRgb(t.ouro, .12), border: `1px solid ${hexRgb(t.ouro, .3)}`, color: t.ouro }}>
+            <Badge variant="primary" size="sm" pill>
               SÓ FRETE · sem diária/descarga
-            </span>
+            </Badge>
           ))}
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 6px 7px" }}>
@@ -1661,7 +1660,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               </Button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 5 }}>
-              <span style={{ fontSize: 9.5, fontWeight: 700, fontFamily: "var(--font-mono)", padding: "2px 7px", borderRadius: 20, background: t.card2, border: `1px solid ${t.borda}`, color: t.txt2 }}>{mesLabel(p.periodo_ref)}</span>
+              <Badge variant="default" size="sm" pill>{mesLabel(p.periodo_ref)}</Badge>
               <span style={{ fontSize: 10.5, color: t.txt, fontWeight: 700 }}>{userChip(p.nome_usuario || "sem usuário", 15)}</span>
               {p.placa && <span style={{ fontSize: 10.5, color: t.txt2, fontFamily: "var(--font-mono)" }}>{p.placa}</span>}
               {p.is_devolucao && badge(ICO_DEVOLUCAO, "DEVOLUÇÃO · FOB", t.azul)}
@@ -1892,7 +1891,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
               <Button variant="secondary" size="sm" onClick={() => setPreview(null)}>
                 Cancelar
               </Button>
-              <Button variant="primary" size="sm" onClick={confirmarImportacao} disabled={importing || cnpjsDesconhecidos.length > 0}>
+              <Button variant="primary" size="sm" onClick={confirmarImportacao} disabled={importing || cnpjsDesconhecidos.length> 0}>
                 {importing ? "Importando..." : "Confirmar e gravar"}
               </Button>
             </div>
@@ -2238,7 +2237,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                             fontSize: 11.5, padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
                             border: `1px solid ${hexRgb(t.warn, .35)}`, background: t.card, color: t.txt }}>
                           <b>{CATEGORIA_LABEL[o.categoria] || o.categoria}</b>
-                          {o.categoria_manual && <span style={{ fontSize: 9.5, fontWeight: 800, padding: "2px 6px", borderRadius: 20, background: hexRgb(t.verde, .15), color: t.verde }}>DEFINIDA À MÃO</span>}
+                          {o.categoria_manual && <Badge variant="success" size="sm" pill>DEFINIDA À MÃO</Badge>}
                           <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontWeight: 700, color: t.ouro }}>{money(o.saldo)}</span>
                           <span style={{ color: t.azul, fontWeight: 700, fontSize: 10.5 }}>abrir ›</span>
                         </button>
@@ -2629,7 +2628,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   <div key={d.id} style={{ borderRadius: 12, border: `1.5px solid ${esteId ? hexRgb(t.ouro, .5) : t.borda}`, background: t.bg, padding: "12px 13px", opacity: ehAtivo(d) ? 1 : .55 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, flexWrap: "wrap" }}>
                       <span style={{ fontWeight: 800, fontSize: 13, color: t.txt }}>CTRC {d.ctrc}</span>
-                      {esteId && <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 20, background: hexRgb(t.ouro, .15), color: t.ouro }}>ESTE</span>}
+                      {esteId && <Badge variant="primary" size="sm" pill>ESTE</Badge>}
                     </div>
                     <div style={{ fontSize: 10.5, color: t.txt, fontWeight: 700, marginBottom: 7 }}>{userChip(d.nome_usuario || "sem usuário na planilha", 15)}</div>
                     <div style={{ marginBottom: 7 }}>

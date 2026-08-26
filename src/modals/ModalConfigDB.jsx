@@ -1,4 +1,5 @@
 import React from "react";
+import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import Icon from "../components/Icon.jsx";
@@ -128,7 +129,7 @@ export default function ModalConfigDB({ ctx }) {
                     <div key={pref} {...clickable(()=>{const ns=new Set(motImportPrefSel);if(ns.has(pref))ns.delete(pref);else ns.add(pref);setMotImportPrefSel(ns);})} style={{display:"flex",alignItems:"center",gap:10,padding:"14px 10px",borderRadius:8,marginBottom:4,cursor:"pointer",background:sel?`rgba(2,192,118,.05)`:`rgba(246,70,93,.03)`,border:`1px solid ${sel?`rgba(2,192,118,.2)`:`rgba(246,70,93,.15)`}`}}>
                       <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${sel?t.verde:t.danger}`,background:sel?t.verde:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#000",fontWeight:700}}>{sel?<Icon n="check" s={11} c="#000" sw={2.6}/>:""}</div>
                       <span style={{flex:1,fontSize:12,fontWeight:700,color:isAv&&!sel?t.danger:t.txt}}>{pref}</span>
-                      {isAv && <span style={{fontSize:9,color:t.danger,background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.2)`,borderRadius:4,padding:"1px 5px",display:"inline-flex",alignItems:"center",gap:3}}><Icon n="alert" s={9} c={t.danger}/> não-motorista</span>}
+                      {isAv && <Badge variant="danger" size="sm"><Icon n="alert" s={9} c={t.danger}/> não-motorista</Badge>}
                       <span style={{fontSize:10,color:t.txt2}}>{qt} contato{qt!==1?"s":""}</span>
                     </div>
                   );
