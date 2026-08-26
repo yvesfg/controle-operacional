@@ -55,6 +55,36 @@ const P = {
   plane:        <><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></>,
   chart:        <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,
   clock:        <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+
+  // ── Completados na migração dos emojis (2026-08-26) ──────────────────────
+  // Os 7 primeiros JÁ eram citados pelo mapa EMOJI_ICON abaixo mas não existiam
+  // aqui: <Icon n="check-circle"/> devolvia null em silêncio.
+  "check-circle": <><circle cx="12" cy="12" r="10"/><polyline points="16 9.5 11 15 8 12"/></>,
+  "x-circle":     <><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></>,
+  "alert-octagon":<><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+  "arrow-right":  <><line x1="4" y1="12" x2="20" y2="12"/><polyline points="14 6 20 12 14 18"/></>,
+  "map-pin":      <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></>,
+  "file-text":    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></>,
+  "credit-card":  <><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></>,
+
+  "arrow-up":     <><line x1="12" y1="20" x2="12" y2="4"/><polyline points="6 10 12 4 18 10"/></>,
+  "arrow-down":   <><line x1="12" y1="4" x2="12" y2="20"/><polyline points="6 14 12 20 18 14"/></>,
+  "arrow-left":   <><line x1="20" y1="12" x2="4" y2="12"/><polyline points="10 6 4 12 10 18"/></>,
+  "chevron-up":   <><polyline points="6 15 12 9 18 15"/></>,
+  "chevron-down": <><polyline points="6 9 12 15 18 9"/></>,
+  "chevron-left": <><polyline points="15 6 9 12 15 18"/></>,
+  "chevron-right":<><polyline points="9 6 15 12 9 18"/></>,
+  refresh:      <><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>,
+  undo:         <><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></>,
+  play:         <><polygon points="6 3 20 12 6 21"/></>,
+  plus:         <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+  minus:        <><line x1="5" y1="12" x2="19" y2="12"/></>,
+  filter:       <><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46"/></>,
+  hash:         <><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></>,
+  ruler:        <><path d="M2 15 15 2l7 7L9 22z"/><path d="m6 11 2 2M9 8l2 2M12 5l2 2"/></>,
+  car:          <><path d="M5 17h14M3 13l2-5a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 8l2 5v4a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><circle cx="7.5" cy="13.5" r=".5"/><circle cx="16.5" cy="13.5" r=".5"/></>,
+  printer:      <><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>,
+  copy:         <><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></>,
 };
 
 export default function Icon({ n, name, s = 16, size, c, color, sw = 1.8, style }) {
