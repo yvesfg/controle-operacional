@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { PERMS_PADRAO, PERMS_LISTA, BASES } from "../constants.js";
 import { hashSenha, saveJSON, clickable } from "../utils.js";
 import { supaFetch } from "../supabase.js";
@@ -31,7 +32,7 @@ export default function ModalUsuario({ ctx }) {
                 <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} USUÁRIO</div>
                 <div style={{fontSize:9,color:t.txt2}}>Preencha os dados do usuário</div>
               </div>
-              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+              <Button variant="ghost" size="touch" iconOnly onClick={()=>setModalOpen(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
             </div>
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {/* Dados básicos */}
@@ -166,7 +167,7 @@ export default function ModalUsuario({ ctx }) {
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
               <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.azul},${t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="mail" s={18} c="#fff"/></div>
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>EMAIL DE BOAS-VINDAS</div><div style={{fontSize:9,color:t.txt2}}>Notificar o novo usuário?</div></div>
-              <button onClick={()=>setUsuarioEmailPreview(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+              <Button variant="ghost" size="touch" iconOnly onClick={()=>setUsuarioEmailPreview(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
             </div>
             <div style={{padding:16}}>
               <div style={{background:t.card2,borderRadius:10,padding:12,marginBottom:14,border:`1px solid ${t.borda}`}}>

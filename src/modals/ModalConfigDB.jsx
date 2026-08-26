@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
@@ -30,7 +31,7 @@ export default function ModalConfigDB({ ctx }) {
             <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
               <Icon n="database" s={19} c={t.txt}/>
               <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt}}>BANCO DE DADOS</div><div style={{fontSize:10,color:t.txt2}}>Conexões Supabase</div></div>
-              <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+              <Button variant="ghost" size="touch" iconOnly onClick={()=>setModalOpen(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
             </div>
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {conexoes.map((c,i) => (
@@ -110,7 +111,7 @@ export default function ModalConfigDB({ ctx }) {
                   <div style={{fontSize:14,fontWeight:800,color:t.txt}}>Filtrar por Prefixo</div>
                   <div style={{fontSize:10,color:t.txt2,marginTop:1}}>{motImportRaw.length} contatos · {_allP.length} prefixos únicos</div>
                 </div>
-                <button onClick={()=>setMotImportPrefOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+                <Button variant="ghost" size="touch" iconOnly onClick={()=>setMotImportPrefOpen(false)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
               </div>
               <div style={{padding:"10px 14px",borderBottom:`1px solid ${t.borda}`,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",flexShrink:0}}>
                 <input value={motImportPrefBusca} onChange={e=>setMotImportPrefBusca(e.target.value)} placeholder="Buscar prefixo..." style={{...css.inp,flex:1,minWidth:120,fontSize:11}}/>

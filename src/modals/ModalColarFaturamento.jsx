@@ -10,6 +10,7 @@
 //   tablet / mobile  empilhado, o painel de cima limitado a ~metade da altura
 //                    pra nunca empurrar a conferência pra fora da tela
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import {
   BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
@@ -190,9 +191,7 @@ export default function ModalColarFaturamento({ ctx }) {
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: 2, color: t.ouro }}>PREENCHER PELO BLOCO</div>
             <div style={{ fontSize: 9, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
           </div>
-          <button onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" style={{ background: "rgba(128,128,128,.1)", border: "none", borderRadius: 7, width: 44, height: 44, cursor: salvando ? "not-allowed" : "pointer", color: t.txt2, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icon n="x" s={16} c={t.txt2} sw={2} />
-          </button>
+          <Button variant="ghost" size="touch" iconOnly onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" style={{ flexShrink: 0 }}><Icon n="x" s={16} c={t.txt2} sw={2} /></Button>
         </div>
 
         {/* Corpo — 2 colunas no desktop, empilhado abaixo disso */}

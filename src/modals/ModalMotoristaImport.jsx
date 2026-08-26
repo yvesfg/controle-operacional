@@ -1,4 +1,5 @@
 import { clickable } from '../utils.js';
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from '../components/Icon.jsx';
 
 export default function ModalMotoristaImport({ ctx }) {
@@ -79,7 +80,7 @@ export default function ModalMotoristaImport({ ctx }) {
                 : `${vinculos.length} DT${vinculos.length!==1?"s":""} com placa correspondente`}
             </div>
           </div>
-          <button onClick={()=>setMotImportOpen(false)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+          <Button variant="ghost" size="touch" iconOnly onClick={()=>setMotImportOpen(false)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
         </div>
 
         <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:12,maxHeight:"calc(96vh - 120px)"}}>

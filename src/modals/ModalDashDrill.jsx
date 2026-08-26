@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
@@ -62,7 +63,7 @@ export default function ModalDashDrill({ ctx }) {
                 : `${dashDrillModal.regs.length} ${dashDrillModal.regs.length!==1?"viagens":"viagem"} · ${dashDrillModal.type==="motorista"?"Histórico completo":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
             </div>
           </div>
-          <button onClick={()=>setDashDrillModal(null)} style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+          <Button variant="ghost" size="touch" iconOnly onClick={()=>setDashDrillModal(null)} style={{ flexShrink: 0 }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
         </div>
         {/* Conteúdo */}
         <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"10px 14px 14px",maxHeight:"calc(96vh - 120px)"}}>

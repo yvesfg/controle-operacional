@@ -60,6 +60,10 @@
 .ds-btn--lg  { height: var(--btn-h-lg); padding: 0 var(--space-5); font-size: var(--text-md); }
 .ds-btn--xl  { height: var(--btn-h-xl); padding: 0 var(--space-6); font-size: var(--text-lg); }
 .ds-btn--icon-only { padding: 0; aspect-ratio: 1; border-radius: var(--radius-ico); }
+/* Alvo de toque: 44px é o mínimo confortável no celular, e metade do uso do app
+   é lá. Existe porque o X de fechar modal já era 44×44 em 13 telas — virar sm
+   (28px) seria regressão no dedo de quem usa em pé, na operação. */
+.ds-btn--touch { height: 44px; min-width: 44px; padding: 0 var(--space-3); font-size: var(--text-base); }
 
 /* Variantes */
 .ds-btn--primary {

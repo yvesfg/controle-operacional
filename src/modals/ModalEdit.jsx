@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import Toggle from "../components/Toggle.jsx";
 import Icon from "../components/Icon.jsx";
@@ -287,7 +288,7 @@ function ModalEditComponent({ ctx }) {
             <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0 ? "EDITAR" : "NOVO REGISTRO"}</div>
             <div style={{fontSize:9,color:t.txt2}}>Preencha os dados</div>
           </div>
-          <button onClick={()=>setModalOpen(null)} style={{marginLeft:"auto",background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,width:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="x" s={16} c={t.txt2} sw={2}/></button>
+          <Button variant="ghost" size="touch" iconOnly onClick={()=>setModalOpen(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
         </div>
 
         {/* ── BODY ── */}
