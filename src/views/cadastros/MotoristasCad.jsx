@@ -3,6 +3,7 @@ import useMotoristas from "../../hooks/useMotoristas.js";
 import useVeiculos from "../../hooks/useVeiculos.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
 import EmptyState from "../../components/EmptyState.jsx";
+import Icon from "../../components/Icon.jsx";
 import ExportarCadastroPanel from "./ExportarCadastroPanel.jsx";
 import {
   GENEROS, FUNCOES, UFS, normalizarGenero, normalizarFuncao, normalizarUF,
@@ -288,6 +289,10 @@ export default function MotoristasCad({ ctx, conn }) {
   };
 
   const inp = { fontSize: 12.5, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", width: "100%" };
+  // Dois pesos: ferramenta (ghost, some no fundo) e ação (com borda/preenchimento).
+  const btnBase = { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, borderRadius: 8, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" };
+  const btnGhost = { ...btnBase, padding: "7px 10px", background: "transparent", color: t.txt2, border: "1.5px solid transparent" };
+  const btnAcao = { ...btnBase, padding: "7px 14px", background: "transparent", border: "1.5px solid" };
   const lbl = { fontSize: 10.5, color: t.txt2, marginBottom: 3, display: "block" };
   const campo = (label, k, extra = {}) => (
     <div style={{ flex: extra.flex || "1 1 140px" }}>
@@ -298,28 +303,39 @@ export default function MotoristasCad({ ctx, conn }) {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+      {/* Cinco botões do mesmo peso disputavam a atenção. Agora a linha tem
+          hierarquia: busca, as três FERRAMENTAS em ghost (uso esporádico) e, à
+          direita, as duas ações do dia a dia. Ícones vêm do set do sidebar
+          (components/Icon.jsx) — emoji não é o padrão do app. */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
         <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, CPF, placa ou DT"
-          style={{ ...inp, flex: "1 1 220px", width: "auto" }} />
-        <button onClick={sugerirVinculos} title="Cruza as placas do cadastro com as viagens e sugere preencher o motorista nas DTs sem nome"
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.verde, border: `1.5px solid ${t.verde}` }}>
-          🔗 Sugerir vínculos
+          style={{ ...inp, flex: "1 1 240px", width: "auto" }} />
+
+        <div style={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <button onClick={sugerirVinculos} title="Cruza as placas do cadastro com as viagens e preenche o motorista nas DTs sem nome"
+            style={btnGhost}>
+            <Icon n="link" s={13} /> Sugerir vínculos
+          </button>
+          <button onClick={() => setImportAberto(true)} title="Google Contacts → cadastro (enriquece quem já existe)"
+            style={btnGhost}>
+            <Icon n="upload" s={13} /> Importar agenda
+          </button>
+          <button onClick={exportarVCard} title="Cadastro → Google Contacts (.vcf)" style={btnGhost}>
+            <Icon n="download" s={13} /> Exportar vCard
+          </button>
+        </div>
+
+        <div style={{ width: 1, height: 22, background: t.borda }} />
+
+        {/* Toggle: quando o painel está aberto o botão fica preenchido, senão
+            não dá pra saber de onde aquele bloco veio. */}
+        <button onClick={() => setEnvioAberto((v) => !v)}
+          title="Monta o arquivo no modelo da embarcadora com os cadastros que você marcar"
+          style={{ ...btnAcao, color: envioAberto ? t.txtInverse : t.azul, background: envioAberto ? t.azul : "transparent", borderColor: t.azul }}>
+          <Icon n="building" s={13} /> Cadastro embarcadora
         </button>
-        <button onClick={() => setImportAberto(true)} title="Google Contacts → cadastro (enriquece quem já existe)"
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}` }}>
-          📥 Importar agenda (CSV)
-        </button>
-        <button onClick={() => setEnvioAberto((v) => !v)} title="Gera o .xlsx no modelo da embarcadora, escolhendo as DTs"
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}` }}>
-          📤 Cadastro embarcadora
-        </button>
-        <button onClick={exportarVCard} title="Cadastro → Google Contacts (.vcf)"
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.txt, border: `1.5px solid ${t.borda}` }}>
-          📤 Exportar vCard
-        </button>
-        <button onClick={novo}
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: t.ouro, color: "#1a1a1a", border: "none" }}>
-          + Novo motorista
+        <button onClick={novo} style={{ ...btnAcao, background: t.ouro, color: t.onPrimary, borderColor: t.ouro }}>
+          <Icon n="user" s={13} /> Novo motorista
         </button>
       </div>
 
@@ -386,8 +402,8 @@ export default function MotoristasCad({ ctx, conn }) {
           {openDocIntake && (
             <button onClick={() => openDocIntake("cnh", aplicarCnh)}
               title="Envie foto ou PDF da CNH — a IA preenche número, categoria, validade, UF e nascimento"
-              style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 8, cursor: "pointer", background: "transparent", color: t.verde, border: `1.5px solid ${t.verde}` }}>
-              📄 Ler CNH (foto ou PDF)
+              style={{ ...btnAcao, marginBottom: 10, color: t.verde, borderColor: t.verde }}>
+              <Icon n="id" s={13} /> Ler CNH (foto ou PDF)
             </button>
           )}
 
@@ -479,8 +495,8 @@ export default function MotoristasCad({ ctx, conn }) {
                     {openDocIntake && (
                       <button onClick={() => openDocIntake("crlv", (d) => aplicarCrlv(s, d))}
                         title="Envie foto ou PDF do CRLV desta peça — a placa vem do documento"
-                        style={{ fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.azul, border: `1.5px solid ${t.azul}`, marginBottom: 1 }}>
-                        📄 Ler CRLV
+                        style={{ ...btnAcao, padding: "6px 12px", fontSize: 11, color: t.azul, borderColor: t.azul, marginBottom: 1 }}>
+                        <Icon n="truck" s={13} /> Ler CRLV
                       </button>
                     )}
                   </div>

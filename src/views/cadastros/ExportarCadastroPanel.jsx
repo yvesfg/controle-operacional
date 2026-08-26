@@ -4,6 +4,7 @@ import { itensDoEnvio, matrizesDoTemplate, nomeDoArquivo } from "../../cadastroE
 import { listarEnvios, registrarEnvios, situacaoDoEnvio, indexarEnvios } from "../../cadastroEnvios.js";
 import { diasParaVencerCnh, DIAS_AVISO_CNH } from "../../cadastroEmbarcadora.js";
 import { baixarXLSXAbas } from "../../exportacao.js";
+import Icon from "../../components/Icon.jsx";
 
 // Painel de geração do cadastro da embarcadora — mora dentro de Cadastros >
 // Motoristas, no mesmo lugar (e no mesmo padrão) do "Importar agenda".
@@ -27,8 +28,10 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
   const [templateId, setTemplateId] = React.useState("");
   const [busca, setBusca] = React.useState("");
   const [marcadas, setMarcadas] = React.useState(new Set());
-  const [soCompletos, setSoCompletos] = React.useState(true);
-  const [soPendentes, setSoPendentes] = React.useState(true);
+  // Antes eram dois checkboxes em negativa ("só completos" + "esconder o que já
+  // foi"), e o efeito de marcar/desmarcar não era óbvio. Vira UM seletor com o
+  // nome da situação — a lógica por trás é a mesma combinação.
+  const [filtro, setFiltro] = React.useState("prontos");
   const [envios, setEnvios] = React.useState([]);
   const [gerando, setGerando] = React.useState(false);
 
@@ -62,26 +65,34 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
     diasCnh: diasParaVencerCnh(i.motorista?.cnh_validade),
   })), [DADOS, motoristas, veiculos, indiceEnvios]);
 
-  const contagem = React.useMemo(() => itens.reduce((acc, i) => {
-    acc[i.situacao.estado] = (acc[i.situacao.estado] || 0) + 1;
-    return acc;
-  }, {}), [itens]);
+  const contagem = React.useMemo(() => ({
+    prontos:   itens.filter((i) => !i.pendencias.length && i.situacao.estado !== "igual").length,
+    pendencia: itens.filter((i) => i.pendencias.length).length,
+    enviados:  itens.filter((i) => i.situacao.estado === "igual").length,
+    todos:     itens.length,
+  }), [itens]);
+
+  // "Prontos" é o padrão porque é o que se vai enviar: cadastro completo que
+  // ainda não foi, ou cujo conjunto mudou.
+  const daSituacao = React.useCallback((i) => {
+    if (filtro === "todos") return true;
+    if (filtro === "pendencia") return i.pendencias.length > 0;
+    if (filtro === "enviados") return i.situacao.estado === "igual";
+    return !i.pendencias.length && i.situacao.estado !== "igual";
+  }, [filtro]);
 
   const visiveis = React.useMemo(() => {
     const q = busca.trim().toUpperCase();
     return itens.filter((i) => {
-      if (soCompletos && i.pendencias.length) return false;
-      // "igual" = já foi e nada mudou. Reenviar só faz a embarcadora receber
-      // repetido, então some por padrão — mas o filtro é destravável.
-      if (soPendentes && i.situacao.estado === "igual") return false;
+      if (!daSituacao(i)) return false;
       if (!q) return true;
       return i.dts.some((d) => d.toUpperCase().includes(q))
         || i.nome.toUpperCase().includes(q)
         || i.veiculos.some((v) => v.placa.includes(q.replace(/[^A-Z0-9]/g, "")));
     });
-  }, [itens, busca, soCompletos, soPendentes]);
+  }, [itens, busca, daSituacao]);
   const selecionados = itens.filter((i) => marcadas.has(i.chave));
-  const comPendencia = itens.filter((i) => i.pendencias.length).length;
+  const marcaveis = visiveis.filter((i) => !i.pendencias.length).length;
 
   const alternar = (chave) => setMarcadas((s) => {
     const n = new Set(s);
@@ -133,7 +144,10 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
   return (
     <div style={{ marginBottom: 14, border: `1.5px solid ${t.azul}`, borderRadius: 10, background: t.card, padding: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, flex: "1 1 auto" }}>Gerar cadastro da embarcadora</div>
+        <div style={{ flex: "1 1 auto" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>Gerar cadastro da embarcadora</div>
+          <div style={{ fontSize: 11, color: t.txt2 }}>Cada linha é um motorista com o conjunto que rodou — marque e gere o arquivo no modelo dela.</div>
+        </div>
         <button onClick={onFechar} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Fechar</button>
       </div>
 
@@ -152,21 +166,26 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
       </div>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 8, fontSize: 11.5, color: t.txt2 }}>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-          <input type="checkbox" checked={soCompletos} onChange={(e) => setSoCompletos(e.target.checked)} />
-          Só cadastros completos
-        </label>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}
-          title="Esconde os cadastros já mandados com este mesmo conjunto — reenviar igual só faz a embarcadora receber repetido">
-          <input type="checkbox" checked={soPendentes} onChange={(e) => setSoPendentes(e.target.checked)} />
-          Esconder o que já foi com este mesmo conjunto
-        </label>
-        <span>{visiveis.length} cadastro(s) na lista · {marcadas.size} marcado(s)</span>
-        {comPendencia > 0 && <span style={{ color: t.warn }}>{comPendencia} com pendência</span>}
-        {(contagem.mudou > 0 || contagem.igual > 0) && (
-          <span>{contagem.novo || 0} novo(s) · {contagem.mudou || 0} com conjunto novo · {contagem.igual || 0} já enviado(s)</span>
+        {[
+          { k: "prontos",   l: "Prontos pra enviar", dica: "Cadastro completo que ainda não foi, ou cujo conjunto mudou" },
+          { k: "pendencia", l: "Falta documento",    dica: "Aparecem pra você ver o que falta, mas não podem ser marcados" },
+          { k: "enviados",  l: "Já enviados",        dica: "Mesmo motorista e mesmo conjunto que já foram — reenviar repete" },
+          { k: "todos",     l: "Todos",              dica: "A base inteira" },
+        ].map((f) => (
+          <button key={f.k} onClick={() => setFiltro(f.k)} title={f.dica}
+            style={{ fontSize: 11.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, cursor: "pointer", fontFamily: "inherit",
+              background: filtro === f.k ? t.azul : "transparent",
+              color: filtro === f.k ? t.txtInverse : t.txt2,
+              border: `1px solid ${filtro === f.k ? t.azul : t.borda}` }}>
+            {f.l} {contagem[f.k] || 0}
+          </button>
+        ))}
+        <span style={{ marginLeft: "auto" }}>{marcadas.size} marcado(s)</span>
+        {marcaveis > 0 && (
+          <button onClick={marcarVisiveis} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}`, fontFamily: "inherit" }}>
+            Marcar {marcaveis} da lista
+          </button>
         )}
-        <button onClick={marcarVisiveis} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt, border: `1px solid ${t.borda}` }}>Marcar visíveis</button>
         {marcadas.size > 0 && (
           <button onClick={() => setMarcadas(new Set())} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.txt2, border: `1px solid ${t.borda}` }}>Desmarcar</button>
         )}
@@ -174,8 +193,18 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
 
       <div style={{ display: "flex", flexDirection: "column", gap: 5, maxHeight: 320, overflowY: "auto", marginBottom: 10 }}>
         {!visiveis.length && (
-          <div style={{ fontSize: 11.5, color: t.txt2, padding: 8 }}>
-            Nenhum cadastro {soCompletos ? "completo " : ""}nesta base — desmarque o filtro pra ver o que falta.
+          <div style={{ fontSize: 11.5, color: t.txt2, padding: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            {busca.trim()
+              ? <span>Nada bate com “{busca.trim()}” nesta situação.</span>
+              : filtro === "prontos" && contagem.pendencia > 0
+                ? <>
+                    <span>Nenhum cadastro pronto — {contagem.pendencia} ainda esperam CNH ou CRLV.</span>
+                    <button onClick={() => setFiltro("pendencia")}
+                      style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", background: "transparent", color: t.warn, border: `1px solid ${t.warn}`, fontFamily: "inherit" }}>
+                      Ver o que falta
+                    </button>
+                  </>
+                : <span>Nada nesta situação.</span>}
           </div>
         )}
         {visiveis.slice(0, 300).map((i) => (
@@ -224,9 +253,11 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
           </span>
         )}
         <button onClick={gerar} disabled={!selecionados.length || gerando}
-          style={{ fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: selecionados.length ? "pointer" : "not-allowed",
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit",
+            fontSize: 12, fontWeight: 700, padding: "7px 16px", borderRadius: 8, cursor: selecionados.length ? "pointer" : "not-allowed",
             background: "var(--accent)", color: "#fff", border: "none", opacity: selecionados.length && !gerando ? 1 : .45 }}>
-          {gerando ? "Gerando…" : `Gerar .xlsx (${selecionados.length})`}
+          <Icon n="download" s={13} />
+          {gerando ? "Gerando…" : selecionados.length ? `Gerar .xlsx · ${selecionados.length} cadastro(s)` : "Gerar .xlsx"}
         </button>
       </div>
     </div>
