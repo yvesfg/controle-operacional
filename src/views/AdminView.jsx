@@ -130,7 +130,7 @@ export default function AdminView({ ctx }) {
                         <span style={{...css.badge(syncStatus.ok?t.verde:t.danger,syncStatus.ok?`rgba(2,192,118,.1)`:`rgba(246,70,93,.1)`,syncStatus.ok?`rgba(2,192,118,.3)`:`rgba(246,70,93,.3)`)}}>{syncStatus.ok?"OK":"COM ERROS"}</span>
                         <span style={{fontSize:10,color:t.txt2}}><Icon n="clock" s={13} /> {syncStatus.timestamp}</span>
                       </div>
-                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                      <div className="co-autogrid" style={{ "--col-min": "100px", gap: 6 }}>
                         <div style={{background:t.card2,borderRadius:7,padding:"7px 10px",textAlign:"center"}}>
                           <div style={{fontSize:16,fontWeight:700,color:t.azulLt}}>{syncStatus.total_planilha||0}</div>
                           <div style={{fontSize:8,color:t.txt2,textTransform:"uppercase",letterSpacing:1}}>Linhas na planilha</div>

@@ -470,7 +470,7 @@ export default function DiariasView({ ctx }) {
                               </span>
                             </div>
                           )}
-                          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:12}}>
+                          <div className="co-autogrid" style={{ "--col-min": "110px", gap: 6, marginBottom: 12 }}>
                             {kpis.map(k => (
                               <div key={k.k}
                                 onClick={()=>setExtratoFiltro(extratoFiltro===k.k?"todos":k.k)}

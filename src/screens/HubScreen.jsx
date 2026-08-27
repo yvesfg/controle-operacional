@@ -214,24 +214,19 @@ export default function HubScreen({
           <div style={{fontSize:11,color:t.txt2,lineHeight:1.6}}>Sua conta foi criada. Aguarde o administrador liberar o acesso aos módulos.</div>
         </div>
       ) : (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:520,width:"100%",animation:"hubUp .38s ease-out",position:"relative",zIndex:1}}>
+        <div className="co-choice-grid" style={{maxWidth:540,animation:"hubUp .38s ease-out",position:"relative",zIndex:1}}>
           {mods.filter(m => m.slug !== 'financeiro').map(m => (
-            <Button variant="secondary" size="sm" key={m.slug} onClick={()=>abrir(m)}
-              
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.6);e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.background=t.bgAlt||t.card2;}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.transform="none";e.currentTarget.style.background=t.card;}} style={{ position: "relative" }}>
-              <span className="co-sidebar__ico" style={{width:52,height:52,borderRadius:13,flexShrink:0,
-                background:`linear-gradient(135deg,${hexRgb(t.ouro,.16)},${hexRgb(t.ouro,.05)})`,
-                border:`1.5px solid ${hexRgb(t.ouro,.22)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <button className="co-choice co-choice--stack" key={m.slug} onClick={()=>abrir(m)}>
+              <span className="co-choice__ico">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                   {SVGS[m.slug] || <circle cx="12" cy="12" r="9"/>}
                 </svg>
               </span>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontFamily:"var(--font-heading)",fontSize:12,fontWeight:700,color:t.txt,letterSpacing:"-.01em",lineHeight:1.2}}>{m.nome}</div>
-                <div style={{fontSize:8.5,color:t.txt2,marginTop:3,lineHeight:1.4}}>{m.descricao || DESCS[m.slug] || ""}</div>
-              </div>
-            </Button>
+              <span className="co-choice__txt">
+                <span className="co-choice__nome">{m.nome}</span>
+                <span className="co-choice__desc">{m.descricao || DESCS[m.slug] || ""}</span>
+              </span>
+            </button>
           ))}
         </div>
       )}

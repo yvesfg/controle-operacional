@@ -206,10 +206,12 @@ export default function ModalColarFaturamento({ ctx }) {
               <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                 {Object.entries(BLOCOS).map(([k, b]) => (
-                  <Button variant={modo === k ? "outline" : "secondary"} size="sm" key={k} onClick={() => { setModo(k); setModoManual(true); }}>
-                    <div style={{ fontSize: 12, fontWeight: 700 }}>{b.l}</div>
-                    <div style={{ fontSize: 9, color: t.txt2, marginTop: 1 }}>{b.sub}</div>
-                  </Button>
+                  <button className={`co-choice${modo === k ? " co-choice--active" : ""}`} key={k} onClick={() => { setModo(k); setModoManual(true); }}>
+                    <span className="co-choice__txt">
+                      <span className="co-choice__nome">{b.l}</span>
+                      <span className="co-choice__desc">{b.sub}</span>
+                    </span>
+                  </button>
                 ))}
               </div>
             </div>

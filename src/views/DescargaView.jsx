@@ -403,7 +403,7 @@ export default function DescargaView({ ctx }) {
                       return (
                         <div>
                           {/* KPI cards */}
-                          <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:10}}>
+                          <div className="co-autogrid" style={{ "--col-min": "110px", gap: 6, marginBottom: 10 }}>
                             {KPIS.map(k=>(
                               <div key={k.k} {...clickable(()=>setRodorricaFiltro(rodorricaFiltro===k.k?"todos":k.k))}
                                 style={{background:k.bg,border:`1.5px solid ${rodorricaFiltro===k.k?k.c:t.borda}`,borderRadius:10,padding:"9px 8px",cursor:"pointer",textAlign:"center"}}>

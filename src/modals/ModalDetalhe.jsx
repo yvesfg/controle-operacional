@@ -217,11 +217,11 @@ export default function ModalDetalhe({ ctx }) {
                           <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:4,marginBottom:8,scrollbarWidth:"none"}}>
                             {dias.map(d=>{
                               const ent=getE(d);const isHoje=d===new Date().toISOString().slice(0,10);const isSel=acompDiaSel===d;
-                              return(<Button variant="info-outline" size="sm" key={d} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}} style={{ minWidth: 46, flexShrink: 0 }}>
-                                <div style={{fontSize:8,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</div>
-                                {isHoje&&<div style={{fontSize:11,color:t.ouro,fontWeight:700}}>HOJE</div>}
-                                {ent&&<div style={{display:"flex",justifyContent:"center",marginTop:1}}><Icon n="check" s={11} c={t.verde} sw={2.4}/></div>}
-                              </Button>);
+                              return(<button className={`co-choice co-choice--tile${isSel?" co-choice--active":""}`} key={d} style={{"--choice-accent":ent?t.verde:t.azul}} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}}>
+                                <span style={{fontSize:9,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span>
+                                {isHoje&&<span style={{fontSize:9,color:t.ouro,fontWeight:700}}>HOJE</span>}
+                                {ent&&<Icon n="check" s={11} c={t.verde} sw={2.4}/>}
+                              </button>);
                             })}
                           </div>
                           {acompDiaSel&&(

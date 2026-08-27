@@ -1532,7 +1532,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           {sectionHead(`Comparativo com meses anteriores · até dia ${comparativo.diaCorte}`)}
 
           {/* Totais acumulados no período — 3 meses lado a lado */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 14 }}>
+          <div className="co-autogrid" style={{ "--col-min": "120px", gap: 8, marginBottom: 14 }}>
             {[
               { label: mesLabel(mesAnt2), d: comparativo.total2 },
               { label: mesLabel(mesAnt1), d: comparativo.total1 },

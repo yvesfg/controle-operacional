@@ -126,7 +126,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
             <div style={{ fontSize: 9, color: t.txt2, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
               Tipo <span style={{ color: t.txt2, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(selecione um ou mais)</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
+            <div className="co-autogrid" style={{ "--col-min": "90px", gap: 5 }}>
               {TIPOS.map(tp => {
                 const ativo = tipos.has(tp.k);
                 return (

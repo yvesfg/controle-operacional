@@ -53,7 +53,7 @@ export default function ModalNFD({ ctx }) {
                 const TIPOS_COM_NF_NFD=new Set(['falta','avaria','dev_total','dev_parcial','desacordo']);
                 const nfListNFD=(formData?.nf||'').split(',').map(s=>s.trim()).filter(Boolean);
                 return (<>
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                  <div className="co-autogrid" style={{ "--col-min": "100px", gap: 6 }}>
                     {TIPOS_NFD.map(tp=>{const ativo=nfdForm.tipo===tp.k;return(
                       <Button variant="secondary" size="sm" key={tp.k} onClick={()=>setNfdForm(p=>({...p,tipo:tp.k}))}>
                         {tp.l}

@@ -150,7 +150,7 @@ export default function ModalRelatorios({ ctx }) {
                   <Button variant="secondary" size="sm" onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,true])))}>Todas</Button>
                   <Button variant="secondary" size="sm" onClick={()=>setRelGeralColunas(p=>Object.fromEntries(Object.keys(p).map(k=>[k,false])))}>Nenhuma</Button>
                 </div>
-                <div style={{marginTop:8,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:4}}>
+                <div className="co-autogrid" style={{ "--col-min": "100px", gap: 4, marginTop: 8 }}>
                   {[
                     {k:"dt",l:"Espelho"},
                     {k:"nome",l:"Motorista"},

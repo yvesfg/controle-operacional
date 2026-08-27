@@ -27,33 +27,26 @@ export default function BaseSelectorScreen({
 
         {/* Consolidado: soma as bases num painel só (leitura). Fica em destaque
             porque é o que quem acompanha resultado quer abrir primeiro. */}
-        <Button variant="primary" size="md" onClick={() => setBaseAtual(BASE_TODAS)}
-          
-          onMouseEnter={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.16)}}
-          onMouseLeave={e=>{e.currentTarget.style.background=hexRgb(t.ouro,.10)}} style={{ width: "100%" }}>
-          <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${hexRgb(t.ouro,.28)},${hexRgb(t.ouro,.12)})`,border:`1px solid ${hexRgb(t.ouro,.4)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-          </div>
-          <div>
-            <div style={{fontFamily:"var(--font-heading)",fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-.01em"}}>{BASE_TODAS.label}</div>
-            <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Painel somado das {basesPermitidas.length} bases · só leitura</div>
-          </div>
-        </Button>
+        <button className="co-choice co-choice--active" onClick={() => setBaseAtual(BASE_TODAS)}>
+          <span className="co-choice__ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </span>
+          <span className="co-choice__txt">
+            <span className="co-choice__nome">{BASE_TODAS.label}</span>
+            <span className="co-choice__desc">Painel somado das {basesPermitidas.length} bases · só leitura</span>
+          </span>
+        </button>
 
         {basesPermitidas.map(base => (
-          <Button variant="secondary" size="sm" key={base.id}
-            onClick={() => setBaseAtual(base)}
-            
-            onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.55);e.currentTarget.style.background=t.bgAlt||t.card2}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.background=t.card2}} style={{ width: "100%" }}>
-            <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${hexRgb(t.ouro,.18)},${hexRgb(t.ouro,.08)})`,border:`1px solid ${hexRgb(t.ouro,.3)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            </div>
-            <div>
-              <div style={{fontFamily:"var(--font-heading)",fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-.01em"}}>{base.label}</div>
-              <div style={{fontSize:10,color:t.txt2,marginTop:2,fontFamily:"var(--font-mono)",letterSpacing:".04em"}}>{base.table}</div>
-            </div>
-          </Button>
+          <button className="co-choice" key={base.id} onClick={() => setBaseAtual(base)}>
+            <span className="co-choice__ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </span>
+            <span className="co-choice__txt">
+              <span className="co-choice__nome">{base.label}</span>
+              <span className="co-choice__desc" style={{fontFamily:"var(--font-mono)",letterSpacing:".04em"}}>{base.table}</span>
+            </span>
+          </button>
         ))}
         <Button variant="ghost" size="sm" onClick={handleLogout} style={{ marginTop: 4 }}>
           Sair e trocar conta

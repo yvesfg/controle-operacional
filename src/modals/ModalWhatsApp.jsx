@@ -189,7 +189,7 @@ export default function ModalWhatsApp({ ctx }) {
                 // Sentido inverso do "Faturamento": em vez de gerar o texto, lê o texto.
                 ...(podeColar?[{k:"preencher", ico:<><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 13h6M9 17h4"/></>, color:t.verde, l:"Preencher pelo bloco", sub:"Faturamento ou contratação — grava na DT e na planilha"}]:[]),
               ].map((op)=>(
-                <Button variant="secondary" size="sm" key={op.k} onClick={()=>{
+                <button className="co-choice" key={op.k} onClick={()=>{
                   const _reg=wppSearchReg||buscaResult;
                   // "preencher" não exige busca: a DT vem do texto colado.
                   if(op.k==="preencher"){
@@ -205,18 +205,16 @@ export default function ModalWhatsApp({ ctx }) {
                   else if(op.k==="descarga"){abrirWppPagModal(_reg,mot,"descarga");}
                   else if(op.k==="diarias"){abrirWppPagModal(_reg,mot,"diarias");}
                 }}
-                
-                onMouseEnter={e=>{e.currentTarget.style.background=`rgba(${op.color.includes("#7c")?'124,58,237':op.color===t.azulLt?'22,119,255':op.color===t.verde?'34,197,94':'240,185,11'},.1)`;e.currentTarget.style.borderColor=op.color}}
-                onMouseLeave={e=>{e.currentTarget.style.background=t.card2;e.currentTarget.style.borderColor=t.borda}} style={{ width: "100%" }}>
-                  <div style={{width:42,height:42,borderRadius:11,background:op.color+"18",border:`1px solid ${op.color}33`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                style={{ "--choice-accent": op.color }}>
+                  <span className="co-choice__ico">
                     {hIco(op.ico,op.color,18)}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:700,fontSize:14,color:t.txt,fontFamily:"var(--font-heading)"}}>{op.l}</div>
-                    <div style={{fontSize:11,color:t.txt2,marginTop:2}}>{op.sub}</div>
-                  </div>
+                  </span>
+                  <span className="co-choice__txt">
+                    <span className="co-choice__nome">{op.l}</span>
+                    <span className="co-choice__desc">{op.sub}</span>
+                  </span>
                   {hIco(<><polyline points="9 18 15 12 9 6"/></>,t.txt3||t.txt2,14)}
-                </Button>
+                </button>
               ))}
             </div>
             <div style={{height:8}}/>

@@ -624,7 +624,7 @@ export default function DashboardView({ ctx }) {
             <div style={{height:"100%",width:"100%",transform:`scaleX(${taxaDoc/100})`,transformOrigin:"left",
               background:`linear-gradient(90deg,var(--accent),${t.verde})`,borderRadius:3,transition:"transform .5s"}}/>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:incompletas.length>0?14:0}}>
+          <div className="co-autogrid" style={{ "--col-min": "110px", gap: 10, marginBottom: incompletas.length>0?14:0 }}>
             {[{label:"Sem CTE",count:semCTE.length},{label:"Sem MDF",count:semMDF.length},{label:"Sem NF",count:semNF.length}].map(({label,count})=>(
               <KpiCard key={label} label={label} value={count} sub={count>0?"cargas pendentes":"completo"}
                 color={count>0?undefined:t.verde} danger={count>0} compact />

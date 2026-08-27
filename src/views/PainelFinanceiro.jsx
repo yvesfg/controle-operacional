@@ -336,7 +336,7 @@ export default function PainelFinanceiro({ ctx }) {
               )}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${t.borda}` }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text3)", marginBottom: 7 }}>Acumulado {ytd.ano}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+                <div className="co-autogrid" style={{ "--col-min": "120px", gap: 8 }}>
                   <div><div style={{ fontSize: 9, color: t.txt2 }}>Faturamento</div><div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: t.verde }}>{moneyK(ytd.fat)}</div></div>
                   <div><div style={{ fontSize: 9, color: t.txt2 }}>Despesas</div><div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: t.danger }}>{moneyK(ytd.desp)}</div></div>
                   <div><div style={{ fontSize: 9, color: t.txt2 }}>Resultado</div><div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: ytd.resultado >= 0 ? t.verde : t.danger }}>{moneyK(ytd.resultado)}</div></div>
