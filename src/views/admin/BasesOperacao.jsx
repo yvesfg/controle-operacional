@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../../design-system/components/Button.jsx";
 import Icon from "../../components/Icon.jsx";
 import Toggle from "../../components/Toggle.jsx";
 import { FEATURES_META, ALERTAS_OPCOES } from "../../operacao/perfil.js";
@@ -91,12 +92,12 @@ export default function BasesOperacao({ ctx }) {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-              <button onClick={recarregar} style={{ ...css.hBtn, fontSize: 10, padding: "3px 8px" }}>
+              <Button variant="secondary" size="xs" onClick={recarregar}>
                 {carregando ? <Icon n="clock" s={12} /> : <><Icon n="refresh" s={12} /> Atualizar</>}
-              </button>
-              <button onClick={() => abrirEdicao(null)} style={{ ...css.hBtn, fontSize: 10, padding: "3px 8px", marginLeft: "auto" }}>
+              </Button>
+              <Button variant="secondary" size="xs" onClick={() => abrirEdicao(null)} style={{ marginLeft: "auto" }}>
                 + Nova base
-              </button>
+              </Button>
             </div>
 
             {!carregando && !bases.length && (
@@ -235,12 +236,12 @@ export default function BasesOperacao({ ctx }) {
               </div>
 
               <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                <button onClick={salvar} disabled={salvando} style={{ ...css.hBtn, fontSize: 11, padding: "6px 14px", borderColor: t.ouro, color: t.ouro }}>
+                <Button variant="outline" size="xs" onClick={salvar} disabled={salvando}>
                   {salvando ? "Salvando..." : "Salvar base"}
-                </button>
-                <button onClick={() => { setSel(null); setForm(null); }} style={{ ...css.hBtn, fontSize: 11, padding: "6px 14px" }}>
+                </Button>
+                <Button variant="secondary" size="xs" onClick={() => { setSel(null); setForm(null); }}>
                   Cancelar
-                </button>
+                </Button>
               </div>
             </div>
           )}

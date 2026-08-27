@@ -39,11 +39,11 @@ export default function LoginScreen({
       <div style={{position:"absolute",top:"8%",left:"50%",transform:"translateX(-50%)",width:"500px",height:"260px",background:`radial-gradient(ellipse,${hexRgb(t.ouro, .06)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
       <div style={{position:"absolute",bottom:"12%",left:"50%",transform:"translateX(-50%)",width:"400px",height:"200px",background:`radial-gradient(ellipse,${hexRgb(t.ouro,.04)} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0}}/>
 
-      <button onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{position:"absolute",top:16,right:16,...css.hBtn,fontSize:16,padding:"8px 12px",zIndex:10}}>
+      <Button variant="secondary" size="sm" onClick={()=>setTheme(theme==="dark"?"light":"dark")} style={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
         {theme==="dark"
             ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>}
-      </button>
+      </Button>
 
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28,animation:"loginPop .45s ease-out",position:"relative",zIndex:1}}>
         <img src={loginLogo} alt="YFGroup" width="80" height="80" style={{marginBottom:14,borderRadius:"50%"}} />
@@ -83,7 +83,7 @@ export default function LoginScreen({
               onKeyDown={e=>{if(e.key==="Enter") entrarTeste();}}
               style={{background:t.inputBg,border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.inp,padding:"9px 11px",color:t.txt,fontSize:12}} />
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>{setModoTeste(false);setTestMsg(null);}} style={{flex:1,...css.hBtn,fontSize:11,padding:"8px"}}>Cancelar</button>
+              <Button variant="secondary" size="xs" onClick={()=>{setModoTeste(false);setTestMsg(null);}} style={{ flex: 1 }}>Cancelar</Button>
               <Button variant="primary" size="sm" disabled={entrando} onClick={entrarTeste} style={{ flex: 2 }}>
                 {entrando ? "Entrando…" : "Entrar"}
               </Button>

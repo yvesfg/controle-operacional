@@ -263,13 +263,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
   // ── Estilos ───────────────────────────────────────────────────────────────
   const card = { background:t.card, border:`1px solid ${t.borda}`, borderRadius:12, overflow:"hidden" };
-  const chip = (on) => ({ fontSize:10, padding:"3px 8px", borderRadius:20, fontWeight:700, cursor:"pointer",
-    border:`1px solid ${on?hexRgb(t.ouro,.5):t.borda2}`, background:on?hexRgb(t.ouro,.14):"transparent", color:on?t.ouro:t.txt2 });
   const tag = (cor) => ({ fontSize:9, padding:"2px 6px", borderRadius:5, fontWeight:700, whiteSpace:"nowrap",
     border:`1px solid ${hexRgb(cor,.35)}`, background:hexRgb(cor,.12), color:cor });
   const sel = { background:t.inputBg, border:`1px solid ${t.borda2}`, borderRadius:8, padding:"4px 8px", color:t.txt, fontSize:11 };
   const inp = { ...sel, padding:"7px 10px", fontSize:12, width:"100%" };
-  const btnAcao = (cor) => ({ fontSize:11, fontWeight:700, padding:"6px 12px", borderRadius:8, cursor:"pointer", border:`1.5px solid ${cor}`, background:hexRgb(cor,.12), color:cor, whiteSpace:"nowrap" });
   const rotulo = { fontSize:9, textTransform:"uppercase", letterSpacing:".06em", color:t.txt2, marginBottom:5 };
   const secTitulo = (cor, texto) => (
     <div style={{fontSize:11,fontWeight:700,color:cor,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
@@ -339,14 +336,14 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           {/* Ações rápidas por status — sem precisar expandir o card */}
           <div style={{display:"flex",gap:6,flexShrink:0}}>
             {p.status === "pendente" && <>
-              <button disabled={buscando} onClick={()=>aprovar(p)} style={btnAcao(t.verde)}>Aprovar</button>
-              <button disabled={buscando} onClick={()=>negar(p)} style={btnAcao(t.danger)}>Negar</button>
+              <Button variant="success-outline" size="sm" disabled={buscando} onClick={()=>aprovar(p)}>Aprovar</Button>
+              <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar</Button>
             </>}
             {p.status === "aprovado" && (
-              <button disabled={buscando} onClick={()=>negar(p)} style={btnAcao(t.danger)}>Negar acesso</button>
+              <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar acesso</Button>
             )}
             {p.status === "negado" && (
-              <button disabled={buscando} onClick={()=>marcarPendente(p)} style={btnAcao(t.laranja)}>Reabrir</button>
+              <Button variant="warning-outline" size="sm" disabled={buscando} onClick={()=>marcarPendente(p)}>Reabrir</Button>
             )}
           </div>
 
@@ -359,15 +356,15 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               <div style={{border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{fontWeight:700,fontSize:11.5,color:t.txt,flex:1}}>Credenciais de teste</span>
-                  <button disabled={buscando} onClick={()=>abrirResetSenha(p.id)} style={{...css.hBtn,fontSize:11,padding:"5px 10px"}}><Icon n="key" s={13} /> Resetar senha</button>
-                  <button disabled={buscando} onClick={()=>excluirTeste(p)} style={{...css.hBtn,fontSize:11,padding:"5px 10px",color:t.danger}}><Icon n="trash" s={13} /> Excluir conta</button>
+                  <Button variant="secondary" size="xs" disabled={buscando} onClick={()=>abrirResetSenha(p.id)}><Icon n="key" s={13} /> Resetar senha</Button>
+                  <Button variant="danger-outline" size="xs" disabled={buscando} onClick={()=>excluirTeste(p)}><Icon n="trash" s={13} /> Excluir conta</Button>
                 </div>
                 {resetSenha?.userId === p.id && (
                   <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",background:hexRgb(t.ouro,.06),border:`1px solid ${hexRgb(t.ouro,.3)}`,borderRadius:8,padding:"8px 10px"}}>
                     <span style={{fontSize:10.5,color:t.txt2}}>Nova senha:</span>
                     <input value={resetSenha.senha} onChange={e=>setResetSenha(s=>({...s,senha:e.target.value}))} style={{...inp,width:140,fontFamily:"var(--font-mono)"}} />
-                    <button onClick={()=>setResetSenha(s=>({...s,senha:gerarSenhaAleatoria()}))} title="Gerar outra" style={{...css.hBtn,padding:"0 8px",fontSize:11}}><Icon n="refresh" s={13} /></button>
-                    <button disabled={buscando} onClick={confirmarResetSenha} style={{...btnAcao(t.verde)}}>Salvar nova senha</button>
+                    <Button variant="secondary" size="xs" onClick={()=>setResetSenha(s=>({...s,senha:gerarSenhaAleatoria()}))} title="Gerar outra"><Icon n="refresh" s={13} /></Button>
+                    <Button variant="success-outline" size="sm" disabled={buscando} onClick={confirmarResetSenha}>Salvar nova senha</Button>
                     <Button variant="ghost" size="sm" onClick={()=>setResetSenha(null)}>Cancelar</Button>
                   </div>
                 )}
@@ -389,7 +386,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         {["admin","editor","viewer"].map(r=><option key={r} value={r}>{r}</option>)}
                       </select>
                     )}
-                    <button onClick={()=>salvarAcesso(a,{ativo:!a.ativo})} style={{...chip(a.ativo),color:"var(--color-text-inverse)",borderColor:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)"}}>{a.ativo?"Ativo":"Inativo"}</button>
+                    <Button variant={a.ativo?"success":"danger"} size="xs" pill onClick={()=>salvarAcesso(a,{ativo:!a.ativo})}>{a.ativo?"Ativo":"Inativo"}</Button>
                     <Button variant="ghost" size="md" onClick={()=>remover(a.id)}  title="Remover este registro de módulo"><Icon n="x" s={13} /></Button>
                   </div>
 
@@ -408,7 +405,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         <div style={rotulo}>Bases permitidas</div>
                         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                           {BASE_LIST.map(b=>{const on=bases.includes(b.id);return (
-                            <button key={b.id} onClick={()=>setConfig(a,{bases:on?bases.filter(x=>x!==b.id):[...bases,b.id]})} style={chip(on)}>{b.label}</button>
+                            <Button variant={on ? "outline" : "secondary"} size="xs" pill key={b.id} onClick={()=>setConfig(a,{bases:on?bases.filter(x=>x!==b.id):[...bases,b.id]})}>{b.label}</Button>
                           );})}
                         </div>
                         {bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}><Icon n="alert" s={13} /> Sem base — usuário não verá dados</div>}
@@ -417,7 +414,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                         <div style={rotulo}>Permissões finas</div>
                         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                           {PERMS_LISTA.map(({key,lbl})=>{const on=permsCO[key]!==false;return (
-                            <button key={key} onClick={()=>setConfig(a,{perms:{...permsCO,[key]:!on}})} style={chip(on)}>{lbl}</button>
+                            <Button variant={on ? "outline" : "secondary"} size="xs" pill key={key} onClick={()=>setConfig(a,{perms:{...permsCO,[key]:!on}})}>{lbl}</Button>
                           );})}
                         </div>
                       </div>
@@ -443,9 +440,8 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                                       const dash = a.config?.dash || {};
                                       const on = dash[grupo]?.[it.k] !== false;
                                       return (
-                                        <button key={it.k} title={it.d}
-                                          onClick={()=>setConfig(a,{dash:{...dash,[grupo]:{...(dash[grupo]||{}),[it.k]:!on}}})}
-                                          style={chip(on)}>{it.l}</button>
+                                        <Button variant={on ? "outline" : "secondary"} size="xs" pill key={it.k} title={it.d}
+                                          onClick={()=>setConfig(a,{dash:{...dash,[grupo]:{...(dash[grupo]||{}),[it.k]:!on}}})}>{it.l}</Button>
                                       );
                                     })}
                                   </div>
@@ -482,9 +478,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   // ── Card de convite ───────────────────────────────────────────────────────
   const BotoesAviso = ({ email }) => (
     <>
-      <button onClick={()=>copiarLink(email)} style={btnAcao(t.azulLt)}>Copiar aviso</button>
-      <button onClick={()=>abrirWpp(email)}   style={btnAcao(t.verde)}>WhatsApp</button>
-      <button onClick={()=>abrirGmail(email)} style={btnAcao(t.ouro)}>Gmail</button>
+      <Button variant="info-outline" size="sm" onClick={()=>copiarLink(email)}>Copiar aviso</Button>
+      <Button variant="success-outline" size="sm" onClick={()=>abrirWpp(email)}>WhatsApp</Button>
+      <Button variant="outline" size="sm" onClick={()=>abrirGmail(email)}>Gmail</Button>
     </>
   );
 
@@ -509,7 +505,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           <span style={{fontSize:10,color:t.azulLt,fontStyle:"italic",whiteSpace:"nowrap"}}>aguardando 1º login</span>
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             <BotoesAviso email={c.email}/>
-            <button onClick={()=>cancelarConvite(c.email)} style={btnAcao(t.danger)}>Cancelar</button>
+            <Button variant="danger-outline" size="sm" onClick={()=>cancelarConvite(c.email)}>Cancelar</Button>
           </div>
         </div>
       </div>
@@ -537,7 +533,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
           {catalogo.map(c=>{
             const on = form.modulos.includes(c.slug);
-            return <button key={c.slug} onClick={()=>setForm(f=>({...f,modulos:on?f.modulos.filter(x=>x!==c.slug):[...f.modulos,c.slug]}))} style={chip(on)}>{c.nome}</button>;
+            return <Button variant={on ? "outline" : "secondary"} size="xs" pill key={c.slug} onClick={()=>setForm(f=>({...f,modulos:on?f.modulos.filter(x=>x!==c.slug):[...f.modulos,c.slug]}))}>{c.nome}</Button>;
           })}
         </div>
 
@@ -545,7 +541,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           <div style={rotulo}>Perfil no Controle Operacional</div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
             {PERFIS.map(pf=>(
-              <button key={pf.k} onClick={()=>setForm(f=>({...f,perfil:pf.k,perms:null}))} style={chip(form.perfil===pf.k)}>{pf.l}</button>
+              <Button variant={form.perfil===pf.k ? "outline" : "secondary"} size="xs" pill key={pf.k} onClick={()=>setForm(f=>({...f,perfil:pf.k,perms:null}))}>{pf.l}</Button>
             ))}
           </div>
           <div style={{fontSize:10.5,color:t.txt2,marginBottom:12}}>{PERFIS.find(x=>x.k===form.perfil)?.d}</div>
@@ -554,7 +550,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
             {BASE_LIST.map(b=>{
               const on = form.bases.includes(b.id);
-              return <button key={b.id} onClick={()=>setForm(f=>({...f,bases:on?f.bases.filter(x=>x!==b.id):[...f.bases,b.id]}))} style={chip(on)}>{b.label}</button>;
+              return <Button variant={on ? "outline" : "secondary"} size="xs" pill key={b.id} onClick={()=>setForm(f=>({...f,bases:on?f.bases.filter(x=>x!==b.id):[...f.bases,b.id]}))}>{b.label}</Button>;
             })}
           </div>
           {form.bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}><Icon n="alert" s={13} /> Sem base ele não vê dado nenhum</div>}
@@ -566,7 +562,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
               {PERMS_LISTA.map(({key,lbl})=>{
                 const on = permsForm[key] !== false;
-                return <button key={key} onClick={()=>setForm(f=>({...f,perms:{...permsForm,[key]:!on}}))} style={chip(on)}>{lbl}</button>;
+                return <Button variant={on ? "outline" : "secondary"} size="xs" pill key={key} onClick={()=>setForm(f=>({...f,perms:{...permsForm,[key]:!on}}))}>{lbl}</Button>;
               })}
             </div>
           )}
@@ -587,9 +583,8 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                       {lista.filter(it=>itemCabeNasBases(it, form.bases)).map(it=>{
                         const on = form.dash?.[grupo]?.[it.k] !== false;
                         return (
-                          <button key={it.k} title={it.d}
-                            onClick={()=>setForm(f=>({...f,dash:{...(f.dash||{}),[grupo]:{...(f.dash?.[grupo]||{}),[it.k]:!on}}}))}
-                            style={chip(on)}>{it.l}</button>
+                          <Button variant={on ? "outline" : "secondary"} size="xs" pill key={it.k} title={it.d}
+                            onClick={()=>setForm(f=>({...f,dash:{...(f.dash||{}),[grupo]:{...(f.dash?.[grupo]||{}),[it.k]:!on}}}))}>{it.l}</Button>
                         );
                       })}
                     </div>
@@ -635,7 +630,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                 <div style={rotulo}>Senha</div>
                 <div style={{display:"flex",gap:6}}>
                   <input value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} style={inp}/>
-                  <button onClick={()=>setForm(f=>({...f,password:gerarSenhaAleatoria()}))} title="Gerar nova senha" style={{...css.hBtn,padding:"0 10px",fontSize:12}}><Icon n="refresh" s={13} /></button>
+                  <Button variant="secondary" size="sm" onClick={()=>setForm(f=>({...f,password:gerarSenhaAleatoria()}))} title="Gerar nova senha"><Icon n="refresh" s={13} /></Button>
                 </div>
               </div>
             </div>
@@ -656,7 +651,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
     <div style={{...css.app,background:t.bg,minHeight:"100vh",padding:"24px 18px"}}>
       <div style={{maxWidth:960,margin:"0 auto"}}>
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-          <button onClick={onVoltar} style={{...css.hBtn,padding:"7px 12px",fontSize:12}}><Icon n="arrow-left" s={13} /> Voltar</button>
+          <Button variant="secondary" size="sm" onClick={onVoltar}><Icon n="arrow-left" s={13} /> Voltar</Button>
           <div style={{flex:1,minWidth:180}}>
             <div style={{fontFamily:"var(--font-heading)",fontSize:17,fontWeight:700,color:t.txt}}>Gerenciar acessos</div>
             <div style={{fontSize:11,color:t.txt2}}>Libere módulos e defina permissões por usuário</div>

@@ -55,6 +55,9 @@
 }
 
 /* Tamanhos */
+/* xs é o chip clicável de linha densa (permissões, bases, filtros de coluna):
+   o sm de 28px empurra a linha e quebra a grade dessas telas. */
+.ds-btn--xs  { height: 20px; padding: 0 var(--space-2); font-size: var(--text-2xs); }
 .ds-btn--sm  { height: var(--btn-h-sm); padding: 0 var(--space-3); font-size: var(--text-xs); }
 .ds-btn--md  { height: var(--btn-h-md); padding: 0 var(--space-4); font-size: var(--text-base); }
 .ds-btn--lg  { height: var(--btn-h-lg); padding: 0 var(--space-5); font-size: var(--text-md); }
@@ -161,6 +164,27 @@
   border-color: var(--color-success-border, var(--color-success));
 }
 .ds-btn--success-outline:hover:not(:disabled) { background: var(--color-success-bg); border-color: var(--color-success); }
+
+/* Fecham a grade de contorno: primary/info/success já existiam, danger e warning
+   faltavam e cada tela desenhava a sua com `border: 1.5px solid ${cor}`. */
+.ds-btn--danger-outline {
+  background  : transparent;
+  color       : var(--color-danger);
+  border-color: var(--color-danger-border);
+}
+.ds-btn--danger-outline:hover:not(:disabled) { background: var(--color-danger-bg); border-color: var(--color-danger); }
+
+.ds-btn--warning-outline {
+  background  : transparent;
+  color       : var(--color-warning);
+  border-color: var(--color-warning-border);
+}
+.ds-btn--warning-outline:hover:not(:disabled) { background: var(--color-warning-bg); border-color: var(--color-warning); }
+
+/* FORMA, não cor — combina com qualquer variante. É o chip clicável de filtro
+   ("Papel", "Celulose", bases, permissões), que o app fazia com borderRadius:20
+   inline em toda tela. */
+.ds-btn--pill { border-radius: var(--radius-full); }
 
 /* Loading spinner */
 .ds-btn--loading { pointer-events: none; opacity: 0.75; }

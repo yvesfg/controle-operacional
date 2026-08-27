@@ -14,6 +14,7 @@
 //
 // Tokens do design system (DESIGN.md) — sem hex solto aqui.
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import Icon from "./Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
 import {
@@ -22,29 +23,6 @@ import {
   MESES_CURTOS, PERIODO_TODOS,
 } from "../periodoDash.js";
 
-const btn = {
-  background: "var(--card2)",
-  border: "1px solid var(--border2)",
-  color: "var(--text2)",
-  borderRadius: "var(--radius-btn, 6px)",
-  cursor: "pointer",
-  fontSize: 11,
-  fontFamily: "var(--font-mono)",
-  padding: "0 10px",
-  height: 30,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 5,
-  whiteSpace: "nowrap",
-};
-const btnOn = {
-  ...btn,
-  background: "var(--color-primary-bg)",
-  border: "1px solid var(--color-primary-border)",
-  color: "var(--accent)",
-  fontWeight: 700,
-};
 const rotulo = {
   fontFamily: "var(--font-mono)", fontSize: 9, textTransform: "uppercase",
   letterSpacing: "0.06em", color: "var(--text3)", fontWeight: 400, marginBottom: 7,
@@ -119,8 +97,8 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
       ];
 
   const anoNav = (d) => (
-    <button onClick={() => setAno((a) => a + d)} style={{ ...btn, width: 30, padding: 0 }}
-      title={d < 0 ? "Ano anterior" : "Próximo ano"}>{d < 0 ? "‹" : "›"}</button>
+    <Button variant="secondary" size="sm" onClick={() => setAno((a) => a + d)} 
+      title={d < 0 ? "Ano anterior" : "Próximo ano"} style={{ width: 30 }}>{d < 0 ? "‹" : "›"}</Button>
   );
 
   return (
@@ -145,7 +123,7 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
               Selecionado: {rotuloPeriodo(value)}
             </div>
           </div>
-          <button onClick={onFechar} style={{ ...btn, width: 30, padding: 0, fontSize: 14 }} title="Fechar"><Icon n="x" s={13} /></button>
+          <Button variant="secondary" size="sm" onClick={onFechar}  title="Fechar" style={{ width: 30 }}><Icon n="x" s={13} /></Button>
         </div>
 
         {/* ── Atalhos ── */}
@@ -155,7 +133,7 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
             const p = fn();
             const igual = rotuloPeriodo(p) === rotuloPeriodo(value);
             return (
-              <button key={label} onClick={() => escolher(p)} style={igual ? btnOn : btn}>{label}</button>
+              <Button variant={igual ? "outline" : "secondary"} size="sm" key={label} onClick={() => escolher(p)}>{label}</Button>
             );
           })}
         </div>
@@ -175,14 +153,10 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
             const vazio = comDado ? !comDado.has(mm) : false;
             const sel = mesSel === mm;
             return (
-              <button key={mm} onClick={() => escolher(periodoMes(mm))} disabled={vazio}
-                title={vazio ? "Sem dados neste mês" : mm}
-                style={{
-                  ...(sel ? btnOn : btn), padding: 0, height: 32, textTransform: "capitalize",
-                  opacity: vazio ? 0.32 : 1, cursor: vazio ? "not-allowed" : "pointer",
-                }}>
+              <Button variant={sel ? "outline" : "secondary"} size="sm" key={mm} onClick={() => escolher(periodoMes(mm))} disabled={vazio}
+                title={vazio ? "Sem dados neste mês" : mm}>
                 {nome}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -195,15 +169,14 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
               {[1, 2, 3, 4].map((q) => {
                 const p = periodoTrimestre(ano, q);
                 return (
-                  <button key={q} onClick={() => escolher(p)} style={{ ...(rotuloPeriodo(value) === p.rotulo ? btnOn : btn), flex: 1, padding: 0 }}>
+                  <Button variant={rotuloPeriodo(value) === p.rotulo ? "outline" : "secondary"} size="sm" key={q} onClick={() => escolher(p)} style={{ flex: 1 }}>
                     {q}º tri
-                  </button>
+                  </Button>
                 );
               })}
-              <button onClick={() => escolher(periodoAno(ano))}
-                style={{ ...(rotuloPeriodo(value) === String(ano) ? btnOn : btn), flex: 1, padding: 0 }}>
+              <Button variant={rotuloPeriodo(value) === String(ano) ? "outline" : "secondary"} size="sm" onClick={() => escolher(periodoAno(ano))} style={{ flex: 1 }}>
                 {ano}
-              </button>
+              </Button>
             </div>
 
             {/* ── Intervalo livre ── */}
@@ -213,13 +186,10 @@ export function PeriodoModal({ aberto, onFechar, value, onChange, modo = "comple
               <span style={{ color: "var(--text3)", fontSize: 11 }}>a</span>
               <input type="date" style={inp} value={ate} onChange={(e) => setAte(e.target.value)} aria-label="Data final" />
             </div>
-            <button
-              onClick={() => de && ate && escolher(periodoLivre(de < ate ? de : ate, de < ate ? ate : de))}
-              disabled={!de || !ate}
-              style={{ ...btn, width: "100%", marginTop: 9, height: 32, background: "var(--accent)", color: "var(--on-primary)", border: "none", fontWeight: 700, opacity: de && ate ? 1 : 0.5 }}
-            >
+            <Button variant="primary" size="sm" onClick={() => de && ate && escolher(periodoLivre(de < ate ? de : ate, de < ate ? ate : de))}
+              disabled={!de || !ate} style={{ width: "100%", marginTop: 9 }}>
               Aplicar intervalo
-            </button>
+            </Button>
           </>
         )}
 
@@ -241,24 +211,12 @@ export default function PeriodoBotao({ value, onChange, modo, meses, titulo, sty
   const ativo = value?.tipo === "livre" || value?.tipo === "todos";
   return (
     <>
-      <button
-        onClick={() => setAberto(true)}
-        title="Escolher período"
-        style={{
-          ...btn,
-          height: compacto ? 26 : 30,
-          fontSize: compacto ? 10 : 11.5,
-          border: `1.5px solid ${ativo ? "var(--accent)" : "var(--border2)"}`,
-          color: ativo ? "var(--accent)" : "var(--text)",
-          fontWeight: 700,
-          background: "var(--card)",
-          ...style,
-        }}
-      >
+      <Button variant="secondary" size="sm" onClick={() => setAberto(true)}
+        title="Escolher período">
         <CalIco s={compacto ? 10 : 12} />
         {rotuloPeriodo(value)}
         <span style={{ fontSize: 8, opacity: 0.6 }}><Icon n="chevron-down" s={13} /></span>
-      </button>
+      </Button>
       <PeriodoModal aberto={aberto} onFechar={() => setAberto(false)}
         value={value} onChange={onChange} modo={modo} meses={meses} titulo={titulo} />
     </>

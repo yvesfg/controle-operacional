@@ -118,7 +118,7 @@ export default function AdminView({ ctx }) {
                 <div style={{...css.card,padding:12,border:`1px solid ${syncStatus?(syncStatus.ok?t.verde:(syncStatus.erros_http>0?t.danger:t.ouro)):t.borda}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{fontSize:11,fontWeight:700,color:t.txt}}><Icon n="antenna" s={13} /> Última Sincronização</div>
-                    <button onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto(`gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`);setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{...css.hBtn,fontSize:10,padding:"3px 8px",marginLeft:"auto"}}>{syncStatusLoading ? <Icon n="clock" s={11} /> : "Atualizar"}</button>
+                    <Button variant="secondary" size="xs" onClick={async()=>{setSyncStatusLoading(true);const v=await getConfigRemoto(`gsheet_sync_status_${ctx.baseAtual?.id || "imperatriz_belem"}`);setSyncStatus(v?JSON.parse(v):null);setSyncStatusLoading(false);}} style={{ marginLeft: "auto" }}>{syncStatusLoading ? <Icon n="clock" s={11} /> : "Atualizar"}</Button>
                   </div>
                   {syncStatusLoading && <div style={{fontSize:10,color:t.txt2}}>Buscando status...</div>}
                   {!syncStatusLoading && !syncStatus && (
@@ -374,7 +374,7 @@ function mapearColuna(n){
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   <Button variant="success" size="md" onClick={()=>{saveJSON("co_email_template",emailTemplate);showToast("Template salvo!","ok");registrarLog("EDITAR_EMAIL_TEMPLATE","Template de email atualizado");}} style={{ flex: 1 }}><Icon n="save" s={13} /> Salvar Template</Button>
                   <Button variant="primary" size="md" onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",false)} style={{ flex: 1 }}><Icon n="mail" s={13} /> Testar (Gmail)</Button>
-                  <button onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",true)} style={{...css.hBtn,flex:1,justifyContent:"center",fontSize:12}}><Icon n="mail" s={13} /> Outro Cliente</button>
+                  <Button variant="secondary" size="sm" onClick={()=>enviarEmailBoasVindas({nome:"Teste",email:loadJSON("co_admin_email",""),perfil:"operador"},"senha123",true)}><Icon n="mail" s={13} /> Outro Cliente</Button>
                 </div>
                 <div style={{marginTop:8,padding:"8px 10px",background:t.bg,borderRadius:8,border:"1px solid "+t.borda,fontSize:10,color:t.txt2,lineHeight:1.6}}>
                   O email abre no seu cliente de email ja preenchido. Para usuarios novos, clique no botao Email no cadastro.
@@ -394,15 +394,15 @@ function mapearColuna(n){
               {/* ── Exportar ── */}
               <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.5,color:t.txt2,fontWeight:700,marginBottom:6}}><Icon n="download" s={13} /> Exportar</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
-                <button onClick={()=>{
+                <Button variant="secondary" size="sm" onClick={()=>{
                   if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("Exportação cancelada","err");return;}}
                   const vcards=motoristas.map(m=>{const tel=(m.tel||"").replace(/\D/g,"");const nomeN=(m.nome||"").split(" ");const sob=nomeN.pop()||"";const prim=nomeN.join(" ");
                     return["BEGIN:VCARD","VERSION:3.0",`FN:${m.nome||""}`,`N:${sob};${prim};;;`,tel?`TEL;TYPE=CELL:+55${tel}`:"",m.cpf?`X-CPF:${m.cpf}`:"",`NOTE:Placa: ${[m.placa1,m.placa2,m.placa3,m.placa4].filter(Boolean).join(" | ")} | Vínculo: ${m.vinculo||"—"}`,"END:VCARD"].filter(Boolean).join("\r\n");
                   }).join("\r\n");
                   const blob=new Blob([vcards],{type:"text/vcard;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_yfgroup.vcf";a.click();
                   showToast(`${motoristas.length} contatos exportados como vCard!`,"ok");
-                }} style={{...css.hBtn,fontSize:12}}><Icon n="download" s={13} /> vCard (.vcf)</button>
-                <button onClick={()=>{
+                }}><Icon n="download" s={13} /> vCard (.vcf)</Button>
+                <Button variant="secondary" size="sm" onClick={()=>{
                   if(motoristas.length>=5){const ok=window.prompt(`Você está exportando ${motoristas.length} contatos. Digite ESTOU DE ACORDO para confirmar:`);if(!ok||ok.trim()!=="ESTOU DE ACORDO"){showToast("Exportação cancelada","err");return;}}
                   const header="Name,Given Name,Family Name,Phone 1 - Type,Phone 1 - Value,Notes";
                   const rows=motoristas.map(m=>{
@@ -416,7 +416,7 @@ function mapearColuna(n){
                   const bom="\uFEFF";const blob=new Blob([bom+[header,...rows].join("\n")],{type:"text/csv;charset=utf-8"});
                   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoristas_google.csv";a.click();
                   showToast(`${motoristas.length} contatos exportados como CSV Google!`,"ok");
-                }} style={{...css.hBtn,fontSize:12}}><Icon n="chart" s={13} /> CSV Google</button>
+                }}><Icon n="chart" s={13} /> CSV Google</Button>
                 <Button variant="primary" size="md" onClick={()=>{
                   const normalizados=motoristas.map(m=>({...m,nome:normalizarNome(m.nome),tel:normalizarTelefone(m.tel),placa1:normalizarPlaca(m.placa1),placa2:normalizarPlaca(m.placa2),placa3:normalizarPlaca(m.placa3),placa4:normalizarPlaca(m.placa4),favorecido:normalizarNome(m.favorecido)}));
                   saveMotoristasLS(normalizados);registrarLog("NORMALIZAR_CONTATOS",`${normalizados.length} motoristas normalizados`);showToast(`${normalizados.length} contatos normalizados!`,"ok");
@@ -574,7 +574,7 @@ function mapearColuna(n){
                   {[{k:"dev",l:"Desenvolvimento"},{k:"op",l:"Operacional"}].map(st=>(
                     <Button variant={logsSubTab===st.k ? "outline" : "secondary"} size="sm" key={st.k} onClick={()=>setLogsSubTab(st.k)}>{st.l}</Button>
                   ))}
-                  {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}><Icon n="refresh" s={13} /> Atualizar</button>}
+                  {logsSubTab==="op" && <Button variant="secondary" size="xs" onClick={carregarLogs} style={{ marginLeft: "auto" }}><Icon n="refresh" s={13} /> Atualizar</Button>}
                 </div>
 
                 {/* ABA DESENVOLVIMENTO */}

@@ -1521,14 +1521,14 @@ export default function App() {
             </div>
             <div className="co-topbar__actions">
               {alertas.length > 0 && (
-                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
+                <Button variant="danger-outline" size="sm" onClick={()=>setAlertasOpen(!alertasOpen)}>
                   {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,14)}
                   <span style={{fontSize:11,fontWeight:700,color:t.danger,fontFamily:"var(--font-mono)"}}>{alertas.length} alerta{alertas.length>1?"s":""}</span>
-                </button>
+                </Button>
               )}
-              <button onClick={()=>setBuscaModalOpen(true)} style={{...css.hBtn,padding:"6px 8px"}} title="Buscar (Ctrl+K)">
+              <Button variant="secondary" size="sm" onClick={()=>setBuscaModalOpen(true)}  title="Buscar (Ctrl+K)">
                 {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,15,2)}
-              </button>
+              </Button>
               {canEdit && (
                 <Button variant="primary" size="md" onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}}>
                   {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",14,2.5)} Nova DT
@@ -1567,22 +1567,22 @@ export default function App() {
                 </div>
               )}
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
-              <button onClick={sincronizar} className="co-hbtn" style={{...css.hBtn,padding:"6px 7px",position:"relative"}}>
+              <Button variant="secondary" size="sm" onClick={sincronizar} className="co-hbtn" style={{ position: "relative" }}>
                 {connStatus==="syncing"
                   ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,13)
                   : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2,13)
                 }
                 <span style={{position:"absolute",bottom:4,right:4,width:4,height:4,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger}}/>
-              </button>
+              </Button>
               {alertas.length > 0 && (
-                <button onClick={()=>setAlertasOpen(!alertasOpen)} style={{...css.hBtn,background:`rgba(239,68,68,.08)`,borderColor:"rgba(239,68,68,.45)",padding:"5px 9px",display:"flex",alignItems:"center",gap:4}}>
+                <Button variant="danger-outline" size="sm" onClick={()=>setAlertasOpen(!alertasOpen)}>
                   {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,12)}
                   <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"var(--font-mono)"}}>{alertas.length}</span>
-                </button>
+                </Button>
               )}
-              <button onClick={()=>setBuscaModalOpen(true)} style={{...css.hBtn,padding:"6px 7px"}} title="Buscar (Ctrl+K)">
+              <Button variant="secondary" size="sm" onClick={()=>setBuscaModalOpen(true)}  title="Buscar (Ctrl+K)">
                 {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,13,2)}
-              </button>
+              </Button>
               {canEdit && (
                 <Button variant="primary" size="md" onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}}>
                   {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",13,2.5)} Nova DT

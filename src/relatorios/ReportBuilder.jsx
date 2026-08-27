@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import {
   FIELD_CATALOG,
@@ -329,22 +330,6 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
       outline: "none",
       cursor: "pointer",
     },
-    btn: (variant = "default") => ({
-      display: "flex", alignItems: "center", gap: 5,
-      padding: "5px 12px",
-      borderRadius: 6,
-      fontSize: 12, fontWeight: 600,
-      cursor: "pointer",
-      border: variant === "primary"
-        ? `1px solid ${t.ouro}`
-        : `1px solid ${t.borda}`,
-      background: variant === "primary"
-        ? t.ouro
-        : "transparent",
-      color: variant === "primary" ? "#111" : t.txt2,
-      transition: "opacity .12s",
-      whiteSpace: "nowrap",
-    }),
     tableWrap: {
       flex: isMobile ? "none" : 1,
       overflow: "auto", padding: "0",
@@ -465,12 +450,12 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
             {mobilePanelOpen ? "▲ Ocultar campos" : "▼ Selecionar campos"} · {activeFields.length} campo{activeFields.length!==1?"s":""}
           </span>
           <div style={{display:"flex",gap:6}}>
-            <button style={{...S.btn("primary"),padding:"3px 10px",fontSize:11}} onClick={e=>{e.stopPropagation();handlePrint();}} disabled={!activeFields.length}>
+            <Button variant="primary" size="sm" onClick={e=>{e.stopPropagation();handlePrint();}} disabled={!activeFields.length}>
               <IcoPrint/> Imprimir
-            </button>
-            <button style={{...S.btn(),padding:"3px 10px",fontSize:11}} onClick={e=>{e.stopPropagation();handleCSV();}} disabled={!activeFields.length}>
+            </Button>
+            <Button variant="secondary" size="sm" onClick={e=>{e.stopPropagation();handleCSV();}} disabled={!activeFields.length}>
               <IcoCSV/> CSV
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -521,18 +506,15 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
 
         {/* Ações da sidebar */}
         <div style={{ padding: "8px 12px", borderTop: `1px solid ${t.borda}`, flexShrink: 0, display: "flex", gap: 6 }}>
-          <button style={{ ...S.btn(), flex: 1, justifyContent: "center" }}
-            onClick={() => setSelectedFields(DEFAULT_VISIBLE)}>
+          <Button variant="secondary" size="sm" onClick={() => setSelectedFields(DEFAULT_VISIBLE)} style={{ flex: 1 }}>
             Padrão
-          </button>
-          <button style={{ ...S.btn(), flex: 1, justifyContent: "center" }}
-            onClick={() => setSelectedFields(FIELD_CATALOG.filter(f => f.modulo === filterModulo).map(f => f.id))}>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setSelectedFields(FIELD_CATALOG.filter(f => f.modulo === filterModulo).map(f => f.id))} style={{ flex: 1 }}>
             Todos
-          </button>
-          <button style={{ ...S.btn(), flex: 1, justifyContent: "center" }}
-            onClick={() => setSelectedFields([])}>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setSelectedFields([])} style={{ flex: 1 }}>
             Nenhum
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -566,16 +548,9 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
             {/* Status pills */}
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
               {STATUS_OPCOES.map(s => (
-                <button key={s} onClick={() => toggleStatus(s)}
-                  style={{
-                    ...S.btn(filterStatus.includes(s) ? "primary" : "default"),
-                    padding: "3px 8px", fontSize: 10,
-                    background: filterStatus.includes(s) ? t.ouro + "33" : "transparent",
-                    border: `1px solid ${filterStatus.includes(s) ? t.ouro : t.borda}`,
-                    color: filterStatus.includes(s) ? t.ouro : t.txt2,
-                  }}>
+                <Button variant={filterStatus.includes(s) ? "primary" : "secondary"} size="xs" key={s} onClick={() => toggleStatus(s)}>
                   {s}
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -595,25 +570,24 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
           <div style={{ flex: 1 }} />
 
           {/* Reset */}
-          <button style={S.btn()} onClick={resetFilters} title="Limpar filtros">
+          <Button variant="secondary" size="sm" onClick={resetFilters} title="Limpar filtros">
             <IcoReset/> Limpar
-          </button>
+          </Button>
 
           {/* Preview toggle */}
-          <button style={S.btn(showPreview ? "primary" : "default")}
-            onClick={() => setShowPreview(p => !p)}>
+          <Button variant={showPreview ? "primary" : "secondary"} size="sm" onClick={() => setShowPreview(p => !p)}>
             <IcoEye/> {showPreview ? "Ocultar" : "Preview"}
-          </button>
+          </Button>
 
           {/* CSV */}
-          <button style={S.btn()} onClick={handleCSV} disabled={!activeFields.length}>
+          <Button variant="secondary" size="sm" onClick={handleCSV} disabled={!activeFields.length}>
             <IcoCSV/> CSV
-          </button>
+          </Button>
 
           {/* Print / PDF */}
-          <button style={S.btn("primary")} onClick={handlePrint} disabled={!activeFields.length}>
+          <Button variant="primary" size="sm" onClick={handlePrint} disabled={!activeFields.length}>
             <IcoPrint/> Imprimir
-          </button>
+          </Button>
         </div>
 
         {/* ── Contagem ─────────────────────────────────────────────────── */}
@@ -690,11 +664,11 @@ export default function ReportBuilder({ dados = [], motoristas = [], apontItems 
         {/* ── Paginação ─────────────────────────────────────────────────── */}
         {showPreview && !groupedData && filteredData.length > PREVIEW_PAGE_SIZE && (
           <div style={S.pagination}>
-            <button style={S.btn()} onClick={() => setPreviewPage(p => Math.max(1, p - 1))}
-              disabled={previewPage <= 1}>‹ Ant.</button>
+            <Button variant="secondary" size="sm" onClick={() => setPreviewPage(p => Math.max(1, p - 1))}
+              disabled={previewPage <= 1}>‹ Ant.</Button>
             <span>Pág. {previewPage} / {totalPages}</span>
-            <button style={S.btn()} onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}
-              disabled={previewPage >= totalPages}>Próx. ›</button>
+            <Button variant="secondary" size="sm" onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}
+              disabled={previewPage >= totalPages}>Próx. ›</Button>
             <span style={{ marginLeft: 8 }}>
               ({((previewPage-1)*PREVIEW_PAGE_SIZE)+1}–{Math.min(previewPage*PREVIEW_PAGE_SIZE, filteredData.length)} de {filteredData.length})
             </span>
