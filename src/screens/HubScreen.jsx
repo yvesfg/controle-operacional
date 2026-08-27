@@ -216,13 +216,10 @@ export default function HubScreen({
       ) : (
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:520,width:"100%",animation:"hubUp .38s ease-out",position:"relative",zIndex:1}}>
           {mods.filter(m => m.slug !== 'financeiro').map(m => (
-            <button key={m.slug} onClick={()=>abrir(m)}
-              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,padding:"20px 10px 18px",background:t.card,
-                border:`1.5px solid ${t.borda2||t.borda}`,borderRadius:14,cursor:"pointer",
-                transition:"border-color .18s, transform .18s, background .18s",position:"relative",overflow:"hidden"}}
+            <Button variant="secondary" size="sm" key={m.slug} onClick={()=>abrir(m)}
+              
               onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.6);e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.background=t.bgAlt||t.card2;}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.transform="none";e.currentTarget.style.background=t.card;}}
-            >
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.transform="none";e.currentTarget.style.background=t.card;}} style={{ position: "relative" }}>
               <span className="co-sidebar__ico" style={{width:52,height:52,borderRadius:13,flexShrink:0,
                 background:`linear-gradient(135deg,${hexRgb(t.ouro,.16)},${hexRgb(t.ouro,.05)})`,
                 border:`1.5px solid ${hexRgb(t.ouro,.22)}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -234,7 +231,7 @@ export default function HubScreen({
                 <div style={{fontFamily:"var(--font-heading)",fontSize:12,fontWeight:700,color:t.txt,letterSpacing:"-.01em",lineHeight:1.2}}>{m.nome}</div>
                 <div style={{fontSize:8.5,color:t.txt2,marginTop:3,lineHeight:1.4}}>{m.descricao || DESCS[m.slug] || ""}</div>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       )}

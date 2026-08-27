@@ -352,12 +352,9 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
             )}
 
             <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={handleClose}
-                style={{ flex: 1, background: "rgba(128,128,128,.08)", border: `1.5px solid ${t.borda}`, borderRadius: 9, padding: 10, color: t.txt2, fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}
-              >
+              <Button variant="secondary" size="sm" onClick={handleClose} style={{ flex: 1 }}>
                 Cancelar
-              </button>
+              </Button>
               <button
                 onClick={handleConfirm}
                 style={{

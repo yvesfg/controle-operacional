@@ -1089,16 +1089,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
         {/* Dropdown custom — o <select> nativo abre um menu branco no tema escuro; este
             casa com o box do input de mês (mesma borda/raio/padding) e vira par visual. */}
         <div style={{ position: "relative" }}>
-          <button onClick={() => setCliOpen((o) => !o)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "space-between", minWidth: 180,
-              fontSize: 13, padding: "8px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
-              border: `1.5px solid ${cliOpen ? t.ouro : t.borda}`, background: t.card, color: t.txt }}>
+          <Button variant="secondary" size="sm" onClick={() => setCliOpen((o) => !o)} style={{ minWidth: 180 }}>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{clienteFiltro || "Todos os clientes"}</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
               style={{ color: t.txt2, transform: cliOpen ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>
               <polyline points="6 9 12 15 18 9" />
             </svg>
-          </button>
+          </Button>
           {cliOpen && (
             <>
               <div onClick={() => setCliOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
@@ -1562,12 +1559,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
             {resumoPorUsuario.map(([nome, qtd]) => {
               const ativo = usuarioFiltro === nome;
               return (
-                <button key={nome} onClick={() => setUsuarioFiltro(ativo ? "" : nome)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11.5, fontWeight: 600, padding: "5px 12px 5px 5px", borderRadius: 20, cursor: "pointer",
-                    background: ativo ? hexRgb(t.ouro, .12) : t.card2, border: `1px solid ${ativo ? t.ouro : t.borda}`, color: t.txt, fontFamily: "inherit" }}>
+                <Button variant={ativo ? "primary" : "secondary"} size="sm" key={nome} onClick={() => setUsuarioFiltro(ativo ? "" : nome)}>
                   {avatar(nome, 20)}
                   <b>{nome}</b> <span style={{ color: t.danger, fontWeight: 700 }}>{qtd}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -2127,11 +2122,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   cancelado: "Este CTe foi CANCELADO. Refeito no CTRC (opcional):",
                 }[vincTipo];
                 const btn = (label, cor, onClick) => (
-                  <button onClick={onClick} disabled={salvandoVinc}
-                    style={{ fontSize: 11.5, fontWeight: 700, padding: "7px 13px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
-                      border: `1px solid ${hexRgb(cor, .5)}`, background: "transparent", color: cor, opacity: salvandoVinc ? .6 : 1 }}>
+                  <Button variant="ghost" size="sm" onClick={onClick} disabled={salvandoVinc}>
                     {label}
-                  </button>
+                  </Button>
                 );
                 return (
                   <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
@@ -2185,11 +2178,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
                             </div>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                               {candidatosDoCTe.slice(0, 6).map((c) => (
-                                <button key={c.id} onClick={() => setVincCtrc(String(c.ctrc))}
-                                  style={{ fontSize: 10.5, fontWeight: 600, padding: "5px 9px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
-                                    border: `1px solid ${String(c.ctrc) === vincCtrc.trim() ? t.azul : t.borda}`, background: String(c.ctrc) === vincCtrc.trim() ? hexRgb(t.azul, .12) : "transparent", color: t.txt }}>
+                                <Button variant={String(c.ctrc) === vincCtrc.trim() ? "info" : "secondary"} size="sm" key={c.id} onClick={() => setVincCtrc(String(c.ctrc))}>
                                   {c.ctrc} · {money(c.total_frete)}{c.data_emissao ? ` · ${c.data_emissao.split("-").reverse().join("/")}` : ""}
-                                </button>
+                                </Button>
                               ))}
                             </div>
                           </div>
@@ -2232,15 +2223,12 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 9 }}>
                       {copias.map((o) => (
-                        <button key={o.id} onClick={() => abrirRevisar(o)}
-                          style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", textAlign: "left", width: "100%",
-                            fontSize: 11.5, padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
-                            border: `1px solid ${hexRgb(t.warn, .35)}`, background: t.card, color: t.txt }}>
+                        <Button variant="secondary" size="sm" key={o.id} onClick={() => abrirRevisar(o)} style={{ width: "100%" }}>
                           <b>{CATEGORIA_LABEL[o.categoria] || o.categoria}</b>
                           {o.categoria_manual && <Badge variant="success" size="sm" pill>DEFINIDA À MÃO</Badge>}
                           <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontWeight: 700, color: t.ouro }}>{money(o.saldo)}</span>
                           <span style={{ color: t.azul, fontWeight: 700, fontSize: 10.5 }}>abrir ›</span>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
@@ -2268,16 +2256,13 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     {pares.length > 0 && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 9 }}>
                         {pares.map((o) => (
-                          <button key={o.id} onClick={() => abrirRevisar(o)}
-                            style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", textAlign: "left", width: "100%",
-                              fontSize: 11.5, padding: "7px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
-                              border: `1px solid ${hexRgb(t.danger, .35)}`, background: t.card, color: t.txt, opacity: ehAtivo(o) ? 1 : .55 }}>
+                          <Button variant="secondary" size="sm" key={o.id} onClick={() => abrirRevisar(o)} style={{ width: "100%" }}>
                             <b>CTRC {o.ctrc}</b>
                             <span style={{ color: t.txt2 }}>{CATEGORIA_LABEL[o.categoria] || o.categoria}</span>
                             {o.data_emissao && <span style={{ color: t.txt2, fontFamily: "var(--font-mono)", fontSize: 10.5 }}>{o.data_emissao.split("-").reverse().join("/")}</span>}
                             <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontWeight: 700, color: t.ouro }}>{money(o.saldo)}</span>
                             <span style={{ color: t.azul, fontWeight: 700, fontSize: 10.5 }}>abrir ›</span>
-                          </button>
+                          </Button>
                         ))}
                         <Button variant="danger-ghost" size="sm" onClick={() => { setDupModal({ open: true, origem: p }); fechar(); }} style={{ width: "100%" }}>
                           Comparar os {pares.length + 1} lado a lado
@@ -2459,11 +2444,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   <div style={{ fontSize: 11, color: t.txt2, marginBottom: 6 }}>Justifique o que foi verificado/feito (obrigatório):</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
                     {atalhos.map((a) => (
-                      <button key={a} onClick={() => setRevisObs(a)}
-                        style={{ fontSize: 10.5, fontWeight: 600, padding: "5px 9px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
-                          border: `1px solid ${revisObs === a ? t.azul : t.borda}`, background: revisObs === a ? hexRgb(t.azul, .12) : "transparent", color: revisObs === a ? t.txt : t.txt2 }}>
+                      <Button variant={revisObs === a ? "info" : "secondary"} size="sm" key={a} onClick={() => setRevisObs(a)}>
                         {a}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>

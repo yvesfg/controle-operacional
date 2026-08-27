@@ -360,12 +360,9 @@ export default function Resultado({ ctx }) {
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.ods" onChange={onImport} style={{ display: "none" }} />
           {lastImportIds.length > 0 && (
             <>
-              <button onClick={() => { setUndoOpen(o => !o); setUndoInput(""); }}
-                style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-                  border: `1px solid ${t.danger||"var(--cat-red)"}`, background: undoOpen ? `rgba(246,70,93,.1)` : "transparent",
-                  color: t.danger||"var(--cat-red)" }}>
+              <Button variant="danger-ghost" size="sm" onClick={() => { setUndoOpen(o => !o); setUndoInput(""); }}>
                 <Icon n="undo" s={13} /> Desfazer ({lastImportIds.length})
-              </button>
+              </Button>
               {/* separa a ação destrutiva das demais — evita clique acidental por proximidade */}
               <div style={{ width: 1, alignSelf: "stretch", background: t.borda, margin: "0 4px" }} />
             </>
@@ -393,7 +390,7 @@ export default function Resultado({ ctx }) {
               style={{ fontSize: 12, padding: "5px 10px", borderRadius: 7,
                 border: `1.5px solid ${undoInput === "sim" ? (t.danger||"var(--cat-red)") : t.borda}`,
                 background: t.bg, color: t.txt, width: 90, fontFamily: "inherit" }} />
-            <button disabled={undoInput !== "sim" || importing}
+            <Button variant={undoInput === "sim" ? "danger" : "secondary"} size="sm" disabled={undoInput !== "sim" || importing}
               onClick={async () => {
                 setImporting(true);
                 try {
@@ -405,14 +402,9 @@ export default function Resultado({ ctx }) {
                   await carregar();
                 } catch(e) { showToast?.("Erro ao desfazer: " + e.message, "erro"); }
                 finally { setImporting(false); }
-              }}
-              style={{ fontSize: 12, padding: "5px 14px", borderRadius: 7, fontFamily: "inherit", cursor: "pointer",
-                background: undoInput === "sim" ? (t.danger||"var(--cat-red)") : "transparent",
-                color: undoInput === "sim" ? "#fff" : (t.txt2||"#888"),
-                border: `1px solid ${undoInput === "sim" ? (t.danger||"var(--cat-red)") : t.borda}`,
-                opacity: importing ? .6 : 1 }}>
+              }}>
               Confirmar desfazer
-            </button>
+            </Button>
             <Button variant="secondary" size="sm" onClick={() => { setUndoOpen(false); setUndoInput(""); }}>
               Cancelar
             </Button>
@@ -683,13 +675,9 @@ export default function Resultado({ ctx }) {
           {/* Atalho pra achar o que ficou pendente de conferência (migration 060). Só aparece
               quando há alguma — chip morto em tela cheia de dado só atrapalha. */}
           {(emRevisao.length > 0 || soRevisao) && (
-            <button onClick={() => setSoRevisao(v => !v)} title="Mostrar só as despesas marcadas para conferir"
-              style={{ flex: "0 0 auto", fontSize: 10.5, fontWeight: 700, padding: "5px 10px", borderRadius: 20,
-                cursor: "pointer", fontFamily: "inherit",
-                border: `1px solid ${soRevisao ? t.ouro : hexRgb(t.ouro, .45)}`,
-                background: soRevisao ? hexRgb(t.ouro, .16) : "transparent", color: t.ouro }}>
+            <Button variant={soRevisao ? "primary" : "outline"} size="sm" onClick={() => setSoRevisao(v => !v)} title="Mostrar só as despesas marcadas para conferir" style={{ flex: "0 0 auto" }}>
               Em revisão ({emRevisao.length})
-            </button>
+            </Button>
           )}
           <div style={{ fontSize: 11, color: t.txt2, fontFamily: "var(--font-mono)", flex: "0 0 auto" }}>
             {buscaQ ? `${despesasFiltradas.length} de ${pool.length}` : `${pool.length}`} lançamentos

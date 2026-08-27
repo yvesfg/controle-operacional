@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import ReportBuilder from '../relatorios/ReportBuilderWrapper.jsx';
 import _ModalEditImpl  from './ModalEditWrapper.jsx';
 function _renderModalEdit(p) { return React.createElement(_ModalEditImpl, p); }
@@ -97,9 +98,9 @@ export default function AppModals({ ctx }) {
 {reportBuilderOpen && (
   <div style={{position:"fixed",inset:0,zIndex:1200,background:t.bg,display:"flex",flexDirection:"column",overflow:"hidden"}}>
     <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 16px",borderBottom:`1px solid ${t.borda}`,background:t.headerBg,flexShrink:0}}>
-      <button onClick={()=>setReportBuilderOpen(false)} style={{background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda}`,borderRadius:8,padding:"6px 12px",color:t.txt2,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"inherit",fontWeight:600}}>
+      <Button variant="secondary" size="sm" onClick={()=>setReportBuilderOpen(false)}>
         {hIco(<><polyline points="15 18 9 12 15 6"/></>,t.txt2,14)} Voltar
-      </button>
+      </Button>
       <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.ouro}}>RELATÓRIO PERSONALIZADO</div>
       <div style={{fontSize:10,color:t.txt2,marginLeft:2}}>Selecione campos, filtre e exporte</div>
     </div>

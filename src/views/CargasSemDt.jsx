@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import { Badge } from "../design-system/components/Badge.jsx";
 import Icon from "../components/Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
@@ -163,11 +164,9 @@ export default function CargasSemDt({ conn, ctx }) {
               const ativo = aba === a.k;
               const n = contagem[a.k] || 0;
               return (
-                <button key={a.k} onClick={() => setAba(a.k)}
-                  style={{ fontSize: 11.5, fontWeight: 700, padding: "5px 11px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
-                    border: `1px solid ${ativo ? t.ouro : t.borda}`, background: ativo ? hexRgb(t.ouro, 0.12) : "transparent", color: ativo ? t.ouro : t.txt2 }}>
+                <Button variant={ativo ? "primary" : "secondary"} size="sm" key={a.k} onClick={() => setAba(a.k)}>
                   {a.l} {n > 0 && <span style={{ opacity: 0.8 }}>({n})</span>}
-                </button>
+                </Button>
               );
             })}
           </div>

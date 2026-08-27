@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../../design-system/components/Button.jsx";
 import { Badge } from "../../design-system/components/Badge.jsx";
 import Icon from "../../components/Icon.jsx";
 import { clickable } from "../../utils.js";
@@ -108,24 +109,15 @@ export default function GestaoAVB({ ctx }) {
       {/* ── Filtros de etapa ── */}
       <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
         {FILTROS.map(f=>(
-          <button key={f.k} onClick={()=>setFiltro(f.k)}
-            style={{fontSize:10,fontWeight:700,padding:"5px 12px",borderRadius:20,cursor:"pointer",
-              fontFamily:DESIGN.fnt.b,transition:"all .15s",
-              border:`1.5px solid ${filtro===f.k?"var(--accent)":t.borda}`,
-              background:filtro===f.k?"rgba(255,107,53,.12)":"transparent",
-              color:filtro===f.k?"var(--accent)":t.txt2}}>
+          <Button variant={filtro===f.k ? "outline" : "secondary"} size="sm" key={f.k} onClick={()=>setFiltro(f.k)}>
             {f.l}
             <span style={{marginLeft:5,fontSize:9,opacity:.7}}>{contadores[f.k]}</span>
-          </button>
+          </Button>
         ))}
         <div style={{marginLeft:"auto",display:"flex",gap:6,alignItems:"center"}}>
           <span style={{fontSize:9,color:"var(--text3)"}}>Ordem:</span>
           {[["etapa","Etapa"],["data","Data"],["nome","Nome"]].map(([k,l])=>(
-            <button key={k} onClick={()=>setOrdem(k)}
-              style={{fontSize:9,padding:"4px 9px",borderRadius:6,cursor:"pointer",fontFamily:DESIGN.fnt.b,
-                border:`1px solid ${ordem===k?"var(--accent)":t.borda}`,
-                background:ordem===k?"rgba(255,107,53,.1)":"transparent",
-                color:ordem===k?"var(--accent)":t.txt2}}>{l}</button>
+            <Button variant={ordem===k ? "outline" : "secondary"} size="sm" key={k} onClick={()=>setOrdem(k)}>{l}</Button>
           ))}
         </div>
       </div>

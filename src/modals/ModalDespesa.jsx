@@ -140,13 +140,10 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
                 ].map(([v, titulo, ajuda, cor]) => {
                   const ativo = form.classe_credito === v;
                   return (
-                    <button key={v} onClick={() => set("classe_credito", v)} title={ajuda}
-                      style={{ flex: 1, textAlign: "left", padding: "9px 11px", borderRadius: 8, cursor: "pointer",
-                        fontFamily: "inherit", background: ativo ? `${cor}1a` : "transparent",
-                        border: `1.5px solid ${ativo ? cor : t.borda}` }}>
+                    <Button variant="secondary" size="sm" key={v} onClick={() => set("classe_credito", v)} title={ajuda} style={{ flex: 1 }}>
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: ativo ? cor : t.txt }}>{titulo}</div>
                       <div style={{ fontSize: 10, color: t.txt2, marginTop: 2, lineHeight: 1.35 }}>{ajuda}</div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

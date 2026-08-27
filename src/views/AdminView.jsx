@@ -51,8 +51,8 @@ export default function AdminView({ ctx }) {
                 <Badge variant="success" size="sm"  style={{ marginLeft: "auto" }}>{connStatus==="online"?"ONLINE":"OFFLINE"}</Badge>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,background:t.borda}}>
-                <button onClick={sincronizar} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.azulLt,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Sincronizar</span></button>
-                <button onClick={()=>setModalOpen("configdb")} style={{background:t.card,border:"none",padding:14,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:5,fontFamily:DESIGN.fnt.b}}>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,t.txt2,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Config DB</span></button>
+                <Button variant="secondary" size="sm" onClick={sincronizar}>{hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.azulLt,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Sincronizar</span></Button>
+                <Button variant="secondary" size="sm" onClick={()=>setModalOpen("configdb")}>{hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,t.txt2,20)}<span style={{fontSize:9,color:t.txt2,fontWeight:700,letterSpacing:.5,textTransform:"uppercase"}}>Config DB</span></Button>
               </div>
             </div>
 
@@ -76,7 +76,7 @@ export default function AdminView({ ctx }) {
                   <div key={i} style={{background:t.card,borderRadius:10,border:`1px solid ${t.borda}`,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>
                     {hIco(<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,t.txt2,14)}
                     <div style={{flex:1,minWidth:0}}><div style={{fontSize:11,fontWeight:600,color:t.txt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name||c.url}</div></div>
-                    <button onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}} style={{background:`rgba(246,70,93,.08)`,border:`1px solid rgba(246,70,93,.18)`,borderRadius:DESIGN.r.badge,padding:"4px 8px",cursor:"pointer",fontSize:10,color:t.danger,fontFamily:DESIGN.fnt.b}}><Icon n="x" s={13} /></button>
+                    <Button variant="danger-ghost" size="sm" onClick={()=>{const nc=[...conexoes];nc.splice(i,1);saveConexoesLS(nc);showToast("Removido");}}><Icon n="x" s={13} /></Button>
                   </div>
                 ))}
                 <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
@@ -572,7 +572,7 @@ function mapearColuna(n){
                 {/* Sub-abas */}
                 <div style={{display:"flex",gap:5,marginBottom:12}}>
                   {[{k:"dev",l:"Desenvolvimento"},{k:"op",l:"Operacional"}].map(st=>(
-                    <button key={st.k} onClick={()=>setLogsSubTab(st.k)} style={{padding:"6px 12px",fontSize:10,fontWeight:700,border:`1.5px solid ${logsSubTab===st.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.badge,cursor:"pointer",background:logsSubTab===st.k?`rgba(217,98,43,.08)`:t.card2,color:logsSubTab===st.k?t.ouro:t.txt2,fontFamily:DESIGN.fnt.b}}>{st.l}</button>
+                    <Button variant={logsSubTab===st.k ? "outline" : "secondary"} size="sm" key={st.k} onClick={()=>setLogsSubTab(st.k)}>{st.l}</Button>
                   ))}
                   {logsSubTab==="op" && <button onClick={carregarLogs} style={{...css.hBtn,fontSize:10,padding:"5px 10px",marginLeft:"auto"}}><Icon n="refresh" s={13} /> Atualizar</button>}
                 </div>

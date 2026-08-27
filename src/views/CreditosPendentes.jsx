@@ -159,12 +159,9 @@ export default function CreditosPendentes({ ctx }) {
   };
 
   const chip = (k, l, ativo, onClick, cor) => (
-    <button key={k} onClick={onClick}
-      style={{ fontSize: 12, fontWeight: ativo ? 700 : 500, padding: "7px 13px", cursor: "pointer", borderRadius: 8,
-        border: `1px solid ${ativo ? (cor || "var(--accent)") : t.borda}`,
-        background: ativo ? (cor || "var(--accent)") : "transparent", color: ativo ? "#fff" : t.txt2, whiteSpace: "nowrap" }}>
+    <Button variant={ativo ? "primary" : "secondary"} size="sm" key={k} onClick={onClick}>
       {l}
-    </button>
+    </Button>
   );
 
   return (
@@ -291,15 +288,13 @@ export default function CreditosPendentes({ ctx }) {
                             {candidatosCredito.length === 0 ? (
                               <div style={{ fontSize: 11, color: t.txt2, padding: 8 }}>Nenhum crédito encontrado.</div>
                             ) : candidatosCredito.map((c) => (
-                              <button key={c.id} onClick={() => vincular(d.id, c.id)}
-                                style={{ textAlign: "left", display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", borderRadius: 7, cursor: "pointer",
-                                  border: `1px solid ${c.exato ? t.verde + "88" : t.borda}`, background: c.exato ? `${t.verde}14` : t.card2, color: t.txt, fontFamily: "inherit" }}>
+                              <Button variant="success" size="sm" key={c.id} onClick={() => vincular(d.id, c.id)}>
                                 <span style={{ fontWeight: 700, color: t.verde, minWidth: 84, flexShrink: 0 }}>{money(Number(c.valor || 0))}</span>
                                 <span style={{ fontSize: 11, color: t.azulLt || t.txt2, minWidth: 66, flexShrink: 0 }}>{filialLabel(filialKey(c))}</span>
                                 <span style={{ fontSize: 11, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.natureza || c.historico || "—"}</span>
                                 <span style={{ fontSize: 10, color: t.txt2, flexShrink: 0 }}>{mesLabel(c.mes_ref)}</span>
                                 {c.exato && <span style={{ fontSize: 9, fontWeight: 700, color: t.verde, flexShrink: 0 }}>MATCH</span>}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         </div>

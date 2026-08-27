@@ -55,12 +55,9 @@ export default function ModalNFD({ ctx }) {
                 return (<>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
                     {TIPOS_NFD.map(tp=>{const ativo=nfdForm.tipo===tp.k;return(
-                      <button key={tp.k} onClick={()=>setNfdForm(p=>({...p,tipo:tp.k}))}
-                        style={{padding:'6px 4px',borderRadius:7,border:`1.5px solid ${ativo?tp.cor:t.borda}`,
-                          background:ativo?`${tp.cor}22`:'transparent',color:ativo?tp.cor:t.txt2,
-                          fontSize:10,fontWeight:ativo?700:400,cursor:'pointer',fontFamily:'inherit'}}>
+                      <Button variant="secondary" size="sm" key={tp.k} onClick={()=>setNfdForm(p=>({...p,tipo:tp.k}))}>
                         {tp.l}
-                      </button>
+                      </Button>
                     );})}
                   </div>
                   {TIPOS_COM_NF_NFD.has(nfdForm.tipo)&&nfListNFD.length>0&&(
@@ -70,12 +67,9 @@ export default function ModalNFD({ ctx }) {
                         {nfListNFD.map(nf=>{
                           const cur=(nfdForm.nfs||'').split(',').map(s=>s.trim()).filter(Boolean);
                           const sel=cur.includes(nf);
-                          return(<button key={nf} onClick={()=>{const next=sel?cur.filter(x=>x!==nf):[...cur,nf];setNfdForm(p=>({...p,nfs:next.join(', ')}));}}
-                            style={{padding:'4px 10px',borderRadius:6,border:`1.5px solid ${sel?'var(--cat-gold)':t.borda}`,
-                              background:sel?'rgba(217,98,43,.1)':t.bg,color:sel?'var(--cat-gold)':t.txt2,
-                              fontSize:10,fontWeight:sel?700:400,cursor:'pointer'}}>
+                          return(<Button variant="outline" size="sm" key={nf} onClick={()=>{const next=sel?cur.filter(x=>x!==nf):[...cur,nf];setNfdForm(p=>({...p,nfs:next.join(', ')}));}}>
                             {nf}
-                          </button>);
+                          </Button>);
                         })}
                       </div>
                     </div>
@@ -126,7 +120,7 @@ export default function ModalNFD({ ctx }) {
             </div>
             {/* ✨ Camada de IA — sugere campos a partir da 1ª foto (operador confirma) */}
             {nfdFotos.length>0&&(
-              <button disabled={iaLoading} onClick={async()=>{
+              <Button variant="outline" size="sm" disabled={iaLoading} onClick={async()=>{
                 try{
                   setIaLoading(true);
                   const s=await analyzeNfdFoto(nfdFotos[0].preview);
@@ -139,12 +133,9 @@ export default function ModalNFD({ ctx }) {
                   showToast(`IA sugeriu — confira os campos${pct}`,"ok");
                 }catch(e){showToast("IA: "+e.message,"warn");}
                 finally{setIaLoading(false);}
-              }} style={{width:"100%",marginBottom:10,padding:"9px 10px",borderRadius:9,
-                border:`1.5px solid ${t.ouro}`,background:`rgba(217,98,43,.08)`,color:t.ouro,
-                fontWeight:700,fontSize:12,cursor:iaLoading?"wait":"pointer",fontFamily:"inherit",
-                display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:iaLoading?.6:1}}>
+              }} style={{ width: "100%", marginBottom: 10 }}>
                 {iaLoading?"Analisando foto…":<><Icon n="sparkles" s={13} c={t.ouro}/> Analisar foto com IA</>}
-              </button>
+              </Button>
             )}
             {/* Checkbox registrar outra */}
             <label style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,border:`1px solid ${t.borda}`,background:`rgba(217,98,43,.04)`,cursor:"pointer",userSelect:"none"}}>
@@ -153,10 +144,10 @@ export default function ModalNFD({ ctx }) {
             </label>
             {/* Ações */}
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);setNfdRegistrarOutra(false);}} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:9,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              <Button variant="secondary" size="sm" onClick={()=>{setNfdAlertOpen(false);setNfdFotos([]);setNfdRegistrarOutra(false);}} style={{ flex: 1 }}>
                 Não houve NFD
-              </button>
-              <button disabled={nfdUploadando} onClick={async()=>{
+              </Button>
+              <Button variant="danger-ghost" size="sm" disabled={nfdUploadando} onClick={async()=>{
                 if(nfdForm.tipo!=="sobra"&&!nfdForm.numero){showToast("Informe o número da NFD","warn");return;}
                 const conn=getConexao();
                 let fotos=[];
@@ -190,12 +181,12 @@ export default function ModalNFD({ ctx }) {
                   setNfdFotos([]);
                   setNfdRegistrarOutra(false);
                 }
-              }} style={{flex:1,background:nfdUploadando?`rgba(246,70,93,.04)`:`linear-gradient(135deg,rgba(246,70,93,.2),rgba(246,70,93,.1))`,border:`1.5px solid rgba(246,70,93,.5)`,borderRadius:9,padding:"10px",color:t.danger,fontWeight:700,fontSize:12,cursor:nfdUploadando?"wait":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:5,opacity:nfdUploadando?.6:1}}>
+              }} style={{ flex: 1 }}>
                 {nfdUploadando
                   ? <>{hIco(<><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></>,t.danger,14,2)} Enviando fotos…</>
                   : <>{hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,t.danger,14,2)} Registrar NFD</>
                 }
-              </button>
+              </Button>
             </div>
           </div>
         </div>

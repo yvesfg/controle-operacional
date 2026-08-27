@@ -45,11 +45,10 @@ export default function ModalDashDrill({ ctx }) {
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
           {voltar&&(
-            <button onClick={()=>setDashDrillModal(voltar)} title="Voltar"
-              style={{background:"rgba(128,128,128,.1)",border:"none",borderRadius:7,minWidth:44,height:44,cursor:"pointer",color:t.txt2,display:"flex",alignItems:"center",justifyContent:"center",gap:4,flexShrink:0,fontFamily:"inherit",fontSize:11,padding:"0 10px"}}>
+            <Button variant="secondary" size="sm" onClick={()=>setDashDrillModal(voltar)} title="Voltar" style={{ minWidth: 44, flexShrink: 0 }}>
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               {!isMobile&&"Voltar"}
-            </button>
+            </Button>
           )}
           <div style={{width:36,height:36,borderRadius:9,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
             <Icon n={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":(dashDrillModal.type==="destino"||ehLista)?"map-pin":"chart"} s={18} c={t.ouro}/>

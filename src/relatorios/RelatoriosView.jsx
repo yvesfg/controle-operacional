@@ -105,17 +105,9 @@ function BarChart({ data, color = "var(--accent)", height = 80 }) {
 // ── TabButton ─────────────────────────────────────────────────────────────────
 function TabBtn({ label, active, onClick }) {
   return (
-    <button onClick={onClick} style={{
-      background: active ? "var(--surface)" : "none",
-      border: active ? "1px solid var(--border2)" : "1px solid transparent",
-      color: active ? "var(--text)" : "var(--text2)",
-      fontSize: 12, fontFamily: "'DM Sans', sans-serif",
-      fontWeight: active ? 500 : 400,
-      padding: "6px 10px", borderRadius: 6, cursor: "pointer", whiteSpace: "nowrap",
-      transition: "all 0.15s",
-    }}>
+    <Button variant="secondary" size="sm" onClick={onClick}>
       {label}
-    </button>
+    </Button>
   );
 }
 

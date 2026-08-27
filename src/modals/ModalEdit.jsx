@@ -322,7 +322,7 @@ function ModalEditComponent({ ctx }) {
                 placeholder="EXCLUIR"
                 style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:t.danger,fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
               />
-              <button onClick={()=>{if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt);}} disabled={excluirTexto!=="EXCLUIR"} style={{background:excluirTexto==="EXCLUIR"?t.danger:"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}>CONFIRMAR</button>
+              <Button variant="danger" size="sm" onClick={()=>{if(excluirTexto==="EXCLUIR") deletarRegistro(DADOS[editIdx]?.dt);}} disabled={excluirTexto!=="EXCLUIR"}>CONFIRMAR</Button>
               <Button variant="secondary" size="sm" onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}}><Icon n="x" s={14} c={t.txt2} sw={2}/></Button>
             </div>
           )}

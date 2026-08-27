@@ -1602,8 +1602,7 @@ export default function App() {
               <span style={{fontSize:11,color:t.txt2,lineHeight:1.5,flex:1}}>{a.txt}{a.reg&&<span style={{color:t.azulLt,fontSize:10,marginLeft:6}}><Icon n="arrow-right" s={13} /> ver DT</span>}</span>
               {a.cat==="descarga" && a.reg && (
                 <div style={{display:"flex",gap:5,flexShrink:0}}>
-                  <button
-                    title="Adicionar ao Calendário (celular/notebook)"
+                  <Button variant="info-outline" size="sm" title="Adicionar ao Calendário (celular/notebook)"
                     onClick={()=>{
                       const reg = a.reg;
                       const titulo = `Descarga — ${reg.nome||"Motorista"} · DT ${reg.dt}`;
@@ -1614,9 +1613,7 @@ export default function App() {
                       } else {
                         abrirGoogleCalendar(titulo, data, desc);
                       }
-                    }}
-                    style={{background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.2)`,borderRadius:6,padding:"4px 8px",color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}
-                  ><Icon n="calendar" s={13} /> Calendário</button>
+                    }}><Icon n="calendar" s={13} /> Calendário</Button>
                 </div>
               )}
             </div>

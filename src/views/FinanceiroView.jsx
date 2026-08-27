@@ -59,24 +59,10 @@ export default function FinanceiroView({ ctx }) {
   const tabBtn = (key, label) => {
     const active = finTab === key;
     return (
-      <button
-        key={key}
-        onClick={() => setFinTab(key)}
-        style={{
-          padding: "7px 18px",
-          fontSize: 12,
-          fontWeight: 700,
-          fontFamily: DESIGN?.fnt?.b || "inherit",
-          cursor: "pointer",
-          borderRadius: 8,
-          border: `1px solid ${active ? t.azulLt : t.borda}`,
-          background: active ? t.azulLt : "transparent",
-          color: active ? "#fff" : t.txt2,
-          transition: "all .15s",
-        }}
-      >
+      <Button variant={active ? "info" : "secondary"} size="sm" key={key}
+        onClick={() => setFinTab(key)}>
         {label}
-      </button>
+      </Button>
     );
   };
 

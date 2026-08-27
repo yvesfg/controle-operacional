@@ -206,11 +206,10 @@ export default function ModalColarFaturamento({ ctx }) {
               <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                 {Object.entries(BLOCOS).map(([k, b]) => (
-                  <button key={k} onClick={() => { setModo(k); setModoManual(true); }}
-                    style={{ padding: "8px 10px", borderRadius: 9, border: `1.5px solid ${modo === k ? t.ouro : t.borda}`, background: modo === k ? "rgba(217,98,43,.1)" : t.card2, color: modo === k ? t.ouro : t.txt2, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>
+                  <Button variant={modo === k ? "outline" : "secondary"} size="sm" key={k} onClick={() => { setModo(k); setModoManual(true); }}>
                     <div style={{ fontSize: 12, fontWeight: 700 }}>{b.l}</div>
                     <div style={{ fontSize: 9, color: t.txt2, marginTop: 1 }}>{b.sub}</div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -258,11 +257,10 @@ export default function ModalColarFaturamento({ ctx }) {
                   <span style={{ flexShrink: 0, marginTop: 1 }}><Icon n="alert" s={12} c={t.danger} /></span>
                   <span>DT {campos.dt} ainda não está nesta base ({baseAtual?.nome || baseAtual?.id || "—"}). Se você acabou de lançá-la na planilha, a rodada automática é de 15 em 15 min.</span>
                 </div>
-                <button onClick={buscarDTNaPlanilha} disabled={buscandoDT}
-                  style={{ marginTop: 9, width: "100%", padding: "9px 12px", borderRadius: 8, cursor: buscandoDT ? "wait" : "pointer", background: "rgba(217,98,43,.12)", border: `1.5px solid ${t.ouro}`, color: t.ouro, fontWeight: 700, fontSize: 11.5, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                <Button variant="outline" size="sm" onClick={buscarDTNaPlanilha} disabled={buscandoDT} style={{ width: "100%", marginTop: 9 }}>
                   <Icon n={buscandoDT ? "clock" : "download"} s={13} c="currentColor" />
                   {buscandoDT ? "BUSCANDO NA PLANILHA…" : "BUSCAR ESTA DT NA PLANILHA AGORA"}
-                </button>
+                </Button>
               </div>
             )}
 
@@ -321,9 +319,9 @@ export default function ModalColarFaturamento({ ctx }) {
                   <div style={{ padding: "9px 12px", display: "flex", alignItems: "center", gap: 8, background: "rgba(217,98,43,.06)", flexWrap: "wrap" }}>
                     <Icon n="alert" s={12} c={t.warn} />
                     <span style={{ flex: 1, minWidth: 140, fontSize: 10, color: t.warn }}>{conflitos.length} campo{conflitos.length > 1 ? "s já têm" : " já tem"} outro valor gravado.</span>
-                    <button onClick={() => setSobrescrever(v => !v)} style={{ background: sobrescrever ? "rgba(246,70,93,.12)" : "transparent", border: `1.5px solid ${sobrescrever ? t.danger : t.borda}`, borderRadius: 7, padding: "4px 9px", color: sobrescrever ? t.danger : t.txt2, fontSize: 9.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                    <Button variant={sobrescrever ? "danger-ghost" : "secondary"} size="sm" onClick={() => setSobrescrever(v => !v)}>
                       {sobrescrever ? "SOBRESCREVENDO" : "SOBRESCREVER"}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -336,14 +334,11 @@ export default function ModalColarFaturamento({ ctx }) {
           <Button variant="secondary" size="md" onClick={limpar}
             disabled={salvando || !texto.trim()}
             title="Esvazia o bloco pra colar o próximo — não fecha a tela" style={{ flex: "0 0 auto" }}>LIMPAR</Button>
-          <button
-            onClick={gravar}
-            disabled={salvando || !reg || !aGravar.length}
-            style={{ flex: 1, borderRadius: 10, padding: "12px 18px", cursor: salvando ? "wait" : (!reg || !aGravar.length ? "not-allowed" : "pointer"), background: !reg || !aGravar.length ? "rgba(128,128,128,.15)" : "rgba(2,192,118,.15)", border: `1.5px solid ${!reg || !aGravar.length ? t.borda : "rgba(2,192,118,.4)"}`, color: !reg || !aGravar.length ? t.txt2 : t.verde, fontWeight: 700, fontSize: 13, letterSpacing: .5, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
-          >
+          <Button variant={!reg || !aGravar.length ? "secondary" : "success-outline"} size="sm" onClick={gravar}
+            disabled={salvando || !reg || !aGravar.length} style={{ flex: 1 }}>
             <Icon n="save" s={15} c="currentColor" />
             {rotuloGravar}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

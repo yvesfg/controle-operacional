@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Button } from "../design-system/components/Button.jsx";
 
 // Botão flutuante discreto e arrastável para voltar ao Hub.
 // - Arrasta com mouse/toque (pointer events); posição salva em localStorage.
@@ -66,32 +67,16 @@ export default function HubFab({ t, onClick }) {
   if (!pos) return null;
 
   return (
-    <button
-      onPointerDown={onPointerDown}
+    <Button variant="secondary" size="sm" onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      title="Voltar ao Hub (arraste para mover)"
-      style={{
-        position: "fixed", left: pos.x, top: pos.y, zIndex: 250,
-        height: SIZE, width: hover ? "auto" : SIZE, minWidth: SIZE,
-        padding: hover ? "0 16px 0 12px" : 0,
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        borderRadius: SIZE / 2, cursor: "grab", touchAction: "none",
-        background: hover ? t.card : "rgba(20,24,29,.78)",
-        backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-        border: `1px solid ${hover ? t.borda : "rgba(255,255,255,.22)"}`,
-        boxShadow: "0 6px 20px rgba(0,0,0,.45)",
-        opacity: hover ? 1 : 0.9,
-        transition: "opacity .18s, background .18s, border-color .18s, width .18s, padding .18s",
-        color: t.txt2, fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
-      }}
-    >
+      title="Voltar ao Hub (arraste para mover)" style={{ width: hover ? "auto" : SIZE, minWidth: SIZE, position: "fixed", top: pos.y, left: pos.x, zIndex: 250 }}>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
         <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
       </svg>
       {hover && <span style={{ whiteSpace: "nowrap" }}>Hub</span>}
-    </button>
+    </Button>
   );
 }

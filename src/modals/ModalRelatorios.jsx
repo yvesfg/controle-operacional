@@ -197,8 +197,7 @@ export default function ModalRelatorios({ ctx }) {
               <Button variant="secondary" size="md" onClick={()=>setRelGeralOpen(false)} style={{ flex: 1 }}>
                 Cancelar
               </Button>
-              <button
-                disabled={relGeralLoading}
+              <Button variant="outline" size="sm" disabled={relGeralLoading}
                 onClick={async ()=>{
                   setRelGeralOpen(false);
                   // Se seção de ocorrências estiver ativa, pré-carrega do Supabase
@@ -228,13 +227,12 @@ export default function ModalRelatorios({ ctx }) {
                     vinculo:relGeralVinculo,secoes:relGeralSecoes,colunas:relGeralColunas
                   });
                   if(relGeralSecoes.apontamentos) setTimeout(()=>gerarRelatorioOperacional(relGeralFrom,relGeralTo,{sgs:false,apontamentos:true}),800);
-                }}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:relGeralLoading?`rgba(217,98,43,.06)`:`rgba(217,98,43,.13)`,color:t.ouro,cursor:relGeralLoading?"not-allowed":"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s",opacity:relGeralLoading?.6:1}}>
+                }} style={{ flex: 2 }}>
                 {relGeralLoading
                   ? <><span style={{fontSize:14,animation:"spin 1s linear infinite",display:"inline-block"}}><Icon n="clock" s={13} /></span> Buscando ocorrências...</>
                   : <>{hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}Gerar Relatório PDF</>
                 }
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -297,11 +295,10 @@ export default function ModalRelatorios({ ctx }) {
             </div>
             <div style={{display:"flex",gap:10}}>
               <Button variant="secondary" size="md" onClick={()=>setRelDiariaOpen(false)} style={{ flex: 1 }}>Cancelar</Button>
-              <button onClick={()=>{setRelDiariaOpen(false);gerarRelatorioDiarias(relDiariaFrom,relDiariaTo,{motorista:relDiariaMotorista,vinculo:relDiariaVinculo,status:relDiariaStatus});}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Button variant="outline" size="sm" onClick={()=>{setRelDiariaOpen(false);gerarRelatorioDiarias(relDiariaFrom,relDiariaTo,{motorista:relDiariaMotorista,vinculo:relDiariaVinculo,status:relDiariaStatus});}} style={{ flex: 2 }}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -354,11 +351,10 @@ export default function ModalRelatorios({ ctx }) {
             </div>
             <div style={{display:"flex",gap:10}}>
               <Button variant="secondary" size="md" onClick={()=>setRelDescargaOpen(false)} style={{ flex: 1 }}>Cancelar</Button>
-              <button onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Button variant="outline" size="sm" onClick={()=>{setRelDescargaOpen(false);gerarRelatorioDescargas(relDescargaFrom,relDescargaTo,{motorista:relDescargaMotorista,status:relDescargaStatus});}} style={{ flex: 2 }}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -413,11 +409,10 @@ export default function ModalRelatorios({ ctx }) {
               <Button variant="secondary" size="md" onClick={()=>setRelOperOpen(false)} style={{ flex: 1 }}>
                 Cancelar
               </Button>
-              <button onClick={()=>{setRelOperOpen(false);gerarRelatorioOperacional(relOperFrom,relOperTo,relOperSecoes);}}
-                style={{flex:2,padding:"11px",borderRadius:10,border:`1.5px solid ${t.ouro}44`,background:`rgba(217,98,43,.13)`,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:800,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Button variant="outline" size="sm" onClick={()=>{setRelOperOpen(false);gerarRelatorioOperacional(relOperFrom,relOperTo,relOperSecoes);}} style={{ flex: 2 }}>
                 {hIco(<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,t.ouro,15,1.8)}
                 Gerar Relatório PDF
-              </button>
+              </Button>
             </div>
           </div>
         </div>

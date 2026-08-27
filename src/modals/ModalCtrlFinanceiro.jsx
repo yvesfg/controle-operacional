@@ -185,9 +185,9 @@ export default function ModalCtrlFinanceiro({ ctx }) {
               </div>
               <div style={{display:"flex",gap:8}}>
                 <Button variant="secondary" size="md" onClick={()=>setRelCtrlDccOpen(false)} style={{ flex: "0 0 auto" }}>Cancelar</Button>
-                <button onClick={gerarCtrlDcc} style={{flex:1,background:`linear-gradient(135deg,rgba(22,119,255,.2),rgba(22,119,255,.1))`,border:`1.5px solid rgba(22,119,255,.5)`,borderRadius:9,padding:"10px",color:t.azulLt,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                <Button variant="info-outline" size="sm" onClick={gerarCtrlDcc} style={{ flex: 1 }}>
                   {hIco(<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,t.azulLt,15,2)} Gerar Planilha .XLS
-                </button>
+                </Button>
               </div>
             </div>
           </div>

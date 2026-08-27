@@ -49,7 +49,7 @@ export default function DiariasView({ ctx }) {
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.ouro,13)}
                 <span style={{fontSize:11,fontWeight:700,color:t.ouro}}>DT {diariaNavDT}</span>
                 <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
-                <button onClick={()=>setDiariaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(217,98,43,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.ouro,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}><Icon n="x" s={13} /> Limpar</button>
+                <Button variant="outline" size="sm" onClick={()=>setDiariaNavDT(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={13} /> Limpar</Button>
               </div>
             )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
@@ -115,7 +115,7 @@ export default function DiariasView({ ctx }) {
                 {/* Filtro + toolbar de view */}
                 <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap",alignItems:"center"}}>
                   {[{k:"todos",l:"Todos"},{k:"diaria",l:"Com Diária"},{k:"atraso",l:"Perdeu Agenda"},{k:"sem_diaria",l:"Sem Diária"},{k:"pendente",l:"Aguardando"}].map(f => (
-                    <button key={f.k} onClick={()=>setDFiltro(f.k)} style={{padding:"10px 14px",fontSize:11,fontWeight:700,minHeight:44,border:`1.5px solid ${dFiltro===f.k?t.ouro:t.borda}`,borderRadius:7,cursor:"pointer",background:dFiltro===f.k?`rgba(217,98,43,.07)`:t.card2,color:dFiltro===f.k?t.ouro:t.txt2,fontFamily:"inherit"}}>{f.l}</button>
+                    <Button variant={dFiltro===f.k ? "outline" : "secondary"} size="sm" key={f.k} onClick={()=>setDFiltro(f.k)}>{f.l}</Button>
                   ))}
                 </div>
                 {/* Toolbar view */}
@@ -124,9 +124,9 @@ export default function DiariasView({ ctx }) {
                     {v:"linhas",l:"Linhas",svg:<><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>},
                     {v:"blocos",l:"Blocos",svg:<><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>}
                   ].map(m => (
-                    <button key={m.v} onClick={()=>{setDiariaView(m.v);saveJSON("co_diaria_view",m.v);}} style={{padding:"5px 11px",fontSize:10,fontWeight:700,border:`1.5px solid ${diariaView===m.v?"var(--accent)":"var(--border)"}`,borderRadius:7,cursor:"pointer",background:diariaView===m.v?"var(--accent2)":"var(--card2)",color:diariaView===m.v?"var(--accent)":"var(--text2)",fontFamily:"var(--font-heading)",display:"flex",alignItems:"center",gap:4}}>
+                    <Button variant="primary" size="sm" key={m.v} onClick={()=>{setDiariaView(m.v);saveJSON("co_diaria_view",m.v);}}>
                       {hIco(m.svg,diariaView===m.v?t.azulLt:t.txt2,14)} {m.l}
-                    </button>
+                    </Button>
                   ))}
                   {diariaView==="blocos" && (
                     <>
@@ -388,7 +388,7 @@ export default function DiariasView({ ctx }) {
                             placeholder="sim" autoFocus
                             style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${extratoUndoInput==="sim"?t.danger||"var(--cat-red)":t.borda}`,
                               background:t.bg,color:t.txt,width:80,fontFamily:"inherit"}}/>
-                          <button disabled={extratoUndoInput!=="sim"}
+                          <Button variant={extratoUndoInput==="sim" ? "danger" : "secondary"} size="sm" disabled={extratoUndoInput!=="sim"}
                             onClick={()=>{
                               setExtratoRows(prevExtratoSnap.rows);
                               setExtratoFileName(prevExtratoSnap.fileName);
@@ -396,13 +396,9 @@ export default function DiariasView({ ctx }) {
                               setPrevExtratoSnap(null);
                               setExtratoUndoConfirm(false);
                               setExtratoUndoInput("");
-                            }}
-                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
-                              background:extratoUndoInput==="sim"?(t.danger||"var(--cat-red)"):"transparent",
-                              color:extratoUndoInput==="sim"?"#fff":(t.txt2||"#888"),
-                              border:`1px solid ${extratoUndoInput==="sim"?(t.danger||"var(--cat-red)"):t.borda}`}}>
+                            }}>
                             Confirmar
-                          </button>
+                          </Button>
                           <Button variant="secondary" size="sm" onClick={()=>{setExtratoUndoConfirm(false);setExtratoUndoInput("");}}>
                             Cancelar
                           </Button>
@@ -489,11 +485,7 @@ export default function DiariasView({ ctx }) {
                           <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
                             <span style={{fontSize:9,color:t.txt2,marginRight:2}}>Filtrar:</span>
                             {[{k:"todos",l:"Todos"},...Object.entries(confCfg).map(([k,v])=>({k,l:v.l}))].map(f=>(
-                              <button key={f.k} onClick={()=>setExtratoFiltro(f.k)}
-                                style={{padding:"4px 10px",fontSize:9,fontWeight:700,cursor:"pointer",fontFamily:"inherit",
-                                  border:`1.5px solid ${extratoFiltro===f.k?t.ouro:t.borda}`,borderRadius:6,
-                                  background:extratoFiltro===f.k?`rgba(217,98,43,.08)`:t.card2,
-                                  color:extratoFiltro===f.k?t.ouro:t.txt2}}>{f.l}</button>
+                              <Button variant={extratoFiltro===f.k ? "outline" : "secondary"} size="sm" key={f.k} onClick={()=>setExtratoFiltro(f.k)}>{f.l}</Button>
                             ))}
                             <span style={{marginLeft:"auto",fontSize:9,color:t.txt2}}>{filtrado.length} reg.</span>
                           </div>

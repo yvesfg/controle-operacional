@@ -518,7 +518,7 @@ export default function OperacionalView({ ctx }) {
                       <div style={{ gridColumn: "1/-1" }}>FRS · Folha: <strong style={{ color: semFRS ? t.danger : t.verde }}>{a.frs_folha || a.folha_registro || "NÃO PREENCHIDO"}</strong></div>
                       {a.data_apontamento && <div style={{ gridColumn: "1/-1", fontSize: 9, color: t.txt2, marginTop: 2 }}><Icon n="calendar" s={13} /> {a.data_apontamento}</div>}
                     </div>
-                    <button onClick={async () => { if (confirm("Excluir apontamento?")) { const n = [...apontItems]; n.splice(i, 1); await deleteApontSupabase(a.numero || a.apontamento); await saveAponts(n); } }} style={{ marginTop: 8, background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.18)`, borderRadius: 6, padding: "4px 9px", cursor: "pointer", fontSize: 10, color: t.danger, fontFamily: "inherit" }}><Icon n="trash" s={13} /> Excluir</button>
+                    <Button variant="danger-ghost" size="sm" onClick={async () => { if (confirm("Excluir apontamento?")) { const n = [...apontItems]; n.splice(i, 1); await deleteApontSupabase(a.numero || a.apontamento); await saveAponts(n); } }} style={{ marginTop: 8 }}><Icon n="trash" s={13} /> Excluir</Button>
                   </div>
                 );
               })}

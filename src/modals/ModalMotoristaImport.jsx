@@ -107,7 +107,7 @@ export default function ModalMotoristaImport({ ctx }) {
                       </div>
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:4,flexShrink:0}}>
-                      <button onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:true};setMotImportData({...motImportData,vinculos:nv});}} style={{padding:"5px 12px",fontSize:10,fontWeight:700,borderRadius:7,border:`1.5px solid ${t.verde}`,background:v.aceito===true?`rgba(2,192,118,.2)`:`rgba(2,192,118,.07)`,color:t.verde,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="check" s={11} c={t.verde} sw={2.2}/> Vincular</button>
+                      <Button variant="success-outline" size="sm" onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:true};setMotImportData({...motImportData,vinculos:nv});}}><Icon n="check" s={11} c={t.verde} sw={2.2}/> Vincular</Button>
                       <Button variant="secondary" size="sm" onClick={()=>{const nv=[...vinculos];nv[vi]={...nv[vi],aceito:false};setMotImportData({...motImportData,vinculos:nv});}}><Icon n="x" s={11} c={t.txt2} sw={2.2}/> Pular</Button>
                     </div>
                   </div>
@@ -192,15 +192,15 @@ export default function ModalMotoristaImport({ ctx }) {
         <div style={{padding:"10px 14px 18px",borderTop:`1px solid ${t.borda}`,display:"flex",gap:8,flexShrink:0}}>
           <Button variant="secondary" size="md" onClick={()=>{setMotImportOpen(false);setMotImportData(null);setMotImportConfirm("");}} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
           {motImportStep===1 ? (
-            <button onClick={aplicar} disabled={!confirmOk} style={{flex:1,border:`1.5px solid ${confirmOk?t.azulLt:t.borda}`,borderRadius:10,padding:"12px 18px",cursor:confirmOk?"pointer":"not-allowed",background:confirmOk?`rgba(22,119,255,.12)`:`rgba(128,128,128,.08)`,color:confirmOk?t.azulLt:t.txt2,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
+            <Button variant={confirmOk ? "info-outline" : "secondary"} size="sm" onClick={aplicar} disabled={!confirmOk} style={{ flex: 1 }}>
               <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="download" s={14} c="currentColor"/> IMPORTAR ({novos.length} novos + {conflitos.filter(c=>c.escolha==="usar").length} atualizações)</span>
               {vinculos.length>0&&<span style={{fontSize:10,opacity:.7,marginLeft:6}}><Icon n="arrow-right" s={13} /> depois {vinculos.length} sugestão{vinculos.length>1?"ões":""}</span>}
-            </button>
+            </Button>
           ) : (
-            <button onClick={aplicarVinculos} style={{flex:1,border:`1.5px solid ${t.verde}`,borderRadius:10,padding:"12px 18px",cursor:"pointer",background:`rgba(2,192,118,.1)`,color:t.verde,fontWeight:700,fontSize:13,letterSpacing:.5,fontFamily:"inherit"}}>
+            <Button variant="success-outline" size="sm" onClick={aplicarVinculos} style={{ flex: 1 }}>
               <span style={{display:"inline-flex",alignItems:"center",gap:6}}><Icon n="link" s={14} c="currentColor"/> CONFIRMAR {vinculos.filter(v=>v.aceito===true).length} VÍNCULO{vinculos.filter(v=>v.aceito===true).length!==1?"S":""}</span>
               {vinculos.some(v=>v.aceito===null)&&<span style={{fontSize:10,opacity:.7,marginLeft:6}}>(pular restantes)</span>}
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -71,8 +71,8 @@ export default function ModalMotoristasAdmin({ ctx }) {
                   </div>
                   {s.aceito===null && (
                     <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:true};setMotSugestData(nd);}} style={{flex:1,background:`rgba(2,192,118,.1)`,border:`1px solid rgba(2,192,118,.25)`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.verde,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="check" s={12} c={t.verde} sw={2.2}/> Aceitar</button>
-                      <button onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:false};setMotSugestData(nd);}} style={{flex:1,background:`rgba(128,128,128,.07)`,border:`1px solid ${t.borda}`,borderRadius:7,padding:"5px 0",fontSize:10,color:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="x" s={12} c={t.txt2} sw={2.2}/> Ignorar</button>
+                      <Button variant="success-outline" size="sm" onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:true};setMotSugestData(nd);}} style={{ flex: 1 }}><Icon n="check" s={12} c={t.verde} sw={2.2}/> Aceitar</Button>
+                      <Button variant="secondary" size="sm" onClick={()=>{const nd=[...motSugestData];nd[i]={...nd[i],aceito:false};setMotSugestData(nd);}} style={{ flex: 1 }}><Icon n="x" s={12} c={t.txt2} sw={2.2}/> Ignorar</Button>
                     </div>
                   )}
                   {s.aceito===true && <div style={{fontSize:10,color:t.verde,fontWeight:700,display:"flex",alignItems:"center",gap:5}}><Icon n="check" s={11} c={t.verde} sw={2.2}/> Aceito — será aplicado ao salvar</div>}
@@ -119,7 +119,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
             </div>
             <div style={{display:"flex",gap:8,padding:"0 16px 18px"}}>
               <Button variant="secondary" size="md" onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{ flex: "0 0 auto" }}>CANCELAR</Button>
-              <button disabled={motExcluirLoteTexto!=="EXCLUIR"} onClick={()=>{
+              <Button variant="danger-ghost" size="sm" disabled={motExcluirLoteTexto!=="EXCLUIR"} onClick={()=>{
                 if(motExcluirLoteTexto!=="EXCLUIR")return;
                 const nm=motoristas.filter((_,i)=>!motSelecionados.has(i));
                 saveMotoristasLS(nm);
@@ -128,7 +128,7 @@ export default function ModalMotoristasAdmin({ ctx }) {
                 setMotSelecionados(new Set());
                 setMotExcluirLoteOpen(false);
                 setMotExcluirLoteTexto("");
-              }} style={{flex:1,background:motExcluirLoteTexto==="EXCLUIR"?`rgba(246,70,93,.9)`:`rgba(246,70,93,.2)`,border:`1.5px solid rgba(246,70,93,.4)`,borderRadius:9,padding:"10px 0",color:motExcluirLoteTexto==="EXCLUIR"?"#fff":t.danger,fontSize:12,fontWeight:700,cursor:motExcluirLoteTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",transition:"all .2s"}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,motExcluirLoteTexto==="EXCLUIR"?"#fff":t.danger,13)} CONFIRMAR EXCLUSÃO</button>
+              }} style={{ flex: 1 }}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,motExcluirLoteTexto==="EXCLUIR"?"#fff":t.danger,13)} CONFIRMAR EXCLUSÃO</Button>
             </div>
           </div>
         </div>

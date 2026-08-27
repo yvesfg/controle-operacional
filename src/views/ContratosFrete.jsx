@@ -278,13 +278,9 @@ export default function ContratosFrete({ ctx, conn }) {
         {[["", `Todas (${cruzados.filter((c) => c.problemas.length > 0).length})`],
           ...ORDEM_PROBLEMA.map((k) => [k, `${PROBLEMA[k]} (${resumo.porProblema[k] || 0})`])]
           .map(([id, label]) => (
-            <button key={id || "todas"} onClick={() => setFiltroProblema(id)}
-              style={{ fontSize: 11, fontWeight: 600, padding: "6px 11px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
-                border: `1px solid ${filtroProblema === id ? t.azul : t.borda}`,
-                background: filtroProblema === id ? hexRgb(t.azul, .12) : "transparent",
-                color: filtroProblema === id ? t.txt : t.txt2 }}>
+            <Button variant={filtroProblema === id ? "info" : "secondary"} size="sm" key={id || "todas"} onClick={() => setFiltroProblema(id)}>
               {label}
-            </button>
+            </Button>
           ))}
       </div>
 

@@ -114,8 +114,8 @@ export default function ModalMotorista({ ctx }) {
                   <div style={{fontSize:10,color:t.txt,marginBottom:4}}><b>{motDupSugest.nome}</b> · CPF: {motDupSugest.cpf||"—"} · Placa: {motDupSugest.placa1||"—"}</div>
                   <div style={{fontSize:9,color:t.txt2,marginBottom:8}}>Deseja ver o cadastro existente ou continuar salvando mesmo assim?</div>
                   <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>{setFormData({...motDupSugest});setEditIdx(motoristas.indexOf(motDupSugest));setMotDupSugest(null);}} style={{flex:1,background:`rgba(22,119,255,.1)`,border:`1px solid rgba(22,119,255,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.azulLt,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="edit" s={11} c={t.azulLt}/> Editar existente</button>
-                    <button onClick={()=>setMotDupSugest(null)} style={{flex:1,background:`rgba(246,70,93,.1)`,border:`1px solid rgba(246,70,93,.25)`,borderRadius:7,padding:"6px 0",fontSize:10,color:t.danger,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="alert" s={11} c={t.danger}/> Salvar mesmo assim</button>
+                    <Button variant="info-outline" size="sm" onClick={()=>{setFormData({...motDupSugest});setEditIdx(motoristas.indexOf(motDupSugest));setMotDupSugest(null);}} style={{ flex: 1 }}><Icon n="edit" s={11} c={t.azulLt}/> Editar existente</Button>
+                    <Button variant="danger-ghost" size="sm" onClick={()=>setMotDupSugest(null)} style={{ flex: 1 }}><Icon n="alert" s={11} c={t.danger}/> Salvar mesmo assim</Button>
                   </div>
                 </div>
               )}

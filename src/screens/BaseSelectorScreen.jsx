@@ -41,13 +41,11 @@ export default function BaseSelectorScreen({
         </Button>
 
         {basesPermitidas.map(base => (
-          <button
-            key={base.id}
+          <Button variant="secondary" size="sm" key={base.id}
             onClick={() => setBaseAtual(base)}
-            style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:t.card2,border:`1px solid ${t.borda2||t.borda}`,borderRadius:10,padding:"14px 16px",cursor:"pointer",textAlign:"left",transition:"all .15s"}}
+            
             onMouseEnter={e=>{e.currentTarget.style.borderColor=hexRgb(t.ouro,.55);e.currentTarget.style.background=t.bgAlt||t.card2}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.background=t.card2}}
-          >
+            onMouseLeave={e=>{e.currentTarget.style.borderColor=t.borda2||t.borda;e.currentTarget.style.background=t.card2}} style={{ width: "100%" }}>
             <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${hexRgb(t.ouro,.18)},${hexRgb(t.ouro,.08)})`,border:`1px solid ${hexRgb(t.ouro,.3)}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.ouro} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             </div>
@@ -55,7 +53,7 @@ export default function BaseSelectorScreen({
               <div style={{fontFamily:"var(--font-heading)",fontSize:14,fontWeight:700,color:t.txt,letterSpacing:"-.01em"}}>{base.label}</div>
               <div style={{fontSize:10,color:t.txt2,marginTop:2,fontFamily:"var(--font-mono)",letterSpacing:".04em"}}>{base.table}</div>
             </div>
-          </button>
+          </Button>
         ))}
         <Button variant="ghost" size="sm" onClick={handleLogout} style={{ marginTop: 4 }}>
           Sair e trocar conta

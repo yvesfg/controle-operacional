@@ -46,9 +46,9 @@ export default function ModalOcorrChegada({ ctx }) {
         </div>
         {/* Ações */}
         <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>setOcorrChegadaAlert(false)} style={{flex:1,background:`rgba(128,128,128,.08)`,border:`1.5px solid ${t.borda}`,borderRadius:DESIGN.r.inp,padding:"10px",color:t.txt2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:DESIGN.fnt.b}}>
+          <Button variant="secondary" size="sm" onClick={()=>setOcorrChegadaAlert(false)} style={{ flex: 1 }}>
             Sem Ocorrência
-          </button>
+          </Button>
           <button onClick={()=>{
             setOcorrChegadaAlert(false);
             if(formData.ro) showToast(`RO registrado: ${formData.ro}`,"ok");

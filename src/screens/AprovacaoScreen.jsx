@@ -34,7 +34,7 @@ export default function AprovacaoScreen({
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> {pendingUserInfo.email}
           </div>
         )}
-        <button onClick={async()=>{
+        <Button variant="primary" size="sm" onClick={async()=>{
           const conn=getConexao();
           if(!conn){showToast("Sem conexão com banco","warn");return;}
           showToast("Verificando status...","ok");
@@ -59,9 +59,9 @@ export default function AprovacaoScreen({
               showToast("Solicitação não encontrada. Tente fazer login novamente.","warn");
             }
           }catch{showToast("Erro ao verificar status","err");}
-        }} style={{width:"100%",padding:"13px",background:`linear-gradient(135deg,${t.ouroDk},${t.ouro})`,border:"none",borderRadius:DESIGN.r.btn,color:t.onPrimary,fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:10,letterSpacing:.5,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+        }} style={{ width: "100%", marginBottom: 10 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink:0}}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Verificar Status
-        </button>
+        </Button>
         <Button variant="secondary" size="md" onClick={()=>{setAguardandoAprovacao(false);localStorage.removeItem("co_pending_user");setPendingUserInfo(null);}} style={{ width: "100%" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{flexShrink:0}}><polyline points="15 18 9 12 15 6"/></svg> Voltar ao Login
         </Button>

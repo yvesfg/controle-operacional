@@ -82,7 +82,7 @@ export default function DescargaView({ ctx }) {
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,13)}
                 <span style={{fontSize:11,fontWeight:700,color:t.azulLt}}>DT {descargaNavDT}</span>
                 <span style={{fontSize:10,color:t.txt2}}>em destaque</span>
-                <button onClick={()=>setDescargaNavDT(null)} style={{marginLeft:"auto",background:"transparent",border:`1px solid rgba(22,119,255,.3)`,borderRadius:6,padding:"2px 8px",fontSize:10,color:t.azulLt,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}><Icon n="x" s={13} /> Limpar</button>
+                <Button variant="info-outline" size="sm" onClick={()=>setDescargaNavDT(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={13} /> Limpar</Button>
               </div>
             )}
             <div style={{display:"flex",justifyContent:"flex-end",marginBottom:8}}>
@@ -327,7 +327,7 @@ export default function DescargaView({ ctx }) {
                             placeholder="sim" autoFocus
                             style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:`1.5px solid ${rodoUndoInput==="sim"?t.danger||"var(--cat-red)":t.borda}`,
                               background:t.bg,color:t.txt,width:80,fontFamily:"inherit"}}/>
-                          <button disabled={rodoUndoInput!=="sim"}
+                          <Button variant={rodoUndoInput==="sim" ? "danger" : "secondary"} size="sm" disabled={rodoUndoInput!=="sim"}
                             onClick={()=>{
                               setRodorricaRows(prevRodorricaSnap.rows);
                               setRodorricaFileName(prevRodorricaSnap.fileName);
@@ -335,13 +335,9 @@ export default function DescargaView({ ctx }) {
                               setPrevRodorricaSnap(null);
                               setRodoUndoConfirm(false);
                               setRodoUndoInput("");
-                            }}
-                            style={{fontSize:10,padding:"4px 10px",borderRadius:6,fontFamily:"inherit",cursor:"pointer",
-                              background:rodoUndoInput==="sim"?(t.danger||"var(--cat-red)"):"transparent",
-                              color:rodoUndoInput==="sim"?"#fff":(t.txt2||"#888"),
-                              border:`1px solid ${rodoUndoInput==="sim"?(t.danger||"var(--cat-red)"):t.borda}`}}>
+                            }}>
                             Confirmar
-                          </button>
+                          </Button>
                           <Button variant="secondary" size="sm" onClick={()=>{setRodoUndoConfirm(false);setRodoUndoInput("");}}>
                             Cancelar
                           </Button>

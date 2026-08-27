@@ -111,9 +111,9 @@ export default function ModalBusca({ ctx }) {
                 {k:"cpf",   ico:<><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,                  l:"CPF"},
                 {k:"placa", ico:<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>, l:"PLACA"},
               ].map(b => (
-                <button key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");limparBusca();}} style={{padding:"10px 18px",fontSize:12,fontWeight:700,border:`1.5px solid ${buscaTipo===b.k?t.ouro:t.borda}`,borderRadius:DESIGN.r.btn,cursor:"pointer",background:buscaTipo===b.k?`rgba(217,98,43,.08)`:t.card2,color:buscaTipo===b.k?t.ouro:t.txt2,fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,transition:"all .18s"}}>
+                <Button variant={buscaTipo===b.k ? "outline" : "secondary"} size="sm" key={b.k} onClick={()=>{setBuscaTipo(b.k);setBuscaInput("");limparBusca();}}>
                   {hIco(b.ico,buscaTipo===b.k?t.ouro:t.txt2,15,2)} {b.l}
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -227,7 +227,7 @@ export default function ModalBusca({ ctx }) {
                           <div style={{fontSize:10,color:t.txt2,marginTop:2}}>Este motorista não está no cadastro. Deseja cadastrar?</div>
                         </div>
                         {canEdit && (
-                          <button onClick={()=>{
+                          <Button variant="outline" size="sm" onClick={()=>{
                             setFormData({
                               nome: buscaResult.nome || "",
                               cpf: buscaResult.cpf || "",
@@ -236,9 +236,9 @@ export default function ModalBusca({ ctx }) {
                             });
                             setEditIdx(-1);
                             setModalOpen("motorista");
-                          }} style={{background:`rgba(217,98,43,.12)`,border:`1px solid rgba(217,98,43,.3)`,borderRadius:8,padding:"7px 11px",color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",flexShrink:0}}>
+                          }} style={{ flexShrink: 0 }}>
                             ＋ Cadastrar
-                          </button>
+                          </Button>
                         )}
                       </div>
                     );

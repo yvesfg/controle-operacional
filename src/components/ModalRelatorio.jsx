@@ -177,11 +177,9 @@ export default function ModalRelatorio({
             {colunas.map((c) => {
               const on = visiveis.includes(c.id);
               return (
-                <button key={c.id} onClick={() => setVisiveis((v) => (on ? v.filter((x) => x !== c.id) : [...v, c.id]))}
-                  style={{ fontSize: 10.5, fontWeight: 600, padding: "5px 9px", borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
-                    border: `1px solid ${on ? t.azul : t.borda}`, background: on ? hexRgb(t.azul, .12) : "transparent", color: on ? t.txt : t.txt2 }}>
+                <Button variant={on ? "info" : "secondary"} size="sm" key={c.id} onClick={() => setVisiveis((v) => (on ? v.filter((x) => x !== c.id) : [...v, c.id]))}>
                   {c.label}
-                </button>
+                </Button>
               );
             })}
           </div>

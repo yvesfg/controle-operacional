@@ -88,10 +88,10 @@ export default function ModalDetalhe({ ctx }) {
                   </div>
                   <div style={{display:"flex",gap:5,flexShrink:0}}>
                     {canEditDetalhe && (
-                      <button onClick={()=>{
+                      <Button variant="outline" size="sm" onClick={()=>{
                         const idx=DADOS.findIndex(x=>x.dt===r.dt);
                         setEditIdx(idx);setFormData({...r});setEditStep(1);setModalOpen("edit");
-                      }} style={{background:`rgba(217,98,43,.1)`,border:`1px solid rgba(217,98,43,.25)`,borderRadius:7,padding:"7px 12px",color:t.ouro,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,13)} Editar</button>
+                      }}>{hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.ouro,13)} Editar</Button>
                     )}
                     {canEditDetalhe && excluirConfirm!=="detalhe" && (
                       <button onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}} style={{background:"rgba(220,38,38,.08)",border:`1px solid rgba(220,38,38,.3)`,borderRadius:7,padding:"7px 10px",color:"var(--red)",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:4}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>, "var(--red)", 14)}</button>
@@ -110,11 +110,8 @@ export default function ModalDetalhe({ ctx }) {
                       placeholder="EXCLUIR"
                       style={{flex:1,background:"rgba(220,38,38,.08)",border:`1.5px solid ${excluirTexto==="EXCLUIR"?"var(--red)":"rgba(220,38,38,.3)"}`,borderRadius:7,padding:"7px 10px",color:"var(--red)",fontSize:12,fontFamily:"inherit",fontWeight:700,letterSpacing:1,outline:"none"}}
                     />
-                    <button
-                      onClick={()=>{ if(excluirTexto==="EXCLUIR") deletarRegistro(r.dt); }}
-                      disabled={excluirTexto!=="EXCLUIR"}
-                      style={{background:excluirTexto==="EXCLUIR"?"var(--red)":"rgba(220,38,38,.2)",border:"none",borderRadius:7,padding:"7px 14px",color:"#fff",fontSize:11,fontWeight:700,cursor:excluirTexto==="EXCLUIR"?"pointer":"not-allowed",fontFamily:"inherit",opacity:excluirTexto==="EXCLUIR"?1:.6}}
-                    >CONFIRMAR</button>
+                    <Button variant="danger" size="sm" onClick={()=>{ if(excluirTexto==="EXCLUIR") deletarRegistro(r.dt); }}
+                      disabled={excluirTexto!=="EXCLUIR"}>CONFIRMAR</Button>
                     <Button variant="secondary" size="sm" onClick={()=>{setExcluirConfirm(null);setExcluirTexto("");}}><Icon n="x" s={14} c={t.txt2} sw={2}/></Button>
                   </div>
                 )}
@@ -220,11 +217,11 @@ export default function ModalDetalhe({ ctx }) {
                           <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:4,marginBottom:8,scrollbarWidth:"none"}}>
                             {dias.map(d=>{
                               const ent=getE(d);const isHoje=d===new Date().toISOString().slice(0,10);const isSel=acompDiaSel===d;
-                              return(<button key={d} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}} style={{flexShrink:0,padding:"5px 7px",borderRadius:8,border:"1.5px solid "+(isSel?t.azul:ent?t.verde:t.borda),background:isSel?"rgba(22,119,255,.1)":ent?"rgba(2,192,118,.06)":"transparent",cursor:"pointer",minWidth:46,textAlign:"center"}}>
+                              return(<Button variant="info-outline" size="sm" key={d} onClick={()=>{setAcompDiaSel(isSel?null:d);setAcompTexto(ent?ent.texto:"");setAcompImagens(ent?ent.imagens:[]);}} style={{ minWidth: 46, flexShrink: 0 }}>
                                 <div style={{fontSize:8,color:isSel?t.azulLt:ent?t.verde:t.txt2,fontWeight:700}}>{new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</div>
                                 {isHoje&&<div style={{fontSize:11,color:t.ouro,fontWeight:700}}>HOJE</div>}
                                 {ent&&<div style={{display:"flex",justifyContent:"center",marginTop:1}}><Icon n="check" s={11} c={t.verde} sw={2.4}/></div>}
-                              </button>);
+                              </Button>);
                             })}
                           </div>
                           {acompDiaSel&&(
@@ -338,7 +335,7 @@ export default function ModalDetalhe({ ctx }) {
                           <span style={{fontSize:11,fontWeight:700,color:t.ouro,display:"inline-flex",alignItems:"center",gap:5}}><Icon n="dot" s={9} c={t.ouro}/> Existe DCC?</span>
                           <span style={{fontSize:9,color:t.txt2,flex:1}}>Documento de Cobrança Complementar</span>
                           {["sim","nao"].map(op=>(
-                            <button key={op} onClick={()=>setDetalheTemDcc(op)} style={{padding:"5px 14px",borderRadius:7,border:`1.5px solid ${detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.borda}`,background:detalheTemDcc===op?(op==="sim"?`rgba(217,98,43,.12)`:`rgba(246,70,93,.08)`):`transparent`,color:detalheTemDcc===op?(op==="sim"?t.ouro:t.danger):t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11,textTransform:"uppercase",transition:"all .15s",display:"inline-flex",alignItems:"center",gap:5}}>{op==="sim"?<><Icon n="check-circle" s={12} c="currentColor"/> Sim</>:<><Icon n="x-circle" s={12} c="currentColor"/> Não</>}</button>
+                            <Button variant={detalheTemDcc===op ? "outline" : "secondary"} size="sm" key={op} onClick={()=>setDetalheTemDcc(op)}>{op==="sim"?<><Icon n="check-circle" s={12} c="currentColor"/> Sim</>:<><Icon n="x-circle" s={12} c="currentColor"/> Não</>}</Button>
                           ))}
                         </div>
                         {detalheTemDcc===null&&<div style={{fontSize:9,color:t.txt2,marginTop:5}}>Informe se há DCC para liberar o formulário de minutas.</div>}
@@ -358,7 +355,7 @@ export default function ModalDetalhe({ ctx }) {
                               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                                 <div style={{display:"flex",gap:5}}>
                                   {["D01-MAT","D05-MAR"].map(tp=>(
-                                    <button key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.ouro:t.borda}`,background:mn.tipo===tp?`rgba(217,98,43,.15)`:t.card,color:mn.tipo===tp?t.ouro:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                    <Button variant={mn.tipo===tp ? "outline" : "secondary"} size="sm" key={tp} onClick={()=>setDetalheMinDcc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))}>{tp}</Button>
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDcc.length>1?idx+1:""}</span>
                                 </div>
@@ -372,7 +369,7 @@ export default function ModalDetalhe({ ctx }) {
                               </div>
                             </div>
                           ))}
-                          <button onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{background:`rgba(217,98,43,.06)`,border:`1px dashed rgba(217,98,43,.35)`,borderRadius:7,padding:"5px 10px",color:t.ouro,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta DCC</button>
+                          <Button variant="outline" size="sm" onClick={()=>setDetalheMinDcc(p=>[...p,{tipo:"D01-MAT",cte:"",mdf:"",num:"",valor:""}])} style={{ width: "100%" }}>＋ Outra Minuta DCC</Button>
                         </div>}
                       </div>}
 
@@ -407,7 +404,7 @@ export default function ModalDetalhe({ ctx }) {
                               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
                                 <div style={{display:"flex",gap:5}}>
                                   {["MAM","MRM"].map(tp=>(
-                                    <button key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))} style={{padding:"4px 10px",borderRadius:6,border:`1.5px solid ${mn.tipo===tp?t.azulLt:t.borda}`,background:mn.tipo===tp?`rgba(22,119,255,.12)`:t.card,color:mn.tipo===tp?t.azulLt:t.txt2,fontWeight:700,cursor:"pointer",fontFamily:"inherit",fontSize:11}}>{tp}</button>
+                                    <Button variant={mn.tipo===tp ? "info-outline" : "secondary"} size="sm" key={tp} onClick={()=>setDetalheMinDsc(p=>p.map((m,i)=>i===idx?{...m,tipo:tp}:m))}>{tp}</Button>
                                   ))}
                                   <span style={{fontSize:10,color:t.txt2,marginLeft:4,alignSelf:"center"}}>Minuta {detalheMinDsc.length>1?idx+1:""}</span>
                                 </div>
@@ -420,7 +417,7 @@ export default function ModalDetalhe({ ctx }) {
                               </div>
                             </div>
                           ))}
-                          <button onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{background:`rgba(22,119,255,.05)`,border:`1px dashed rgba(22,119,255,.35)`,borderRadius:7,padding:"5px 10px",color:t.azulLt,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"inherit",width:"100%"}}>＋ Outra Minuta Descarga</button>
+                          <Button variant="info-outline" size="sm" onClick={()=>setDetalheMinDsc(p=>[...p,{tipo:"MAM",cte:"",mdf:"",num:""}])} style={{ width: "100%" }}>＋ Outra Minuta Descarga</Button>
                         </div>}
                       </div>
 
@@ -454,7 +451,7 @@ export default function ModalDetalhe({ ctx }) {
                                   {r.diaria_prev&&<div style={{fontSize:9,color:t.txt2,marginTop:4}}>Devida: <strong style={{color:t.ouro}}>{fmtMoeda(r.diaria_prev)}</strong></div>}
                                   {r.diaria_pg&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Paga: <strong style={{color:t.verde}}>{fmtMoeda(r.diaria_pg)}</strong></div>}
                                   {r.diaria_prev&&r.diaria_pg&&(()=>{const saldo=(parseFloat(r.diaria_pg)||0)-(parseFloat(r.diaria_prev)||0);return saldo!==0&&<div style={{fontSize:9,color:saldo<0?t.danger:t.verde,marginTop:2,fontWeight:700}}>Saldo: {fmtMoeda(Math.abs(saldo))} {saldo<0?"a pagar":"a favor"}</div>;})()}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.ouro}44`,background:`rgba(217,98,43,.08)`,color:t.ouro,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="clipboard" s={11} c="currentColor"/> Ver Diárias <Icon n="arrow-right" s={11} c="currentColor"/></button>
+                                  <Button variant="outline" size="sm" onClick={()=>{setModalOpen(null);setActiveTab("diarias");}} style={{ width: "100%", marginTop: 8 }}><Icon n="clipboard" s={11} c="currentColor"/> Ver Diárias <Icon n="arrow-right" s={11} c="currentColor"/></Button>
                                 </div>
                               )}
                               {temDescarga && (
@@ -465,7 +462,7 @@ export default function ModalDetalhe({ ctx }) {
                                   {r.data_desc&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Descarga: <strong style={{color:t.verde}}>{r.data_desc}</strong></div>}
                                   {r.chegada&&<div style={{fontSize:9,color:t.txt2,marginTop:2}}>Chegada: <strong style={{color:t.txt}}>{r.chegada}</strong></div>}
                                   {r.destino&&<div style={{fontSize:9,color:t.txt2,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Destino: <strong style={{color:t.txt}}>{r.destino}</strong></div>}
-                                  <button onClick={()=>{setModalOpen(null);setActiveTab("descarga");}} style={{marginTop:8,width:"100%",padding:"5px 0",borderRadius:6,border:`1px solid ${t.azulLt}44`,background:`rgba(22,119,255,.08)`,color:t.azulLt,fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:"inherit",letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="package" s={11} c="currentColor"/> Ver Descargas <Icon n="arrow-right" s={11} c="currentColor"/></button>
+                                  <Button variant="info-outline" size="sm" onClick={()=>{setModalOpen(null);setActiveTab("descarga");}} style={{ width: "100%", marginTop: 8 }}><Icon n="package" s={11} c="currentColor"/> Ver Descargas <Icon n="arrow-right" s={11} c="currentColor"/></Button>
                                 </div>
                               )}
                             </div>
@@ -481,10 +478,10 @@ export default function ModalDetalhe({ ctx }) {
 
             {/* Rodapé fixo — Salvar Documentos sempre alcançável, sem depender de rolar até o fim (desktop e mobile) */}
             <div className="co-dt-footer">
-              <button onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{flexShrink:0,padding:"0 16px",background:"rgba(128,128,128,.12)",border:`1px solid ${t.borda2}`,borderRadius:DESIGN.r.btn,color:t.txt2,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon n="x" s={13} c="currentColor" sw={2}/> Fechar</button>
-              <button onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{flex:1,padding:"12px",borderRadius:DESIGN.r.btn,border:"none",background:salvandoMins?t.card:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,color:salvandoMins?t.txt2:"#fff",fontWeight:700,fontSize:13,cursor:salvandoMins?"not-allowed":"pointer",fontFamily:"inherit",letterSpacing:.5}}>
+              <Button variant="secondary" size="sm" onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}} style={{ flexShrink: 0 }}><Icon n="x" s={13} c="currentColor" sw={2}/> Fechar</Button>
+              <Button variant={salvandoMins ? "secondary" : "success"} size="sm" onClick={salvarMinutasDetalhe} disabled={salvandoMins} style={{ flex: 1 }}>
                 <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>{salvandoMins?<><Icon n="clock" s={14} c="currentColor"/> Salvando...</>:<><Icon n="save" s={14} c="currentColor"/> SALVAR DOCUMENTOS</>}</span>
-              </button>
+              </Button>
             </div>
           </div>{/* fim co-dt-modal */}
         </div>

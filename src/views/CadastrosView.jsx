@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../design-system/components/Button.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import EmbarcadorasCad from "./cadastros/EmbarcadorasCad.jsx";
 import MotoristasCad from "./cadastros/MotoristasCad.jsx";
@@ -29,12 +30,9 @@ export default function CadastrosView({ ctx }) {
           {SECOES.map((s) => {
             const on = s.k === sec;
             return (
-              <button key={s.k} onClick={() => setSec(s.k)}
-                style={{ fontSize: 12, fontWeight: on ? 700 : 500, padding: "6px 14px", borderRadius: 999, cursor: "pointer",
-                  fontFamily: "inherit", border: `1.5px solid ${on ? t.ouro : t.borda}`,
-                  background: on ? t.ouro : "transparent", color: on ? "#1a1a1a" : t.txt2 }}>
+              <Button variant={on ? "primary" : "secondary"} size="sm" key={s.k} onClick={() => setSec(s.k)}>
                 {s.l}
-              </button>
+              </Button>
             );
           })}
         </div>

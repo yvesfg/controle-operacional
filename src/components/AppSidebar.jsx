@@ -61,18 +61,16 @@ export default function AppSidebar({
             };
             return (<>
               {mainTabs.map(renderItem)}
-              <button
-                className="co-sidebar__item"
+              <Button variant="success-outline" size="sm" className="co-sidebar__item"
                 onClick={()=>{ setWppTipoOpen(true); if(!isWide) setMobileSidebarExpanded(false); }}
-                style={{border:`1px solid rgba(37,211,102,.18)`,borderRadius:DESIGN.r.sidebar,color:"#25D366",gap:10}}
-                title={!isWide||sidebarCollapsed?"WhatsApp":undefined}
-              >
+                
+                title={!isWide||sidebarCollapsed?"WhatsApp":undefined}>
                 <span className="co-sidebar__ico">
                   {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                   </>,"#25D366",16)}
                 </span>
                 <span className="co-sidebar__item-lbl" style={{color:"#25D366",fontWeight:600}}>WhatsApp</span>
-              </button>
+              </Button>
               <div className="co-sidebar__section-lbl">PÓS CARGA</div>
               <div className="co-sidebar__section-line"/>
               {pcTabs.map(renderItem)}

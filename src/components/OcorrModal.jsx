@@ -115,10 +115,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
               <Badge variant="default" size="sm">{tipos.size} tipos</Badge>
             )}
           </div>
-          <button
-            onClick={onClose}
-            style={{ background: "rgba(128,128,128,.1)", border: "none", cursor: "pointer", color: t.txt2, padding: "4px 9px", lineHeight: 1, fontSize: 17, borderRadius: 6 }}
-          >×</button>
+          <Button variant="secondary" size="md" onClick={onClose}>×</Button>
         </div>
 
         {/* Body */}
@@ -133,28 +130,13 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
               {TIPOS.map(tp => {
                 const ativo = tipos.has(tp.k);
                 return (
-                  <button
-                    key={tp.k}
-                    onClick={() => toggleTipo(tp.k)}
-                    style={{
-                      padding: "5px 3px",
-                      borderRadius: 6,
-                      border: `1.5px solid ${ativo ? tp.cor : t.borda}`,
-                      background: ativo ? `${tp.cor}20` : "transparent",
-                      color: ativo ? tp.cor : t.txt2,
-                      fontSize: 9,
-                      fontWeight: ativo ? 700 : 400,
-                      cursor: "pointer",
-                      transition: "all 0.12s",
-                      fontFamily: "inherit",
-                      position: "relative",
-                    }}
-                  >
+                  <Button variant="secondary" size="sm" key={tp.k}
+                    onClick={() => toggleTipo(tp.k)} style={{ position: "relative" }}>
                     {ativo && (
                       <span style={{ position: "absolute", top: 2, right: 3, width: 5, height: 5, borderRadius: "50%", background: tp.cor }} />
                     )}
                     {tp.l}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -194,18 +176,8 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                   {nfListRec.map(nf => {
                     const sel = nfsRec.has(nf);
                     return (
-                      <button
-                        key={nf}
-                        onClick={() => setNfsRec(prev => { const n = new Set(prev); n.has(nf) ? n.delete(nf) : n.add(nf); return n; })}
-                        style={{
-                          padding: "3px 9px", borderRadius: 5,
-                          border: `1.5px solid ${sel ? "var(--cat-gold)" : t.borda}`,
-                          background: sel ? "rgba(217,98,43,0.13)" : "transparent",
-                          color: sel ? "var(--cat-gold)" : t.txt2,
-                          fontSize: 10, fontWeight: sel ? 700 : 400,
-                          cursor: "pointer", fontFamily: "inherit",
-                        }}
-                      >{nf}</button>
+                      <Button variant={sel ? "outline" : "secondary"} size="sm" key={nf}
+                        onClick={() => setNfsRec(prev => { const n = new Set(prev); n.has(nf) ? n.delete(nf) : n.add(nf); return n; })}>{nf}</Button>
                     );
                   })}
                   {nfsManual.map(nf => (

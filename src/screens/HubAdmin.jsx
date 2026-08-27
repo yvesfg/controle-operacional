@@ -611,12 +611,10 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
           ].map(op=>{
             const on = form.entrada===op.k;
             return (
-              <button key={op.k} onClick={()=>setForm(f=>({...f,entrada:op.k}))}
-                style={{flex:1,minWidth:220,textAlign:"left",cursor:"pointer",borderRadius:10,padding:"10px 12px",
-                  border:`1.5px solid ${on?t.ouro:t.borda2}`,background:on?hexRgb(t.ouro,.08):"transparent"}}>
+              <Button variant={on ? "primary" : "secondary"} size="sm" key={op.k} onClick={()=>setForm(f=>({...f,entrada:op.k}))} style={{ flex: 1, minWidth: 220 }}>
                 <div style={{fontSize:12,fontWeight:700,color:on?t.ouro:t.txt}}>{op.tit}</div>
                 <div style={{fontSize:10.5,color:t.txt2,marginTop:3,lineHeight:1.45}}>{op.des}</div>
-              </button>
+              </Button>
             );
           })}
         </div>
