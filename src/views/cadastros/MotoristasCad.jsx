@@ -738,7 +738,7 @@ function ImportarAgenda({ ctx, conn, motoristas, usuarioLogado, onFechar, onConc
                     <span style={{ flex: "1 1 200px", fontWeight: 600, color: t.txt }}>{c.nome}</span>
                     <span style={{ flex: "0 0 auto", color: t.txt2, fontFamily: "var(--font-mono)" }}>{c.placas.join(" · ")}</span>
                     <span style={{ flex: "0 0 auto", color: t.txt2 }}>{[c.configEixos, c.carroceria, c.capacidadeM3 && c.capacidadeM3 + "m³"].filter(Boolean).join(" ")}</span>
-                    {c.statusRisco && <span style={{ flex: "0 0 auto", fontWeight: 700, color: STATUS_COR[c.statusRisco] }}>{STATUS_LABEL[c.statusRisco]}</span>}
+                    {c.statusRisco && <Badge variant={STATUS_VARIANTE[c.statusRisco] || "default"} size="sm" pill style={{ flex: "0 0 auto" }}>{STATUS_LABEL[c.statusRisco]}</Badge>}
                   </label>
                 ))}
               </div>

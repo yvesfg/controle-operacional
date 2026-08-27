@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "../../design-system/components/Card.jsx";
+import useModalEsc from "../../hooks/useModalEsc.js";
 import { listarTemplates } from "../../cadastroTemplates.js";
 import { itensDoEnvio, matrizesDoTemplate, nomeDoArquivo } from "../../cadastroExport.js";
 import { listarEnvios, registrarEnvios, situacaoDoEnvio, indexarEnvios } from "../../cadastroEnvios.js";
@@ -25,6 +25,8 @@ const ESTADO_VARIANTE = { novo: "info", mudou: "warning", igual: "default" };
 const dataCurta = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR") : "");
 
 export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos, onFechar }) {
+  // Agora que e modal, fecha no ESC como todos os outros.
+  useModalEsc(true, onFechar);
   const { t, DADOS, showToast, usuarioLogado } = ctx;
 
   const [templates, setTemplates] = React.useState([]);
@@ -149,16 +151,22 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
   const inp = { fontSize: 12.5, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", width: "100%" };
 
   return (
-    <Card size="sm" accent="info" style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-        <div style={{ flex: "1 1 auto" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>Gerar cadastro da embarcadora</div>
+    <div className="co-modal-overlay co-modal-overlay--center" onClick={onFechar}>
+      <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: 780 }} onClick={(e) => e.stopPropagation()}>
+
+      {/* Cabeçalho fixo — o que rola é só a lista, no meio. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+                    padding: "14px 16px", borderBottom: `1px solid ${t.borda}`, flexShrink: 0 }}>
+        <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: t.txt }}>Gerar cadastro da embarcadora</div>
           <div style={{ fontSize: 11, color: t.txt2 }}>Cada linha é um motorista com o conjunto que rodou — marque e gere o arquivo no modelo dela.</div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onFechar}>Fechar</Button>
+        <Button variant="secondary" size="touch" iconOnly onClick={onFechar} title="Fechar">
+          <Icon n="x" s={16} />
+        </Button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", padding: "12px 16px 0", flexShrink: 0 }}>
         <div style={{ flex: "1 1 260px" }}>
           <label style={{ fontSize: 10.5, color: t.txt2, marginBottom: 3, display: "block" }}>Modelo</label>
           <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} style={inp}>
@@ -172,7 +180,7 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 8, fontSize: 11.5, color: t.txt2 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "10px 16px 8px", fontSize: 11.5, color: t.txt2, flexShrink: 0 }}>
         {[
           { k: "prontos",   l: "Prontos pra enviar", dica: "Cadastro completo que ainda não foi, ou cujo conjunto mudou" },
           { k: "pendencia", l: "Falta documento",    dica: "Aparecem pra você ver o que falta, mas não podem ser marcados" },
@@ -198,7 +206,10 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
         )}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 5, maxHeight: 320, overflowY: "auto", marginBottom: 10 }}>
+      {/* A lista é quem rola: no card inline ela tinha 320px fixos, aqui pega
+          toda a altura que sobra entre o cabeçalho e o rodapé. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 5, flex: 1, minHeight: 0,
+                    overflowY: "auto", padding: "0 16px 10px" }}>
         {!visiveis.length && (
           <div style={{ fontSize: 11.5, color: t.txt2, padding: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             {busca.trim()
@@ -254,7 +265,8 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
         {visiveis.length > 300 && <div style={{ fontSize: 11, color: t.txt2, textAlign: "center", padding: 6 }}>mostrando 300 de {visiveis.length} — refine a busca</div>}
       </div>
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", flexWrap: "wrap",
+                    padding: "12px 16px", borderTop: `1px solid ${t.borda}`, flexShrink: 0 }}>
         {template && (
           <span style={{ fontSize: 11, color: t.txt2, marginRight: "auto" }}>
             {template.layout === "blocos" ? "Uma aba, um bloco por motorista" : `${template.definicao?.secoes?.length || 0} abas`}
@@ -265,6 +277,8 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
           {gerando ? "Gerando…" : selecionados.length ? `Gerar .xlsx · ${selecionados.length} cadastro(s)` : "Gerar .xlsx"}
         </Button>
       </div>
-    </Card>
+
+      </div>
+    </div>
   );
 }
