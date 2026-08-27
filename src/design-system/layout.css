@@ -800,6 +800,10 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
     padding       : var(--space-3);
   }
   .co-choice--stack .co-choice__ico { width: 44px; height: 44px; }
+  /* Deitado, o cartão precisa da linha inteira: o minmax ainda caberia
+     duas colunas em 375px, e aí o ícone de 44px come metade do espaço
+     que sobra pro nome. No celular vira lista. */
+  .co-choice-grid { grid-template-columns: 1fr; }
 }
 
 /* ── MENU ANCORADO ───────────────────────────────────────────────────
