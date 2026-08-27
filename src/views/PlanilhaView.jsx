@@ -12,6 +12,7 @@ import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import { getPerfil } from "../operacao/perfil.js";
 import { parseValorBR } from "../utils.js";
+import { origemBate } from "../financeiroCalc.js";
 
 const MESES_PT = { "01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez" };
 const REGISTROS_POR_PAGINA = 200;
@@ -103,7 +104,7 @@ export default function PlanilhaView({ ctx }) {
     planilhaFiltroDestino, setPlanilhaFiltroDestino,
     t, isMobile,
     ExportMenu,
-    baseAtual,
+    baseAtual, filialAtiva,
     setPlanilhaFiltroContratante,
     setPlanilhaFiltroGerenciadora,
   } = ctx;
@@ -113,6 +114,10 @@ export default function PlanilhaView({ ctx }) {
   // Classificador da operacao (ex.: papel x celulose; padrao x exportacao). O chip so
   // aparece no valor NAO-padrao — marcar toda linha com o valor comum seria ruido.
   const clf = getPerfil(baseAtual?.id).classificador;
+  // Base que separa filial (Imperatriz/Belem): a origem da viagem E a filial, e
+  // quem recorta e o seletor do topbar. Nas outras a origem e CIDADE e o filtro
+  // local continua fazendo sentido.
+  const temFilial = !!getPerfil(baseAtual?.id)?.features?.filialNasDespesas;
   const rotuloClf = (row) => {
     if (!clf) return null;
     const v = row[clf.campo];
@@ -140,7 +145,9 @@ export default function PlanilhaView({ ctx }) {
     const ym = parseYMfilt(r.data_carr || r.data_desc || "");
     if (planilhaFiltroAno   && ym?.ano !== planilhaFiltroAno)   return false;
     if (planilhaFiltroMes   && ym?.mes !== planilhaFiltroMes)   return false;
-    if (planilhaFiltroOrigem && planilhaFiltroOrigem !== "todas"
+    if (temFilial) {
+      if (filialAtiva && filialAtiva !== "todas" && !origemBate(r.origem, filialAtiva)) return false;
+    } else if (planilhaFiltroOrigem && planilhaFiltroOrigem !== "todas"
         && (r.origem || "").trim() !== planilhaFiltroOrigem)    return false;
     if (planilhaFiltroDataDe && toISO(r.data_carr||r.data_agenda||"") < planilhaFiltroDataDe) return false;
     if (planilhaFiltroDataAte && toISO(r.data_carr||r.data_agenda||"") > planilhaFiltroDataAte) return false;
@@ -193,7 +200,7 @@ export default function PlanilhaView({ ctx }) {
     }
   };
 
-  const temFiltro = planilhaFiltroAno || planilhaFiltroMes || planilhaFiltroOrigem !== "todas" || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca || planilhaFiltroStatus || planilhaFiltroDestino;
+  const temFiltro = planilhaFiltroAno || planilhaFiltroMes || (!temFilial && planilhaFiltroOrigem !== "todas") || planilhaFiltroDataDe || planilhaFiltroDataAte || planilhaBusca || planilhaFiltroStatus || planilhaFiltroDestino;
 
   return (
     <div className="pv-shell">
@@ -220,6 +227,8 @@ export default function PlanilhaView({ ctx }) {
           <option value="">Todos os meses</option>
           {mesesDisp.map(m => <option key={m} value={m}>{MESES_PT[m] || m}</option>)}
         </select>
+        {/* Onde a base separa filial, a origem vem do seletor do topbar. */}
+        {!temFilial && (
         <select
           className="pv-filter-pill"
           value={planilhaFiltroOrigem || "todas"}
@@ -229,6 +238,7 @@ export default function PlanilhaView({ ctx }) {
           <option value="todas">Todas as origens</option>
           {origensDisp.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
+        )}
         <input
           type="text"
           placeholder="Buscar..."

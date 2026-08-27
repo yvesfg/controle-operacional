@@ -44,6 +44,8 @@ export default function DashboardView({ ctx }) {
     setPlanilhaFiltroContratante,
     perms, dashCfg, salvarDashCfg, setBaseAtual, basesPermitidas,
   } = ctx;
+  // Base que separa filial: la o recorte de origem vem do topbar (ver App.jsx/dashData).
+  const temFilial = !!getPerfil(baseAtual?.id)?.features?.filialNasDespesas;
 
   // Modo "organizar painel": arrastar/ocultar os cards. Só liga a edição —
   // o que fica salvo é o config.dash do usuário (ver dashboardConfig.js).
@@ -203,10 +205,13 @@ export default function DashboardView({ ctx }) {
             <Icon n="x" s={13} />
           </Button>
         )}
-        {dashOrigem!=="todos" && (
+        {/* Nas bases COM filial (Imperatriz/Belem) a origem da viagem E a filial, e
+            quem recorta e o seletor do topbar — o seletor daqui era o mesmo controle
+            em dois lugares. Nas outras bases a origem e CIDADE e o seletor continua. */}
+        {!temFilial && dashOrigem!=="todos" && (
           <Button variant="danger-ghost" size="sm" onClick={()=>setDashOrigem("todos")} style={{ marginLeft: 4 }}><Icon n="x" s={13} /> {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</Button>
         )}
-        {dashOrigem==="todos" && dashData.cidades.length>0 && (
+        {!temFilial && dashOrigem==="todos" && dashData.cidades.length>0 && (
           <select onChange={e=>setDashOrigem(e.target.value)} value={dashOrigem} style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",marginLeft:4}}>
             <option value="todos">Origem: Todas</option>
             {dashData.cidades.map(c=><option key={c} value={c}>{c==="BELEM"?"BELEM-PA":c==="IMPERATRIZ"?"IMPERATRIZ-MA":c}</option>)}

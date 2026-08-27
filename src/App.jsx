@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Button } from "./design-system/components/Button.jsx";
 import Icon from "./components/Icon.jsx";
-import { nMoeda } from "./financeiroCalc.js";
+import { nMoeda, origemBate } from "./financeiroCalc.js";
 import { PERIODO_TODOS, periodoMes, dataRegistro } from "./periodoDash.js";
 import { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler } from "chart.js";
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, Legend, ArcElement, PieController, DoughnutController, LineController, LineElement, PointElement, Filler);
@@ -750,6 +750,9 @@ export default function App() {
     ];
     // Recorte do período: mês (grupos), intervalo livre (data a data) ou tudo.
     const avb = baseAtual?.id === "acailandia_avb";
+    // Base que separa filial (hoje so Imperatriz/Belem): o recorte por origem vem
+    // do topbar, nao de seletor proprio.
+    const temFilial = !!getPerfil(baseAtual?.id)?.features?.filialNasDespesas;
     const noIntervalo = (r) => {
       const d = dataRegistro(r, avb);
       if (!d) return false;
@@ -764,9 +767,18 @@ export default function App() {
       ? [...new Set(mesRegs.map(r => normOrigem(r.origem)).filter(Boolean))]
       : ORIGENS_PERMITIDAS.filter(o => mesRegs.some(r => normOrigem(r.origem) === o.norm)).map(o => o.norm);
 
-    // Aplica filtros: período + cidade origem
+    // Aplica filtros: período + origem.
+    // A ORIGEM da viagem e a FILIAL sao a mesma dimensao em Imperatriz/Belem
+    // (origemBate: IMP=IMPERATRIZ, BELEM=BELEM), entao quem manda ali e o seletor
+    // do topbar — ter os dois era o mesmo controle em dois lugares. Nas bases sem
+    // filial (Acailandia, Maracanau) a origem e CIDADE de verdade e o filtro local
+    // continua, porque ali ele nao duplica nada.
     let filtrado = periodoRegs;
-    if (dashOrigem !== "todos") filtrado = filtrado.filter(r => normOrigem(r.origem) === dashOrigem);
+    if (temFilial) {
+      if (filialAtiva && filialAtiva !== "todas") filtrado = filtrado.filter(r => origemBate(r.origem, filialAtiva));
+    } else if (dashOrigem !== "todos") {
+      filtrado = filtrado.filter(r => normOrigem(r.origem) === dashOrigem);
+    }
 
     const dtsU = new Set(filtrado.filter(r=>!r._semDt).map(r=>dtBase(r.dt)));
     let cteT = 0; filtrado.forEach(r=>{ cteT += nMoeda(r.vl_cte); });
@@ -780,7 +792,7 @@ export default function App() {
       });
     }
     return { grupos, meses, filtrado, dtsU, cteT, cidades, normOrigem, avbContratoT, avbAdtT, avbSaldoT };
-  }, [DADOS, dashMes, dashPeriodo, dashOrigem, baseAtual]);
+  }, [DADOS, dashMes, dashPeriodo, dashOrigem, baseAtual, filialAtiva]);
 
   // Reset dashOrigem quando o mês selecionado não contém a cidade atual
   useEffect(() => {
@@ -1714,7 +1726,7 @@ export default function App() {
             planilhaFiltroGerenciadora, setPlanilhaFiltroGerenciadora,
             planilhaFiltroDestino, setPlanilhaFiltroDestino,
             t, isMobile, ExportMenu,
-            baseAtual,
+            baseAtual, filialAtiva,
           }} />
         )}
 
