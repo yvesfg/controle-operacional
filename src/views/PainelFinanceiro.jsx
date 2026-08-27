@@ -4,6 +4,7 @@ import { getPerfil } from "../operacao/perfil.js";
 import { Chart } from "chart.js";
 import { listarDespesasBase } from "../despesas.js";
 import { nCte, nContrato, aplicarComplementar, origemBate } from "../financeiroCalc.js";
+import Icon from "../components/Icon.jsx";
 import Toggle from "../components/Toggle.jsx";
 import KpiCard from "../components/KpiCard.jsx";
 import PeriodoBotao from "../components/PeriodoModal.jsx";
