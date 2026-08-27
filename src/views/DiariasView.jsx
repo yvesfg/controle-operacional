@@ -35,7 +35,7 @@ export default function DiariasView({ ctx }) {
     extratoRows, setExtratoRows,
     extratoResultado,
     prevExtratoSnap, setPrevExtratoSnap,
-    extratoSheetInfo,
+    extratoSheetInfo, setExtratoSheetInfo,
   } = ctx;
 
   const [extratoUndoConfirm, setExtratoUndoConfirm] = useState(false);
@@ -369,7 +369,7 @@ export default function DiariasView({ ctx }) {
                           &#8617; Desfazer
                         </Button>
                       )}
-                      <Button variant="secondary" size="sm" onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");setPrevExtratoSnap(null);setExtratoSheetInfo&&setExtratoUndoConfirm(false);}}>
+                      <Button variant="secondary" size="sm" onClick={()=>{setExtratoRows([]);setExtratoFileName(null);setExtratoFiltro("todos");setPrevExtratoSnap(null);setExtratoSheetInfo(null);setExtratoUndoConfirm(false);}}>
                         &#215; Trocar
                       </Button>
                     </div>

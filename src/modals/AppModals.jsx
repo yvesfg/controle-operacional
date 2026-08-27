@@ -214,6 +214,7 @@ export default function AppModals({ ctx }) {
   hIco,
   showToast,
   conexoes, saveConexoesLS,
+  DADOS,
   motImportPrefOpen, setMotImportPrefOpen,
   motImportRaw,
   motImportPrefBusca, setMotImportPrefBusca,

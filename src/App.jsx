@@ -1759,7 +1759,7 @@ export default function App() {
           extratoRows, setExtratoRows,
           extratoResultado,
           prevExtratoSnap, setPrevExtratoSnap,
-          extratoSheetInfo,
+          extratoSheetInfo, setExtratoSheetInfo,
         }} />
 
         {/* ═══ DESCARGA / LOGÍSTICA ═══ */}

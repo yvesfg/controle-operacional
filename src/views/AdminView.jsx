@@ -5,8 +5,9 @@ import Icon from "../components/Icon.jsx";
 import Toggle from "../components/Toggle.jsx";
 import AlterarSenhaAdmin from '../components/AlterarSenhaAdmin.jsx';
 import BasesOperacao from "./admin/BasesOperacao.jsx";
-import { TABLE_USUARIOS, PERMS_PADRAO, BASES as BASES_CONST } from '../constants.js';
-import { saveJSON, loadJSON } from '../utils.js';
+import { TABLE_USUARIOS, PERMS_PADRAO, BASES as BASES_CONST, DEV_CHANGELOG } from '../constants.js';
+import { saveJSON, loadJSON, normalizarPlaca, normalizarTelefone } from '../utils.js';
+import { normalizarNome } from '../motoristasImport.js';
 
 export default function AdminView({ ctx }) {
   const {

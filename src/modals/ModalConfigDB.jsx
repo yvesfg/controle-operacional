@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
-import { clickable } from "../utils.js";
+import { clickable, saveJSON } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
 export default function ModalConfigDB({ ctx }) {
@@ -20,6 +20,7 @@ export default function ModalConfigDB({ ctx }) {
     setMotImportData,
     setMotImportOpen,
     setMotImportStep,
+    DADOS,
   } = ctx;
 
   if (modalOpen !== "configdb" && !motImportPrefOpen) return null;
