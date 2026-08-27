@@ -41,11 +41,7 @@ export function ExportMenu({ dados, cols, filename, titulo }) {
       {open && (
         <>
           <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
-          <div style={{
-            position: "absolute", right: 0, top: "110%", background: "var(--card)",
-            border: "1px solid var(--border)", borderRadius: "var(--radius-card, 10px)",
-            overflow: "hidden", zIndex: 50, minWidth: 190, boxShadow: "0 8px 24px var(--color-shadow)",
-          }}>
+          <div className="co-dropdown co-dropdown--right" style={{ minWidth: 190 }}>
             {opcoes.map((o, i) => (
               <Button variant="ghost" size="sm" key={o.id} onClick={() => rodar(o.id)} disabled={!!ocupado} style={{ width: "100%" }}>
                 {ocupado === o.id ? "gerando…" : o.l}

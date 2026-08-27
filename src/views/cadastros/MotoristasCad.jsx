@@ -1,4 +1,5 @@
 import React from "react";
+import { Card } from "../../design-system/components/Card.jsx";
 import useMotoristas from "../../hooks/useMotoristas.js";
 import useVeiculos from "../../hooks/useVeiculos.js";
 import { parseAgendaCSV, classificarContatos, aplicarEnriquecimentoLote, confirmarNovosLote } from "../../motoristasImport.js";
@@ -366,7 +367,7 @@ export default function MotoristasCad({ ctx, conn }) {
       )}
 
       {form && (
-        <div style={{ marginBottom: 14, border: `1.5px solid ${t.ouro}`, borderRadius: 10, background: t.card, padding: 14 }}>
+        <Card size="sm" accent="primary" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>
               {form.__novo ? "Novo motorista" : `Editando: ${form.nome}`}
@@ -557,7 +558,7 @@ export default function MotoristasCad({ ctx, conn }) {
               Concluir cadastro
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading && <div style={{ fontSize: 12, color: t.txt2, padding: 8 }}>Carregando…</div>}

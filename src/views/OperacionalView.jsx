@@ -21,6 +21,7 @@
  *   ctx.css, ctx.hIco
  */
 import React from "react";
+import { Card } from "../design-system/components/Card.jsx";
 import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
@@ -213,7 +214,7 @@ export default function OperacionalView({ ctx }) {
           </div>
 
           {sgsFormOpen && (
-            <div style={{ background: t.card, borderRadius: 12, border: `1px solid var(--accent)44`, padding: 14, marginBottom: 14 }}>
+            <Card size="sm" accent="primary" style={{ marginBottom: 14 }}>
               <div style={{ fontWeight: 700, color: "var(--accent)", fontSize: 12, marginBottom: 10 }}><Icon n="phone" s={13} /> Registrar Chamado SGS</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                 <div><label style={lbl}>Nº do Chamado</label><input value={sgsForm.numero} onChange={e => setSgsForm(p => ({ ...p, numero: e.target.value }))} placeholder="SGS-000000" style={inp} /></div>
@@ -239,7 +240,7 @@ export default function OperacionalView({ ctx }) {
                   showToast("Chamado registrado!", "ok");
                 }} style={{ flex: 1 }}><Icon n="save" s={13} /> Salvar Chamado</Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {sgsItems.length === 0 ? (
@@ -444,7 +445,7 @@ export default function OperacionalView({ ctx }) {
 
           {/* Form novo apontamento */}
           {apontFormOpen && (
-            <div style={{ background: t.card, borderRadius: 12, border: `1px solid var(--accent)44`, padding: 14, marginBottom: 14 }}>
+            <Card size="sm" accent="primary" style={{ marginBottom: 14 }}>
               <div style={{ fontWeight: 700, color: "var(--accent)", fontSize: 12, marginBottom: 10 }}><Icon n="clipboard" s={13} /> Novo Apontamento</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                 <div><label style={lbl}>Nº Apontamento</label><input value={apontForm.numero} onChange={e => setApontForm(p => ({ ...p, numero: e.target.value }))} placeholder="Ex: 1000000002580650" style={inp} /></div>
@@ -485,7 +486,7 @@ export default function OperacionalView({ ctx }) {
                   showToast("Apontamento salvo!", "ok");
                 }} style={{ flex: 1 }}><Icon n="save" s={13} /> Salvar Apontamento</Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {apontLoading ? (

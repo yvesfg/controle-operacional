@@ -1,4 +1,5 @@
 import React from "react";
+import { Card } from "../../design-system/components/Card.jsx";
 import { listarTemplates } from "../../cadastroTemplates.js";
 import { itensDoEnvio, matrizesDoTemplate, nomeDoArquivo } from "../../cadastroExport.js";
 import { listarEnvios, registrarEnvios, situacaoDoEnvio, indexarEnvios } from "../../cadastroEnvios.js";
@@ -148,7 +149,7 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
   const inp = { fontSize: 12.5, padding: "7px 10px", borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", width: "100%" };
 
   return (
-    <div style={{ marginBottom: 14, border: `1.5px solid ${t.azul}`, borderRadius: 10, background: t.card, padding: 14 }}>
+    <Card size="sm" accent="info" style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         <div style={{ flex: "1 1 auto" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>Gerar cadastro da embarcadora</div>
@@ -264,6 +265,6 @@ export default function ExportarCadastroPanel({ ctx, conn, motoristas, veiculos,
           {gerando ? "Gerando…" : selecionados.length ? `Gerar .xlsx · ${selecionados.length} cadastro(s)` : "Gerar .xlsx"}
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -117,7 +117,7 @@ export default function ModalWhatsApp({ ctx }) {
           onClick={e=>{if(e.target===e.currentTarget)setWppTipoOpen(false);}}
           className="co-modal-overlay co-modal-overlay--center"
         >
-          <div style={{background:t.card,border:`1px solid ${t.borda}`,borderRadius:20,width:"100%",maxWidth:460,boxShadow:`0 32px 64px rgba(0,0,0,.4)`,overflow:"hidden",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
+          <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: 460 }}>
             {/* Header */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:`1px solid ${t.borda}`,background:"rgba(37,211,102,.05)"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>

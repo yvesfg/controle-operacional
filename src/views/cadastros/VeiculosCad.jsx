@@ -1,4 +1,5 @@
 import React from "react";
+import { Card } from "../../design-system/components/Card.jsx";
 import Icon from "../../components/Icon.jsx";
 import { Button } from "../../design-system/components/Button.jsx";
 import useVeiculos from "../../hooks/useVeiculos.js";
@@ -146,7 +147,7 @@ export default function VeiculosCad({ ctx, conn }) {
       </div>
 
       {form && (
-        <div style={{ marginBottom: 14, border: `1.5px solid ${t.ouro}`, borderRadius: 10, background: t.card, padding: 14 }}>
+        <Card size="sm" accent="primary" style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>{form.__novo ? "Novo veículo" : `Editando: ${form.placa}`}</div>
 
           {openDocIntake && (
@@ -291,7 +292,7 @@ export default function VeiculosCad({ ctx, conn }) {
               {salvando ? "Salvando..." : "Salvar"}
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading && <div style={{ fontSize: 12, color: t.txt2, padding: 8 }}>Carregando…</div>}

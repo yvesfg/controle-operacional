@@ -83,9 +83,7 @@ export default function ModalBusca({ ctx }) {
       style={{overflowY:"auto"}}
       onClick={e=>{if(e.target===e.currentTarget)setBuscaModalOpen(false);}}
     >
-      <div style={{background:t.card,borderRadius:20,width:"100%",maxWidth:640,
-                   border:`1px solid ${t.borda}`,boxShadow:"0 32px 64px rgba(0,0,0,.5)",
-                   animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}}>
+      <div className="co-modal-box co-modal-box--nopad" style={{ maxWidth: 640 }}>
         {/* Header */}
         <div style={{padding:"14px 20px",borderBottom:`1px solid ${t.borda}`,display:"flex",
                      alignItems:"center",gap:10,borderRadius:"20px 20px 0 0"}}>

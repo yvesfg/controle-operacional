@@ -643,6 +643,8 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 /* Modal denso (formulário longo): respira mais. */
 .co-modal-box--lg { padding: var(--space-7); }
+/* Modal cujo conteúdo já traz o próprio respiro (cada seção tem padding). */
+.co-modal-box--nopad { padding: 0; }
 /* Modal que monta o PRÓPRIO cabeçalho/rodapé fixo e rola só no meio:
    o padding e o scroll passam a ser responsabilidade de dentro. */
 .co-modal-box--flush {
@@ -664,6 +666,27 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 .co-modal-box--primary { border: 1.5px solid var(--color-primary-border); }
 .co-modal-box--info    { border: 1.5px solid var(--color-info-border);    }
 .co-modal-box--success { border: 1.5px solid var(--color-success-border); }
+
+/* ── MENU ANCORADO ───────────────────────────────────────────────────
+   Painel que abre colado no gatilho (seletor de base, Exportar,
+   autocomplete da conferência). Quatro deles desenhavam o mesmo card
+   flutuante à mão. O pai precisa de position:relative.
+   Quem abre pra esquerda usa --right; o alinhamento e a largura ficam
+   inline porque dependem do gatilho.                                   */
+.co-dropdown {
+  position     : absolute;
+  top          : calc(100% + 6px);
+  left         : 0;
+  z-index      : var(--z-dropdown);
+  background   : var(--card);
+  border       : 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  box-shadow   : var(--shadow-dropdown);
+  overflow     : hidden;
+}
+.co-dropdown--right { left: auto; right: 0; }
+/* Lista longa que rola dentro do próprio menu. */
+.co-dropdown--scroll { overflow: hidden auto; }
 
 /* ════════════════════════════════════════════════════════════════════
    RESPONSIVE GLOBAL

@@ -1492,7 +1492,7 @@ export default function App() {
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
-                      <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:210,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
+                      <div className="co-dropdown" style={{ minWidth: 210, zIndex: 101 }}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
                         {opcoesEscopo.map(o=>(
                           <Button variant={o.key===escopoKey ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)}
@@ -1552,7 +1552,7 @@ export default function App() {
                   {baseMenuOpen && basesPermitidas.length>1 && (
                     <>
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
-                      <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,minWidth:200,background:t.card,border:`1px solid ${t.borda}`,borderRadius:10,boxShadow:`0 12px 32px ${t.shadow||"rgba(0,0,0,.4)"}`,zIndex:101,overflow:"hidden"}}>
+                      <div className="co-dropdown" style={{ minWidth: 200, zIndex: 101 }}>
                         <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
                         {opcoesEscopo.map(o=>(
                           <Button variant={o.key===escopoKey ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)} style={{ width: "100%" }}>

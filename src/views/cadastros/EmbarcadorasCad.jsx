@@ -1,4 +1,5 @@
 import React from "react";
+import { Card } from "../../design-system/components/Card.jsx";
 import { Button } from "../../design-system/components/Button.jsx";
 import useEmbarcadoras from "../../hooks/useEmbarcadoras.js";
 import { formatCNPJ, soDigitosCNPJ } from "../../embarcadoras.js";
@@ -135,7 +136,7 @@ export default function EmbarcadorasCad({ ctx, conn }) {
       </div>
 
       {form && (
-        <div style={{ marginBottom: 14, border: `1.5px solid ${t.ouro}`, borderRadius: 10, background: t.card, padding: 14 }}>
+        <Card size="sm" accent="primary" style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.txt, marginBottom: 10 }}>
             {form.__novo ? "Nova embarcadora" : `Editando: ${form.nome}`}
           </div>
@@ -188,7 +189,7 @@ export default function EmbarcadorasCad({ ctx, conn }) {
               {salvando ? "Salvando..." : "Salvar"}
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {loading && <div style={{ fontSize: 12, color: t.txt2, padding: 8 }}>Carregando…</div>}

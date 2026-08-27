@@ -1099,8 +1099,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
           {cliOpen && (
             <>
               <div onClick={() => setCliOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40 }} />
-              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, minWidth: "100%", zIndex: 41,
-                background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 10, padding: 4, boxShadow: "0 8px 28px rgba(0,0,0,.4)", maxHeight: 300, overflowY: "auto" }}>
+              <div className="co-dropdown co-dropdown--scroll" style={{ minWidth: "100%", maxHeight: 300, padding: 4 }}>
                 {[["", "Todos os clientes"], ...clientesPresentes.map((c) => [c, c])].map(([v, label]) => {
                   const ativo = clienteFiltro === v;
                   return (
