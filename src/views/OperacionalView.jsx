@@ -277,8 +277,8 @@ export default function OperacionalView({ ctx }) {
                           {s.descricao && <div style={{ fontSize: 11, color: t.txt, marginTop: 4, lineHeight: 1.4 }}>{s.descricao}</div>}
                         </div>
                         <div style={{ display: "flex", gap: 5, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                          <button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], status: a[i].status === "encerrado" ? "aberto" : "encerrado" }; saveSGS(a); }} style={{ background: s.status === "encerrado" ? `rgba(246,70,93,.08)` : `rgba(2,192,118,.08)`, border: `1px solid ${s.status === "encerrado" ? t.danger : t.verde}33`, borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon n="dot" s={11} c={s.status === "encerrado" ? t.danger : t.verde} /></button>
-                          <button onClick={() => { if (confirm("Excluir este chamado?")) { const n = [...sgsItems]; n.splice(i, 1); saveSGS(n); } }} style={{ background: `rgba(246,70,93,.08)`, border: `1px solid rgba(246,70,93,.18)`, borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon n="trash" s={13} /></button>
+                          <Button onClick={() => { const a = [...sgsItems]; a[i] = { ...a[i], status: a[i].status === "encerrado" ? "aberto" : "encerrado" }; saveSGS(a); }} variant={s.status === "encerrado" ? "danger-outline" : "success-outline"} size="sm" iconOnly><Icon n="dot" s={11} c={s.status === "encerrado" ? t.danger : t.verde} /></Button>
+                          <Button onClick={() => { if (confirm("Excluir este chamado?")) { const n = [...sgsItems]; n.splice(i, 1); saveSGS(n); } }} variant="danger-outline" size="sm" iconOnly><Icon n="trash" s={13} /></Button>
                         </div>
                       </div>
                     </div>
@@ -404,7 +404,7 @@ export default function OperacionalView({ ctx }) {
               <span style={{ flex: 1, height: 1, background: t.borda }} />
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => setRelCtrlDccOpen(true)} style={{ background: `rgba(124,58,237,.08)`, border: `1px solid rgba(124,58,237,.28)`, borderRadius: 8, padding: "8px 12px", color: "var(--accent)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}><Icon n="chart" s={13} /> Planilha Financeiro</button>
+              <Button onClick={() => setRelCtrlDccOpen(true)} variant="outline" size="sm"><Icon n="chart" s={13} /> Planilha Financeiro</Button>
               <Button variant="primary" size="md" onClick={() => { setApontForm({ numero: "", item: "", linha: "", descricao_apontamento: "", pedido: "", mes_ref: "", filial: "", valor: "", frs_folha: "", tipo: "descarga", dt_rel: "", cidade: "", nf_numero: "", data_emissao: "", data_apontamento: new Date().toISOString().split("T")[0] }); setApontFormOpen(true); }}>＋ Novo</Button>
             </div>
           </div>

@@ -190,6 +190,8 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
   }
 
   const mix = (pct) => `color-mix(in srgb, ${col} ${pct}%, transparent)`;
+  // a acao do modal herda a cor do DOCUMENTO: CNH e verde, CRLV e azul.
+  const variante = tipo === "cnh" ? "success-outline" : "info-outline";
 
   return (
     <div className="co-modal-overlay co-modal-overlay--center" onClick={handleClose}>
@@ -260,18 +262,10 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
                   <Button variant="secondary" size="sm" onClick={() => { setFile(null); setPreviewUrl(null); setIsPdf(false); inputRef.current?.click(); }} style={{ flex: 1 }}>
                     Trocar arquivo
                   </Button>
-                  <button
-                    onClick={handleExtract}
-                    style={{
-                      flex: 2, padding: "8px 12px", borderRadius: 9, fontFamily: "inherit",
-                      border: `1.5px solid ${mix(50)}`, background: mix(10),
-                      color: col, fontSize: 12, fontWeight: 700, cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                    }}
-                  >
-                    {hIco(<><circle cx="12" cy="12" r="3"/><path d="M20.188 10.934a8.5 8.5 0 1 0-.122 2.187"/><path d="M20 4v4h-4"/></>, col, 14, 2)}
+                  <Button variant={variante} size="sm" onClick={handleExtract} style={{ flex: 2 }}>
+                    {hIco(<><circle cx="12" cy="12" r="3"/><path d="M20.188 10.934a8.5 8.5 0 1 0-.122 2.187"/><path d="M20 4v4h-4"/></>, "currentColor", 14, 2)}
                     Analisar com IA
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
@@ -355,17 +349,10 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
               <Button variant="secondary" size="sm" onClick={handleClose} style={{ flex: 1 }}>
                 Cancelar
               </Button>
-              <button
-                onClick={handleConfirm}
-                style={{
-                  flex: 2, borderRadius: 9, padding: 10, fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit",
-                  border: `1.5px solid ${mix(50)}`, background: mix(15), color: col,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                }}
-              >
-                {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>, col, 14, 2)}
+              <Button variant={variante} size="sm" onClick={handleConfirm} style={{ flex: 2 }}>
+                {hIco(<><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>, "currentColor", 14, 2)}
                 Confirmar dados
-              </button>
+              </Button>
             </div>
           </>
         )}

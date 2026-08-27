@@ -132,12 +132,10 @@ export default function CargasSemDt({ conn, ctx }) {
   const totalGeral = Object.values(contagem).reduce((s, n) => s + n, 0);
   if (!loading && totalGeral === 0) return null;
 
-  const acaoBtn = (label, cor, onClick, opts = {}) => (
-    <button onClick={onClick} disabled={salvando}
-      style={{ fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 8, cursor: salvando ? "default" : "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-        border: opts.fill ? "none" : `1px solid ${cor}`, background: opts.fill ? cor : "transparent", color: opts.fill ? "#fff" : cor, opacity: salvando ? 0.5 : 1 }}>
+  const acaoBtn = (label, variant, onClick) => (
+    <Button variant={variant} size="sm" onClick={onClick} disabled={salvando}>
       {label}
-    </button>
+    </Button>
   );
 
   return (
@@ -263,13 +261,13 @@ export default function CargasSemDt({ conn, ctx }) {
               )}
 
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                {acaoBtn("Excluir", t.danger, () => excluir(p))}
+                {acaoBtn("Excluir", "danger-outline", () => excluir(p))}
                 <span style={{ flex: 1 }} />
-                {acaoBtn("Fechar", t.txt2, () => setModal(null))}
-                {acaoBtn("Salvar correções", t.ouro, () => salvar(p))}
-                {(p.status === "confirmado" || p.status === "erro") && acaoBtn("Reabrir", t.txt2, () => reabrir(p))}
-                {p.status !== "erro" && acaoBtn("Marcar erro", t.danger, () => decidir(p, "erro"))}
-                {p.status !== "confirmado" && acaoBtn("Confirmar carga", t.verde, () => decidir(p, "confirmado"), { fill: true })}
+                {acaoBtn("Fechar", "secondary", () => setModal(null))}
+                {acaoBtn("Salvar correções", "outline", () => salvar(p))}
+                {(p.status === "confirmado" || p.status === "erro") && acaoBtn("Reabrir", "secondary", () => reabrir(p))}
+                {p.status !== "erro" && acaoBtn("Marcar erro", "danger-outline", () => decidir(p, "erro"))}
+                {p.status !== "confirmado" && acaoBtn("Confirmar carga", "success", () => decidir(p, "confirmado"))}
               </div>
             </div>
           </div>

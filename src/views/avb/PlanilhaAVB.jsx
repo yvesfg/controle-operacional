@@ -141,13 +141,6 @@ export default function PlanilhaAVB({ ctx }) {
     color:active?"var(--accent)":"var(--text)", cursor:"pointer",
   });
 
-  const pagBtn = disabled => ({
-    padding:"4px 8px", fontSize:9,
-    border:`1px solid ${disabled?"var(--border)":"var(--accent)"}`,
-    borderRadius:4, cursor:disabled?"not-allowed":"pointer",
-    background:"transparent",
-    color:disabled?"var(--text3)":"var(--accent)", fontWeight:600,
-  });
 
   return (
     <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 130px)"}}>
@@ -240,10 +233,10 @@ export default function PlanilhaAVB({ ctx }) {
           )}
         </span>
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
-          <button onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1} style={pagBtn(paginaAtual===1)}><Icon n="chevron-left" s={12} /><Icon n="chevron-left" s={12} style={{marginLeft:-6}} /></button>
-          <button onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1} style={pagBtn(paginaAtual===1)}><Icon n="chevron-left" s={13} /></button>
-          <button onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas} style={pagBtn(paginaAtual===totalPaginas)}><Icon n="play" s={13} /></button>
-          <button onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas} style={pagBtn(paginaAtual===totalPaginas)}><Icon n="chevron-right" s={12} /><Icon n="chevron-right" s={12} style={{marginLeft:-6}} /></button>
+          <Button variant="outline" size="xs" onClick={()=>setPlanilhaPagina(1)} disabled={paginaAtual===1}><Icon n="chevron-left" s={12} /><Icon n="chevron-left" s={12} style={{marginLeft:-6}} /></Button>
+          <Button variant="outline" size="xs" onClick={()=>setPlanilhaPagina(p=>Math.max(1,p-1))} disabled={paginaAtual===1}><Icon n="chevron-left" s={13} /></Button>
+          <Button variant="outline" size="xs" onClick={()=>setPlanilhaPagina(p=>Math.min(totalPaginas,p+1))} disabled={paginaAtual===totalPaginas}><Icon n="play" s={13} /></Button>
+          <Button variant="outline" size="xs" onClick={()=>setPlanilhaPagina(totalPaginas)} disabled={paginaAtual===totalPaginas}><Icon n="chevron-right" s={12} /><Icon n="chevron-right" s={12} style={{marginLeft:-6}} /></Button>
         </div>
         {ExportMenu && (
           <ExportMenu

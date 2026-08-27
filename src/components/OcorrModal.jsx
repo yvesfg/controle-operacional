@@ -164,10 +164,7 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
                   style={{ ...css.inp, flex: 1, fontSize: 11, padding: "6px 9px" }}
                 />
                 {nfInput.trim() && (
-                  <button
-                    onClick={() => parseAndAddNfs(nfInput)}
-                    style={{ padding: "6px 10px", borderRadius: 7, border: "none", background: "var(--cat-blue)", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-                  >+</button>
+                  <Button variant="info" size="sm" onClick={() => parseAndAddNfs(nfInput)}>+</Button>
                 )}
               </div>
               {/* Chips: DT record NFs + manual */}

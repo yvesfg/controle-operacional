@@ -199,10 +199,9 @@ export default function DashboardView({ ctx }) {
         <PeriodoBotao value={dashPeriodo} onChange={setDashPeriodo} meses={dashData.meses} compacto
           titulo="Período do Dashboard" />
         {dashPeriodo?.tipo !== "mes" && (
-          <button onClick={()=>setDashPeriodo(periodoMes(mesAtual()))} title="Voltar para o mês corrente"
-            style={{...css.inp,width:"auto",padding:"3px 8px",fontSize:10,height:26,cursor:"pointer",border:`1px solid ${t.borda}`,color:t.txt2,fontFamily:DESIGN.fnt.b}}>
+          <Button variant="secondary" size="xs" onClick={()=>setDashPeriodo(periodoMes(mesAtual()))} title="Voltar para o mês corrente">
             <Icon n="x" s={13} />
-          </button>
+          </Button>
         )}
         {dashOrigem!=="todos" && (
           <Button variant="danger-ghost" size="sm" onClick={()=>setDashOrigem("todos")} style={{ marginLeft: 4 }}><Icon n="x" s={13} /> {dashOrigem==="BELEM"?"BELEM-PA":dashOrigem==="IMPERATRIZ"?"IMPERATRIZ-MA":dashOrigem}</Button>
@@ -214,13 +213,10 @@ export default function DashboardView({ ctx }) {
           </select>
         )}
         {salvarDashCfg && (
-          <button onClick={()=>setEditandoPainel(v=>!v)} title="Arrastar, tirar ou devolver cards do painel"
-            style={{...css.inp,width:"auto",marginLeft:"auto",padding:"3px 10px",fontSize:10,height:26,cursor:"pointer",
-                    border:`1.5px solid ${editandoPainel?t.ouro:t.borda}`,color:editandoPainel?t.ouro:t.txt2,
-                    fontWeight:700,fontFamily:DESIGN.fnt.b,display:"inline-flex",alignItems:"center",gap:6}}>
+          <Button variant="secondary" size="xs" onClick={()=>setEditandoPainel(v=>!v)} title="Arrastar, tirar ou devolver cards do painel">
             {hIco(<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,editandoPainel?t.ouro:t.txt2,12,2)}
             {editandoPainel?"Concluir":"Organizar painel"}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -524,8 +520,8 @@ export default function DashboardView({ ctx }) {
                 <div>
                   <div style={{fontFamily:"var(--font-mono)",fontSize:11,textTransform:"uppercase",letterSpacing:"0.06em",color:"var(--text3)",fontWeight:400}}>Evolução do Período</div>
                   <div style={{display:"flex",gap:6,marginTop:6}}>
-                    <button onClick={()=>setDashHeroTab("carr")} style={{padding:"3px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="carr"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="carr"?t.txt:"transparent",color:dashHeroTab==="carr"?t.bg:t.txt2}}>Carregamentos</button>
-                    {canFin&&<button onClick={()=>setDashHeroTab("cte")} style={{padding:"3px 10px",fontSize:10,fontWeight:700,cursor:"pointer",fontFamily:DESIGN.fnt.b,borderRadius:20,border:`1px solid ${dashHeroTab==="cte"?t.txt:hexRgb(t.txt,.18)}`,background:dashHeroTab==="cte"?t.txt:"transparent",color:dashHeroTab==="cte"?t.bg:t.txt2}}>Receita CTE</button>}
+                    <Button onClick={()=>setDashHeroTab("carr")} variant={dashHeroTab==="carr"?"primary":"secondary"} size="xs" pill>Carregamentos</Button>
+                    {canFin&&<Button onClick={()=>setDashHeroTab("cte")} variant={dashHeroTab==="cte"?"primary":"secondary"} size="xs" pill>Receita CTE</Button>}
                   </div>
                 </div>
                 <div style={{textAlign:"right"}}>

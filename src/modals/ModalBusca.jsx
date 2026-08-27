@@ -255,13 +255,9 @@ export default function ModalBusca({ ctx }) {
                         {hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,t.bg,16,2)} EDITAR
                       </Button>
                     )}
-                    <button
-                      onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}
-                      onMouseEnter={e=>{e.currentTarget.style.background="rgba(232,130,12,.2)";}}
-                      onMouseLeave={e=>{e.currentTarget.style.background="rgba(232,130,12,.08)";}}
-                      style={{borderRadius:DESIGN.r.btn,padding:11,cursor:"pointer",background:"rgba(232,130,12,.08)",border:"1px solid rgba(232,130,12,.35)",color:"var(--cat-amber)",fontWeight:700,fontSize:13,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"background .15s"}}>
+                    <Button variant="warning-outline" size="md" onClick={()=>abrirOcorrModal(buscaResult.dt, buscaResult)}>
                       {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,`var(--cat-amber)`,16,2)} Ocorrências
-                    </button>
+                    </Button>
                   </div>
 
                   {canEdit && (
