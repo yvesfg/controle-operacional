@@ -1940,6 +1940,21 @@ export default function ConferenciaFrete({ ctx, conn }) {
             <span style={{ color: t.txt, fontWeight: 600, textAlign: "right" }}>{v || "—"}</span>
           </div>
         );
+        // Par rótulo-em-cima/valor-embaixo: cabe lado a lado na grade. O campo()
+        // acima gasta uma LINHA inteira por dado, e a maioria deles (placa, peso,
+        // data, %) é curta — o modal ficava com meia largura vazia.
+        const par = (l, v, mono) => (
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: ".07em", color: t.txt2, marginBottom: 2 }}>{l}</div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: t.txt, fontFamily: mono ? "var(--font-mono)" : "inherit", overflowWrap: "anywhere" }}>{v || "—"}</div>
+          </div>
+        );
+        const bloco = (titulo, filhos, colMin) => (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: ".09em", color: t.txt2, fontWeight: 700, marginBottom: 6 }}>{titulo}</div>
+            <div className="co-autogrid" style={{ "--col-min": colMin, gap: 10 }}>{filhos}</div>
+          </div>
+        );
         // Edição admin (migration 036): inputs + selects. setF atualiza um campo do form.
         const setF = (k, v) => setEditForm((f) => ({ ...f, [k]: v }));
         const inpStyle = { padding: "6px 9px", fontSize: 12, borderRadius: 7, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none", width: "100%", minWidth: 0 };
@@ -1978,23 +1993,51 @@ export default function ConferenciaFrete({ ctx, conn }) {
               </div>
 
               {!editando && (<>
-                {campo("Categoria", CATEGORIA_LABEL[p.categoria] || p.categoria)}
-                {campo("Modalidade", p.is_devolucao ? "FOB (devolução)" : (p.modalidade || "CIF"))}
-                {campo("Empresa (código)", p.empresa_cod)}
-                {campo("Placa", p.placa)}
-                {campo("Data emissão", p.data_emissao)}
-                {campo("Trecho", [p.trecho, trechoRota(p.trecho),
-                                  trechoKm(p.trecho) ? `${trechoKm(p.trecho)} km` : ""].filter(Boolean).join(" · "))}
-                {campo("NFS", p.nfs)}
-                {campo("Nº Manifesto", p.numero_manifesto)}
-                {campo("Nº Contrato Frete", p.numero_contrato)}
-                {campo("Valor NF", money(p.valor_nf))}
-                {campo("Peso NF", pesoFmt(p.peso_nf))}
-                {campo("Frete Peso", money(p.frete_peso))}
-                {campo("Total do Frete", money(p.total_frete))}
-                {campo("Valor Contrato Frete", money(p.valor_contrato_frete))}
-                {campo("Saldo", money(p.saldo))}
-                {campo("Margem Lucro", Number(p.margem_lucro).toFixed(2) + "%")}
+                {/* ROTA em destaque: a sigla do TMS (6 letras) não diz nada sozinha.
+                    Origem e destino saem do de-para de trechos, não de coluna gravada. */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 12px", marginBottom: 12,
+                              borderRadius: 10, border: `1px solid ${hexRgb(t.azul, .3)}`, background: hexRgb(t.azul, .07) }}>
+                  <Icon n="map-pin" s={15} c={t.azul} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>{trechoOrigem(p.trecho) || "origem não mapeada"}</span>
+                    <Icon n="arrow-right" s={13} c={t.txt2} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: t.txt }}>{trechoDestino(p.trecho) || "destino não mapeado"}</span>
+                  </div>
+                  <span style={{ fontSize: 10.5, fontFamily: "var(--font-mono)", color: t.txt2 }}>{p.trecho || "—"}</span>
+                  {trechoKm(p.trecho) > 0 && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: t.azul, fontFamily: "var(--font-mono)" }}>{trechoKm(p.trecho)} km</span>
+                  )}
+                </div>
+
+                {bloco("Lançamento", <>
+                  {par("Categoria",    CATEGORIA_LABEL[p.categoria] || p.categoria)}
+                  {par("Modalidade",   p.is_devolucao ? "FOB (devolução)" : (p.modalidade || "CIF"))}
+                  {par("Data emissão", p.data_emissao, true)}
+                  {par("Placa",        p.placa, true)}
+                  {par("Empresa",      p.empresa_cod, true)}
+                  {par("NFS",          p.nfs, true)}
+                  {par("Nº Manifesto", p.numero_manifesto, true)}
+                  {par("Nº Contrato",  p.numero_contrato, true)}
+                </>, "128px")}
+
+                {bloco("Valores", <>
+                  {par("Valor NF",       money(p.valor_nf), true)}
+                  {par("Peso NF",        pesoFmt(p.peso_nf), true)}
+                  {par("Frete Peso",     money(p.frete_peso), true)}
+                  {par("Total do Frete", money(p.total_frete), true)}
+                  {par("Contrato Frete", money(p.valor_contrato_frete), true)}
+                  {par("Saldo",          money(p.saldo), true)}
+                </>, "130px")}
+
+                {/* Margem sozinha: é o número que decide a conferência. */}
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 12,
+                              padding: "9px 12px", borderRadius: 10, border: `1px solid ${t.borda}` }}>
+                  <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: ".07em", color: t.txt2, fontWeight: 700 }}>Margem de lucro</span>
+                  <span style={{ fontSize: 17, fontWeight: 800, fontFamily: "var(--font-mono)",
+                                 color: p.flag_negativa ? t.danger : p.flag_baixa ? t.warn : t.verde }}>
+                    {Number(p.margem_lucro).toFixed(2)}%
+                  </span>
+                </div>
               </>)}
 
               {/* Edição admin — corrigir lançamento (ex.: FOB/CIF, categoria, valores).
