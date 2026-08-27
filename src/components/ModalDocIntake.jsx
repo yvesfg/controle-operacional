@@ -195,13 +195,7 @@ export default function ModalDocIntake({ open, tipo, onClose, onConfirm, ctx }) 
 
   return (
     <div className="co-modal-overlay co-modal-overlay--center" onClick={handleClose}>
-      <div
-        style={{
-          background: t.card, borderRadius: 18, padding: 20, width: "100%", maxWidth: 440,
-          border: `1.5px solid ${mix(35)}`,
-          boxShadow: "0 24px 64px rgba(0,0,0,.6)", maxHeight: "90vh", overflowY: "auto",
-          animation: "slideUp .22s cubic-bezier(.34,1.1,.64,1)",
-        }}
+      <div className={`co-modal-box co-modal-box--${tipo === "cnh" ? "success" : "info"}`} style={{ maxWidth: 440 }}
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ── */}

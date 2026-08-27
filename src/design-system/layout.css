@@ -623,6 +623,48 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
    overlay dele cobre o modal que ele mesmo acabou de abrir. */
 .co-modal-overlay--launcher { z-index: calc(var(--z-modal) - 1); }
 
+/* ── A CAIXA do modal ────────────────────────────────────────────────
+   O overlay já era compartilhado; a caixa dentro dele era redesenhada à
+   mão em 13 modais, sempre com o mesmo fundo, raio, sombra e slideUp —
+   só a largura e o padding mudavam de verdade.
+   Uso: <div class="co-modal-overlay co-modal-overlay--center">
+          <div class="co-modal-box" style={{ maxWidth: 440 }}>
+   maxWidth continua inline: é a única medida que muda por modal.       */
+.co-modal-box {
+  background   : var(--card);
+  border       : 1px solid var(--border);
+  border-radius: var(--radius-modal);
+  box-shadow   : var(--shadow-modal);
+  width        : 100%;
+  padding      : var(--space-5);
+  max-height   : 90vh;
+  overflow-y   : auto;
+  animation    : slideUp .22s cubic-bezier(.34, 1.1, .64, 1);
+}
+/* Modal denso (formulário longo): respira mais. */
+.co-modal-box--lg { padding: var(--space-7); }
+/* Modal que monta o PRÓPRIO cabeçalho/rodapé fixo e rola só no meio:
+   o padding e o scroll passam a ser responsabilidade de dentro. */
+.co-modal-box--flush {
+  padding       : 0;
+  overflow      : hidden;
+  display       : flex;
+  flex-direction: column;
+}
+/* Caixa em coluna que MANTÉM o próprio respiro (lista que cresce dentro de
+   um modal com padding), diferente do flush, que zera o padding. */
+.co-modal-box--col {
+  display       : flex;
+  flex-direction: column;
+}
+/* Acento na borda quando o modal carrega gravidade própria (NFD, chegada
+   com ocorrência): era rgba cravado no JSX de cada um. */
+.co-modal-box--danger  { border: 1.5px solid var(--color-danger-border);  }
+.co-modal-box--warning { border: 1.5px solid var(--color-warning-border); }
+.co-modal-box--primary { border: 1.5px solid var(--color-primary-border); }
+.co-modal-box--info    { border: 1.5px solid var(--color-info-border);    }
+.co-modal-box--success { border: 1.5px solid var(--color-success-border); }
+
 /* ════════════════════════════════════════════════════════════════════
    RESPONSIVE GLOBAL
    ════════════════════════════════════════════════════════════════════ */

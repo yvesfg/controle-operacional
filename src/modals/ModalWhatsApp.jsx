@@ -893,7 +893,7 @@ export default function ModalWhatsApp({ ctx }) {
       {/* ═══ WHATSAPP CONFIRM MODAL ═══ */}
       {wppConfirmModal && (
         <div className="co-modal-overlay co-modal-overlay--center" style={{zIndex:"calc(var(--z-modal) + 10)"}} onClick={e=>{if(e.target===e.currentTarget)setWppConfirmModal(null);}}>
-          <div style={{background:"var(--card)",border:"1px solid var(--borda)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 32px 64px rgba(0,0,0,.5)",overflow:"hidden",display:"flex",flexDirection:"column",maxHeight:"96vh"}}>
+          <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: 460, maxHeight: "96vh" }}>
             {/* Header */}
             <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--borda)",background:"rgba(37,211,102,.06)",flexShrink:0}}>
               <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>

@@ -16,7 +16,7 @@ export default function ModalOcorrChegada({ ctx }) {
       className="co-modal-overlay co-modal-overlay--center"
       onClick={()=>setOcorrChegadaAlert(false)}
     >
-      <div style={{background:t.card,borderRadius:DESIGN.r.modal,padding:20,width:"100%",maxWidth:420,border:`1.5px solid rgba(232,130,12,.35)`,boxShadow:"0 24px 64px rgba(0,0,0,.6)",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+      <div className="co-modal-box co-modal-box--warning" style={{ maxWidth: 420 }} onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
           <div style={{width:42,height:42,borderRadius:DESIGN.r.ico,background:"rgba(232,130,12,.12)",border:"1.5px solid rgba(232,130,12,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>

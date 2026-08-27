@@ -41,7 +41,7 @@ export default function ModalDashDrill({ ctx }) {
       className="co-modal-overlay co-modal-overlay--center"
       onClick={()=>setDashDrillModal(null)}
     >
-      <div style={{background:t.card,borderRadius:18,width:"100%",maxWidth:ehLista?860:640,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.45)",maxHeight:"80vh",display:"flex",flexDirection:"column",animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+      <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: ehLista?860:640, maxHeight: "80vh" }} onClick={e=>e.stopPropagation()}>
         {/* Header */}
         <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
           {voltar&&(

@@ -71,6 +71,8 @@
   --chip-neutral-text  : #8892a8;
   --focus-ring         : 0 0 0 2px rgba(59,130,246,.55);
   --shadow-primary     : 0 2px 10px rgba(217,98,43,.22);
+  /* Elevação da caixa de modal — 13 modais cravavam essa sombra no JSX. */
+  --shadow-modal       : 0 24px 64px rgba(0,0,0,.55);
 
   /* ── Tipografia — Manrope (display + body) / IBM Plex Mono (data) ── */
   --font-heading : 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
@@ -143,7 +145,9 @@
   --radius-inp    : 6px;    /* md — standard inputs */
   --radius-card   : 8px;    /* lg — content cards */
   --radius-logo   : 8px;    /* lg */
-  --radius-modal  : 12px;   /* xl — elevated containers / modais */
+  /* 18px é o que os modais do app de fato desenham (7 de 13 cravavam 18 no
+     JSX); o token dizia 12 e tinha UM consumidor, que por isso destoava. */
+  --radius-modal  : 18px;
   --radius-xl     : 12px;   /* xl */
   --radius-full   : 9999px; /* pill — CTAs de destaque */
 

@@ -416,8 +416,7 @@ export default function Resultado({ ctx }) {
       {sheetSel.open && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setSheetSel(s => ({ ...s, open: false }))}>
-          <div style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px",
-            minWidth: 340, maxWidth: 520, width: "90vw", boxShadow: "0 8px 40px rgba(0,0,0,.5)", maxHeight: "80vh", overflowY: "auto" }}
+          <div className="co-modal-box co-modal-box--lg" style={{ maxWidth: 520, minWidth: 340, width: "90vw", maxHeight: "80vh" }}
             onClick={e => e.stopPropagation()}>
             <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Selecionar abas para importar</div>
             <div style={{ fontSize: 11, color: t.txt2, marginBottom: 16 }}>
@@ -505,8 +504,7 @@ export default function Resultado({ ctx }) {
       {foraMesSel.open && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setForaMesSel(s => ({ ...s, open: false }))}>
-          <div style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px",
-            minWidth: 340, maxWidth: 560, width: "90vw", boxShadow: "0 8px 40px rgba(0,0,0,.5)", maxHeight: "80vh", display: "flex", flexDirection: "column" }}
+          <div className="co-modal-box co-modal-box--lg co-modal-box--col" style={{ maxWidth: 560, minWidth: 340, width: "90vw", maxHeight: "80vh" }}
             onClick={e => e.stopPropagation()}>
             <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>Linhas de outro mês</div>
             <div style={{ fontSize: 11, color: t.txt2, marginBottom: 8 }}>

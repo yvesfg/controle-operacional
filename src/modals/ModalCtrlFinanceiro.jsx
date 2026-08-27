@@ -157,7 +157,7 @@ export default function ModalCtrlFinanceiro({ ctx }) {
         };
         return (
           <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelCtrlDccOpen(false)}>
-            <div style={{background:t.card,borderRadius:16,padding:20,width:"100%",maxWidth:440,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+            <div className="co-modal-box" style={{ maxWidth: 440 }} onClick={e=>e.stopPropagation()}>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
                 <div style={{width:40,height:40,borderRadius:10,background:"rgba(22,119,255,.12)",border:"1.5px solid rgba(22,119,255,.35)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                   {hIco(<><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></>,t.azulLt,20,1.8)}

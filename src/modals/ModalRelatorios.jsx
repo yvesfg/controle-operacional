@@ -31,7 +31,7 @@ export default function ModalRelatorios({ ctx }) {
       {/* ═══ MODAL: RELATÓRIO GERAL ═══ */}
       {relGeralOpen && (
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelGeralOpen(false)}>
-          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:600,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+          <div className="co-modal-box co-modal-box--lg" style={{ maxWidth: 600 }} onClick={e=>e.stopPropagation()}>
             {/* Cabeçalho */}
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
               <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -241,7 +241,7 @@ export default function ModalRelatorios({ ctx }) {
       {/* ═══ MODAL: RELATÓRIO DIÁRIAS ═══ */}
       {relDiariaOpen && (
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelDiariaOpen(false)}>
-          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:560,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+          <div className="co-modal-box co-modal-box--lg" style={{ maxWidth: 560 }} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
               <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="bed" s={20} c={t.ouro}/></div>
               <div>
@@ -307,7 +307,7 @@ export default function ModalRelatorios({ ctx }) {
       {/* ═══ MODAL: RELATÓRIO DESCARGAS ═══ */}
       {relDescargaOpen && (
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelDescargaOpen(false)}>
-          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:520,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+          <div className="co-modal-box co-modal-box--lg" style={{ maxWidth: 520 }} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
               <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="package" s={20} c={t.ouro}/></div>
               <div>
@@ -363,7 +363,7 @@ export default function ModalRelatorios({ ctx }) {
       {/* ═══ MODAL: RELATÓRIO OPERACIONAL ═══ */}
       {relOperOpen && (
         <div className="co-modal-overlay co-modal-overlay--center" onClick={()=>setRelOperOpen(false)}>
-          <div style={{background:t.card,borderRadius:18,padding:28,width:"100%",maxWidth:500,border:`1px solid ${t.borda}`,boxShadow:"0 24px 64px rgba(0,0,0,.55)",maxHeight:"90vh",overflowY:"auto",animation:"slideUp .22s cubic-bezier(.34,1.1,.64,1)"}} onClick={e=>e.stopPropagation()}>
+          <div className="co-modal-box co-modal-box--lg" style={{ maxWidth: 500 }} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:22}}>
               <div style={{width:42,height:42,borderRadius:11,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="clipboard" s={20} c={t.ouro}/></div>
               <div>

@@ -357,7 +357,7 @@ export default function DescargaView({ ctx }) {
                     </div>
                     {/* Modal de seleção de período pós-upload */}
                     {rodorricaPeriodoModal&&(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:"var(--z-modal)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setRodorricaPeriodoModal(false)}>
-                      <div style={{background:t.card,border:`1.5px solid ${t.ouro}`,borderRadius:16,padding:"28px 28px 22px",minWidth:340,maxWidth:420,boxShadow:"0 8px 40px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
+                      <div className="co-modal-box co-modal-box--lg co-modal-box--primary" style={{ maxWidth: 420, minWidth: 340 }} onClick={e=>e.stopPropagation()}>
                         <div style={{fontWeight:800,fontSize:14,color:t.ouro,marginBottom:6}}><Icon n="calendar" s={13} /> Definir período de comparação</div>
                         <div style={{fontSize:11,color:t.txt2,marginBottom:18}}>Filtra por <b>DT Carregamento</b> da planilha. Deixe em branco para incluir todos os registros.</div>
                         <div style={{display:"flex",flexDirection:"column",gap:12}}>
