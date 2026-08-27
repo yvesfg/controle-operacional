@@ -95,7 +95,7 @@ const ICO_CATEGORIA = {
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot, filialAtiva } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot, filialAtiva, baseAtual } = ctx;
   const isAdmin = perfil === "admin";
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
@@ -338,9 +338,19 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // O reembolso de sinistro tem débito-contrapartida parcelado na mesma base, então
   // é recuperação de custo, não receita nova. Ver o comentário longo em Resultado.jsx.
   const [despesasBase, setDespesasBase] = React.useState({}); // { [base_id]: {deb, est, linhas} }
+  // RECORTE POR BASE — esta tela era a única que ignorava o seletor do topbar:
+  // carregava por período e pronto, então dentro de Açailândia apareciam CTes da
+  // Suzano e vice-versa. O base_id vem gravado no próprio CTe (todos têm), não do
+  // cadastro de embarcadora — por isso o recorte é confiável.
+  // "Todas as bases" (consolidado) segue vendo tudo, que é o propósito dele.
+  const linhasDaBase = React.useMemo(() => {
+    if (!baseAtual?.id || baseAtual.consolidado) return linhasPeriodo;
+    return linhasPeriodo.filter((l) => l.base_id === baseAtual.id);
+  }, [linhasPeriodo, baseAtual]);
+
   const basesDoPeriodo = React.useMemo(
-    () => [...new Set(linhasPeriodo.filter(ehAtivo).map((l) => l.base_id).filter(Boolean))].sort(),
-    [linhasPeriodo]);
+    () => [...new Set(linhasDaBase.filter(ehAtivo).map((l) => l.base_id).filter(Boolean))].sort(),
+    [linhasDaBase]);
 
   React.useEffect(() => {
     if (!conn || !periodoRef || !basesDoPeriodo.length) { setDespesasBase({}); return; }
@@ -365,7 +375,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // porque a despesa não é rateada por cliente. A tela diz isso quando o filtro está ligado.
   const comissao = React.useMemo(() => {
     const linhas = basesDoPeriodo.map((b) => {
-      const saldo = linhasPeriodo.filter(ehAtivo).filter((l) => l.base_id === b)
+      const saldo = linhasDaBase.filter(ehAtivo).filter((l) => l.base_id === b)
         .reduce((s, l) => s + (Number(l.saldo) || 0), 0);
       const d = despesasBase[b];
       const despesa = d ? d.deb + d.cred : 0;
@@ -377,7 +387,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       base_comissao: a.base_comissao + l.base_comissao,
     }), { saldo: 0, despesa: 0, recup: 0, base_comissao: 0 });
     return { linhas, tot, faltando: linhas.filter((l) => !l.temDespesa) };
-  }, [basesDoPeriodo, linhasPeriodo, despesasBase]);
+  }, [basesDoPeriodo, linhasDaBase, despesasBase]);
 
   // `silencioso`: revalidação em segundo plano depois de uma escrita. Sem isso,
   // `loading` esconde a fila de revisão e a tela pisca a cada clique.
@@ -642,9 +652,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
   const clientesPresentes = React.useMemo(() => {
-    const arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
+    const arr = clientesDaFilial ? linhasDaBase.filter(l => clientesDaFilial.has(l.cliente)) : linhasDaBase;
     return [...new Set(arr.map(l => l.cliente))].sort();
-  }, [linhasPeriodo, clientesDaFilial]);
+  }, [linhasDaBase, clientesDaFilial]);
   // Trocar a filial no topbar com um cliente da outra filial selecionado deixaria a tela
   // vazia sem explicação — limpa o seletor.
   React.useEffect(() => {
@@ -661,10 +671,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const basesOpc = React.useMemo(() => Object.values(BASES).map((b) => ({ v: b.id, l: b.label })), []);
 
   const linhasFiltradas = React.useMemo(() => {
-    let arr = clientesDaFilial ? linhasPeriodo.filter(l => clientesDaFilial.has(l.cliente)) : linhasPeriodo;
+    let arr = clientesDaFilial ? linhasDaBase.filter(l => clientesDaFilial.has(l.cliente)) : linhasDaBase;
     if (clienteFiltro) arr = arr.filter(l => l.cliente === clienteFiltro);
     return arr;
-  }, [linhasPeriodo, clienteFiltro, clientesDaFilial]);
+  }, [linhasDaBase, clienteFiltro, clientesDaFilial]);
 
   // Relatório da tela: as linhas do período JÁ filtradas (filial, cliente) — o modal cuida de
   // colunas, ordem, agrupamento e exportação. Só CTes ativos, como todo resumo daqui.

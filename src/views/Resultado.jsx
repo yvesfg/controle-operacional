@@ -618,7 +618,6 @@ export default function Resultado({ ctx }) {
           só em Créditos Pendentes agora, evitando duas telas com fluxos incompletos entre si. */}
       {indevidasView.length > 0 && (() => {
         const totalIndevido = indevidasView.reduce((s, i) => s + Math.abs(Number(i.valor || 0)), 0);
-        const filialParaCreditos = getPerfil(baseId).financeiro.filialDespesas;
         return (
           <div style={{ ...card, marginBottom: 16, border: `1px solid ${t.danger}55`,
             display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
@@ -634,7 +633,7 @@ export default function Resultado({ ctx }) {
                 {money(totalIndevido)} nesta base, em todos os meses até resolver.
               </div>
             </div>
-            <Button variant="danger" size="sm" onClick={() => irParaCreditos?.(filialParaCreditos)}>
+            <Button variant="danger" size="sm" onClick={() => irParaCreditos?.()}>
               Ver e vincular <Icon n="arrow-right" s={13} />
             </Button>
           </div>

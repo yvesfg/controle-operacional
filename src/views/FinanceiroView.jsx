@@ -46,8 +46,9 @@ export default function FinanceiroView({ ctx }) {
   // Navegação Resultado → Créditos Pendentes (achado de auditoria: "indevidas aguardando
   // crédito" existia duplicado nas duas telas; agora Resultado só resume e linka pra cá,
   // com filtro de filial pré-selecionado quando dá pra mapear 1:1 a partir da base atual).
-  const [filtroFilialInicial, setFiltroFilialInicial] = React.useState(null);
-  const irParaCreditos = (filial) => { setFiltroFilialInicial(filial || null); setFinTab("creditos"); };
+  // A filial de destino saia daqui pro Creditos; agora o recorte e o do topbar,
+  // entao o atalho so troca de aba.
+  const irParaCreditos = () => setFinTab("creditos");
 
   // Faixa única: o segmentado Operacional/Faturamento (antes dentro do Resultado) sobe pra
   // cá, e os filtros da sub-tela são portalizados pro slot — tudo na mesma linha da nav.
@@ -114,7 +115,7 @@ export default function FinanceiroView({ ctx }) {
           <Resultado ctx={{ ...finCtx, activeTab: "resultado" }} />
         )}
         {finTab === "creditos" && podeCreditos && !consolidado && (
-          <CreditosPendentes ctx={{ ...ctx, activeTab: "creditos_pendentes", filtroFilialInicial }} />
+          <CreditosPendentes ctx={{ ...ctx, activeTab: "creditos_pendentes" }} />
         )}
       </div>
     </div>

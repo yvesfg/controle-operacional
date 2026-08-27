@@ -34,7 +34,7 @@ const faixaCor = (dias, t) => dias == null ? t.txt2 : dias > 60 ? t.danger : dia
 const hoje = () => new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 
 export default function CreditosPendentes({ ctx }) {
-  const { activeTab, getConexao, t, isMobile, showToast, canFin, filtroFilialInicial } = ctx;
+  const { activeTab, getConexao, t, isMobile, showToast, canFin, baseAtual, filialAtiva } = ctx;
   if (activeTab !== "creditos_pendentes") return null;
   if (canFin === false) {
     return <div style={{ padding: 24, color: t.txt2, fontSize: 13 }}>Sem permissão financeira para visualizar os Créditos Pendentes.</div>;
@@ -55,9 +55,10 @@ export default function CreditosPendentes({ ctx }) {
   }, [conn]);
   React.useEffect(() => { carregar(); }, [carregar]);
 
-  // Filtros — filtroFilialInicial vem de Resultado.jsx (botão "Ver e vincular →"), quando dá
-  // pra mapear a base atual pra uma única filial (ex.: acailandia_avb → AÇA).
-  const [filtroFilial, setFiltroFilial] = React.useState(() => filtroFilialInicial || "todos");
+  // O recorte por filial NÃO mora mais aqui: vem do seletor do topbar (base +
+  // filial), que é o mesmo de todas as telas. Ter um chip próprio significava dois
+  // controles para a mesma coisa, e quem estava em "Imperatriz" no topo via
+  // "Todas as filiais" aqui sem entender por quê.
   const [filtroStatus, setFiltroStatus] = React.useState("todos"); // todos | a_cobrar | cobrados
   const [busca, setBusca] = React.useState("");
 
@@ -87,15 +88,13 @@ export default function CreditosPendentes({ ctx }) {
   useModalEsc(!!preview, () => setPreview(null));
 
   // Filiais presentes (para os chips)
-  const filiaisDisp = React.useMemo(() => {
-    const s = new Set(items.map(filialKey));
-    return [...s].sort();
-  }, [items]);
 
   // Aplicação dos filtros
   const q = busca.trim().toLowerCase();
   const filtrados = React.useMemo(() => items.filter((d) => {
-    if (filtroFilial !== "todos" && filialKey(d) !== filtroFilial) return false;
+    // base do topbar ("Todas as bases" vê tudo), e a filial refina dentro dela
+    if (baseAtual?.id && !baseAtual.consolidado && d.base_id && d.base_id !== baseAtual.id) return false;
+    if (filialAtiva && filialAtiva !== "todas" && filialKey(d) !== filialAtiva) return false;
     if (filtroStatus === "a_cobrar" && d.cobrado_em) return false;
     if (filtroStatus === "cobrados" && !d.cobrado_em) return false;
     if (q) {
@@ -103,7 +102,7 @@ export default function CreditosPendentes({ ctx }) {
       if (!alvo.includes(q)) return false;
     }
     return true;
-  }), [items, filtroFilial, filtroStatus, q]);
+  }), [items, baseAtual, filialAtiva, filtroStatus, q]);
 
   // KPIs (sobre os filtrados)
   const totalPend = filtrados.reduce((s, d) => s + Math.abs(Number(d.valor || 0)), 0);
@@ -158,12 +157,6 @@ export default function CreditosPendentes({ ctx }) {
     else showToast?.("Selecione e copie o texto.", "warn");
   };
 
-  const chip = (k, l, ativo, onClick, cor) => (
-    <Button variant={ativo ? "primary" : "secondary"} size="sm" key={k} onClick={onClick}>
-      {l}
-    </Button>
-  );
-
   return (
     <div style={{ padding: isMobile ? 12 : "20px 24px" }}>
       {/* Cabeçalho */}
@@ -188,8 +181,6 @@ export default function CreditosPendentes({ ctx }) {
 
       {/* Filtros */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 16 }}>
-        {chip("todos", "Todas as filiais", filtroFilial === "todos", () => setFiltroFilial("todos"))}
-        {filiaisDisp.map((k) => chip(k, filialLabel(k), filtroFilial === k, () => setFiltroFilial(k)))}
         <div style={{ display: "flex", border: `1px solid ${t.borda}`, borderRadius: 8, overflow: "hidden", marginLeft: isMobile ? 0 : 6 }}>
           {[["todos", "Todos"], ["a_cobrar", "A cobrar"], ["cobrados", "Cobrados"]].map(([k, l], i) => (
             <Button variant={filtroStatus === k ? "primary" : "ghost"} size="sm" key={k} onClick={() => setFiltroStatus(k)}>
