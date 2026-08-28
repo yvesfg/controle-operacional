@@ -1,3 +1,13 @@
+## 2026-08-28 — Papel × Celulose passa a valer na Conferência (Fase 2 de 3)
+
+**Solicitado:** escolher "Celulose" no topo não mudava nada na Conferência de Faturamento.
+
+**Por que não mudava:** o filtro do topbar recorta `DADOS` (planilha operacional, onde `tipo_carga` existe por DT). A Conferência lê `frete_conferencia`, que **não tem** esse campo — o CTe do TMS não diz o tipo de carga.
+
+**Implementado:** o elo é o número do CTe (`controle_operacional.cte`/`cte_comp` ↔ `frete_conferencia.ctrc`, só dígitos). Como `DADOS` já chega recortado pelo filtro, o conjunto de CTes que sobrou lá **é** o filtro: `ctesDoTipo` entra no `recortar()` (KPIs, Por cliente, Evolução diária, comparativo, card de gestão) e também na fila de revisão, para a fila não cobrar CTe que os totais não mostram.
+
+Cobertura é parcial e a tela diz isso: em 08/2026 (Imperatriz/Belém) o filtro Celulose deixa **50 fretes / R$ 499.969,80**, e uma faixa azul avisa quantos CTes ficaram de fora por não ter par na planilha — descarga (138) e diária (27) saem em CTe próprio, sem DT, então não têm tipo. É recorte declarado, não sumiço silencioso. Build ✓
+
 ## 2026-08-28 — Trecho pendente vira clique (Fase 1 de 3)
 
 **Solicitado:** o aviso "Trechos sem informação completa" mostra a sigla (AGAIMP) mas não diz onde corrigir — dá para clicar e abrir um modal?

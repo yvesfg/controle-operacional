@@ -1868,6 +1868,10 @@ export default function App() {
             activeTab, baseAtual, filialAtiva, DADOS, getConexao,
             t, css, DESIGN, isMobile, showToast, canFin, hexRgb,
             usuarioLogado, perfil, perms, hIco, basesPermitidas,
+            // Classificador (papel x celulose): a Conferencia so conhece o CTe, e quem sabe o
+            // tipo de carga e a planilha operacional, por DT. DADOS ja chega recortado pelo
+            // filtro, entao o elo e o numero do CTe. Ver ConferenciaFrete.
+            filtroTipoCarga, classificador: perfilAtual.classificador,
           }} />
         )}
 

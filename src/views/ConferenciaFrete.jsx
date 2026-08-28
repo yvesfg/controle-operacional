@@ -35,6 +35,8 @@ import { BASES } from "../constants.js";
 const money = (n) => "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pesoFmt = (n) => (n || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " kg";
 const mesLabel = (m) => { if (!m) return ""; const [y, mo] = m.split("-"); return `${mo}/${y}`; };
+// Só os dígitos: o CTe vem "1234" na planilha operacional e "CTRC 1234"/"001234" no TMS.
+const soNum = (s) => String(s ?? "").replace(/\D/g, "");
 // Desloca um "YYYY-MM" por N meses (negativo = pro passado) — usado no comparativo com meses anteriores.
 const shiftMes = (m, delta) => {
   const [y, mo] = m.split("-").map(Number);
@@ -95,7 +97,8 @@ const ICO_CATEGORIA = {
 };
 
 export default function ConferenciaFrete({ ctx, conn }) {
-  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot, filialAtiva, baseAtual } = ctx;
+  const { t, isMobile, showToast, hexRgb, usuarioLogado, perfil, css, hIco, filaSlot, filialAtiva, baseAtual,
+    DADOS, filtroTipoCarga, classificador } = ctx;
   const isAdmin = perfil === "admin";
 
   const [periodoRef, setPeriodoRef] = React.useState(() => new Date().toISOString().slice(0, 7));
@@ -658,12 +661,31 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Recorte da tela (base do topbar + filial + cliente) aplicado a QUALQUER conjunto de
   // linhas — inclusive os meses anteriores. Sem isso, o mês exibido vinha de uma base só e
   // os meses do comparativo somavam todas as bases: a "queda" do mês corrente era o recorte.
-  const recortar = React.useCallback((arr) => {
+  const recortarEscopo = React.useCallback((arr) => {
     let out = (baseAtual?.id && !baseAtual.consolidado) ? arr.filter((l) => l.base_id === baseAtual.id) : arr;
     if (clientesDaFilial) out = out.filter((l) => clientesDaFilial.has(l.cliente));
     if (clienteFiltro) out = out.filter((l) => l.cliente === clienteFiltro);
     return out;
   }, [baseAtual, clientesDaFilial, clienteFiltro]);
+
+  // ── Recorte por tipo de carga (papel × celulose) ───────────────────────────
+  // A Conferência só conhece o CTe; quem sabe o tipo é a planilha operacional, por DT.
+  // `DADOS` já chega recortado pelo filtro do topbar, então o conjunto de CTes que sobrou
+  // lá É o filtro. CTe sem par na planilha (descarga e diária quase nunca têm) fica de fora
+  // e é contado à parte — some do total, mas não sem explicação: ver `semTipo` no aviso.
+  const ctesDoTipo = React.useMemo(() => {
+    if (!classificador || !filtroTipoCarga || filtroTipoCarga === "todos") return null;
+    const s = new Set();
+    for (const r of DADOS || []) {
+      for (const c of [r.cte, r.cte_comp]) { const d = soNum(c); if (d) s.add(d); }
+    }
+    return s;
+  }, [DADOS, classificador, filtroTipoCarga]);
+
+  const recortar = React.useCallback((arr) => {
+    const out = recortarEscopo(arr);
+    return ctesDoTipo ? out.filter((l) => ctesDoTipo.has(soNum(l.ctrc))) : out;
+  }, [recortarEscopo, ctesDoTipo]);
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
   const clientesPresentes = React.useMemo(() => {
@@ -762,6 +784,15 @@ export default function ConferenciaFrete({ ctx, conn }) {
     } finally { setSalvandoTrecho(false); }
   }, [trechoModal, conn, showToast]);
 
+  // Quantos CTes o filtro de tipo de carga deixou de fora por não terem par na planilha
+  // operacional. É o número honesto do recorte: sem ele, sumiriam 138 descargas em silêncio.
+  const tipoLabel = classificador?.valores?.find((v) => v.valor === filtroTipoCarga)?.label || "";
+  const semTipo = React.useMemo(() => {
+    if (!ctesDoTipo) return 0;
+    return recortarEscopo(linhasPeriodo).filter(ehAtivo)
+      .filter((l) => !ctesDoTipo.has(soNum(l.ctrc))).length;
+  }, [ctesDoTipo, recortarEscopo, linhasPeriodo]);
+
   // ── Aviso de trecho sem tradução ou sem distância ──────────────────────────
   // Sem isto, os dois casos aparecem iguais na tela: coluna vazia. Um é praça cujo
   // relatório "Trechos/Rotas" nunca foi importado; o outro é cidade homônima que
@@ -816,8 +847,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
     .filter(ehAtivo)
     .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
     .filter(p => !usuarioFiltro || (p.nome_usuario || "(sem usuário na planilha)") === usuarioFiltro)
-    .filter(p => !filaMesRef || p.periodo_ref === filaMesRef),
-    [pendentes, clienteFiltro, usuarioFiltro, filaMesRef]
+    .filter(p => !filaMesRef || p.periodo_ref === filaMesRef)
+    // Mesmo recorte de tipo de carga do resto da tela — senão a fila cobraria revisão de
+    // CTe que os totais nem estão mostrando.
+    .filter(p => !ctesDoTipo || ctesDoTipo.has(soNum(p.ctrc))),
+    [pendentes, clienteFiltro, usuarioFiltro, filaMesRef, ctesDoTipo]
   );
   const sinalizadosFiltrados = React.useMemo(() => sinalizados
     .filter(p => !clienteFiltro || p.cliente === clienteFiltro)
@@ -1229,6 +1263,18 @@ export default function ConferenciaFrete({ ctx, conn }) {
       <div style={{ fontSize: 11, color: t.txt2, marginBottom: 14 }}>
         Fonte: planilhas brutas de faturamento (CTRC/TMS) por cliente — <b style={{ color: t.txt }}>não é o mesmo dado</b> do Operacional (Google Sheets). Os valores deveriam bater, mas ainda são conferidos separadamente.
       </div>
+
+      {/* Filtro de tipo de carga (papel × celulose): a Conferência não tem esse campo, ele vem
+          do DT pelo número do CTe. Dizer quantos ficaram sem par é o que impede o total de
+          parecer uma queda — é recorte, não sumiço. */}
+      {ctesDoTipo && (
+        <div style={{ ...css.card, padding: isMobile ? 12 : 14, marginBottom: 14, borderLeft: `3px solid ${t.azul}`, fontSize: 11.5, color: t.txt2, lineHeight: 1.55 }}>
+          <b style={{ color: t.txt }}>Mostrando só {tipoLabel.toLowerCase()}.</b>{" "}
+          O tipo de carga é da planilha operacional (por DT) e chega aqui pelo número do CTe.
+          {semTipo > 0 && <> <b style={{ color: t.azul }}>{semTipo} CTe(s)</b> do período ficaram de fora por não ter par na planilha — descarga e diária saem em CTe próprio, sem DT.</>}
+          {" "}Para ver tudo, escolha <b style={{ color: t.txt }}>Todos</b> no topo.
+        </div>
+      )}
 
       {avisoTrechos}
 
