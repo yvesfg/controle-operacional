@@ -81,6 +81,63 @@ export function trechosSemKm(linhas) {
   })).sort((a, b) => b.linhas - a.linhas);
 }
 
+// ── Praças (3 letras) deduzidas do que já existe ──────────────────────────
+// O código é origem+destino, então cada rota conhecida ensina DUAS praças: IMPAGA diz que
+// IMP=IMPERATRIZ e AGA=ARAGUAINA. Com isso um trecho novo (AGAIMP) já nasce com a rota
+// proposta, e resolver a pendência vira conferir, não digitar. Voto por maioria porque a
+// mesma praça aparece escrita de formas diferentes em rotas antigas.
+function pracas() {
+  const votos = {}; // { IMP: { IMPERATRIZ: 12 } }
+  const votar = (sigla, cidade) => {
+    if (!sigla || !cidade) return;
+    votos[sigla] = votos[sigla] || {};
+    votos[sigla][cidade] = (votos[sigla][cidade] || 0) + 1;
+  };
+  for (const [cod, i] of Object.entries(_mapa)) {
+    if (cod.length !== 6) continue;
+    votar(cod.slice(0, 3), i.origem);
+    votar(cod.slice(3, 6), i.destino);
+  }
+  const out = {};
+  for (const [sigla, c] of Object.entries(votos)) {
+    out[sigla] = Object.entries(c).sort((a, b) => b[1] - a[1])[0][0];
+  }
+  return out;
+}
+
+// { origem, destino } proposto para uma sigla ainda sem de-para. Campo vazio = praça que
+// nunca apareceu em nenhuma rota; aí não há o que propor e a pessoa digita.
+export function sugerirTrecho(codigo) {
+  const c = norm(codigo);
+  const p = pracas();
+  return { origem: p[c.slice(0, 3)] || "", destino: p[c.slice(3, 6)] || "" };
+}
+
+// Grava um trecho (cria ou corrige) e atualiza o mapa em memória, pra tela refletir sem
+// recarregar. `km` é opcional: em branco, quem manda é o cálculo do OSRM.
+export async function salvarTrecho(conn, { codigo, origem, destino, km }) {
+  if (!conn || !_sessionToken) throw new Error("Sessão expirada — entre de novo.");
+  const c = norm(codigo);
+  const o = String(origem || "").trim().toUpperCase();
+  const d = String(destino || "").trim().toUpperCase();
+  if (!c || !o || !d) throw new Error("Informe origem e destino.");
+  const kmNum = km === "" || km == null ? null : Number(km);
+  await supaFetch(conn.url, conn.key, "POST", "rpc/upsert_trechos_lote", {
+    p_token: _sessionToken,
+    p_linhas: [{ codigo: c, origem: o, destino: d, km: kmNum }],
+  });
+  const antes = _mapa[c] || {};
+  // Mudou a rota: o km calculado antes era de outro caminho e não vale mais.
+  const rotaMudou = antes.origem !== o || antes.destino !== d;
+  const kmCalc = rotaMudou ? null : (antes.kmCalc ?? null);
+  _mapa[c] = {
+    origem: o, destino: d, km: kmNum, kmCalc,
+    kmFonte: kmCalc != null ? "osrm" : (kmNum != null ? "tms" : null),
+    destinoResolvido: rotaMudou ? "" : (antes.destinoResolvido || ""),
+  };
+  return c;
+}
+
 // Cidade -> UF a partir do que a operação registra nas viagens ("BELÉM - PA").
 // É o critério que desempata homônimo antes de geocodificar; sem ele, "DAVINOPOLIS"
 // vira Goiás em vez do Maranhão (ver migration 068).

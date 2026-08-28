@@ -1,3 +1,13 @@
+## 2026-08-28 — Trecho pendente vira clique (Fase 1 de 3)
+
+**Solicitado:** o aviso "Trechos sem informação completa" mostra a sigla (AGAIMP) mas não diz onde corrigir — dá para clicar e abrir um modal?
+
+**Implementado:** as siglas do aviso viraram `<Badge as="button">` e abrem um modal que grava na tabela `trechos` pela RPC `upsert_trechos_lote` (que existia desde a migration 065 e nunca tinha sido usada pelo app — o de-para só era populado por migration).
+
+O modal já vem preenchido: `sugerirTrecho()` deduz a rota das praças que os outros trechos ensinam — o código é 3 letras de origem + 3 de destino, então `IMPAGA` (IMPERATRIZ → ARAGUAINA) ensina que `AGA` é ARAGUAINA e `IMP` é IMPERATRIZ, e `AGAIMP` nasce proposto como ARAGUAINA → IMPERATRIZ. Voto por maioria, porque a mesma praça aparece escrita de formas diferentes em rotas antigas. Salvar com o KM em branco dispara o cálculo do OSRM na hora (mesmo `/api/trecho-km` que a tela já usava).
+
+Vale também para a linha "Sem distância": ali o trecho existe e o modal abre com a rota atual, para acrescentar a UF no destino (CONDE - BA) e a medição deixar de ficar ambígua. Nada é copiado para dentro da linha do CTe, então a correção vale para todo o histórico. Build ✓
+
 ## 2026-08-28 — Conferência: o comparativo mostrava mês pela metade (corte de 1000 linhas)
 
 **Solicitado:** o card "Comparativo com meses anteriores" mostrava 08/2026 com 108 CTRCs e R$ 493.558,90 contra 378 e R$ 1,86 M em 06/2026 — queda que não existia na operação.

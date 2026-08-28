@@ -16,8 +16,8 @@ import {
 } from "../freteConferencia.js";
 import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
 import {
-  trechoRota, trechoOrigem, trechoDestino, trechoKm,
-  trechosSemDePara, trechosSemKm, calcularKmFaltante,
+  trechoRota, trechoOrigem, trechoDestino, trechoKm, trechoInfo,
+  trechosSemDePara, trechosSemKm, calcularKmFaltante, sugerirTrecho, salvarTrecho,
 } from "../operacao/trechos.js";
 import { consultarCNPJ, nomeSugerido } from "../receitaCnpj.js";
 import { listarDespesas, classeDoCredito } from "../despesas.js";
@@ -151,6 +151,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
   // Mês de competência da diária emitida (migration 053) — editado no modal do CTe.
   const [compRef, setCompRef] = React.useState("");
 
+  // Trecho pendente aberto pra correção — { codigo, origem, destino, km, sugerido, linhas }.
+  const [trechoModal, setTrechoModal] = React.useState(null);
+  const [salvandoTrecho, setSalvandoTrecho] = React.useState(false);
+
+  useModalEsc(!!trechoModal, () => setTrechoModal(null));
   useModalEsc(!!preview, () => setPreview(null));
   useModalEsc(dupModal.open, () => setDupModal({ open: false, origem: null }));
   useModalEsc(revisarModal.open, () => setRevisarModal({ open: false, item: null }));
@@ -723,6 +728,40 @@ export default function ConferenciaFrete({ ctx, conn }) {
   ], []);
   const relLinhas = React.useMemo(() => linhasFiltradas.filter(ehAtivo), [linhasFiltradas]);
 
+  // Abre o trecho pendente já com a rota proposta pelas praças que os outros trechos
+  // conhecem (ver sugerirTrecho). Trecho que existe mas está sem km abre com a rota atual —
+  // é o caso da cidade homônima, onde basta acrescentar a UF no destino.
+  const abrirTrecho = React.useCallback((codigo, linhas) => {
+    const atual = trechoInfo(codigo);
+    const s = atual ? { origem: atual.origem, destino: atual.destino } : sugerirTrecho(codigo);
+    setTrechoModal({
+      codigo, linhas: linhas || 0,
+      origem: s.origem, destino: s.destino,
+      km: atual?.km != null ? String(atual.km) : "",
+      sugerido: !atual && !!(s.origem || s.destino),
+    });
+  }, []);
+
+  const onSalvarTrecho = React.useCallback(async () => {
+    if (!trechoModal) return;
+    setSalvandoTrecho(true);
+    try {
+      const cod = await salvarTrecho(conn, trechoModal);
+      // Sem km digitado, mede pelo OSRM na hora — é o mesmo caminho que a tela já usa pros
+      // trechos importados, então o número sai da mesma fonte.
+      let medido = 0;
+      if (!String(trechoModal.km || "").trim()) {
+        const r = await calcularKmFaltante(conn, [cod]).catch(() => ({ gravados: 0 }));
+        medido = r.gravados || 0;
+      }
+      setKmVersao((v) => v + 1);
+      setTrechoModal(null);
+      showToast?.(medido ? `Trecho ${cod} salvo e distância calculada.` : `Trecho ${cod} salvo.`, "ok");
+    } catch (e) {
+      showToast?.("Erro ao salvar trecho: " + e.message, "erro");
+    } finally { setSalvandoTrecho(false); }
+  }, [trechoModal, conn, showToast]);
+
   // ── Aviso de trecho sem tradução ou sem distância ──────────────────────────
   // Sem isto, os dois casos aparecem iguais na tela: coluna vazia. Um é praça cujo
   // relatório "Trechos/Rotas" nunca foi importado; o outro é cidade homônima que
@@ -736,12 +775,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
         <span style={{ fontWeight: 700, color: t.txt }}>{titulo}</span>{" "}
         <span style={{ color: t.txt2 }}>{detalhe}</span>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 5 }}>
+          {/* Clicável: o lugar onde o problema aparece é o lugar de corrigir. */}
           {itens.slice(0, 12).map((x) => (
-            <span key={x.codigo} style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, fontWeight: 700,
-              background: hexRgb(t.ouro, .1), border: `1px solid ${hexRgb(t.ouro, .3)}`,
-              borderRadius: 5, padding: "2px 7px", color: t.ouro }}>
+            <Badge key={x.codigo} as="button" type="button" variant="warning" size="sm"
+              onClick={() => abrirTrecho(x.codigo, x.linhas)}
+              title="Definir origem e destino deste trecho"
+              style={{ fontFamily: "var(--font-mono)", cursor: "pointer" }}>
               {x.codigo}{x.destino ? ` · ${x.destino}` : ""} ({x.linhas})
-            </span>
+            </Badge>
           ))}
           {itens.length > 12 && <span style={{ fontSize: 10.5, color: t.txt2 }}>+{itens.length - 12}</span>}
         </div>
@@ -755,13 +796,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
           <b style={{ color: t.ouro }}>Trechos sem informação completa</b>
         </div>
         {semDePara.length > 0 && linha("Sem origem/destino:", semDePara,
-          "— praça cujo relatório de trechos do TMS ainda não foi importado. O número entre parênteses é a quantidade de linhas.")}
+          "— praça cujo relatório de trechos do TMS ainda não foi importado. Clique na sigla para definir a rota; o número entre parênteses é a quantidade de linhas.")}
         {semKm.length > 0 && linha("Sem distância:", semKm,
-          "— cidade com nome repetido no Brasil; falta definir a UF para poder medir.")}
+          "— cidade com nome repetido no Brasil. Clique e acrescente a UF ao destino (ex.: CONDE - BA) para poder medir.")}
       </div>
     );
   // kmVersao entra de propósito: o de-para é módulo, não estado do React.
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // (abrirTrecho é estável — useCallback sem dependências.)
   }, [linhasFiltradas, kmVersao, t, css, isMobile, hexRgb, hIco]);
   // Recorte de mês da fila de revisão — relativo ao mês real corrente (não ao periodoRef,
   // que controla os resumos). A fila já vem limitada a mês anterior + corrente do backend.
@@ -2615,6 +2657,49 @@ export default function ConferenciaFrete({ ctx, conn }) {
           qual documento era nem no que os dois diferiam. Agora: o que é IGUAL (a chave que
           disparou o alerta) em cima, e os CTes em colunas com TODOS os campos, destacando em
           dourado o que difere — é o que dá certeza se é duplicidade, substituição ou 2 fretes. */}
+      {/* Trecho pendente — abre pelo próprio aviso, resolve ali e a tela recalcula.
+          Grava na tabela `trechos`, que vale para todo o histórico (não copia para a linha). */}
+      {trechoModal && (
+        <div onClick={() => setTrechoModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: "var(--z-modal)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: t.card, border: `1.5px solid ${t.borda}`, borderRadius: 16, padding: "24px 24px 20px", minWidth: 320, maxWidth: 520, width: "92vw", boxShadow: "0 8px 40px rgba(0,0,0,.5)" }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: t.txt, marginBottom: 4 }}>
+              Trecho <span style={{ fontFamily: "var(--font-mono)", color: t.ouro }}>{trechoModal.codigo}</span>
+              {trechoModal.linhas > 0 ? ` · ${trechoModal.linhas} linha(s) no período` : ""}
+            </div>
+            <div style={{ fontSize: 11, color: t.txt2, marginBottom: 14, lineHeight: 1.5 }}>
+              A sigla do TMS são 3 letras da praça de origem + 3 do destino. O que for salvo aqui
+              vale para <b style={{ color: t.txt }}>todo o histórico</b>, sem reimportar planilha.
+              {trechoModal.sugerido && <> Origem e destino abaixo vieram das praças que os outros trechos já conhecem — <b style={{ color: t.ouro }}>confira antes de salvar</b>.</>}
+            </div>
+
+            <div style={{ display: "grid", gap: 10, marginBottom: 16 }}>
+              {[["Origem", "origem", "Cidade de origem"], ["Destino", "destino", "Cidade de destino (com UF quando houver homônima: CONDE - BA)"]].map(([label, campo, ph]) => (
+                <label key={campo} style={{ display: "block" }}>
+                  <span style={{ display: "block", fontSize: 10, fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: ".05em", color: "var(--text3)", marginBottom: 4 }}>{label}</span>
+                  <input value={trechoModal[campo]} placeholder={ph} autoFocus={campo === "origem"}
+                    onChange={(e) => setTrechoModal((m) => ({ ...m, [campo]: e.target.value.toUpperCase() }))}
+                    style={{ width: "100%", boxSizing: "border-box", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", textTransform: "uppercase" }} />
+                </label>
+              ))}
+              <label style={{ display: "block" }}>
+                <span style={{ display: "block", fontSize: 10, fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: ".05em", color: "var(--text3)", marginBottom: 4 }}>KM (opcional)</span>
+                <input value={trechoModal.km} placeholder="deixe em branco para medir a rota automaticamente" inputMode="numeric"
+                  onChange={(e) => setTrechoModal((m) => ({ ...m, km: e.target.value.replace(/\D/g, "") }))}
+                  style={{ width: "100%", boxSizing: "border-box", fontSize: 12.5, padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit" }} />
+              </label>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <Button variant="ghost" size="sm" onClick={() => setTrechoModal(null)}>Cancelar</Button>
+              <Button variant="primary" size="sm" onClick={onSalvarTrecho}
+                disabled={salvandoTrecho || !trechoModal.origem.trim() || !trechoModal.destino.trim()}>
+                {salvandoTrecho ? "Salvando..." : "Salvar trecho"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {dupModal.open && (() => {
         const g = grupoDup;
         const base = g[0] || {};
