@@ -39,10 +39,15 @@ export default function ResumoFinanceiro({ ctx }) {
   // No consolidado as despesas vêm de cada base e são somadas; numa base só é
   // uma chamada. Em ambos os casos vem o histórico inteiro de uma vez, servindo
   // tanto ao mês selecionado quanto à tabela de meses.
+  // Escopo múltiplo (baseAtual.multi) é consolidado restrito: soma só as bases marcadas.
+  const idsMulti = React.useMemo(
+    () => (baseAtual?.multi ? [...new Set(baseAtual.multi.map(e => e.base))] : null),
+    [baseAtual]);
   const idsDespesas = React.useMemo(() => (
-    consolidado ? (basesPermitidas || []).filter(b => b && !b.consolidado).map(b => b.id)
-                : (baseId ? [baseId] : [])
-  ), [consolidado, basesPermitidas, baseId]);
+    idsMulti ? idsMulti
+      : consolidado ? (basesPermitidas || []).filter(b => b && !b.consolidado).map(b => b.id)
+                    : (baseId ? [baseId] : [])
+  ), [idsMulti, consolidado, basesPermitidas, baseId]);
   const chaveIds = idsDespesas.join(",");
 
   React.useEffect(() => {

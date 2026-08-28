@@ -388,7 +388,15 @@ export default function App() {
     const merged = base.map(r => overrides.has(r.dt) ? overrides.get(r.dt) : r);
     const baseDTs = new Set(merged.map(r => r.dt));
     const additions = extras.filter(x => !x._override && !baseDTs.has(x.dt));
-    const todas = [...merged, ...additions, ...semDtRows];
+    let todas = [...merged, ...additions, ...semDtRows];
+    // Escopo multiplo (2+ marcados no seletor): a sync ja trouxe so as bases marcadas, mas
+    // Imperatriz e Belem sao FILIAIS da mesma base — essas se separam por origem da viagem,
+    // aqui. `_baseId` so existe no consolidado; linha sem ele veio da unica base carregada.
+    const multi = baseAtual?.multi;
+    if (multi?.length) {
+      todas = todas.filter(r => multi.some(e =>
+        (!r._baseId || r._baseId === e.base) && (e.filial === "todas" || origemBate(r.origem, e.filial))));
+    }
     // Filtro global pelo classificador da operação (ex.: papel/celulose) — só onde a
     // operação declara ter classificadores. Default "todos" = sem alteração; registro
     // sem o campo (linha criada no app) assume o valor padrão do classificador.
@@ -1230,6 +1238,32 @@ export default function App() {
   const escopoLabel = (opcoesEscopo.find((o) => o.key === escopoKey) || {}).label || baseAtual?.label || "";
   const escolherEscopo = (o) => { setBaseAtual(o.base); setFilialAtiva(o.filial); setBaseMenuOpen(false); };
 
+  // ── Escopo multiplo (marcar 2+ no seletor) ────────────────────────────────
+  // Marcar mais de um escopo vira uma base sintetica `consolidado` restrita ao que foi
+  // marcado: o consolidado ja sabe carregar base a base e marcar _baseId em cada linha,
+  // entao aqui so limitamos a lista. Como o consolidado, e LEITURA — salvar precisa saber
+  // em qual tabela gravar. `multi` guarda o par base+filial, porque Belem e Imperatriz sao
+  // filiais da MESMA base e o recorte delas e por origem da viagem, nao por tabela.
+  const escoposMulti = baseAtual?.multi || null;
+  const escoposMarcados = new Set(escoposMulti ? escoposMulti.map(e => e.key) : (escopoKey ? [escopoKey] : []));
+  const baseMultiDe = (lista) => ({
+    id: "multi:" + lista.map(o => o.key).join(","),
+    label: lista.map(o => o.label).join(" + "),
+    table: null, consolidado: true,
+    multi: lista.map(o => ({ key: o.key, base: o.base.id, filial: o.filial })),
+  });
+  const alternarEscopo = (o) => {
+    // "Todas as bases" ja e o tudo — combinar com um recorte nao faria sentido.
+    if (o.base?.consolidado) return escolherEscopo(o);
+    const chaves = new Set(escoposMarcados);
+    chaves.has(o.key) ? chaves.delete(o.key) : chaves.add(o.key);
+    const lista = opcoesEscopo.filter(x => chaves.has(x.key) && !x.base?.consolidado);
+    if (!lista.length) return;                       // desmarcar o ultimo nao deixa a tela sem escopo
+    if (lista.length === 1) return escolherEscopo(lista[0]);
+    setBaseAtual(baseMultiDe(lista));
+    setFilialAtiva("todas");                          // a filial de cada escopo vai dentro de `multi`
+  };
+
   const modoConsolidado = baseAtual?.consolidado === true;
   const canEdit = (isAdmin || perms.editar) && !modoConsolidado;
   const canFin = perms.financeiro;
@@ -1505,15 +1539,19 @@ export default function App() {
                     <>
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
                       <div className="co-dropdown" style={{ minWidth: 210, zIndex: 101 }}>
-                        <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
+                        <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base · clique na bolinha para somar</div>
                         {opcoesEscopo.map(o=>(
-                          <Button variant={o.key===escopoKey ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)}
-                            
+                          <Button variant={escoposMarcados.has(o.key) ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)}
+
                             onMouseEnter={e=>e.currentTarget.style.background=hexRgb(t.ouro,.16)}
-                            onMouseLeave={e=>e.currentTarget.style.background=o.key===escopoKey?hexRgb(t.ouro,.10):"transparent"} style={{ width: "100%" }}>
-                            <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
+                            onMouseLeave={e=>e.currentTarget.style.background=escoposMarcados.has(o.key)?hexRgb(t.ouro,.10):"transparent"} style={{ width: "100%" }}>
+                            {/* Bolinha = marcar/desmarcar (ve mais de uma base junto); o resto da linha
+                                continua trocando pra aquele escopo sozinho. */}
+                            <span role="checkbox" aria-checked={escoposMarcados.has(o.key)} title={o.base?.consolidado?undefined:"Marcar/desmarcar para ver junto"}
+                              onClick={e=>{ e.stopPropagation(); alternarEscopo(o); }}
+                              style={{width:11,height:11,borderRadius:"50%",border:`2px solid ${escoposMarcados.has(o.key)?t.ouro:t.borda}`,background:escoposMarcados.has(o.key)?t.ouro:"transparent",flexShrink:0,cursor:"pointer"}}/>
                             <span style={{flex:1}}>{o.label}</span>
-                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
+                            {escoposMarcados.has(o.key) && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
                           </Button>
                         ))}
                       </div>
@@ -1565,12 +1603,14 @@ export default function App() {
                     <>
                       <div onClick={()=>setBaseMenuOpen(false)} style={{position:"fixed",inset:0,zIndex:100}}/>
                       <div className="co-dropdown" style={{ minWidth: 200, zIndex: 101 }}>
-                        <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base</div>
+                        <div style={{fontSize:9,fontFamily:"var(--font-mono)",color:t.txt2,textTransform:"uppercase",letterSpacing:".08em",padding:"9px 12px 6px"}}>Trocar base · toque na bolinha para somar</div>
                         {opcoesEscopo.map(o=>(
-                          <Button variant={o.key===escopoKey ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)} style={{ width: "100%" }}>
-                            <span style={{width:7,height:7,borderRadius:"50%",background:o.key===escopoKey?t.ouro:t.borda,flexShrink:0}}/>
+                          <Button variant={escoposMarcados.has(o.key) ? "primary" : "ghost"} size="sm" key={o.key} onClick={()=>escolherEscopo(o)} style={{ width: "100%" }}>
+                            <span role="checkbox" aria-checked={escoposMarcados.has(o.key)}
+                              onClick={e=>{ e.stopPropagation(); alternarEscopo(o); }}
+                              style={{width:13,height:13,borderRadius:"50%",border:`2px solid ${escoposMarcados.has(o.key)?t.ouro:t.borda}`,background:escoposMarcados.has(o.key)?t.ouro:"transparent",flexShrink:0,cursor:"pointer"}}/>
                             <span style={{flex:1}}>{o.label}</span>
-                            {o.key===escopoKey && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
+                            {escoposMarcados.has(o.key) && <span style={{color:t.ouro,fontSize:12}}><Icon n="check" s={13} /></span>}
                           </Button>
                         ))}
                       </div>

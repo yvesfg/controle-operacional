@@ -1,3 +1,13 @@
+## 2026-08-28 — Seletor de base aceita mais de um escopo (Fase 3 de 3)
+
+**Solicitado:** poder "ticar" mais de uma base no seletor do topbar — ex.: ver só Belém e Açailândia.
+
+**Implementado:** a bolinha de cada linha do menu virou marcador. Clicar na bolinha soma/tira aquele escopo; clicar no resto da linha continua trocando para ele sozinho. Com 2+ marcados, `baseAtual` vira uma base sintética `{ consolidado: true, multi: [{base, filial}] }` — o consolidado já sabia carregar base a base marcando `_baseId` em cada linha, então aqui só limitamos a lista de alvos da sync (`useSyncHandlers`) e as bases somadas no Resumo Financeiro.
+
+Belém e Imperatriz são **filiais da mesma base**, não bases: elas se separam por origem da viagem, no `DADOS` (`origemBate`), e por isso o escopo guarda o par base+filial em vez de só o id da base.
+
+**Limite herdado do consolidado, de propósito:** com 2+ marcados a tela é leitura — Dashboard e Financeiro › Resumo. Salvar precisa saber em qual tabela gravar, e Resultado/Conferência/Painel continuam pedindo uma base só, como já acontecia em "Todas as bases". Build ✓
+
 ## 2026-08-28 — Papel × Celulose passa a valer na Conferência (Fase 2 de 3)
 
 **Solicitado:** escolher "Celulose" no topo não mudava nada na Conferência de Faturamento.

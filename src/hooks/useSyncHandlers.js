@@ -19,8 +19,12 @@ const sincronizar = useCallback(async () => {
     // origem em cada linha. O RPC já recebe a base, e o token valida cada uma
     // contra co_usuarios.bases_permitidas — quem não tem a base simplesmente
     // não recebe as linhas dela, sem precisar de regra nova aqui.
+    // Escopo múltiplo (baseAtual.multi): mesmo caminho do consolidado, restrito às bases
+    // marcadas no seletor. Filial não entra aqui — Imperatriz e Belém vivem na MESMA tabela
+    // e se separam por origem da viagem, na montagem do DADOS.
+    const idsMulti = baseAtual?.multi ? new Set(baseAtual.multi.map(e => e.base)) : null;
     const alvos = baseAtual?.consolidado
-      ? (basesPermitidas || []).filter(b => b && !b.consolidado)
+      ? (basesPermitidas || []).filter(b => b && !b.consolidado && (!idsMulti || idsMulti.has(b.id)))
       : [baseAtual];
 
     // Consolidado sem bases ainda (Hub carregando) — nao zera o que ja esta na
