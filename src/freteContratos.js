@@ -114,10 +114,24 @@ export function parseContratosXLSX(file) {
 // CTes vem repetido no relatório, uma linha por CTe.
 const chaveContrato = (l) => `${l.empresa_emissao}||${l.contrato}||${l.cte_ctrc || ""}`;
 
+// Pagina por período pelo mesmo motivo da Conferência: o PostgREST corta em 1000 linhas sem
+// avisar (503 contratos só em 08/2026), e o mês truncado some do cruzamento em silêncio.
+// Ordem estável (…, id) vem da migration 077.
+const PAGINA = 1000;
 export async function listarContratosPorPeriodos(conn, periodos) {
   if (!_sessionToken) return [];
-  return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_contratos_periodos",
-    { p_token: _sessionToken, p_periodos: periodos }));
+  const umPeriodo = async (periodo) => {
+    const out = [];
+    for (let p = 0; p < 50; p++) {
+      const pagina = _rows(await supaFetch(conn.url, conn.key, "POST",
+        `rpc/listar_contratos_periodos?limit=${PAGINA}&offset=${p * PAGINA}`,
+        { p_token: _sessionToken, p_periodos: [periodo] }));
+      out.push(...pagina);
+      if (pagina.length < PAGINA) break;
+    }
+    return out;
+  };
+  return (await Promise.all(periodos.map(umPeriodo))).flat();
 }
 
 // O insert faz UPSERT (ver migration 055): reimportar o mês depois de lançar o que faltava

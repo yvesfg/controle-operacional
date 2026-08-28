@@ -1,3 +1,19 @@
+## 2026-08-28 — Conferência: o comparativo mostrava mês pela metade (corte de 1000 linhas)
+
+**Solicitado:** o card "Comparativo com meses anteriores" mostrava 08/2026 com 108 CTRCs e R$ 493.558,90 contra 378 e R$ 1,86 M em 06/2026 — queda que não existia na operação.
+
+**Duas causas, as duas confirmadas contra o banco:**
+
+1. **Corte silencioso de 1000 linhas.** O PostgREST limita a resposta a `db-max-rows = 1000` e não avisa — vale também para RPC que retorna SETOF. A tela pedia os três meses numa chamada só (1.549 linhas em 06–08/2026) e recebia 1.000; o resto sumia sem erro. Reproduzido em SQL: com `LIMIT 1000` na mesma consulta, os totais batem exatamente com os do card (06/2026 = 378 CTRCs / R$ 1.859.520,32 / saldo R$ 276.115,02).
+2. **Recorte de base só no mês exibido.** O mês corrente vinha filtrado pela base do topbar (imperatriz_belem) e os dois meses anteriores somavam todas as bases — comparação entre bases diferentes. Os 108 CTRCs do card são exatamente as linhas de imperatriz_belem que sobreviveram ao corte.
+
+**Implementado:**
+- `listarPorPeriodo` pagina por `limit`/`offset` até vir página curta, e `listarPorPeriodos` chama um pedido por mês em paralelo — assim o corte nunca cai sempre no mês mais recente. `listarTodosPeriodo` passou a delegar para a mesma função. Mesmo tratamento em `listarContratosPorPeriodos` (503 contratos só em 08/2026).
+- Migration **077**: `ORDER BY id` em `listar_frete_periodos` e desempate por `id` em `listar_contratos_periodos` — paginar sem ordem determinística pode repetir ou perder linha entre páginas. Só a cláusula ORDER BY mudou; já aplicada no projeto.
+- `ConferenciaFrete.jsx`: novo `recortar()` (base + filial + cliente) aplicado ao mês exibido, aos dois meses do comparativo e ao card de gestão da diária, que tinha o mesmo vazamento de base no acumulado de 3 meses. `linhasFiltradas` passou a usá-lo, então o recorte tem uma definição só.
+
+**Depois do fix** (imperatriz_belem, até dia 28): 06/2026 = 340 CTRCs / R$ 1.335.974,89 · 07/2026 = 339 / R$ 1.647.153,62 · 08/2026 = **394 / R$ 2.152.446,73** — agosto é o maior mês dos três, não uma queda. Build ✓
+
 ## 2026-08-19 — Dashboard: a linha do meio entrou na grade de 12 (Fase 3b)
 
 **Continuacao da Fase 3**, que tinha colocado so a faixa de KPIs na grade de 12 colunas.

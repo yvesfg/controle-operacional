@@ -650,6 +650,16 @@ export default function ConferenciaFrete({ ctx, conn }) {
     return nomes.length ? new Set(nomes) : null;
   }, [clientesMap, filialAtiva]);
 
+  // Recorte da tela (base do topbar + filial + cliente) aplicado a QUALQUER conjunto de
+  // linhas — inclusive os meses anteriores. Sem isso, o mês exibido vinha de uma base só e
+  // os meses do comparativo somavam todas as bases: a "queda" do mês corrente era o recorte.
+  const recortar = React.useCallback((arr) => {
+    let out = (baseAtual?.id && !baseAtual.consolidado) ? arr.filter((l) => l.base_id === baseAtual.id) : arr;
+    if (clientesDaFilial) out = out.filter((l) => clientesDaFilial.has(l.cliente));
+    if (clienteFiltro) out = out.filter((l) => l.cliente === clienteFiltro);
+    return out;
+  }, [baseAtual, clientesDaFilial, clienteFiltro]);
+
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
   const clientesPresentes = React.useMemo(() => {
     const arr = clientesDaFilial ? linhasDaBase.filter(l => clientesDaFilial.has(l.cliente)) : linhasDaBase;
@@ -670,11 +680,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   }, [clientesMap]);
   const basesOpc = React.useMemo(() => Object.values(BASES).map((b) => ({ v: b.id, l: b.label })), []);
 
-  const linhasFiltradas = React.useMemo(() => {
-    let arr = clientesDaFilial ? linhasDaBase.filter(l => clientesDaFilial.has(l.cliente)) : linhasDaBase;
-    if (clienteFiltro) arr = arr.filter(l => l.cliente === clienteFiltro);
-    return arr;
-  }, [linhasDaBase, clienteFiltro, clientesDaFilial]);
+  const linhasFiltradas = React.useMemo(() => recortar(linhasPeriodo), [recortar, linhasPeriodo]);
 
   // Relatório da tela: as linhas do período JÁ filtradas (filial, cliente) — o modal cuida de
   // colunas, ordem, agrupamento e exportação. Só CTes ativos, como todo resumo daqui.
@@ -796,14 +802,14 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const mesAnt1 = React.useMemo(() => shiftMes(periodoRef, -1), [periodoRef]);
   const mesAnt2 = React.useMemo(() => shiftMes(periodoRef, -2), [periodoRef]);
   const comparativo = React.useMemo(() => {
-    // Mesmo recorte do mês exibido (cliente + toggle de diária/descarga), senão o
-    // comparativo compararia bases diferentes e a variação % sairia inventada.
-    const filtrarCli = (arr) => {
-      const porCli = clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
-      return incluirDiariaDescarga ? porCli : semDiariaDescarga(porCli);
+    // Mesmo recorte do mês exibido (base + filial + cliente + toggle de diária/descarga),
+    // senão o comparativo compararia bases diferentes e a variação % sairia inventada.
+    const mesmoRecorte = (arr) => {
+      const r = recortar(arr);
+      return incluirDiariaDescarga ? r : semDiariaDescarga(r);
     };
-    const resumoAnt1 = resumoPorDia(filtrarCli(linhasComparativo[mesAnt1] || []));
-    const resumoAnt2 = resumoPorDia(filtrarCli(linhasComparativo[mesAnt2] || []));
+    const resumoAnt1 = resumoPorDia(mesmoRecorte(linhasComparativo[mesAnt1] || []));
+    const resumoAnt2 = resumoPorDia(mesmoRecorte(linhasComparativo[mesAnt2] || []));
 
     const hojeStr = new Date().toISOString().slice(0, 10);
     const mesAtualReal = hojeStr.slice(0, 7);
@@ -823,7 +829,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const totalAtual = somar(mapaAtual), total1 = somar(mapa1), total2 = somar(mapa2);
 
     return { diaCorte, totalAtual, total1, total2 };
-  }, [linhasComparativo, mesAnt1, mesAnt2, periodoRef, resumoDia, clienteFiltro, incluirDiariaDescarga, semDiariaDescarga]);
+  }, [linhasComparativo, mesAnt1, mesAnt2, periodoRef, resumoDia, recortar, incluirDiariaDescarga, semDiariaDescarga]);
   const totalMes = React.useMemo(() => Object.values(resumoCli).reduce((a, d) => ({
     registros: a.registros + d.registros, peso: a.peso + d.peso, fretePeso: a.fretePeso + d.fretePeso, saldo: a.saldo + d.saldo,
   }), { registros: 0, peso: 0, fretePeso: 0, saldo: 0 }), [resumoCli]);
@@ -840,7 +846,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const soma = (arr, cat, campo) => ativas(arr).filter(l => l.categoria === cat)
       .reduce((s, l) => s + (Number(l[campo]) || 0), 0);
     const conta = (arr, cat) => ativas(arr).filter(l => l.categoria === cat).length;
-    const porCli = (arr) => clienteFiltro ? arr.filter(l => l.cliente === clienteFiltro) : arr;
+    const porCli = (arr) => recortar(arr); // base + filial + cliente, igual ao mês exibido
     // As DUAS pontas da diária são lidas no mês de competência (migrations 053/054), não no
     // mês do documento: o D01/D05 sai antes ou depois do espelho (um mês de pagamento pode
     // se referir a dois meses de espelho) e o CTe que cobra sai depois, podendo cobrar o mês
@@ -870,7 +876,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     const pagoAcum = meses.reduce((s, m) => s + m.diariaPaga, 0);
     const emitAcum = meses.reduce((s, m) => s + m.diariaEmitida, 0);
     return { atual: meses[0], meses, pagoAcum, emitAcum };
-  }, [linhasFiltradas, linhasComparativo, periodoRef, mesAnt1, mesAnt2, clienteFiltro]);
+  }, [linhasFiltradas, linhasComparativo, periodoRef, mesAnt1, mesAnt2, recortar]);
 
   // Curva de saldo acumulado ao longo do mês — pontos para o mini-gráfico de área da Evolução diária.
   const chartEvo = React.useMemo(() => {

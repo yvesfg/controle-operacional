@@ -458,28 +458,43 @@ const chaveLinha = (l) => `${soDigitos(l.cnpj_remetente)}||${l.categoria}||${l.c
 // classificado. Usada pra proteger linha com categoria definida à mão (ver diffImportFrete).
 const chaveDoc = (l) => `${soDigitos(l.cnpj_remetente)}||${l.ctrc}||${l.periodo_ref}`;
 
-export async function listarPorPeriodo(conn, periodoRef, cliente) {
-  if (_sessionToken) {
-    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_periodos",
-      { p_token: _sessionToken, p_periodos: [periodoRef], p_cliente: cliente ?? null }));
+// O PostgREST corta a resposta em 1000 linhas (db-max-rows) e NÃO avisa — vale pro REST e
+// pra RPC que retorna SETOF. Três meses de CTe passam disso (1.549 em 06-08/2026), então a
+// Conferência mostrava mês incompleto sem nenhum erro. Toda leitura de período pagina até
+// vir uma página curta. A ordem estável (id) vem da migration 077.
+const PAGINA = 1000;
+const MAX_PAGINAS = 50; // trava de segurança: 50k linhas por período já é absurdo
+async function _paginar(buscar) {
+  const out = [];
+  for (let p = 0; p < MAX_PAGINAS; p++) {
+    const pagina = await buscar(p * PAGINA, PAGINA);
+    out.push(...pagina);
+    if (pagina.length < PAGINA) break;
   }
+  return out;
+}
+
+export async function listarPorPeriodo(conn, periodoRef, cliente) {
   const q = (s) => encodeURIComponent(s);
-  let path = `${TABELA}?periodo_ref=eq.${q(periodoRef)}`;
-  if (cliente) path += `&cliente=eq.${q(cliente)}`;
-  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+  return _paginar(async (offset, limite) => {
+    if (_sessionToken) {
+      return _rows(await supaFetch(conn.url, conn.key, "POST",
+        `rpc/listar_frete_periodos?limit=${limite}&offset=${offset}`,
+        { p_token: _sessionToken, p_periodos: [periodoRef], p_cliente: cliente ?? null }));
+    }
+    let path = `${TABELA}?periodo_ref=eq.${q(periodoRef)}&order=id.asc&limit=${limite}&offset=${offset}`;
+    if (cliente) path += `&cliente=eq.${q(cliente)}`;
+    return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+  });
 }
 
 // Igual listarPorPeriodo, mas pra varios meses de uma vez — necessario porque um
 // arquivo importado pode cobrir varios periodo_ref (ver parseFreteXLSX).
+// Um pedido por mês (em paralelo): a paginação é por período, senão o corte de 1000 linhas
+// cairia sempre no mês mais recente e ele apareceria pela metade.
 export async function listarPorPeriodos(conn, periodoRefs, cliente) {
-  if (_sessionToken) {
-    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_periodos",
-      { p_token: _sessionToken, p_periodos: periodoRefs, p_cliente: cliente ?? null }));
-  }
-  const q = (s) => encodeURIComponent(s);
-  let path = `${TABELA}?periodo_ref=in.(${periodoRefs.map(q).join(",")})`;
-  if (cliente) path += `&cliente=eq.${q(cliente)}`;
-  return (await supaFetch(conn.url, conn.key, "GET", path)) || [];
+  const partes = await Promise.all(periodoRefs.map((p) => listarPorPeriodo(conn, p, cliente)));
+  return partes.flat();
 }
 
 // Sem filtro de cliente: um arquivo pode trazer varias embarcadoras juntas agora
@@ -732,12 +747,7 @@ export function recalcularLinhaEditada(l) {
 
 // ── Indicadores (dashboard) ──
 export async function listarTodosPeriodo(conn, periodoRef) {
-  if (_sessionToken) {
-    return _rows(await supaFetch(conn.url, conn.key, "POST", "rpc/listar_frete_periodos",
-      { p_token: _sessionToken, p_periodos: [periodoRef], p_cliente: null }));
-  }
-  const q = encodeURIComponent(periodoRef);
-  return (await supaFetch(conn.url, conn.key, "GET", `${TABELA}?periodo_ref=eq.${q}`)) || [];
+  return listarPorPeriodo(conn, periodoRef, null);
 }
 
 // Todos os resumos abaixo somam SÓ CTes ativos (ver ehAtivo): substituídos e cancelados
