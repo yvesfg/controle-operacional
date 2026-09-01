@@ -88,6 +88,8 @@ const ICO_CANCELADO = <><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.9
 const ICO_COMPLEMENTAR = <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>;
 // Transbordo (migration 078): carga trocou de veículo e o TMS obrigou a emitir um contrato
 // novo — setas trocando de sentido.
+// Tipo de carga do CTe (migration 079) — caixa/fardo.
+const ICO_TIPO_CARGA = <><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" /></>;
 const ICO_TRANSBORDO = <><polyline points="16 3 21 8 16 13" /><path d="M21 8H8a4 4 0 0 0-4 4v1" /><polyline points="8 21 3 16 8 11" /><path d="M3 16h13a4 4 0 0 0 4-4v-1" /></>;
 // Categoria definida por uma pessoa (migration 049) — a planilha não sobrescreve.
 const ICO_CATEGORIA_MANUAL = <><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>;
@@ -723,10 +725,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
     return s;
   }, [DADOS, classificador, filtroTipoCarga]);
 
+  // Desde a migration 079 o tipo vem do PRÓPRIO CTe (Remetente × Destinatário, gravado na
+  // importação). O cruzamento por DT continua valendo só pras linhas importadas antes disso,
+  // que estão sem tipo_carga — some sozinho conforme os meses forem reimportados.
+  const daTipoSelecionado = React.useCallback((l) => (
+    l.tipo_carga ? l.tipo_carga === filtroTipoCarga : ctesDoTipo.has(soNum(l.ctrc))
+  ), [ctesDoTipo, filtroTipoCarga]);
+
   const recortar = React.useCallback((arr) => {
     const out = recortarEscopo(arr);
-    return ctesDoTipo ? out.filter((l) => ctesDoTipo.has(soNum(l.ctrc))) : out;
-  }, [recortarEscopo, ctesDoTipo]);
+    return ctesDoTipo ? out.filter(daTipoSelecionado) : out;
+  }, [recortarEscopo, ctesDoTipo, daTipoSelecionado]);
 
   // Clientes presentes no período (pra popular o filtro, mesmo sem estar no cadastro fixo)
   const clientesPresentes = React.useMemo(() => {
@@ -831,8 +840,17 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const semTipo = React.useMemo(() => {
     if (!ctesDoTipo) return 0;
     return recortarEscopo(linhasPeriodo).filter(ehAtivo)
-      .filter((l) => !ctesDoTipo.has(soNum(l.ctrc))).length;
-  }, [ctesDoTipo, recortarEscopo, linhasPeriodo]);
+      .filter((l) => !daTipoSelecionado(l)).length;
+  }, [ctesDoTipo, recortarEscopo, linhasPeriodo, daTipoSelecionado]);
+
+  // CTes em que as duas fontes discordam: a planilha operacional marcou um tipo, o CTe
+  // (Remetente × Destinatário) diz outro. Em 08/2026 eram 14 transferências marcadas papel.
+  // Quem manda aqui é o CTe; o número serve pra corrigir a planilha na origem.
+  const divergenciaTipo = React.useMemo(() => {
+    if (!ctesDoTipo) return 0;
+    return recortarEscopo(linhasPeriodo).filter(ehAtivo)
+      .filter((l) => l.tipo_carga && l.tipo_carga !== filtroTipoCarga && ctesDoTipo.has(soNum(l.ctrc))).length;
+  }, [ctesDoTipo, recortarEscopo, linhasPeriodo, filtroTipoCarga]);
 
   // ── Aviso de trecho sem tradução ou sem distância ──────────────────────────
   // Sem isto, os dois casos aparecem iguais na tela: coluna vazia. Um é praça cujo
@@ -891,7 +909,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
     .filter(p => !filaMesRef || p.periodo_ref === filaMesRef)
     // Mesmo recorte de tipo de carga do resto da tela — senão a fila cobraria revisão de
     // CTe que os totais nem estão mostrando.
-    .filter(p => !ctesDoTipo || ctesDoTipo.has(soNum(p.ctrc))),
+    .filter(p => !ctesDoTipo || daTipoSelecionado(p)),
     [pendentes, clienteFiltro, usuarioFiltro, filaMesRef, ctesDoTipo]
   );
   const sinalizadosFiltrados = React.useMemo(() => sinalizados
@@ -1311,8 +1329,11 @@ export default function ConferenciaFrete({ ctx, conn }) {
       {ctesDoTipo && (
         <div style={{ ...css.card, padding: isMobile ? 12 : 14, marginBottom: 14, borderLeft: `3px solid ${t.azul}`, fontSize: 11.5, color: t.txt2, lineHeight: 1.55 }}>
           <b style={{ color: t.txt }}>Mostrando só {tipoLabel.toLowerCase()}.</b>{" "}
-          O tipo de carga é da planilha operacional (por DT) e chega aqui pelo número do CTe.
-          {semTipo > 0 && <> <b style={{ color: t.azul }}>{semTipo} CTe(s)</b> do período ficaram de fora por não ter par na planilha — descarga e diária saem em CTe próprio, sem DT.</>}
+          O tipo vem do próprio CTe: carga que sai e chega na mesma empresa é transferência da
+          fábrica (celulose), o resto é venda (papel). CTe importado antes dessa regra ainda
+          depende do cruzamento com a planilha operacional, por DT.
+          {semTipo > 0 && <> <b style={{ color: t.azul }}>{semTipo} CTe(s)</b> do período ficaram de fora — sem classificação e sem par na planilha (descarga e diária saem em CTe próprio, sem DT). Reimportar o mês classifica todos.</>}
+          {divergenciaTipo > 0 && <> <b style={{ color: t.ouro }}>{divergenciaTipo} CTe(s)</b> estão marcados como {tipoLabel.toLowerCase()} na planilha operacional, mas o remetente e o destinatário dizem o contrário — vale corrigir na planilha.</>}
           {" "}Para ver tudo, escolha <b style={{ color: t.txt }}>Todos</b> no topo.
         </div>
       )}
@@ -2137,6 +2158,9 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
                 {p.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
                 {grupoContrato && badge(ICO_COMPLEMENTAR, `CONTRATO ${grupoContrato.numero_contrato} · ${grupoContrato.qtd} CTES`, t.azul)}
+                {p.tipo_carga && classificador && badge(ICO_TIPO_CARGA,
+                  (classificador.valores.find((v) => v.valor === p.tipo_carga)?.label || p.tipo_carga).toUpperCase(),
+                  p.tipo_carga === "celulose" ? t.azul : t.txt2)}
                 {transbordoDecidido && badge(ICO_TRANSBORDO, temTransbordo(p) ? "TRANSBORDO AJUSTADO" : "TRANSBORDO CONFERIDO", t.verde)}
                 {transbordo && !transbordoDecidido && badge(ICO_TRANSBORDO, "TRANSBORDO · 2 CONTRATOS", t.warn)}
                 {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
@@ -2169,6 +2193,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {par("NFS",          p.nfs, true)}
                   {par("Nº Manifesto", p.numero_manifesto, true)}
                   {par("Nº Contrato",  p.numero_contrato, true)}
+                  {/* Remetente e Destinatário (migration 079): é deste par que sai o tipo de
+                      carga — sai e chega na mesma empresa = transferência (celulose). */}
+                  {p.remetente && par("Remetente", p.remetente)}
+                  {p.destinatario && par("Destinatário", p.destinatario)}
                 </>, "128px")}
 
                 {bloco("Valores", <>
@@ -2179,6 +2207,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {par("Contrato Frete", money(p.valor_contrato_frete), true)}
                   {/* Com transbordo ajustado o Saldo da tela não é mais o do relatório: os dois
                       aparecem lado a lado pra conferência com o TMS continuar possível. */}
+                  {/* Deduções: é o que o TMS tirou do CTe (contrato + ICMS + pedágio…).
+                      Saldo = Total do Frete − Deduções, então é aqui que aparece desconto
+                      a mais — ex.: contrato lançado duas vezes no transbordo. */}
+                  {Number(p.valor_deducoes) > 0 && par("Deduções", money(p.valor_deducoes), true)}
                   {par(temTransbordo(p) ? "Saldo (TMS)" : "Saldo", money(p.saldo), true)}
                   {temTransbordo(p) && par("Saldo ajustado", money(saldoEfetivo(p)), true)}
                 </>, "130px")}

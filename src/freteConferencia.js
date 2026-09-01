@@ -8,6 +8,7 @@
 // Nao cruzar/deduplicar entre as duas tabelas ainda (ver nota na migration 003).
 import * as XLSX from "xlsx";
 import { supaFetch } from "./supabase.js";
+import { getPerfil } from "./operacao/perfil.js";
 
 const TABELA = "frete_conferencia";
 
@@ -351,7 +352,45 @@ const campoBase = (r, cli, cnpj, categoria, empresaCod) => ({
   valor_contrato_frete: num(r["Valor Contrato Frete"]),
   saldo: num(r["Saldo"]),
   margem_lucro: num(r["Margem Lucro"]),
+  // Colunas que o TMS sempre mandou e a importação nunca leu (migration 079). Não são
+  // obrigatórias: export antigo/reduzido grava vazio e a tela cai no comportamento de antes.
+  remetente: String(r["Remetente"] ?? "").trim(),
+  destinatario: String(r["Destinatario"] ?? r["Destinatário"] ?? "").trim(),
+  local_coleta: String(r["Local de Coleta"] ?? "").trim(),
+  local_entrega: String(r["Local de Entrega"] ?? "").trim(),
+  // Saldo = Total do Frete − Deduções (bate em 408 das 409 linhas do export de 08/2026).
+  // É por aqui que se enxerga o que foi descontado além do contrato (ICMS, pedágio, ou o
+  // contrato lançado duas vezes — ver transbordo, migration 078).
+  valor_deducoes: num(r["Valor Total Deducoes"] ?? r["Valor Total Deduções"]),
 });
+
+// ── Tipo de carga do CTe (migration 079) ───────────────────────────────────
+// Até aqui o tipo (papel × celulose) só existia na planilha operacional, escrito à mão na
+// origem ("IMPERATRIZ-MA, CELULOSE"), e chegava na Conferência por cruzamento CTe × DT —
+// CTe sem DT casado ficava sem tipo nenhum. O relatório do TMS já resolve isso sozinho:
+// carga que sai e chega na MESMA empresa é transferência da fábrica (celulose); o resto é
+// venda (papel). Medido em 08/2026 (Suzano Imperatriz, 248 fretes): destinatário Suzano =
+// 130 CTes / R$ 1.314.097,57, contra os 50 que o cruzamento por DT enxergava; e ZERO celulose
+// marcada fora desse grupo — a regra não inventa nenhum caso novo, só recupera os que faltavam.
+// Só trecho não serve: IMPSLU também leva papel pro Armazém Mateus.
+const soLetrasNums = (v) => String(v ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+// "SUZANO SA" e "SUZANO S/A" são a mesma empresa; sufixo societário não distingue ninguém.
+const nomeEmpresa = (v) => soLetrasNums(v).replace(/(SA|SAS|LTDA|EIRELI|ME|EPP)$/,"");
+export const ehTransferencia = (l) => {
+  const rem = nomeEmpresa(l?.remetente), dest = nomeEmpresa(l?.destinatario);
+  return !!rem && !!dest && rem === dest;
+};
+
+// Classifica a linha segundo o classificador da base (perfil.js). Base sem classificador
+// (Açailândia, Maracanaú) devolve null — a coluna fica vazia e nada muda por lá.
+// null também quando o arquivo não trouxe Remetente/Destinatário: melhor sem classificação
+// do que classificar tudo como papel por falta de dado.
+export function classificarTipoCarga(linha) {
+  const regra = getPerfil(linha?.base_id)?.classificador?.importFrete;
+  if (!regra || regra.regra !== "transferencia") return null;
+  if (!String(linha?.remetente ?? "").trim() || !String(linha?.destinatario ?? "").trim()) return null;
+  return ehTransferencia(linha) ? regra.valor : regra.padrao;
+}
 
 // Resolve o registro de embarcadora (do mapaEmbarcadoras) no "cliente efetivo" que
 // classifica as linhas. Cliente normal (tipo 'cliente'/legado): ele mesmo. Devolução
@@ -420,6 +459,9 @@ export function recalcularFlagsEPeriodo(linhas, naoClassificadas) {
     // Contrato lançado num irmão do mesmo Nº Contrato Frete não é falta de lançamento
     // (ver gruposPorContrato) — a conta certa desses CTes é a do grupo.
     l.flag_sem_contrato = ehFreteSemContrato(l) && !contratoEstaNoIrmao(l, linhas);
+    // Tipo de carga (papel × celulose): vem do próprio CTe agora (Remetente × Destinatário),
+    // não mais só do cruzamento com a planilha operacional. Ver classificarTipoCarga.
+    l.tipo_carga = classificarTipoCarga(l);
     const grupo = porChave[chaveDuplicidade(l)];
     l.flag_duplicidade = grupo.length > 1;
     l.dup_grupo_chave = grupo.length > 1 ? chaveDuplicidade(l) : null;
@@ -579,8 +621,9 @@ export async function listarPorPeriodos(conn, periodoRefs, cliente) {
 export const CAMPOS_DA_PLANILHA = [
   "data_emissao", "trecho", "nfs", "placa", "nome_usuario", "numero_manifesto", "numero_contrato",
   "valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo",
+  "remetente", "destinatario", "local_coleta", "local_entrega", "valor_deducoes", "tipo_carga",
 ];
-const NUMERICOS = new Set(["valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo"]);
+const NUMERICOS = new Set(["valor_nf", "peso_nf", "frete_peso", "total_frete", "valor_contrato_frete", "saldo", "valor_deducoes"]);
 
 // Diferença real entre o que está gravado e o que veio na planilha — usada pra oferecer a
 // correção quando um arquivo errado/incompleto já foi importado antes (caso real: export de
@@ -945,7 +988,10 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
   // linhas de subtotal/total abaixo (que ficam mais curtas, com a célula final vazia).
   const COLS = ["Cliente", "CTRC", "Empresa", "Data Emissão", "Trecho", "NFS", "Placa", "Nome do Usuário",
     "Nº Manifesto", "Nº Contrato Frete", "Valor NF", "Peso NF", "Frete Peso", "Total do Frete",
-    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)", "Modalidade", "Situação"];
+    "Valor Contrato Frete", "Saldo", "Margem Lucro (%)", "Modalidade", "Situação",
+    // Appendadas no fim pelo mesmo motivo de "Modalidade": as linhas de subtotal/total abaixo
+    // são posicionais e ficam mais curtas, então coluna nova no fim não desloca nada.
+    "Destinatário", "Tipo de Carga"];
 
   // A coluna Saldo sai ajustada (saldoEfetivo) quando houve transbordo, então a Situação
   // precisa dizer que aquele número não é o cru do TMS — senão a planilha não bate com o
@@ -962,6 +1008,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
     l.numero_manifesto, l.numero_contrato, num(l.valor_nf), num(l.peso_nf), num(l.frete_peso),
     num(l.total_frete), num(l.valor_contrato_frete), saldoEfetivo(l), r2(num(l.margem_lucro)),
     l.is_devolucao ? "FOB (devolução)" : "CIF", situacao(l),
+    l.destinatario || "", l.tipo_carga || "",
   ];
 
   const construirAba = (categoria, titulo) => {

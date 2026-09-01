@@ -1,3 +1,26 @@
+## 2026-09-01 — Papel × celulose passa a sair do próprio CTe (migration 079)
+
+**Pergunta:** como o app decide o que é papel e o que é celulose?
+
+**Como era:** o tipo só existia na planilha operacional — alguém escreve a origem como `IMPERATRIZ-MA, CELULOSE`, o sync corta o sufixo e grava `tipo_carga` em `controle_operacional`. A Conferência não tinha o campo: cruzava CTe × DT (`ctesDoTipo`). CTe sem DT casado ficava fora dos dois filtros.
+
+**O que a planilha bruta mostrou:** o relatório do TMS já traz `Remetente`, `Destinatario`, `Local de Coleta`, `Local de Entrega` e `Valor Total Deduções` — cinco colunas que a importação nunca leu. Medindo 08/2026 (Suzano Imperatriz, 248 fretes) contra o export "0108-3108 SUZ ITZ":
+
+| grupo | CTes | total frete | celulose na planilha | papel | sem DT |
+|---|---|---|---|---|---|
+| Destinatário = SUZANO SA | 130 | R$ 1.314.097,57 | 50 | 14 | 66 |
+| Destinatário ≠ SUZANO SA | 118 | R$ 1.010.262,93 | 0 | 101 | 17 |
+
+Zero falso positivo e os 50 que a tela já mostrava estão todos dentro — o que faltava era alcance. A tela mostrava R$ 499.969,80 de celulose em vez de ~R$ 1,31 milhão, e 14 transferências estavam marcadas papel por engano na planilha.
+
+**Implementado:** regra `classificador.importFrete` no perfil da operação — carga que sai e chega na MESMA empresa é transferência da fábrica (celulose), o resto é venda (papel). A importação grava `frete_conferencia.tipo_carga`, e a Conferência lê esse campo; o cruzamento por DT continua valendo só para as linhas importadas antes disso e some conforme os meses forem reimportados. Exigir remetente E destinatário iguais exclui a devolução `AGAIMP` (CTRC 2740, remetente Pinheiro e Cardoso) — só trecho não serviria, `IMPSLU` também leva papel pro Armazém Mateus (46 CTes no mesmo arquivo). Aplicada ao arquivo real, a regra separa 130 transferências de 278 vendas, com um único nome normalizado do lado da celulose (`SUZANO`).
+
+O aviso azul da tela mudou de acordo: diz de onde vem o tipo, quantos CTes seguem sem classificação e — novo — quantos estão **marcados de um jeito na planilha e de outro no CTe** (os 14), para corrigir na origem.
+
+**Deduções:** `Saldo = Total do Frete − Valor Total Deduções` em 408 das 409 linhas. A coluna passou a ser importada e aparece no modal; no CTRC 35244 ela mostra R$ 22.000,00 de dedução para um contrato de R$ 11.000 — a confirmação direta do transbordo da migration 078, sem inferir por aritmética. Exportação ganhou "Destinatário" e "Tipo de Carga" no fim das colunas.
+
+Migration 079 aplicada (5 colunas + `tipo_carga` + índice; `inserir_frete_lote`, `atualizar_frete_lote` e `editar_frete` atualizados). Campo ausente no arquivo não apaga o que já está gravado, então export antigo não desclassifica CTe já classificado. **Ação do Yves:** reimportar os meses (a reimportação corretiva já existia e agora preenche destinatário e tipo). Build ✓
+
 ## 2026-09-01 — Opções de contrato viram cartão (o texto vazava pra fora do modal)
 
 **Reportado:** o bloco verde do transbordo estava ilegível e a escrita sumia pelos lados da tela.

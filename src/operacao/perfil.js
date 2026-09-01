@@ -97,6 +97,12 @@ const POR_BASE = {
         { valor: "papel",    label: "Papel" },
         { valor: "celulose", label: "Celulose" },
       ],
+      // Como a Conferência classifica o CTe na importação (migration 079). O relatório do
+      // TMS traz Remetente e Destinatário: carga que sai e chega na MESMA empresa é
+      // transferência da fábrica (celulose); o resto é venda para cliente (papel).
+      // Antes disso o tipo só existia na planilha operacional e chegava por DT — CTe sem DT
+      // casado ficava fora dos dois filtros (em 08/2026 isso escondia 80 dos 130 CTes).
+      importFrete: { regra: "transferencia", valor: "celulose", padrao: "papel" },
     },
   },
 
