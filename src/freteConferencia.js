@@ -44,6 +44,73 @@ const margemBruta = (saldo, fretePeso) => {
   return fp > 0 ? r2((num(saldo) / fp) * 100) : 0;
 };
 
+// ── Transbordo: dois contratos no mesmo CTe (migration 078) ──
+// Quando a carga precisa de TRANSBORDO o TMS obriga a emitir um contrato NOVO pro segundo
+// veículo; depois que o motorista descarrega, um dos dois é cancelado. Enquanto isso não
+// acontece o CTe fica com dois lançamentos e o Saldo do relatório pode vir descontando os
+// dois — margem despenca sem que exista prejuízo nenhum.
+//
+// O CTe está certo: o que sobra é um LANÇAMENTO de contrato. Por isso não se reescreve o
+// Saldo do TMS (que é a fonte) — guarda-se o ESTORNO ao lado, e todo total lê saldoEfetivo.
+export const saldoEfetivo = (l) => r2(num(l?.saldo) + num(l?.transbordo_estorno));
+export const temTransbordo = (l) => r2(num(l?.transbordo_estorno)) !== 0;
+
+const contratosDoCte = (cte, contratos) => (contratos || []).filter((c) =>
+  String(c.cte_ctrc ?? "").trim() === String(cte?.ctrc ?? "").trim()
+  && String(c.cte_empresa ?? "").trim().toUpperCase() === String(cte?.empresa_cod ?? "").trim().toUpperCase());
+
+// Quanto do contrato descartado precisa voltar pro Saldo. Só devolve o que REALMENTE entrou:
+// se a dedução do TMS (Total do Frete − Saldo) não cobre os dois contratos, o TMS já descontou
+// um só e o número está certo — aí o registro serve apenas pra apontar qual contrato cai.
+// Casos reais 08/2026: 35188 dedução 16.000 = 8.000+8.000 → estorna 8.000; 35090 dedução
+// 8.320 (contrato 8.000 + ICMS/pedágio) contra 16.000 lançados → estorna 0.
+export function estornoTransbordo(cte, valorValido, valorDescartado) {
+  const deducao = r2(num(cte?.total_frete) - num(cte?.saldo));
+  const doisEntraram = deducao + 0.02 >= num(valorValido) + num(valorDescartado);
+  return doisEntraram ? r2(num(valorDescartado)) : 0;
+}
+
+// Aponta o CTe com cara de transbordo. Três assinaturas, todas vistas em 08/2026 (base MAT):
+//   • 'relatorio'      — dois contratos apontando o mesmo CTe no relatório de contratos
+//                        (35090: 26999+27038; 35188: 27094+27112);
+//   • 'coluna_dobrada' — a coluna Valor Contrato Frete já veio somada e passou do Total do
+//                        Frete, com Saldo negativo (35188: contrato 16.000, CTe 9.411,52);
+//   • 'saldo_dobrado'  — a coluna mostra um contrato só, mas o Saldo descontou ele duas vezes
+//                        (35244: 12.940,40 − 11.000 − 11.000 = −9.059,60).
+// O relatório de contratos só existe a partir de 08/2026, então as duas últimas assinaturas
+// (que leem só o próprio CTe) são as que funcionam em qualquer mês.
+export function analiseTransbordo(cte, contratos) {
+  if (!cte || cte.categoria !== "frete") return null;
+  const lista = contratosDoCte(cte, contratos)
+    .slice().sort((a, b) => String(a.contrato).localeCompare(String(b.contrato)));
+  const total = num(cte.total_frete), contrato = num(cte.valor_contrato_frete), saldo = num(cte.saldo);
+  const deducao = r2(total - saldo);
+  const colunaDobrada = contrato > total + 0.01 && saldo < 0;
+  const saldoDobrado = contrato > 0 && Math.abs(deducao - contrato * 2) < 0.02;
+  if (lista.length < 2 && !colunaDobrada && !saldoDobrado) return null;
+
+  const doTms = numeroContratoDoCte(cte);
+  // Sugestão: o contrato que o TMS aponta no CTe fica como válido; o outro é o descartado.
+  // Sem o relatório (35244) não dá pra dizer QUAL número sobra — mas o valor é o mesmo,
+  // porque o que dobrou foi o próprio contrato da coluna.
+  const valido = lista.find((c) => String(c.contrato) === doTms) || lista[lista.length - 1] || null;
+  const descartado = lista.find((c) => c !== valido) || null;
+  const valorValido = valido ? num(valido.valor) : contrato;
+  const valorDescartado = descartado ? num(descartado.valor) : (saldoDobrado ? contrato : 0);
+  return {
+    motivo: lista.length > 1 ? "relatorio" : colunaDobrada ? "coluna_dobrada" : "saldo_dobrado",
+    contratos: lista,
+    deducao,
+    sugestao: {
+      valido: valido ? String(valido.contrato) : (doTms || null),
+      descartado: descartado ? String(descartado.contrato) : null,
+      valorValido: r2(valorValido),
+      valorDescartado: r2(valorDescartado),
+      estorno: estornoTransbordo(cte, valorValido, valorDescartado),
+    },
+  };
+}
+
 // ── Ciclo de vida do CTe (migration 048) ──
 // status_doc diz se o CTe ENTRA no faturamento: 'ativo' entra; 'substituido' (foi refeito
 // por outro CTe) e 'cancelado' ficam na base pra consulta/auditoria mas fora de todo
@@ -729,6 +796,69 @@ export async function vincularContratoCte(conn, id, contrato, por) {
   return Array.isArray(res) ? res[0] : res;
 }
 
+// Registra o transbordo (migration 078): qual contrato vale, qual cai, e quanto do
+// descartado volta pro Saldo. estorno 0 = o TMS já descontou um só, é só o apontamento.
+// O RPC guarda o Saldo do TMS do momento: se a reimportação trouxer outro, o ajuste cai
+// sozinho — senão o mesmo dinheiro seria estornado duas vezes.
+export async function marcarTransbordo(conn, id, { valido, descartado, estorno, por, obs }) {
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/marcar_transbordo_frete",
+      { p_token: _sessionToken, p_id: id, p_valido: valido || null, p_descartado: descartado || null,
+        p_estorno: num(estorno), p_por: por || null, p_obs: obs || null }));
+  }
+  return _patchTransbordo(conn, id, {
+    transbordo_contrato_valido: valido || null,
+    transbordo_contrato_descartado: descartado || null,
+    transbordo_estorno: num(estorno),
+    transbordo_em: new Date().toISOString(),
+    transbordo_por: por || null,
+    decisao_manual: "transbordo_ajustado",
+    revisado_em: new Date().toISOString(),
+    revisado_por: por || null,
+    revisado_obs: obs || null,
+  }, num(estorno));
+}
+
+export async function limparTransbordo(conn, id) {
+  if (_sessionToken) {
+    return _one(await supaFetch(conn.url, conn.key, "POST", "rpc/limpar_transbordo_frete",
+      { p_token: _sessionToken, p_id: id }));
+  }
+  return _patchTransbordo(conn, id, {
+    transbordo_contrato_valido: null, transbordo_contrato_descartado: null,
+    transbordo_estorno: 0, transbordo_saldo_tms: null,
+    transbordo_em: null, transbordo_por: null,
+    decisao_manual: null, revisado_em: null, revisado_por: null, revisado_obs: null,
+  }, 0);
+}
+
+// Fallback anon (pré go-live, igual às outras escritas deste arquivo): o RPC recalcula
+// margem/flags e carimba transbordo_saldo_tms server-side; aqui isso é feito na mão, com a
+// linha lida antes pra saber o Saldo e o Frete Peso do momento.
+async function _patchTransbordo(conn, id, patch, estorno) {
+  const q = encodeURIComponent(id);
+  const atual = (await supaFetch(conn.url, conn.key, "GET", `${TABELA}?id=eq.${q}&limit=1`)) || [];
+  const l = Array.isArray(atual) ? atual[0] : atual;
+  if (!l) throw new Error("CTe não encontrado.");
+  const margemFlexivel = l.categoria === "diaria" || l.categoria === "descarga"
+    || l.categoria === "bonificacao" || l.categoria === "diaria_emitida";
+  const margem = margemBruta(num(l.saldo) + num(estorno), l.frete_peso);
+  // Item já sinalizado pra correção continua sinalizado (mesma regra do RPC): o contrato
+  // ainda precisa ser cancelado no TMS, e trocar a decisão aqui o tiraria da lista.
+  const manter = l.decisao_manual === "sinalizar_correcao" && patch.decisao_manual;
+  const body = {
+    ...patch,
+    ...(manter ? { decisao_manual: l.decisao_manual, revisado_em: l.revisado_em, revisado_por: l.revisado_por, revisado_obs: l.revisado_obs } : {}),
+    ...(estorno ? { transbordo_saldo_tms: num(l.saldo) } : {}),
+    margem_lucro: margem,
+    flag_negativa: !margemFlexivel && margem < 0,
+    flag_baixa: !margemFlexivel && margem >= 0 && margem < 10,
+    atualizado_em: new Date().toISOString(),
+  };
+  const res = await supaFetch(conn.url, conn.key, "PATCH", `${TABELA}?id=eq.${q}`, body);
+  return Array.isArray(res) ? res[0] : res;
+}
+
 // Recalcula margem + flags de UMA linha após edição admin (mesma regra de
 // recalcularFlagsEPeriodo, menos flag_duplicidade, que é cruzada entre linhas).
 export function recalcularLinhaEditada(l) {
@@ -763,7 +893,7 @@ export function resumoPorCategoria(linhas) {
       registros: sub.length,
       peso: sub.reduce((s, l) => s + num(l.peso_nf), 0),
       fretePeso: sub.reduce((s, l) => s + num(l.frete_peso), 0),
-      saldo: sub.reduce((s, l) => s + num(l.saldo), 0),
+      saldo: sub.reduce((s, l) => s + saldoEfetivo(l), 0),
       margemMedia: sub.length ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / sub.length : 0,
     };
   });
@@ -777,7 +907,7 @@ export function resumoPorCliente(linhas) {
     out[l.cliente].registros++;
     out[l.cliente].peso += num(l.peso_nf);
     out[l.cliente].fretePeso += num(l.frete_peso);
-    out[l.cliente].saldo += num(l.saldo);
+    out[l.cliente].saldo += saldoEfetivo(l);
     // Amostragem de margem = só Frete. Descarga tem margem 0 por definição (CTe=Contrato) e
     // Diária é normalmente negativa (motorista pago na hora, CTe complementar entra depois) —
     // misturar essas categorias distorceria o indicador de margem real por cliente.
@@ -798,7 +928,7 @@ export function resumoPorDia(linhas) {
     out[dia].registros++;
     out[dia].peso += num(l.peso_nf);
     out[dia].fretePeso += num(l.frete_peso);
-    out[dia].saldo += num(l.saldo);
+    out[dia].saldo += saldoEfetivo(l);
   });
   return Object.entries(out).sort((a, b) => a[0].localeCompare(b[0])).map(([dia, d]) => ({ dia, ...d }));
 }
@@ -817,15 +947,20 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
     "Nº Manifesto", "Nº Contrato Frete", "Valor NF", "Peso NF", "Frete Peso", "Total do Frete",
     "Valor Contrato Frete", "Saldo", "Margem Lucro (%)", "Modalidade", "Situação"];
 
+  // A coluna Saldo sai ajustada (saldoEfetivo) quando houve transbordo, então a Situação
+  // precisa dizer que aquele número não é o cru do TMS — senão a planilha não bate com o
+  // relatório de origem e ninguém sabe por quê.
   const situacao = (l) =>
-    l.tipo_doc === "substituto" ? `Substitui o CTRC ${l.ctrc_ref || "?"}`
+    temTransbordo(l) ? `Transbordo: contrato ${l.transbordo_contrato_descartado || "duplicado"} descartado `
+      + `(+${r2(num(l.transbordo_estorno))} sobre o Saldo ${r2(num(l.saldo))} do TMS)`
+    : l.tipo_doc === "substituto" ? `Substitui o CTRC ${l.ctrc_ref || "?"}`
     : l.tipo_doc === "complementar" ? `Complementar do CTRC ${l.ctrc_ref || "?"}`
     : "";
 
   const linhaArray = (l) => [
     l.cliente, l.ctrc, l.empresa_cod, l.data_emissao, l.trecho, l.nfs, l.placa, l.nome_usuario,
     l.numero_manifesto, l.numero_contrato, num(l.valor_nf), num(l.peso_nf), num(l.frete_peso),
-    num(l.total_frete), num(l.valor_contrato_frete), num(l.saldo), r2(num(l.margem_lucro)),
+    num(l.total_frete), num(l.valor_contrato_frete), saldoEfetivo(l), r2(num(l.margem_lucro)),
     l.is_devolucao ? "FOB (devolução)" : "CIF", situacao(l),
   ];
 
@@ -841,7 +976,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
       const qtd = rows.length;
       const somaPeso = rows.reduce((s, l) => s + num(l.peso_nf), 0);
       const somaFretePeso = rows.reduce((s, l) => s + num(l.frete_peso), 0);
-      const somaSaldo = rows.reduce((s, l) => s + num(l.saldo), 0);
+      const somaSaldo = rows.reduce((s, l) => s + saldoEfetivo(l), 0);
       const mediaMargem = qtd ? rows.reduce((s, l) => s + num(l.margem_lucro), 0) / qtd : 0;
       aoa.push([`Subtotal ${cli}`, `${qtd} reg.`, "", "", "", "", "", "", "", "", "", somaPeso, somaFretePeso, "", "", somaSaldo, r2(mediaMargem)]);
       aoa.push([]);
@@ -849,7 +984,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
     const qtdTotal = sub.length;
     const somaPesoTotal = sub.reduce((s, l) => s + num(l.peso_nf), 0);
     const somaFretePesoTotal = sub.reduce((s, l) => s + num(l.frete_peso), 0);
-    const somaSaldoTotal = sub.reduce((s, l) => s + num(l.saldo), 0);
+    const somaSaldoTotal = sub.reduce((s, l) => s + saldoEfetivo(l), 0);
     const mediaMargemTotal = qtdTotal ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / qtdTotal : 0;
     aoa.push(["TOTAL GERAL", `${qtdTotal} reg.`, "", "", "", "", "", "", "", "", "", somaPesoTotal, somaFretePesoTotal, "", "", somaSaldoTotal, r2(mediaMargemTotal)]);
 
@@ -874,7 +1009,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
       const qtd = sub.length;
       const peso = sub.reduce((s, l) => s + num(l.peso_nf), 0);
       const fretePeso = sub.reduce((s, l) => s + num(l.frete_peso), 0);
-      const saldo = sub.reduce((s, l) => s + num(l.saldo), 0);
+      const saldo = sub.reduce((s, l) => s + saldoEfetivo(l), 0);
       const margem = qtd ? sub.reduce((s, l) => s + num(l.margem_lucro), 0) / qtd : 0;
       const obs = cat === "descarga" ? "margem 0 por definição (CTe = Contrato)"
         : cat === "diaria" ? "custo: diária paga ao motorista na hora (o CTe emitido vem depois)"
@@ -901,7 +1036,7 @@ export function gerarWorkbookXLSX(linhasTodas, periodoRef) {
     clientes.forEach((cli) => {
       const sub = devolucoes.filter((l) => l.cliente === cli);
       if (!sub.length) return;
-      resumoAoa.push([cli, sub.length, sub.reduce((s, l) => s + num(l.frete_peso), 0), sub.reduce((s, l) => s + num(l.saldo), 0)]);
+      resumoAoa.push([cli, sub.length, sub.reduce((s, l) => s + num(l.frete_peso), 0), sub.reduce((s, l) => s + saldoEfetivo(l), 0)]);
     });
   }
 

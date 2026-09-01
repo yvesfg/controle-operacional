@@ -13,6 +13,7 @@ import {
   resumoGrupoContrato, contratoEstaNoIrmao, vincularContratoCte, numeroContratoDoCte,
   substituicaoDeMesFechado,
   editarFrete, excluirFrete, recalcularLinhaEditada, ehAtivo, vincularCte, candidatosVinculo,
+  saldoEfetivo, temTransbordo, analiseTransbordo, estornoTransbordo, marcarTransbordo, limparTransbordo,
 } from "../freteConferencia.js";
 import { listarContratosPorPeriodos, candidatosContratoDoCte } from "../freteContratos.js";
 import {
@@ -58,6 +59,7 @@ const DECISAO_LABEL = {
   ignorar_duplicidade: "duplicidade ignorada",
   correcao_feita: "correção feita",
   frota_rodorrica: "frota Rodorrica (contrato = CTe − R$ 300)",
+  transbordo_ajustado: "transbordo — contrato descartado",
 };
 
 // Justificativas prontas do "Marcar revisado" — os motivos que mais se repetem na fila.
@@ -83,6 +85,9 @@ const ICO_SEM_CONTRATO = <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 
 const ICO_SUBSTITUICAO = <><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></>;
 const ICO_CANCELADO = <><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></>;
 const ICO_COMPLEMENTAR = <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>;
+// Transbordo (migration 078): carga trocou de veículo e o TMS obrigou a emitir um contrato
+// novo — setas trocando de sentido.
+const ICO_TRANSBORDO = <><polyline points="16 3 21 8 16 13" /><path d="M21 8H8a4 4 0 0 0-4 4v1" /><polyline points="8 21 3 16 8 11" /><path d="M3 16h13a4 4 0 0 0 4-4v-1" /></>;
 // Categoria definida por uma pessoa (migration 049) — a planilha não sobrescreve.
 const ICO_CATEGORIA_MANUAL = <><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></>;
 
@@ -139,6 +144,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const [contratosMes, setContratosMes] = React.useState([]);
   const [vincContrato, setVincContrato] = React.useState({ aberto: false, num: "" });
   const [salvandoContrato, setSalvandoContrato] = React.useState(false);
+  const [salvandoTransbordo, setSalvandoTransbordo] = React.useState(false);
   const [revisarModal, setRevisarModal] = React.useState({ open: false, item: null });
   const [sinalizando, setSinalizando] = React.useState(false);
   const [sinalObs, setSinalObs] = React.useState("");
@@ -279,6 +285,40 @@ export default function ConferenciaFrete({ ctx, conn }) {
     finally { setSalvandoContrato(false); }
   };
 
+  // Transbordo (migration 078): a carga trocou de veículo no meio do caminho, o TMS obrigou a
+  // emitir um contrato novo e um dos dois será cancelado depois da descarga. Aqui a pessoa diz
+  // qual contrato vale; o descartado fica registrado e, se o Saldo do TMS tiver descontado os
+  // dois, volta pro Saldo como estorno. Não mexe no Saldo do TMS — ver saldoEfetivo.
+  const onMarcarTransbordo = async (p, valido, descartado, estorno) => {
+    setSalvandoTransbordo(true);
+    try {
+      const atualizado = await marcarTransbordo(conn, p.id, {
+        valido, descartado, estorno, por: usuarioLogado,
+        obs: `transbordo: contrato ${valido || "?"} vale, ${descartado || "o duplicado"} a cancelar no TMS`
+          + (estorno ? ` — estorno de ${money(estorno)} no Saldo` : " — Saldo do TMS já estava certo"),
+      });
+      showToast?.(estorno
+        ? `CTRC ${p.ctrc}: contrato ${descartado || "duplicado"} descartado — ${money(estorno)} devolvidos ao Saldo.`
+        : `CTRC ${p.ctrc}: contrato ${descartado || "duplicado"} marcado pra cancelar no TMS (Saldo não muda).`, "ok");
+      setRevisarModal({ open: false, item: null });
+      aplicarLinhas(atualizado);
+      carregar({ silencioso: true });
+    } catch (e) { showToast?.("Erro ao registrar o transbordo: " + e.message, "erro"); }
+    finally { setSalvandoTransbordo(false); }
+  };
+
+  const onLimparTransbordo = async (p) => {
+    setSalvandoTransbordo(true);
+    try {
+      const atualizado = await limparTransbordo(conn, p.id);
+      showToast?.(`Ajuste de transbordo desfeito no CTRC ${p.ctrc} — volta ao Saldo cru do TMS.`, "ok");
+      setRevisarModal({ open: false, item: null });
+      aplicarLinhas(atualizado);
+      carregar({ silencioso: true });
+    } catch (e) { showToast?.("Erro ao desfazer o transbordo: " + e.message, "erro"); }
+    finally { setSalvandoTransbordo(false); }
+  };
+
   // Abre o modo edição admin: inicializa o formulário a partir do CTe.
   const abrirEdicao = (p) => {
     setEditForm({
@@ -384,7 +424,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
   const comissao = React.useMemo(() => {
     const linhas = basesDoPeriodo.map((b) => {
       const saldo = linhasDaBase.filter(ehAtivo).filter((l) => l.base_id === b)
-        .reduce((s, l) => s + (Number(l.saldo) || 0), 0);
+        .reduce((s, l) => s + saldoEfetivo(l), 0);
       const d = despesasBase[b];
       const despesa = d ? d.deb + d.cred : 0;
       return { base: b, label: BASES[b]?.label || b, saldo, despesa, recup: d ? d.recup : 0,
@@ -936,7 +976,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
       const emitidas = daCategoriaNoMes("diaria_emitida", m);
       const pagas = daCategoriaNoMes("diaria", m);
       return {
-        freteSaldo: soma(arr, "frete", "saldo"),
+        freteSaldo: ativas(arr).filter((l) => l.categoria === "frete").reduce((s, l) => s + saldoEfetivo(l), 0),
         fretePeso: soma(arr, "frete", "frete_peso"),
         nFrete: conta(arr, "frete"),
         diariaPaga: pagas.reduce((s, l) => s + (Number(l.valor_contrato_frete) || 0), 0),
@@ -1526,7 +1566,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
             </Button>
           ))}
           <div style={{ fontSize: 11, color: t.txt2, marginTop: -6, marginBottom: 10 }}>
-            {linhasFiltradas.filter(ehAtivo).length} CTe(s) · saldo {money(linhasFiltradas.filter(ehAtivo).reduce((s, l) => s + (l.saldo || 0), 0))} — clique num CTe pra ver ou editar.
+            {linhasFiltradas.filter(ehAtivo).length} CTe(s) · saldo {money(linhasFiltradas.filter(ehAtivo).reduce((s, l) => s + saldoEfetivo(l), 0))} — clique num CTe pra ver ou editar.
             {linhasFiltradas.length !== linhasFiltradas.filter(ehAtivo).length && (
               <> · <b style={{ color: t.txt }}>{linhasFiltradas.length - linhasFiltradas.filter(ehAtivo).length}</b> fora do faturamento (substituído/cancelado)</>
             )}
@@ -1549,7 +1589,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                     {Number(p.margem_lucro).toFixed(1)}%
                   </span>
                   <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
-                    {money(p.saldo)}
+                    {money(saldoEfetivo(p))}
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
@@ -1751,7 +1791,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {Number(p.margem_lucro).toFixed(1)}%
               </span>
               <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
-                {money(p.saldo)}
+                {money(saldoEfetivo(p))}
               </span>
               <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); abrirRevisar(p); }} style={{ flexShrink: 0 }}>
                 Revisar
@@ -1791,7 +1831,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
                 </span>
                 <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
-                  {money(p.saldo)}
+                  {money(saldoEfetivo(p))}
                 </span>
                 <Button variant="success" size="sm" onClick={(e) => { e.stopPropagation(); onDecidir(p.id, "correcao_feita", "correção confirmada"); }}
                   title="A correção na origem foi feita — sai de Sinalizados e vai para Revisados" style={{ flexShrink: 0 }}>
@@ -1826,7 +1866,7 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {p.cliente} · CTRC {p.ctrc} · {CATEGORIA_LABEL[p.categoria] || p.categoria}
                 </span>
                 <span style={{ width: 104, flexShrink: 0, textAlign: "right", fontSize: 12, fontWeight: 700, fontFamily: "var(--font-mono)", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", color: t.ouro }}>
-                  {money(p.saldo)}
+                  {money(saldoEfetivo(p))}
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
@@ -2019,6 +2059,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
         // baixa e não virar lucro de novo) — o aviso genérico de contrato zerado daria o
         // conselho errado aqui, então sai de cena.
         const subsMesFechado = substituicaoDeMesFechado(p, universoLinhas);
+        // Transbordo: dois contratos no mesmo CTe porque a carga trocou de veículo. Um deles
+        // será cancelado no TMS depois da descarga — até lá o Saldo pode vir descontando os dois.
+        const transbordo = analiseTransbordo(p, contratosMes);
+        const transbordoDecidido = !!p.transbordo_em;
         const semContrato = ehFreteSemContrato(p) && !contratoEstaNoIrmao(p, universoLinhas)
           && !p.contrato_ref && !subsMesFechado;
         // Vínculo de contrato: só faz sentido em frete (descarga/diária não têm contrato de
@@ -2092,6 +2136,8 @@ export default function ConferenciaFrete({ ctx, conn }) {
                 {p.flag_ambigua && badge(ICO_AMBIGUO, "DESCARGA/LOCAL AMBÍGUO", t.azul)}
                 {p.flag_sem_contrato && badge(ICO_SEM_CONTRATO, "SEM CONTRATO", t.ouro)}
                 {grupoContrato && badge(ICO_COMPLEMENTAR, `CONTRATO ${grupoContrato.numero_contrato} · ${grupoContrato.qtd} CTES`, t.azul)}
+                {transbordoDecidido && badge(ICO_TRANSBORDO, temTransbordo(p) ? "TRANSBORDO AJUSTADO" : "TRANSBORDO CONFERIDO", t.verde)}
+                {transbordo && !transbordoDecidido && badge(ICO_TRANSBORDO, "TRANSBORDO · 2 CONTRATOS", t.warn)}
                 {p.flag_duplicidade && badge(ICO_DUPLICIDADE, "POSSÍVEL DUPLICIDADE", t.danger)}
                 {candidatoFrota && badge(ICO_FROTA, "POSSÍVEL FROTA RODORRICA", t.azul)}
               </div>
@@ -2130,7 +2176,10 @@ export default function ConferenciaFrete({ ctx, conn }) {
                   {par("Frete Peso",     money(p.frete_peso), true)}
                   {par("Total do Frete", money(p.total_frete), true)}
                   {par("Contrato Frete", money(p.valor_contrato_frete), true)}
-                  {par("Saldo",          money(p.saldo), true)}
+                  {/* Com transbordo ajustado o Saldo da tela não é mais o do relatório: os dois
+                      aparecem lado a lado pra conferência com o TMS continuar possível. */}
+                  {par(temTransbordo(p) ? "Saldo (TMS)" : "Saldo", money(p.saldo), true)}
+                  {temTransbordo(p) && par("Saldo ajustado", money(saldoEfetivo(p)), true)}
                 </>, "130px")}
 
                 {/* Margem sozinha: é o número que decide a conferência. */}
@@ -2214,6 +2263,90 @@ export default function ConferenciaFrete({ ctx, conn }) {
                       <span style={{ color: t.txt2 }}>Margem <b style={{ color: grupoContrato.margem < 10 ? t.warn : t.verde }}>{grupoContrato.margem.toFixed(1)}%</b></span>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Transbordo (migration 078): a carga trocou de veículo, o TMS obrigou a emitir um
+                  contrato NOVO e um dos dois é cancelado depois da descarga. Enquanto isso não
+                  acontece o Saldo pode vir descontando os dois — aqui se escolhe qual vale. */}
+              {(transbordo || transbordoDecidido) && !editando && !revisando && !sinalizando && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${hexRgb(t.borda, .4)}` }}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, textTransform: "uppercase", letterSpacing: ".06em", color: "var(--text3)", marginBottom: 8 }}>
+                    Transbordo · dois contratos no mesmo CTe
+                  </div>
+
+                  {transbordoDecidido ? (
+                    <div style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.verde, .3)}`, background: hexRgb(t.verde, .07), padding: "10px 12px" }}>
+                      <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.6 }}>
+                        Contrato válido <b>{p.transbordo_contrato_valido || "—"}</b> · a cancelar no TMS{" "}
+                        <b>{p.transbordo_contrato_descartado || "o duplicado"}</b>
+                      </div>
+                      <div style={{ fontSize: 11, color: t.txt2, marginTop: 4 }}>
+                        {temTransbordo(p)
+                          ? <>Saldo do TMS {money(p.saldo)} + estorno {money(p.transbordo_estorno)} ={" "}
+                              <b style={{ color: t.ouro }}>{money(saldoEfetivo(p))}</b>
+                              {Number(p.frete_peso) > 0 && <> · margem {Number(p.margem_lucro).toFixed(1)}%</>}</>
+                          : <>Saldo do TMS já descontava um contrato só — nada foi estornado.</>}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 4 }}>
+                        {p.transbordo_por || "sem registro"}
+                        {p.transbordo_em ? ` · ${new Date(p.transbordo_em).toLocaleDateString("pt-BR")}` : ""}
+                        {temTransbordo(p) ? " · o ajuste cai sozinho quando o TMS corrigir e o mês for reimportado" : ""}
+                      </div>
+                      <Button variant="secondary" size="sm" onClick={() => onLimparTransbordo(p)} disabled={salvandoTransbordo} style={{ marginTop: 9 }}>
+                        <Icon n="undo" s={13} /> Desfazer ajuste
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ fontSize: 11.5, color: t.txt, lineHeight: 1.55, marginBottom: 8 }}>
+                        {transbordo.motivo === "relatorio"
+                          ? <>O relatório de contratos traz <b>{transbordo.contratos.length} contratos</b> apontando este CTe — típico de transbordo, em que o TMS obriga a emitir contrato novo pro segundo veículo.</>
+                          : transbordo.motivo === "coluna_dobrada"
+                          ? <>A coluna <b>Valor Contrato Frete</b> ({money(p.valor_contrato_frete)}) passou do <b>Total do Frete</b> ({money(p.total_frete)}): o TMS somou dois contratos no mesmo CTe.</>
+                          : <>O TMS descontou <b>{money(transbordo.deducao)}</b> deste CTe — o contrato de {money(p.valor_contrato_frete)} entrou <b>duas vezes</b>, embora a coluna mostre um só.</>}
+                        {" "}Escolha qual contrato vale; o outro fica registrado pra cancelar no TMS.
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+                        {(transbordo.contratos.length > 1
+                          ? transbordo.contratos.map((c) => ({
+                              valido: String(c.contrato),
+                              descartado: transbordo.contratos.filter((o) => o !== c).map((o) => String(o.contrato)).join(", "),
+                              valorValido: Number(c.valor) || 0,
+                              valorDescartado: transbordo.contratos.filter((o) => o !== c).reduce((s, o) => s + (Number(o.valor) || 0), 0),
+                              info: `${c.nome_agregado || "sem agregado"} · ${c.veiculo || "sem placa"}${c.data_emissao ? ` · ${c.data_emissao.split("-").reverse().join("/")}` : ""}`,
+                            }))
+                          : [{ valido: transbordo.sugestao.valido, descartado: null,
+                               valorValido: transbordo.sugestao.valorValido, valorDescartado: transbordo.sugestao.valorDescartado,
+                               info: "o segundo lançamento não está no relatório de contratos importado" }]
+                        ).map((op) => {
+                          const estorno = estornoTransbordo(p, op.valorValido, op.valorDescartado);
+                          const novoSaldo = (Number(p.saldo) || 0) + estorno;
+                          const novaMargem = Number(p.frete_peso) > 0 ? (novoSaldo / Number(p.frete_peso)) * 100 : 0;
+                          return (
+                            <Button variant="success" size="sm" key={op.valido || "unico"} disabled={salvandoTransbordo}
+                              onClick={() => onMarcarTransbordo(p, op.valido, op.descartado, estorno)}>
+                              <div style={{ fontSize: 12, fontWeight: 700 }}>
+                                Contrato {op.valido || "do TMS"} vale ({money(op.valorValido)})
+                                {op.descartado && <> · cancelar {op.descartado}</>}
+                              </div>
+                              <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 2 }}>
+                                {op.info} · {estorno
+                                  ? <>estorna {money(estorno)} → saldo {money(novoSaldo)} · margem {novaMargem.toFixed(1)}%</>
+                                  : <>Saldo do TMS não muda ({money(p.saldo)})</>}
+                              </div>
+                            </Button>
+                          );
+                        })}
+                      </div>
+
+                      <div style={{ fontSize: 10.5, color: t.txt2, lineHeight: 1.5 }}>
+                        O Saldo do TMS não é reescrito: o estorno fica ao lado e some sozinho quando o contrato
+                        for cancelado no TMS e o mês for reimportado.
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

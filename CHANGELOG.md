@@ -1,3 +1,22 @@
+## 2026-09-01 — Transbordo: dois contratos no mesmo CTe (migration 078)
+
+**Solicitado:** o CTRC 35244 aparecia com Saldo −9.059,60 e margem −70%. Investigando: o TMS descontou o contrato de R$ 11.000 **duas vezes** (12.940,40 − 11.000 − 11.000). Não é erro de lançamento solto — quando a carga precisa de **transbordo**, o TMS obriga a emitir um contrato novo pro segundo veículo e um dos dois só é cancelado depois que o motorista descarrega. O pedido: sinalizar que há dois contratos, deixar escolher o correto, marcar o outro pra exclusão e desconsiderá-lo nos totais.
+
+**Implementado:** o CTe está certo — quem sobra é um *lançamento de contrato*. Por isso o Saldo do TMS **não é reescrito**: guarda-se um estorno ao lado (`transbordo_estorno`) e todo total passou a ler `saldo_efetivo` (coluna gerada = saldo + estorno) — KPIs, Por cliente, Evolução diária, card de gestão, base de comissão e a exportação (a coluna Situação explica o ajuste).
+
+Detecção (3 assinaturas, todas de casos reais de 08/2026, base MAT):
+- dois contratos apontando o mesmo CTe no relatório de contratos — 35090 (26999+27038), 35188 (27094+27112);
+- coluna "Valor Contrato Frete" maior que o Total do Frete, com Saldo negativo — 35188 (16.000 contra 9.411,52);
+- dedução do Saldo = contrato × 2 com a coluna mostrando um só — 35244.
+
+As duas últimas leem só o próprio CTe, então funcionam em meses sem o relatório de contratos (que hoje só existe a partir de 08/2026). Varredura no histórico: 5 CTes em 8 meses — não vira enxurrada na fila.
+
+O estorno só devolve o que **realmente entrou**: se a dedução do TMS não cobre os dois contratos, ele já descontou um só e o número está certo (35090: dedução 8.320 contra 16.000 lançados → estorna 0, o registro serve só pra apontar qual contrato cai). No 35244 o estorno de 11.000 devolve o Saldo pra 1.940,40 e a margem pra 15,0% — igual ao CTe irmão 35167, mesma rota e mesmo valor.
+
+**Reimportação:** o RPC guarda o Saldo do TMS do momento do ajuste. Se o mês voltar com outro Saldo, o TMS corrigiu: o estorno cai sozinho, sem contar o mesmo dinheiro duas vezes. Se voltar igual, o ajuste é mantido e a margem/flags são recalculadas pelo saldo efetivo (senão a linha voltava pra fila de margem negativa a cada reimportação). Item já sinalizado pra correção continua sinalizado — o contrato ainda precisa ser cancelado no TMS.
+
+Migration 078 aplicada (colunas + `saldo_efetivo` gerada + RPCs `marcar_transbordo_frete`/`limpar_transbordo_frete` + `atualizar_frete_lote`/`editar_frete` atualizados). Testes dos dois cenários de reimportação rodados em transação com rollback, sem tocar nos dados. Build ✓
+
 ## 2026-08-28 — Seletor de base aceita mais de um escopo (Fase 3 de 3)
 
 **Solicitado:** poder "ticar" mais de uma base no seletor do topbar — ex.: ver só Belém e Açailândia.
