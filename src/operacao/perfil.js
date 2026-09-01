@@ -141,11 +141,18 @@ const POR_BASE = {
 let _remotos = {};
 export function setPerfisRemotos(mapa) { _remotos = mapa || {}; }
 
-// Merge raso por seção (features/vocab/financeiro são objetos de 1 nível).
+// Merge raso por seção (features/vocab/financeiro/classificador são objetos de 1 nível).
 // Precedência: PADRÃO → POR_BASE (código) → banco.
+//
+// `classificador` entra no merge por seção pelo mesmo motivo das outras: o registro em
+// co_bases foi gravado em 07/2026 e não conhece chave criada depois. Substituindo o objeto
+// inteiro, a regra `importFrete` (migration 079) sumia e a importação gravava tipo_carga
+// nulo em tudo — celulose continuou aparecendo só pelo cruzamento com DT.
 export function getPerfil(baseId) {
   const over = POR_BASE[baseId] || {};
   const rem  = _remotos[baseId] || {};
+  const clf = (over.classificador || rem.classificador)
+    ? { ...(over.classificador || {}), ...(rem.classificador || {}) } : null;
   return {
     ...PADRAO,
     ...over,
@@ -153,6 +160,7 @@ export function getPerfil(baseId) {
     features:   { ...PADRAO.features,   ...(over.features   || {}), ...(rem.features   || {}) },
     vocab:      { ...PADRAO.vocab,      ...(over.vocab      || {}), ...(rem.vocab      || {}) },
     financeiro: { ...PADRAO.financeiro, ...(over.financeiro || {}), ...(rem.financeiro || {}) },
+    classificador: clf,
   };
 }
 

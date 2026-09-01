@@ -1,3 +1,13 @@
+## 2026-09-01 — Celulose continuava em 49: o perfil do banco engolia a regra
+
+**Reportado:** reimportei a planilha bruta e a Conferência continua mostrando ~49 de celulose.
+
+**Causa:** a reimportação funcionou — `destinatario` entrou em 247 fretes de 08/2026 — mas `tipo_carga` ficou **NULL em todas as linhas**. O perfil da base vem de dois lugares (código em `perfil.js` + registro em `co_bases.perfil`, migration 043) e o `getPerfil` fazia merge por seção em `features`/`vocab`/`financeiro`, mas substituía o objeto `classificador` inteiro pelo do banco. Esse registro foi gravado em 07/2026 e não conhece a chave `importFrete` criada ontem, então a regra sumia e a classificação devolvia nulo — a tela seguia contando pelo cruzamento com DT.
+
+**Implementado:** `classificador` entra no merge por seção como as outras (banco complementa, não substitui). Corrige a classe do problema: qualquer chave nova de código deixa de ser apagada por um registro antigo de base. Migration 080 classifica o que já está importado com a mesma regra do app (normalização idêntica: só letras/números, sem sufixo societário), idempotente e só onde há remetente e destinatário.
+
+**Resultado em 08/2026, base Imperatriz/Belém:** frete celulose **129 CTes / R$ 1.310.518,02**, frete papel 118 / R$ 1.000.649,48, mais 26 fretes ainda sem classificação (Belém, que não veio nesse arquivo). Descarga e diária entraram como papel (128 e 25). Não precisa reimportar de novo — basta recarregar a tela. Build ✓
+
 ## 2026-09-01 — Papel × celulose passa a sair do próprio CTe (migration 079)
 
 **Pergunta:** como o app decide o que é papel e o que é celulose?
