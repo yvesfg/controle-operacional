@@ -27,6 +27,7 @@ import KpiCard from "../components/KpiCard.jsx";
 import Toggle from "../components/Toggle.jsx";
 import ModalRelatorio from "../components/ModalRelatorio.jsx";
 import { BASES } from "../constants.js";
+import { clickable } from "../utils.js";
 
 // Conferência de Faturamento — planilhas BRUTAS de faturamento (TMS/ERP), fonte
 // DIFERENTE do operacional (Google Sheets). Segmento dentro de Resultado.jsx.
@@ -2324,19 +2325,28 @@ export default function ConferenciaFrete({ ctx, conn }) {
                           const estorno = estornoTransbordo(p, op.valorValido, op.valorDescartado);
                           const novoSaldo = (Number(p.saldo) || 0) + estorno;
                           const novaMargem = Number(p.frete_peso) > 0 ? (novoSaldo / Number(p.frete_peso)) * 100 : 0;
+                          // Cartão clicável, não Button: o ds-btn é de altura fixa e nowrap, e a
+                          // explicação de cada opção tem duas linhas — dentro do botão ela vazava
+                          // pra fora do modal.
                           return (
-                            <Button variant="success" size="sm" key={op.valido || "unico"} disabled={salvandoTransbordo}
-                              onClick={() => onMarcarTransbordo(p, op.valido, op.descartado, estorno)}>
-                              <div style={{ fontSize: 12, fontWeight: 700 }}>
+                            <div key={op.valido || "unico"}
+                              {...(salvandoTransbordo ? {} : clickable(() => onMarcarTransbordo(p, op.valido, op.descartado, estorno)))}
+                              style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.verde, .35)}`, background: hexRgb(t.verde, .07),
+                                       padding: "9px 11px", cursor: salvandoTransbordo ? "default" : "pointer",
+                                       opacity: salvandoTransbordo ? .6 : 1 }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, lineHeight: 1.4, overflowWrap: "anywhere" }}>
                                 Contrato {op.valido || "do TMS"} vale ({money(op.valorValido)})
                                 {op.descartado && <> · cancelar {op.descartado}</>}
                               </div>
-                              <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 2 }}>
-                                {op.info} · {estorno
-                                  ? <>estorna {money(estorno)} → saldo {money(novoSaldo)} · margem {novaMargem.toFixed(1)}%</>
+                              <div style={{ fontSize: 11, color: t.txt2, marginTop: 3, lineHeight: 1.5, overflowWrap: "anywhere" }}>
+                                {estorno
+                                  ? <>estorna <b style={{ color: t.ouro }}>{money(estorno)}</b> → saldo {money(novoSaldo)} · margem {novaMargem.toFixed(1)}%</>
                                   : <>Saldo do TMS não muda ({money(p.saldo)})</>}
                               </div>
-                            </Button>
+                              <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 2, lineHeight: 1.45, overflowWrap: "anywhere" }}>
+                                {op.info}
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -2670,17 +2680,22 @@ export default function ConferenciaFrete({ ctx, conn }) {
                           : "Nenhum contrato importado combina com este CTe. Digite o número se souber qual é."}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8 }}>
+                        {/* Cartão clicável, não Button: o ds-btn tem altura fixa e nowrap, e estas
+                            duas linhas (agregado, placa, trecho, data) vazavam pra fora do modal. */}
                         {candContratos.slice(0, 5).map((c) => (
-                          <Button variant="success" size="sm" key={c.id || c.contrato} onClick={() => onVincularContrato(p, String(c.contrato))} disabled={salvandoContrato}>
-                            <div style={{ fontSize: 12, fontWeight: 700 }}>
+                          <div key={c.id || c.contrato}
+                            {...(salvandoContrato ? {} : clickable(() => onVincularContrato(p, String(c.contrato))))}
+                            style={{ borderRadius: 10, border: `1px solid ${hexRgb(t.verde, .35)}`, background: hexRgb(t.verde, .07),
+                                     padding: "9px 11px", cursor: salvandoContrato ? "default" : "pointer", opacity: salvandoContrato ? .6 : 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: t.txt, lineHeight: 1.4, overflowWrap: "anywhere" }}>
                               Contrato {c.contrato} · {money(c.valor)}
                               {String(c.cte_ctrc) === String(p.ctrc) && <span style={{ color: t.verde, fontWeight: 600, fontSize: 10.5 }}> · aponta este CTe</span>}
                             </div>
-                            <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 2 }}>
+                            <div style={{ fontSize: 10.5, color: t.txt2, marginTop: 2, lineHeight: 1.45, overflowWrap: "anywhere" }}>
                               {c.nome_agregado || "sem agregado"} · {c.veiculo || "sem placa"} · {c.trecho || "—"}
                               {c.data_emissao ? ` · ${c.data_emissao.split("-").reverse().join("/")}` : ""}
                             </div>
-                          </Button>
+                          </div>
                         ))}
                       </div>
                       <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>

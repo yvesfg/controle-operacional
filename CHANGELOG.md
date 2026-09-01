@@ -1,3 +1,11 @@
+## 2026-09-01 — Opções de contrato viram cartão (o texto vazava pra fora do modal)
+
+**Reportado:** o bloco verde do transbordo estava ilegível e a escrita sumia pelos lados da tela.
+
+**Causa:** as opções eram `<Button size="sm">` com duas linhas de texto dentro. O `.ds-btn` é `height` fixa (28px no sm) + `white-space: nowrap` — controle de uma linha só. O conteúdo de duas linhas força a largura e escapa do modal.
+
+**Implementado:** cada opção virou cartão clicável (`clickable()` do utils, mesmo role/foco/Enter do resto do app), com as cores do botão success que já usava, `line-height` e `overflow-wrap: anywhere`. Mesmo tratamento no bloco vizinho "Contrato do CTe" (candidatos a vínculo), que tinha o mesmo `<Button>` de duas linhas e vazaria igual. Medido em página isolada com a caixa do modal: `scrollWidth == clientWidth` a 608px e a 330px de largura. Build ✓
+
 ## 2026-09-01 — Transbordo: dois contratos no mesmo CTe (migration 078)
 
 **Solicitado:** o CTRC 35244 aparecia com Saldo −9.059,60 e margem −70%. Investigando: o TMS descontou o contrato de R$ 11.000 **duas vezes** (12.940,40 − 11.000 − 11.000). Não é erro de lançamento solto — quando a carga precisa de **transbordo**, o TMS obriga a emitir um contrato novo pro segundo veículo e um dos dois só é cancelado depois que o motorista descarrega. O pedido: sinalizar que há dois contratos, deixar escolher o correto, marcar o outro pra exclusão e desconsiderá-lo nos totais.
