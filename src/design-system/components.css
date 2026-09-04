@@ -816,6 +816,39 @@ a:focus-visible,
   box-shadow: 0 6px 20px rgba(0,0,0,.40);
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   FECHAR DE MODAL — .co-modal-close
+   O X vivia como caixa cinza sem borda (rgba(128,128,128,.1)) e sumia no
+   cabeçalho. Aqui ele tem contorno e ícone em texto primário: visível sem
+   competir com a ação da tela. O vermelho aparece só no hover/foco —
+   fechar é comum demais pra ser vermelho o tempo todo.
+   38px no desktop e 44px no toque (piso do DESIGN.md).
+   ════════════════════════════════════════════════════════════════════ */
+.co-modal-close {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-btn);
+  background: var(--color-modal-bg);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--dur-fast, 100ms) ease, border-color var(--dur-fast, 100ms) ease, color var(--dur-fast, 100ms) ease;
+}
+.co-modal-close:hover:not(:disabled),
+.co-modal-close:focus-visible {
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 45%, transparent);
+  color: var(--color-danger);
+}
+.co-modal-close:disabled { opacity: .5; cursor: not-allowed; }
+@media (pointer: coarse) {
+  .co-modal-close { width: 44px; height: 44px; }
+}
+
 /* ── Reduced motion — sobrepõe inline styles via !important; PRODUCT.md exige alternativa instantânea ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

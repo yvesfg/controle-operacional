@@ -216,7 +216,11 @@ export default function ModalColarFaturamento({ ctx }) {
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, letterSpacing: 2, color: t.txt }}>PREENCHER PELO BLOCO</div>
             <div style={{ fontSize: 11, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
           </div>
-          <Button variant="ghost" size="touch" iconOnly onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" style={{ flexShrink: 0 }}><Icon n="x" s={16} c={t.txt2} sw={2} /></Button>
+          {/* Fechar: contorno + ícone claro (classe .co-modal-close). Fica visível
+              sem competir com GRAVAR, e só vira vermelho no hover/foco. */}
+          <button className="co-modal-close" onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" aria-label="Fechar">
+            <Icon n="x" s={17} c="currentColor" sw={2} />
+          </button>
         </div>
 
         {/* Corpo — 2 colunas no desktop, empilhado abaixo disso */}
