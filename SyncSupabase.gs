@@ -409,7 +409,7 @@ var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedid
 
 // Muda quando este arquivo muda. Serve pra saber se o /exec ja esta servindo o
 // codigo novo — publicar NOVA VERSAO da implantacao e o passo mais esquecido.
-var WEBAPP_VERSAO = '2026-08-21-a';
+var WEBAPP_VERSAO = '2026-09-04-a';
 
 // So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
 // Cobre os dois blocos colados: faturamento e contratacao (esta traz o ID, que
@@ -417,7 +417,7 @@ var WEBAPP_VERSAO = '2026-08-21-a';
 var CAMPOS_WRITEBACK = [
   'cte', 'mdf', 'mat', 'nf', 'cliente', 'data_manifesto',
   'id_doc', 'nome', 'cpf', 'telefone', 'placa', 'placa2', 'placa3',
-  'destino', 'data_carr', 'data_agenda', 'vl_cte', 'vl_contrato', 'adiant'
+  'origem', 'destino', 'data_carr', 'data_agenda', 'vl_cte', 'vl_contrato', 'adiant'
 ];
 
 function doPost(e) {

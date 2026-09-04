@@ -52,7 +52,12 @@ const F = {
   placa2:      { k: "placa2",       l: "Placa 02",     rotulos: ["placa 02", "placa02", "placa 2", "placa2", "placas 02", "placas02", "placas 2", "placas2", "carreta"], tipo: "placa" },
   placa3:      { k: "placa3",       l: "Placa 03",     rotulos: ["placa 03", "placa03", "placa 3", "placa3", "placas 03", "placas03", "placas 3", "placas3"], tipo: "placa" },
   placas:      { k: "placa",        l: "Placas",       rotulos: ["placas", "placa"], tipo: "placas" },
-  destino:     { k: "destino",      l: "Destino",      rotulos: ["destino"], tipo: "texto" },
+  // Origem/destino entram como CIDADE: caixa alta e "IMPERATRIZ - MA" vira
+  // "IMPERATRIZ-MA", que é a forma que a planilha e o filtro do app usam.
+  origem:      { k: "origem",       l: "Origem",       rotulos: ["origem", "praca origem", "praça origem", "cidade origem", "saida", "saída", "coleta"], tipo: "cidade" },
+  destino:     { k: "destino",      l: "Destino",      rotulos: ["destino", "praca destino", "praça destino", "cidade destino", "entrega"], tipo: "cidade" },
+  // "ROTA: IMPERATRIZ-MA > BRASILIA-DF" (ou x, ->, /, "para") vira os dois campos.
+  rota:        { k: "rota",         l: "Rota",         rotulos: ["rota", "trecho", "origem/destino", "origem x destino"], tipo: "rota" },
   data_carr:   { k: "data_carr",    l: "Carregar",     rotulos: ["carregar", "data carregamento", "data carr", "carregamento"], tipo: "data" },
   data_agenda: { k: "data_agenda",  l: "Ag. Descarga", rotulos: ["ag descarga", "ag. descarga", "agenda", "data agenda", "agendamento"], tipo: "data" },
   vl_cte:      { k: "vl_cte",       l: "Vlr Empresa",  rotulos: ["vlr empresa", "valor empresa", "vl cte", "valor cte"], tipo: "moeda" },
@@ -104,7 +109,7 @@ const TODOS_CAMPOS = Object.values(F).concat([CAMPO_MANIFESTO]);
 // Ordem em que a conferência lista o que foi lido: identidade, carga, documentos,
 // dinheiro. Independe de qual bloco o texto parecia ser.
 const ORDEM_CONFERENCIA = [
-  "nome", "cpf", "telefone", "placa", "placa2", "placa3", "destino",
+  "nome", "cpf", "telefone", "placa", "placa2", "placa3", "origem", "destino",
   "data_carr", "data_agenda", "id_doc", "cte", "mdf", "mat", "nf", "cliente",
   "vl_cte", "vl_contrato", "adiant", "forma_pgto", "data_manifesto",
 ];
@@ -174,8 +179,55 @@ const limpar = (valor, tipo) => {
   if (tipo === "moeda") return limparMoeda(v);
   if (tipo === "pgto")  return normalizarPgto(v);
   if (tipo === "placa") return v.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (tipo === "cidade") return normalizarCidade(v);
   return v.replace(/[^\dA-Za-z\-/]/g, "");
 };
+
+// "imperatriz - ma" → "IMPERATRIZ-MA" (forma usada na planilha e nos filtros).
+export function normalizarCidade(valor) {
+  return String(valor || "").toUpperCase()
+    .replace(/\s*-\s*/g, "-")
+    .replace(/\s+/g, " ")
+    .replace(/[,\s]+$/, "")
+    .trim();
+}
+
+// "IMPERATRIZ-MA > BRASILIA-DF" → { origem, destino }. Aceita >, →, ->, x, / e "para".
+const quebrarRota = (valor) => {
+  const partes = String(valor || "")
+    .split(/\s*(?:→|->|>|\/|\bx\b|\bpara\b)\s*/i)
+    .map(normalizarCidade).filter(Boolean);
+  const out = {};
+  if (partes[0]) out.origem = partes[0];
+  if (partes[1]) out.destino = partes[1];
+  return out;
+};
+
+// Origem e destino trocados de lugar: a base sabe quais origens existem (o perfil
+// da operação), então dá pra corrigir sozinho em vez de gravar invertido.
+// `origensValidas` vazio = base sem lista fechada: não mexe em nada.
+export function ajustarOrigemDestino(campos, origensValidas) {
+  const validas = (origensValidas || []).map(normalizarCidade);
+  if (!validas.length) return { campos, avisos: [] };
+
+  const ehOrigem = (v) => v && validas.includes(normalizarCidade(v));
+  const { origem, destino } = campos;
+  const avisos = [];
+  const out = { ...campos };
+
+  if (destino && ehOrigem(destino) && origem && !ehOrigem(origem)) {
+    out.origem = normalizarCidade(destino);
+    out.destino = normalizarCidade(origem);
+    avisos.push(`Origem e destino estavam trocados — ${out.origem} é origem desta base. Corrigi na conferência.`);
+  } else if (destino && ehOrigem(destino) && !origem) {
+    out.origem = normalizarCidade(destino);
+    delete out.destino;
+    avisos.push(`"${destino}" é origem desta base, não destino — li como Origem.`);
+  } else if (origem && !ehOrigem(origem)) {
+    avisos.push(`Origem "${origem}" não é uma das origens desta base (${validas.join(", ")}) — confira antes de gravar.`);
+  }
+  return { campos: out, avisos };
+}
 
 // "KEW9943 / KQW5I51" → { placa, placa2, placa3 }
 const quebrarPlacas = (valor) => {
@@ -273,6 +325,13 @@ export function parseBloco(texto, modo = MODO_PADRAO) {
       const placas = quebrarPlacas(valor);
       if (campos.placa) { avisos.push("Placas apareceram mais de uma vez — usei o primeiro"); continue; }
       Object.entries(placas).forEach(([k, v]) => { campos[k] = v; achados.push(k); });
+      continue;
+    }
+    if (campo.tipo === "rota") {
+      Object.entries(quebrarRota(valor)).forEach(([k, v]) => {
+        if (campos[k]) return;                       // ORIGEM: explícito vence a rota
+        campos[k] = v; achados.push(k);
+      });
       continue;
     }
     if (campos[campo.k]) { avisos.push(`${campo.l} apareceu mais de uma vez — usei o primeiro`); continue; }

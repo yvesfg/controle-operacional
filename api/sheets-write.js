@@ -26,7 +26,7 @@ const CAMPOS_PERMITIDOS = [
   "cte", "mdf", "mat", "nf", "cliente", "data_manifesto",
   // contratação
   "id_doc", "nome", "cpf", "telefone", "placa", "placa2", "placa3",
-  "destino", "data_carr", "data_agenda", "vl_cte", "vl_contrato", "adiant",
+  "origem", "destino", "data_carr", "data_agenda", "vl_cte", "vl_contrato", "adiant",
 ];
 
 export default async function handler(req, res) {

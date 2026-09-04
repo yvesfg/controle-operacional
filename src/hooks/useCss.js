@@ -48,7 +48,7 @@ export function useCss(t) {
     // overlay (por isso 100vh - 40px, não 94vh) pra nunca encostar nas beiradas.
     // margin:auto mantém o modal centrado mesmo quando o overlay precisa rolar
     // (com alignItems:center puro, conteúdo alto corta o topo e fica inalcançável).
-    modal:     { width:"100%", maxWidth:520, maxHeight:`calc(100${UNIDADE_ALTURA} - 40px)`, margin:"auto", background:t.modalBg, borderRadius:16, border:`1px solid ${t.borda}`, display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"0 24px 64px rgba(0,0,0,.45)", animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
+    modal:     { width:"100%", maxWidth:520, maxHeight:`calc(100${UNIDADE_ALTURA} - 40px)`, margin:"auto", background:t.modalBg, borderRadius:DESIGN.r.modal, border:`1px solid ${t.borda}`, display:"flex", flexDirection:"column", overflow:"hidden", boxShadow:"0 24px 64px rgba(0,0,0,.45)", animation:"slideUp .24s cubic-bezier(.34,1.1,.64,1)", transition:"background .25s" },
   };
 
   return { css, statusBorderColor };

@@ -11,11 +11,14 @@
 //                    pra nunca empurrar a conferência pra fora da tela
 import React from "react";
 import { Button } from "../design-system/components/Button.jsx";
+import { DESIGN } from "../constants.js";
 import Icon from "../components/Icon.jsx";
 import {
   BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
   paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO, CAMPOS_SO_APP, CAMPOS_FATURAMENTO_CHAVE,
+  ajustarOrigemDestino,
 } from "../faturamentoParse.js";
+import { getPerfil } from "../operacao/perfil.js";
 import { escreverFaturamentoNaPlanilha, sincronizarDTDaPlanilha } from "../faturamentoSheets.js";
 
 const isoParaBR = (iso) => (iso ? paraDataBR(iso) : "");
@@ -38,6 +41,7 @@ export default function ModalColarFaturamento({ ctx }) {
   const [sobrescrever, setSobrescrever] = React.useState(false);
   const [salvando, setSalvando] = React.useState(false);
   const [buscandoDT, setBuscandoDT] = React.useState(false);
+  const [mostrarIguais, setMostrarIguais] = React.useState(false);
   const txtRef = React.useRef(null);
 
   // Abre com o texto que veio de quem chamou (bloco colado na busca do WhatsApp
@@ -60,7 +64,17 @@ export default function ModalColarFaturamento({ ctx }) {
   const def = BLOCOS[modo] || BLOCOS[MODO_PADRAO];
   // Manifesto é pergunta de faturamento — quem decide é o que o texto trouxe,
   // não o bloco escolhido nos chips (o bloco real vem misto).
-  const { campos, avisos } = React.useMemo(() => parseBloco(texto, modo), [texto, modo]);
+  // A base sabe quais origens existem (perfil da operação) — é isso que permite
+  // reconhecer origem x destino sozinho, e avisar quando a origem não é dali.
+  const origensValidas = React.useMemo(
+    () => getPerfil(baseAtual?.id)?.vocab?.origem || [],
+    [baseAtual]
+  );
+  const { campos, avisos } = React.useMemo(() => {
+    const lido = parseBloco(texto, modo);
+    const ajustado = ajustarOrigemDestino(lido.campos, origensValidas);
+    return { campos: ajustado.campos, avisos: [...lido.avisos, ...ajustado.avisos] };
+  }, [texto, modo, origensValidas]);
   const pedeManifesto = CAMPOS_FATURAMENTO_CHAVE.some(k => campos[k]);
   const reg = React.useMemo(
     () => (campos.dt ? DADOS.find(r => String(r.dt).trim() === String(campos.dt).trim()) : null),
@@ -83,6 +97,11 @@ export default function ModalColarFaturamento({ ctx }) {
   const linhas = reg ? compararComRegistro(reg, camposFinais, modo) : [];
   const conflitos = linhas.filter(l => l.estado === "conflito");
   const aGravar = linhas.filter(l => l.estado === "preenche" || (l.estado === "conflito" && sobrescrever));
+
+  // Campo que já está igual não é decisão — some da lista por padrão e vira
+  // contagem no cabeçalho, pra sobrar na tela só o que muda.
+  const iguais = linhas.filter(l => l.estado === "igual");
+  const linhasVisiveis = mostrarIguais ? linhas : linhas.filter(l => l.estado !== "igual");
 
   const corEstado = { preenche: t.verde, igual: t.txt2, conflito: t.warn };
   const rotuloEstado = { preenche: "PREENCHE", igual: "JÁ IGUAL", conflito: "DIFERENTE" };
@@ -291,8 +310,29 @@ export default function ModalColarFaturamento({ ctx }) {
             {/* Conferência */}
             {reg && linhas.length > 0 && (
               <div style={{ background: t.card2, borderRadius: 10, border: `1px solid ${t.borda}`, overflow: "hidden", flexShrink: 0 }}>
-                <div style={{ padding: "8px 12px", borderBottom: `1px solid ${t.borda}`, fontSize: 8, textTransform: "uppercase", letterSpacing: 1, color: t.txt2, fontWeight: 700 }}>Conferência</div>
-                {linhas.map(l => (
+                {/* Cabeçalho com o placar: sem ele, oito linhas "JÁ IGUAL" e um
+                    botão "NADA A GRAVAR" não explicavam por que nada acontece. */}
+                <div style={{ padding: "9px 12px", borderBottom: `1px solid ${t.borda}`, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: t.txt2, fontWeight: 700 }}>Conferência</span>
+                  <div style={{ flex: 1, display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    {[
+                      { n: linhas.filter(l => l.estado === "preenche").length, l: "a gravar",  c: t.verde },
+                      { n: conflitos.length,                                    l: "diferente", c: t.warn },
+                      { n: iguais.length,                                       l: "já igual",  c: t.txt2 },
+                    ].filter(x => x.n > 0).map(x => (
+                      <span key={x.l} style={{ fontSize: 10, fontWeight: 700, color: x.c, border: `1px solid ${x.c}`, borderRadius: DESIGN.r.badge, padding: "1px 7px", opacity: x.c === t.txt2 ? .7 : 1 }}>
+                        {x.n} {x.l}
+                      </span>
+                    ))}
+                    {iguais.length > 0 && (
+                      <button onClick={() => setMostrarIguais(v => !v)}
+                        style={{ background: "transparent", border: "none", color: t.txt2, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", minHeight: isMobile ? 44 : 26, padding: isMobile ? "0 10px" : "2px 4px" }}>
+                        {mostrarIguais ? "ocultar iguais" : "ver iguais"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {linhasVisiveis.map(l => (
                   isMobile ? (
                     // Telas estreitas: rótulo + estado em cima, atual → novo embaixo.
                     // Em 4 colunas os valores viravam reticências e a linha não dizia nada.
@@ -320,6 +360,12 @@ export default function ModalColarFaturamento({ ctx }) {
                     </div>
                   )
                 ))}
+                {!linhasVisiveis.length && (
+                  <div style={{ padding: "12px", display: "flex", alignItems: "center", gap: 7, fontSize: 11, color: t.txt2 }}>
+                    <Icon n="check-circle" s={13} c={t.verde} />
+                    Tudo que você colou já está gravado igual nesta DT — não há o que mudar.
+                  </div>
+                )}
                 {conflitos.length > 0 && (
                   <div style={{ padding: "9px 12px", display: "flex", alignItems: "center", gap: 8, background: "rgba(217,98,43,.06)", flexWrap: "wrap" }}>
                     <Icon n="alert" s={12} c={t.warn} />
