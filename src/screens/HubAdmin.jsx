@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
+import ModalHeader from "../components/ModalHeader.jsx";
 import Toast from "../components/Toast.jsx";
 import { hexRgb, BASES, PERMS_PADRAO, PERMS_LISTA } from "../constants.js";
 import { DASH_KPIS, DASH_BLOCOS } from "../dashboardConfig.js";
@@ -24,6 +25,16 @@ const PERFIS = [
 const PERFIL_TO_ROLE = { admin:"admin", gerente:"editor", operador:"editor", gestor:"viewer", visualizador:"viewer" };
 const BASE_LIST = Object.values(BASES);
 const NEGADOS_PREVIA = 5; // "breve histórico" — o resto fica atrás de "ver todos"
+
+// Filtro por situação. As quatro listas existiam desde sempre, mas apareciam
+// TODAS ao mesmo tempo — com 30 usuários a tela virava rolagem sem fim.
+const FILTROS = [
+  { k:"todos",     l:"Todos",     d:"Convites, pendentes, com acesso e negados" },
+  { k:"convites",  l:"Convites",  d:"E-mails liberados aguardando o 1º login" },
+  { k:"pendentes", l:"Aguardando",d:"Entraram e esperam aprovação" },
+  { k:"aprovados", l:"Com acesso",d:"Já operam o app" },
+  { k:"negados",   l:"Negados",   d:"Acesso revogado ou recusado" },
+];
 
 function normalizarUsername(v) {
   return (v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
@@ -67,6 +78,14 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   const [aberto, setAberto] = useState(null);
   const [novo, setNovo] = useState({});         // por user: {slug, role}
   const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState("todos");
+  // Esta tela é standalone (não recebe isMobile do App), então mede sozinha.
+  const [isEstreito, setIsEstreito] = useState(() => window.innerWidth < 720);
+  useEffect(() => {
+    const fn = () => setIsEstreito(window.innerWidth < 720);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
@@ -293,6 +312,15 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   const negadosTd  = (filtrados || []).filter(p => p.status === "negado");
   const negados    = verTodosNegados ? negadosTd : negadosTd.slice(0, NEGADOS_PREVIA);
 
+  const contagens = {
+    todos: convitesFiltrados.length + pendentes.length + comAcesso.length + negadosTd.length,
+    convites: convitesFiltrados.length,
+    pendentes: pendentes.length,
+    aprovados: comAcesso.length,
+    negados: negadosTd.length,
+  };
+  const mostrar = (secao) => filtro === "todos" || filtro === secao;
+
   // ── Card de usuário ───────────────────────────────────────────────────────
   const renderUserCard = (p) => {
     const exp = aberto === p.id;
@@ -307,8 +335,16 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
     return (
       <div key={p.id} style={{...card, borderColor: semBase ? hexRgb(t.danger,.4) : t.borda}}>
-        <div style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",flexWrap:"wrap"}}>
-          <Button variant="ghost" size="sm" onClick={()=>setAberto(exp?null:p.id)} style={{ flex: 1, minWidth: 200 }}>
+        {/* Linha em GRADE, não em flex-wrap: identidade cresce, módulos e ações
+            têm largura própria. Antes tudo era flex com wrap e, em qualquer
+            largura intermediária, os botões caíam pra baixo do e-mail.
+            A linha inteira também deixou de ser um <Button> gigante — quem
+            expande é o chevron, que é o que a pessoa procura pra isso. */}
+        <div style={{
+          display:"grid", gap:10, padding:"12px 14px", alignItems:"center",
+          gridTemplateColumns: isEstreito ? "1fr auto" : "minmax(0,1fr) auto auto auto",
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
             <div style={{width:34,height:34,borderRadius:"50%",background:hexRgb(t.ouro,.18),color:t.ouro,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:14,flexShrink:0}}>{(p.nome||p.email||"?").charAt(0).toUpperCase()}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:700,fontSize:13,color:t.txt,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
@@ -319,36 +355,59 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               <div style={{fontSize:11,color:t.txt2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.email}</div>
               {/* Bases na linha fechada: dá pra varrer quem vê o quê sem abrir card por card */}
               {acessoCO && (
-                <div style={{fontSize:10,color:semBase?t.danger:t.txt2,marginTop:2}}>
+                <div style={{fontSize:10,color:semBase?t.danger:t.txt2,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
+                  {semBase && <Icon n="alert" s={11} c={t.danger} />}
                   {semBase ? "sem base — não vai ver dado nenhum"
                            : basesCO.map(id => BASES[id]?.label || id).join(" · ")}
                 </div>
               )}
             </div>
-          </Button>
-
-          <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:260}}>
-            {p.status === "aprovado" && (p.acessos.length === 0
-              ? <span style={{fontSize:10,color:t.txt2,fontStyle:"italic"}}>sem módulo concedido</span>
-              : p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",color:"var(--color-text-inverse)"}}>{nomeModulo(a.modulo_slug)}</span>))}
           </div>
 
+          {!isEstreito && (
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"flex-end",maxWidth:220}}>
+              {p.status === "aprovado" && (p.acessos.length === 0
+                ? <span style={{fontSize:10,color:t.txt2,fontStyle:"italic"}}>sem módulo concedido</span>
+                : p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",color:"var(--color-text-inverse)"}}>{nomeModulo(a.modulo_slug)}</span>))}
+            </div>
+          )}
+
           {/* Ações rápidas por status — sem precisar expandir o card */}
-          <div style={{display:"flex",gap:6,flexShrink:0}}>
+          {!isEstreito && (
+            <div style={{display:"flex",gap:6,flexShrink:0}}>
+              {p.status === "pendente" && <>
+                <Button variant="success-outline" size="sm" disabled={buscando} onClick={()=>aprovar(p)}>Aprovar</Button>
+                <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar</Button>
+              </>}
+              {p.status === "aprovado" && (
+                <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar acesso</Button>
+              )}
+              {p.status === "negado" && (
+                <Button variant="warning-outline" size="sm" disabled={buscando} onClick={()=>marcarPendente(p)}>Reabrir</Button>
+              )}
+            </div>
+          )}
+
+          <Button variant="ghost" size="touch" iconOnly onClick={()=>setAberto(exp?null:p.id)}
+            title={exp ? "Recolher" : "Ver e editar acessos"} aria-expanded={exp}>
+            <Icon n={exp ? "chevron-up" : "chevron-down"} s={14} />
+          </Button>
+        </div>
+
+        {/* Estreito: módulos e ações viram uma segunda linha, com largura inteira,
+            em vez de espremer quatro colunas num celular. */}
+        {isEstreito && (
+          <div style={{padding:"0 14px 12px",display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+            {p.status === "aprovado" && p.acessos.map(a => <span key={a.id} style={{fontSize:9,padding:"2px 6px",borderRadius:5,fontWeight:700,background:a.ativo?"var(--chip-solid-success)":"var(--chip-solid-danger)",color:"var(--color-text-inverse)"}}>{nomeModulo(a.modulo_slug)}</span>)}
+            <div style={{flex:1}} />
             {p.status === "pendente" && <>
               <Button variant="success-outline" size="sm" disabled={buscando} onClick={()=>aprovar(p)}>Aprovar</Button>
               <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar</Button>
             </>}
-            {p.status === "aprovado" && (
-              <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar acesso</Button>
-            )}
-            {p.status === "negado" && (
-              <Button variant="warning-outline" size="sm" disabled={buscando} onClick={()=>marcarPendente(p)}>Reabrir</Button>
-            )}
+            {p.status === "aprovado" && <Button variant="danger-outline" size="sm" disabled={buscando} onClick={()=>negar(p)}>Negar acesso</Button>}
+            {p.status === "negado" && <Button variant="warning-outline" size="sm" disabled={buscando} onClick={()=>marcarPendente(p)}>Reabrir</Button>}
           </div>
-
-          <Button variant="ghost" size="sm" onClick={()=>setAberto(exp?null:p.id)}>{exp ? <Icon n="chevron-up" s={12} /> : <Icon n="chevron-down" s={12} />}</Button>
-        </div>
+        )}
 
         {exp && (
           <div style={{borderTop:`1px solid ${t.borda}`,padding:"14px",display:"flex",flexDirection:"column",gap:14}}>
@@ -514,7 +573,13 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
   // ── Painel "Adicionar usuário" ────────────────────────────────────────────
   const painelAdicionar = (
-    <div style={{...card,padding:"16px",marginBottom:16,display:"flex",flexDirection:"column",gap:16}}>
+    <div style={{...card,marginBottom:16}}>
+      {/* O painel já vinha em 3 passos numerados; faltava o cabeçalho que diz o
+          que ele é — mesma faixa dos modais, tom verde de "criar". */}
+      <ModalHeader tom="verde" icone="user" titulo="NOVO ACESSO"
+        sub="Quem é · o que acessa · como entra"
+        onFechar={()=>{setAddOpen(false); setForm(FORM_VAZIO());}} />
+      <div style={{padding:"16px",display:"flex",flexDirection:"column",gap:16}}>
       {/* 1. Quem */}
       <div>
         <div style={{fontSize:12,fontWeight:700,color:t.txt,marginBottom:8}}>1 · Quem é</div>
@@ -638,11 +703,12 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
         </div>
       </div>
 
-      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-        <Button variant="primary" size="sm" disabled={salvando} onClick={salvarNovo}>
+      <div style={{display:"flex",gap:8,alignItems:"center",borderTop:`1px solid ${t.borda}`,paddingTop:14}}>
+        <Button variant="primary" size="lg" disabled={salvando} onClick={salvarNovo} style={{flex:"1 1 auto",maxWidth:320}}>
           {salvando ? "Salvando…" : form.entrada === "google" ? "Liberar acesso por e-mail" : "Criar usuário de teste"}
         </Button>
-        <Button variant="ghost" size="sm" onClick={()=>{setAddOpen(false); setForm(FORM_VAZIO());}}>Cancelar</Button>
+        <Button variant="secondary" size="lg" onClick={()=>{setAddOpen(false); setForm(FORM_VAZIO());}}>Cancelar</Button>
+      </div>
       </div>
     </div>
   );
@@ -650,23 +716,41 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   return (
     <div style={{...css.app,background:t.bg,minHeight:"100vh",padding:"24px 18px"}}>
       <div style={{maxWidth:960,margin:"0 auto"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20,flexWrap:"wrap"}}>
-          <Button variant="secondary" size="sm" onClick={onVoltar}><Icon n="arrow-left" s={13} /> Voltar</Button>
-          <div style={{flex:1,minWidth:180}}>
-            <div style={{fontFamily:"var(--font-heading)",fontSize:17,fontWeight:700,color:t.txt}}>Gerenciar acessos</div>
-            <div style={{fontSize:11,color:t.txt2}}>Libere módulos e defina permissões por usuário</div>
-          </div>
-          <Button variant={addOpen ? "secondary" : "primary"} size="sm" onClick={()=>{setAddOpen(v=>!v); setCredenciaisCriadas(null); setConviteCriado(null);}}>
-            {addOpen ? "Fechar" : "+ Adicionar usuário"}
-          </Button>
+        {/* Mesmo cabeçalho dos modais (faixa de acento + superfície elevada): a
+            tela tinha só uma linha de texto solta, sem âncora visual nenhuma. */}
+        <div style={{...card,marginBottom:14}}>
+          <ModalHeader
+            tom="accent" icone="users" titulo="GERENCIAR ACESSOS"
+            sub="Libere módulos e defina permissões por usuário"
+            esquerda={<Button variant="secondary" size="sm" onClick={onVoltar} title="Voltar"><Icon n="arrow-left" s={13} /> Voltar</Button>}
+            acoes={<Button variant={addOpen ? "secondary" : "primary"} size="md" onClick={()=>{setAddOpen(v=>!v); setCredenciaisCriadas(null); setConviteCriado(null);}}>
+              {addOpen ? "Fechar" : <><Icon n="plus" s={14} /> Adicionar usuário</>}
+            </Button>}
+          />
         </div>
 
-        <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-          <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar por nome ou email…" style={{...inp,flex:1,minWidth:180}} />
+        {/* Busca + filtro por situação. Antes as quatro listas apareciam sempre
+            todas, uma embaixo da outra, e os contadores eram tags decorativas —
+            números que não levavam a lugar nenhum. Agora contam E filtram. */}
+        <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+          <div style={{position:"relative",flex:1,minWidth:190}}>
+            <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",display:"flex",pointerEvents:"none"}}>
+              <Icon n="search" s={14} c={t.txt2} />
+            </span>
+            <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar por nome ou email…" style={{...inp,paddingLeft:32}} />
+          </div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-            {convitesFiltrados.length>0 && <span style={tag(t.azulLt)}>{convitesFiltrados.length} convite{convitesFiltrados.length>1?"s":""}</span>}
-            {pendentes.length>0 && <span style={tag(t.laranja)}>{pendentes.length} aguardando</span>}
-            <span style={tag(t.verde)}>{comAcesso.length} com acesso</span>
+            {FILTROS.map(f => {
+              const n = contagens[f.k];
+              const ativo = filtro === f.k;
+              if (f.k !== "todos" && !n) return null;
+              return (
+                <Button key={f.k} variant={ativo ? "primary" : "secondary"} size="sm" pill
+                  onClick={()=>setFiltro(f.k)} title={f.d}>
+                  {f.l} <span style={{opacity:.75,marginLeft:5}}>{n}</span>
+                </Button>
+              );
+            })}
           </div>
         </div>
 
@@ -706,9 +790,25 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
 
         {perfis === null ? <div style={{fontSize:12,color:t.txt2}}>Carregando…</div>
         : (filtrados.length === 0 && convitesFiltrados.length === 0)
-          ? <div style={{fontSize:12,color:t.txt2}}>{busca ? "Nenhum usuário encontrado." : "Nenhum usuário ainda. Use \"+ Adicionar usuário\" pra liberar um e-mail — a pessoa loga com o Google e já entra."}</div>
+          /* Estado vazio com saída: antes era uma frase cinza no meio do nada. */
+          ? <div style={{...card,padding:"32px 20px",textAlign:"center"}}>
+              <Icon n={busca ? "search" : "users"} s={26} c={t.txt2} />
+              <div style={{fontSize:13,fontWeight:700,color:t.txt,marginTop:10}}>
+                {busca ? `Nada encontrado para "${busca}"` : "Nenhum usuário ainda"}
+              </div>
+              <div style={{fontSize:11.5,color:t.txt2,marginTop:6,lineHeight:1.6,maxWidth:420,marginLeft:"auto",marginRight:"auto"}}>
+                {busca
+                  ? "A busca olha nome e e-mail. Limpe o campo para ver a lista inteira."
+                  : "Libere um e-mail aqui: a pessoa entra com o Google desse mesmo endereço e já cai nas telas, sem fila de aprovação."}
+              </div>
+              <div style={{marginTop:14,display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                {busca
+                  ? <Button variant="secondary" size="md" onClick={()=>setBusca("")}>Limpar busca</Button>
+                  : <Button variant="primary" size="md" onClick={()=>setAddOpen(true)}><Icon n="plus" s={14} /> Adicionar usuário</Button>}
+              </div>
+            </div>
         : <div style={{display:"flex",flexDirection:"column",gap:20}}>
-          {convitesFiltrados.length > 0 && (
+          {mostrar("convites") && convitesFiltrados.length > 0 && (
             <div>
               {secTitulo(t.azulLt, `Convites — acesso já definido (${convitesFiltrados.length})`)}
               <div style={{fontSize:10.5,color:t.txt2,marginTop:-4,marginBottom:8,lineHeight:1.5}}>
@@ -717,19 +817,19 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{convitesFiltrados.map(renderConvite)}</div>
             </div>
           )}
-          {pendentes.length > 0 && (
+          {mostrar("pendentes") && pendentes.length > 0 && (
             <div>
               {secTitulo(t.laranja, `Aguardando aprovação (${pendentes.length})`)}
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{pendentes.map(renderUserCard)}</div>
             </div>
           )}
-          {comAcesso.length > 0 && (
+          {mostrar("aprovados") && comAcesso.length > 0 && (
             <div>
               {secTitulo(t.verde, `Com acesso (${comAcesso.length})`)}
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{comAcesso.map(renderUserCard)}</div>
             </div>
           )}
-          {negadosTd.length > 0 && (
+          {mostrar("negados") && negadosTd.length > 0 && (
             <div>
               {secTitulo(t.danger, `Acesso negado (${negadosTd.length})`)}
               <div style={{display:"flex",flexDirection:"column",gap:10}}>{negados.map(renderUserCard)}</div>
