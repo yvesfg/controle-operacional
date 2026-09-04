@@ -512,9 +512,9 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                               ? <><Icon n="check-circle" s={13} c={t.verde} /> Padrão do perfil {PERFIS.find(x=>x.k===perfilCO)?.l}</>
                               : <><Icon n="alert" s={13} c={t.warn} /> Ajustado à mão — {ajustados.length} diferente{ajustados.length>1?"s":""} do perfil</>}
                             <div style={{flex:1}} />
+                            {/* null = volta a herdar do perfil, que é como o
+                                cadastro nasce (ver FORM_VAZIO). */}
                             {ajustados.length > 0 && (
-                              {/* null = volta a herdar do perfil, que é como o
-                                  cadastro nasce (ver FORM_VAZIO). */}
                               <Button variant="secondary" size="xs" onClick={()=>setConfig(a,{perms:PERMS_PADRAO[perfilCO] || null})}>Restaurar padrão</Button>
                             )}
                           </div>
