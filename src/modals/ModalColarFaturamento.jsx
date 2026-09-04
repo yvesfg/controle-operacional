@@ -204,14 +204,17 @@ export default function ModalColarFaturamento({ ctx }) {
   return (
     <div style={css.overlay} onClick={e => e.target === e.currentTarget && !salvando && setFaturaColarOpen(null)}>
       <div style={{ ...css.modal, maxWidth: isDesktop ? 1040 : 640 }}>
-        {/* Header */}
-        <div style={{ padding: "13px 16px 10px", display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid ${t.borda}`, flexShrink: 0, background: "rgba(217,98,43,.06)" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(217,98,43,.15)", border: "1px solid rgba(217,98,43,.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon n="clipboard" s={18} c={t.ouro} />
+        {/* Header — superfície elevada + faixa de acento no topo, o mesmo recurso
+            que os KPIs do dashboard usam. O desenho anterior era um wash de 6%:
+            quase invisível, e o título em accent sobre ele ficava apagado.
+            Título agora em texto primário; o accent fica só na faixa e no ícone. */}
+        <div style={{ padding: "13px 16px 11px", display: "flex", alignItems: "center", gap: 11, borderTop: `3px solid ${t.ouro}`, borderBottom: `1px solid ${t.borda}`, flexShrink: 0, background: t.card2 }}>
+          <div style={{ width: 38, height: 38, borderRadius: DESIGN.r.btn, background: t.ouro, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon n="clipboard" s={19} c="var(--on-primary)" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 17, letterSpacing: 2, color: t.ouro }}>PREENCHER PELO BLOCO</div>
-            <div style={{ fontSize: 9, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, letterSpacing: 2, color: t.txt }}>PREENCHER PELO BLOCO</div>
+            <div style={{ fontSize: 11, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
           </div>
           <Button variant="ghost" size="touch" iconOnly onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" style={{ flexShrink: 0 }}><Icon n="x" s={16} c={t.txt2} sw={2} /></Button>
         </div>
@@ -380,14 +383,17 @@ export default function ModalColarFaturamento({ ctx }) {
           </div>
         </div>
 
-        {/* Rodapé */}
-        <div style={{ padding: "10px 14px 18px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 8, flexShrink: 0 }}>
-          <Button variant="secondary" size="md" onClick={limpar}
+        {/* Rodapé — os dois botões no MESMO size (antes um era md e o outro sm,
+            o que dava alturas diferentes) e o de gravar como primário: é a ação
+            da tela, não pode ser um contorno discreto ao lado de um sólido. */}
+        <div style={{ padding: "12px 14px 16px", borderTop: `1px solid ${t.borda}`, display: "flex", gap: 10, flexShrink: 0, background: t.card2 }}>
+          <Button variant="secondary" size="lg" onClick={limpar}
             disabled={salvando || !texto.trim()}
-            title="Esvazia o bloco pra colar o próximo — não fecha a tela" style={{ flex: "0 0 auto" }}>LIMPAR</Button>
-          <Button variant={!reg || !aGravar.length ? "secondary" : "success-outline"} size="sm" onClick={gravar}
+            title="Esvazia o bloco pra colar o próximo — não fecha a tela"
+            style={{ flex: "0 0 auto", minWidth: 108 }}>LIMPAR</Button>
+          <Button variant={!reg || !aGravar.length ? "secondary" : "primary"} size="lg" onClick={gravar}
             disabled={salvando || !reg || !aGravar.length} style={{ flex: 1 }}>
-            <Icon n="save" s={15} c="currentColor" />
+            <Icon n="save" s={16} c="currentColor" />
             {rotuloGravar}
           </Button>
         </div>
