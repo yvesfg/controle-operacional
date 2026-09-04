@@ -93,7 +93,7 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
   const [conviteCriado, setConviteCriado] = useState(null);           // {email} — passo "avise a pessoa"
   const [verTodosNegados, setVerTodosNegados] = useState(false);
   const [resetSenha, setResetSenha] = useState(null); // {userId, senha}
-  const [painelAberto, setPainelAberto] = useState(null); // id do acesso com o configurador de painel aberto
+  const [abaCfg, setAbaCfg] = useState({});               // {idAcesso: "perfil"|"perms"|"dash"}
   const [processando, setProcessando] = useState(null); // id em request, pra desabilitar botão
 
   const carregar = useCallback(async () => {
@@ -449,69 +449,118 @@ export default function HubAdmin({ t, css, showToast, toast, onVoltar }) {
                     <Button variant="ghost" size="md" onClick={()=>remover(a.id)}  title="Remover este registro de módulo"><Icon n="x" s={13} /></Button>
                   </div>
 
-                  {isCO && (
-                    <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:10}}>
-                      <div>
-                        <div style={rotulo}>Perfil</div>
-                        <select value={perfilCO}
-                          onChange={e=>{const pf=e.target.value; salvarAcesso(a,{role:PERFIL_TO_ROLE[pf]||"viewer",config:{...cfg,perfil:pf,perms:PERMS_PADRAO[pf]}});}}
-                          style={sel}>
-                          {PERFIS.map(pf=><option key={pf.k} value={pf.k}>{pf.l}</option>)}
-                        </select>
-                        <div style={{fontSize:10,color:t.txt2,marginTop:4}}>{PERFIS.find(x=>x.k===perfilCO)?.d}</div>
-                      </div>
-                      <div>
-                        <div style={rotulo}>Bases permitidas</div>
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                          {BASE_LIST.map(b=>{const on=bases.includes(b.id);return (
-                            <Button variant={on ? "outline" : "secondary"} size="xs" pill key={b.id} onClick={()=>setConfig(a,{bases:on?bases.filter(x=>x!==b.id):[...bases,b.id]})}>{b.label}</Button>
-                          );})}
-                        </div>
-                        {bases.length===0 && <div style={{fontSize:9,color:t.danger,marginTop:4}}><Icon n="alert" s={13} /> Sem base — usuário não verá dados</div>}
-                      </div>
-                      <div>
-                        <div style={rotulo}>Permissões finas</div>
-                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                          {PERMS_LISTA.map(({key,lbl})=>{const on=permsCO[key]!==false;return (
-                            <Button variant={on ? "outline" : "secondary"} size="xs" pill key={key} onClick={()=>setConfig(a,{perms:{...permsCO,[key]:!on}})}>{lbl}</Button>
-                          );})}
-                        </div>
+                  {isCO && (() => {
+                    // Três assuntos diferentes viviam empilhados numa coluna só
+                    // (perfil, ~20 chips de permissão, painel do dashboard): pra
+                    // ver o último era rolar o card inteiro. Viraram abas.
+                    const aba = abaCfg[a.id] || "perfil";
+                    const padrao = PERMS_PADRAO[perfilCO] || {};
+                    const ajustados = PERMS_LISTA.filter(({key}) => (permsCO[key] !== false) !== (padrao[key] !== false));
+                    const liberadas = PERMS_LISTA.filter(({key}) => permsCO[key] !== false).length;
+                    const ocultos = contarOcultos(a.config?.dash);
+                    const ABAS = [
+                      { k:"perfil", l:"Perfil e bases", n: bases.length ? null : "!" },
+                      { k:"perms",  l:"Permissões",     n: `${liberadas}/${PERMS_LISTA.length}` },
+                      ...(permsCO.dashboard !== false ? [{ k:"dash", l:"Dashboard", n: ocultos ? `−${ocultos}` : null }] : []),
+                    ];
+                    return (
+                    <div style={{marginTop:10}}>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>
+                        {ABAS.map(ab => (
+                          <Button key={ab.k} variant={aba===ab.k ? "primary" : "secondary"} size="sm" pill
+                            onClick={()=>setAbaCfg(x=>({...x,[a.id]:ab.k}))}>
+                            {ab.l}{ab.n && <span style={{opacity:.75,marginLeft:5}}>{ab.n}</span>}
+                          </Button>
+                        ))}
                       </div>
 
-                      {/* Painel: o que ele vê DENTRO do dashboard. Só aparece se ele
-                          tem a aba — configurar KPI de quem não vê o dashboard é ruído. */}
-                      {permsCO.dashboard !== false && (
-                        <div>
-                          <Button variant="ghost" size="sm" onClick={()=>setPainelAberto(x=>x===a.id?null:a.id)}>
-                            {painelAberto===a.id ? "Esconder painel do dashboard" : "Configurar painel do dashboard"}
-                            {contarOcultos(a.config?.dash) > 0 && <span style={{color:t.txt2}}> · {contarOcultos(a.config?.dash)} oculto(s)</span>}
-                          </Button>
-                          {painelAberto===a.id && (
-                            <div style={{marginTop:10,border:`1px solid ${t.borda2}`,borderRadius:10,padding:"10px 12px"}}>
-                              <div style={{fontSize:10.5,color:t.txt2,marginBottom:10,lineHeight:1.5}}>
-                                Ligado = ele vê. Desligar aqui não mexe no dado, só tira da tela dele.
-                              </div>
-                              {[["kpis","Indicadores (KPIs)",DASH_KPIS],["blocos","Blocos e painéis",DASH_BLOCOS]].map(([grupo,titulo,lista])=>(
-                                <div key={grupo} style={{marginBottom:10}}>
-                                  <div style={rotulo}>{titulo}</div>
-                                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                                    {lista.filter(it=>itemCabeNasBases(it, bases)).map(it=>{
-                                      const dash = a.config?.dash || {};
-                                      const on = dash[grupo]?.[it.k] !== false;
-                                      return (
-                                        <Button variant={on ? "outline" : "secondary"} size="xs" pill key={it.k} title={it.d}
-                                          onClick={()=>setConfig(a,{dash:{...dash,[grupo]:{...(dash[grupo]||{}),[it.k]:!on}}})}>{it.l}</Button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              ))}
+                      {aba === "perfil" && (
+                        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                          <div>
+                            <div style={rotulo}>Perfil</div>
+                            <select value={perfilCO}
+                              onChange={e=>{const pf=e.target.value; salvarAcesso(a,{role:PERFIL_TO_ROLE[pf]||"viewer",config:{...cfg,perfil:pf,perms:PERMS_PADRAO[pf]}});}}
+                              style={sel}>
+                              {PERFIS.map(pf=><option key={pf.k} value={pf.k}>{pf.l}</option>)}
+                            </select>
+                            <div style={{fontSize:10.5,color:t.txt2,marginTop:5}}>{PERFIS.find(x=>x.k===perfilCO)?.d}</div>
+                          </div>
+                          <div>
+                            <div style={{...rotulo,display:"flex",alignItems:"center",gap:8}}>
+                              <span style={{flex:1}}>Bases permitidas</span>
+                              <Button variant="ghost" size="xs" onClick={()=>setConfig(a,{bases:BASE_LIST.map(b=>b.id)})}>todas</Button>
+                              <Button variant="ghost" size="xs" onClick={()=>setConfig(a,{bases:[]})}>nenhuma</Button>
                             </div>
-                          )}
+                            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                              {BASE_LIST.map(b=>{const on=bases.includes(b.id);return (
+                                <Button variant={on ? "primary" : "secondary"} size="sm" pill key={b.id} onClick={()=>setConfig(a,{bases:on?bases.filter(x=>x!==b.id):[...bases,b.id]})}>
+                                  <Icon n={on ? "check" : "plus"} s={12} /> {b.label}
+                                </Button>
+                              );})}
+                            </div>
+                            {bases.length===0 && <div style={{fontSize:10,color:t.danger,marginTop:6,display:"flex",alignItems:"center",gap:5}}><Icon n="alert" s={13} /> Sem base — usuário não verá dados</div>}
+                          </div>
+                        </div>
+                      )}
+
+                      {aba === "perms" && (
+                        <div>
+                          {/* O que faltava aqui era dizer se isto ainda é o perfil
+                              ou já é exceção — e como voltar atrás. */}
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:10,fontSize:10.5,color:t.txt2}}>
+                            {ajustados.length === 0
+                              ? <><Icon n="check-circle" s={13} c={t.verde} /> Padrão do perfil {PERFIS.find(x=>x.k===perfilCO)?.l}</>
+                              : <><Icon n="alert" s={13} c={t.warn} /> Ajustado à mão — {ajustados.length} diferente{ajustados.length>1?"s":""} do perfil</>}
+                            <div style={{flex:1}} />
+                            {ajustados.length > 0 && (
+                              {/* null = volta a herdar do perfil, que é como o
+                                  cadastro nasce (ver FORM_VAZIO). */}
+                              <Button variant="secondary" size="xs" onClick={()=>setConfig(a,{perms:PERMS_PADRAO[perfilCO] || null})}>Restaurar padrão</Button>
+                            )}
+                          </div>
+                          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                            {PERMS_LISTA.map(({key,lbl})=>{
+                              const on=permsCO[key]!==false;
+                              const mudou = on !== (padrao[key] !== false);
+                              return (
+                                <Button variant={on ? "primary" : "secondary"} size="sm" pill key={key}
+                                  title={mudou ? "Diferente do padrão do perfil" : undefined}
+                                  onClick={()=>setConfig(a,{perms:{...permsCO,[key]:!on}})}>
+                                  <Icon n={on ? "check" : "x"} s={12} /> {lbl}{mudou && " *"}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {aba === "dash" && (
+                        <div>
+                          <div style={{fontSize:10.5,color:t.txt2,marginBottom:10,lineHeight:1.5}}>
+                            Ligado = ele vê. Desligar aqui não mexe no dado, só tira da tela dele.
+                          </div>
+                          {[["kpis","Indicadores (KPIs)",DASH_KPIS],["blocos","Blocos e painéis",DASH_BLOCOS]].map(([grupo,titulo,lista])=>(
+                            <div key={grupo} style={{marginBottom:12}}>
+                              <div style={rotulo}>{titulo}</div>
+                              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                                {lista.filter(it=>itemCabeNasBases(it, bases)).map(it=>{
+                                  const dash = a.config?.dash || {};
+                                  const on = dash[grupo]?.[it.k] !== false;
+                                  return (
+                                    <Button variant={on ? "primary" : "secondary"} size="sm" pill key={it.k} title={it.d}
+                                      onClick={()=>setConfig(a,{dash:{...dash,[grupo]:{...(dash[grupo]||{}),[it.k]:!on}}})}>
+                                      <Icon n={on ? "check" : "x"} s={12} /> {it.l}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })}
