@@ -91,6 +91,31 @@ export const BLOCOS = {
 
 export const MODO_PADRAO = "faturamento";
 
+// ── MODELO ÚNICO ──────────────────────────────────────────────────────────────
+// O texto que a equipe manda de verdade é MISTO: o bloco de faturamento vem com
+// MOT e PLACAS junto (print do Yves, 21/08/2026). Antes, cada modo só aceitava a
+// sua lista e o resto virava aviso de "campo do outro bloco" — quem colava o
+// bloco real perdia motorista e placas.
+// Agora TODO campo conhecido é lido, venha em que bloco vier. Os dois blocos
+// continuam existindo, mas só decidem o EXEMPLO no campo de colar, a ordem da
+// leitura sem rótulos e se a tela pergunta a data do manifesto.
+const TODOS_CAMPOS = Object.values(F).concat([CAMPO_MANIFESTO]);
+
+// Ordem em que a conferência lista o que foi lido: identidade, carga, documentos,
+// dinheiro. Independe de qual bloco o texto parecia ser.
+const ORDEM_CONFERENCIA = [
+  "nome", "cpf", "telefone", "placa", "placa2", "placa3", "destino",
+  "data_carr", "data_agenda", "id_doc", "cte", "mdf", "mat", "nf", "cliente",
+  "vl_cte", "vl_contrato", "adiant", "forma_pgto", "data_manifesto",
+];
+
+const ROTULO = {};
+TODOS_CAMPOS.forEach(c => { if (!ROTULO[c.k] || c.tipo !== "placas") ROTULO[c.k] = c.l; });
+
+// Campos que dizem "isto é faturamento" — a tela usa pra decidir se pergunta a
+// data do manifesto, em vez de olhar só o modo escolhido.
+export const CAMPOS_FATURAMENTO_CHAVE = ["cte", "mdf", "mat", "nf", "cliente"];
+
 const norm = (s) => String(s || "")
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .toLowerCase().trim();
@@ -213,7 +238,10 @@ export function detectarModo(texto) {
 //   avisos  = problemas que não impedem seguir (linha ignorada, rótulo repetido)
 export function parseBloco(texto, modo = MODO_PADRAO) {
   const def = BLOCOS[modo] || BLOCOS[MODO_PADRAO];
-  const conhecidos = [...def.campos, CAMPO_MANIFESTO];
+  // Lê TODO campo conhecido, não só os do bloco escolhido: o texto real vem
+  // misto (faturamento com MOT e PLACAS junto). O modo só decide a ordem da
+  // leitura sem rótulos, logo abaixo.
+  const conhecidos = TODOS_CAMPOS;
   const campos = {};
   const achados = [];
   const avisos = [];
@@ -235,9 +263,7 @@ export function parseBloco(texto, modo = MODO_PADRAO) {
 
     const campo = conhecidos.find(c => c.rotulos.includes(rotulo));
     if (!campo) {
-      const outro = Object.entries(BLOCOS).find(([m, d]) => m !== modo && d.campos.some(c => c.rotulos.includes(rotulo)));
-      if (outro) avisos.push(`"${linha.slice(0, 28)}" é campo de ${outro[1].l} — ignorado neste bloco`);
-      else if (/^[\d.\-/]+$/.test(linha)) semRotulo.push(linha);
+      if (/^[\d.\-/]+$/.test(linha)) semRotulo.push(linha);
       else if (linha.includes(":")) avisos.push(`Linha ignorada: "${linha.slice(0, 40)}"`);
       continue;
     }
@@ -311,10 +337,16 @@ export function faltandoFaturamento(reg) {
 // "15/08" colado sobre "15/08/2026" vira igual em vez de sobrescrever com uma
 // data mais pobre. Campo vazio não tem de onde tirar o ano — usa o corrente e
 // marca anoAssumido pra tela avisar.
-export function compararComRegistro(reg, campos, modo = MODO_PADRAO) {
+// A lista sai do que o TEXTO trouxe, não do bloco escolhido — é o que permite o
+// bloco misto (faturamento com motorista e placas) aparecer inteiro na conferência.
+export function compararComRegistro(reg, campos, _modo) {
   const anoCorrente = new Date().getFullYear();
-  return camposDoBloco(modo)
-    .filter(c => campos[c.k] !== undefined && campos[c.k] !== "")
+  const tipoDe = {};
+  TODOS_CAMPOS.forEach(c => { if (c.tipo !== "placas") tipoDe[c.k] = c.tipo; });
+
+  return ORDEM_CONFERENCIA
+    .filter(k => campos[k] !== undefined && campos[k] !== "")
+    .map(k => ({ k, l: ROTULO[k] || k, tipo: tipoDe[k] }))
     .map(c => {
       const atual = String(reg?.[c.k] ?? "").trim();
       let novo = String(campos[c.k]).trim();

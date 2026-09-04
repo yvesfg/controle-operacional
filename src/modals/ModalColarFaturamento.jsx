@@ -14,7 +14,7 @@ import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import {
   BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
-  paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO, CAMPOS_SO_APP,
+  paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO, CAMPOS_SO_APP, CAMPOS_FATURAMENTO_CHAVE,
 } from "../faturamentoParse.js";
 import { escreverFaturamentoNaPlanilha, sincronizarDTDaPlanilha } from "../faturamentoSheets.js";
 
@@ -58,7 +58,10 @@ export default function ModalColarFaturamento({ ctx }) {
   }, [texto, modoManual, modo]);
 
   const def = BLOCOS[modo] || BLOCOS[MODO_PADRAO];
+  // Manifesto é pergunta de faturamento — quem decide é o que o texto trouxe,
+  // não o bloco escolhido nos chips (o bloco real vem misto).
   const { campos, avisos } = React.useMemo(() => parseBloco(texto, modo), [texto, modo]);
+  const pedeManifesto = CAMPOS_FATURAMENTO_CHAVE.some(k => campos[k]);
   const reg = React.useMemo(
     () => (campos.dt ? DADOS.find(r => String(r.dt).trim() === String(campos.dt).trim()) : null),
     [campos.dt, DADOS]
@@ -67,13 +70,13 @@ export default function ModalColarFaturamento({ ctx }) {
   // Data do manifesto (só no faturamento): vem da tela, não do texto. Começa na
   // data do lançamento (ou na que o registro já tem) e fica editável.
   React.useEffect(() => {
-    if (!reg || !def.perguntaManifesto) return;
+    if (!reg || !pedeManifesto) return;
     setManifestoISO(prev => prev || brParaISO(campos.data_manifesto || reg.data_manifesto || dataDeHojeBR()));
-  }, [reg, campos.data_manifesto, def.perguntaManifesto]);
+  }, [reg, campos.data_manifesto, pedeManifesto]);
 
   if (!faturaColarOpen) return null;
 
-  const manifestoBR = def.perguntaManifesto ? isoParaBR(manifestoISO) : "";
+  const manifestoBR = pedeManifesto ? isoParaBR(manifestoISO) : "";
   const camposFinais = { ...campos, ...(manifestoBR ? { data_manifesto: manifestoBR } : {}) };
   delete camposFinais.dt;
 
@@ -203,7 +206,7 @@ export default function ModalColarFaturamento({ ctx }) {
           <div style={painelEsq}>
             {/* Modo — detectado pelo texto, trocável na mão */}
             <div>
-              <label style={lbl}>Tipo do bloco {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
+              <label style={lbl}>Modelo do exemplo {!modoManual && texto.trim() && <span style={{ color: t.verde, fontSize: 8 }}>(reconhecido pelo texto)</span>}</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                 {Object.entries(BLOCOS).map(([k, b]) => (
                   <button className={`co-choice${modo === k ? " co-choice--active" : ""}`} key={k} onClick={() => { setModo(k); setModoManual(true); }}>
@@ -227,9 +230,9 @@ export default function ModalColarFaturamento({ ctx }) {
                 style={{ ...css.inp, fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.7, resize: "vertical", height: alturaTexto, overflowY: "auto" }}
               />
               <div style={{ fontSize: 9, color: t.txt2, marginTop: 4 }}>
-                {def.perguntaManifesto
-                  ? "A data do manifesto é preenchida ao lado, não no texto. ID saiu do faturamento — agora é campo da contratação."
-                  : "Placas podem vir juntas (KEW9943 / KQW5I51). Valores entram como estão no texto. PGTO aceita cheque, conta ou ambos — e fica só no app, porque a planilha não tem essa coluna."}
+                Pode misturar: motorista, placas, documentos e valores no mesmo bloco — o que vier é lido.
+                {pedeManifesto ? " A data do manifesto é preenchida ao lado, não no texto." : ""}
+                {" Placas podem vir juntas (KEW9943 / KQW5I51) e PGTO aceita cheque, conta ou ambos."}
               </div>
             </div>
 
@@ -278,7 +281,7 @@ export default function ModalColarFaturamento({ ctx }) {
             )}
 
             {/* Data do manifesto — vem da tela, só no faturamento */}
-            {reg && def.perguntaManifesto && (
+            {reg && pedeManifesto && (
               <div style={{ flexShrink: 0 }}>
                 <label style={lbl}>{CAMPO_MANIFESTO.l} <span style={{ color: t.verde, fontSize: 8 }}>(data do lançamento — editável)</span></label>
                 <input type="date" value={manifestoISO} onChange={e => setManifestoISO(e.target.value)} style={{ ...css.inp, fontSize: 12, padding: "7px 10px" }} />
