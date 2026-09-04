@@ -6,6 +6,7 @@ import { criarMotorista, atualizarMotorista } from "../motoristas.js";
 import { parseBloco, detectarModo, MODO_PADRAO } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
 
+import ModalHeader from "../components/ModalHeader.jsx";
 export default function ModalWhatsApp({ ctx }) {
   const {
     wppTipoOpen, setWppTipoOpen,
@@ -119,19 +120,8 @@ export default function ModalWhatsApp({ ctx }) {
         >
           <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: 460 }}>
             {/* Header */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 20px",borderBottom:`1px solid ${t.borda}`,background:"rgba(37,211,102,.05)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                {hIco(<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </>,"#25D366",20)}
-                <div>
-                  <div style={{fontFamily:"var(--font-heading)",fontWeight:700,fontSize:15,color:t.txt}}>WhatsApp</div>
-                  <div style={{fontSize:10,color:t.txt2,fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase",marginTop:1}}>Selecione o modelo</div>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" onClick={()=>setWppTipoOpen(false)}>
-                {hIco(<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,t.txt2,18)}
-              </Button>
-            </div>
+            <ModalHeader tom="whatsapp" icone="message" titulo="WHATSAPP"
+              sub="Selecione o modelo" onFechar={()=>setWppTipoOpen(false)} />
             {/* Search / DT Context */}
             <div style={{padding:"12px 16px",borderBottom:`1px solid ${t.borda}`}}>
               {(wppSearchReg||buscaResult) ? (
@@ -300,14 +290,8 @@ export default function ModalWhatsApp({ ctx }) {
                 em 2 colunas e o conteúdo continua cabendo sem rolar. */}
             <div style={{...css.modal,maxWidth:bankForm?760:css.modal.maxWidth,transition:"max-width .22s cubic-bezier(.34,1.1,.64,1)"}}>
               {/* Header */}
-              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.06)"}}>
-                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>
-                <div style={{flex:1}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>WHATSAPP</div>
-                  <div style={{fontSize:9,color:t.txt2}}>Revise os dados antes de enviar</div>
-                </div>
-                <Button variant="ghost" size="touch" iconOnly onClick={()=>setWppModal(null)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-              </div>
+              <ModalHeader tom="whatsapp" icone="smartphone" titulo="WHATSAPP"
+                sub="Revise os dados antes de enviar" onFechar={()=>setWppModal(null)} />
 
               <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}}>
 
@@ -529,14 +513,8 @@ export default function ModalWhatsApp({ ctx }) {
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppModal2(null)}>
             <div style={{...css.modal}}>
               {/* Header */}
-              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
-                <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="file-text" s={18} c={t.azulLt}/></div>
-                <div style={{flex:1}}>
-                  <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>WHATSAPP DOC</div>
-                  <div style={{fontSize:9,color:t.txt2}}>Mensagem documentária · RO obrigatório</div>
-                </div>
-                <Button variant="ghost" size="touch" iconOnly onClick={()=>setWppModal2(null)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-              </div>
+              <ModalHeader tom="azul" icone="file-text" titulo="WHATSAPP DOC"
+                sub="Mensagem documentária · RO obrigatório" onFechar={()=>setWppModal2(null)} />
 
               <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}}>
 
@@ -647,11 +625,9 @@ export default function ModalWhatsApp({ ctx }) {
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppFatModal(null)}>
             <div style={{...css.modal}}>
-              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:"rgba(37,211,102,.05)"}}>
-                <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="receipt" s={18} c="#25D366"/></div>
-                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>FATURAMENTO</div><div style={{fontSize:9,color:t.txt2}}>{isAvb ? "CTE · MDF · MAT · CODIGO · NF" : "CTE · MDF · MAT · DT · NF · ID"}</div></div>
-                <Button variant="ghost" size="touch" iconOnly onClick={()=>setWppFatModal(null)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-              </div>
+              <ModalHeader tom="whatsapp" icone="receipt" titulo="FATURAMENTO"
+                sub={isAvb ? "CTE · MDF · MAT · CODIGO · NF" : "CTE · MDF · MAT · DT · NF · ID"}
+                onFechar={()=>setWppFatModal(null)} />
               <div style={{flex:"1 1 auto",minHeight:0,overflowY:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}}>
                 <div style={{background:t.bg,borderRadius:10,padding:"10px 12px",border:`1px solid ${t.borda}`}}>
                   <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1,color:t.txt2,fontWeight:700,marginBottom:8}}>Preview</div>
@@ -697,8 +673,6 @@ export default function ModalWhatsApp({ ctx }) {
         const {reg,mot,tipo} = wppPagModal;
         const isDiaria = tipo === "diarias";
         const nomeLabel = isDiaria ? "DIÁRIAS" : "DESCARGA / STRETCH";
-        const headerColor = isDiaria ? t.danger : t.azulLt;
-        const headerBg = isDiaria ? "rgba(246,70,93,.06)" : "rgba(22,119,255,.06)";
         const placas = [mot?.placa1||reg.placa,mot?.placa2,mot?.placa3,mot?.placa4].filter(Boolean).join(" / ")||reg.placa||"—";
         const pixLabel = mot?.pix_tipo ? `${mot.pix_tipo}: ${mot.pix_chave||"—"}` : "—";
         const inpP = {...css.inp,fontSize:12,padding:"7px 10px"};
@@ -755,11 +729,9 @@ export default function ModalWhatsApp({ ctx }) {
         return (
           <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setWppPagModal(null)}>
             <div style={{...css.modal}}>
-              <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:headerBg}}>
-                <div style={{width:36,height:36,borderRadius:9,background:`${headerColor}22`,border:`1px solid ${headerColor}44`,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n={isDiaria?"bed":"package"} s={18} c={headerColor}/></div>
-                <div style={{flex:1}}><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:headerColor}}>{nomeLabel}</div><div style={{fontSize:9,color:t.txt2}}>Solicitar pagamento · {reg.nome||"—"}</div></div>
-                <Button variant="ghost" size="touch" iconOnly onClick={()=>setWppPagModal(null)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-              </div>
+              <ModalHeader tom={isDiaria ? "vermelho" : "azul"} icone={isDiaria?"bed":"package"}
+                titulo={nomeLabel} sub={`Solicitar pagamento · ${reg.nome||"—"}`}
+                onFechar={()=>setWppPagModal(null)} />
 
               <div style={{flex:1,minHeight:0,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:10}}>
                 {/* Dados do registro */}
@@ -893,14 +865,8 @@ export default function ModalWhatsApp({ ctx }) {
         <div className="co-modal-overlay co-modal-overlay--center" style={{zIndex:"calc(var(--z-modal) + 10)"}} onClick={e=>{if(e.target===e.currentTarget)setWppConfirmModal(null);}}>
           <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: 460, maxHeight: "96vh" }}>
             {/* Header */}
-            <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid var(--borda)",background:"rgba(37,211,102,.06)",flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:"rgba(37,211,102,.15)",border:"1px solid rgba(37,211,102,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="smartphone" s={18} c="#25D366"/></div>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:"#25D366"}}>MENSAGEM WHATSAPP</div>
-                <div style={{fontSize:9,color:"var(--text2)"}}>Copie o texto ou clique em Abrir no WhatsApp</div>
-              </div>
-              <Button variant="ghost" size="touch" iconOnly onClick={()=>setWppConfirmModal(null)}><Icon n="x" s={16} c="var(--text2)" sw={2}/></Button>
-            </div>
+            <ModalHeader tom="whatsapp" icone="smartphone" titulo="MENSAGEM WHATSAPP"
+              sub="Copie o texto ou clique em Abrir no WhatsApp" onFechar={()=>setWppConfirmModal(null)} />
             {/* Texto */}
             <div style={{flex:1,overflowY:"auto",padding:14}}>
               <div style={{fontSize:8,textTransform:"uppercase",letterSpacing:1.2,color:"var(--text2)",fontWeight:700,marginBottom:6}}>Texto da mensagem</div>

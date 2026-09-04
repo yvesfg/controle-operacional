@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 
+import ModalHeader from "../components/ModalHeader.jsx";
 export default function ModalMotorista({ ctx }) {
   const {
     formData, setFormData,
@@ -19,11 +20,8 @@ export default function ModalMotorista({ ctx }) {
   return (
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
           <div style={css.modal}>
-            <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center"}}>{hIco(<><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,null,20,2)}</div>
-              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0?"EDITAR":"NOVO"} MOTORISTA</div></div>
-              <Button variant="ghost" size="touch" iconOnly onClick={()=>setModalOpen(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-            </div>
+            <ModalHeader tom="verde" icone="truck" titulo={`${editIdx>=0?"EDITAR":"NOVO"} MOTORISTA`}
+              onFechar={()=>setModalOpen(null)} />
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,display:"flex",flexDirection:"column",gap:10,maxHeight:"calc(96vh - 120px)"}}>
 
               {/* ── Identificação ── */}

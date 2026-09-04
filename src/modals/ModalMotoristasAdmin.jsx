@@ -1,4 +1,5 @@
 import Icon from "../components/Icon.jsx";
+import ModalHeader from "../components/ModalHeader.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 
 export default function ModalMotoristasAdmin({ ctx }) {
@@ -53,10 +54,9 @@ export default function ModalMotoristasAdmin({ ctx }) {
       {motSugestOpen && (
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotSugestOpen(false)}>
           <div style={{...css.modal,maxWidth:480}}>
-            <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.verde,display:"flex",alignItems:"center",gap:7}}><Icon n="link" s={15} c={t.verde}/> SUGESTÕES DE VÍNCULO</div>
-              <Button variant="ghost" size="touch" iconOnly onClick={()=>setMotSugestOpen(false)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-            </div>
+            <ModalHeader tom="verde" icone="link" titulo="SUGESTÕES DE VÍNCULO"
+              sub="Placas cadastradas encontradas em viagens com outro nome"
+              onFechar={()=>setMotSugestOpen(false)} />
             <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:8,maxHeight:"calc(96vh - 120px)"}}>
               <div style={{fontSize:10,color:t.txt2,marginBottom:4}}>Placas dos motoristas cadastrados foram encontradas em registros de viagem com nomes diferentes. Aceite para atualizar o nome no registro.</div>
               {motSugestData.map((s,i)=>(
@@ -103,10 +103,9 @@ export default function ModalMotoristasAdmin({ ctx }) {
       {motExcluirLoteOpen && (
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotExcluirLoteOpen(false)}>
           <div style={{...css.modal,maxWidth:360}}>
-            <div style={{padding:"16px 16px 12px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid rgba(246,70,93,.25)`}}>
-              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:2,color:t.danger,display:"flex",alignItems:"center",gap:7}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,t.danger,16)} EXCLUIR EM LOTE</div>
-              <Button variant="ghost" size="touch" iconOnly onClick={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-            </div>
+            <ModalHeader tom="vermelho" icone="trash" titulo="EXCLUIR EM LOTE"
+              sub="Ação sem volta — exige confirmação digitada"
+              onFechar={()=>{setMotExcluirLoteOpen(false);setMotExcluirLoteTexto("");}} />
             <div style={{padding:16}}>
               <div style={{fontSize:12,color:t.txt,marginBottom:8}}>Você está prestes a excluir <b style={{color:t.danger}}>{motSelecionados.size} motorista(s)</b>. Esta ação não pode ser desfeita.</div>
               <div style={{fontSize:10,color:t.txt2,marginBottom:10}}>Digite <b style={{color:t.danger}}>EXCLUIR</b> para confirmar:</div>

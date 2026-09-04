@@ -4,6 +4,7 @@ import { Button } from "../design-system/components/Button.jsx";
 import { clickable } from "../utils.js";
 import { faltandoFaturamento } from "../faturamentoParse.js";
 import Icon from "../components/Icon.jsx";
+import ModalHeader from "../components/ModalHeader.jsx";
 import DestinosAccordion from "./DestinosAccordion.jsx";
 
 const PAGINA = 10;
@@ -43,28 +44,23 @@ export default function ModalDashDrill({ ctx }) {
     >
       <div className="co-modal-box co-modal-box--flush" style={{ maxWidth: ehLista?860:640, maxHeight: "80vh" }} onClick={e=>e.stopPropagation()}>
         {/* Header */}
-        <div style={{padding:"14px 18px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-          {voltar&&(
+        <ModalHeader
+          tom="accent"
+          icone={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":(dashDrillModal.type==="destino"||ehLista)?"map-pin":"chart"}
+          titulo={dashDrillModal.label}
+          sub={ehLista
+            ? `${nDestinos} destino${nDestinos!==1?"s":""} no período · toque para ver os motoristas`
+            : dashDrillModal.type==="motoristas"
+            ? `${new Set(dashDrillModal.regs.map(r=>r.nome).filter(Boolean)).size} motoristas no período`
+            : `${dashDrillModal.regs.length} ${dashDrillModal.regs.length!==1?"viagens":"viagem"} · ${dashDrillModal.type==="motorista"?"Histórico completo":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
+          esquerda={voltar&&(
             <Button variant="secondary" size="sm" onClick={()=>setDashDrillModal(voltar)} title="Voltar" style={{ minWidth: 44, flexShrink: 0 }}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={t.txt2} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               {!isMobile&&"Voltar"}
             </Button>
           )}
-          <div style={{width:36,height:36,borderRadius:9,background:`rgba(217,98,43,.12)`,border:`1.5px solid rgba(217,98,43,.3)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <Icon n={dashDrillModal.type==="motorista"||dashDrillModal.type==="motoristas"?"user":(dashDrillModal.type==="destino"||ehLista)?"map-pin":"chart"} s={18} c={t.ouro}/>
-          </div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:14,fontWeight:800,color:t.txt,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{dashDrillModal.label}</div>
-            <div style={{fontSize:9,color:t.txt2,marginTop:2}}>
-              {ehLista
-                ? `${nDestinos} destino${nDestinos!==1?"s":""} no período · toque para ver os motoristas`
-                : dashDrillModal.type==="motoristas"
-                ? `${new Set(dashDrillModal.regs.map(r=>r.nome).filter(Boolean)).size} motoristas no período`
-                : `${dashDrillModal.regs.length} ${dashDrillModal.regs.length!==1?"viagens":"viagem"} · ${dashDrillModal.type==="motorista"?"Histórico completo":dashDrillModal.type==="destino"?"Motoristas nesta rota":"Registros com este status"}`}
-            </div>
-          </div>
-          <Button variant="ghost" size="touch" iconOnly onClick={()=>setDashDrillModal(null)} style={{ flexShrink: 0 }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-        </div>
+          onFechar={()=>setDashDrillModal(null)}
+        />
         {/* Conteúdo */}
         <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"10px 14px 14px",maxHeight:"calc(96vh - 120px)"}}>
           {ehLista?(

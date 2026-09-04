@@ -4,6 +4,7 @@ import { getPerfil } from "../operacao/perfil.js";
 import Toggle from "../components/Toggle.jsx";
 import Icon from "../components/Icon.jsx";
 
+import ModalHeader from "../components/ModalHeader.jsx";
 function ModalEditComponent({ ctx }) {
   const {
     formData, setFormData,
@@ -277,19 +278,9 @@ function ModalEditComponent({ ctx }) {
       <div style={modalStyle}>
 
         {/* ── HEADER ── */}
-        <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-          <div style={{width:36,height:36,borderRadius:9,background:`linear-gradient(135deg,${editIdx>=0?t.ouroDk:t.azul},${editIdx>=0?t.ouro:t.azulLt})`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {editIdx>=0
-              ? hIco(<><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>, null, 18, 2)
-              : hIco(<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><polyline points="8 2 8 6 16 6 16 2"/></>, null, 18, 2)
-            }
-          </div>
-          <div>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.txt}}>{editIdx>=0 ? "EDITAR" : "NOVO REGISTRO"}</div>
-            <div style={{fontSize:9,color:t.txt2}}>Preencha os dados</div>
-          </div>
-          <Button variant="ghost" size="touch" iconOnly onClick={()=>setModalOpen(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-        </div>
+        <ModalHeader tom={editIdx>=0 ? "accent" : "azul"} icone={editIdx>=0 ? "edit" : "clipboard"}
+          titulo={editIdx>=0 ? "EDITAR" : "NOVO REGISTRO"} sub="Preencha os dados"
+          onFechar={()=>setModalOpen(null)} />
 
         {/* ── BODY ── */}
         {isWide ? (

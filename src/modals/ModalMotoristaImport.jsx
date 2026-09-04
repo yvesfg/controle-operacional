@@ -2,6 +2,7 @@ import { clickable } from '../utils.js';
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from '../components/Icon.jsx';
 
+import ModalHeader from "../components/ModalHeader.jsx";
 export default function ModalMotoristaImport({ ctx }) {
   const {
     motImportOpen, setMotImportOpen,
@@ -68,20 +69,12 @@ export default function ModalMotoristaImport({ ctx }) {
     <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setMotImportOpen(false)}>
       <div style={{...css.modal}}>
         {/* Header */}
-        <div style={{padding:"13px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0,background:`rgba(22,119,255,.06)`}}>
-          <div style={{width:36,height:36,borderRadius:9,background:"rgba(22,119,255,.15)",border:"1px solid rgba(22,119,255,.3)",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon n="download" s={18} c={t.azulLt}/></div>
-          <div style={{flex:1}}>
-            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:17,letterSpacing:2,color:t.azulLt}}>
-              {motImportStep===1?"IMPORTAR CONTATOS":"SUGESTÕES DE VÍNCULO"}
-            </div>
-            <div style={{fontSize:9,color:t.txt2}}>
-              {motImportStep===1
-                ? `${novos.length} novos · ${conflitos.length} conflito${conflitos.length!==1?"s":""}`
-                : `${vinculos.length} DT${vinculos.length!==1?"s":""} com placa correspondente`}
-            </div>
-          </div>
-          <Button variant="ghost" size="touch" iconOnly onClick={()=>setMotImportOpen(false)}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-        </div>
+        <ModalHeader tom="azul" icone="users"
+          titulo={motImportStep===1?"IMPORTAR CONTATOS":"SUGESTÕES DE VÍNCULO"}
+          sub={motImportStep===1
+            ? `${novos.length} novos · ${conflitos.length} conflito${conflitos.length!==1?"s":""}`
+            : `${vinculos.length} DT${vinculos.length!==1?"s":""} com placa correspondente`}
+          onFechar={()=>setMotImportOpen(false)} />
 
         <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:14,display:"flex",flexDirection:"column",gap:12,maxHeight:"calc(96vh - 120px)"}}>
 

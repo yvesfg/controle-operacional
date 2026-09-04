@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "../design-system/components/Button.jsx";
 import Toggle from "../components/Toggle.jsx";
+import ModalHeader from "../components/ModalHeader.jsx";
 
 // ModalDespesa — criar/editar uma única despesa (CRUD da planilha de débitos).
 // Props: { open, onClose, onSave, onDelete, inicial, t, isMobile }
@@ -81,13 +82,9 @@ export default function ModalDespesa({ open, onClose, onSave, onDelete, inicial,
         style={{ background: t.card, borderRadius: 16, border: `1px solid ${t.borda}`,
           width: isMobile ? "100%" : 460, maxWidth: "100%", maxHeight: "90vh", overflow: "auto",
           boxShadow: "0 20px 60px rgba(0,0,0,.4)" }}>
-        <div style={{ padding: "16px 20px", borderBottom: `1px solid ${t.borda}`,
-          display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: t.txt }}>
-            {ehEdicao ? "Editar despesa" : "Nova despesa"}
-          </div>
-          <Button variant="ghost" size="md" onClick={onClose}>×</Button>
-        </div>
+        <ModalHeader tom="accent" icone="receipt"
+          titulo={ehEdicao ? "EDITAR DESPESA" : "NOVA DESPESA"}
+          onFechar={onClose} />
 
         <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
           <div>

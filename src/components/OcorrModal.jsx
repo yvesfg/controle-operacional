@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
+import ModalHeader from "./ModalHeader.jsx";
 
 const TIPOS = [
   { k: "falta",       l: "Falta",        cor: "var(--cat-red)" },
@@ -99,24 +99,9 @@ export default function OcorrModal({ open, onClose, onSave, dtRecord, t, hIco, c
         overflow: "hidden",
       }}>
         {/* Header */}
-        <div style={{
-          padding: "11px 14px 9px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderBottom: `1px solid ${t.borda}`, flexShrink: 0,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: t.txt, textTransform: "uppercase" }}>
-              Nova Ocorrência
-            </span>
-            {dtRecord && (
-              <Badge variant="default" size="sm">DT {dtRecord.dt}</Badge>
-            )}
-            {tipos.size > 1 && (
-              <Badge variant="default" size="sm">{tipos.size} tipos</Badge>
-            )}
-          </div>
-          <Button variant="secondary" size="md" onClick={onClose}>×</Button>
-        </div>
+        <ModalHeader tom="laranja" icone="alert" titulo="NOVA OCORRÊNCIA"
+          sub={dtRecord ? `DT ${dtRecord.dt}${tipos.size > 1 ? ` · ${tipos.size} tipos` : ""}` : null}
+          onFechar={onClose} />
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: "auto", padding: "11px 14px", display: "flex", flexDirection: "column", gap: 11 }}>

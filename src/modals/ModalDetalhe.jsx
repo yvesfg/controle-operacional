@@ -3,6 +3,7 @@ import { Badge } from "../design-system/components/Badge.jsx";
 import { Button } from "../design-system/components/Button.jsx";
 import OcorrModal from "../components/OcorrModal.jsx";
 import Icon from "../components/Icon.jsx";
+import ModalHeader from "../components/ModalHeader.jsx";
 
 export default function ModalDetalhe({ ctx }) {
   const {
@@ -79,14 +80,15 @@ export default function ModalDetalhe({ ctx }) {
           <div className="co-dt-overlay" onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
             <div className="co-dt-modal">
               {/* Header */}
-              <div style={{flexShrink:0,background:theme==="dark"?"linear-gradient(135deg,#161a1e,#1e2026)":`linear-gradient(135deg,#f8f9fa,#fff)`}}>
-                <div style={{padding:"10px 14px 8px",display:"flex",alignItems:"center",gap:9,borderBottom:excluirConfirm==="detalhe"?`1px solid rgba(220,38,38,.25)`:`1px solid ${t.borda}`}}>
-                  <div style={{width:34,height:34,borderRadius:9,background:`linear-gradient(135deg,${t.verdeDk},${t.verde})`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon n="truck" s={18} c="#fff"/></div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:2,color:t.txt,lineHeight:1}}>{r.nome||"—"}</div>
-                    <div style={{fontSize:9,color:t.txt2,letterSpacing:.5}}>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}{r.data_criacao&&<span style={{opacity:.6}}> · {new Date(r.data_criacao).toLocaleDateString("pt-BR")}</span>}</div>
-                  </div>
-                  <div style={{display:"flex",gap:5,flexShrink:0}}>
+              <div style={{flexShrink:0}}>
+                {/* Tom vermelho enquanto a exclusão está sendo confirmada: a faixa
+                    do topo passa a dizer em que estado o modal está. */}
+                <ModalHeader
+                  tom={excluirConfirm==="detalhe" ? "vermelho" : "verde"}
+                  icone="truck"
+                  titulo={r.nome||"—"}
+                  sub={<>DT {r.dt} · {r.placa||"—"} · {r.cpf||"—"}{r.data_criacao&&<span style={{opacity:.6}}> · {new Date(r.data_criacao).toLocaleDateString("pt-BR")}</span>}</>}
+                  acoes={<div style={{display:"flex",gap:5,flexShrink:0}}>
                     {canEditDetalhe && (
                       <Button variant="outline" size="sm" onClick={()=>{
                         const idx=DADOS.findIndex(x=>x.dt===r.dt);
@@ -96,9 +98,9 @@ export default function ModalDetalhe({ ctx }) {
                     {canEditDetalhe && excluirConfirm!=="detalhe" && (
                       <Button variant="danger-outline" size="sm" onClick={()=>{setExcluirConfirm("detalhe");setExcluirTexto("");}}>{hIco(<><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>, "var(--red)", 14)}</Button>
                     )}
-                    <Button variant="secondary" size="touch" iconOnly onClick={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-                  </div>
-                </div>
+                  </div>}
+                  onFechar={()=>{setModalOpen(null);setExcluirConfirm(null);setExcluirTexto("");}}
+                />
                 {excluirConfirm==="detalhe" && (
                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 16px",background:"rgba(220,38,38,.06)",borderBottom:`1px solid rgba(220,38,38,.2)`}}>
                     <span style={{fontSize:11,color:"var(--red)",fontWeight:600,whiteSpace:"nowrap"}}>Digite EXCLUIR para confirmar:</span>

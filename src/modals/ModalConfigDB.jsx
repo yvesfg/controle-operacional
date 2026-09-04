@@ -4,6 +4,7 @@ import { Button } from "../design-system/components/Button.jsx";
 import { clickable, saveJSON } from "../utils.js";
 import Icon from "../components/Icon.jsx";
 
+import ModalHeader from "../components/ModalHeader.jsx";
 export default function ModalConfigDB({ ctx }) {
   const {
     modalOpen, setModalOpen,
@@ -30,11 +31,8 @@ export default function ModalConfigDB({ ctx }) {
       {modalOpen === "configdb" && (
         <div style={css.overlay} onClick={e=>e.target===e.currentTarget&&setModalOpen(null)}>
           <div style={{...css.modal,maxWidth:480}}>
-            <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:10,borderBottom:`1px solid ${t.borda}`,flexShrink:0}}>
-              <Icon n="database" s={19} c={t.txt}/>
-              <div><div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,letterSpacing:2,color:t.txt}}>BANCO DE DADOS</div><div style={{fontSize:10,color:t.txt2}}>Conexões Supabase</div></div>
-              <Button variant="ghost" size="touch" iconOnly onClick={()=>setModalOpen(null)} style={{ marginLeft: "auto" }}><Icon n="x" s={16} c={t.txt2} sw={2}/></Button>
-            </div>
+            <ModalHeader tom="accent" icone="database" titulo="BANCO DE DADOS"
+              sub="Conexões Supabase" onFechar={()=>setModalOpen(null)} />
             <div style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:16,maxHeight:"calc(96vh - 120px)"}}>
               {conexoes.map((c,i) => (
                 <div key={i} style={{background:t.card2,borderRadius:9,padding:10,marginBottom:6,display:"flex",alignItems:"center",gap:8}}>

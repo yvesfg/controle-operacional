@@ -13,6 +13,7 @@ import React from "react";
 import { Button } from "../design-system/components/Button.jsx";
 import { DESIGN } from "../constants.js";
 import Icon from "../components/Icon.jsx";
+import ModalHeader from "../components/ModalHeader.jsx";
 import {
   BLOCOS, MODO_PADRAO, detectarModo, parseBloco, compararComRegistro,
   paraDataBR, dataDeHojeBR, CAMPO_MANIFESTO, CAMPOS_SO_APP, CAMPOS_FATURAMENTO_CHAVE,
@@ -204,24 +205,9 @@ export default function ModalColarFaturamento({ ctx }) {
   return (
     <div style={css.overlay} onClick={e => e.target === e.currentTarget && !salvando && setFaturaColarOpen(null)}>
       <div style={{ ...css.modal, maxWidth: isDesktop ? 1040 : 640 }}>
-        {/* Header — superfície elevada + faixa de acento no topo, o mesmo recurso
-            que os KPIs do dashboard usam. O desenho anterior era um wash de 6%:
-            quase invisível, e o título em accent sobre ele ficava apagado.
-            Título agora em texto primário; o accent fica só na faixa e no ícone. */}
-        <div style={{ padding: "13px 16px 11px", display: "flex", alignItems: "center", gap: 11, borderTop: `3px solid ${t.ouro}`, borderBottom: `1px solid ${t.borda}`, flexShrink: 0, background: t.card2 }}>
-          <div style={{ width: 38, height: 38, borderRadius: DESIGN.r.btn, background: t.ouro, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icon n="clipboard" s={19} c="var(--on-primary)" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, letterSpacing: 2, color: t.txt }}>PREENCHER PELO BLOCO</div>
-            <div style={{ fontSize: 11, color: t.txt2 }}>Cole o texto do WhatsApp — grava na DT e na planilha</div>
-          </div>
-          {/* Fechar: contorno + ícone claro (classe .co-modal-close). Fica visível
-              sem competir com GRAVAR, e só vira vermelho no hover/foco. */}
-          <button className="co-modal-close" onClick={() => setFaturaColarOpen(null)} disabled={salvando} title="Fechar" aria-label="Fechar">
-            <Icon n="x" s={17} c="currentColor" sw={2} />
-          </button>
-        </div>
+        <ModalHeader tom="accent" icone="clipboard" titulo="PREENCHER PELO BLOCO"
+          sub="Cole o texto do WhatsApp — grava na DT e na planilha"
+          onFechar={() => setFaturaColarOpen(null)} fecharDesabilitado={salvando} />
 
         {/* Corpo — 2 colunas no desktop, empilhado abaixo disso */}
         <div style={{
