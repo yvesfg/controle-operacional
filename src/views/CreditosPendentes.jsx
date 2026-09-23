@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "../design-system/components/Button.jsx";
 import Icon from "../components/Icon.jsx";
 import useModalEsc from "../hooks/useModalEsc.js";
+import { clickable } from "../utils.js";
 import { listarIndevidasPendentesGlobal, marcarCobrado, desmarcarCobrado, listarCreditosGlobal, vincularCredito } from "../despesas.js";
 import KpiCard from "../components/KpiCard.jsx";
 
@@ -275,17 +276,19 @@ export default function CreditosPendentes({ ctx }) {
                           <input value={buscaCred} onChange={(e) => setBuscaCred(e.target.value)} autoFocus
                             placeholder="Buscar crédito por natureza / histórico / conta (qualquer filial)..."
                             style={{ width: "100%", boxSizing: "border-box", padding: "7px 10px", fontSize: 12, borderRadius: 8, border: `1.5px solid ${t.borda}`, background: t.bg, color: t.txt, fontFamily: "inherit", outline: "none" }} />
-                          <div style={{ maxHeight: 220, overflowY: "auto", marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div style={{ maxHeight: 220, overflowY: "auto", marginTop: 6, border: `1px solid ${t.borda}`, borderRadius: 8, padding: 3 }}>
                             {candidatosCredito.length === 0 ? (
                               <div style={{ fontSize: 11, color: t.txt2, padding: 8 }}>Nenhum crédito encontrado.</div>
                             ) : candidatosCredito.map((c) => (
-                              <Button variant="success" size="sm" key={c.id} onClick={() => vincular(d.id, c.id)}>
-                                <span style={{ fontWeight: 700, color: t.verde, minWidth: 84, flexShrink: 0 }}>{money(Number(c.valor || 0))}</span>
-                                <span style={{ fontSize: 11, color: t.azulLt || t.txt2, minWidth: 66, flexShrink: 0 }}>{filialLabel(filialKey(c))}</span>
-                                <span style={{ fontSize: 11, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.natureza || c.historico || "—"}</span>
+                              <div key={c.id} {...clickable(() => vincular(d.id, c.id))}
+                                className="cp-cred-row"
+                                style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 7px", borderRadius: 6, cursor: "pointer" }}>
+                                <span style={{ background: `${t.verde}1a`, color: t.verde, fontSize: 11, fontWeight: 700, padding: "4px 8px", borderRadius: 6, minWidth: 76, textAlign: "center", flexShrink: 0 }}>{money(Number(c.valor || 0))}</span>
+                                <span style={{ fontSize: 10, color: t.txt2, minWidth: 56, flexShrink: 0 }}>{filialLabel(filialKey(c))}</span>
+                                <span style={{ fontSize: 12, color: t.txt, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.natureza || c.historico || "—"}</span>
                                 <span style={{ fontSize: 10, color: t.txt2, flexShrink: 0 }}>{mesLabel(c.mes_ref)}</span>
                                 {c.exato && <span style={{ fontSize: 9, fontWeight: 700, color: t.verde, flexShrink: 0 }}>MATCH</span>}
-                              </Button>
+                              </div>
                             ))}
                           </div>
                         </div>

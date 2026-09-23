@@ -849,6 +849,9 @@ a:focus-visible,
   .co-modal-close { width: 44px; height: 44px; }
 }
 
+/* Linha clicável de lista (ex.: candidatos de vínculo de crédito) — hover neutro, sem cor de botão */
+.cp-cred-row:hover { background: var(--color-bg-alt); }
+
 /* ── Reduced motion — sobrepõe inline styles via !important; PRODUCT.md exige alternativa instantânea ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
