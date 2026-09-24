@@ -388,6 +388,15 @@ function mapearColunaMaracanau(n) {
     'desc_aguardando': 'desc_aguardando', 'aguardando descarga': 'desc_aguardando',
     'alguma ocorrencia / sgs': 'sgs', 'alguma ocorrência / sgs': 'sgs',
 
+    // Cabecalhos reais da planilha que o aviso de 24/09/2026 mostrou sem mapeamento.
+    // DIÁRIAS PAGAS, CTE COMP VLR, D01/D05 e MINUTA DESCARGA ficam de fora de
+    // proposito: o app edita esses campos, e a planilha apagaria o que foi digitado.
+    'qtd dias': 'dias', 'quant.dias': 'dias', 'quant dias': 'dias',
+    'diárias recebido': 'diaria_rec', 'diarias recebido': 'diaria_rec',
+    'pag. descarga': 'pag_desc', 'pag descarga': 'pag_desc',
+    'pag. stretch': 'pag_stretch',
+    'mdfe': 'mdf',
+
     // ── Observacoes ── (vieram de Imperatriz em 24/09/2026: obs_chegada e
     // obs_descarga estavam vazias nas 697 linhas do Maracanau)
     'obs chegada': 'obs_chegada', 'obs. chegada': 'obs_chegada',
