@@ -172,6 +172,7 @@ export const DEV_CHANGELOG = [
       "CAMPOS · A coluna sgs nunca existiu no banco: os 3 .gs mandavam e o app inteiro le r.sgs (Ocorrencias, Relatorios, editar DT), mas upsert_co_lote e patch_operacional descartavam calados. Criada nas 3 tabelas (migration 080).",
       "CAMPOS · AVB e Maracanau nao avisavam coluna sem mapeamento (so Imperatriz avisava). Ganharam o aviso no status. Na AVB, data_desc, obs, diarias, placa2, id_doc e informou_analista estao vazios nas 654 linhas; no Maracanau, obs_chegada/obs_descarga vazios nas 697. Entraram os aliases de Imperatriz para essas colunas; o aviso da proxima rodada mostra o que ainda falta.",
       "NAO MAPEADO DE PROPOSITO (Imperatriz) · FORMS, DIARIAS PAGAS, CTE COMP, D01/D05, MINUTA DESCARGA, DCC: o app e dono desses campos (detalhe DCC/minutas em useDTHandlers); mapear faria a planilha apagar o que foi digitado no app a cada 15 min.",
+      "FIX 2 · Medido depois de colar: ainda ~22 segmentos/h. A AVB regravava ~27 linhas TODA rodada sem mudanca final: o envio era por aba, e o mesmo codigo em duas abas com valores diferentes era gravado duas vezes, uma desfazendo a outra (no Maracanau bastava o campo sheet, que difere por aba). Os 3 .gs agora deduplicam entre TODAS as abas (a ultima vence, que era o resultado final de antes) e mandam um envio so; o status lista as chaves repetidas pra corrigir na planilha.",
       "PENDENTE (Yves) · Colar os 3 .gs nas planilhas (repor SUPA_URL/SUPA_KEY/WEBAPP_TOKEN no de Imperatriz) e publicar nova versao do Web App de Imperatriz."
     ],
   },

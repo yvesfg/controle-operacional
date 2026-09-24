@@ -56,6 +56,8 @@ function sincronizarComSupabase() {
   };
 
   var todosDts = []; // todo DT visto em qualquer aba nesta rodada — usado p/ marcar_fora_planilha
+  var porDT = {};     // DT -> { reg, aba } de TODAS as abas (ultima aba vence)
+  var repetidos = {}; // DT -> abas onde aparece, quando aparece em mais de uma
   var todosSemDt = []; // cargas SEM DT (com placa) capturadas p/ a fila de revisao 'sem_dt'
 
   try {
@@ -213,66 +215,21 @@ function sincronizarComSupabase() {
         registros.push(reg);
       }
 
-      // Deduplicar por DT (ultimo valor vence) — evita HTTP 500 no upsert
-      var vistosDT = {};
-      registros.forEach(function(reg) { vistosDT[reg.dt] = reg; });
-      registros = Object.values(vistosDT);
-
-      // Marca cada linha como "veio da planilha nesta rodada" + acumula pro marcar_fora_planilha global
+      // Deduplica por DT dentro da aba E entre abas (a ultima aba vence). Antes o
+      // envio era por aba: um DT presente em duas abas com valores diferentes era
+      // gravado duas vezes por rodada, uma desfazendo a outra — escrita eterna sem
+      // mudanca nenhuma no final (o que segurava o Disk IO alto em 24/09/2026).
       registros.forEach(function(reg) {
+        var ja = porDT[reg.dt];
+        if (ja && ja.aba !== nomAba) repetidos[reg.dt] = (repetidos[reg.dt] || [ja.aba]).concat(nomAba);
         reg.fora_planilha = false;
-        todosDts.push(reg.dt);
+        porDT[reg.dt] = { reg: reg, aba: nomAba };
       });
-
-      // Enviar para Supabase em lotes de 50
-      var totalLotes = Math.ceil(registros.length / 50);
-      for (var i = 0; i < registros.length; i += 50) {
-        var lote = registros.slice(i, i + 50);
-        var numLote = Math.floor(i / 50) + 1;
-        try {
-          // RPC em vez de POST direto na tabela: mesma semantica do upsert
-          // (conflito por DT, coluna ausente no payload nao e tocada), mas so
-          // grava quando a linha mudou de fato. O POST direto usava
-          // resolution=merge-duplicates, que reescreve a linha inteira toda
-          // rodada mesmo sem alteracao — ~12 milhoes de UPDATE inuteis em 5
-          // meses, que era o que estourava o Disk IO Budget do projeto.
-          var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_co_lote', {
-            method: 'POST',
-            headers: {
-              apikey: SUPA_KEY,
-              Authorization: 'Bearer ' + SUPA_KEY,
-              'Content-Type': 'application/json'
-            },
-            payload: JSON.stringify({ p_tabela: TABELA, p_rows: lote }),
-            muteHttpExceptions: true
-          });
-
-          var code = resp.getResponseCode();
-          if (code >= 200 && code < 300) {
-            statusGlobal.sincronizados += lote.length;
-            try {
-              var r = JSON.parse(resp.getContentText() || '{}');
-              statusGlobal.inseridos   += (r.inseridos   || 0);
-              statusGlobal.atualizados += (r.atualizados || 0);
-              statusGlobal.sem_mudanca += (r.sem_mudanca || 0);
-            } catch (cntErr) {}
-          } else {
-            statusGlobal.erros_http++;
-            var msg = 'Aba ' + nomAba + ' Lote ' + numLote + '/' + totalLotes + ': HTTP ' + code;
-            try {
-              var body = JSON.parse(resp.getContentText());
-              if (body.message) msg += ' - ' + body.message;
-            } catch (parseErr) {}
-            if (statusGlobal.erros_detalhes.length < 10) statusGlobal.erros_detalhes.push(msg);
-          }
-        } catch (httpErr) {
-          statusGlobal.erros_http++;
-          if (statusGlobal.erros_detalhes.length < 10) {
-            statusGlobal.erros_detalhes.push('Aba ' + nomAba + ' Lote ' + numLote + ': ' + httpErr.message);
-          }
-        }
-      }
     } // fim loop abas
+
+    todosDts = Object.keys(porDT);
+    avisarRepetidos(repetidos, 'DT', statusGlobal);
+    enviarLotes(todosDts.map(function(k) { return porDT[k].reg; }), statusGlobal);
 
     // Marca fora_planilha=true pra tudo que NAO apareceu em nenhuma aba nesta rodada
     // (rodou sem excecao ate aqui = varredura completa das abas, lista confiavel)
@@ -360,6 +317,61 @@ function sincronizarComSupabase() {
 
   gravarStatus(statusGlobal);
   Logger.log(JSON.stringify(statusGlobal, null, 2));
+}
+
+// ============================================================
+// Envio em lotes de 50 via upsert_co_lote (so grava linha que mudou)
+// ============================================================
+function enviarLotes(registros, statusGlobal) {
+  var totalLotes = Math.ceil(registros.length / 50);
+  for (var i = 0; i < registros.length; i += 50) {
+    var lote = registros.slice(i, i + 50);
+    var numLote = Math.floor(i / 50) + 1;
+    try {
+      var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_co_lote', {
+        method: 'POST',
+        headers: {
+          apikey: SUPA_KEY,
+          Authorization: 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({ p_tabela: TABELA, p_rows: lote }),
+        muteHttpExceptions: true
+      });
+      var code = resp.getResponseCode();
+      if (code >= 200 && code < 300) {
+        statusGlobal.sincronizados += lote.length;
+        try {
+          var r = JSON.parse(resp.getContentText() || '{}');
+          statusGlobal.inseridos   += (r.inseridos   || 0);
+          statusGlobal.atualizados += (r.atualizados || 0);
+          statusGlobal.sem_mudanca += (r.sem_mudanca || 0);
+        } catch (cntErr) {}
+      } else {
+        statusGlobal.erros_http++;
+        var msg = 'Lote ' + numLote + '/' + totalLotes + ': HTTP ' + code;
+        try {
+          var body = JSON.parse(resp.getContentText());
+          if (body.message) msg += ' - ' + body.message;
+        } catch (parseErr) {}
+        if (statusGlobal.erros_detalhes.length < 10) statusGlobal.erros_detalhes.push(msg);
+      }
+    } catch (httpErr) {
+      statusGlobal.erros_http++;
+      if (statusGlobal.erros_detalhes.length < 10) {
+        statusGlobal.erros_detalhes.push('Lote ' + numLote + ': ' + httpErr.message);
+      }
+    }
+  }
+}
+
+// Chave que aparece em mais de uma aba vira aviso no status: so a ultima aba
+// sobe, entao a outra copia provavelmente esta desatualizada na planilha.
+function avisarRepetidos(repetidos, rotulo, statusGlobal) {
+  var chaves = Object.keys(repetidos);
+  if (!chaves.length) return;
+  statusGlobal.info.push(chaves.length + ' ' + rotulo + '(s) em mais de uma aba (vale a ultima): ' +
+    chaves.slice(0, 15).map(function(k) { return k + ' [' + repetidos[k].join(', ') + ']'; }).join(' | '));
 }
 
 // ============================================================

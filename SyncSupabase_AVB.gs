@@ -72,6 +72,8 @@ function sincronizarAVB() {
 
   try {
     var ss     = SpreadsheetApp.getActiveSpreadsheet();
+    var porChave = {};  // chave -> { reg, aba } de TODAS as abas (ultima aba vence)
+    var repetidos = {}; // chave -> abas onde aparece, quando aparece em mais de uma
     var sheets = ss.getSheets();
 
     for (var si = 0; si < sheets.length; si++) {
@@ -172,44 +174,20 @@ function sincronizarAVB() {
         return normalizado;
       });
 
-      // Enviar em lotes de 50
-      for (var i = 0; i < registros.length; i += 50) {
-        var lote = registros.slice(i, i + 50);
-        try {
-          // RPC em vez de POST direto: mesmo upsert (conflito por `codigo`), mas
-          // so grava quando a linha mudou. Ver migration 063 — o merge-duplicates
-          // reescrevia as ~486 linhas a cada 15 min sem nada ter mudado.
-          var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_co_lote', {
-            method: 'POST',
-            headers: {
-              apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY,
-              'Content-Type': 'application/json'
-            },
-            payload: JSON.stringify({ p_tabela: TABELA, p_rows: lote }),
-            muteHttpExceptions: true
-          });
-          var code = resp.getResponseCode();
-          if (code >= 200 && code < 300) {
-            statusGlobal.sincronizados += lote.length;
-            try {
-              var r = JSON.parse(resp.getContentText() || '{}');
-              statusGlobal.inseridos   += (r.inseridos   || 0);
-              statusGlobal.atualizados += (r.atualizados || 0);
-              statusGlobal.sem_mudanca += (r.sem_mudanca || 0);
-            } catch (cntErr) {}
-          } else {
-            statusGlobal.erros_http++;
-            var msg = 'Aba ' + nomAba + ' HTTP ' + code;
-            try { var b = JSON.parse(resp.getContentText()); if (b.message) msg += ' - ' + b.message; } catch(e) {}
-            if (statusGlobal.erros_detalhes.length < 10) statusGlobal.erros_detalhes.push(msg);
-          }
-        } catch (httpErr) {
-          statusGlobal.erros_http++;
-          if (statusGlobal.erros_detalhes.length < 10)
-            statusGlobal.erros_detalhes.push('Aba ' + nomAba + ': ' + httpErr.message);
-        }
-      }
+      // Deduplica entre abas (a ultima aba vence) e envia UMA vez no fim. Antes o
+      // envio era por aba: a mesma chave em duas abas com valores diferentes era
+      // gravada duas vezes por rodada, uma desfazendo a outra — escrita eterna sem
+      // mudanca no final (~27 UPDATEs por rodada na AVB em 24/09/2026).
+      registros.forEach(function(reg) {
+        var k = reg.codigo || reg.dt;
+        var ja = porChave[k];
+        if (ja && ja.aba !== nomAba) repetidos[k] = (repetidos[k] || [ja.aba]).concat(nomAba);
+        porChave[k] = { reg: reg, aba: nomAba };
+      });
     }
+
+    avisarRepetidos(repetidos, 'codigo', statusGlobal);
+    enviarLotes(Object.keys(porChave).map(function(k) { return porChave[k].reg; }), statusGlobal);
 
     statusGlobal.ok = (statusGlobal.erros_http === 0 && statusGlobal.total_planilha > 0);
   } catch (e) {
@@ -219,6 +197,61 @@ function sincronizarAVB() {
 
   gravarStatusAVB(statusGlobal);
   Logger.log(JSON.stringify(statusGlobal, null, 2));
+}
+
+// ============================================================
+// Envio em lotes de 50 via upsert_co_lote (so grava linha que mudou)
+// ============================================================
+function enviarLotes(registros, statusGlobal) {
+  var totalLotes = Math.ceil(registros.length / 50);
+  for (var i = 0; i < registros.length; i += 50) {
+    var lote = registros.slice(i, i + 50);
+    var numLote = Math.floor(i / 50) + 1;
+    try {
+      var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_co_lote', {
+        method: 'POST',
+        headers: {
+          apikey: SUPA_KEY,
+          Authorization: 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({ p_tabela: TABELA, p_rows: lote }),
+        muteHttpExceptions: true
+      });
+      var code = resp.getResponseCode();
+      if (code >= 200 && code < 300) {
+        statusGlobal.sincronizados += lote.length;
+        try {
+          var r = JSON.parse(resp.getContentText() || '{}');
+          statusGlobal.inseridos   += (r.inseridos   || 0);
+          statusGlobal.atualizados += (r.atualizados || 0);
+          statusGlobal.sem_mudanca += (r.sem_mudanca || 0);
+        } catch (cntErr) {}
+      } else {
+        statusGlobal.erros_http++;
+        var msg = 'Lote ' + numLote + '/' + totalLotes + ': HTTP ' + code;
+        try {
+          var body = JSON.parse(resp.getContentText());
+          if (body.message) msg += ' - ' + body.message;
+        } catch (parseErr) {}
+        if (statusGlobal.erros_detalhes.length < 10) statusGlobal.erros_detalhes.push(msg);
+      }
+    } catch (httpErr) {
+      statusGlobal.erros_http++;
+      if (statusGlobal.erros_detalhes.length < 10) {
+        statusGlobal.erros_detalhes.push('Lote ' + numLote + ': ' + httpErr.message);
+      }
+    }
+  }
+}
+
+// Chave que aparece em mais de uma aba vira aviso no status: so a ultima aba
+// sobe, entao a outra copia provavelmente esta desatualizada na planilha.
+function avisarRepetidos(repetidos, rotulo, statusGlobal) {
+  var chaves = Object.keys(repetidos);
+  if (!chaves.length) return;
+  statusGlobal.info.push(chaves.length + ' ' + rotulo + '(s) em mais de uma aba (vale a ultima): ' +
+    chaves.slice(0, 15).map(function(k) { return k + ' [' + repetidos[k].join(', ') + ']'; }).join(' | '));
 }
 
 function gravarStatusAVB(status) {
