@@ -229,11 +229,13 @@ function sincronizarComSupabase() {
 
     todosDts = Object.keys(porDT);
     avisarRepetidos(repetidos, 'DT', statusGlobal);
-    enviarLotes(todosDts.map(function(k) { return porDT[k].reg; }), statusGlobal);
+    var enviados = enviarLotes(todosDts.map(function(k) { return porDT[k].reg; }), statusGlobal, function(r) { return r.dt; });
 
     // Marca fora_planilha=true pra tudo que NAO apareceu em nenhuma aba nesta rodada
     // (rodou sem excecao ate aqui = varredura completa das abas, lista confiavel)
-    if (todosDts.length > 0) {
+    // So chama quando a lista de DTs mudou desde a ultima rodada (ou o cache expirou).
+    var hashDts = todosDts.length > 0 ? hashSeMudou('dts', todosDts.slice().sort()) : null;
+    if (hashDts) {
       try {
         var respFlag = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/marcar_fora_planilha', {
           method: 'POST',
@@ -248,6 +250,8 @@ function sincronizarComSupabase() {
         var codeFlag = respFlag.getResponseCode();
         if (codeFlag < 200 || codeFlag >= 300) {
           statusGlobal.erros_detalhes.push('marcar_fora_planilha: HTTP ' + codeFlag + ' - ' + respFlag.getContentText());
+        } else {
+          lembrarHash('dts', hashDts);
         }
       } catch (flagErr) {
         statusGlobal.erros_detalhes.push('marcar_fora_planilha: ' + flagErr.message);
@@ -259,10 +263,14 @@ function sincronizarComSupabase() {
     // CONGELA depois que um humano decidiu (confirmado/erro/conciliado). Casa pela
     // identidade estavel placa+cpf+origem — entao preencher data/CTe no Sheets DEPOIS
     // da captura passa a refletir na fila (antes ficava congelado desde a 1a captura).
-    if (todosSemDt.length > 0) {
-      var vistosSemDt = {};
-      todosSemDt.forEach(function(x) { vistosSemDt[x.chave_natural] = x; });
-      var listaSemDt = Object.values(vistosSemDt); // dedupe por chave dentro da rodada
+    var semDtEnviado = false;
+    var vistosSemDt = {};
+    todosSemDt.forEach(function(x) { vistosSemDt[x.chave_natural] = x; });
+    var listaSemDt = Object.values(vistosSemDt); // dedupe por chave dentro da rodada
+    // So manda quando a fila sem-DT da planilha mudou desde a ultima rodada.
+    var hashSemDt = listaSemDt.length > 0 ? hashSeMudou('sem_dt', listaSemDt) : null;
+    if (hashSemDt) {
+      var semDtOk = true;
       for (var j = 0; j < listaSemDt.length; j += 50) {
         var loteSD = listaSemDt.slice(j, j + 50);
         try {
@@ -280,18 +288,23 @@ function sincronizarComSupabase() {
           if (codeSD >= 200 && codeSD < 300) {
             statusGlobal.sem_dt += loteSD.length;
           } else {
+            semDtOk = false;
             statusGlobal.erros_detalhes.push('sem_dt lote: HTTP ' + codeSD + ' - ' + respSD.getContentText());
           }
         } catch (sdErr) {
+          semDtOk = false;
           statusGlobal.erros_detalhes.push('sem_dt lote: ' + sdErr.message);
         }
       }
+      semDtEnviado = true;
+      if (semDtOk) lembrarHash('sem_dt', hashSemDt);
     }
 
     // Concilia pendencias 'sem_dt' contra DTs que JA existem (linha-espelho sem DT cuja carga
     // ja entrou com DT em outra linha da planilha). O gatilho so fecha quando um DT NOVO entra;
     // isto fecha as que casam com DTs antigos, evitando a fila encher de duplicata (ex.: 133 de 142).
-    try {
+    // So roda quando algo entrou/mudou nesta rodada — sem mudanca, nao ha o que conciliar.
+    if (enviados > 0 || semDtEnviado) try {
       var respConc = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/conciliar_sem_dt_existentes', {
         method: 'POST',
         headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
@@ -320,12 +333,48 @@ function sincronizarComSupabase() {
 }
 
 // ============================================================
-// Envio em lotes de 50 via upsert_co_lote (so grava linha que mudou)
+// Envio em lotes de 50 via upsert_co_lote — SO as linhas que mudaram
 // ============================================================
-function enviarLotes(registros, statusGlobal) {
-  var totalLotes = Math.ceil(registros.length / 50);
-  for (var i = 0; i < registros.length; i += 50) {
-    var lote = registros.slice(i, i + 50);
+// O script guarda (CacheService, 6 h) o hash de cada linha enviada e so manda o
+// que mudou desde a ultima rodada. Antes toda rodada mandava ~2.700 linhas pro
+// banco comparar (~160 chamadas pesadas a cada 15 min), mesmo sem nada mudado —
+// no plano Nano isso bastava pra esgotar o Disk IO no meio da tarde (quedas de
+// 23 e 24/09/2026). O cache expira em 6 h: a cada 6 h vai tudo de novo, o que
+// corrige qualquer divergencia (ex.: linha apagada ou alterada direto no banco).
+var CACHE_TTL_S = 6 * 60 * 60;
+
+function hashDe(obj) {
+  return Utilities.base64Encode(Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5, JSON.stringify(obj), Utilities.Charset.UTF_8));
+}
+
+// Devolve o hash se `valor` mudou desde a ultima vez que foi lembrado, senao null.
+function hashSeMudou(nome, valor) {
+  var h = hashDe(valor);
+  return CacheService.getScriptCache().get('x:' + nome) === h ? null : h;
+}
+function lembrarHash(nome, h) {
+  CacheService.getScriptCache().put('x:' + nome, h, CACHE_TTL_S);
+}
+
+function enviarLotes(registros, statusGlobal, chaveFn) {
+  var cache = CacheService.getScriptCache();
+  var chaves = registros.map(function(r) { return 'h:' + chaveFn(r); });
+  var hashes = registros.map(hashDe);
+  var guardados = {};
+  for (var c = 0; c < chaves.length; c += 500) {
+    var g = cache.getAll(chaves.slice(c, c + 500));
+    for (var gk in g) guardados[gk] = g[gk];
+  }
+  var pend = [], pendChaves = [], pendHashes = [];
+  registros.forEach(function(r, i) {
+    if (guardados[chaves[i]] === hashes[i]) { statusGlobal.iguais_sem_envio = (statusGlobal.iguais_sem_envio || 0) + 1; return; }
+    pend.push(r); pendChaves.push(chaves[i]); pendHashes.push(hashes[i]);
+  });
+
+  var totalLotes = Math.ceil(pend.length / 50);
+  for (var i = 0; i < pend.length; i += 50) {
+    var lote = pend.slice(i, i + 50);
     var numLote = Math.floor(i / 50) + 1;
     try {
       var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/rpc/upsert_co_lote', {
@@ -341,6 +390,10 @@ function enviarLotes(registros, statusGlobal) {
       var code = resp.getResponseCode();
       if (code >= 200 && code < 300) {
         statusGlobal.sincronizados += lote.length;
+        // So lembra o hash depois que o banco aceitou: lote que falhou vai de novo.
+        var lembrar = {};
+        for (var j = i; j < i + lote.length; j++) lembrar[pendChaves[j]] = pendHashes[j];
+        cache.putAll(lembrar, CACHE_TTL_S);
         try {
           var r = JSON.parse(resp.getContentText() || '{}');
           statusGlobal.inseridos   += (r.inseridos   || 0);
@@ -363,6 +416,7 @@ function enviarLotes(registros, statusGlobal) {
       }
     }
   }
+  return pend.length;
 }
 
 // Chave que aparece em mais de uma aba vira aviso no status: so a ultima aba
@@ -408,10 +462,14 @@ function gravarStatus(status) {
 // 15 min, sem nada ter mudado, era o que estourava o Disk IO Budget — a queda de
 // 23/09/2026. Ver migration 080.
 var STATUS_HEARTBEAT_MS = 2 * 60 * 60 * 1000;
+var STATUS_FORA_DO_HASH = ['timestamp', 'sincronizados', 'inseridos', 'atualizados', 'sem_mudanca',
+  'iguais_sem_envio', 'sem_dt', 'sem_dt_conciliadas'];
 
 function statusPrecisaGravar(status) {
   var semHora = {};
-  Object.keys(status).forEach(function(k) { if (k !== 'timestamp') semHora[k] = status[k]; });
+  // Contadores da rodada ficam fora do hash: variam a cada mudanca real e fariam o
+  // status ser regravado duas vezes (na rodada da mudanca e na seguinte, ja quieta).
+  Object.keys(status).forEach(function(k) { if (STATUS_FORA_DO_HASH.indexOf(k) < 0) semHora[k] = status[k]; });
   var hash = Utilities.base64Encode(Utilities.computeDigest(
     Utilities.DigestAlgorithm.MD5, JSON.stringify(semHora), Utilities.Charset.UTF_8));
   var props = PropertiesService.getScriptProperties();
