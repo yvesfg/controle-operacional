@@ -367,8 +367,10 @@ function sincronizarComSupabase() {
 // ============================================================
 function gravarStatus(status) {
   if (!SUPA_URL || SUPA_URL === 'SUA_URL_SUPABASE') return;
+  var hash = statusPrecisaGravar(status);
+  if (!hash) return;
   try {
-    UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TAB_CFG + '?on_conflict=chave', {
+    var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TAB_CFG + '?on_conflict=chave', {
       method: 'POST',
       headers: {
         apikey: SUPA_KEY,
@@ -382,9 +384,34 @@ function gravarStatus(status) {
       }]),
       muteHttpExceptions: true
     });
+    if (resp.getResponseCode() < 300) marcarStatusGravado(hash);
   } catch (e) {
     Logger.log('Erro ao gravar status: ' + e.message);
   }
+}
+
+// Status so vai pro banco quando MUDOU (ignorando o horario) ou a cada 2 h.
+// Motivo: o Supabase fecha e arquiva um segmento de WAL de 16 MB em toda janela
+// de 2 min com QUALQUER escrita (archive_timeout = 120 s). Gravar "rodei" a cada
+// 15 min, sem nada ter mudado, era o que estourava o Disk IO Budget — a queda de
+// 23/09/2026. Ver migration 080.
+var STATUS_HEARTBEAT_MS = 2 * 60 * 60 * 1000;
+
+function statusPrecisaGravar(status) {
+  var semHora = {};
+  Object.keys(status).forEach(function(k) { if (k !== 'timestamp') semHora[k] = status[k]; });
+  var hash = Utilities.base64Encode(Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5, JSON.stringify(semHora), Utilities.Charset.UTF_8));
+  var props = PropertiesService.getScriptProperties();
+  var ultimoMs = Number(props.getProperty('status_gravado_ms') || 0);
+  if (hash === props.getProperty('status_hash') && Date.now() - ultimoMs < STATUS_HEARTBEAT_MS) return null;
+  return hash;
+}
+
+function marcarStatusGravado(hash) {
+  PropertiesService.getScriptProperties().setProperties({
+    status_hash: hash, status_gravado_ms: String(Date.now())
+  });
 }
 
 // ============================================================
@@ -409,7 +436,7 @@ var WEBAPP_TOKEN = '';  // <- defina; vazio DESLIGA a escrita (recusa todo pedid
 
 // Muda quando este arquivo muda. Serve pra saber se o /exec ja esta servindo o
 // codigo novo — publicar NOVA VERSAO da implantacao e o passo mais esquecido.
-var WEBAPP_VERSAO = '2026-09-04-a';
+var WEBAPP_VERSAO = '2026-09-24-a';
 
 // So estes campos podem ser escritos pelo app. Nao e porta generica de escrita.
 // Cobre os dois blocos colados: faturamento e contratacao (esta traz o ID, que

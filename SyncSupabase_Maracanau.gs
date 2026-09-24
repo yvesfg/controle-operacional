@@ -90,6 +90,16 @@ function sincronizarMaracanau() {
         continue;
       }
 
+      // Coluna que nenhum alias reconheceu vira AVISO no status (igual Imperatriz).
+      var naoMapeadas = [];
+      (dados[linhaInicio - 1] || []).forEach(function(col, i) {
+        if (normalizarCabecalho(col) && !mapa[i]) naoMapeadas.push(String(col).trim());
+      });
+      if (naoMapeadas.length) {
+        statusGlobal.info.push('Aba "' + nomAba + '": ' + naoMapeadas.length +
+          ' coluna(s) sem mapeamento -> ' + naoMapeadas.slice(0, 25).join(' | '));
+      }
+
       statusGlobal.info.push('Aba "' + nomAba + '": cabecalho linha ' + linhaInicio + ', ' + melhorContagem + ' cols mapeadas');
       statusGlobal.total_planilha += dados.length - linhaInicio;
 
@@ -213,8 +223,10 @@ function sincronizarMaracanau() {
 // Grava o status no Supabase (tabela co_config)
 // ============================================================
 function gravarStatusMaracanau(status) {
+  var hash = statusPrecisaGravar(status);
+  if (!hash) return;
   try {
-    UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TAB_CFG + '?on_conflict=chave', {
+    var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TAB_CFG + '?on_conflict=chave', {
       method: 'POST',
       headers: {
         apikey: SUPA_KEY,
@@ -228,9 +240,34 @@ function gravarStatusMaracanau(status) {
       }]),
       muteHttpExceptions: true
     });
+    if (resp.getResponseCode() < 300) marcarStatusGravado(hash);
   } catch (e) {
     Logger.log('Erro ao gravar status: ' + e.message);
   }
+}
+
+// Status so vai pro banco quando MUDOU (ignorando o horario) ou a cada 2 h.
+// Motivo: o Supabase fecha e arquiva um segmento de WAL de 16 MB em toda janela
+// de 2 min com QUALQUER escrita (archive_timeout = 120 s). Gravar "rodei" a cada
+// 15 min, sem nada ter mudado, era o que estourava o Disk IO Budget — a queda de
+// 23/09/2026. Ver migration 080.
+var STATUS_HEARTBEAT_MS = 2 * 60 * 60 * 1000;
+
+function statusPrecisaGravar(status) {
+  var semHora = {};
+  Object.keys(status).forEach(function(k) { if (k !== 'timestamp') semHora[k] = status[k]; });
+  var hash = Utilities.base64Encode(Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5, JSON.stringify(semHora), Utilities.Charset.UTF_8));
+  var props = PropertiesService.getScriptProperties();
+  var ultimoMs = Number(props.getProperty('status_gravado_ms') || 0);
+  if (hash === props.getProperty('status_hash') && Date.now() - ultimoMs < STATUS_HEARTBEAT_MS) return null;
+  return hash;
+}
+
+function marcarStatusGravado(hash) {
+  PropertiesService.getScriptProperties().setProperties({
+    status_hash: hash, status_gravado_ms: String(Date.now())
+  });
 }
 
 // ============================================================
@@ -348,7 +385,17 @@ function mapearColunaMaracanau(n) {
     'gerenc': 'gerenc', 'gerenciadora': 'gerenc',
     'manifesto': 'data_manifesto', 'data manifesto': 'data_manifesto', 'data_manifesto': 'data_manifesto',
     'informou analista': 'informou_analista', 'informou_analista': 'informou_analista',
-    'desc_aguardando': 'desc_aguardando', 'aguardando descarga': 'desc_aguardando'
+    'desc_aguardando': 'desc_aguardando', 'aguardando descarga': 'desc_aguardando',
+    'alguma ocorrencia / sgs': 'sgs', 'alguma ocorrência / sgs': 'sgs',
+
+    // ── Observacoes ── (vieram de Imperatriz em 24/09/2026: obs_chegada e
+    // obs_descarga estavam vazias nas 697 linhas do Maracanau)
+    'obs chegada': 'obs_chegada', 'obs. chegada': 'obs_chegada',
+    'obs de chegada': 'obs_chegada', 'obs da chegada': 'obs_chegada',
+    'observacao chegada': 'obs_chegada', 'observação chegada': 'obs_chegada',
+    'obs descarga': 'obs_descarga', 'obs. descarga': 'obs_descarga',
+    'obs de descarga': 'obs_descarga', 'obs da descarga': 'obs_descarga',
+    'observacao descarga': 'obs_descarga', 'observação descarga': 'obs_descarga'
   };
   return mapa[n] || null;
 }

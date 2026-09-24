@@ -164,6 +164,18 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-09-24", sessao: "Sessao 58",
+    itens: [
+      "PEDIDO (Yves) · Verificar o sync planilhas x banco, campo a campo, e melhorar o sync. Contexto: o projeto caiu em 23/09 (16:15) por Disk IO Budget e ficou ~horas sem responder (504/522 em tudo, inclusive no app).",
+      "CAUSA REAL DO DISK IO · O Postgres quase nao toca o disco (banco de 28 MB inteiro em memoria; WAL real ~120 MB/dia). O que consome e o archive_timeout = 120 s do Supabase: toda janela de 2 min com QUALQUER escrita fecha um segmento de WAL de 16 MB que o backup le e sobe. pg_stat_archiver: 69.547 segmentos desde 12/02 = ~310/dia = ~5 GB/dia, 40x o WAL real. E toda rodada do sync escrevia algo mesmo sem mudanca: o status em co_config (timestamp novo, 3 scripts em minutos diferentes) e o upsert_sem_dt (regravava as pendencias com atualizado_em = now()).",
+      "FIX (migration 080) · upsert_sem_dt so faz UPDATE quando algum campo mudou. Os 3 .gs so gravam o status quando ele muda (ignorando o horario) ou de 2 em 2 h. Rodada sem mudanca passa a escrever ZERO no banco. Efeito no Admin: o horario da 'Ultima Sincronizacao' passa a ser o da ultima rodada que mudou algo, com no maximo 2 h de atraso.",
+      "CAMPOS · A coluna sgs nunca existiu no banco: os 3 .gs mandavam e o app inteiro le r.sgs (Ocorrencias, Relatorios, editar DT), mas upsert_co_lote e patch_operacional descartavam calados. Criada nas 3 tabelas (migration 080).",
+      "CAMPOS · AVB e Maracanau nao avisavam coluna sem mapeamento (so Imperatriz avisava). Ganharam o aviso no status. Na AVB, data_desc, obs, diarias, placa2, id_doc e informou_analista estao vazios nas 654 linhas; no Maracanau, obs_chegada/obs_descarga vazios nas 697. Entraram os aliases de Imperatriz para essas colunas; o aviso da proxima rodada mostra o que ainda falta.",
+      "NAO MAPEADO DE PROPOSITO (Imperatriz) · FORMS, DIARIAS PAGAS, CTE COMP, D01/D05, MINUTA DESCARGA, DCC: o app e dono desses campos (detalhe DCC/minutas em useDTHandlers); mapear faria a planilha apagar o que foi digitado no app a cada 15 min.",
+      "PENDENTE (Yves) · Colar os 3 .gs nas planilhas (repor SUPA_URL/SUPA_KEY/WEBAPP_TOKEN no de Imperatriz) e publicar nova versao do Web App de Imperatriz."
+    ],
+  },
+  {
     data: "2026-08-25", sessao: "Sessao 57",
     itens: [
       "PEDIDO (Yves) · A embarcadora (Suzano) recebe hoje uma planilha de cadastro de motorista e veiculo preenchida a mao, em DOIS layouts: blocos empilhados (motorista / cavalo / carreta, cabecalho repetido a cada bloco) e tres abas tabulares MOTORISTA / VEICULOS / CARRETA. Objetivo: o analista vai preenchendo no app, conclui o cadastro lendo CNH e CRLV por IA, e no fim gera o .xlsx escolhendo os motoristas pela DT.",

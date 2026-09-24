@@ -106,6 +106,18 @@ function sincronizarAVB() {
         continue;
       }
 
+      // Coluna que nenhum alias reconheceu vira AVISO no status (igual Imperatriz).
+      // Sem isto a AVB tinha data de descarga, observacoes e diarias vazias nas 654
+      // linhas do banco sem nenhum sinal de por que.
+      var naoMapeadas = [];
+      (dados[linhaInicio - 1] || []).forEach(function(col, i) {
+        if (normalizarCabecalho(col) && !mapa[i]) naoMapeadas.push(String(col).trim());
+      });
+      if (naoMapeadas.length) {
+        statusGlobal.info.push('Aba "' + nomAba + '": ' + naoMapeadas.length +
+          ' coluna(s) sem mapeamento -> ' + naoMapeadas.slice(0, 25).join(' | '));
+      }
+
       statusGlobal.info.push('Aba "' + nomAba + '": cabecalho linha ' + linhaInicio + ', ' + melhorContagem + ' cols');
       statusGlobal.total_planilha += dados.length - linhaInicio;
 
@@ -211,8 +223,10 @@ function sincronizarAVB() {
 
 function gravarStatusAVB(status) {
   if (!SUPA_URL || SUPA_URL === 'SUA_URL_SUPABASE') return;
+  var hash = statusPrecisaGravar(status);
+  if (!hash) return;
   try {
-    UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TAB_CFG + '?on_conflict=chave', {
+    var resp = UrlFetchApp.fetch(SUPA_URL + '/rest/v1/' + TAB_CFG + '?on_conflict=chave', {
       method: 'POST',
       headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY,
                  'Content-Type': 'application/json',
@@ -220,7 +234,32 @@ function gravarStatusAVB(status) {
       payload: JSON.stringify([{ chave: 'gsheet_sync_status_avb', valor: JSON.stringify(status) }]),
       muteHttpExceptions: true
     });
+    if (resp.getResponseCode() < 300) marcarStatusGravado(hash);
   } catch (e) { Logger.log('Erro ao gravar status AVB: ' + e.message); }
+}
+
+// Status so vai pro banco quando MUDOU (ignorando o horario) ou a cada 2 h.
+// Motivo: o Supabase fecha e arquiva um segmento de WAL de 16 MB em toda janela
+// de 2 min com QUALQUER escrita (archive_timeout = 120 s). Gravar "rodei" a cada
+// 15 min, sem nada ter mudado, era o que estourava o Disk IO Budget — a queda de
+// 23/09/2026. Ver migration 080.
+var STATUS_HEARTBEAT_MS = 2 * 60 * 60 * 1000;
+
+function statusPrecisaGravar(status) {
+  var semHora = {};
+  Object.keys(status).forEach(function(k) { if (k !== 'timestamp') semHora[k] = status[k]; });
+  var hash = Utilities.base64Encode(Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5, JSON.stringify(semHora), Utilities.Charset.UTF_8));
+  var props = PropertiesService.getScriptProperties();
+  var ultimoMs = Number(props.getProperty('status_gravado_ms') || 0);
+  if (hash === props.getProperty('status_hash') && Date.now() - ultimoMs < STATUS_HEARTBEAT_MS) return null;
+  return hash;
+}
+
+function marcarStatusGravado(hash) {
+  PropertiesService.getScriptProperties().setProperties({
+    status_hash: hash, status_gravado_ms: String(Date.now())
+  });
 }
 
 function configurarGatilho() {
@@ -314,6 +353,34 @@ function mapearColunaAVB(n) {
     'chave pix': 'chave_pix',
     'cpf/cnpj': 'cpf_cnpj', 'cpf / cnpj': 'cpf_cnpj',
     'favorecido': 'favorecido',
+
+    // Vieram de Imperatriz em 24/09/2026: estas colunas existem no banco da AVB
+    // e estavam vazias nas 654 linhas. So preenchem se a planilha tiver o cabecalho.
+    'alguma ocorrencia / sgs': 'sgs', 'alguma ocorrência / sgs': 'sgs',
+    'data de descarga': 'data_desc', 'dt descarga': 'data_desc',
+    'placa 02': 'placa2', 'placa02': 'placa2', 'placa 2': 'placa2',
+    'placa 03': 'placa3', 'placa03': 'placa3', 'placa 3': 'placa3',
+    'shipment id': 'id_doc', 'shipmente id': 'id_doc', 'id doc': 'id_doc', 'id_doc': 'id_doc',
+    'data validade': 'data_val',
+    'comprovei': 'comprovei',
+    'hr ro': 'hr_ro', 'hr criação da ro': 'hr_ro', 'hr criacao da ro': 'hr_ro',
+    'informou analista': 'informou_analista', 'informou analista ate 9h': 'informou_analista',
+    'informou analista até 9h': 'informou_analista',
+    'aguardando descarga': 'desc_aguardando',
+    'diarias devida': 'diaria_prev', 'diarias (devida r$)': 'diaria_prev',
+    'diária prevista': 'diaria_prev', 'diaria prevista': 'diaria_prev',
+    'diaria': 'diaria',
+    'diárias recebido': 'diaria_rec', 'diarias recebido': 'diaria_rec',
+    'diárias recebidas': 'diaria_rec', 'diarias recebidas': 'diaria_rec',
+    'pag. descarga': 'pag_desc', 'pag descarga': 'pag_desc',
+    'pag. stretch': 'pag_stretch', 'pag stretch': 'pag_stretch',
+    'total': 'total',
+    'obs chegada': 'obs_chegada', 'obs. chegada': 'obs_chegada',
+    'obs de chegada': 'obs_chegada', 'obs da chegada': 'obs_chegada',
+    'observacao chegada': 'obs_chegada', 'observação chegada': 'obs_chegada',
+    'obs descarga': 'obs_descarga', 'obs. descarga': 'obs_descarga',
+    'obs de descarga': 'obs_descarga', 'obs da descarga': 'obs_descarga',
+    'observacao descarga': 'obs_descarga', 'observação descarga': 'obs_descarga',
   };
   return mapa[n] || null;
 }
