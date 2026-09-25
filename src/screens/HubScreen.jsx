@@ -172,7 +172,7 @@ export default function HubScreen({
 
   if (iframeUrl) {
     return (
-      <div style={{position:"relative",width:"100%",height:"100vh"}}>
+      <div style={{position:"relative",width:"100%",height:"100dvh"}}>
         <iframe src={iframeUrl} style={{width:"100%",height:"100%",border:"none",display:"block"}} title={iframeTitle} allow="camera" />
         <HubFab t={t} onClick={fecharExterno} />
       </div>
@@ -181,7 +181,7 @@ export default function HubScreen({
 
   if (showFrotaModal) {
     return (
-      <div style={{position:"relative",width:"100%",height:"100vh"}}>
+      <div style={{position:"relative",width:"100%",height:"100dvh"}}>
         <iframe ref={frotaIframeRef} src={`${frotaUrl}/auth/hub`} style={{width:"100%",height:"100%",border:"none",display:"block"}}/>
         <HubFab t={t} onClick={fecharFrota} />
       </div>
