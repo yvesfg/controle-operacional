@@ -1296,6 +1296,16 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   [data-theme="dark"] .co-main {
     margin-left: 0 !important;
   }
+  /* Drawer "Mais" no tema escuro: o bloco glass acima (ícone-only) escondia os
+     rótulos do rodapé e do usuário, e o z-index 100 dele deixava o drawer ABAIXO
+     do scrim (199) — o menu aparecia escurecido e borrado. */
+  [data-theme="dark"] .co-sidebar--mob-expanded { z-index: 200 !important; }
+  [data-theme="dark"] .co-sidebar--mob-expanded .co-sidebar__footer      { align-items: stretch; }
+  [data-theme="dark"] .co-sidebar--mob-expanded .co-sidebar__footer-item { justify-content: flex-start; padding: 7px 10px; }
+  [data-theme="dark"] .co-sidebar--mob-expanded .co-sidebar__footer-lbl  { display: block !important; }
+  [data-theme="dark"] .co-sidebar--mob-expanded .co-sidebar__user        { flex-direction: row; justify-content: flex-start; padding: 8px 10px; }
+  [data-theme="dark"] .co-sidebar--mob-expanded .co-sidebar__user-info   { display: flex !important; }
+  [data-theme="dark"] .co-sidebar--mob-expanded .co-sidebar__logo-sub    { display: block !important; }
 }
 
 

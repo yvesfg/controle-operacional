@@ -173,7 +173,9 @@ export const DEV_CHANGELOG = [
       "PLANILHA < 640px · cada viagem vira card (codigo e margem no topo com o chevron; motorista, rota e status embaixo), so por CSS de grid sobre as mesmas celulas — desktop intacto. Filtros rolam na horizontal; KPIs em grade de 2 colunas com a linha de registros/pagina embaixo. Status vazio mostra 'Sem status'.",
       "HEADER MOBILE · 'Nova DT' vira so o icone + (era o botao laranja cortado) e o nome da base corta com reticencias. O FAB 'NOVO' saiu: cobria a margem e o chevron, e o + do topo faz o mesmo.",
       "FAIXA AMARELA · era o bloco 'Cargas sem DT' fechado e sem pendencia: so fica amarelo quando ha o que revisar; sem pendencia vira card neutro, com margem lateral.",
-      "MENU INFERIOR · rotulo curto 'Descarga' so na barra de baixo; drawer e desktop seguem 'Carga/Descarga'."
+      "MENU INFERIOR · rotulo curto 'Descarga' so na barra de baixo; drawer e desktop seguem 'Carga/Descarga'.",
+      "VERIFICADO NO APP (sessao logada no navegador do Claude, 375px) · rota nao passa mais por baixo do status; Cargas sem DT comeca fechado sem pendencia; topo compacto (sync/busca so icone, alerta so numero) pra caber o nome da base; titulo 'Descarga' no topo; tela de Descarga com respiro lateral; FAB do Hub saiu do celular e virou item 'Hub' no menu Mais.",
+      "BUG ANTIGO · Menu Mais no tema escuro aparecia escurecido e borrado: o drawer tinha z-index 100 e o scrim 199. Os rotulos do rodape (tema, usuario) tambem sumiam pelo bloco glass icone-only. Corrigido so para o drawer do celular."
     ],
   },
   {
