@@ -1,5 +1,5 @@
 import React from "react";
-import { MOBILE_NAV_PINNED as PINNED } from "../constants.js";
+import { MOBILE_NAV_PINNED as PINNED, MOBILE_TAB_LABEL } from "../constants.js";
 
 // Ícone SVG do "Mais" (grid 2x2)
 const IcoMais = ({ active }) => (
@@ -10,10 +10,6 @@ const IcoMais = ({ active }) => (
     <circle cx="8"  cy="16" r="2"/><circle cx="16" cy="16" r="2"/>
   </svg>
 );
-
-// Rótulo curto só na barra inferior: "Carga/Descarga" não cabe em 1/5 de 375px e
-// aparecia cortado ("CARGA/DESCARG"). No drawer e no desktop continua o nome inteiro.
-const ROTULO_CURTO = { descarga: "Descarga" };
 
 export default function BottomNav({ tabs, activeTab, onNavigate, onMore }) {
   // Pega as tabs pinadas que existem (respeitando permissões)
@@ -37,7 +33,7 @@ export default function BottomNav({ tabs, activeTab, onNavigate, onMore }) {
               ? tb.ico(isActive)
               : <span style={{ fontSize: 18 }}>{tb.ico}</span>
             }
-            <span className="co-mobile-nav__lbl">{ROTULO_CURTO[tb.k] || tb.l}</span>
+            <span className="co-mobile-nav__lbl">{MOBILE_TAB_LABEL[tb.k] || tb.l}</span>
           </button>
         );
       })}

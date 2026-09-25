@@ -76,7 +76,8 @@ export default function DescargaView({ ctx }) {
   // ── Fim layout AVB ──────────────────────────────────────────────────────
 
   return (
-          <div>
+          // No celular o .co-content zera o padding (layout.css); sem isto os cards encostavam na borda.
+          <div style={isMobile ? { padding: 12 } : undefined}>
             {descargaNavDT && (
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",borderRadius:10,background:`rgba(22,119,255,.08)`,border:`1px solid rgba(22,119,255,.3)`}}>
                 {hIco(<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,t.azulLt,13)}

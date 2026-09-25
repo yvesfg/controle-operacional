@@ -9,7 +9,7 @@ Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip, L
 import * as XLSX from "xlsx";
 import { themes, TABLE, BASES, BASE_TODAS, TABLE_USUARIOS, TABLE_CONFIG, TABLE_OCORR, TABLE_LOGS, TABLE_APOINTS,
   MESES_LABEL, PERMS_PADRAO, PERMS_LISTA, DESIGN, hexRgb,
-  DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY } from './constants.js';
+  DEV_CHANGELOG, ENV_SUPA_URL, ENV_SUPA_KEY, MOBILE_TAB_LABEL } from './constants.js';
 import { DEFAULT_LOGO } from './defaultLogo.js';
 import loginLogo from '../assets/images/logo-login.png';
 import { parseData, diffDias, fmtMoeda, brToInput, inputToBr,
@@ -1591,7 +1591,7 @@ export default function App() {
           /* ── Mobile topbar: aba ativa + ações ── */
           <>
             <div>
-              <div style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
+              <div style={{fontFamily:"var(--font-heading)",fontSize:15,fontWeight:700,letterSpacing:"-0.03em",color:"var(--text)",lineHeight:1}}>{MOBILE_TAB_LABEL[activeTab]||tabs.find(tb=>tb.k===activeTab)?.l||"Dashboard"}</div>
               <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
             </div>
               {baseAtual && (

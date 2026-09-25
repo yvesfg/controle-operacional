@@ -72,6 +72,9 @@ export const MESES_LABEL = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set
 // Tabs fixadas no bottom bar mobile (compartilhado entre BottomNav e AppSidebar,
 // para o drawer "Mais" não duplicar o que já está fixado embaixo).
 export const MOBILE_NAV_PINNED = ["dashboard", "financeiro", "planilha", "descarga"];
+// Rótulo curto no celular (barra inferior e título do topo): "Carga/Descarga" não
+// cabe e empurrava o seletor de base pra fora. Drawer e desktop usam o nome inteiro.
+export const MOBILE_TAB_LABEL = { descarga: "Descarga" };
 // Chaves `buscar`, `relatorios`, `operacional` e `gestao` nasceram depois das
 // outras: as abas correspondentes não tinham perm nenhuma, então apareciam pra
 // todo mundo — inclusive pra um visualizador que só deveria ver o dashboard.
