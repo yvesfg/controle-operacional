@@ -14,6 +14,7 @@ export default function AppSidebar({
   isAdmin, setModalOpen,
   usuarioLogado, perfil,
   handleLogout,
+  onHub,
 }) {
   return (
     <aside className={`co-sidebar${isWide?" co-sidebar--collapsed":""}${!isWide&&mobileSidebarExpanded?" co-sidebar--mob-expanded":""}`}>
@@ -80,6 +81,13 @@ export default function AppSidebar({
 
         {/* ── Footer — utilitários + usuário ── */}
         <div className="co-sidebar__footer">
+          {/* Só no drawer do celular: lá não existe o botão flutuante do Hub. */}
+          {!isWide && onHub && (
+            <button className="co-sidebar__footer-item" onClick={onHub} title="Voltar ao Hub">
+              {hIco(<><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,t.txt2,16)}
+              <span className="co-sidebar__footer-lbl">Hub</span>
+            </button>
+          )}
           <button className="co-sidebar__footer-item co-sidebar__footer-item--center" onClick={()=>setTheme(theme==="dark"?"light":"dark")} title={theme==="dark"?"Tema Claro":"Tema Escuro"}>
             {theme==="dark"
               ? hIco(<><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></>,t.txt2,16)

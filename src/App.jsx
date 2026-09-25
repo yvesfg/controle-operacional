@@ -1503,6 +1503,7 @@ export default function App() {
         isAdmin={isAdmin} setModalOpen={setModalOpen}
         usuarioLogado={usuarioLogado} perfil={perfil}
         handleLogout={handleLogout}
+        onHub={()=>{ setMobileSidebarExpanded(false); setHubScreen(null); }}
       />
 
       {/* Scrim mobile — fecha sidebar ao clicar fora */}
@@ -1619,7 +1620,7 @@ export default function App() {
                 </div>
               )}
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
-              <Button variant="secondary" size="sm" onClick={sincronizar} className="co-hbtn" style={{ position: "relative" }}>
+              <Button variant="secondary" size="sm" iconOnly onClick={sincronizar} className="co-hbtn" style={{ position: "relative" }}>
                 {connStatus==="syncing"
                   ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,13)
                   : hIco(<><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></>,t.txt2,13)
@@ -1627,12 +1628,12 @@ export default function App() {
                 <span style={{position:"absolute",bottom:4,right:4,width:4,height:4,borderRadius:"50%",background:connStatus==="online"?t.verde:connStatus==="syncing"?t.ouro:t.danger}}/>
               </Button>
               {alertas.length > 0 && (
-                <Button variant="danger-outline" size="sm" onClick={()=>setAlertasOpen(!alertasOpen)}>
-                  {hIco(<><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,t.danger,12)}
+                <Button variant="danger-outline" size="sm" title={`${alertas.length} alertas`} onClick={()=>setAlertasOpen(!alertasOpen)}>
+                  {/* no celular só o número: o ícone somava ~24px e espremia o nome da base */}
                   <span style={{fontSize:10,fontWeight:700,color:t.danger,fontFamily:"var(--font-mono)"}}>{alertas.length}</span>
                 </Button>
               )}
-              <Button variant="secondary" size="sm" onClick={()=>setBuscaModalOpen(true)}  title="Buscar (Ctrl+K)">
+              <Button variant="secondary" size="sm" iconOnly onClick={()=>setBuscaModalOpen(true)}  title="Buscar (Ctrl+K)">
                 {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,13,2)}
               </Button>
               {canEdit && (
@@ -1988,7 +1989,8 @@ export default function App() {
       </div>
 
       {/* ═══ HUB FAB — botão flutuante arrastável p/ voltar ao Hub ═══ */}
-      <HubFab t={t} onClick={()=>setHubScreen(null)} />
+      {/* No celular o FAB ficava por cima dos cards da Planilha; lá o Hub vai pro menu "Mais". */}
+      {isWide && <HubFab t={t} onClick={()=>setHubScreen(null)} />}
 
       {/* ═══ BOTTOM NAV — mobile only; some enquanto o drawer "Mais" estiver aberto p/ não duplicar navegação ═══ */}
       {!isWide && !mobileSidebarExpanded && (
