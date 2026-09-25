@@ -47,7 +47,8 @@ export default function CargasSemDt({ conn, ctx }) {
   const [linhas, setLinhas] = React.useState([]);
   const [contagem, setContagem] = React.useState({});
   const [loading, setLoading] = React.useState(false);
-  const [aberto, setAberto] = React.useState(true);
+  // Começa fechado; abre sozinho só quando chega pendência pra revisar (ver efeito abaixo).
+  const [aberto, setAberto] = React.useState(false);
   const [modal, setModal] = React.useState(null); // { ...linha } em edição
   const [salvando, setSalvando] = React.useState(false);
 
@@ -67,6 +68,9 @@ export default function CargasSemDt({ conn, ctx }) {
   React.useEffect(() => { carregar(); }, [carregar]);
 
   const pendentes = contagem.pendente || 0;
+  // Aberto por padrão ocupava meia tela no celular com "Nada em Pendentes".
+  // Abre sozinho quando há pendência; o usuário ainda pode abrir/fechar à mão.
+  React.useEffect(() => { if (pendentes > 0) setAberto(true); }, [pendentes]);
 
   // Move a contagem de um status pra outro sem refetch.
   const moverContagem = (de, para) => setContagem((c) => ({

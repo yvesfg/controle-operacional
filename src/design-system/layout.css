@@ -1252,8 +1252,11 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   .pv-table-header { display: none; }
   .pv-row-main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto 24px;
-    grid-template-areas: "cod marg chev" "mot mot mot" "rota rota status";
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    /* Status ocupa as 2 colunas "auto" da direita: a grade alarga pra caber o
+       selo inteiro e a rota (coluna flexível) corta com reticências. Antes o
+       status ficava numa coluna de 24px e o selo passava por cima da rota. */
+    grid-template-areas: "cod marg chev" "mot mot mot" "rota status status";
     gap: 4px 8px;
     padding: 10px 12px;
   }
@@ -1262,7 +1265,8 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
   .pv-c-marg   { grid-area: marg; font-size: 12px !important; text-align: right; }
   .pv-row-main > .pv-toggle { grid-area: chev; width: auto !important; }
   .pv-c-mot    { grid-area: mot; font-size: 12px !important; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pv-c-rota   { grid-area: rota; flex-wrap: wrap; }
+  .pv-c-rota   { grid-area: rota; overflow: hidden; }
+  .pv-c-rota > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .pv-c-status { grid-area: status; justify-self: end; align-self: center; }
   .pv-detail-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
 }
