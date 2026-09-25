@@ -11,6 +11,10 @@ const IcoMais = ({ active }) => (
   </svg>
 );
 
+// Rótulo curto só na barra inferior: "Carga/Descarga" não cabe em 1/5 de 375px e
+// aparecia cortado ("CARGA/DESCARG"). No drawer e no desktop continua o nome inteiro.
+const ROTULO_CURTO = { descarga: "Descarga" };
+
 export default function BottomNav({ tabs, activeTab, onNavigate, onMore }) {
   // Pega as tabs pinadas que existem (respeitando permissões)
   const tabMap = Object.fromEntries((tabs || []).map(t => [t.k, t]));
@@ -33,7 +37,7 @@ export default function BottomNav({ tabs, activeTab, onNavigate, onMore }) {
               ? tb.ico(isActive)
               : <span style={{ fontSize: 18 }}>{tb.ico}</span>
             }
-            <span className="co-mobile-nav__lbl">{tb.l}</span>
+            <span className="co-mobile-nav__lbl">{ROTULO_CURTO[tb.k] || tb.l}</span>
           </button>
         );
       })}

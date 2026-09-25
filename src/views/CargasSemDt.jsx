@@ -139,7 +139,9 @@ export default function CargasSemDt({ conn, ctx }) {
   );
 
   return (
-    <div style={{ marginBottom: 14, border: `1.5px solid ${hexRgb(t.warn, 0.45)}`, borderRadius: 12, background: hexRgb(t.warn, 0.05), overflow: "hidden" }}>
+    // Amarelo só quando há o que revisar. Sem pendência, a faixa amarela com só o
+    // título parecia um aviso vazio — principalmente no celular, logo abaixo do topo.
+    <div style={{ margin: "12px 16px 0", border: `1.5px solid ${pendentes > 0 ? hexRgb(t.warn, 0.45) : t.borda}`, borderRadius: 12, background: pendentes > 0 ? hexRgb(t.warn, 0.05) : t.card, overflow: "hidden" }}>
       <div onClick={() => setAberto((o) => !o)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", cursor: "pointer" }}>
         <span style={{ fontSize: 13, fontWeight: 800, color: t.txt }}>Cargas sem DT</span>
         {pendentes > 0 && (

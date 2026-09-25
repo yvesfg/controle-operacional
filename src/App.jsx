@@ -1594,9 +1594,9 @@ export default function App() {
               <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text3)",letterSpacing:"0.04em",textTransform:"uppercase",marginTop:2}}>CTRL OPERACIONAL</div>
             </div>
               {baseAtual && (
-                <div style={{position:"relative",marginLeft:8}}>
-                  <Button variant="primary" size="sm" title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }}>
-                    <Icon n="dot" s={13} /> {escopoLabel}
+                <div style={{position:"relative",marginLeft:8,minWidth:0}}>
+                  <Button variant="primary" size="sm" title={basesPermitidas.length>1?"Trocar base":undefined} onClick={()=>{ if(basesPermitidas.length>1) setBaseMenuOpen(o=>!o); }} style={{maxWidth:"100%"}}>
+                    <Icon n="dot" s={13} /> <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0}}>{escopoLabel}</span>
                     {basesPermitidas.length>1 && <span style={{fontSize:11,marginLeft:1}}><Icon n="chevron-down" s={13} /></span>}
                   </Button>
                   {baseMenuOpen && basesPermitidas.length>1 && (
@@ -1618,7 +1618,7 @@ export default function App() {
                   )}
                 </div>
               )}
-            <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
+            <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
               <Button variant="secondary" size="sm" onClick={sincronizar} className="co-hbtn" style={{ position: "relative" }}>
                 {connStatus==="syncing"
                   ? hIco(<><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></>,t.ouro,13)
@@ -1636,8 +1636,8 @@ export default function App() {
                 {hIco(<><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></>,t.txt2,13,2)}
               </Button>
               {canEdit && (
-                <Button variant="primary" size="md" onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}}>
-                  {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",13,2.5)} Nova DT
+                <Button variant="primary" size="sm" iconOnly title="Nova DT" aria-label="Nova DT" onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}}>
+                  {hIco(<><path d="M12 5v14M5 12h14"/></>,theme==="dark"?"#000":"#fff",14,2.5)}
                 </Button>
               )}
             </div>
@@ -2000,15 +2000,8 @@ export default function App() {
         />
       )}
 
-      {/* ═══ FAB — só mobile (desktop tem botão "Nova DT" no topbar) ═══ */}
-      {canEdit && !isWide && (
-        <div style={{position:"fixed",bottom:74,right:14,zIndex:200}}>
-          <button onClick={()=>{setFormData({});setEditIdx(-1);setEditStep(1);setModalOpen("edit")}} style={{width:50,height:50,background:t.ouro,borderRadius:14,border:"none",boxShadow:"0 5px 20px rgba(217,98,43,.4)",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2}}>
-            <span style={{fontSize:18,color:"#000"}}>＋</span>
-            <span style={{fontSize:11,fontWeight:700,color:t.txt,letterSpacing:.8,textTransform:"uppercase"}}>NOVO</span>
-          </button>
-        </div>
-      )}
+      {/* Sem FAB "NOVO" no mobile: ficava por cima da coluna de margem e do chevron
+          da Planilha. O "+" do topbar faz o mesmo. */}
 
       </div>{/* end .co-main */}
 

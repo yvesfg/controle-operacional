@@ -164,6 +164,16 @@ export const hexRgb = (colorOrVar, a) => {
 
 export const DEV_CHANGELOG = [
   {
+    data: "2026-09-25", sessao: "Sessao 59",
+    itens: [
+      "PEDIDO (Yves) · Correcao do modo mobile: Planilha com 5 colunas espremidas, header estourando, KPIs transbordando, status '—' sem rotulo, faixa amarela vazia, botao NOVO por cima da margem, menu inferior 'CARGA/DESCARG'.",
+      "PLANILHA < 640px · cada viagem vira card (codigo e margem no topo com o chevron; motorista, rota e status embaixo), so por CSS de grid sobre as mesmas celulas — desktop intacto. Filtros rolam na horizontal; KPIs em grade de 2 colunas com a linha de registros/pagina embaixo. Status vazio mostra 'Sem status'.",
+      "HEADER MOBILE · 'Nova DT' vira so o icone + (era o botao laranja cortado) e o nome da base corta com reticencias. O FAB 'NOVO' saiu: cobria a margem e o chevron, e o + do topo faz o mesmo.",
+      "FAIXA AMARELA · era o bloco 'Cargas sem DT' fechado e sem pendencia: so fica amarelo quando ha o que revisar; sem pendencia vira card neutro, com margem lateral.",
+      "MENU INFERIOR · rotulo curto 'Descarga' so na barra de baixo; drawer e desktop seguem 'Carga/Descarga'."
+    ],
+  },
+  {
     data: "2026-09-24", sessao: "Sessao 58",
     itens: [
       "PEDIDO (Yves) · Verificar o sync planilhas x banco, campo a campo, e melhorar o sync. Contexto: o projeto caiu em 23/09 (16:15) por Disk IO Budget e ficou ~horas sem responder (504/522 em tudo, inclusive no app).",

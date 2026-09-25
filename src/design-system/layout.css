@@ -1233,6 +1233,40 @@ button:active { transform: scale(0.97) !important; transition: transform .07s !i
 }
 .pv-page-btn:disabled { opacity: 0.35; cursor: default; }
 
+/* ── Planilha no celular (< 640px) ──
+   5 colunas lado a lado não cabem em 375px: cada viagem vira um card.
+   Topo: código e margem (+ chevron); embaixo: motorista, rota e status.
+   Filtros rolam na horizontal e os KPIs viram grade de 2 colunas. */
+@media (max-width: 639px) {
+  .pv-shell { padding: 12px; }
+  .pv-toolbar {
+    height: auto; overflow-x: auto; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; padding-bottom: 2px;
+  }
+  .pv-toolbar::-webkit-scrollbar { display: none; }
+  .pv-toolbar > * { flex-shrink: 0; }
+  .pv-kpi-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; }
+  .pv-kpi-chip { min-height: 34px; min-width: 0; }
+  .pv-kpi-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pv-kpi-info { grid-column: 1 / -1; margin-left: 0 !important; }
+  .pv-table-header { display: none; }
+  .pv-row-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 24px;
+    grid-template-areas: "cod marg chev" "mot mot mot" "rota rota status";
+    gap: 4px 8px;
+    padding: 10px 12px;
+  }
+  .pv-row-main > * { min-width: 0; }
+  .pv-c-cod    { grid-area: cod; font-size: 12px !important; }
+  .pv-c-marg   { grid-area: marg; font-size: 12px !important; text-align: right; }
+  .pv-row-main > .pv-toggle { grid-area: chev; width: auto !important; }
+  .pv-c-mot    { grid-area: mot; font-size: 12px !important; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pv-c-rota   { grid-area: rota; flex-wrap: wrap; }
+  .pv-c-status { grid-area: status; justify-self: end; align-self: center; }
+  .pv-detail-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+}
+
 [data-theme="light"] .pv-shell,
 [data-theme="light"] .pv-toolbar,
 [data-theme="light"] .pv-kpi-strip,

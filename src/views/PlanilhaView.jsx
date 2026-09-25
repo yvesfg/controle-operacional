@@ -66,7 +66,8 @@ function PvBadge({ status }) {
   else if (s.includes("pend") || s.includes("aguard")) cls = "pv-badge pv-badge-pend";
   else if (s.includes("atraso") || s.includes("atrasad")) cls = "pv-badge pv-badge-atraso";
   else if (s.includes("trânsito") || s.includes("transito") || s.includes("viagem")) cls = "pv-badge pv-badge-transito";
-  return <span className={cls}><Icon n="dot" s={13} /> {status || "—"}</span>;
+  // Sem status: rótulo explícito em vez de "—" solto, que no card do mobile parecia vazio.
+  return <span className={cls}><Icon n="dot" s={13} /> {status || "Sem status"}</span>;
 }
 
 // Antes assumia formato BR sempre (stripava TODO ponto como milhar); ~489 linhas no banco
@@ -298,7 +299,7 @@ export default function PlanilhaView({ ctx }) {
           <span className="pv-kpi-value" style={{ color: "var(--accent)" }}>{dadosExibir.length}</span>
           <span className="pv-kpi-label">nesta página</span>
         </div>
-        <span style={{ marginLeft: "auto", fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text2)", fontWeight: 600 }}>
+        <span className="pv-kpi-info" style={{ marginLeft: "auto", fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--text2)", fontWeight: 600 }}>
           {dadosFiltrados.length} de {DADOS.length} registros · pág. {paginaAtual}/{totalPaginas}
           {planilhaSortKey && (
             <span style={{ color: "var(--accent)", marginLeft: 8 }}>
@@ -330,13 +331,13 @@ export default function PlanilhaView({ ctx }) {
             return (
               <div key={rowId} className={`pv-row-card${isExp ? " expanded" : ""}`}>
                 <div className="pv-row-main" onClick={() => pvToggle(rowId)}>
-                  <div style={{ flex: "1.2", fontSize: 11, color: "var(--color-info)", fontFamily: "var(--font-mono)" }}>
+                  <div className="pv-c-cod" style={{ flex: "1.2", fontSize: 11, color: "var(--color-info)", fontFamily: "var(--font-mono)" }}>
                     {row.codigo || row.dt || row.id || `#${i+1}`}
                   </div>
-                  <div style={{ flex: 2, fontSize: 11, color: "var(--text)" }}>
+                  <div className="pv-c-mot" style={{ flex: 2, fontSize: 11, color: "var(--text)" }}>
                     {row.nome || row.motorista || "—"}
                   </div>
-                  <div style={{ flex: 2, fontSize: 10, color: "var(--text3)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <div className="pv-c-rota" style={{ flex: 2, fontSize: 10, color: "var(--text3)", display: "flex", alignItems: "center", gap: 6 }}>
                     <span>{rota}</span>
                     {rotuloClf(row) && (
                       <Badge variant="info" size="sm" pill>{rotuloClf(row)}</Badge>
@@ -345,8 +346,8 @@ export default function PlanilhaView({ ctx }) {
                       <span title="Carga carregada sem DT (aguardando o DT da Suzano) — confirmada e contando nos totais" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--accent)", background: "color-mix(in srgb, var(--accent) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--accent) 35%, transparent)", borderRadius: 20, padding: "1px 7px", whiteSpace: "nowrap" }}>Sem DT</span>
                     )}
                   </div>
-                  <div style={{ flex: "1.2" }}><PvBadge status={row.status} /></div>
-                  <div style={{ flex: "1.2", fontSize: 11, fontWeight: 600, color: margemColor }}>
+                  <div className="pv-c-status" style={{ flex: "1.2" }}><PvBadge status={row.status} /></div>
+                  <div className="pv-c-marg" style={{ flex: "1.2", fontSize: 11, fontWeight: 600, color: margemColor }}>
                     {margem != null ? fmtR(margem) : "—"}
                   </div>
                   <div className="pv-toggle" style={{ width: 28, textAlign: "center" }}>
