@@ -1,3 +1,7 @@
+## 2026-09-25 — Frota Pro: menu inferior escondido no celular
+
+**Solicitado:** o menu inferior do Frota Pro não aparecia dentro do hub.
+**Implementado:** `src/screens/HubScreen.jsx` — o container dos módulos embutidos passou de `100vh` para `100dvh`. No celular, 100vh inclui a área atrás da barra do navegador e escondia o rodapé da tela embutida.
 ## 2026-09-01 — Celulose continuava em 49: o perfil do banco engolia a regra
 
 **Reportado:** reimportei a planilha bruta e a Conferência continua mostrando ~49 de celulose.
